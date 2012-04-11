@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Apr 11 07:27:05 2012 (serrano)                */
+#*    Last change :  Wed Apr 11 14:04:27 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -200,7 +200,7 @@ if [ "$debian " = "maemo " ]; then
     $TMP/hop-$VERSION/maemo/hop.desktop && \
     chmod a-w $TMP/hop-$VERSION/maemo/hop.desktop
   cat > $TMP/hop-$VERSION/debian/hop.links <<EOF
-  $PREFIX/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
+usr/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
 EOF
 fi
 

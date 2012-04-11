@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Mon Apr  9 08:19:40 2012 (serrano)                */
+#*    Last change :  Wed Apr 11 14:09:49 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -36,7 +36,7 @@ if [ "@DEBIAN@ " = "maemo " ]; then
   # below), since maemo-select-menu-location will trigger the
   # reconstructing of the Taks navigator menu as well.
   
-  cp $prefixhildondir/hop.inactive $hildondir/hop.desktop
+  mv $hildondir/hop.inactive $hildondir/hop.desktop
   
   # Now we are ready to let the user move the entry around, but only if
   # this is a new install
