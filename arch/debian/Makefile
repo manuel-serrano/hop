@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Wed Apr 11 07:57:37 2012 (serrano)                */
+#*    Last change :  Wed Apr 11 08:49:06 2012 (serrano)                */
 #*    Copyright   :  2011-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */
@@ -30,7 +30,7 @@ LAUNCHER = Makefile.in configure.in hop-128x128.png hop.c list.h param.h \
 
 DEBIAN = changelog.in control.in postinst.in postrm.in rules.in
 
-POPULATION = Makefile README
+POPULATION = Makefile README \
   init.d/hop.in \
   makedeb.sh \
   $(MAEMO:%=maemo/%) \
