@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Apr 10 16:08:38 2012 (serrano)                */
+#*    Last change :  Wed Apr 11 07:27:05 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -25,6 +25,7 @@ AUTHOR=Manuel.Serrano@inria.fr
 LICENSE=gpl
 TMP=`pwd`/build.hop
 BASEDIR=`dirname $0`
+MAEMODIR=$BASEDIR/maemo
 HOPPREFIX=/opt/bigloo
 PREFIX=/usr
 HOPUSER=hop
@@ -51,7 +52,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    The maemo configuration                                          */
 #*---------------------------------------------------------------------*/
-maemo=`pkg-config maemo-version --modversion` 2> /dev/null
+maemo=`pkg-config maemo-version --modversion 2> /dev/null`
 
 if [ $? = 0 ]; then
   debian=maemo
@@ -68,7 +69,7 @@ fi
 #*---------------------------------------------------------------------*/
 if [ "$debian " = "maemo " ]; then
   mkdir -p $TMP/hop-$VERSION/maemo
-  (cp -r $BASEDIR/hop-launcher $TMP/hop-$VERSION/maemo)
+  (cp -r $MAEMODIR/hop-launcher $TMP/hop-$VERSION/maemo)
   (cd $TMP/hop-$VERSION/maemo/hop-launcher && \
    branch=`echo $VERSION | sed -e "s/[0-9]*$/x/g"` && \
    cat configure.in | sed -e "s/@HOPBRANCH@/$branch/g" > configure && \
@@ -79,7 +80,7 @@ if [ "$debian " = "maemo " ]; then
 
   mkdir -p $TMP/hop-$VERSION/icons
   for p in $ICONS; do 
-    cp $BASEDIR/$p $TMP/hop-$VERSION/icons;
+    cp $MAEMODIR/$p $TMP/hop-$VERSION/icons;
   done
 fi
 
@@ -97,7 +98,7 @@ EOF
 tar cfz $TMP/hop-$VERSION.tar.gz -C $TMP hop-$VERSION
 
 if [ "$debian " = "maemo " ]; then
-  cat $BASEDIR/Makefile.maemo | \
+  cat $MAEMODIR/Makefile.maemo | \
     sed -e "s/@HOPBRANCH@/$branch/g" | \
     sed -e "s|@HOPPREXI@|$HOPREFIX|g" | \
     sed -e "s|@PREFIX@|$PREFIX|g" >> \
@@ -192,7 +193,7 @@ done
 # The desktop file
 cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
 if [ "$debian " = "maemo " ]; then
-  cat $BASEDIR/hop.desktop.in \
+  cat $MAEMODIR/hop.desktop.in \
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
           -e "s|@PREFIX@|$PREFIX|g" > \
@@ -205,7 +206,7 @@ fi
 
 # The service
 if [ "$debian " = "maemo " ]; then
-  cat $BASEDIR/hop.service.in  \
+  cat $MAEMODIR/hop.service.in  \
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
           -e "s|@PREFIX@|$PREFIX|g" > \
