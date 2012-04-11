@@ -62,7 +62,7 @@ install: build
 	# See postinst for why we do this.
 	if [ "@DEBIAN@ " = "maemo " ]; then \
           mv $(CURDIR)/debian/hop/usr/share/applications/hildon/hop.desktop \
-             $(CURDIR)/debian/hop/usr/share/applications/hildon/hop.inactive \
+             $(CURDIR)/debian/hop/usr/share/applications/hildon/hop.inactive; \
         fi
 
 # Build architecture-independent files here.
