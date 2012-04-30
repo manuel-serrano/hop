@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Jan 12 09:32:03 2012 (serrano)                */
+;*    Last change :  Fri Apr 20 06:58:51 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -168,7 +168,7 @@
 	       ((+ blank)
 		(ignore))
 	       ((: (+ (out ">= \t\n")) #\=)
-		(let* ((key (the-subsymbol 0 (-fx (the-length) 1)))
+		(let* ((key (the-subsymbol 0 -1))
 		       (val (read-attribute-value ip)))
 		   (values key val)))
 	       (#\>

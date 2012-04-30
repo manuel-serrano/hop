@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Dec  2 13:51:55 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Thu Apr 19 08:56:45 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -81,7 +81,6 @@
 		(hop-verb 2 (hop-color id id " ACCEPT")
 			  ": " (socket-hostname sock)
 			  " [" (current-date) "]\n")
-		(tprint "SOCKET.generic=" (socket-host-address sock))
 		;; tune the socket
 		(tune-socket! sock)
 		;; process the request
@@ -118,7 +117,6 @@
 		(n (socket-accept-many serv socks
 				       :inbufs in-buffers
 				       :outbufs out-buffers)))
-	    (when (>fx n 1) (tprint "*** socket-accept-many: n=" n))
 	    (let liip ((i 0))
 	       (if (=fx i n)
 		   (loop (+fx id i))
@@ -247,7 +245,6 @@
       (let ((n (socket-accept-many serv socks
 				   :inbufs dummybufs
 				   :outbufs dummybufs)))
-	 (if (> n 1) (tprint "*** socket-accept-many: " n))
 	 (let liip ((i 0))
 	    (if (=fx i n)
 		(loop (+fx id i))

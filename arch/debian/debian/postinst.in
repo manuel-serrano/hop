@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Sat Apr 14 12:55:24 2012 (serrano)                */
+#*    Last change :  Tue Apr 17 13:19:12 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -75,7 +75,7 @@ fi
 #*---------------------------------------------------------------------*/
 if [ "@DEBIAN@ " = "maemo " ]; then
   init=true
-elif @HOPPREFIX@/bin/hop --eval '(begin (print "Start Hop automatically? (Y/n) ") (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
+elif @HOPPREFIX@/bin/hop --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
   init=true
 else
   init=false
