@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-spage.hss               */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-spage.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Tue Apr 26 17:38:38 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Thu May  3 11:01:31 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
 /*=====================================================================*/
@@ -17,39 +17,39 @@ $(module __hss-spage)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type spage "div[hssclass=hop-spage]"
+$(define-hss-type spage "div[data-hss-tag=hop-spage]"
     (define-hss-property (transition-style v)
        (cond
 	  ((string=? (car v) "slide")
-           (format "span[hssclass=hop-spstyle] { cursor: move; }"))
+           (format "span[data-hss-tag=hop-spstyle] { cursor: move; }"))
 	  ((string=? (car v) "fade")
-           (format "span[hssclass=hop-spstyle] { cursor: help; }"))
+           (format "span[data-hss-tag=hop-spstyle] { cursor: help; }"))
 	  ((string=? (car v) "none")
-           (format "span[hssclass=hop-spstyle] { cursor: wait; }"))
+           (format "span[data-hss-tag=hop-spstyle] { cursor: wait; }"))
 	  ((string=? (car v) "auto")
-           (format "span[hssclass=hop-spstyle] { cursor: auto; }"))
+           (format "span[data-hss-tag=hop-spstyle] { cursor: auto; }"))
 	  (else
-           (format "span[hssclass=hop-spstyle] { cursor: default; }")))))
+           (format "span[data-hss-tag=hop-spstyle] { cursor: default; }")))))
 
-$(define-hss-type sphead "div[hssclass=hop-sphead]"
+$(define-hss-type sphead "div[data-hss-tag=hop-sphead]"
     (define-hss-property (button-visibility v)
-       (format "div[hssclass=hop-sppopbutton] { visibility: ~l; }" v))
+       (format "div[data-hss-tag=hop-sppopbutton] { visibility: ~l; }" v))
     (define-hss-property (button-display v)
-       (format "div[hssclass=hop-sppopbutton] { display: ~l; }" v))
+       (format "div[data-hss-tag=hop-sppopbutton].visible { display: ~l; }" v))
     (define-hss-property (button-text-visibility v)
-       (format "div[hssclass=hop-sppopbutton] > span { visibility: ~l; }" v))
+       (format "div[data-hss-tag=hop-sppopbutton] > span { visibility: ~l; }" v))
     (define-hss-property (button-content v)
-       (format "div[hssclass=hop-sppopbutton]:before { content: ~l; }" v))
+       (format "div[data-hss-tag=hop-sppopbutton]:before { content: ~l; }" v))
     (define-hss-property (button-color v)
-       (format "div[hssclass=hop-sppopbutton]:before { color: ~l; }" v))
+       (format "div[data-hss-tag=hop-sppopbutton]:before { color: ~l; }" v))
     (define-hss-property (button-width v)
-       (format "div[hssclass=hop-sppopbutton] { width: ~l; }" v)))
+       (format "div[data-hss-tag=hop-sppopbutton] { width: ~l; }" v)))
 
-$(define-hss-type sptab "div[hssclass=hop-sptab]")
-$(define-hss-type spbody "div[hssclass=hop-spbody]")
+$(define-hss-type sptab "div[data-hss-tag=hop-sptab]")
+$(define-hss-type spbody "div[data-hss-tag=hop-spbody]")
 
-$(define-hss-type sptabhead "div[hssclass=hop-sptabhead]")
-$(define-hss-type sppushbutton "div[hssclass=hop-sppushbutton]")
+$(define-hss-type sptabhead "div[data-hss-tag=hop-sptabhead]")
+$(define-hss-type sppushbutton "div[data-hss-tag=hop-sppushbutton]")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -118,7 +118,7 @@ spage {
   overflow: hidden;
 }
 
-spage span[hssclass=hop-spstyle] {
+spage span[data-hss-tag=hop-spstyle] {
   display: none;
 }
 
@@ -143,7 +143,7 @@ sptabhead > sppushbutton {
   vertical-align: bottom;
 }
 
-div[hssclass=hop-spwindow] {
+div[data-hss-tag=hop-spwindow] {
   width: 100%;
   height: 100%;
   border: 0;
@@ -152,7 +152,7 @@ div[hssclass=hop-spwindow] {
   padding: 0;
 }
 
-div[hssclass=hop-spviewport] {
+div[data-hss-tag=hop-spviewport] {
   position: relative;
   transition: left 0.4s ease-in;
   margin: 0;
@@ -170,7 +170,7 @@ spbody {
   z-index: 0;
 }
  
-div[hssclass=hop-sppopbutton] {
+div[data-hss-tag=hop-sppopbutton] {
   user-select: none;
   display: none;
   position: absolute;
@@ -186,24 +186,25 @@ div[hssclass=hop-sppopbutton] {
   font-size: 80%;
   color: black;
   padding-bottom: 2px;
+  white-space: nowrap;
 }
 
-div[hssclass=hop-sppopbutton]:before {
+div[data-hss-tag=hop-sppopbutton]:before {
   font-size: 140%;
   font-weight: normal;
   margin-right: 2px;
   text-shadow: 1px -1px #999;
 }
 
-div[hssclass=hop-sppopbutton]:hover {
+div[data-hss-tag=hop-sppopbutton]:hover {
   background: #bbb;
   color: white;
 }
 
-div[hssclass=hop-sppopbutton].visible {
+div[data-hss-tag=hop-sppopbutton].visible {
   display: block;
 }
 
-div[hssclass=hop-sptab-static] {
+div[data-hss-tag=hop-sptab-static] {
   display: none;
 }

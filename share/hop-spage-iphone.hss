@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-spage-iphone.hss        */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-spage-iphone.hss        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Dec  8 11:16:21 2010                          */
-/*    Last change :  Mon Dec 13 16:51:05 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Thu May  3 11:00:51 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spage with an iphone-like look-and-feel.                         */
 /*=====================================================================*/
@@ -71,7 +71,7 @@ sptabhead:hover {
 /*---------------------------------------------------------------------*/
 /*    sppopup configuration                                            */
 /*---------------------------------------------------------------------*/
-div[hssclass=hop-sppopbutton] {
+div[data-hss-tag=hop-sppopbutton] {
   display: none;
   position: absolute;
   left: 5px;
@@ -92,16 +92,16 @@ div[hssclass=hop-sppopbutton] {
   font-size: 60%;
 }
 
-div[hssclass=hop-sppopbutton]:before {
+div[data-hss-tag=hop-sppopbutton]:before {
   font-size: 140%;
   margin-right: 2px;
 }
 
-div[hssclass=hop-sppopbutton]:hover {
+div[data-hss-tag=hop-sppopbutton]:hover {
   background: #4A6C9B;
   color: white;
 }
 
-div[hssclass=hop-sppopbutton].filled {
+div[data-hss-tag=hop-sppopbutton].filled {
   display: block;
 }

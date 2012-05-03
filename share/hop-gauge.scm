@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Sat Mar 31 14:59:24 2012 (serrano)                */
+;*    Last change :  Thu May  3 08:54:27 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
@@ -47,10 +47,10 @@
 	 (tid (symbol->string (gensym))))
       (let ((format (let ((l (memq :format attrs)))
 		       (if (pair? l) (cadr l) (format "~~a/~a" max)))))
-	 (<DIV> :hssclass "hop-gauge" :id id
+	 (<DIV> :data-hss-tag "hop-gauge" :id id
 	    "0"
-	    (<DIV> :hssclass "hop-gauge-fill" :id fid)
-	    (<DIV> :hssclass "hop-gauge-text" :id tid "0")
+	    (<DIV> :data-hss-tag "hop-gauge-fill" :id fid)
+	    (<DIV> :data-hss-tag "hop-gauge-text" :id tid "0")
 	    (add-event-listener! id "ready"
 	       (lambda (e)
 		  (gauge-init! id fid tid value min max format listener))

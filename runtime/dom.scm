@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/2.3.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Nov 11 07:08:30 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Thu May  3 08:50:18 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -43,7 +43,6 @@
 	   (generic dom-get-element-by-id obj ::bstring)
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-class::pair-nil obj ::bstring)
-	   (dom-get-elements-by-hssclass::pair-nil obj ::bstring)
 	   (dom-get-attribute node ::bstring)
 	   (dom-has-attribute?::bool node ::bstring)
 	   (dom-remove-attribute! node name)
@@ -592,23 +591,6 @@
 		;; of the class attribute. If we decide to change this,
 		;; the change should be reported in the JS implementation
 		;; inside the file hop-dom.js
-		(if (and (string? c) (string=? c name))
-		    (cons obj (loop body))
-		    (loop body)))))
-	 (else
-	  '()))))
-
-;*---------------------------------------------------------------------*/
-;*    dom-get-elements-by-hssclass ...                                 */
-;*---------------------------------------------------------------------*/
-(define (dom-get-elements-by-hssclass::pair-nil obj name)
-   (let loop ((obj obj))
-      (cond
-	 ((pair? obj)
-	  (append-map loop obj))
-	 ((isa? obj xml-markup)
-	  (with-access::xml-markup obj (body)
-	     (let ((c (dom-get-attribute obj "hssclass")))
 		(if (and (string? c) (string=? c name))
 		    (cons obj (loop body))
 		    (loop body)))))

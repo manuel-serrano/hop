@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Sat Mar 31 09:20:52 2012 (serrano)                */
+;*    Last change :  Thu May  3 08:48:00 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -459,7 +459,7 @@
 		 el)))
       (let loop ((parent (dom-parent-node el)))
 	 (cond
-	    ((string=? (parent.getAttribute "hssclass") "hop-spage")
+	    ((string=? (parent.getAttribute "data-hss-tag") "hop-spage")
 	     parent)
 	    ((or (not parent) (eq? parent #unspecified))
 	     (error "find-spage" "cannot find parent spage" el))

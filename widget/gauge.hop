@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Fri Mar 30 11:03:19 2012 (serrano)                */
+;*    Last change :  Thu May  3 08:54:53 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
@@ -21,14 +21,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    <GAUGE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <GAUGE> ((id (xml-make-id 'GAUGE) string)
-			      (format #unspecified)
-			      (value 0 integer)
-			      (min 0 integer)
-			      (max 99 integer)
-			      (onchange #f)
-			      (attrs)
-			      body)
+(define-tag <GAUGE> ((id (xml-make-id 'GAUGE) string)
+		     (format #unspecified)
+		     (value 0 integer)
+		     (min 0 integer)
+		     (max 99 integer)
+		     (onchange #f)
+		     (attrs)
+		     body)
    (let ((listener (when (isa? onchange xml-tilde)
 		      (sexp->xml-tilde
 			 `(lambda (event)
@@ -38,10 +38,10 @@
 	 (fmt (if (string? format)
 		  format
 		  (string-append "~a/~a"))))
-      (<DIV> :hssclass "hop-gauge" :id id attrs
+      (<DIV> :data-hss-tag "hop-gauge" :id id attrs
 	 "0"
-	 (<DIV> :hssclass "hop-gauge-fill" :id fid)
-	 (<DIV> :hssclass "hop-gauge-text" :id tid "0")
+	 (<DIV> :data-hss-tag "hop-gauge-fill" :id fid)
+	 (<DIV> :data-hss-tag "hop-gauge-text" :id tid "0")
 	 ~(add-event-listener! $id "ready"
 	     (lambda (e)
 		(gauge-init! $id $fid $tid $value $min $max $fmt $listener)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sat Jan 14 08:04:31 2012 (serrano)                */
+;*    Last change :  Thu May  3 10:55:21 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -27,52 +27,52 @@
 ;*---------------------------------------------------------------------*/
 ;*    SPAGE ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SPAGE> ((id (xml-make-id 'SPAGE) string)
-			      (onchange #f)
-			      (class #f)
-			      (attr)
-			      body)
+(define-tag <SPAGE> ((id (xml-make-id 'SPAGE) string)
+		     (onchange #f)
+		     (class #f)
+		     (attr)
+		     body)
    (let ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
 	 (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
       (instantiate::xml-element
 	 (tag 'div)
 	 (id id)
-	 (attributes `(:hssclass "hop-spage" :class ,class ,@attr))
+	 (attributes `(:data-hss-tag "hop-spage" :class ,class ,@attr))
 	 (body (list (if (null? head)
 			 (<SPHEAD> :style "display: none" "?")
 			 (car head))
-		     (<SPAN> :hssclass "hop-spstyle" " ")
-		     (<DIV> :hssclass "hop-spwindow"
-			(<DIV> :hssclass "hop-spviewport"
-			   (<DIV> :hssclass "hop-spbody"
-			      :class class
-			      body)))
-		     ~(add-event-listener! $id "ready"
-			 (lambda (e)
-			    (spage-init $id
-			       $(when (isa? onchange xml-tilde)
-				   (with-access::xml-tilde onchange (env menv)
-				      (sexp->xml-tilde
-					 `(lambda (event)
-					     ,(xml-tilde->sexp onchange))
-					 env menv))))))
-		     ;; firefox workaround
-		     ~(if #f 1 2))))))
+		  (<SPAN> :data-hss-tag "hop-spstyle" " ")
+		  (<DIV> :data-hss-tag "hop-spwindow"
+		     (<DIV> :data-hss-tag "hop-spviewport"
+			(<DIV> :data-hss-tag "hop-spbody"
+			   :class class
+			   body)))
+		  ~(add-event-listener! $id "ready"
+		      (lambda (e)
+			 (spage-init $id
+			    $(when (isa? onchange xml-tilde)
+				(with-access::xml-tilde onchange (env menv)
+				   (sexp->xml-tilde
+				      `(lambda (event)
+					  ,(xml-tilde->sexp onchange))
+				      env menv))))))
+		  ;; firefox workaround
+		  ~(if #f 1 2))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPHEAD ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SPHEAD> ((id (xml-make-id 'SPHEAD) string)
-			       (attr)
-			       body)
+(define-tag <SPHEAD> ((id (xml-make-id 'SPHEAD) string)
+		      (attr)
+		      body)
    (instantiate::xml-sphead-element
       (tag 'div)
-      (attributes `(:hssclass "hop-sphead" ,@attr))
+      (attributes `(:data-hss-tag "hop-sphead" ,@attr))
       (id id)
       (body (list (<DIV> body)
-		  (<DIV> :hssclass "hop-sppopbutton"
-		     :onclick ~(spage-pop-update this)
-		     (<SPAN> ""))))))
+	       (<DIV> :data-hss-tag "hop-sppopbutton"
+		  :onclick ~(spage-pop-update this)
+		  (<SPAN> ""))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    svc-stamp ...                                                    */
@@ -90,11 +90,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SPTAB> ((id (xml-make-id 'SPTAB) string)
-			      (onselect #f)
-			      (class #f)
-			      (attr)
-			      body)
+(define-tag <SPTAB> ((id (xml-make-id 'SPTAB) string)
+		     (onselect #f)
+		     (class #f)
+		     (attr)
+		     body)
    
    (define (init-sptab id onselect)
       (if (isa? onselect xml-tilde)
@@ -110,42 +110,42 @@
 			  #unspecified)))
 		env menv))
 	  (sexp->xml-tilde
-	   `(add-event-listener! ,id "ready"
-	       (lambda (event)
-		  (set! this.hop_add_event_listener sptab-add-event-listener!)
-		  #unspecified)))))
+	     `(add-event-listener! ,id "ready"
+		 (lambda (event)
+		    (set! this.hop_add_event_listener sptab-add-event-listener!)
+		    #unspecified)))))
    
    (let* ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
 	  (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
       (if (and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
 	  ;; a dynamic tab
 	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
-			(<DIV> :hssclass "hop-spbody"
+			(<DIV> :data-hss-tag "hop-spbody"
 			   :class class
 			   attr
 			   body))))
-	     (<DIV> :hssclass "hop-sptab" :class class  :id id
+	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(spage-push-service this $svc)
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect)))
 	  ;; a static tab
-	  (<DIV> :hssclass "hop-sptab" :class class :id id
+	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
 	     :onclick ~(spage-push-node this (dom-first-child (dom-last-child this)))
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)
-	     (<DIV> :hssclass "hop-sptab-static"
-		(<DIV> :hssclass "hop-spbody":class class attr body))))))
+	     (<DIV> :data-hss-tag "hop-sptab-static"
+		(<DIV> :data-hss-tag "hop-spbody":class class attr body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD) string)
-				  (onclick #f)
-				  (attr)
-				  body)
+(define-tag <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD) string)
+			 (onclick #f)
+			 (attr)
+			 body)
    (instantiate::xml-sphead-element
       (tag 'div)
-      (attributes `(:hssclass "hop-sptabhead" ,@attr))
+      (attributes `(:data-hss-tag "hop-sptabhead" ,@attr))
       (id id)
       (body (list (<SPAN> body)
-		  (<DIV> :hssclass "hop-sppushbutton" "")))))
+	       (<DIV> :data-hss-tag "hop-sppushbutton" "")))))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-gauge.hss               */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-gauge.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Apr 13 09:01:57 2010                          */
-/*    Last change :  Mon Nov 22 16:23:50 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Thu May  3 10:54:17 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP gauge CSS                                                    */
 /*=====================================================================*/
@@ -17,11 +17,11 @@ $(module __hop_hop-gauge)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type gauge "div[hssclass=hop-gauge]")
+$(define-hss-type gauge "div[data-hss-tag=hop-gauge]")
 
-$(define-hss-type gaugefill "div[hssclass=hop-gauge-fill]")
+$(define-hss-type gaugefill "div[data-hss-tag=hop-gauge-fill]")
 
-$(define-hss-type gaugetext "div[hssclass=hop-gauge-text]")
+$(define-hss-type gaugetext "div[data-hss-tag=hop-gauge-text]")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
