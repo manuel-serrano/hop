@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Mar 19 13:44:55 2012 (serrano)                */
+;*    Last change :  Fri May  4 12:30:44 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -450,6 +450,7 @@
 		      (display-elong size p)
 		      (http-write-line p))
 		   (http-write-line p)
+		   (flush-output-port p)
 		   ;; the body
 		   (with-trace 4 "http-response-file"
 		      (when bodyp (send-file file p size #e-1)))

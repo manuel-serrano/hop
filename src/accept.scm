@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Thu Apr 19 08:56:45 2012 (serrano)                */
+;*    Last change :  Sat May  5 07:29:03 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -63,7 +63,9 @@
 ;*    tune-socket! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (tune-socket! sock)
-   (socket-option-set! sock :SO_SNDBUF (hop-sndbuf))
+   ;; MS CARE: as of 4 may 2012 setting SO_SNDBUF blocks sendfile
+   ;; (config: Linux 3.3.4 glibc 2.15)
+   ;;(socket-option-set! sock :SO_SNDBUF (hop-sndbuf))
    (socket-option-set! sock :TCP_NODELAY #t))
     
 ;*---------------------------------------------------------------------*/
@@ -259,34 +261,34 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::nothread-scheduler serv::socket w)
    (letrec ((thread (nothread-scheduler-get-fake-thread
-		     (lambda ()
-			(let loop ()
-			   (with-handler
-			      (make-scheduler-error-handler thread)
-			      (with-access::hopthread thread (inbuf outbuf)
-				 (let loop ((id 1))
-				    (let ((s (socket-accept
-						serv
-						:inbuf inbuf
-						:outbuf outbuf)))
-				       (if (socket-reject s)
-					   (begin
-					      ;; notify and close
-					      (notify-reject s)
-					      (socket-close s)
-					      (loop id))
-					   (begin
-					      ;; tune the socket
-					      (tune-socket! s)
-					      ;; process the request
-					      (spawn scd stage-request id s
-						 (hop-read-timeout))
-					      (loop (+fx id 1))))))))
-			   (loop))))))
+		       (lambda ()
+			  (let loop ()
+			     (with-handler
+				(make-scheduler-error-handler thread)
+				(with-access::hopthread thread (inbuf outbuf)
+				   (let loop ((id 1))
+				      (let ((s (socket-accept
+						  serv
+						  :inbuf inbuf
+						  :outbuf outbuf)))
+					 (if (socket-reject s)
+					     (begin
+						;; notify and close
+						(notify-reject s)
+						(socket-close s)
+						(loop id))
+					     (begin
+						;; tune the socket
+						(tune-socket! s)
+						;; process the request
+						(spawn scd stage-request id s
+						   (hop-read-timeout))
+						(loop (+fx id 1))))))))
+			     (loop))))))
       (if w
 	  (thread-join! (thread-start-joinable! thread))
 	  (thread-start! thread))))
-
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    socket-reject ...                                                */
 ;*---------------------------------------------------------------------*/
