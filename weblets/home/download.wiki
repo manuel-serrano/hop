@@ -1,8 +1,8 @@
-,(define-xml-compound <QRCODE> ((typenumber 4)
-				(id #f)
-				(correctlevel "L")
-				(class #f)
-				text)
+,(define-tag <QRCODE> ((typenumber 4)
+		       (id #f)
+		       (correctlevel "L")
+		       (class #f)
+		       text)
     (<IMG> :class class
        :id (xml-make-id id)
        :src (format (home-google-qrcode-format)
@@ -92,8 +92,8 @@ used without downloading and installing the source code manually:
 
 == Maemo ==
 
-,(let ((fremantle (home/maemo/hop.install "fremantle" "hop" "free"))
-       (chinook (home/maemo/hop.install "chinook" "hop" "free"))
+,(let ((fremantle (home/maemo/install "fremantle" "hop" "free"))
+       (chinook (home/maemo/install "chinook" "hop" "free"))
        (name (format "hop-~a.install" (home-hop-stable-version))))
     (<TABLE> :id "download-source"
        (<TR>

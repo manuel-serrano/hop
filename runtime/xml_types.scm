@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sat Jan 14 19:40:58 2012 (serrano)                */
+;*    Last change :  Thu May 10 07:05:09 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -27,7 +27,8 @@
 	      (css-stop (default #f))
 	      (meta-delimiter::bstring read-only)
 	      (abbrev-emptyp::bool (default #f))
-	      (security::obj read-only (default #f)))
+	      (security::obj read-only (default #f))
+	      (empty-end-tag::bool (default #t)))
 
 	    (class security-manager
 	       (name::bstring read-only (default "*"))

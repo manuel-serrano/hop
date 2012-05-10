@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jan 13 18:15:23 2012 (serrano)                */
+;*    Last change :  Thu May 10 07:07:08 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -95,10 +95,12 @@
    (instantiate::xml-backend
       (id 'html-4.01)
       (mime-type "text/html")
-      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Strict//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
+      (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
+;*       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">") */
       (html-attributes '())
       (header-format "")
       (no-end-tags-elements '(link))
+      (empty-end-tag #f)
       ;; the meta-format contains the closing >
       (meta-delimiter ">")))
 
@@ -283,7 +285,7 @@
 	     ((symbol? tag)
 	      (string-append (symbol->string! tag) n))
 	     (else
-	      (string-append "_" n))))))
+	      (string-append "G" n))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-event-handler-attribute? ...                                 */
@@ -529,7 +531,8 @@
       (display id p)
       (display "'" p)
       (xml-write-attributes attributes p backend)
-      (display "/>" p)
+      (with-access::xml-backend backend (empty-end-tag)
+	 (display (if empty-end-tag "/>" ">") p))
       (xml-write-initializations obj p backend)))
 
 ;*---------------------------------------------------------------------*/

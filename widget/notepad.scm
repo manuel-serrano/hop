@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jan 14 07:56:12 2012 (serrano)                */
+;*    Last change :  Thu May 10 07:23:31 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -104,7 +104,7 @@
 		       (isa? (car body) xml-delay)
 		       (null? (cdr body)))
 	       (set! attributes `(:lang "delay" ,@attributes))))
-	 (<DIV> :hssclass "hop-notepad-tab-body"
+	 (<DIV> :data-hss-tag "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
 	    :id idt
 	    (cond
@@ -123,18 +123,18 @@
 			    attrs)))
       (apply <DIV>
 	     :id id
-	     :hssclass "hop-notepad"
+	     :data-hss-tag "hop-notepad"
 	     :class (make-class-name "hop-notepad" klass)
 	     head
-	     (<TABLE> :hssclass "hop-notepad"
+	     (<TABLE> :data-hss-tag "hop-notepad"
 		(<TR>
 		   (<TD> :id (string-append id "-tabs")
-		      :hssclass "hop-notepad-tabs"
+		      :data-hss-tag "hop-notepad-tabs"
 		      tabs))
 		(<TR>
 		   (<TD> :id (string-append id "-body")
-		      :hssclass "hop-notepad-body" bodies)))
-		(<SCRIPT> :class "hop-notepad-init"
+		      :data-hss-tag "hop-notepad-body" bodies)))
+		(<SCRIPT>
 		   (when onchange
 		      (format "document.getElementById('~a').onchange = ~a"
 			      id (hop->js-callback onchange)))
@@ -151,7 +151,7 @@
    (instantiate::xml-nphead-element
       (tag 'div)
       (id (xml-make-id id 'NPHEAD))
-      (attributes `(:hssclass "hop-nphead" ,@attr))
+      (attributes `(:data-hss-tag "hop-nphead" ,@attr))
       (body body)))
    
 ;*---------------------------------------------------------------------*/
@@ -174,8 +174,8 @@
 	  (instantiate::xml-nptab-element
 	     (tag 'span)
 	     (id (xml-make-id id 'NPTAB))
-	     (idtag (xml-make-id id 'NPTABTAG))
-	     (attributes `(:hssclass "hop-nptab" ,@attr))
+	     (idtag (xml-make-id #f 'NPTABTAG))
+	     (attributes `(:data-hss-tag "hop-nptab" ,@attr))
 	     (klass cla)
 	     (onselect onselect)
 	     (head (car body))
@@ -190,7 +190,7 @@
    (instantiate::xml-nptabhead-element
       (tag 'span)
       (id (xml-make-id id 'NPTABHEAD))
-      (attributes `(:hssclass "hop-nptab-head" ,@attr))
+      (attributes `(:data-hss-tag "hop-nptab-head" ,@attr))
       (body body)))
    
 ;*---------------------------------------------------------------------*/
@@ -233,7 +233,7 @@
    (if (and (isa? a2 xml-markup)
 	    (with-access::xml-markup a2 (tag)
 	       (eq? tag 'span))
-	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab-head"))
+	    (equal? (dom-get-attribute a2 "data-hss-tag") "hop-nptab-head"))
        (with-access::xml-markup a1 ((body1 body))
 	  (with-access::xml-markup a2 ((body2 body))
 	     (xml-compare body1 body2)))
@@ -246,7 +246,7 @@
    (if (and (isa? a2 xml-markup)
 	    (with-access::xml-markup a2 (tag)
 	       (eq? tag 'span))
-	    (equal? (dom-get-attribute a2 "hssclass") "hop-nptab")
+	    (equal? (dom-get-attribute a2 "data-hss-tag") "hop-nptab")
 	    (let ((head (dom-first-child a2))
 		  (body (cadr (dom-child-nodes a2))))
 	       (xml-compare (cadr (dom-child-nodes a1)) head)))

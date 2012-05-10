@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/home/demo.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/home/demo.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Fri Jan 21 05:32:13 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Thu May 10 05:49:52 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
 ;*=====================================================================*/
@@ -32,10 +32,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <DEMO> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<DEMO> req)
+(define (<DEMO> req::http-request)
    (let ((inl (not
 	       (string-contains
-		(http-header-field (http-request-header req) :user-agent)
+		(http-header-field req.header :user-agent)
 		"MSIE"))))
       (<DIV> :class "demo"
 	 :id "demo-playground"

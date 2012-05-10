@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-notepad.hss             */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-notepad.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jan 17 18:56:22 2005                          */
-/*    Last change :  Wed Nov 10 09:55:05 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Thu May 10 07:10:20 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad CSS                                                  */
 /*=====================================================================*/
@@ -12,17 +12,17 @@
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type notepad "div[hssclass=hop-notepad]")
-$(define-hss-type notepad-tabs "td[hssclass=hop-notepad-tabs]")
-$(define-hss-type notepad-body "td[hssclass=hop-notepad-body]")
-$(define-hss-type nphead "div[hssclass=hop-nphead]")
-$(define-hss-type nptab "span[hssclass=hop-nptab]"
+$(define-hss-type notepad "div[data-hss-tag=hop-notepad]")
+$(define-hss-type notepad-tabs "td[data-hss-tag=hop-notepad-tabs]")
+$(define-hss-type notepad-body "td[data-hss-tag=hop-notepad-body]")
+$(define-hss-type nphead "div[data-hss-tag=hop-nphead]")
+$(define-hss-type nptab "span[data-hss-tag=hop-nptab]"
     (define-hss-property (border-color v)
         (format "border-top-color: ~l; border-right-color: ~l; border-left-color: ~l;" v v v )))
 $(define-hss-type nptab-active "span.hop-nptab-active")
 $(define-hss-type nptab-inactive "span.hop-nptab-inactive")
-$(define-hss-type nptab-body "div[hssclass=hop-notepad-tab-body]")
-$(define-hss-type nptabhead "span[hssclass=hop-nptab-head]")
+$(define-hss-type nptab-body "div[data-hss-tag=hop-notepad-tab-body]")
+$(define-hss-type nptabhead "span[data-hss-tag=hop-nptab-head]")
     
 /*---------------------------------------------------------------------*/
 /*    <NOTEPAD>                                                        */
@@ -35,7 +35,7 @@ notepad {
   font-family: Arial, Verdana, sans-serif;
 }
 
-notepad table[hssclass=hop-notepad] {
+notepad table[data-hss-tag=hop-notepad] {
   width: 100%;
   height: 100%;
   border-collapse: collapse;

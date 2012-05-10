@@ -15,7 +15,8 @@
 	 (join-login (<INPUT> :type "hidden" :name "login"))
 	 (new-login (<INPUT> :type "hidden" :name "login"))
 	 (active-games (filter (lambda (g)
-				  (eq? (Game-state (cdr g)) 'open))
+				  (with-access::Game (cdr g) (state)
+				     (eq? state 'open)))
 			       *games*)))
       (<HTML>
 	 (<HEAD>
@@ -146,19 +147,19 @@
 		(<HTML>
 		   (<BODY>
 		      "Game does not exist.")))
-	       ((eq? (Game-state (cdr g)) 'playing)
+	       ((eq? (with-access::Game (cdr g) (state) state) 'playing)
 		(<HTML>
 		   (<BODY>
 		      "Game has already started.")))
-	       ((eq? (Game-state (cdr g)) 'game-over)
+	       ((eq? (with-access::Game (cdr g) (state) state) 'game-over)
 		(<HTML>
 		   (<BODY>
 		      "Game has already finished.")))
 	       ((or (not (string? login))
 		    (string=? "" login)
-		    (any? (lambda (player)
-			     (string=? login (Player-login player)))
-			  (Game-players (cdr g))))
+		    (any? (lambda (player::Player)
+			     (string=? login player.login))
+		       (with-access::Game (cdr g) (players) players)))
 		(<HTML>
 		   (<BODY>
 		      "Login is invalid or already used")))
