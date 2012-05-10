@@ -585,6 +585,7 @@
 		  ("Rightarrow" "&rArr;")
 		  ("rightarrow" "&rarr;")
 		  ("rmoustache" "\\rmoustache")
+		  "setminus"
 		  "sim"
 		  "simeq"
 		  "sqcap"

@@ -254,6 +254,9 @@ while : ; do
     --disable-ssl)
       ssl=no;;
 
+    --enable-avahi)
+      avahi=yes;;
+
     --disable-avahi)
       avahi=no;;
 
