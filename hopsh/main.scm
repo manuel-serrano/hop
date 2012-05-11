@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Apr  9 08:47:18 2012 (serrano)                */
+;*    Last change :  Fri May 11 11:38:11 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
@@ -21,6 +21,9 @@
 
    (cond-expand
       (enable-ssl (library ssl)))
+   
+   (cond-expand
+      ((and enable-avahi (library avahi)) (library avahi)))
    
    (import  hopsh_parseargs
 	    hopsh_param
