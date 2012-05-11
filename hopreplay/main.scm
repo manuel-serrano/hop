@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopreplay/main.scm                */
+;*    serrano/prgm/project/hop/2.3.x/hopreplay/main.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  4 16:32:52 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Fri May 11 11:40:42 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
 ;*=====================================================================*/
@@ -19,6 +19,12 @@
    (cond-expand
       (enable-threads (library pthread)))
 
+   (cond-expand
+      (enable-ssl (library ssl)))
+   
+   (cond-expand
+      ((and enable-avahi (library avahi)) (library avahi)))
+   
    (import  hoprp_parseargs
 	    hoprp_param
 	    hoprp_replay
