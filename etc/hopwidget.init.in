@@ -25,11 +25,6 @@
 (cond-expand
    (bigloo-compile
     ;; required libraries for HOPWIDGETS
-    (set! *additional-bigloo-libraries*
-	  (cons* 'bigloomultimedia
-		 'biglooweb
-		 'hop
-                 @BIGLOOSSL@
-		 *additional-bigloo-libraries*)))
+    (for-each use-library! '(hop @BIGLOOCLOSELIBS@)))
    (bigloo-eval
     #unspecified))

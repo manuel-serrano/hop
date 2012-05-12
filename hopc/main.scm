@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri May 11 11:37:58 2012 (serrano)                */
+;*    Last change :  Sat May 12 09:04:06 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -16,15 +16,6 @@
 
    (library scheme2js hopscheme hop)
 
-   (cond-expand
-      (enable-threads (library pthread)))
-
-   (cond-expand
-      (enable-ssl (library ssl)))
-
-   (cond-expand
-      ((and enable-avahi (library avahi)) (library avahi)))
-   
    (import  hopc_parseargs
 	    hopc_param)
 

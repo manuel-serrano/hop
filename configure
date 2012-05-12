@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu May  3 12:15:24 2012 (serrano)                */
+#*    Last change :  Sat May 12 09:08:55 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -465,7 +465,8 @@ if [ "$ssl" = "yes" ]; then
   fi
 
   hopsrfis="$hopsrfis enable-ssl"
-  libraries="ssl $libraries"
+  libraries="$libraries ssl"
+  bglcloselibs="$bglcloselibs ssl"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -491,7 +492,8 @@ if [ "$threads" = "yes" ]; then
   fi
 
   hopsrfis="$hopsrfis enable-threads"
-  libraries="pthread $libraries"
+  libraries="$libraries pthread"
+  bglcloselibs="$bglcloselibs pthread"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -517,9 +519,9 @@ if [ "$avahi" = "yes" ]; then
   fi
 
   hopsrfis="$hopsrfis enable-avahi"
-  libraries="avahi $libraries"
-  bglcloselibs="$bglcloselibs avahi"
   zeroconf="avahi $zeroconf"
+  libraries="$libraries avahi"
+  bglcloselibs="$bglcloselibs avahi"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -602,22 +604,18 @@ fi
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
-  bigloossl="'bigloossl";
   bigloossllibs="-lbigloossl_s-$""(RELEASE)";
   bigloossllibu="-lbigloossl_u-$""(RELEASE)";
 else
-  bigloossl="";
   bigloossllibs="";
   bigloossllibu="";
 fi
 
 if [ "$threads " = "yes " ]; then
-  bigloopth="'bigloopthread";
   bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
   bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
   bigloogc="-lbigloogc_fth-$""(RELEASE)"
 else
-  bigloopth="";
   bigloopthlibs="";
   bigloopthlibu="";
   bigloogc="-lbigloogc-$""(RELEASE)"
@@ -627,12 +625,10 @@ mkmf=etc/Makefile.hopconfig
 
 bglcloselibs_u=
 bglcloselibs_s=
-bglcloselibs_init=
 
 for p in $bglcloselibs; do
   bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
   bglcloselibs_s="$bglcloselibs_s -lbigloo$p""_s-$""(RELEASE)";
-  bglcloselibs_init="'bigloo$p $bglcloselibs_init";
 done
 
 rm -f $mkmf 2> /dev/null
@@ -773,9 +769,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
-          -e "s|@BIGLOOSSL@|$bigloossl|" \
-          -e "s|@BIGLOOPTH@|$bigloopth|" \
-          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs_init|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 
@@ -806,8 +800,7 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hopwidget.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
-          -e "s|@BIGLOOSSL@|$bigloossl|" \
-          -e "s|@BIGLOOPTH@|$bigloopth|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 
