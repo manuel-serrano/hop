@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/prefs.scm                  */
+;*    serrano/prgm/project/hop/2.3.x/widget/prefs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan  5 14:11:23 2011                          */
-;*    Last change :  Thu Feb 17 11:29:10 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Wed May 16 14:20:08 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
 ;*=====================================================================*/
@@ -135,10 +135,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <PREFS> ((id #unspecified string)
-			      (class #unspecified string)
-			      (attrs)
-			      body)
+(define-tag <PREFS> ((id #unspecified string)
+		     (class #unspecified string)
+		     (attrs)
+		     body)
    (instantiate::xml-element
       (tag 'table)
       (id (xml-make-id id 'PREFS))
@@ -150,10 +150,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <PRLABEL> ((id #unspecified string)
-				(class #unspecified string)
-				(attrs)
-				body)
+(define-tag <PRLABEL> ((id #unspecified string)
+		       (class #unspecified string)
+		       (attrs)
+		       body)
    (<TR>
       (<TD> :class (make-class-name "hop-prefs-label" class)
 	 :id (xml-make-id id 'PRLABEL)
@@ -162,10 +162,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <PRSEP> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <PRSEP> ((id #unspecified string)
-			      (class #unspecified string)
-			      (attrs)
-			      body)
+(define-tag <PRSEP> ((id #unspecified string)
+		     (class #unspecified string)
+		     (attrs)
+		     body)
    (<TD> :class (make-class-name "hop-prefs-separator" class)
       :id (xml-make-id id 'PRSEP)
       :colspan 3 (<PRE> " ")))
@@ -175,17 +175,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <PR> ((id #unspecified string)
-			   (pref #unspecified symbol)
-			   (default #unspecified)
-			   (param #unspecified pair)
-			   (type 'string)
-			   (class #unspecified string)
-			   (validate #unspecified procedure)
-			   (parse #f)
-			   (title #unspecified string)
-			   (attrs)
-			   body)
+(define-tag <PR> ((id #unspecified string)
+		  (pref #unspecified symbol)
+		  (default #unspecified)
+		  (param #unspecified pair)
+		  (type 'string)
+		  (class #unspecified string)
+		  (validate #unspecified procedure)
+		  (parse #f)
+		  (title #unspecified string)
+		  (attrs)
+		  body)
    (when (procedure? validate) (preferences-add-validator! pref validate))
    (let ((cla (make-class-name "hop-pr" class))
 	 (id (xml-make-id id 'PR))

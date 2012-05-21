@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/weblets/doc/doc.hss               */
+/*    serrano/prgm/project/hop/2.3.x/weblets/doc/doc.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Tue Nov 16 17:37:14 2010 (serrano)                */
-/*    Copyright   :  2005-10 Manuel Serrano                            */
+/*    Last change :  Mon May 21 16:34:30 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -91,6 +91,10 @@ tt {
 
 table td {
   text-align: left;
+}
+
+td#doc-icon {
+  width: 96px;
 }
 
 /*--- forms -----------------------------------------------------------*/
@@ -240,10 +244,12 @@ notepad-body {
 
 nptab {
   border-color: $border-color;
+  user-select: none;
 }
 
 nptab-active {
-  background-color: $doc-color;
+  color: white;
+  background-color: #999;
   border-bottom-color: $doc-color;
 }
 
@@ -339,6 +345,13 @@ div.iwindow-menu {
 }
 
 /*--- api-index -------------------------------------------------------*/
+div.api span.api-toc:after {
+  content: "\2006\2386";
+  vertical-align: top;
+  font-size: 90%;
+  font-weight: 200;
+}
+
 div.api span.api-toc:hover {
   text-decoration: underline;
   cursor: pointer;

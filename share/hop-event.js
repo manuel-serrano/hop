@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Apr 30 18:24:12 2012 (serrano)                */
+/*    Last change :  Sun May 13 09:29:42 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -316,9 +316,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
 	 }
       } else if( k == "r" ) {
 	 // register, first event listener added to the server
-	 if( !hop_serverready_triggered ) {
-	    hop_trigger_serverready_event( new HopServerReadyEvent() );
-	 }
+	 hop_trigger_serverready_event();
       } else {
 	 alert( "hop-event.js(debug), hop_servevt_envelope_parse val=" + val
 		+ " xhr=" + xhr );
@@ -355,7 +353,8 @@ function start_servevt_websocket_proxy( key, host, port ) {
       ws.onopen = function() {
 	 // after a reconnection, the onerror listener must be removed
 	 ws.onerror = undefined;
-	 
+
+	 alert( "hop-event.js: ONOPEN..." );
 	 // we are ready to register now
 	 hop_server.state = 2;
 	 hop_servevt_proxy.register = register;
@@ -372,7 +371,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	    }
 	 }
 
-	 hop_trigger_serverready_event( new HopServerReadyEvent() );
+	 hop_trigger_serverready_event();
       }
       ws.onclose = function( e ) {
 	 hop_server.state = 3;
@@ -408,7 +407,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
    };
 
    var reconnect = function( wait, max ) {
-      alert( "Reconnecting..." + hop_servevt_proxy.reconnect_url );
       var ws = make_websocket( hop_servevt_proxy.reconnect_url ); 
 
       ws.onerror = function( e ) {
@@ -539,7 +537,7 @@ function start_servevt_ajax_proxy( key ) {
 	    if( server_ready != 2 ) {
 	       // mark the server ready
 	       hop_server.state = 2;
-	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	       hop_trigger_serverready_event();
 	    }
 	    
 	    // null is used as a marker for an abandonned connection
@@ -749,7 +747,7 @@ function start_servevt_script_proxy( key ) {
       
       // trigger server_ready 
       after( 100, function() {
-	 hop_trigger_serverready_event( new HopServerReadyEvent() );
+	 hop_trigger_serverready_event();
       } );
    }
 }
@@ -903,7 +901,7 @@ function hop_servevt_proxy_flash_init() {
       var success = function( e ) {
 	 if( pending_events > 0 ) {
 	    if( pending_events == 1 ) {
-	       hop_trigger_serverready_event( new HopServerReadyEvent() );
+	       hop_trigger_serverready_event();
 	    }
 	    pending_events--;
 	 }
@@ -948,7 +946,7 @@ function hop_servevt_proxy_flash_init() {
 	 }
       }
    } else {
-      hop_trigger_serverready_event( new HopServerReadyEvent() );
+      hop_trigger_serverready_event();
    }
 }
 
@@ -1256,8 +1254,10 @@ function HopServerReadyEvent() {
 /*---------------------------------------------------------------------*/
 /*    hop_trigger_serverready_event ...                                */
 /*---------------------------------------------------------------------*/
-function hop_trigger_serverready_event( evt ) {
+function hop_trigger_serverready_event() {
    if( !hop_serverready_triggered ) {
+      var evt = new HopServerReadyEvent();
+      
       hop_serverready_triggered = true;
    
       while( sc_isPair( hop_serverready_list ) ) {

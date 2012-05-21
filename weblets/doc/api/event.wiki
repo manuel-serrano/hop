@@ -66,7 +66,7 @@ are //propagated//. The propagation uses three phases:
 ~~ Note: ,(<SPAN> :style { font-weight: bold } [
 A current ,(<SPAN> :style { font-weight: bold; color: red } [bug]) in Firefox's Flash plugin prevents server event values
 to contain ,(<SPAN> :style { font-weight: bold; color: red } [strings]) 
-containing ,(<SPAN> :style { font-weight: bold; color: red } ,(<SPAN> "\"")  characters.])
+containing ,(<SPAN> :style { font-weight: bold; color: red } ,(<SPAN> "\"")  characters.)])
 
 ~~ HOP implements //server events//. That is, contrary to the classical Web
 model, HOP servers may **push** information to clients. Clients that defined

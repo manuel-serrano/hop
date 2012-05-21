@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/lframe.scm                 */
+;*    serrano/prgm/project/hop/2.3.x/widget/lframe.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 26 07:21:23 2009                          */
-;*    Last change :  Mon May 30 14:48:11 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Tue May 15 17:27:07 2012 (serrano)                */
+;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's lframes.                                                   */
 ;*=====================================================================*/
@@ -23,16 +23,16 @@
 ;*    <LFRAME> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-tag <LFRAME> ((attrs) body)
-   (<DIV> :hssclass "hop-lframe"
+   (<DIV> :data-hss-tag "hop-lframe"
       attrs
-      (<DIV> :hssclass "hop-lfborder"
-         (<DIV> :hssclass "hop-lfbody" body))))
+      (<DIV> :data-hss-tag "hop-lfborder"
+         (<DIV> :data-hss-tag "hop-lfbody" body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <LFLABEL> ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-tag <LFLABEL> ((attrs) body)
-   (<DIV> :hssclass "hop-lflabel"
+   (<DIV> :data-hss-tag "hop-lflabel"
       attrs
       (<SPAN> body)))
    

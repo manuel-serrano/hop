@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu May 10 07:23:31 2012 (serrano)                */
+;*    Last change :  Mon May 21 16:22:52 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -19,7 +19,7 @@
    (static  (class xml-nphead-element::xml-element)
 	    (class xml-nptabhead-element::xml-element)
 	    (class xml-nptab-element::xml-element
-	       (idtag::bstring read-only)
+	       (idtab::bstring read-only)
 	       (head::xml-nptabhead-element read-only)
 	       (onselect read-only)
 	       klass::bstring ))
@@ -89,15 +89,15 @@
 	   op))))
    
    (define (make-tab-div tab i)
-      (with-access::xml-nptab-element tab (attributes (idt id) idtag body klass)
+      (with-access::xml-nptab-element tab (attributes (idt id) idtab body klass)
 	 (let ((click (format "hop_notepad_select( '~a', '~a', ~a )"
-			      id idtag (if history "true" "false"))))
+			      id idt (if history "true" "false"))))
 	    (set! attributes
 		  `(:onclick ,(secure-javascript-attr click)
-		    :class ,(string-append klass
-					   (if (=fx i 0)
-					       " hop-nptab-active"
-					       " hop-nptab-inactive"))
+		      :class ,(string-append klass
+				 (if (=fx i 0)
+				     " hop-nptab-active"
+				     " hop-nptab-inactive"))
 		    ,@attributes)))
 	 (with-access::xml-element tab (body)
 	    (when (and (pair? body)
@@ -107,6 +107,7 @@
 	 (<DIV> :data-hss-tag "hop-notepad-tab-body"
 	    :style (if (=fx i 0) "display: block" "display: none")
 	    :id idt
+	    :data-idtab idtab
 	    (cond
 	       ((=fx i 0)
 		(nptab-get-body tab))
@@ -155,6 +156,18 @@
       (body body)))
    
 ;*---------------------------------------------------------------------*/
+;*    <NPTABHEAD> ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-tag <NPTABHEAD> ((id #unspecified string)
+			 (attr)
+			 body)
+   (instantiate::xml-nptabhead-element
+      (tag 'span)
+      (id (xml-make-id id 'NPTABHEAD))
+      (attributes `(:data-hss-tag "hop-nptab-head" ,@attr))
+      (body body)))
+   
+;*---------------------------------------------------------------------*/
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <NPTAB> ((id #unspecified string)
@@ -174,7 +187,7 @@
 	  (instantiate::xml-nptab-element
 	     (tag 'span)
 	     (id (xml-make-id id 'NPTAB))
-	     (idtag (xml-make-id #f 'NPTABTAG))
+	     (idtab (xml-make-id #f 'NPTABTAG))
 	     (attributes `(:data-hss-tag "hop-nptab" ,@attr))
 	     (klass cla)
 	     (onselect onselect)
@@ -182,31 +195,19 @@
 	     (body (cdr body)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    <NPTABHEAD> ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-tag <NPTABHEAD> ((id #unspecified string)
-			 (attr)
-			 body)
-   (instantiate::xml-nptabhead-element
-      (tag 'span)
-      (id (xml-make-id id 'NPTABHEAD))
-      (attributes `(:data-hss-tag "hop-nptab-head" ,@attr))
-      (body body)))
-   
-;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-nptab-element p backend)
-   (with-access::xml-nptab-element obj (id idtag head attributes onselect)
+   (with-access::xml-nptab-element obj (idtab head attributes onselect)
       (display "<span id='" p)
-      (display idtag p)
+      (display idtab p)
       (display "'" p)
       (xml-write-attributes attributes p backend)
       (display ">" p)
       (when onselect
 	 (display "<script>" p)
 	 (display "document.getElementById( '" p)
-	 (display idtag p)
+	 (display idtab p)
 	 (display "' ).onselect = " p)
 	 (display (hop->js-callback onselect) p)
 	 (display "</script>" p))

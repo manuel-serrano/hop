@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-lframe.hss              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-lframe.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 10 08:52:15 2009                          */
-/*    Last change :  Thu Jul 16 11:42:19 2009 (serrano)                */
-/*    Copyright   :  2009 Manuel Serrano                               */
+/*    Last change :  Tue May 15 17:27:35 2012 (serrano)                */
+/*    Copyright   :  2009-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Label Frames                                                     */
 /*=====================================================================*/
@@ -17,34 +17,34 @@ $(module __hss-lframe)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type lframe "div[hssclass=hop-lframe]"
+$(define-hss-type lframe "div[data-hss-tag=hop-lframe]"
     
-    :body "div[hssclass=hop-lfbody]"
+    :body "div[data-hss-tag=hop-lfbody]"
 
     (define-hss-property (-hop-label-margin v)
        (format "padding: ~l;" v))
 
     (define-hss-property (-hop-label-border v)
-       (format "div[hssclass=hop-lfborder] { border: ~l; }" v))
+       (format "div[data-hss-tag=hop-lfborder] { border: ~l; }" v))
 
     (define-hss-property (padding v)
-       (format "div[hssclass=hop-lfbody] { padding: ~l; }" v))
+       (format "div[data-hss-tag=hop-lfbody] { padding: ~l; }" v))
 
     (define-hss-property (-hop-label-border-radius v)
-       (format "div[hssclass=hop-lfborder] { border-radius: ~l; }" v))
+       (format "div[data-hss-tag=hop-lfborder] { border-radius: ~l; }" v))
     
     (define-hss-property (-hop-label-align v)
-       (format "div[hssclass=hop-lflabel] { text-align: ~l; }" v))
+       (format "div[data-hss-tag=hop-lflabel] { text-align: ~l; }" v))
     
     (define-hss-property (-hop-label-offset v)
-       (format "div[hssclass=hop-lflabel] { top: -~l; }" v))
+       (format "div[data-hss-tag=hop-lflabel] { top: -~l; }" v))
 
     (define-hss-property (background v)
        (list (format "background: ~a;" (car v))
-             (format "div[hssclass=hop-lflabel] > span { background: ~a; }" 
+             (format "div[data-hss-tag=hop-lflabel] > span { background: ~a; }" 
                      (car v)))))
 
-$(define-hss-type lflabel "div[hssclass=hop-lflabel] span")
+$(define-hss-type lflabel "div[data-hss-tag=hop-lflabel] span")
 
 /*---------------------------------------------------------------------*/
 /*    public declarations ...                                          */
@@ -70,11 +70,11 @@ lflabel {
 /*---------------------------------------------------------------------*/
 /*    private declarations ...                                         */
 /*---------------------------------------------------------------------*/
-div[hssclass=hop-lframe] div[hssclass=hop-lfborder] {
+div[data-hss-tag=hop-lframe] div[data-hss-tag=hop-lfborder] {
   position: relative;
 }
 
-div[hssclass=hop-lframe] div[hssclass=hop-lflabel] {
+div[data-hss-tag=hop-lframe] div[data-hss-tag=hop-lflabel] {
   position: relative;
   left: 10px;
   margin-right: 20px;

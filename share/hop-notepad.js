@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Wed Jan 18 16:12:36 2012 (serrano)                */
+/*    Last change :  Mon May 21 16:23:58 2012 (serrano)                */
 /*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
@@ -81,11 +81,12 @@ function hop_notepad_inner_select( np, to, callback ) {
 function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
+   var body = document.getElementById( tab.getAttribute( "data-idtab" ) );
    var tabs = document.getElementById( np.id + "-tabs" );
    var i;
 
    for( i = 0; i < tabs.childNodes.length; i++ ) {
-      if( tabs.childNodes[ i ] == tab ) {
+      if( tabs.childNodes[ i ] == body ) {
 	 if( history != false ) hop_state_history_add( np.id, "np", i );
 	 
 	 return hop_notepad_inner_select( np, i, callback );
