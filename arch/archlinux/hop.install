@@ -3,6 +3,7 @@ post_install() {
   echo "==> hop: To run HOP automatically on boot, add the \"hop\" service to /etc/rc.conf"
   echo "==> hop: Edit the config under /etc/hop/hoprc.hop before using HOP"
   groupadd -g 8080 hop &>/dev/null
+  mkdir -p /var/lib/hop
   useradd -u 8080 -g hop -d /var/lib/hop -s /bin/true hop &>/dev/null
   gpasswd -a hop audio &>/dev/null
   chown hop:hop -R /var/lib/hop
