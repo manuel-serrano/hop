@@ -23,7 +23,6 @@ SCRIPTNAME=/etc/init.d/$NAME
 LOGDIR=/var/log/hop
 LOGFILE=$LOGDIR/$NAME.log
 DAEMON=@HOPPREFIX@/bin/hop
-DAEMON=/opt/bigloo/bin/hop
 DAEMON_ARGS="--log-file $LOGFILE"
 DAEMONUSER=@HOPUSER@
 PIDFILE=/var/run/$NAME.pid
@@ -150,5 +149,3 @@ case "$1" in
     exit 3
     ;;
 esac
-
-:
