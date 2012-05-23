@@ -1,0 +1,27 @@
+# Contributor: Manuel Serrano <Manuel.Serrano@inria.fr>
+
+pkgname=hop
+pkgver=2.3.0
+pkgrel=1
+pkgdesc="a Software Development Kit for the Web"
+url='http://hop.inria.fr'
+license=('GPL' 'LGPL')
+arch=('i686' 'x86_64' 'arm')
+depends=('bigloo>=3.8c')
+makedepends=('bigloo>=3.8c)
+install=hop.install
+source=(ftp://ftp-sop.inria.fr/mimosa/fp/Hop/$pkgname-$pkgver.tar.gz)
+md5sums=('6f84bc2bf73379cd00a0fe7404b35c6a')
+
+build() {
+  cd $startdir/src/$pkgname-$pkgver
+  ./configure --prefix=/usr --etcdir=/etc/hop
+  make || return 1
+}
+
+package() {
+  cd $startdir/src/$pkgname-$pkgver
+  make DESTDIR=$startdir/pkg install
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop
+  chmod a+rx $startdir/pkg/etc/rc.d/hop
+}

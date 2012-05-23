@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# This file is part of hop.
+# 
+# Copyright (c) 2011-2012 Manuel Serrano <Manuel.Serrano@inria.fr>
+
+#
+# Authors: <Manuel.Serrano@inria.fr>
+#
+
+# general config
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+# hop configuration
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Hop Web Broker"
+NAME=hop
+PORT=8080
+LOGDIR=/var/log/hop
+LOGFILE=$LOGDIR/$NAME.log
+DAEMON=/usr/bin/hop
+DAEMON=/usr/local/bin/hop
+DAEMONUSER=hop
+DAEMONUSER=serrano
+DAEMON_ARGS="--log-file $LOGFILE"
+
+# Read configuration variable file if it is present
+[ -r /etc/conf.d/$NAME ] && . /etc/conf.d/$NAME
+
+#
+# Function that starts the daemon/service
+#
+run_daemon() {
+  sh -s <<EOF
+while : ; do
+  $DAEMON -p $PORT --eval "(hop-user-set! \"$DAEMONUSER\")" --accept-kill $DAEMON_ARGS
+
+  if [ $? != 5 ]; then
+    break;
+  fi
+done
+EOF
+}
+
+do_start() {
+echo "DO STAT"
+  if [ ! -d $LOGDIR ]; then
+    mkdir -p $LOGDIR && chown -R $DAEMONUSER $LOGDIR;
+  fi
+
+  run_daemon &
+
+  return 0
+}
+
+PID=`pidof -o %PPID $DAEMON`
+case "$1" in
+  start)
+    stat_busy "Starting $NAME"
+    if [ -z "$PID" ]; then
+      do_start
+    fi
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      add_daemon hop
+      stat_done
+    fi
+    ;;
+  stop)
+    stat_busy "Stopping $NAME"
+    [ ! -z "$PID" ] && $DAEMON -p $PORT --eval "(hop-user-set! \"$DAEMONUSER\")" --kill $DAEMON_ARGS
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      rm_daemon hop
+      stat_done
+    fi
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $1 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}" >&2
+    exit 3
+    ;;
+esac

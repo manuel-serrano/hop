@@ -1,32 +1,22 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/Makefile                     */
+#*    serrano/prgm/project/hop/2.3.x/arch/archlinux/Makefile           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
-#*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed May 23 17:11:48 2012 (serrano)                */
-#*    Copyright   :  2006-12 Manuel Serrano                            */
+#*    Creation    :  Sun Feb  7 07:41:50 2010                          */
+#*    Last change :  Wed May 23 17:12:07 2012 (serrano)                */
+#*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    ETC Makefile                                                     */
+#*    The Makefile that handles ARCHLINUX specific files               */
 #*=====================================================================*/
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
--include ../etc/Makefile.hopconfig
--include ../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
-#*    Population                                                       */
+#*    Variables                                                        */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile
-
-POPDIRS = felix android macosx vm debian archlinux # vm
-
-install:
-
-uninstall:
-
-clean:
-
-devclean: clean
+POPULATION = Makefile PKGBUILD hop.install rc.d/hop.in
 
