@@ -8,7 +8,7 @@ url='http://hop.inria.fr'
 license=('GPL' 'LGPL')
 arch=('i686' 'x86_64' 'arm')
 depends=('bigloo>=3.8c')
-makedepends=('bigloo>=3.8c)
+makedepends=('bigloo>=3.8c')
 install=hop.install
 source=(ftp://ftp-sop.inria.fr/mimosa/fp/Hop/$pkgname-$pkgver.tar.gz)
 md5sums=('6f84bc2bf73379cd00a0fe7404b35c6a')
