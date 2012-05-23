@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Wed May 23 17:11:19 2012 (serrano)                */
+#*    Last change :  Wed May 23 17:11:39 2012 (serrano)                */
 #*    Copyright   :  2011-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */
@@ -15,7 +15,7 @@ do: build
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 -include ../../etc/Makefile.hopconfig
--include ../etc/Makefile.version
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
