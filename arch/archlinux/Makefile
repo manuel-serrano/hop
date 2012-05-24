@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sun Feb  7 07:41:50 2010                          */
-#*    Last change :  Wed May 23 17:12:07 2012 (serrano)                */
+#*    Last change :  Thu May 24 16:18:28 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that handles ARCHLINUX specific files               */
@@ -18,5 +18,5 @@
 #*---------------------------------------------------------------------*/
 #*    Variables                                                        */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile PKGBUILD hop.install rc.d/hop.in
+POPULATION = Makefile PKGBUILD.in hop.install rc.d/hop.in
 

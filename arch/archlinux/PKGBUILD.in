@@ -11,7 +11,7 @@ depends=('bigloo>=3.8c')
 makedepends=('bigloo>=3.8c')
 install=hop.install
 source=(ftp://ftp-sop.inria.fr/mimosa/fp/Hop/$pkgname-$pkgver.tar.gz)
-md5sums=('6f84bc2bf73379cd00a0fe7404b35c6a')
+md5sums=('@MD5SUM@')
 
 build() {
   cd $startdir/src/$pkgname-$pkgver
