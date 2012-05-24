@@ -9,8 +9,7 @@ Package: hop
 Architecture: any
 Depends: ${shlibs:Depends}, bigloo-libs, libssl-bigloo, 
  libalsa-bigloo, libflac-bigloo, libmpg123-bigloo, 
- libavahi-bigloo, 
- @EXTRADEPEND@ 
+ libavahi-bigloo,  libsqlite-bigloo, @EXTRADEPEND@ 
 Description: A SDK for the Web 2.0.
  Hop is a SDK for the Web 2.0. It consists in a new higher-order 
  programming language and runtime environment containing a 
