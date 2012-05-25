@@ -72,7 +72,25 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 ~~ HOP is shipped with some **Linux distributions** on which it can be
 used without downloading and installing the source code manually:
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) [[http://aur.archlinux.org|Arch Linux]]
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) to access the ArchLinux packages, 
+add the following to the ++/etc/pacman.conf++ file:
+
+  [hop]
+  Server = ftp://ftp-sop.inria.fr/indes/fp/Hop/archlinux/$arch
+
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "debian-16x16.png")) For Debian (squeeze) packages, 
+add the following to the ++/etc/apt.conf/sources.list++ file:
+
+  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
+
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "ubuntu-16x16.png")) For Ubuntu (tls) packages, 
+add the following to the ++/etc/apt.conf/sources.list++ file:
+
+  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/ubuntu tls hop
+
+
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
 
 
