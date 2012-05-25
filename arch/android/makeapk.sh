@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sat May  5 09:08:32 2012 (serrano)                */
+#*    Last change :  Fri May 25 13:56:06 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -43,7 +43,7 @@ fi
 basedir=`dirname $0`
 tmp=`pwd`/build.hop
 
-ant=/usr/share/java/apache-ant/bin/ant
+ant=/usr/share/apache-ant/bin/ant
 
 if [ "$MAKEJOBS " = " " ]; then
   MAKEJOBS=2
