@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 30 08:05:48 2012 (serrano)                */
+;*    Last change :  Thu May 31 05:28:49 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopc
 
-   (library scheme2js hopscheme hopwidget hop)
+   (library scheme2js hopscheme hop)
 
    (import  hopc_parseargs
 	    hopc_param)
