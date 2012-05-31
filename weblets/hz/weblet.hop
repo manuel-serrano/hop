@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Jan 18 13:28:58 2012 (serrano)                */
+;*    Last change :  Wed May 30 20:04:59 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -29,20 +29,25 @@
 	      (category::bstring read-only)
 	      (minhop::bstring read-only)
 	      (maxhop::bstring read-only)
+	      (depends::pair-nil read-only)
 	      (title::bstring read-only)
 	      (comment::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default ""))
 	      (authorization read-only (default #f))
 	      (directory::bstring read-only (default "")))
 
-	   (weblet->list::pair ::weblet)
-	   (info->weblet::weblet ::pair #!key name version url authorization dir)))
+	   (weblet->list::pair-nil ::weblet)
+	   (info->weblet::weblet ::pair #!key name version url authorization (dir "") publisher)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet->list ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (weblet->list w)
-   (map (lambda (f) ((class-field-accessor f) w))
+   (map (lambda (f)
+	   (let ((v ((class-field-accessor f) w)))
+	      (if (or (null? v) (pair? v))
+		  (obj->string v)
+		  v)))
       (vector->list (class-all-fields (object-class w)))))
 
 ;*---------------------------------------------------------------------*/
@@ -55,10 +60,10 @@
 ;*      - author:                                                      */
 ;*      - url: download url                                            */
 ;*      - home: home page                                              */
-;*      - publisher: the optional publisher that publishes updates     */
 ;*      - category:                                                    */
 ;*      - minhop: the minimal Hop version that can run the weblet      */
 ;*      - maxhop: the maximal Hop version that can run the weblet      */
+;*      - depends: dependences list                                    */
 ;*      - title:                                                       */
 ;*      - comment:                                                     */
 ;*      - signature:                                                   */
@@ -66,7 +71,7 @@
 ;*                                                                     */
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
-(define (info->weblet info::pair #!key name version url authorization (dir ""))
+(define (info->weblet info::pair #!key name version url authorization (dir "") publisher)
 
    (define (find key default)
       (cond
@@ -99,7 +104,6 @@
 			  (error "info->weblet"
 				 (format "weblet ~a, version mismatch" name)
 				 (format "~a expected, ~a provided" version v)))))
-	  (publisher (convert (find 'publisher #f)))
 	  (url (let ((u (convert (find 'url url))))
 		  (cond
 		     (u u)
@@ -126,4 +130,6 @@
 	 (title (convert (find 'title "")))
 	 (comment (convert (find 'comment "")))
 	 (authorization authorization)
+	 (depends (map (lambda (x) (if (symbol? x) (list x) x))
+		     (find 'depends '())))
 	 (directory dir))))

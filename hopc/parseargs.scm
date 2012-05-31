@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 18 15:32:03 2012 (serrano)                */
+;*    Last change :  Wed May 30 07:50:07 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -89,12 +89,7 @@
 	     (if (string=? else "--")
 		 (begin
 		    (hopc-bigloo-options-set!
-		       (append (hopc-bigloo-options)
-			  (map (lambda (s)
-				  (if (string-index s #\space)
-				      (string-append "\"" s "\"")
-				      s))
-			     (cdr rest))))
+		       (append (hopc-bigloo-options) (cdr rest)))
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       (when loadp

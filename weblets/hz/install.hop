@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/install.hop            */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/install.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Wed Nov 16 16:12:38 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed May 30 20:11:34 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -20,17 +20,52 @@
 	   hz_db)
    
    (export (hz-install-url ::bstring #!key auth weblet)
+           (hz-load ::bstring)
 	   (hz-install-weblet ::weblet)
-	   (hz-load ::bstring)
 	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-weblet ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hz-install-weblet e)
-   (with-access::weblet e (url authorization)
+   (with-access::weblet e (name url authorization)
+      (unless (hz-installable? e)
+	 (error "hz" "Incompatible weblet" name))
       (hz-install-url url :auth authorization :weblet e)))
 
+;*---------------------------------------------------------------------*/
+;*    hz-installable? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hz-installable? e)
+   
+   (define (version-compatible? w v)
+      (when (symbol? v)
+	 (let ((s (symbol->string v)))
+	    (cond
+	       ((string-prefix? ">=" s)
+		'todo1)
+	       ((string-prefix? ">" s)
+		'todo2)
+	       ((string-prefix? "<=" s)
+		'todo3)
+	       ((string-prefix? "<" s)
+		'todo4)
+	       (else
+		'todo5)))))
+      
+   (with-access::weblet e (depends minhop maxhop)
+      (and (or (=fx (string-length minhop) 0)
+	       (>fx (string-natural-compare3 (hop-version) minhop) 0))
+	   (or (=fx (string-length maxhop) 0)
+	       (<fx (string-natural-compare3 (hop-version) maxhop) 0))
+	   (every? (lambda (d)
+		      (let ((w (hz-db-find-by-name (car d))))
+			 (when (isa? w weblet)
+			    (every? (lambda (v)
+				       (version-compatible? w v))
+			       (cdr d)))))
+	      depends))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-url ...                                               */
 ;*---------------------------------------------------------------------*/

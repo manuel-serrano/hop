@@ -1,0 +1,115 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/api.hop                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri May 25 16:53:13 2012                          */
+;*    Last change :  Wed May 30 19:55:46 2012 (serrano)                */
+;*    Copyright   :  2012 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    public HZ api                                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_api
+   
+   (import hz_config
+           hz_weblet
+	   hz_install
+	   
+           hz_db)
+   
+   (export hz/list/categories
+	   hz/list/weblets
+	   hz/search/weblets
+	   hz/weblet/install
+	   hz/weblet/uninstall
+	   hz/update
+	   hz/list/update)
+
+   (from   hz_weblet))
+
+;*---------------------------------------------------------------------*/
+;*    hz-api-init! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hz-api-init!)
+   (when (authorized-service? (current-request) 'admin)
+      (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+      (hz-db-init!)
+      #t))
+
+;*---------------------------------------------------------------------*/
+;*    hz/list/categories ...                                           */
+;*---------------------------------------------------------------------*/
+(define-service (hz/list/categories)
+   (when (hz-api-init!)
+      (hz-db-get-categories)))
+
+;*---------------------------------------------------------------------*/
+;*    hz/list/category/weblets ...                                     */
+;*---------------------------------------------------------------------*/
+(define-service (hz/list/weblets #!key category)
+   (when (hz-api-init!)
+      (if (not category)
+	  (append-map hz-db-get-entries-by-category (hz-db-get-categories))
+	  (hz-db-get-entries-by-category category))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/search/weblets ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (hz/search/weblets #!key regexp category)
+   (when (hz-api-init!)
+      (let ((ws (if (string? category)
+		    (hz-db-get-entries-by-category category)
+		    (append-map hz-db-get-entries-by-category
+		       (hz-db-get-categories)))))
+	 (filter (lambda (w)
+		    (with-access::weblet w (name)
+		       (pregexp-match regexp name)))
+	    ws))))
+
+;*---------------------------------------------------------------------*/
+;*    find-weblet ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (find-weblet name category)
+   (if (string? category)
+       (hz-db-find name category)
+       (let loop ((c (hz-db-get-categories)))
+	  (when (pair? c)
+	     (or (hz-db-find name (car c))
+		 (loop (cdr c)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/weblet/install ...                                            */
+;*---------------------------------------------------------------------*/
+(define-service (hz/weblet/install #!key name category)
+   (when (hz-api-init!)
+      (let ((w (find-weblet name category)))
+	 (when (isa? w weblet)
+	    (hz-install-weblet w)
+	    w))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/weblet/uninstall ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (hz/weblet/uninstall #!key name category)
+   (when (hz-api-init!)
+      (let ((w (find-weblet name category)))
+	 (when (isa? w weblet)
+	    (hz-uninstall-weblet w)
+	    w))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/update ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hz/update)
+   (hz-db-sync-date-update! (current-date))
+   (hz-db-find-update))
+
+;*---------------------------------------------------------------------*/
+;*    hz/list/updage ...                                               */
+;*---------------------------------------------------------------------*/
+(define-service (hz/list/update)
+   (hz-db-find-update))
+

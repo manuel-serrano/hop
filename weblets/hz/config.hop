@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/config.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/config.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Sun Dec 19 08:54:59 2010 (serrano)                */
-;*    Copyright   :  2005-10 Manuel Serrano                            */
+;*    Last change :  Wed May 30 08:07:52 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
 ;*=====================================================================*/
@@ -26,22 +26,22 @@
 	   (hz-package-suffix::bstring)
 	   (hz-db::bstring)
 	   (hz-connection-timeout::int)
-	   (hz-connection-timeout-set!::int)
+	   (hz-connection-timeout-set! ::int)
 	   (hz-publishers::pair-nil)
-	   (hz-publishers-set!::pair-nil)
+	   (hz-publishers-set! ::pair-nil)
 	   (hz-publisher-add! ::bstring #!optional (enable #t))
 	   (hz-publisher-enable! ::bstring ::bool)
 	   (hz-category-icons::pair-nil)
 	   (hz-prefs::bstring)
 	   (hz-preferences-load ::bstring)
-	   (hz-preferences-save ::bstring)
-	   (hz-preferences-edit)))
+	   (hz-preferences-save ::bstring #!optional force-override)
+	   (hz-preferences-edit #!key id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Version                                                          */
 ;*---------------------------------------------------------------------*/
-(define (hz-version) "1.1.0")
-(define (hz-date) "2007")
+(define (hz-version) "1.2.0")
+(define (hz-date) "2012")
 (define (hz-author) "M. Serrano")
 
 ;*---------------------------------------------------------------------*/
@@ -54,7 +54,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir                                                           */
 ;*---------------------------------------------------------------------*/
-(define-parameter hz-dir (dirname (the-loading-file)))
+(define-parameter hz-dir
+   (cond-expand
+      (bigloo-compile (hop-rc-directory))
+      (else (dirname (the-loading-file)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-rc-directory ...                                              */
@@ -166,5 +169,3 @@
    "Path"
    ("Install directory" path hz-weblets-directory)
    ("Download directory" path hz-download-directory))
-   
-

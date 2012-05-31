@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/package.hop            */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/package.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Mar  9 16:04:43 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Tue May 29 09:44:40 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -56,7 +56,7 @@
          ((and (fixnum? vdot) (>fx vdot index))
           ;; a package without release
           (let* ((version (substring n (+fx 1 index) (string-length n)))
-                 (base (substring n 0 index)))
+                 (base (uncgi-base (substring n 0 index))))
 	     (values base version)))
          (else
           ;; a package with release
@@ -64,8 +64,22 @@
              (if (not vindex)
                  (error 'package-name-parse "Illegal package name" name)
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))
-                        (base (substring n 0 vindex)))
+                        (base (uncgi-base (substring n 0 vindex))))
 		    (values base version))))))))
+
+;*---------------------------------------------------------------------*/
+;*    uncgi-base ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (uncgi-base base)
+   (let ((i (string-index base #\?)))
+      (if (fixnum? i)
+	  ;; a CGI url base
+	  (let ((j (string-index base #\= i)))
+	     (if (and (fixnum? j) (<fx j (string-length base)))
+		 ;; with a decent argument
+		 (substring base (+fx j 1))
+		 base))
+	  base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    package-url-parse ...                                            */

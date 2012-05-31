@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/weblets/hz/Makefile               */
+#*    serrano/prgm/project/hop/2.3.x/weblets/hz/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Sat Dec 18 06:50:45 2010 (serrano)                */
-#*    Copyright   :  2006-10 Manuel Serrano                            */
+#*    Last change :  Fri May 25 16:53:20 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES		= hz.hop config.hop install.hop sync.hop \
                   install.hop sync.hop db.hop \
-                  xml.hop package.hop weblet.hop
+                  xml.hop package.hop weblet.hop api.hop
 
 POPULATION	= $(SOURCES) \
                   hz.hss \

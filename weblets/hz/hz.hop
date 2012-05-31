@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/hz.hop                 */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/hz.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Wed Nov 16 16:18:47 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Fri May 25 18:48:22 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 	   hz_db
 	   hz_weblet
 	   hz_install
-	   hz_package)
+	   hz_package
+	   hz_api)
    
    (export hz
 	   hz/documentation

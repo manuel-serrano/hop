@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Sat May  5 09:08:12 2012 (serrano)                */
+#*    Last change :  Tue May 29 08:48:15 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -59,8 +59,16 @@ if [ $? = 0 ]; then
   debianversion=maemo`echo $maemo | sed -e "s/[.].*$//"`
   extradepend="hildon-desktop, "
 else
-  debian=debian
-  debianversion=debian
+  case `cat /etc/issue | awk '{ print $1 }'` in
+    Debian)
+      debian=debian;;
+    Ubuntu)
+      debian=ubuntu;;
+    *)
+      debian=debian;;
+  esac
+
+  debianversion=$debian
   extradepend=
 fi
 
@@ -91,6 +99,28 @@ cat >> $TMP/hop-$VERSION/etc/hoprc.hop.in <<EOF
 ;; small device configuration
 (hop-max-threads-set! 8)
 EOF
+
+# etc/init.d
+for p in hop; do
+  if [ -f $BASEDIR/init.d/$p.in ]; then
+    cat $BASEDIR/init.d/$p.in \
+      | sed -e "s/@HOPVERSION@/$VERSION/g" \
+            -e "s/@HOPUSER@/$HOPUSER/g" \
+            -e "s/@MAEMO@/$maemo/g" \
+            -e "s/@DEBIAN@/$debian/g" \
+            -e "s/@EXTRADEPEND@/$extradepend/g" \
+            -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
+            -e "s|@PREFIX@|$PREFIX|g" \
+            -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
+            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
+      $TMP/hop-$VERSION/arch/debian/init.d/$p;
+  else
+    cp $BASEDIR/init.d/$p $TMP/hop-$VERSION/arch/debian/init.d/$p;
+  fi
+done
+
+# copyright
+cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
 
 #*---------------------------------------------------------------------*/
 #*    Create the .tar.gz file used for building the package            */
@@ -165,34 +195,13 @@ for p in control rules postinst postrm; do
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
       $TMP/hop-$VERSION/debian/$p;
   else
-echo "CP $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;"
-echo "PWD=$PWD";
     cp $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;
   fi
 done
 
-# etc/init.d
-for p in hop; do
-  if [ -f $BASEDIR/init.d/$p.in ]; then
-    cat $BASEDIR/init.d/$p.in \
-      | sed -e "s/@HOPVERSION@/$VERSION/g" \
-            -e "s/@HOPUSER@/$HOPUSER/g" \
-            -e "s/@MAEMO@/$maemo/g" \
-            -e "s/@DEBIAN@/$debian/g" \
-            -e "s/@EXTRADEPEND@/$extradepend/g" \
-            -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
-            -e "s|@PREFIX@|$PREFIX|g" \
-            -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
-            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
-      $TMP/hop-$VERSION/arch/debian/init.d/$p;
-  else
-    cp $BASEDIR/init.d/$p $TMP/hop-$VERSION/arch/debian/init.d/$p;
-  fi
-done
-
-# The desktop file
-cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
+# Maemo specific
 if [ "$debian " = "maemo " ]; then
+  # The desktop file
   cat $MAEMODIR/hop.desktop.in \
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
@@ -202,10 +211,8 @@ if [ "$debian " = "maemo " ]; then
   cat > $TMP/hop-$VERSION/debian/hop.links <<EOF
 usr/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
 EOF
-fi
 
-# The service
-if [ "$debian " = "maemo " ]; then
+  # The service
   cat $MAEMODIR/hop.service.in  \
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
@@ -225,9 +232,9 @@ cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
 #*---------------------------------------------------------------------*/
 #*    Cleanup tmp files                                                */
 #*---------------------------------------------------------------------*/
-/bin/rm -f $TMP/hop-$VERSION.tar.gz
-/bin/rm -f $TMP/hop_$VERSION.tar.gz
-/bin/rm -f $TMP/hop_$VERSION.orig.tar.gz
+#* /bin/rm -f $TMP/hop-$VERSION.tar.gz                                 */
+#* /bin/rm -f $TMP/hop_$VERSION.tar.gz                                 */
+#* /bin/rm -f $TMP/hop_$VERSION.orig.tar.gz                            */
 
 #*---------------------------------------------------------------------*/
 #*    Copy the deb file                                                */

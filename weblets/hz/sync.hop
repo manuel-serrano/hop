@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/hz/sync.hop               */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed Nov 16 16:08:16 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed May 30 19:00:38 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -80,7 +80,7 @@
 		   (with-input-from-string s
 		      (lambda ()
 			 (filter-map (lambda (e)
-					(let ((w (info->weblet e :authorization basic-auth)))
+					(let ((w (info->weblet e :authorization basic-auth :publisher pub)))
 					   (hz-db-add-or-update! w)
 					   #f))
 				     (read)))))

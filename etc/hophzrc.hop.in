@@ -1,24 +1,24 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/etc/hopshrc.hop.in                */
+;*    serrano/prgm/project/hop/2.3.x/etc/hophzrc.hop.in                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 26 08:20:34 2006                          */
-;*    Last change :  Fri May 25 18:45:07 2012 (serrano)                */
+;*    Last change :  Fri May 25 18:45:13 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    HOPSH runtime command file.                                      */
+;*    HOPHZ runtime command file.                                      */
 ;*    -------------------------------------------------------------    */
 ;*    When HOP starts, it first search the RC files in the following   */
 ;*    order:                                                           */
-;*      $HOME/.config/hop.$HOSTNAME/hopshrc.hop                        */
-;*      $HOME/.config/hop/hopshrc.hop                                  */
-;*      $ETC/hopshrc.hop                                               */
+;*      $HOME/.config/hop.$HOSTNAME/hophzrc.hop                        */
+;*      $HOME/.config/hop/hophzrc.hop                                  */
+;*      $ETC/hophzrc.hop                                               */
 ;*                                                                     */
 ;*    Hence, if users want to define their own RC file but still load  */
 ;*    the one from /etc, they have to add the following expression     */
 ;*    anywhere in their RC file:                                       */
 ;*                                                                     */
-;*    (let ((path (make-file-name (hop-etc-directory) "hopshrc.hop"))) */
+;*    (let ((path (make-file-name (hop-etc-directory) "hophzrc.hop"))) */
 ;*       (when (file-exists? path) (hop-load path)))                   */
 ;*=====================================================================*/
 
@@ -27,8 +27,8 @@
 ;*---------------------------------------------------------------------*/
 ;; See hoprc.hop for details
 ;; 
-;; hopsh needs an anonymous user even with highly restricted authorizations
+;; hophz needs an anonymous user even with highly restricted authorizations
 (add-user! "anonymous" 
-           :services '(hopsh)
+           :services '(hz)
 	   :directories (hop-path)
            :preferences-filename #f)

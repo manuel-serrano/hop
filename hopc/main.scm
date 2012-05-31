@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat May 12 09:04:06 2012 (serrano)                */
+;*    Last change :  Wed May 30 08:05:48 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopc
 
-   (library scheme2js hopscheme hop)
+   (library scheme2js hopscheme hopwidget hop)
 
    (import  hopc_parseargs
 	    hopc_param)
@@ -74,11 +74,15 @@
 			       (eval sexp))))))
 	 exprs)
       ;; start the compilation stage
-      (if (hopc-jsheap)
-	  ;; generate a js heap file from the source
-	  (jsheap)
-	  ;; compile the source file
-	  (compile-sources))))
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e)
+	    (exit 1))
+	 (if (hopc-jsheap)
+	     ;; generate a js heap file from the source
+	     (jsheap)
+	     ;; compile the source file
+	     (compile-sources)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
@@ -117,7 +121,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-sources ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (compile-sources)
+(define (compile-sources::int)
 
    (define (compile-javascript p)
       (let ((s (hopscheme-compile-file p '())))
@@ -141,7 +145,7 @@
 	 (else
 	  (error "hopc" "Illegal module" exp))))
       
-   (define (generate-bigloo in)
+   (define (generate-bigloo::int in)
       
       (define (generate out)
 	 (let loop ()
@@ -156,9 +160,10 @@
       
       (if (string? (hopc-destination))
 	  (call-with-output-file (hopc-destination) generate)
-	  (generate (current-output-port))))
+	  (generate (current-output-port)))
+      0)
    
-   (define (compile-bigloo in)
+   (define (compile-bigloo::int in)
       (let* ((opts (hopc-bigloo-options))
 	     (opts (cond
 		      ((string? (hopc-destination))
@@ -172,8 +177,15 @@
 			  (cons* "-o" d opts)))
 		      (else
 		       (cons "--to-stdout" opts))))
-	     (cmd (format "| ~a - ~l -library hop -library hopscheme -fread-internal-src" (hopc-bigloo) opts))
-	     (out (open-output-file cmd)))
+	     (proc (apply run-process (hopc-bigloo)
+		      input: pipe:
+		      "-"
+		      "-library" "hop"
+		      "-library" "hopscheme"
+		      "-library" "hopwidget"
+		      "-fread-internal-src" opts))
+	     (cmd (format "~a - ~l -library hop -library hopscheme -fread-internal-src" (hopc-bigloo) opts))
+	     (out (process-input-port proc)))
 	 (hop-verb 1 cmd "\n")
 	 (unwind-protect
 	    (let loop ()
@@ -185,27 +197,34 @@
 			(else
 			 (write (obj->string exp) out)))
 		     (loop))))
-	    (close-output-port out))))
+	    (close-output-port out))
+	 (process-wait proc)
+	 (process-exit-status proc)))
    
-   (define (compile in)
+   (define (compile::int in)
       (if (eq? (hopc-pass) 'bigloo)
 	  (generate-bigloo in)
 	  (compile-bigloo in)))
 
    (cond
       ((eq? (hopc-pass) 'client-js)
-       (for-each compile-javascript (hopc-sources)))
+       (for-each compile-javascript (hopc-sources))
+       0)
       ((pair? (hopc-sources))
-       (for-each (lambda (s)
-		    (call-with-input-file s compile))
-		 (hopc-sources)))
+       (let loop ((srcs (hopc-sources)))
+	  (if (null? srcs)
+	      0
+	      (let ((r (call-with-input-file (car srcs) compile)))
+		 (if (=fx r 0)
+		     (loop (cdr srcs))
+		     r)))))
       (else
        (compile (current-input-port)))))
 				 
 ;*---------------------------------------------------------------------*/
 ;*    jsheap ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (jsheap)
+(define (jsheap::int)
 
    (define (load-module mod path)
       (print "   ;; " mod)
@@ -246,7 +265,8 @@
 			      i)))
 		clauses)
 	     (print ")")
-	     (print ")"))
+	     (print ")")
+	     0)
 	    (else
 	     (error "hopc" "Illegal heap source file" exp)))))
 

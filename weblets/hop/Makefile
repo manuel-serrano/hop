@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/hop/Makefile              */
+#*    serrano/prgm/project/hop/2.3.x/weblets/hop/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed Oct 14 11:33:35 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Wed May 30 19:07:21 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -13,7 +13,7 @@
 #*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
 TITLE = hop
-VERSION = 1.1.1
+VERSION = $(HOPRELEASE) 
 MINHOP = $(HOPRELEASE) 
 MAXHOP =
 CATEGORY = hop
