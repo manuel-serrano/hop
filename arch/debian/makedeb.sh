@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue May 29 08:48:15 2012 (serrano)                */
+#*    Last change :  Thu May 31 18:38:15 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -230,15 +230,8 @@ cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
 (cd $TMP/hop-$VERSION && dpkg-buildpackage -rfakeroot)
 
 #*---------------------------------------------------------------------*/
-#*    Cleanup tmp files                                                */
-#*---------------------------------------------------------------------*/
-#* /bin/rm -f $TMP/hop-$VERSION.tar.gz                                 */
-#* /bin/rm -f $TMP/hop_$VERSION.tar.gz                                 */
-#* /bin/rm -f $TMP/hop_$VERSION.orig.tar.gz                            */
-
-#*---------------------------------------------------------------------*/
 #*    Copy the deb file                                                */
 #*---------------------------------------------------------------------*/
 if [ -d $REPOSITORY/$debianversion ]; then
-  cp $TMP/hop_"$VERSION"_armel.deb $REPOSITORY/$debianversion
+  cp $TMP/hop_"$VERSION"_*.deb $REPOSITORY/$debianversion
 fi
