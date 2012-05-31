@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Thu May 31 15:05:02 2012 (serrano)                */
+;*    Last change :  Thu May 31 16:37:26 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -26,6 +26,7 @@
    (export hz/list/categories
 	   hz/list/weblets
 	   hz/search/weblets
+	   hz/find/weblet
 	   hz/weblet/install
 	   hz/weblet/uninstall
 	   hz/weblet/depends
@@ -91,9 +92,9 @@
 	 ws)))
 
 ;*---------------------------------------------------------------------*/
-;*    find-weblet ...                                                  */
+;*    hz/find/weblet ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-weblet (find-weblet name category)
+(define-weblet-service (hz/find/weblet #!key name category)
    (if (string? category)
        (hz-db-find name category)
        (let loop ((c (hz-db-get-categories)))
@@ -112,19 +113,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/weblet/uninstall ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-weblet-service (hz/weblet/uninstall #!key name category)
-   (let ((w (find-weblet name category)))
-      (when (isa? w weblet)
-	 (hz-uninstall-weblet w)
-	 w)))
+(define-weblet-service (hz/weblet/uninstall #!key weblet)
+   (when (isa? weblet (@ weblet hz_weblet))
+      (hz-uninstall-weblet weblet)
+      weblet))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/weblet/depends ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-weblet-service (hz/weblet/depends #!key name category)
-   (let ((w (find-weblet name category)))
-      (when (isa? w weblet)
-	 (cons w (hz-weblet-depends w)))))
+(define-weblet-service (hz/weblet/depends #!key weblet)
+   (when (isa? weblet (@ weblet hz_weblet))
+      (cons weblet (hz-weblet-depends weblet))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/update ...                                                    */

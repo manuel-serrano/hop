@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Wed May 30 07:55:48 2012 (serrano)                */
+;*    Last change :  Thu May 31 16:13:48 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
@@ -566,8 +566,6 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 	       ((string=? action "uninstall")
 		;; uninstallation
 		(hz-uninstall-weblet w)
-		;; db update
-		(hz-db-add-or-update! w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action))
 	       ((string=? action "remove")
 		(hz-uninstall-weblet w)
@@ -579,7 +577,6 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 		;; update
 		(hz-uninstall-weblet w)
 		(hz-install-weblet w)
-		(hz-db-add-or-update! w)
 		(<HZ:WEBLET-ACTION-DONE> id name cat action)))))))
 
 ;*---------------------------------------------------------------------*/
