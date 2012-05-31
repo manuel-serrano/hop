@@ -1,0 +1,78 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/depend.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu May 31 05:54:23 2012                          */
+;*    Last change :  Thu May 31 08:40:00 2012 (serrano)                */
+;*    Copyright   :  2012 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Dealing with Weblet dependencies                                 */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hz_depend
+
+   (import hz_weblet
+           hz_db)
+   
+   (export (hz-weblet-depends ::weblet)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-weblet-depends ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-weblet-depends w::weblet)
+   (let ((t (make-hashtable)))
+      (hashtable-put! t w #t)
+      (let loop ((w::weblet w))
+	 (filter-map (lambda (d)
+			(let ((sw (hz-db-find-by-name (symbol->string (car d)))))
+			   (cond
+			      ((not (isa? sw weblet))
+			       (error "hz-weblet-depends"
+				  "Cannot find weblet"
+				  (car d)))
+			      ((hashtable-get t sw)
+			       #f)
+			      (else
+			       (with-access::weblet sw (depends)
+				  (hashtable-put! t w #t)
+				  (list sw (map loop depends)))))))
+	    w.depends))))
+
+;*---------------------------------------------------------------------*/
+;*    check-weblet? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (check-weblet? w::weblet)
+   (and (or (string-null? w.minhop)
+	    (check-version? (string-append ">=" w.minhop) (hop-version)))
+	(or (string-null? w.maxhop)
+	    (check-version? (string-append "<=" w.maxhop) (hop-version)))
+	(every? (lambda (d)
+		   (let ((w (hz-db-find-by-name (car d))))
+		      (when (isa? w weblet)
+			 (every? (lambda (v)
+				    (check-weblet? v))
+			    (cdr d)))))
+	   w.depends)))
+   
+;*---------------------------------------------------------------------*/
+;*    check-version? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (check-version? wanted available)
+   (cond
+      ((string-null? wanted)
+       #t)
+      ((string-prefix? ">=" wanted)
+       (>=fx (string-natural-compare3 available (substring wanted 2)) 0))
+      ((string-prefix? ">" wanted)
+       (>fx (string-natural-compare3 available (substring wanted 2)) 0))
+      ((string-prefix? "<=" wanted)
+       (<=fx (string-natural-compare3 available (substring wanted 2)) 0))
+      ((string-prefix? "<" wanted)
+       (<fx (string-natural-compare3 available (substring wanted 1)) 0))
+      (else
+       (=fx (string-natural-compare3 available wanted) 0))))
+
+

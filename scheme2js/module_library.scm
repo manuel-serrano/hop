@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Sun Apr  8 09:02:28 2012 (serrano)                */
+;*    Last change :  Thu May 31 15:36:05 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -138,7 +138,9 @@
 	  (map (lambda (i)
 		  (let ((m (find (lambda (l) (eq? (cadr l) i)) modules)))
 		     (if (pair? m)
-			 (parse-imported-module i m (lambda l '()) #f)
+			 (parse-imported-module i m
+			    (lambda l
+			       (call-with-input-string "" read)) #f)
 			 (scheme2js-error "scheme2js-module"
 			    "cannot find library module" i lib))))
 	     (cdr imports)))

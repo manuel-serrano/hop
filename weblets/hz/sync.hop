@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed May 30 19:00:38 2012 (serrano)                */
+;*    Last change :  Thu May 31 14:02:10 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
@@ -52,7 +52,9 @@
    (hz-db-sync-stamp-inc!)
    (hz-sync-standard-weblets!)
    (bind-exit (escape)
-      (append-map (lambda (p) (hz-sync-publisher! p escape)) (hz-publishers))))
+      (append-map (lambda (p)
+		     (hz-sync-publisher! p escape))
+	 (hz-publishers))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync-publisher! ...                                           */

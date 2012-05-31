@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -28,7 +28,12 @@
    (memq sym *scheme2js-features*))
 
 (define (srfi0-expand expr)
-   (let ((e (lambda (x e) x)))
+   (let ((e (lambda (x e)
+	       (match-case x
+		  ((cond-expand . ?-)
+		   (srfi0-expand x))
+		  (else
+		   x)))))
       (expand-cond-expand expr e *scheme2js-features*)))
 
 (install-expander!

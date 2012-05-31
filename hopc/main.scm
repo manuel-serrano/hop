@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 31 05:28:49 2012 (serrano)                */
+;*    Last change :  Thu May 31 07:50:53 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -180,6 +180,7 @@
 	     (proc (apply run-process (hopc-bigloo)
 		      input: pipe:
 		      "-"
+		      "-srfi" "hopc"
 		      "-library" "hop"
 		      "-library" "hopscheme"
 		      "-library" "hopwidget"

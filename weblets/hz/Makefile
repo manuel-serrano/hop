@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Fri May 25 16:53:20 2012 (serrano)                */
+#*    Last change :  Thu May 31 05:55:10 2012 (serrano)                */
 #*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -24,7 +24,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES		= hz.hop config.hop install.hop sync.hop \
                   install.hop sync.hop db.hop \
-                  xml.hop package.hop weblet.hop api.hop
+                  xml.hop package.hop weblet.hop api.hop depend.hop
 
 POPULATION	= $(SOURCES) \
                   hz.hss \

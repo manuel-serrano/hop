@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Tue Feb 14 16:42:46 2012 (serrano)                */
+;*    Last change :  Thu May 31 15:57:39 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -235,7 +235,7 @@
 		      header))
 		  (else
 		   (match-case (car clauses)
-		      ((cond-expand ?clause . ?Lclauses)
+		      ((cond-expand . ?-)
 		       (let liip ((new-clauses (srfi0-expand (car clauses))))
 			  (cond
 			     ((null? new-clauses)

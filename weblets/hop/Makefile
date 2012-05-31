@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Wed May 30 19:07:21 2012 (serrano)                */
+#*    Last change :  Thu May 31 08:51:11 2012 (serrano)                */
 #*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
@@ -13,8 +13,8 @@
 #*    CONFIG ...                                                       */
 #*---------------------------------------------------------------------*/
 TITLE = hop
-VERSION = $(HOPRELEASE) 
-MINHOP = $(HOPRELEASE) 
+VERSION = $(HOPRELEASE)
+MINHOP = $(HOPRELEASE)
 MAXHOP =
 CATEGORY = hop
 DATE = $(HOPDATE)
