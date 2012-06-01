@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
-;*    Last change :  Thu May 31 16:13:48 2012 (serrano)                */
+;*    Last change :  Fri Jun  1 10:10:17 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
@@ -19,7 +19,8 @@
 	   hz_install
 	   hz_weblet
 	   hz_db
-	   hz_sync)
+	   hz_sync
+	   hz_depend)
    
    (export (<HZ> req #!key (weblet #f))
 	   (<HZ:BODY> . content)
@@ -498,12 +499,12 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 					  (innerHTML-set! "hz-weblet" h)))
 			  name)))))
 	   (hz-db-get-entries-by-category c))))
-
+reduce
 ;*---------------------------------------------------------------------*/
 ;*    <HZ:WEBLET> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET> w)
-   (with-access::weblet w (name version author title comment home install url)
+   (with-access::weblet w (name version author title comment home install url depends)
       (<VBOX> :class "weblet"
 	 (<VBOX-BLOCK> (<SPAN> :class "title" name " " version))
 	 (<VBOX-SEPARATOR>)
@@ -515,6 +516,16 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 			   (<A> :href home :title home (<TT> home)))))
 	       (<TR> (<TD> (<P> :class "title" title)))
 	       (<TR> (<TD> (<P> :class "comment" comment)))
+	       (<TR> (<TD> (<SPAN> :class "requires" "requires: ")
+			   (reduce (lambda (a b)
+				      (cons* a ", " (if (pair? b) b (list b))))
+			      '()
+			      (map (lambda (x)
+				      (let ((s (format "~l " x)))
+					 (if (hz-weblet-check-depend? x)
+					     s
+					     (<SPAN> :class "incompatible" s))))
+				 depends))))
 	       (<TR> (<TD> "&#160;"))
 	       (<TR> (<TD> :class "action"
 			(<DIV> :class "action"
@@ -531,16 +542,18 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 ;*    <HZ:WEBLET-ACTION> ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET-ACTION> id w)
-   (with-access::weblet w (minhop maxhop driver version install)
+   (with-access::weblet w (minhop maxhop driver version install installable)
       (cond
 	 ((and (not (string-null? minhop))
 	       (< (string-natural-compare3 (hop-version) minhop) 0))
 	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "> ~a" minhop)))
-	 ((string=? driver "standard")
-	  (<HZ:WEBLET-ACTION-UNMANAGED> id w))
 	 ((and (not (string-null? maxhop))
 	       (> (string-natural-compare3 (hop-version) maxhop) 0))
 	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w (format "< ~a" maxhop)))
+	 ((not installable)
+	  (<HZ:WEBLET-ACTION-INCOMPATIBLE> id w #f))
+	 ((string=? driver "standard")
+	  (<HZ:WEBLET-ACTION-UNMANAGED> id w))
 	 ((=fx (string-length install) 0)
 	  (<HZ:WEBLET-ACTION-INSTALL> id w))
 	 ((string=? version install)
@@ -771,9 +784,11 @@ add an expression such as " (<TT> "(hop-hz-server-set! \"http://hop.inria.fr\")"
 	 (<IMG> :src "etc/icons/warning.png"))
       (<TD>
 	 (with-access::weblet w (name)
-	    (<SPAN>
-	       "HOP " (hop-version) " incompatible, required " msg " by weblet "
-	       name)))))
+	    (if (string? msg)
+		(<SPAN>
+		   "HOP " (hop-version) " incompatible, required " msg " by weblet "
+		   name)
+		"incompatible dependencies")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    VBOX ...                                                         */

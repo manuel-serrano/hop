@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Thu May 31 09:37:46 2012 (serrano)                */
+;*    Last change :  Fri Jun  1 08:21:02 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -22,7 +22,7 @@
    (export (hz-load ::bstring)
 	   (hz-install-weblet ::weblet)
 	   (hz-download-url ::bstring #!key auth weblet override)
-	   (hz-install-url ::bstring #!key auth weblet override)
+	   (hz-install-url ::bstring #!key auth weblet override publisher)
 	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
@@ -122,7 +122,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-url ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-url url #!key auth weblet override)
+(define (hz-install-url url #!key auth weblet override publisher)
    (hz-db-init!)
    (multiple-value-bind (name version)
       (package-url-parse url)
@@ -130,8 +130,11 @@
 	 (if (and (string? r) (file-exists? r))
 	     ;; now downloaded, install
 	     (let ((w (hz-install-file weblet r name version url)))
-		  (reset-autoload!)
-		  w)
+		;; add the publisher to the publisher list
+		(when (and (string? publisher) (not (string-null? publisher)))
+		   (hz-publisher-add! publisher))
+		(reset-autoload!)
+		w)
 	     ;; propagate the failure
 	     r))))
 

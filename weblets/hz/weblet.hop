@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed May 30 20:04:59 2012 (serrano)                */
+;*    Last change :  Fri Jun  1 09:56:03 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -17,7 +17,7 @@
    (import hz_config)
    
    (export (class weblet
-	      (stamp::int (default -1))
+	      (stamp::int (default -1) (info "INTEGER"))
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
 	      (version::bstring read-only)
@@ -30,6 +30,7 @@
 	      (minhop::bstring read-only)
 	      (maxhop::bstring read-only)
 	      (depends::pair-nil read-only)
+	      (installable::bool (default #t))
 	      (title::bstring read-only)
 	      (comment::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default ""))
@@ -37,7 +38,7 @@
 	      (directory::bstring read-only (default "")))
 
 	   (weblet->list::pair-nil ::weblet)
-	   (info->weblet::weblet ::pair #!key name version url authorization (dir "") publisher)))
+	   (info->weblet::weblet ::pair #!key name version url authorization (dir "") publisher (stamp -1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet->list ...                                                 */
@@ -45,8 +46,10 @@
 (define (weblet->list w)
    (map (lambda (f)
 	   (let ((v ((class-field-accessor f) w)))
-	      (if (or (null? v) (pair? v))
-		  (obj->string v)
+	      (if (not (string? v))
+		  (if (equal? (class-field-info f) "INTEGER")
+		      v
+		      (obj->string v))
 		  v)))
       (vector->list (class-all-fields (object-class w)))))
 
@@ -71,7 +74,7 @@
 ;*                                                                     */
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
-(define (info->weblet info::pair #!key name version url authorization (dir "") publisher)
+(define (info->weblet info::pair #!key name version url authorization (dir "") publisher (stamp -1))
 
    (define (find key default)
       (cond
@@ -125,6 +128,7 @@
 		      (if (member c (hz-categories))
 			  c
 			  "other")))
+	 (stamp stamp)
 	 (minhop (find 'minhop "0"))
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))

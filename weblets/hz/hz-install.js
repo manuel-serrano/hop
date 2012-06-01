@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz-install.js          */
+/*    serrano/prgm/project/hop/2.3.x/weblets/hz/hz-install.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Thu Jan 14 08:30:17 2010 (serrano)                */
-/*    Copyright   :  2007-10 Manuel Serrano                            */
+/*    Last change :  Fri Jun  1 08:19:16 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
@@ -15,9 +15,9 @@
 var hop_install_stamp = 0;
 
 /*---------------------------------------------------------------------*/
-/*    hop_install_weblet ...                                           */
+/*    hop_hz_install_weblet ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_install_weblet( url, srci, srcr, parent ) {
+function hop_hz_install_weblet( url, srci, srcr, parent, publisher ) {
    var srci = srci ? srci : 'hz-install.png';
    var srcr = srcr ? srcr : 'hz-run.png';
    var base = url;
@@ -42,7 +42,7 @@ function hop_install_weblet( url, srci, srcr, parent ) {
       'var a = this;' +
       check +
       'a.href = "http://" + host.value + ":" + port.value + ' +
-      '"/hop/hz/install?url=' + encodeURIComponent( url ) + '";';
+      '"/hop/hz/install?url=' + encodeURIComponent( url ) + '&publisher=' + encodeURIComponent( publisher ) + '";';
    var onrun = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
       'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
       'var a = this;' +

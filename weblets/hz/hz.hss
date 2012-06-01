@@ -537,6 +537,16 @@ weblets td.homepage tt {
   font-size: 120%;
 }
 
+weblets span.requires {
+  font-weight: bold;
+  color: #555;
+}
+
+weblets span.incompatible {
+  font-weight: bold;
+  color: #D00;
+}
+
 weblets div.action {
   background: #E6FFBD;
   border: 1px solid $border-color;

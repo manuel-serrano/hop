@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 31 05:54:23 2012                          */
-;*    Last change :  Thu May 31 08:40:00 2012 (serrano)                */
+;*    Last change :  Fri Jun  1 09:09:52 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with Weblet dependencies                                 */
@@ -17,7 +17,9 @@
    (import hz_weblet
            hz_db)
    
-   (export (hz-weblet-depends ::weblet)))
+   (export (hz-weblet-depends ::weblet)
+	   (hz-weblet-installable?::bool ::weblet)
+	   (hz-weblet-check-depend? ::pair)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-weblet-depends ...                                            */
@@ -42,20 +44,23 @@
 	    w.depends))))
 
 ;*---------------------------------------------------------------------*/
-;*    check-weblet? ...                                                */
+;*    hz-weblet-check-depend? ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (check-weblet? w::weblet)
+(define (hz-weblet-check-depend? d)
+   (let ((w (hz-db-find-by-name (symbol->string (car d)))))
+      (or (not (isa? w weblet))
+	  (let ((dw::weblet w))
+	     (check-version? (symbol->string (cadr d)) dw.version)))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-weblet-installable? ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-weblet-installable? w::weblet)
    (and (or (string-null? w.minhop)
 	    (check-version? (string-append ">=" w.minhop) (hop-version)))
 	(or (string-null? w.maxhop)
 	    (check-version? (string-append "<=" w.maxhop) (hop-version)))
-	(every? (lambda (d)
-		   (let ((w (hz-db-find-by-name (car d))))
-		      (when (isa? w weblet)
-			 (every? (lambda (v)
-				    (check-weblet? v))
-			    (cdr d)))))
-	   w.depends)))
+	(every? hz-weblet-check-depend? w.depends)))
    
 ;*---------------------------------------------------------------------*/
 ;*    check-version? ...                                               */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/markup.hop        */
+;*    serrano/prgm/project/hop/2.3.x/weblets/weblets/markup.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Wed Nov 16 16:49:22 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Fri Jun  1 08:17:25 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<WEBLETS-PUBLISHER>)
    (<DIV> :class "publisher"
-      "Publisher URL: " (<SPAN> :id "publisher-url" (weblets-publisher))
+      "HZ Publisher URL: " (<SPAN> :id "publisher-url" (weblets-publisher))
       (<DIV> :class "comment"
 	 [This URL will get automatically added to your
 	     ,(<A> :href "/hop/hz" "hz") publishers list
@@ -134,4 +134,4 @@
 	  (srcr (make-file-name dir "hz-run.png"))
 	  (id (symbol->string (gensym))))
       (<DIV> :class "install" :id id
-	 ~((@ hop_install_weblet _) $url $srci $srcr $id))))
+	 ~((@ hop_hz_install_weblet _) $url $srci $srcr $id $(weblets-publisher)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Thu May 31 16:37:26 2012 (serrano)                */
+;*    Last change :  Fri Jun  1 10:34:34 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -33,6 +33,7 @@
 	   hz/update
 	   hz/list/update
 	   hz/clearcache
+	   hz/config
 	   hz/sync/authenticate)
 
    (from   hz_weblet))
@@ -147,6 +148,20 @@
    (let ((path (hz-download-directory)))
       (for-each delete-path (directory->path-list path))
       path))
+
+;*---------------------------------------------------------------------*/
+;*    hz/config ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-weblet-service (hz/config)
+   (list (list 'publishers
+	    (filter-map (lambda (c)
+			   (cond
+			      ((string? c) c)
+			      ((and (pair? c) (cadr c)) (car c))
+			      (else #f)))
+	       (hz-publishers)))
+      (list 'database (hz-db))
+      (list 'cache (hz-download-directory))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/sync/authenticate! ...                                        */
