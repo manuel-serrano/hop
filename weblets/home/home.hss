@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/weblets/home/home.hss             */
+/*    serrano/prgm/project/hop/2.3.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar  7 14:13:59 2011 (serrano)                */
-/*    Copyright   :  2005-11 Manuel Serrano                            */
+/*    Last change :  Fri Jun  1 15:11:23 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -450,7 +450,7 @@ a.download-stable div.download-button {
 }
 
 a.download-stable:hover div.download-button {
-  box-shadow: 0px 0px 12px $(color-darker download-color 4);
+  box-shadow: 0px 0px 8px $(color-darker download-color 4);
 }
   
 a.download-stable td.download-button {
@@ -465,7 +465,7 @@ a.download-vm div.download-button {
 }
 
 a.download-vm:hover div.download-button {
-  box-shadow: 0px 0px 12px $(color-darker download-vm-color 4);
+  box-shadow: 0px 0px 8px $(color-darker download-vm-color 4);
 }
   
 a.download-vm td.download-button {
@@ -479,8 +479,9 @@ a.download-src div.download-button {
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-src-color 2)), to( $download-src-color ));
 }
 
-a.download-devel:hover div.download-button {
-  box-shadow: 0px 0px 12px $(color-darker download-src-color 4);
+a.download-devel:hover div.download-button,
+a.download-src:hover div.download-button {
+  box-shadow: 0px 0px 8px $(color-darker download-src-color 4);
 }
 
 a.download-devel td.download-button {
@@ -580,6 +581,16 @@ table.download span.old {
 
 nptab-body#download pre {
   font-size: 75%;
+}
+
+#license {
+  background: #ffe;
+  border: 1px solid #999;
+  margin-left: 2em;
+}
+
+#download pre {
+  max-width: 50em;
 }
 
 /*---------------------------------------------------------------------*/

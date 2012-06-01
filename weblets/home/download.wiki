@@ -21,6 +21,11 @@
 		(<TH> :class "download-button" legend))
 	     (<TR> (<TD> :class "download-button" (or name (basename url))))))))
 
+== License ==
+
+<include>license.wiki</include>
+
+
 == Source code ==
 
 ,(<TABLE> :id "download-source"
@@ -85,13 +90,18 @@ add the following to the ++/etc/apt.conf/sources.list++ file:
   deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
 
 
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) For Gentoo, proceed as follows:
+
+  emerge -n layman    # Install layman overlay manager
+  layman -a lisp      # Add and fetch the lisp overlay
+  emerge bigloo::lisp # Install bigloo from lisp overlay
+
+
   * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "ubuntu-16x16.png")) For Ubuntu (tls) packages, 
 add the following to the ++/etc/apt.conf/sources.list++ file:
 
   deb ftp://ftp-sop.inria.fr/indes/fp/Hop/ubuntu tls hop
 
-
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
 
 
 == MacOS X ==
@@ -149,6 +159,3 @@ add the following to the ++/etc/apt.conf/sources.list++ file:
 may be found [[/hop/home/vm|here]].
 
 
-== License ==
-
-<include>license.wiki</include>
