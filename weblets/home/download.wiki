@@ -97,10 +97,10 @@ add the following to the ++/etc/apt.conf/sources.list++ file:
   emerge bigloo::lisp # Install bigloo from lisp overlay
 
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "ubuntu-16x16.png")) For Ubuntu (tls) packages, 
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "ubuntu-16x16.png")) For Ubuntu (12.04) packages, 
 add the following to the ++/etc/apt.conf/sources.list++ file:
 
-  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/ubuntu tls hop
+  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/ubuntu precise hop
 
 
 
