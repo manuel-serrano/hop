@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Fri Jan 27 19:04:21 2012 (serrano)                */
+/*    Last change :  Sat Jun  2 07:13:31 2012 (serrano)                */
 /*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -21,8 +21,12 @@ function hop_slider_value_set( slider, value ) {
    value = Math.round( value / slider.step ) * slider.step;
 
    if( slider.value != value ) {
-      if( (value < slider.min) || (value > slider.max) ) {
-	 return;
+      if( value < slider.min ) {
+	 value = slider.min;
+      } else {
+	 if( value > slider.max ) {
+	    value = slider.max;
+	 }
       }
 
       var v = (value - slider.min) / (slider.max - slider.min);

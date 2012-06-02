@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun May 13 09:29:42 2012 (serrano)                */
+/*    Last change :  Sat Jun  2 07:09:05 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -353,8 +353,11 @@ function start_servevt_websocket_proxy( key, host, port ) {
       ws.onopen = function() {
 	 // after a reconnection, the onerror listener must be removed
 	 ws.onerror = undefined;
+	 
+	 if( hop_debug() >= 2 ) {
+	    alert( "hop-event.js: ONOPEN..." );
+	 }
 
-	 alert( "hop-event.js: ONOPEN..." );
 	 // we are ready to register now
 	 hop_server.state = 2;
 	 hop_servevt_proxy.register = register;

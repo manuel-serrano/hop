@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Mon May 21 16:39:48 2012 (serrano)                */
+;*    Last change :  Sat Jun  2 07:02:46 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -333,7 +333,7 @@
 		(el2 (dom-get-element-by-id id2)))
 	     (dom-remove-child! document.body el1)
 	     (dom-remove-child! document.body el2)
-	     (remove-event-listener! $panel-event "server" remove-event-listener!)))
+	     (remove-event-listener! server $panel-event remove-event-listener!)))
        ;; mask
        (dom-append-child!
 	document.body
@@ -352,7 +352,8 @@
 	   (<DIV> :style
 	      (format "color: #ccc; font-size: 60%; position: fixed; bottom: ~apx; text-align: center; left: 0; right: 0; z-index: 9999;" (+ 4 vert))
 	      "Click here to remove ([alt-h] to toggle).")
-	   (add-event-listener! sever $panel-event remove-hop-dashboard!)))))
+	   (add-event-listener! server $panel-event remove-hop-dashboard!)))
+       #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/dashboard-panel ...                                          */

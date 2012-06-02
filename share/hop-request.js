@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Mar  6 15:26:10 2012 (serrano)                */
+/*    Last change :  Sat Jun  2 06:46:34 2012 (serrano)                */
 /*    Copyright   :  2004-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -427,6 +427,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
    if( !sync ) {
       xhr.open( "PUT", svc, true );
+      hop_tprint( "hop-request.js", -1, sc_list( "OPEN: " + svc ) );
       
       if( hop_config.uint8array ) {
 	 xhr.responseType = "arraybuffer";

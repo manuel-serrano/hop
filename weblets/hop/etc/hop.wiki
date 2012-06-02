@@ -12,7 +12,7 @@ weblets and let them been spawned by a simple click.
         (<TH> (string-capitalize "") " version") (<TD> "2.3.0"))
   (<TR> (<TH> "Hop min version") (<TD> "2.3.0"))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "31 May 2012"))
+  (<TR> (<TH> "Date") (<TD> "01 June 2012"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 </doc>

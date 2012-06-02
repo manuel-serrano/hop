@@ -93,7 +93,7 @@ applies to server events.
 
 ~~ The document can also receive server events. The expression:
 
-  (add-event-listener! document "server" (lambda (evt) (alert evt.name)))
+  (add-event-listener! server document (lambda (evt) (alert evt.name)))
 
 
 will force the document to get a notification for each server event that

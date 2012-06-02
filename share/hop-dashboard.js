@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Thu Mar  3 14:43:45 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Sat Jun  2 07:02:54 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -32,11 +32,15 @@ var hop_dashboard_panel_opacity = "0.50";
 /*---------------------------------------------------------------------*/
 function hop_dashboard_start_applet( name, svc ) {
    function success( obj, xhr ) {
+      if( obj === true ) {
+	 return true;
+      }
+      
       if( hop_is_html_element( obj ) ) {
 	 document.body.appendChild( obj );
 	 return true;
       }
-      
+
       if( (obj instanceof String) || (typeof obj === "string") ) {
 	 return alert( obj );
       }
