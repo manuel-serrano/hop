@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri May 11 15:49:04 2012 (serrano)                */
+;*    Last change :  Sun Jun  3 08:30:44 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -681,7 +681,8 @@
 				    (when (wiki-debug?)
 				       (fprint (current-error-port) ";;" name))
 				    (list (<A> :name name)
-					  (apply hx (remove-surrounding-spaces expr)))))
+					  (apply hx :data-wiki-name name
+					     (remove-surrounding-spaces expr)))))
 			      #f)
 		 (ignore)))))
       
