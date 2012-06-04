@@ -56,7 +56,7 @@ from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 == Android ==
 
 ,(let* ((apk (format "hop-~a.apk" (home-hop-stable-version)))
-	(url (make-download-url (make-file-name "android" "2.1") apk)))
+	(url (make-download-url (make-file-name "android") apk)))
     (<TABLE> :id "download-source"
        (<TR>
 	  (<TD> :class "download-source"

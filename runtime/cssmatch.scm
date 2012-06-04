@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Thu Dec 22 10:33:22 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Mon Jun  4 15:22:15 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
 ;*=====================================================================*/
@@ -111,21 +111,7 @@
       (when (pair? rules)
 	 (let ((style (instantiate::css-style)))
 	    (for-each (lambda (rule) (css-set-style! style rule))
-		      (css-sort-rules rules))
-	    #;(when (and (eq? (xml-element-tag el) 'div)
-		       (equal? (dom-get-attribute el "class") "hoptex-prog-line-comment"))
-	       (with-output-to-port (current-error-port)
-		  (lambda ()
-		     (print "----------------------------------------")
-		     (print "el=" el)
-		     (for-each (lambda (r)
-				  (display "rule: ")
-				  (write r)
-				  (newline))
-			       rules)
-		     (newline)
-		     (print "style=" style)
-		     (newline))))
+	       (css-sort-rules rules))
 	    style))))
 
 ;*---------------------------------------------------------------------*/
