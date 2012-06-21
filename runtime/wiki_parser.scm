@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/wiki_parser.scm           */
+;*    serrano/prgm/project/hop/2.4.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Jun  3 08:30:44 2012 (serrano)                */
+;*    Last change :  Wed Jun  6 08:49:43 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -399,10 +399,14 @@
 			     #f #f))
 	    (enter-expr! 'tr
 			 (lambda exp
-			    (let ((cl (if (evenfx? trcount)
+			    (let* ((cl (if (evenfx? trcount)
 					  "hopwiki-row-even"
-					  "hopwiki-row-odd")))
-			       (apply (wiki-syntax-tr syn) :class cl exp)))
+					  "hopwiki-row-odd"))
+				   (cl (if (string? class)
+					   (string-append cl " " class)
+					   cl)))
+			       (apply (wiki-syntax-tr syn) :class cl :id id
+				  exp)))
 			 #f)
 	    (enter-expr! 'tc tc rightp)
 	    (set! trcount (+fx 1 trcount))
@@ -574,31 +578,6 @@
        (add-expr! (the-html-string))
        (ignore))
       
-;*       ;; a blank line: end of expr                                  */
-;*       ((bol (: (? #\Return) #\Newline))                             */
-;*        (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr))))) */
-;* 	  (cond                                                        */
-;* 	     (st                                                       */
-;* 	      (unwind-state! st))                                      */
-;* 	     ((is-state? 'p)                                           */
-;* 	      (pop-state!))))                                          */
-;*        (add-expr! (the-html-string))                                */
-;*        (ignore))                                                    */
-;*                                                                     */
-;*       ;; two consecutive blank lines: end of block                  */
-;*       ((bol (= 2 (: (? #\Return) #\Newline)))                       */
-;*        (let ((st (in-state (lambda (n _)                            */
-;* 			      (and (isa? n block) (not (block-is-subblock n))))))) */
-;* 	  (when st (unwind-state! st)))                                */
-;*        (add-expr! (the-html-string))                                */
-;*        (ignore))                                                    */
-;*                                                                     */
-;*       ;; three consecutive blank lines: end of everything           */
-;*       ((bol (= 3 (: (? #\Return) #\Newline)))                       */
-;*        (unwind-state! #f)                                           */
-;*        (add-expr! (the-html-string))                                */
-;*        (ignore))                                                    */
-
       ;; simple text
       ((+ (or letter (: punct letter) (: #\space letter)))
        (add-expr! (the-html-string))

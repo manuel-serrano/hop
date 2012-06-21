@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/vm/Makefile                  */
+#*    serrano/prgm/project/hop/2.4.x/arch/vm/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Mon Dec 19 12:12:13 2011 (serrano)                */
-#*    Copyright   :  2011 Manuel Serrano                               */
+#*    Last change :  Wed Jun  6 11:16:56 2012 (serrano)                */
+#*    Copyright   :  2011-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
 #*=====================================================================*/
@@ -21,7 +21,7 @@ do: qemu
 #*    Default settings                                                 */
 #*---------------------------------------------------------------------*/
 IMGSIZE = 4G
-WEBLETS = hoptex-1.1.3.hz popart-api-1.0.0.hz hopslide-2.5.4.hz hophifi-1.0.1.hz
+WEBLETS = hoptex-1.2.0.hz popart-api-1.0.0.hz hopslide-2.5.4.hz
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -39,7 +39,7 @@ POPDIRS =
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: qemu qemuw virtualbox virtualbox+ vmware vmware+
+.PHONY: qemu qemu+ virtualbox virtualbox+ vmware vmware+
 
 $(HOPTMPDIR)/hop.hdd:
 	sudo scripts/create_image.sh $(HOPTMPDIR)/hop.hdd $(IMGSIZE)

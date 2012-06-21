@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Apr 29 05:39:20 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:58:28 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -22,6 +22,7 @@
 
    (include "xml.sch"
 	    "service.sch"
+	    "verbose.sch"
 	    "param.sch")
 
    (import  __hop_configure

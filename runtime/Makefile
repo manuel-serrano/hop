@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/2.4.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Jan 12 09:29:52 2012 (serrano)                */
+#*    Last change :  Sun Jun 17 08:55:36 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -68,6 +68,7 @@ INCLUDES = http_lib.sch \
            hss.sch hss_expd.sch \
            prefs.sch prefs_expd.sch  \
            service.sch service_expd.sch \
+           verbose.sch verbose_expd.sch \
            enable_thread.sch disable_thread.sch \
            wiki_syntax.sch wiki_parser.sch \
            zeroconf_avahi.sch zeroconf_dummy.sch

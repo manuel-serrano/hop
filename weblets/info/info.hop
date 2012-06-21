@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon May 21 16:40:30 2012 (serrano)                */
+;*    Last change :  Fri Jun  8 18:06:56 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -284,10 +284,12 @@
 	       (<TD> :align 'left (os-arch)))
 	    (<TR>
 	       (<TH> :align 'right "Server IP")
-	       (<TD> :align 'left (<TT> (host (hostname)))))
+	       (<TD> :align 'left (<TT> (host (hostname)))
+		  " (" (hostname) ")"))
 	    (<TR>
 	       (<TH> :align 'right "Client IP")
-	       (<TD> :align 'left (<TT> (socket-host-address socket)))))
+	       (<TD> :align 'left (<TT> (socket-host-address socket))
+		  " (" (socket-hostname socket) ")")))
 	 (<H1> "Server configuration")
 	 (<TABLE> :class "hop-info"
 	    (<TR>

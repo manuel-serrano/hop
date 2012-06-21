@@ -101,18 +101,18 @@
 (define-parameter hzbuilder-previewers
    (list (lambda (base path)
 	    (cond
-	       ((pregexp-match "^.*[.](?:png|gif)$" base)
+	       ((pregexp-match "^.*\\.(?:png|gif)$" base)
 		(<AUTOSIZE-IMG> path))
-	       ((pregexp-match "^.*[.](?:svg)$" base)
+	       ((pregexp-match "^.*\\.(?:svg)$" base)
 		(<IFRAME> :class "preview"
 		   :width (-fx (hzbuilder-preview-size) 2)
 		   :height (-fx (hzbuilder-preview-size) 2)
 		   :src path))))
 	 (lambda (base path)
-	    (when (pregexp-match "^.*[.](?:jpeg|jpg)$" base)
+	    (when (pregexp-match "^.*\\.(?:jpeg|jpg)$" base)
 	       (<AUTOSIZE-IMG> path)))
 	 (lambda (base path)
-	    (when (pregexp-match "^.*[.](?:hop)$" base)
+	    (when (pregexp-match "^.*\\.(?:hop)$" base)
 	       (let ((logo (make-file-path (dirname path) "etc" "logo.png")))
 		  (when (file-exists? logo)
 		     (<DIV>

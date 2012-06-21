@@ -1,24 +1,25 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/2.3.x/hophz/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 17 08:57:34 2012 (serrano)                */
+;*    Last change :  Wed May 30 12:35:29 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    The HOPSH entry point                                            */
+;*    The HOPHZ entry point                                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module hopsh
+(module hophz
 
-   (library scheme2js hopscheme hop)
+   (library scheme2js hopscheme hopwidget hop sqlite)
 
-   (import  hopsh_parseargs
-	    hopsh_param
-	    hopsh_repl)
+   (import  hophz_parseargs
+	    hophz_param
+	    hophz_login
+	    hophz_action)
 
    (main    main))
 
@@ -35,18 +36,9 @@
    ;; setup the client-side compiler
    (setup-client-compiler!)
    ;; parse the command line
-   (parse-args args)
-   (hop-verb 1 "Starting hopsh (v" (hop-version) "):\n")
-   ;; setup the hop readers
-   (bigloo-load-reader-set! hop-read)
-   ;; start the hop main loop
-   (with-handler
-      (lambda (e)
-	 (exception-notify e)
-	 (exit 2))
-      (unwind-protect
-	 (hopsh-repl)
-	 (newline))))
+   (multiple-value-bind (actions arguments)
+      (parse-args args)
+      (for-each action-exec actions)))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
@@ -57,7 +49,7 @@
    ;; the file of the other.
    (hop-clientc-clear-cache-set! #f)
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
-      :verbose (hop-verbose)
+      :verbose (hophz-verbose)
       :eval (lambda (e) (let ((op (open-output-string)))
 			   (obj->javascript-expr (eval e) op)
 			   (close-output-port op)))
@@ -80,4 +72,3 @@
       :precompiled->JS-expression hopscheme->JS-expression
       :precompiled->JS-statement hopscheme->JS-statement
       :precompiled->JS-return hopscheme->JS-return))
-

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/2.4.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Feb  3 18:47:00 2012 (serrano)                */
+;*    Last change :  Tue Jun 19 14:48:20 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -520,22 +520,23 @@
 ;*    init-zeroconf! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (init-zeroconf!)
-   (hop-zeroconf-start!)
-   (let ((name "Hop"))
-      ;; publish main Hop service
-      (hop-zeroconf-publish! :name name
-	 :type "_http._tcp"
-	 :port (hop-port)
-	 (format "version=~a" (hop-version))
-	 (format "path=~a" (hop-service-base)))
-      ;; publish webdav service
-      (when (hop-enable-webdav)
-	 (hop-zeroconf-publish! :name name
-	    :type "_webdav._tcp"
-	    :port (hop-port)))
-      ;; publish hop available services
-      (for-each (lambda (wi)
-		   (apply hop-zeroconf-publish! :name (format "~a" (cadr wi))
-		      (cddr wi)))
-	 (get-weblets-zeroconf))))
+   (zeroconf-start!
+      (lambda ()
+	 (let ((name "Hop"))
+	    ;; publish main Hop service
+	    (zeroconf-publish! :name name
+	       :type "_http._tcp"
+	       :port (hop-port)
+	       (format "version=~a" (hop-version))
+	       (format "path=~a" (hop-service-base)))
+	    ;; publish webdav service
+	    (when (hop-enable-webdav)
+	       (zeroconf-publish! :name name
+		  :type "_webdav._tcp"
+		  :port (hop-port)))
+	    ;; publish hop available services
+	    (for-each (lambda (wi)
+			 (apply zeroconf-publish! :name (format "~a" (cadr wi))
+			    (cddr wi)))
+	       (get-weblets-zeroconf))))))
 

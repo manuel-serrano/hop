@@ -269,16 +269,16 @@
 (define (compile-value obj p host-compiler host-register loc)
    (let ((cache (register-value obj host-register)))
       (when (pair? cache)
-;* 	 (tprint                                                       */
-;* 	    (call-with-output-string                                   */
-;* 	       (lambda (p)                                             */
-;* 		  (let ((cache (register-value obj host-register)))    */
-;* 		     (let ((len (length cache)))                       */
-;* 			(display "sc_circle(" p)                       */
-;* 			(display len p)                                */
-;* 			(display ", function( cache ) { return " p))   */
-;* 		     (compile-value-circle obj p host-compiler loc cache) */
-;* 		     (display ";})" p)))))                             */
+	 (tprint
+	    (call-with-output-string
+	       (lambda (p)
+		  (let ((cache (register-value obj host-register)))
+		     (let ((len (length cache)))
+			(display "sc_circle(" p)
+			(display len p)
+			(display ", function( cache ) { return " p))
+		     (compile-value-circle obj p host-compiler loc cache)
+		     (display ";})" p)))))
 	 (let ((len (length cache)))
 	    (display "sc_circle(" p)
 	    (display len p)
@@ -287,11 +287,10 @@
       (when (pair? cache)
 	 (display ";})" p))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    register-value ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    This function is used to build a cache a cylic references.       */
+;*    This function is used to build a cache of cyclic references.     */
 ;*---------------------------------------------------------------------*/
 (define (register-value obj host-register)
    

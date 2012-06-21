@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Feb  3 13:49:00 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:59:34 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_user
+
+   (include "verbose.sch")
    
    (import  __hop_param
 	    __hop_configure

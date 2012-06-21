@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-spage.hss               */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-spage.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Thu May  3 11:01:31 2012 (serrano)                */
+/*    Last change :  Wed Jun 20 09:39:16 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -49,6 +49,7 @@ $(define-hss-type sptab "div[data-hss-tag=hop-sptab]")
 $(define-hss-type spbody "div[data-hss-tag=hop-spbody]")
 
 $(define-hss-type sptabhead "div[data-hss-tag=hop-sptabhead]")
+$(define-hss-type sptabheadbody "span[data-hss-tag=hop-sptabhead-body]")
 $(define-hss-type sppushbutton "div[data-hss-tag=hop-sppushbutton]")
 
 /*---------------------------------------------------------------------*/
@@ -130,7 +131,11 @@ sptabhead {
   position: relative;
 }
 
-sptabhead > sppushbutton {
+sptabheadbody {
+  overflow: hidden;
+}
+
+sppushbutton {
   position: absolute;
   right: 0;
   top: 0;

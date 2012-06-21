@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-slider.hss              */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-slider.hss              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Thu Apr 21 11:21:32 2011 (serrano)                */
-/*    Copyright   :  2005-11 Manuel Serrano                            */
+/*    Last change :  Fri Jun 15 17:04:00 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
 /*=====================================================================*/
@@ -17,7 +17,7 @@ $(module __hop_hop-slider-hss)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type slider "table[hssclass=hop-slider]"
+$(define-hss-type slider "table[data-hss-tag=hop-slider]"
 
     (define-hss-property (line-height v)
        (format "div.line { height: ~l; }" v))
@@ -40,36 +40,36 @@ $(define-hss-type slider "table[hssclass=hop-slider]"
     (define-hss-property (line-right-color v)
        (format "div.lineright { background-color: ~l; }" v)))
 
-$(define-hss-type slidercaption "td[hssclass=hop-slider-caption]")
+$(define-hss-type slidercaption "td[data-hss-tag=hop-slider-caption]")
 
-$(define-hss-type slidercursor "td[hssclass=hop-slider-cursor]"
+$(define-hss-type slidercursor "td[data-hss-tag=hop-slider-cursor]"
     (define-hss-property (height v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { min-height: ~l; height: ~l;}" v v)
-             (format "div[hssclass=hop-slider-cursor-image] { min-height: ~l; height: ~l; }" v v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { min-height: ~l; height: ~l;}" v v)
+             (format "div[data-hss-tag=hop-slider-cursor-image] { min-height: ~l; height: ~l; }" v v)))
     (define-hss-property (border v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border: ~l; }" v)))
     (define-hss-property (border-left v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border-left: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-left: ~l; }" v)))
     (define-hss-property (border-right v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border-right: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-right: ~l; }" v)))
     (define-hss-property (border-top v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border-top: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-top: ~l; }" v)))
     (define-hss-property (border-bottom v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border-bottom: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-bottom: ~l; }" v)))
     (define-hss-property (border-radius v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { border-radius: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-radius: ~l; }" v)))
     (define-hss-property (-hop-background-gradient v)
-       (format "div[hssclass=hop-slider-cursor-background] { background: ~l; background-image: ~l; }" v v))
+       (format "div[data-hss-tag=hop-slider-cursor-background] { background: ~l; background-image: ~l; }" v v))
     (define-hss-property (background v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { background: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { background: ~l; }" v)))
     (define-hss-property (background-color v)
-       (list (format "div[hssclass=hop-slider-cursor-background] { background-color: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { background-color: ~l; }" v)))
     (define-hss-property (background-image v)
-       (list (format "div[hssclass=hop-slider-cursor-image] { background-image: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-image: ~l; }" v)))
     (define-hss-property (background-repeat v)
-       (list (format "div[hssclass=hop-slider-cursor-image] { background-repeat: ~l; }" v)))
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-repeat: ~l; }" v)))
     (define-hss-property (background-position v)
-       (list (format "div[hssclass=hop-slider-cursor-image] { background-position: ~l; }" v))))
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-position: ~l; }" v))))
 
 /*---------------------------------------------------------------------*/
 /*    public declarations                                              */
@@ -188,23 +188,23 @@ slidercursor {
   vertical-align: middle;
 }
    
-slidercursor div[hssclass=hop-slider-cursor-background],
-slidercursor div[hssclass=hop-slider-cursor-image] {
+slidercursor div[data-hss-tag=hop-slider-cursor-background],
+slidercursor div[data-hss-tag=hop-slider-cursor-image] {
   background-color: transparent;
   display: inline-block;
   width: 100%;
 }
 
-slidercursor div[hssclass=hop-slider-cursor-background] {
+slidercursor div[data-hss-tag=hop-slider-cursor-background] {
   margin-left: -1px;
   margin-right: 1px;
 }
 
-slidercursor div[hssclass=hop-slider-cursor-image] {
+slidercursor div[data-hss-tag=hop-slider-cursor-image] {
   border: 0;
 }
 
-td[hssclass=hop-slider-cursor] {
+td[data-hss-tag=hop-slider-cursor] {
   background: none;
 }
 

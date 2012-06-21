@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/discovery.scm             */
+;*    serrano/prgm/project/hop/2.4.x/runtime/discovery.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Feb 13 08:12:34 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:58:19 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -19,7 +19,8 @@
       (enable-threads
 	 (library pthread)))
    
-   (include "service.sch")
+   (include "service.sch"
+            "verbose.sch")
    
    (import __hop_configure
 	   __hop_service

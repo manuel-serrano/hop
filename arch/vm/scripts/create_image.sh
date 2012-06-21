@@ -121,6 +121,7 @@ if [ $create_install -eq 1 ]; then
    mkfs.ext2 /dev/loop1
 fi
 
+echo "Mounting $mnt_dir/"
 mount /dev/loop1 $mnt_dir/
 mount_points="$mnt_dir $mount_points"
 

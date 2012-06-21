@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/2.4.x/src/accept.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat May  5 07:29:03 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:57:54 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -39,21 +39,6 @@
 
    (export  (generic scheduler-accept-loop ::scheduler ::socket ::bool)
 	    *verb-mutex*))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
-	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Jun  2 07:09:05 2012 (serrano)                */
+/*    Last change :  Fri Jun  8 08:57:32 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -354,7 +354,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 // after a reconnection, the onerror listener must be removed
 	 ws.onerror = undefined;
 	 
-	 if( hop_debug() >= 2 ) {
+	 if( hop_debug() >= 3 ) {
 	    alert( "hop-event.js: ONOPEN..." );
 	 }
 
@@ -378,6 +378,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       }
       ws.onclose = function( e ) {
 	 hop_server.state = 3;
+	 hop_serverready_triggered = false
 	 if( hop_debug() >= 3 ) {
 	    alert( "WS CLOSE: "
 		   + (sc_currentSeconds() - hop_servevt_proxy.opentime) + "s "
@@ -609,7 +610,6 @@ function start_servevt_ajax_proxy( key ) {
       };
 
       var reconnect = function( wait, max ) {
-	 alert( "Reconnecting..." + hop_servevt_proxy.reconnect_url );
 	 register( "" );
       }
       
@@ -1030,7 +1030,6 @@ function hop_start_servevt_proxy() {
 	    window,
 	    "online",
 	    function() {
-	       hop_serverready_triggered = false;
 	       hop_server.reconnect( 1000, 5 );
 	    },
 	    false );
@@ -1260,13 +1259,14 @@ function HopServerReadyEvent() {
 function hop_trigger_serverready_event() {
    if( !hop_serverready_triggered ) {
       var evt = new HopServerReadyEvent();
+      var l = hop_serverready_list;
       
       hop_serverready_triggered = true;
-   
-      while( sc_isPair( hop_serverready_list ) ) {
-	 hop_serverready_list.car( evt );
+
+      while( sc_isPair( l ) ) {
+	 l.car( evt );
 	 if( evt.isStopped ) break;
-	 hop_serverready_list = hop_serverready_list.cdr;
+	 l = l.cdr;
       }
    }
 }

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/http_remote.scm           */
+;*    serrano/prgm/project/hop/2.4.x/runtime/http_remote.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Wed Feb 15 09:27:35 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:59:03 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP remote response                                         */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_http-remote
 
-   (include "http_lib.sch")
+   (include "http_lib.sch"
+            "verbose.sch")
 
    (library web)
    

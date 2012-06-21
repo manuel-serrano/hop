@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopreplay/main.scm                */
+;*    serrano/prgm/project/hop/2.4.x/hopreplay/main.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat May 12 09:03:56 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:57:26 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
@@ -22,20 +22,6 @@
 	    hoprp_log)
 
    (main    main))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
-	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

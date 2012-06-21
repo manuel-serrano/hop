@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/expanders.sch             */
+;*    serrano/prgm/project/hop/2.4.x/runtime/expanders.sch             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon May 30 14:45:15 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Sun Jun 17 17:19:54 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders installer                                          */
 ;*=====================================================================*/
@@ -13,6 +13,7 @@
 ;*    hop-install-expanders! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hop-install-expanders!)
+   (eval `(define-expander hop-verb ,hop-verb-expander))
    (eval `(define-expander define-service ,hop-define-service-expander))
    (eval `(define-expander service ,hop-service-expander))
    (eval `(define-expander with-hop ,hop-with-hop-expander))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri May  4 12:38:58 2012 (serrano)                */
+;*    Last change :  Tue Jun 12 07:11:35 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -165,7 +165,7 @@
    "255.255.255.255"
    (lambda (v)
       (if (string? v)
-	  (let ((l (pregexp-match "([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})" v)))
+	  (let ((l (pregexp-match "([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})\\.([0-9]{1,3})" v)))
 	     (if (not l)
 		 (error "hop-proxy-ip-mask-set!"
 			"Illegal IPv4 mask"

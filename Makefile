@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/Makefile                          */
+#*    serrano/prgm/project/hop/2.4.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Apr  9 09:36:38 2012 (serrano)                */
+#*    Last change :  Wed Jun 13 07:43:46 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -23,7 +23,7 @@ do: build
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease .hgignore
-POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay \
+POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget
 
@@ -41,7 +41,7 @@ bindir:
 libdir:
 	mkdir -p lib
 
-bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin
+bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin hophz-bin
 
 hopc-bin: lib
 	$(MAKE) -C hopc build
@@ -54,6 +54,9 @@ hopsh-bin: lib
 
 hopreplay-bin: lib
 	$(MAKE) -C hopreplay build
+
+hophz-bin: lib
+	$(MAKE) -C hophz build
 
 lib: libdir scheme2js
 	$(MAKE) -C hopscheme build

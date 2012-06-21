@@ -197,7 +197,7 @@ function sc_circle_delay( i ) {
 }
 
 function sc_circle_force( cache, obj ) {
-   if( !obj instanceof Object ) {
+   if( !(obj instanceof Object) ) {
       return obj;
    } else if( obj instanceof sc_circle_delay ) {
       return cache[ obj.index ];
@@ -211,15 +211,28 @@ function sc_circle_force( cache, obj ) {
       }
       return obj;
    } else if( obj instanceof sc_Object ) {
-      var clazz = sc_object_class( obj );
-      var f = sc_class_all_fields( clazz );
+      if( !obj.hop_circle_forced ) {
+	 var clazz = sc_object_class( obj );
+	 var f = sc_class_all_fields( clazz );
 
-      for( i = 0; i < f.length; i++ ) {
-	 var n = sc_symbol2jsstring( f[ i ].sc_name );
-	 obj[ n ] = sc_circle_force( cache, obj[ n ] );
+	 obj.hop_circle_forced = true;
+	 
+	 for( i = 0; i < f.length; i++ ) {
+	    var n = sc_symbol2jsstring( f[ i ].sc_name );
+	    obj[ n ] = sc_circle_force( cache, obj[ n ] );
+	 }
+	 return obj;
       }
-      return obj;
    } else {
+      if( "hop_classname" in obj ) {
+	 if( !obj.hop_circle_forced ) {
+	    obj.hop_circle_forced = true;
+	    for( f in obj ) {
+	       obj[ f ] = sc_circle_force( cache, obj[ f ] );
+	    }
+	 }
+      }
+	 
       return obj;
    }
 }

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/2.4.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon Jul 25 05:47:14 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Tue Jun 12 07:09:45 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -76,12 +76,12 @@
    (multiple-value-bind (base version)
       (hz-package-name-parse-sans-url url)
       (cond
-	 ((pregexp-match "([0-9]+)[.]([0-9]+)[.][*]" version)
+	 ((pregexp-match "([0-9]+)\\.([0-9]+)\\.[*]" version)
 	  =>
-	  (lambda (m) (format "~a-~a[.]~a[.].*" base (cadr m) (caddr m))))
-	 ((pregexp-match "([0-9]+)[.][*]" version)
+	  (lambda (m) (format "~a-~a\\.~a\\..*" base (cadr m) (caddr m))))
+	 ((pregexp-match "([0-9]+)\\.[*]" version)
 	  =>
-	  (lambda (m) (format "~a-~a[.].*" base (cadr m))))
+	  (lambda (m) (format "~a-~a\\..*" base (cadr m))))
 	 ((string=? "*" version)
 	  => 
 	  (lambda (m) (format "~a-.+" base)))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Mar  5 15:58:59 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:57:59 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -29,20 +29,6 @@
 	   hop_accept)
 
    (export (stage-request ::scheduler ::thread ::int ::socket ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
-	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */

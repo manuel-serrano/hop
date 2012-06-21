@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.4.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Jan 19 13:05:30 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:59:42 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_weblets
 
-   (include "xml.sch")
+   (include "xml.sch"
+            "verbose.sch")
    
    (import __hop_configure
 	   __hop_param

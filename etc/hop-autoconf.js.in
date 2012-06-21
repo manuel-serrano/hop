@@ -55,7 +55,7 @@ function HopServer( host, ip ) {
 
    this.reconnect = function( wait, max ) {
       if( this.state === 3 ) {
-	 if( "reconnect"  in hop_servevt_proxy ) {
+	 if( "reconnect" in hop_servevt_proxy ) {
 	    hop_servevt_proxy.reconnect( wait, max );
 	 }
       }

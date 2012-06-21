@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Feb  3 11:18:03 2012 (serrano)                */
+;*    Last change :  Fri Jun 15 18:04:23 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -305,7 +305,7 @@
 		((find-property-compiler property penv)
 		 =>
 		 (lambda (comp)
-		    ;; A global property that have to be processes again
+		    ;; A global property that have to be processed again
 		    ;; unless the generated property is the initial one
 		    (let liip ((rules (comp (args->string-args expr) prio))
 			       (decl (cdr decl))
@@ -320,7 +320,7 @@
 			  (else
 			   (liip (cdr rules) (cons (car rules) decl) old))))))
 		(else
-		 (loop (cdr decl) (cons (car decl) old) nrules)))))))
+		 (loop (cdr decl) (append (compile (car decl) penv) old) nrules)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-mutex ...                                                    */
@@ -405,8 +405,7 @@
                       (charset (hop-locale))
                       (content-type mime)
                       (bodyp (eq? method 'GET))
-                      (proc (lambda (p)
-                               (css-write hss p)))))
+                      (proc (lambda (p) (css-write hss p)))))
 		(else
 		 (http-file-not-found path)))))
        (user-access-denied req)))
@@ -494,8 +493,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-write ::css-ruleset-unfold ...                               */
 ;*    -------------------------------------------------------------    */
-;*    css-rulesef-unfold i produced by the compilation of a            */
-;*    ruleset.                                                         */
+;*    css-rulesef-unfold produced by the compilation of a ruleset.     */
 ;*---------------------------------------------------------------------*/
 (define-method (css-write o::css-ruleset-unfold p::output-port)
    (with-access::css-ruleset-unfold o (ruleset+)
@@ -600,14 +598,13 @@
 	  ;; the ruleset is unfolded iff:
 	  ;;    it uses several selectors
 	  ;;    one of the selector refers to a compiler in the last position
-	  (begin
-	     (instantiate::css-ruleset-unfold
-		(ruleset+ (map (lambda (s)
-				  (compile-rule
-				     (instantiate::css-ruleset
-					(selector+ (list (compile s penv)))
-					(declaration* declaration*))))
-			     selector+))))
+	  (instantiate::css-ruleset-unfold
+	     (ruleset+ (map (lambda (s)
+			       (compile-rule
+				  (instantiate::css-ruleset
+				     (selector+ (list (compile s penv)))
+				     (declaration* declaration*))))
+			  selector+)))
 	  (compile-rule o))))
 
 ;*---------------------------------------------------------------------*/

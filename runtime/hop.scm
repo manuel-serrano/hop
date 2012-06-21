@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Mar 28 12:34:09 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:58:41 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -15,6 +15,8 @@
 (module __hop_hop
 
    (library web)
+
+   (include "verbose.sch")
    
    (import  __hop_param
 	    __hop_types

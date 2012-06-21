@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jun  4 18:33:36 2012 (serrano)                */
+#*    Last change :  Sun Jun 17 08:56:31 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -784,6 +784,8 @@ echo "" >> $init
 cat runtime/prefs_expd.sch >> $init
 echo "" >> $init
 cat runtime/service_expd.sch >> $init
+echo "" >> $init
+cat runtime/verbose_expd.sch >> $init
 echo "" >> $init
 cat runtime/expanders.sch >> $init
 echo "" >> $init

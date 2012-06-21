@@ -93,7 +93,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider = document.createElement( "table" );
    slider.className = klass;
    slider.id = id;
-   slider.setAttribute( "hssclass", "hop-slider" );
+   slider.setAttribute( "data-hss-tag", "hop-slider" );
    
    slider.onchange = undefined;
    
@@ -132,12 +132,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    line2 = document.createElement( "td" );
    line2.className = "line lineright";
    cursor = document.createElement( "td" );
-   cursor.setAttribute( "hssclass", "hop-slider-cursor" );
+   cursor.setAttribute( "data-hss-tag", "hop-slider-cursor" );
    cursorbg = document.createElement( "div" );
-   cursorbg.setAttribute( "hssclass", "hop-slider-cursor-background" );
+   cursorbg.setAttribute( "data-hss-tag", "hop-slider-cursor-background" );
    cursor.appendChild( cursorbg );
    cursorimg = document.createElement( "div" );
-   cursorimg.setAttribute( "hssclass", "hop-slider-cursor-image" );
+   cursorimg.setAttribute( "data-hss-tag", "hop-slider-cursor-image" );
    cursorbg.appendChild( cursorimg );
 
    slider.line1 = line1;
@@ -151,7 +151,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    if( cap ) {
       td1 = document.createElement( "td" );
       caption = document.createElement( "td" );
-      caption.setAttribute( "hssclass", "hop-slider-caption" );
+      caption.setAttribute( "data-hss-tag", "hop-slider-caption" );
       td3 = document.createElement( "td" );
 
       caption.innerHTML = "";

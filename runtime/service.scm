@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/2.4.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Feb  8 17:20:57 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:59:25 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_service
    
-   (include "service.sch")
+   (include "service.sch"
+            "verbose.sch")
    
    (library web)
    
@@ -215,7 +216,7 @@
 	    " "
 	    (with-output-to-string
 	       (lambda ()
-		  (write (cons id vals))))
+		  (write-circle (cons id vals))))
 	    "\n")
 	 (cond
 	    ((not vals)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hz/weblet.hop             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/weblet.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Jun  1 09:56:03 2012 (serrano)                */
+;*    Last change :  Wed Jun  6 16:11:09 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */

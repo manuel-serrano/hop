@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.4.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 31 07:50:53 2012 (serrano)                */
+;*    Last change :  Sun Jun 17 08:57:17 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -20,20 +20,6 @@
 	    hopc_param)
 
    (main    main))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
-	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
