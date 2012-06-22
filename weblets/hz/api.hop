@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hz/api.hop                */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/api.hop                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Fri Jun  1 10:34:34 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:10:07 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -31,6 +31,7 @@
 	   hz/weblet/uninstall
 	   hz/weblet/depends
 	   hz/update
+	   hz/publisher
 	   hz/list/update
 	   hz/clearcache
 	   hz/config
@@ -134,6 +135,32 @@
       (if (string? sync)
 	  sync
 	  (hz-db-find-update))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/publisher ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-weblet-service (hz/publisher #!key url action)
+   (case action
+      ((add)
+       (hz-publisher-add! url))
+      ((remove)
+       (hz-publishers-set! (filter! (lambda (x)
+				       (cond
+					  ((string? x)
+					   (not (string=? x url)))
+					  ((pair? x)
+					   (not (string=? (car x) url)))
+					  (else
+					   #t)))
+			      (hz-publishers)))
+       (hz-preferences-save (hz-prefs))))
+   (filter-map (lambda (x)
+		  (cond
+		     ((string? x) x)
+		     ((pair? x) (car x))
+		     (else
+		      (tprint "GLOP: " x))))
+      (hz-publishers)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/list/update ...                                               */

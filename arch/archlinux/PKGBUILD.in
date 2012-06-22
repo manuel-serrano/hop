@@ -1,7 +1,7 @@
 # Contributor: Manuel Serrano <Manuel.Serrano@inria.fr>
 
 pkgname=hop
-pkgver=2.3.0
+pkgver=2.4.0
 pkgrel=1
 pkgdesc="a Software Development Kit for the Web"
 url='http://hop.inria.fr'

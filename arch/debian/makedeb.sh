@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/debian/makedeb.sh            */
+#*    serrano/prgm/project/hop/2.4.x/arch/debian/makedeb.sh            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu May 31 18:38:15 2012 (serrano)                */
+#*    Last change :  Thu Jun 21 09:34:44 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -15,7 +15,7 @@
 #*---------------------------------------------------------------------*/
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
-VERSION=2.3.0
+VERSION=2.4.0
 DISTRIB=
 BIGLOOVERSION=3.8c
 

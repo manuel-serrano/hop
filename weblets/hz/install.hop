@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hz/install.hop            */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/install.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Fri Jun  1 08:21:02 2012 (serrano)                */
+;*    Last change :  Thu Jun 21 21:30:10 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -181,4 +181,4 @@
       (with-access::weblet w (name install)
 	 (when (delete-path (make-file-path (hz-weblets-directory) name))
 	    (set! install "")
-	    (hz-db-add-or-update! w)))))
+	    (hz-db-update! w)))))

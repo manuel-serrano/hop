@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hophz/parseargs.scm               */
+;*    serrano/prgm/project/hop/2.4.x/hophz/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun  1 10:30:10 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:09:39 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -90,6 +90,12 @@
 	 (("config" (help "Print HZ configuration"))
 	  (set! actions
 	     (cons (instantiate::config-action)
+		actions)))
+	 (("publisher" ?action (help "publisher [add|remove] URL" "Add/remove publisher"))
+	  (set! actions
+	     (cons (instantiate::publisher-action
+		      (options 1)
+		      (action (string->symbol action)))
 		actions)))
 	 
 	 ;; Options

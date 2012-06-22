@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Wed Jun 13 07:51:19 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:11:34 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -44,6 +44,9 @@
 	    (class clean-action::action)
 
 	    (class config-action::action)
+
+	    (class publisher-action::action
+	       (action::symbol read-only))
 	       
 	    (generic action-exec ::action)))
 
@@ -329,10 +332,25 @@
 (define-method (action-exec a::config-action)
    (hz-with-hop (hz/config)
       (lambda (l)
+	 (display-color 'keyword "hophz")
+	 (display ": ")
+	 (display-color 'version (hophz-version))
+	 (newline) (newline)
 	 (for-each (lambda (e)
-		      (apply printf "~a: ~(, )" e)
+		      (display-color 'keyword (car e))
+		      (apply printf ": ~(, )" (cdr e))
 		      (newline))
 	    l))))
+
+;*---------------------------------------------------------------------*/
+;*    action-exec ::config-action ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (action-exec a::publisher-action)
+   (with-access::publisher-action a (action args)
+      (hz-with-hop (hz/publisher :url (car args) :action action)
+	 (lambda (l)
+	    (display-color 'keyword "New publisher list")
+	    (printf ": ~(, )\n" l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    yes-or-no? ...                                                   */
