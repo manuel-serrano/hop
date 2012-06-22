@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Fri Jun 22 10:10:07 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:21:24 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -32,6 +32,7 @@
 	   hz/weblet/depends
 	   hz/update
 	   hz/publisher
+	   hz/download
 	   hz/list/update
 	   hz/clearcache
 	   hz/config
@@ -161,6 +162,12 @@
 		     (else
 		      (tprint "GLOP: " x))))
       (hz-publishers)))
+
+;*---------------------------------------------------------------------*/
+;*    hz/download ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-weblet-service (hz/download #!key url)
+   (hz-install-url url))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/list/update ...                                               */

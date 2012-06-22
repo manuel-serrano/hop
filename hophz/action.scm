@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Fri Jun 22 10:11:34 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:25:42 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -48,6 +48,9 @@
 	    (class publisher-action::action
 	       (action::symbol read-only))
 	       
+	    (class download-action::action
+	       (url::bstring read-only))
+
 	    (generic action-exec ::action)))
 
 ;*---------------------------------------------------------------------*/
@@ -343,7 +346,7 @@
 	    l))))
 
 ;*---------------------------------------------------------------------*/
-;*    action-exec ::config-action ...                                  */
+;*    action-exec ::publisher-action ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (action-exec a::publisher-action)
    (with-access::publisher-action a (action args)
@@ -352,6 +355,27 @@
 	    (display-color 'keyword "New publisher list")
 	    (printf ": ~(, )\n" l)))))
 
+;*---------------------------------------------------------------------*/
+;*    action-exec ::download-action ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (action-exec a::download-action)
+   (with-access::download-action a (url)
+      (hz-with-hop (hz/download :url url)
+	 (lambda (w)
+	    (cond
+	       ((isa? w weblet)
+		(with-access::weblet w (name category version)
+		   (display-color 'category category "/")
+		   (display-color 'weblet name)
+		   (display " ")
+		   (display-color 'version version)
+		   (print "...installed.")))
+	       ((string? w)
+		(display-color 'error w #\Newline))
+	       (else
+		(display-color 'error url)
+		(print " cannot be installed.")))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    yes-or-no? ...                                                   */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 22 10:09:39 2012 (serrano)                */
+;*    Last change :  Fri Jun 22 10:22:24 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -68,6 +68,11 @@
 	     (cons (instantiate::install-action
 		      (options 1)
 		      (name weblet))
+		actions)))
+	 (("download" ?url (help "Install a weblet located at URL"))
+	  (set! actions
+	     (cons (instantiate::download-action
+		      (url url))
 		actions)))
 	 (("remove" ?weblet (help "remove WEBLET [CATEGORY]" "Remove weblet"))
 	  (set! actions
