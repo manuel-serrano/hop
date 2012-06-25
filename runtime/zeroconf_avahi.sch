@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Jun 20 08:49:18 2012 (serrano)                */
+;*    Last change :  Mon Jun 25 09:35:32 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -27,20 +27,20 @@
    (static (class avahi::zeroconf
 	      (lock::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
-	      (state::symbol (default 'alloc))
+	      (state::symbol (default 'init))
 	      (poll::avahi-simple-poll (default (class-nil avahi-simple-poll)))
-	      (client::avahi-client (default (class-nil avahi-client)))
-	      (oninit::procedure read-only))))
+	      (client::avahi-client (default (class-nil avahi-client))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-init! ::avahi ...                                       */
+;*    zeroconf-start-backend! ::avahi ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-init! o::avahi)
+(define-method (zeroconf-start-backend! o::avahi thunk)
+   
+   ;; start the avahi thread
    (thread-start!
       (instantiate::pthread
 	 (body (lambda ()
 		  (with-access::avahi o (poll client lock condv state)
-		     (set! state 'init)
 		     (set! poll (instantiate::avahi-simple-poll))
 		     (set! client (instantiate::avahi-client
 				     (proc (lambda (c s)
@@ -50,8 +50,20 @@
 			(hop-verb 1
 			   (format "Zeroconf (avahi ~a) setup...\n"
 			      version)))
-		     (avahi-simple-poll-loop poll)))))))
+		     (avahi-simple-poll-loop poll))))))
 
+   ;; wait for the initialization to be completed
+   (with-access::avahi o (lock condv state)
+      (with-lock lock
+	 (lambda ()
+	    (let loop ()
+	       (case state
+		  ((init)
+		   (condition-variable-wait! condv lock)
+		   (loop))
+		  ((ready)
+		   (thunk))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-close! ::avahi ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -208,10 +220,8 @@
        (service-browser o zd event proc))))
 
 ;*---------------------------------------------------------------------*/
-;*    Register the avahi-backend                                       */
+;*    Register the avahi backend                                       */
 ;*---------------------------------------------------------------------*/
 (zeroconf-register-backend!
-   (lambda (init)
-      (instantiate::avahi
-	 (name "avahi")
-	 (oninit init))))
+   (instantiate::avahi
+      (name "avahi")))

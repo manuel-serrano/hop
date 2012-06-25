@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jun 22 08:39:19 2012 (serrano)                */
+#*    Last change :  Mon Jun 25 09:37:53 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -55,7 +55,7 @@ hopsh-bin: lib
 hopreplay-bin: lib
 	$(MAKE) -C hopreplay build
 
-hophz-bin: lib
+hophz-bin: lib hopc-bin
 	$(MAKE) -C hophz build
 
 lib: libdir scheme2js
@@ -71,7 +71,7 @@ share-afile: scheme2js
 share: bin hopc-bin scheme2js
 	$(MAKE) -C share build
 
-weblets: lib
+weblets: lib hopc-bin
 	$(MAKE) -C weblets build
 
 scheme2js:

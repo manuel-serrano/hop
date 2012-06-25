@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/hophz/Makefile                    */
+#*    serrano/prgm/project/hop/2.4.x/hophz/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu May 31 05:56:50 2012 (serrano)                */
+#*    Last change :  Mon Jun 25 09:40:23 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -53,8 +53,14 @@ POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 #*---------------------------------------------------------------------*/
 .PHONY: build dobuild
 
-build:  o $(BACKEND)
-
+build: o
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(MAKE) $(BACKEND))
 
 native: $(BUILDBINDIR)/$(EXEC)
 jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
