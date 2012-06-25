@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Fri Jun 22 10:21:24 2012 (serrano)                */
+;*    Last change :  Mon Jun 25 08:34:07 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -108,9 +108,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/weblet/install ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-weblet-service (hz/weblet/install #!key weblet)
+(define-weblet-service (hz/weblet/install #!key weblet override)
    (when (isa? weblet (@ weblet hz_weblet))
-      (hz-install-weblet weblet)
+      (hz-install-weblet weblet :override override)
       weblet))
 
 ;*---------------------------------------------------------------------*/

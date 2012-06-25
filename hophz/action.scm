@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Fri Jun 22 10:25:42 2012 (serrano)                */
+;*    Last change :  Mon Jun 25 08:34:32 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -184,7 +184,8 @@
 	       (with-access::weblet (car to-install) (installable name)
 		  (if (and (not installable) (not (hophz-force-action)))
 		      (error "hophz" "weblet not installable" name)
-		      (hz-with-hop (hz/weblet/install :weblet (car to-install))
+		      (hz-with-hop (hz/weblet/install :weblet (car to-install)
+				      :overrice (hophz-force-download))
 			 (lambda (w)
 			    (cond
 			       ((isa? w weblet)
