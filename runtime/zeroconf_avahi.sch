@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Jun 25 09:35:32 2012 (serrano)                */
+;*    Last change :  Mon Jun 25 09:48:58 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -32,6 +32,24 @@
 	      (client::avahi-client (default (class-nil avahi-client))))))
 
 ;*---------------------------------------------------------------------*/
+;*    avahi-wait-ready! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (avahi-wait-ready! o::avahi thunk)
+   ;; wait for the initialization to be completed
+   (with-access::avahi o (lock condv state)
+      (if (eq? state 'ready)
+	  (thunk)
+	  (with-lock lock
+	     (lambda ()
+		(let loop ()
+		   (case state
+		      ((init)
+		       (condition-variable-wait! condv lock)
+		       (loop))
+		      ((ready)
+		       (thunk)))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    zeroconf-start-backend! ::avahi ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-start-backend! o::avahi thunk)
@@ -48,21 +66,10 @@
 				     (poll poll)))
 		     (with-access::avahi-client client (version)
 			(hop-verb 1
-			   (format "Zeroconf (avahi ~a) setup...\n"
-			      version)))
+			   (format "Zeroconf (avahi ~a) setup...\n" version)))
 		     (avahi-simple-poll-loop poll))))))
 
-   ;; wait for the initialization to be completed
-   (with-access::avahi o (lock condv state)
-      (with-lock lock
-	 (lambda ()
-	    (let loop ()
-	       (case state
-		  ((init)
-		   (condition-variable-wait! condv lock)
-		   (loop))
-		  ((ready)
-		   (thunk))))))))
+   (avahi-wait-ready! o thunk))
    
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-close! ::avahi ...                                      */
@@ -118,83 +125,77 @@
 ;*    zeroconf-publish-service! ::avahi ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-publish-service! o::avahi name port type opts)
-   (with-access::avahi o (client poll lock condv state)
-      (with-lock lock
-	 (lambda ()
-	    (let loop ()
-	       (if (eq? state 'ready)
-		   (avahi-simple-poll-timeout poll
-		      1
-		      (lambda ()
-			 (let ((group (instantiate::avahi-entry-group
-					 (proc entry-group-callback)
-					 (client client))))
-			    (let loop ((name name))
-			       (with-handler
-				  (lambda (e)
-				     (if (isa? e &avahi-collision-error)
-					 (begin
-					    (avahi-entry-group-reset! group)
-					    (loop (avahi-alternative-service-name name)))
-					 (raise e)))
+   (avahi-wait-ready! o
+      (lambda ()
+	 (with-access::avahi o (client poll)
+	    (avahi-simple-poll-timeout poll
+	       1
+	       (lambda ()
+		  (let ((group (instantiate::avahi-entry-group
+				  (proc entry-group-callback)
+				  (client client))))
+		     (let loop ((name name))
+			(with-handler
+			   (lambda (e)
+			      (if (isa? e &avahi-collision-error)
 				  (begin
-				     ;; add the service for hop
-				     (apply avahi-entry-group-add-service! group
-					:name name
-					:type type
-					:port (hop-port)
-					opts)
-				     ;; tell the server to register the service
-				     (avahi-entry-group-commit group)))))))
-		   (begin
-		      (condition-variable-wait! condv lock)
-		      (loop))))))))
+				     (avahi-entry-group-reset! group)
+				     (loop (avahi-alternative-service-name name)))
+				  (raise e)))
+			   (begin
+			      ;; add the service for hop
+			      (apply avahi-entry-group-add-service! group
+				 :name name
+				 :type type
+				 :port (hop-port)
+				 opts)
+			      ;; tell the server to register the service
+			      (avahi-entry-group-commit group)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-browser ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi zd type proc)
-   (with-access::avahi o (client poll lock state)
-      (with-lock lock
-	 (lambda ()
-	    (when (eq? state 'ready)
-	       (instantiate::avahi-service-browser
-		  (client client)
-		  (type type)
-		  (proc (lambda (b intf proto event name type domain flags)
-			   (when (or (eq? event 'avahi-browser-new)
-				     (eq? event 'avahi-browser-remove))
-			      (instantiate::avahi-service-resolver
-				 (client client)
-				 (interface intf)
-				 (protocol proto)
-				 (name name)
-				 (type type)
-				 (domain domain)
-				 (proc (lambda (r intf proto event svc type domain
-						  host addr port txtlst flags)
-					  (let* ((name (if (eq? event 'avahi-resolver-found)
-							   "add" "remove"))
-						 (proto (case proto
-							   ((avahi-proto-inet)
-							    "ipv4")
-							   ((avahi-proto-inet6)
-							    "ipv6")
-							   (else
-							    "unknown")))
-						 (evt (instantiate::zeroconf-service-event
-							 (name name)
-							 (target zd)
-							 (interface intf)
-							 (protocol proto)
-							 (value svc)
-							 (type type)
-							 (domain domain)
-							 (hostname host)
-							 (port port)
-							 (address addr)
-							 (options txtlst))))
-					     (proc evt))))))))))))))
+   (avahi-wait-ready! o
+      (lambda ()
+	 (with-access::avahi o (client poll)
+	    (instantiate::avahi-service-browser
+	       (client client)
+	       (type type)
+	       (proc (lambda (b intf proto event name type domain flags)
+			(when (or (eq? event 'avahi-browser-new)
+				  (eq? event 'avahi-browser-remove))
+			   (instantiate::avahi-service-resolver
+			      (client client)
+			      (interface intf)
+			      (protocol proto)
+			      (name name)
+			      (type type)
+			      (domain domain)
+			      (proc (lambda (r intf proto event svc type domain
+					       host addr port txtlst flags)
+				       (let* ((name (if (eq? event 'avahi-resolver-found)
+							"add" "remove"))
+					      (proto (case proto
+							((avahi-proto-inet)
+							 "ipv4")
+							((avahi-proto-inet6)
+							 "ipv6")
+							(else
+							 "unknown")))
+					      (evt (instantiate::zeroconf-service-event
+						      (name name)
+						      (target zd)
+						      (interface intf)
+						      (protocol proto)
+						      (value svc)
+						      (type type)
+						      (domain domain)
+						      (hostname host)
+						      (port port)
+						      (address addr)
+						      (options txtlst))))
+					  (proc evt)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish-service! ::avahi ...                            */
@@ -206,18 +207,19 @@
 	  "Illegal event (should be string or #f)"
 	  event))
       ((string=? event "")
-       (with-access::avahi o (client lock state)
-	  (with-access::avahi-client client (poll)
-	     (with-lock lock
-		(lambda ()
-		   (when (eq? state 'ready)
-		      (instantiate::avahi-service-type-browser
-			 (client client)
-			 (proc (lambda (b intf proto event type domain flags)
-				  (when (eq? event 'avahi-browser-new)
-				     (service-browser o zd type proc)))))))))))
+       (avahi-wait-ready! o
+	  (lambda ()
+	     (with-access::avahi o (client)
+		(with-access::avahi-client client (poll)
+		   (instantiate::avahi-service-type-browser
+		      (client client)
+		      (proc (lambda (b intf proto event type domain flags)
+			       (when (eq? event 'avahi-browser-new)
+				  (service-browser o zd type proc))))))))))
       (else
-       (service-browser o zd event proc))))
+       (avahi-wait-ready! o
+	  (lambda ()
+	     (service-browser o zd event proc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Register the avahi backend                                       */
