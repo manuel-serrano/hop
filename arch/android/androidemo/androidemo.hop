@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Feb 20 15:19:40 2012 (serrano)                */
+;*    Last change :  Sun Jun 24 07:03:39 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -520,19 +520,23 @@ missed.")
 			  (<LI> (html-string-encode (car g)))
 			  (<UL>
 			     (map (lambda (a)
+				     (tprint "Artist=[" a "]")
 				     (list
 					(<LI> (car a))
 					(<UL>
-					   (map (lambda (a)
-						   (tprint "Artist=[" a "]")
+					   (map (lambda (al)
+						   (tprint "Album=[" al "]")
 						   (list
-						      (<LI> (car a))
-						      (map (lambda (a)
-							      (tprint "Album=[" a "]")
+						      (<LI> (cadr (memq :album al)))
+						      (let ((i (memq :image al)))
+							 (when i
+							    (<IMG> :src (cadr i))))
+						      (map (lambda (t)
+							      (tprint "Track=[" t "]")
 							      (<PRE>
 								 (with-output-to-string
 								    (lambda ()
-								       (display a)))))
+								       (display t)))))
 							 (mpd-database-get-album mpd (car a)))))
 					      (mpd-database-getartistalbum mpd (car a))))))
 				(mpd-database-getgenreartist mpd (car g))))))

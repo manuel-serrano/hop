@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopConfigurer.java       */
+/*    .../2.3.x/arch/android/src/fr/inria/hop/HopConfigurer.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Thu Oct 14 15:49:28 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Sun Jun 24 06:51:15 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
 /*=====================================================================*/
@@ -56,15 +56,21 @@ public class HopConfigurer extends Thread {
 
    public void run() {
       try {
+	 Log.v( "HopConfigurer", ">>> openConnection \"" + url + "\"..." );
 	 HttpURLConnection conn = (HttpURLConnection)new URL( url ).openConnection();
+	 Log.v( "HopConfigurer", "<<< openConnection \"" + url + "\" opened" );
 
 	 while( true ) {
 	    try {
+	       Log.v( "HopConfigurer", ">>> waiting connection...\"" + url + "\"" );
 	       conn.connect();
-	       Log.i( "HopConfigurer", "connection established" );
+	       Log.i( "HopConfigurer", "<<< connection established" );
 	       Thread.sleep( 1000 );
 	       break;
 	    } catch( IOException e ) {
+	       Log.e( "HopConfigurer", "!!! connect failed..." + e );
+	       Thread.sleep( 5000 );
+	       conn = (HttpURLConnection)new URL( url ).openConnection();
 	       ;
 	    }
 	 }

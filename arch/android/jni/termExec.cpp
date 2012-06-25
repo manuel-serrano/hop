@@ -29,9 +29,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#define LOG_TAG "Exec"
-
 #include "jni.h"
 
 #include <sys/types.h>
@@ -42,6 +39,29 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
+
+#include <android/log.h>
+
+#define LOG_TAG "Hop-Exec"
+#undef LOG_TAG
+
+#if defined( LOG_TAG )
+/* MS 24 jun2012, when LOG_ENABLE is on, the libhoprun.so lib has to be linked against the
+ * Android liblog.so library. The clean way should be to modify and Ant Makefile to add the
+ * lib but I have failed to do that. Instead, copying the file in the proper directory with
+ *   cp /misc/virtual/android/r07/android-ndk-r4b/build/platforms/android-3/arch-arm/usr/lib/liblog.so 
+ *      misc/virtual/android/r07/build.hop/hop-2.3.1/android/obj/local/armeabi/liblog.so
+ * is a possible workaround. It requires to modify Android.mk as follows:
+ *   LOCAL_SHARED_LIBRARIES := log
+ */
+#  define LOGI(...) do { __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__); } while(0)
+#  define LOGW(...) do { __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__); } while(0)
+#  define LOGE(...) do { __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__); } while(0)
+#else
+#  define LOGI(...) 1
+#  define LOGW(...) 1
+#  define LOGE(...) 1
+#endif
 
 static jclass class_fileDescriptor;
 static jfieldID field_fileDescriptor_descriptor;
@@ -86,20 +106,20 @@ static int create_subprocess(const char *cmd, const char *arg0, const char *arg1
 
     ptm = open("/dev/ptmx", O_RDWR); // | O_NOCTTY);
     if(ptm < 0){
-        // LOGE("[ cannot open /dev/ptmx - %s ]\n",strerror(errno));
+        LOGE("[ cannot open /dev/ptmx - %s ]\n",strerror(errno));
         return -1;
     }
     fcntl(ptm, F_SETFD, FD_CLOEXEC);
 
     if(grantpt(ptm) || unlockpt(ptm) ||
        ((devname = (char*) ptsname(ptm)) == 0)){
-        // LOGE("[ trouble with /dev/ptmx - %s ]\n", strerror(errno));
+        LOGE("[ trouble with /dev/ptmx - %s ]\n", strerror(errno));
         return -1;
     }
 
     pid = fork();
     if(pid < 0) {
-        // LOGE("- fork failed: %s -\n", strerror(errno));
+        LOGE("- fork failed: %s -\n", strerror(errno));
         return -1;
     }
 
@@ -132,6 +152,8 @@ static jobject Hop_Exec_createSubProcess(JNIEnv *env, jobject clazz,
 {
     const jchar* str = cmd ? env->GetStringCritical(cmd, 0) : 0;
     String8 cmd_8;
+
+    LOGI( ">>> Hop_Exec_createSubProcess\n" );
     if (str) {
         cmd_8.set(str, env->GetStringLength(cmd));
         env->ReleaseStringCritical(cmd, str);
@@ -202,12 +224,13 @@ static jobject Hop_Exec_createSubProcess(JNIEnv *env, jobject clazz,
     jobject result = env->NewObject(class_fileDescriptor, method_fileDescriptor_init);
 
     if (!result) {
-        // LOGE("Couldn't create a FileDescriptor.");
+        LOGE("Couldn't create a FileDescriptor.");
     }
     else {
         env->SetIntField(result, field_fileDescriptor_descriptor, ptm);
     }
 
+    LOGI( "<<< Hop_Exec_createSubProcess\n" );
     return result;
 }
 
@@ -260,23 +283,27 @@ static void Hop_Exec_close(JNIEnv *env, jobject clazz, jobject fileDescriptor)
 
 static int register_FileDescriptor(JNIEnv *env)
 {
-    class_fileDescriptor = env->FindClass("java/io/FileDescriptor");
+    jclass localRef_class_fileDescriptor = env->FindClass("java/io/FileDescriptor");
 
-    if (class_fileDescriptor == NULL) {
-        // LOGE("Can't find java/io/FileDescriptor");
+    if (localRef_class_fileDescriptor == NULL) {
+        LOGE("Can't find java/io/FileDescriptor");
         return -1;
     }
+
+    class_fileDescriptor = (jclass) env->NewGlobalRef(localRef_class_fileDescriptor);
+
+    env->DeleteLocalRef(localRef_class_fileDescriptor);
 
     field_fileDescriptor_descriptor = env->GetFieldID(class_fileDescriptor, "descriptor", "I");
 
     if (field_fileDescriptor_descriptor == NULL) {
-        // LOGE("Can't find FileDescriptor.descriptor");
+        LOGE("Can't find FileDescriptor.descriptor");
         return -1;
     }
 
     method_fileDescriptor_init = env->GetMethodID(class_fileDescriptor, "<init>", "()V");
     if (method_fileDescriptor_init == NULL) {
-        // LOGE("Can't find FileDescriptor.init");
+        LOGE("Can't find FileDescriptor.init");
         return -1;
      }
      return 0;
@@ -306,11 +333,11 @@ static int registerNativeMethods(JNIEnv* env, const char* className,
 
     clazz = env->FindClass(className);
     if (clazz == NULL) {
-        // LOGE("Native registration unable to find class '%s'", className);
+        LOGE("Native registration unable to find class '%s'", className);
         return JNI_FALSE;
     }
     if (env->RegisterNatives(clazz, gMethods, numMethods) < 0) {
-        // LOGE("RegisterNatives failed for '%s'", className);
+        LOGE("RegisterNatives failed for '%s'", className);
         return JNI_FALSE;
     }
 
@@ -350,21 +377,21 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     jint result = -1;
     JNIEnv* env = NULL;
 
-    // LOGI("JNI_OnLoad");
+    LOGI("JNI_OnLoad");
 
     if (vm->GetEnv(&uenv.venv, JNI_VERSION_1_4) != JNI_OK) {
-        // LOGE("ERROR: GetEnv failed");
+        LOGE("ERROR: GetEnv failed");
         goto bail;
     }
     env = uenv.env;
 
     if ((result = register_FileDescriptor(env)) < 0) {
-        // LOGE("ERROR: registerFileDescriptor failed");
+        LOGE("ERROR: registerFileDescriptor failed");
         goto bail;
     }
 
     if (registerNatives(env) != JNI_TRUE) {
-        // LOGE("ERROR: registerNatives failed");
+        LOGE("ERROR: registerNatives failed");
         goto bail;
     }
 

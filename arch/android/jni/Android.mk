@@ -31,7 +31,8 @@ LOCAL_SRC_FILES:= \
   termExec.cpp
 
 # All of the shared libraries we link against.
-LOCAL_SHARED_LIBRARIES :=
+LOCAL_SHARED_LIBRARIES := log
+# LOCAL_SHARED_LIBRARIES := log
 
 # No static libraries.
 LOCAL_STATIC_LIBRARIES :=
