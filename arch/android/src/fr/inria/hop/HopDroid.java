@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Jun 27 10:39:20 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 14:00:37 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -43,6 +43,7 @@ public class HopDroid extends Thread {
    ServerSocket serv2;
    Handler handler = null;
    final Hashtable eventtable = new Hashtable();
+   
    // constructor
    public HopDroid( int p, Service s ) {
       super();
@@ -67,14 +68,12 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginMediaAudio( this, "mediaaudio" ) );
 	 registerPlugin( new HopPluginSensor( this, "sensor" ) );
 	 registerPlugin( new HopPluginBattery( this, "battery" ) );
+	 registerPlugin( new HopPluginSms( this, "sms" ) );
+	 registerPlugin( new HopPluginWifi( this, "wifi" ) );
+	 registerPlugin( new HopPluginContact( this, "contact" ) );
 	 
-/* 	 registerPlugin( new HopPluginSms( this, activity, "sms" ) );  */
-/* 	 registerPlugin( new HopPluginContact( this, activity, "contact" ) ); */
-/* 	 registerPlugin( new HopPluginCall( this, activity, "call" ) ); */
-
-	 
+	 registerPlugin( new HopPluginCall( this, activity, "call" ) );
 	 registerPlugin( new HopPluginTts( this, "tts" ) );
-/* 	 registerPlugin( new HopPluginWifi( this, activity, "wifi" ) ); */
       } catch( Exception e ) {
 	 abortError( e );
       }
@@ -83,7 +82,7 @@ public class HopDroid extends Thread {
    // abort
    public synchronized void abortError( Throwable e ) {
       if( !killed ) {
-	 Log.e( "HopDroid", "error: " + e.toString() + " exception=" + e.getClass().getName() );
+	 Log.e( "HopDroid", "error: " + e.toString() + " exception=" + e.getClass().getName(), e );
       
 	 kill();
 

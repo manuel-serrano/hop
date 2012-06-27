@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Tue Jan 11 17:30:40 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Wed Jun 27 19:11:02 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
 /*=====================================================================*/
@@ -43,8 +43,8 @@ import java.util.*;
 public class HopPluginContact extends HopPlugin {
    
    // constructor
-   HopPluginContact( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   HopPluginContact( HopDroid h, String n ) {
+      super( h, n );
    }
 
     // contact manager
@@ -74,7 +74,8 @@ public class HopPluginContact extends HopPlugin {
 	 ContactsContract.Contacts.DISPLAY_NAME
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
-      Cursor cur = activity.managedQuery( uri, projection, null, null, null );
+      ContentResolver cr = hopdroid.service.getContentResolver();
+      Cursor cur = cr.query( uri, projection, null, null, null );
 
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
@@ -327,7 +328,8 @@ public class HopPluginContact extends HopPlugin {
       
    // getCursor
    Cursor getCursor( int id, String[] projection, String mimetype ) throws IOException {
-      Cursor cur = activity.managedQuery(
+      ContentResolver cr = hopdroid.service.getContentResolver();
+      Cursor cur = cr.query(
 	 Data.CONTENT_URI, projection,
 	 Data.CONTACT_ID + "=?" + " AND "
 	 + Data.MIMETYPE + "='" + mimetype + "'",
@@ -376,7 +378,7 @@ public class HopPluginContact extends HopPlugin {
    void removeContact( final OutputStream op, final InputStream ip )
       throws IOException {
       String id = HopDroid.read_string( ip );
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       
       // remove from the sub-tables (MS 30oct2010: I'm not sure
       // this is useful. The Android documentation contains the following
@@ -411,7 +413,7 @@ public class HopPluginContact extends HopPlugin {
    // addContact
    void addContact( final OutputStream op, final InputStream ip )
       throws IOException {
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       ContentValues values = new ContentValues();
       String first = HopDroid.read_string( ip );
       String family = HopDroid.read_string( ip );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Tue Jun 26 17:40:00 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 12:02:07 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -44,6 +44,7 @@ public abstract class HopPlugin {
 
    public HopPlugin( HopDroid h, Activity a, String n ) {
       Log.v( "HopPlugin", "creating plugin: " + n );
+      hopdroid = h;
       handroid = h;
       name = n;
       activity = a;

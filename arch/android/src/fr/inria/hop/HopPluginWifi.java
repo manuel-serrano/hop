@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.3.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Sat Dec 17 19:44:49 2011 (serrano)                */
-/*    Copyright   :  2011 Manuel Serrano                               */
+/*    Last change :  Wed Jun 27 13:51:42 2012 (serrano)                */
+/*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
 /*=====================================================================*/
@@ -33,18 +33,18 @@ public class HopPluginWifi extends HopPlugin {
    static WifiManager wifi;
 
    // init
-   static void initMulticastLock( Activity activity ) {
+   static void initMulticastLock( HopDroid hopdroid ) {
       Log.d( "HopPluginWifi", "init multicastlock" );
       
       if( mclock == null ) {
-	 wifi = (WifiManager)activity.getSystemService( Context.WIFI_SERVICE );
+	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
 	 wifi.createMulticastLock( "hop-multicast-lock" );
       }
    }
 	 
    // constructor
-   public HopPluginWifi( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginWifi( HopDroid h, String n ) {
+      super( h, n );
    }
    
    // sensor manager
@@ -53,7 +53,7 @@ public class HopPluginWifi extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'m':
-	    initMulticastLock( activity );
+	    initMulticastLock( hopdroid );
 	    mclock.acquire();
 	    return;
 

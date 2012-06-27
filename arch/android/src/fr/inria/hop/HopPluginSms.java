@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginSms.java        */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginSms.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Tue Jan 11 17:30:00 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Wed Jun 27 19:09:00 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -21,6 +21,7 @@ import android.telephony.*;
 import android.util.Log;
 
 import java.io.*;
+import java.util.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -28,10 +29,62 @@ import java.io.*;
 public class HopPluginSms extends HopPlugin {
    final static String SENT = "SMS_SENT";
    final static String DELIVERED = "SMS_DELIVERED";
- 
+   
+   BroadcastReceiver sent_receiver =
+      new BroadcastReceiver() {
+	 @Override
+	 public void onReceive( Context arg0, Intent arg1 ) {
+	    switch( getResultCode() ) {
+	       case Activity.RESULT_OK:
+		  Log.v( "HopPluginSms", "SMS sent" );
+		  hopdroid.pushEvent( "sms-sent", "(ok)" );
+		  break;
+			   
+	       case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+		  hopdroid.pushEvent( "sms-sent", "(error generic-failure)" );
+		  Log.v( "HopPluginSms", "Generic failure" );
+		  break;
+			   
+	       case SmsManager.RESULT_ERROR_NO_SERVICE:
+		  Log.v( "HopPluginSms", "No service" );
+		  hopdroid.pushEvent( "sms-sent", "(error no-service)" );
+		  break;
+			   
+	       case SmsManager.RESULT_ERROR_NULL_PDU:
+		  Log.v( "HopPluginSms", "null PDU" );
+		  hopdroid.pushEvent( "sms-sent", "(error null-pdu)" );
+		  break;
+			   
+	       case SmsManager.RESULT_ERROR_RADIO_OFF:
+		  Log.v( "HopPluginSms", "Radio off" );
+		  hopdroid.pushEvent( "sms-sent", "(error radio-off)" );
+		  break;
+	    }
+	 }
+      };
+
+   BroadcastReceiver delivered_receiver =
+      new BroadcastReceiver() {
+	 @Override
+	 public void onReceive( Context arg0, Intent arg1 ) {
+	    switch( getResultCode() ) {
+	       case Activity.RESULT_OK:
+		  Log.v( "HopPluginSms", "SMS delivered" );
+		  hopdroid.pushEvent( "sms-delivered", "(ok)" );
+		  break;
+			   
+	       case Activity.RESULT_CANCELED:
+		  Log.v( "HopPluginSms", "SMS not delivered" );
+		  hopdroid.pushEvent( "sms-delivered", "(error)" );
+		  break;                        
+	    }
+	 }
+      };
+      
+
    // constructor
-   public HopPluginSms( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginSms( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // sensor manager
@@ -42,64 +95,19 @@ public class HopPluginSms extends HopPlugin {
 	 case (byte)'s':
 	    // send a SMS
 	    PendingIntent sentpi = PendingIntent.getBroadcast(
-	       activity, 0, new Intent( SENT ), 0 );
+	       hopdroid.service, 0, new Intent( SENT ), 0 );
 	    PendingIntent deliveredpi = PendingIntent.getBroadcast(
-	       activity, 0, new Intent( DELIVERED ), 0 );
+	       hopdroid.service, 0, new Intent( DELIVERED ), 0 );
  
 	    SmsManager sms = SmsManager.getDefault();
 	    String no = HopDroid.read_string( ip );
 	    String msg = HopDroid.read_string( ip );
 
 	    // the SMS has been sent
-	    activity.registerReceiver( new BroadcastReceiver() {
-		  @Override
-		  public void onReceive( Context arg0, Intent arg1 ) {
-		     switch( getResultCode() ) {
-			case Activity.RESULT_OK:
-			   Log.v( "HopPluginSms", "SMS sent" );
-			   handroid.pushEvent( "sms-sent", "(ok)" );
-			   break;
-			   
-			case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-			   handroid.pushEvent( "sms-sent", "(error generic-failure)" );
-			   Log.v( "HopPluginSms", "Generic failure" );
-			   break;
-			   
-			case SmsManager.RESULT_ERROR_NO_SERVICE:
-			   Log.v( "HopPluginSms", "No service" );
-			   handroid.pushEvent( "sms-sent", "(error no-service)" );
-			   break;
-			   
-			case SmsManager.RESULT_ERROR_NULL_PDU:
-			   Log.v( "HopPluginSms", "null PDU" );
-			   handroid.pushEvent( "sms-sent", "(error null-pdu)" );
-			   break;
-			   
-			case SmsManager.RESULT_ERROR_RADIO_OFF:
-			   Log.v( "HopPluginSms", "Radio off" );
-			   handroid.pushEvent( "sms-sent", "(error radio-off)" );
-			   break;
-		     }
-		  }
-	       }, new IntentFilter( SENT ) );
+	    hopdroid.service.registerReceiver( sent_receiver, new IntentFilter( SENT ) );
 
 	    // the SMS has been delivered
-	    activity.registerReceiver( new BroadcastReceiver() {
-		  @Override
-		  public void onReceive( Context arg0, Intent arg1 ) {
-		     switch( getResultCode() ) {
-			case Activity.RESULT_OK:
-			   Log.v( "HopPluginSms", "SMS delivered" );
-			   handroid.pushEvent( "sms-delivered", "(ok)" );
-			   break;
-			   
-			case Activity.RESULT_CANCELED:
-			   Log.v( "HopPluginSms", "SMS not delivered" );
-			   handroid.pushEvent( "sms-delivered", "(error)" );
-			   break;                        
-		     }
-		  }
-	       }, new IntentFilter( DELIVERED ) );
+	    hopdroid.service.registerReceiver( delivered_receiver, new IntentFilter( DELIVERED ) );
 
 	    if( msg.length() > 10 ) {
 	       Log.v( "HopPluginSms", "sms send to " + no + " \""
@@ -110,8 +118,34 @@ public class HopPluginSms extends HopPlugin {
 		      + msg.substring( 0, msg.length() ) 
 		      + "\"" );
 	    }
-	    sms.sendTextMessage( no, null, msg, sentpi, deliveredpi );     
+	    try {
+	       ArrayList<String> dmsg = sms.divideMessage( msg );
+
+	       if( dmsg.size() > 1 ) {
+		  ArrayList<PendingIntent> sentpis = new ArrayList<PendingIntent>();
+		  ArrayList<PendingIntent> deliveredpis = new ArrayList<PendingIntent>();
+
+		  for( int i = 0; i < dmsg.size(); i++ ) {
+		     sentpis.add( sentpi );
+		     deliveredpis.add( deliveredpi );
+		  }
+
+		  sms.sendMultipartTextMessage( no, null, dmsg, sentpis, deliveredpis );
+	       } else {
+		  sms.sendTextMessage( no, null, msg, sentpi, deliveredpi );
+	       }
+	    } catch( Throwable e ) {
+	       Log.e( "HopPluginSms", "Cannot send message", e );
+	    }
 	    return;
       }
+   }
+   
+   // cleanup
+   public void kill() {
+      super.kill();
+
+      hopdroid.service.unregisterReceiver( sent_receiver );
+      hopdroid.service.unregisterReceiver( delivered_receiver );
    }
 }

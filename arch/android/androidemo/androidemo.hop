@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Jun 27 11:13:20 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 12:01:11 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -42,32 +42,32 @@
 	 ,dot ,short-gap ,dot ,short-gap ,dot
 	 ,long-gap)))
 
-;* (define contact                                                     */
-;*    (string->vcard "BEGIN:VCARD                                      */
-;* VERSION:2.1                                                         */
-;* N:Jean;Dupont;;;                                                    */
-;* FN:Jean Dupont                                                      */
-;* TEL;HOME;VOICE:09 29 48 32 28                                       */
-;* TEL;WORK: 01 46 32 22 22                                            */
-;* EMAIL;HOME:foo@bar.org                                              */
-;* ADR;HOME:;;22 Rue De La Poste;Paris;France;75001;                   */
-;* URL:http://nowhere.org                                              */
-;* END:VCARD"))                                                        */
+(define contact
+   (string->vcard "BEGIN:VCARD
+VERSION:2.1
+N:Jean;Dupont;;;
+FN:Jean Dupont
+TEL;HOME;VOICE:09 29 48 32 28
+TEL;WORK: 01 46 32 22 22
+EMAIL;HOME:foo@bar.org
+ADR;HOME:;;22 Rue De La Poste;Paris;France;75001;
+URL:http://nowhere.org
+END:VCARD"))
 
 ;*---------------------------------------------------------------------*/
 ;*    server listener                                                  */
 ;*---------------------------------------------------------------------*/
-;* (add-event-listener! android "sms-delivered"                        */
-;*    (lambda (e)                                                      */
-;*       (hop-event-broadcast! "sms-delivered" #t)))                   */
-;* (add-event-listener! android "sms-sent"                             */
-;*    (lambda (e)                                                      */
-;*       (hop-event-broadcast! "sms-sent" #t)))                        */
-;* (add-event-listener! android "sms-received"                         */
-;*    (lambda (e::event)                                               */
-;*       (let ((val e.value))                                          */
-;* 	 (hop-event-broadcast! "sms-received" val)                     */
-;* 	 (tts-speak atts (cadr val)))))                                */
+(add-event-listener! android "sms-delivered"
+   (lambda (e)
+      (hop-event-broadcast! "sms-delivered" #t)))
+(add-event-listener! android "sms-sent"
+   (lambda (e)
+      (hop-event-broadcast! "sms-sent" #t)))
+(add-event-listener! android "sms-received"
+   (lambda (e::event)
+      (let ((val e.value))
+	 (hop-event-broadcast! "sms-received" val)
+	 (tts-speak atts (cadr val)))))
 (add-event-listener! android "battery"
    (lambda (e::event)
       (set! battery-state e.value)
@@ -75,9 +75,9 @@
 (add-event-listener! android "tts"
    (lambda (e::event)
       (hop-event-broadcast! "tts" e.value)))
-;* (add-event-listener! android "call"                                 */
-;*    (lambda (e::event)                                               */
-;*       (hop-event-broadcast! "call" e.value)))                       */
+(add-event-listener! android "call"
+   (lambda (e::event)
+      (hop-event-broadcast! "call" e.value)))
 (add-event-listener! android "orientation"
    (lambda (e::event)
       (hop-event-broadcast! "orientation" e.value)))
@@ -99,8 +99,8 @@
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
 
-;* 	 (<H2> "Telephony")                                            */
-;* 	 (<ANDROIDEMO:TELEPHONY>)                                      */
+	 (<H2> "Telephony")
+	 (<ANDROIDEMO:TELEPHONY>)
 
 	 (<H2> "Hardware")
 	 (<DIV> :class "short-note"
@@ -109,13 +109,12 @@ side to use the hardware sensors and activators of the phone. Each time a
 button of this web interface is clicked, the corresponding order is send
 to the server to directly controls the phone.")
 	 (<ANDROIDEMO:HARDWARE>)
-;* 	                                                               */
+
 ;* 	 (<H2> "Contact")                                              */
 ;* 	 (<DIV> :class "short-note"                                    */
 ;* 	    "This illustrates the ability of the Hop to use the on-device */
 ;* contacts.")                                                         */
-;* {* 	 (<ANDROIDEMO:CONTACT>)                                        *} */
-;*                                                                     */
+;* 	 (<ANDROIDEMO:CONTACT>)                                        */
 	 
 	 (<H2> "Speech")
 	 (<DIV> :class "short-note"
@@ -191,52 +190,53 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:TELEPHONY> ...                                       */
 ;*---------------------------------------------------------------------*/
-;* (define (<ANDROIDEMO:TELEPHONY>)                                    */
-;*    (list                                                            */
-;*     (<DIV> :id "sms-send"                                           */
-;*        ~(add-event-listener! server "sms-sent"                      */
-;* 	   (lambda (e)                                                 */
-;* 	      (innerHTML-set! "sms-status" "sent")))                   */
-;*        ~(add-event-listener! server "sms-delivered"                 */
-;* 	   (lambda (e)                                                 */
-;* 	      (innerHTML-set! "sms-status" "delivered")))              */
-;*        ~(add-event-listener! server "sms-received"                  */
-;* 	   (lambda (e)                                                 */
-;* 	      (innerHTML-set! "sms-received-no" (car e.value))         */
-;* 	      (innerHTML-set! "sms-received-text" (cadr e.value))))    */
+(define (<ANDROIDEMO:TELEPHONY>)
+   (list
+    (<DIV> :id "sms-send"
+       ~(add-event-listener! server "sms-sent"
+	   (lambda (e)
+	      (innerHTML-set! "sms-status" "sent")))
+       ~(add-event-listener! server "sms-delivered"
+	   (lambda (e)
+	      (innerHTML-set! "sms-status" "delivered")))
+       ~(add-event-listener! server "sms-received"
+	   (lambda (e)
+	      (innerHTML-set! "sms-received-no" (car e.value))
+	      (innerHTML-set! "sms-received-text" (cadr e.value))))
 
-;*        (<DIV>                                                       */
-;* 	  (<BUTTON> :onclick ~(with-hop ($(service (no text)           */
-;* 					     (phone-sms-send android no text)) */
-;* 					  (let ((no (dom-get-element-by-id "smsno"))) */
-;* 					     no.value)                 */
-;* 					  (let ((txt (dom-get-element-by-id "smstext"))) */
-;* 					     txt.value)))              */
-;* 	     "Send SMS")                                               */
-;* 	  (<INPUT> :id "smsno"))                                       */
-;*        (<TEXTAREA> :id "smstext" "")                                */
-;*        (<DIV> :id "sms-status" ""))                                 */
-;*     (<H3> "Incoming SMS")                                           */
-;*     (<DIV> :class "short-note"                                      */
-;*        "This demonstrates the ability to the running Hop to react to */
-;* incoming SMS. In that demonstration, when a SMS is received, the server code */
-;* intercepts that message, read it, and broadcasts it to clients      */
-;* (i.e., web browsers) that display information relative to that message.") */
-;*     (<DIV> "From: " (<SPAN> :id "sms-received-no"))                 */
-;*     (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS") */
-;*     (<H3> "Call Log")                                               */
-;*     (<DIV> :class "short-note"                                      */
-;*        "This shows the log of the recent calls, received, placed, and */
-;* missed.")                                                           */
-;*     (<ANDROIDEMO:CALLLOG>)                                          */
-;*     (<H3> "Call status")                                            */
-;*     (<DIV> :class "short-note"                                      */
-;*        "This shows the status of the phone and call events.")       */
-;*     (<ANDROIDEMO:CALLINFO>)                                         */
-;*     (<H3> "Call")                                                   */
-;*     (<DIV> :class "short-note"                                      */
-;*        "This shows how to place a phone call.")                     */
-;*     (<ANDROIDEMO:CALL>)))                                           */
+       (<DIV>
+	  (<BUTTON> :onclick ~(with-hop ($(service (no text)
+					     (phone-sms-send android no text))
+					  (let ((no (dom-get-element-by-id "smsno")))
+					     no.value)
+					  (let ((txt (dom-get-element-by-id "smstext")))
+					     txt.value)))
+	     "Send SMS")
+	  (<INPUT> :id "smsno"))
+       (<TEXTAREA> :id "smstext" "")
+       (<DIV> :id "sms-status" ""))
+    (<H3> "Incoming SMS")
+    (<DIV> :class "short-note"
+       "This demonstrates the ability to the running Hop to react to
+incoming SMS. In that demonstration, when a SMS is received, the server code
+intercepts that message, read it, and broadcasts it to clients
+(i.e., web browsers) that display information relative to that message.")
+    (<DIV> "From: " (<SPAN> :id "sms-received-no"))
+    (<PRE> :id "sms-received-text" "This box will display the content of incoming SMS")
+    (<H3> "Call Log")
+    (<DIV> :class "short-note"
+       "This shows the log of the recent calls, received, placed, and
+missed.")
+    (<ANDROIDEMO:CALLLOG>)
+    (<H3> "Call status")
+    (<DIV> :class "short-note"
+       "This shows the status of the phone and call events.")
+    (<ANDROIDEMO:CALLINFO>)
+    (<H3> "Call")
+    (<DIV> :class "short-note"
+       "This shows how to place a phone call.")
+    (<ANDROIDEMO:CALL>)
+))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:HARDWARE> ...                                        */
@@ -410,71 +410,71 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;* 					 (innerHTML-set! "contact-list" l)))) */
 ;* 	 "Add entry")))                                                */
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    <ANDROIDEMO:CALLINFO> ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (<ANDROIDEMO:CALLINFO>)                                     */
-;*    (list                                                            */
-;*     ~(add-event-listener! server "call"                             */
-;* 	(lambda (e)                                                    */
-;* 	   (let* ((el (dom-get-element-by-id "callinfo-state"))        */
-;* 		  (s (with-output-to-string                            */
-;* 			(lambda () (write e.value)))))                 */
-;* 	      (innerHTML-set! el (<PRE> s)))))                         */
-;*     (<TABLE> :class "callinfo"                                      */
-;*        (map (lambda (e)                                             */
-;* 	       (<TR> (<TH> (symbol->string (car e))) (<TD> (cadr e)))) */
-;* 	    (phone-call-info android)))                                */
-;*     (<BR>)                                                          */
-;*     (<DIV> :class "short-note"                                      */
-;*        "Call Events")                                               */
-;*     (<DIV> :id "callinfo-state" "")))                               */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    <ANDROIDEMO:CALL> ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (<ANDROIDEMO:CALL>)                                         */
-;*    (list                                                            */
-;*     (<TEXTAREA> :id "call-number"                                   */
-;*        "")                                                          */
-;*     (<TEXTAREA> :id "call-speech"                                   */
-;*        "")                                                          */
-;*     (<DIV>                                                          */
-;*        (<BUTTON> :onclick                                           */
-;* 	  ~(let ((eln (dom-get-element-by-id "call-number"))           */
-;* 		 (elt(dom-get-element-by-id "call-speech")))           */
-;* 	      (with-hop ($(service (number text)                       */
-;* 			     (when (and (string? text)                 */
-;* 					(>fx (string-length text) 0))  */
-;* 				(letrec ((h (lambda (e::event)         */
-;* 					       (match-case e.value     */
-;* 						  ((call-state offhook) */
-;* 						   (remove-event-listener! android "call" h) */
-;* 						   (tts-speak atts "text")))))) */
-;* 				   (add-event-listener! android "call" h) */
-;* 				   (phone-call-start android number)))) */
-;* 			   eln.value elt.value)))                      */
-;* 	  "Place call")                                                */
-;*        (<BUTTON> :onclick ~(with-hop ($(service ()                  */
-;* 					  (phone-call-stop android)))) */
-;* 	  "End call"))))                                               */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    <ANDROIDEMO:CALLLOG> ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (<ANDROIDEMO:CALLLOG>)                                      */
-;*    (<TABLE> :class "calllog"                                        */
-;*       (<TR> (<TH> "number") (<TH> "date") (<TH> "duration") (<TH> "name")) */
-;*       (map (lambda (entry)                                          */
-;* 	      (match-case entry                                        */
-;* 		 ((?type ?number ?date ?duration ?name)                */
-;* 		  (<TR> :class (symbol->string type)                   */
-;* 		     (<TD> (<TT> number))                              */
-;* 		     (<TD> (seconds->date date))                       */
-;* 		     (<TD> duration)                                   */
-;* 		     (<TD> name)))))                                   */
-;* 	   (phone-call-log android 10))))                              */
-;*                                                                     */
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALLINFO> ...                                        */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALLINFO>)
+   (list
+    ~(add-event-listener! server "call"
+	(lambda (e)
+	   (let* ((el (dom-get-element-by-id "callinfo-state"))
+		  (s (with-output-to-string
+			(lambda () (write e.value)))))
+	      (innerHTML-set! el (<PRE> s)))))
+    (<TABLE> :class "callinfo"
+       (map (lambda (e)
+	       (<TR> (<TH> (symbol->string (car e))) (<TD> (cadr e))))
+	    (phone-call-info android)))
+    (<BR>)
+    (<DIV> :class "short-note"
+       "Call Events")
+    (<DIV> :id "callinfo-state" "")))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALL> ...                                            */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALL>)
+   (list
+    (<TEXTAREA> :id "call-number"
+       "")
+    (<TEXTAREA> :id "call-speech"
+       "")
+    (<DIV>
+       (<BUTTON> :onclick
+	  ~(let ((eln (dom-get-element-by-id "call-number"))
+		 (elt(dom-get-element-by-id "call-speech")))
+	      (with-hop ($(service (number text)
+			     (when (and (string? text)
+					(>fx (string-length text) 0))
+				(letrec ((h (lambda (e::event)
+					       (match-case e.value
+						  ((call-state offhook)
+						   (remove-event-listener! android "call" h)
+						   (tts-speak atts "text"))))))
+				   (add-event-listener! android "call" h)
+				   (phone-call-start android number))))
+			   eln.value elt.value)))
+	  "Place call")
+       (<BUTTON> :onclick ~(with-hop ($(service ()
+					  (phone-call-stop android))))
+	  "End call"))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:CALLLOG> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:CALLLOG>)
+   (<TABLE> :class "calllog"
+      (<TR> (<TH> "number") (<TH> "date") (<TH> "duration") (<TH> "name"))
+      (map (lambda (entry)
+	      (match-case entry
+		 ((?type ?number ?date ?duration ?name)
+		  (<TR> :class (symbol->string type)
+		     (<TD> (<TT> number))
+		     (<TD> (seconds->date date))
+		     (<TD> duration)
+		     (<TD> name)))))
+	   (phone-call-log android 10))))
+
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SPEECH> ...                                          */
 ;*---------------------------------------------------------------------*/

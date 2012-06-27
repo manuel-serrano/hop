@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Jun 27 09:37:55 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 13:56:11 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -138,13 +138,13 @@ public class Hop extends Thread {
 			handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 		     }
 		  }
-	       } catch( Exception e ) {
+	       } catch( Throwable e ) {
 		  if( !killed ) {
 		     boolean tosend = false;
 		  
 		     Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
 			    + " currentpid=" + currentpid[ 0 ] 
-			    + ") exception=" +  e.getClass().getName() );
+			    + ") exception=" +  e.getClass().getName(), e );
 		     synchronized( currentpid ) {
 			if( currentpid[ 0 ] == pid[ 0 ] ) {
 			   tosend = true;

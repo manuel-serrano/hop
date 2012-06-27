@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.3.x/arch/android/src/fr/inria/hop/HopPluginCall.java       */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginCall.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sat Dec 17 19:27:00 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Wed Jun 27 14:04:54 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
 /*=====================================================================*/
@@ -136,7 +136,7 @@ public class HopPluginCall extends HopPlugin {
    // initTelephoneManager
    void initTelephoneManager() {
       if( tm == null ) {
-	 tm = (TelephonyManager)activity.getSystemService( Context.TELEPHONY_SERVICE );
+	 tm = (TelephonyManager)hopdroid.service.getSystemService( Context.TELEPHONY_SERVICE );
       }
    }
    
@@ -332,10 +332,11 @@ public class HopPluginCall extends HopPlugin {
 	 Calls.DURATION,
 	 Calls.CACHED_NAME,
       };
-      Uri uri = Calls.CONTENT_URI;
       String order = Calls.DATE + " DESC";
       String limit = (i > 0) ? (order + " LIMIT " + i) : order;
-      Cursor cur = activity.managedQuery( uri, projection, null, null, limit );
+      
+      ContentResolver cr = hopdroid.service.getContentResolver();
+      Cursor cur = cr.query( Calls.CONTENT_URI, projection, null, null, limit );
 
       if( cur.moveToFirst() ) {
 	 
