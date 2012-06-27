@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginSensor.java     */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginSensor.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Tue Jan 11 19:35:49 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Wed Jun 27 10:11:40 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
 /*=====================================================================*/
@@ -47,8 +47,8 @@ public class HopPluginSensor extends HopPlugin {
    };
 
    // constructor
-   HopPluginSensor( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   HopPluginSensor( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // kill
@@ -95,7 +95,7 @@ public class HopPluginSensor extends HopPlugin {
    private void init_sensormanager() {
       if( sensormanager == null ) {
 	 sensormanager =
-	    (SensorManager)activity.getSystemService( Context.SENSOR_SERVICE );
+	    (SensorManager)hopdroid.service.getSystemService( Context.SENSOR_SERVICE );
 	 for( int i = 0; i < TYPE_PRESSURE + 1; i++ ) {
 	    sensors[ i ] = sensormanager.getSensorList( SENSORTYPES[ i ] );
 	    hoplistenerscache[ i ] = new float[ 3 ];
@@ -175,7 +175,7 @@ public class HopPluginSensor extends HopPlugin {
 				 cache[ 1 ] = event.values[ 1 ];
 				 cache[ 2 ] = event.values[ 2 ];
 			      
-				 handroid.pushEvent(
+				 hopdroid.pushEvent(
 				    sensor_name( SENSORTYPES[ type ] ),
 				    values_to_sexp( (float [])values[ type ] ) );
 			      }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Jun 26 17:47:31 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 11:13:20 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -22,6 +22,8 @@
 (define android (instantiate::androidphone))
 (define amusic (instantiate::androidmusic (phone android)))
 (define atts (instantiate::androidtts (phone android)))
+
+(define battery-state '())
 
 (define sos-vibrations
    (let ((dot #l200)
@@ -66,18 +68,19 @@
 ;*       (let ((val e.value))                                          */
 ;* 	 (hop-event-broadcast! "sms-received" val)                     */
 ;* 	 (tts-speak atts (cadr val)))))                                */
-;* (add-event-listener! android "battery"                              */
-;*    (lambda (e::event)                                               */
-;*       (hop-event-broadcast! "battery" e.value)))                    */
-;* (add-event-listener! android "tts"                                  */
-;*    (lambda (e::event)                                               */
-;*       (hop-event-broadcast! "tts" e.value)))                        */
+(add-event-listener! android "battery"
+   (lambda (e::event)
+      (set! battery-state e.value)
+      (hop-event-broadcast! "battery" e.value)))
+(add-event-listener! android "tts"
+   (lambda (e::event)
+      (hop-event-broadcast! "tts" e.value)))
 ;* (add-event-listener! android "call"                                 */
 ;*    (lambda (e::event)                                               */
 ;*       (hop-event-broadcast! "call" e.value)))                       */
-;* (add-event-listener! android "orientation"                          */
-;*    (lambda (e::event)                                               */
-;*       (hop-event-broadcast! "orientation" e.value)))                */
+(add-event-listener! android "orientation"
+   (lambda (e::event)
+      (hop-event-broadcast! "orientation" e.value)))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -134,22 +137,22 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;*---------------------------------------------------------------------*/
 ;*    androidemo/sensors ...                                           */
 ;*---------------------------------------------------------------------*/
-;* (define-service (androidemo/sensors)                                */
-;*    (list (cons 'orientation                                         */
-;* 	       (phone-sensor android 'orientation))                    */
-;* 	 (cons 'magnetic                                               */
-;* 	       (phone-sensor android 'magnetic-field))                 */
-;* 	 (cons 'accelerometer                                          */
-;* 	       (phone-sensor android 'accelerometer))                  */
-;* 	 (cons 'temperature                                            */
-;* 	       (phone-sensor android 'temperature))                    */
-;* 	 (cons 'light                                                  */
-;* 	       (phone-sensor android 'light))                          */
-;* 	 (cons 'pressure                                               */
-;* 	       (phone-sensor android 'pressure))                       */
-;* 	 (cons 'proximity                                              */
-;* 	       (phone-sensor android 'proximity))))                    */
-;*                                                                     */
+(define-service (androidemo/sensors)
+   (list (cons 'orientation
+	       (phone-sensor android 'orientation))
+	 (cons 'magnetic
+	       (phone-sensor android 'magnetic-field))
+	 (cons 'accelerometer
+	       (phone-sensor android 'accelerometer))
+	 (cons 'temperature
+	       (phone-sensor android 'temperature))
+	 (cons 'light
+	       (phone-sensor android 'light))
+	 (cons 'pressure
+	       (phone-sensor android 'pressure))
+	 (cons 'proximity
+	       (phone-sensor android 'proximity))))
+
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BODY> ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -201,13 +204,7 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;* 	   (lambda (e)                                                 */
 ;* 	      (innerHTML-set! "sms-received-no" (car e.value))         */
 ;* 	      (innerHTML-set! "sms-received-text" (cadr e.value))))    */
-;*        ~(add-event-listener! server "orientation"                   */
-;* 	   (lambda (e)                                                 */
-;* 	      (let ((r (format "rotate(~adeg)" (car e.value))))        */
-;* 		 (node-style-set! "img-ori"                            */
-;* 		    :MozTransform r                                    */
-;* 		    :webkitTransform r))))                             */
-;*                                                                     */
+
 ;*        (<DIV>                                                       */
 ;* 	  (<BUTTON> :onclick ~(with-hop ($(service (no text)           */
 ;* 					     (phone-sms-send android no text)) */
@@ -249,84 +246,99 @@ Android phone. This demonstration does not use any HTML5 facility.")
     (<BUTTON> :onclick ~(with-hop ($(service ()
 				       (phone-vibrate android sos-vibrations -1))))
        "Vibrate (SOS)")
-;*     (<ANDROIDEMO:SENSORS>)                                          */
-;*     (<H3> "Battery")                                                */
-;*     (<ANDROIDEMO:BATTERY>)                                          */
+    (<ANDROIDEMO:SENSORS>)
+    (<H3> "Battery")
+    (<ANDROIDEMO:BATTERY>)
     ))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SENSORS> ...                                         */
 ;*---------------------------------------------------------------------*/
-;* (define (<ANDROIDEMO:SENSORS>)                                      */
-;*    (list                                                            */
-;*     ~(define active-sensors #f)                                     */
-;*                                                                     */
-;*     (<DIV> "Sensor list:")                                          */
-;*                                                                     */
-;*     (<PRE> (map (lambda (l)                                         */
-;* 		   (with-output-to-string                              */
-;* 		      (lambda ()                                       */
-;* 			 (write l)                                     */
-;* 			 (newline))))                                  */
-;* 		(phone-sensor-list android)))                          */
-;*                                                                     */
-;*     (<BUTTON> :onclick ~(if active-sensors                          */
-;* 			    (begin                                     */
-;* 			       (innerHTML-set! this "Activate sensors") */
-;* 			       (set! active-sensors #f))               */
-;* 			    (let ((img (dom-get-element-by-id "img"))  */
-;* 				  (2PI (* 4 (atan 1))))                */
-;* 			       (innerHTML-set! this "Deactive sensors") */
-;* 			       (set! active-sensors #t)                */
-;* 			       (let loop ()                            */
-;* 				  (with-hop ($androidemo/sensors)      */
-;* 				     (lambda (l)                       */
-;* 					(innerHTML-set!                */
-;* 					 "sensors"                     */
-;* 					 (<TABLE> (map (lambda (r)     */
-;* 							  (<TR>        */
-;* 							     (<TD> (symbol->string (car r))) */
-;* 							     (<TD> (if (pair? (cdr r)) */
-;* 								       (<TT> (map (lambda (v) */
-;* 										     (list v " " )) */
-;* 										  (cdr r))) */
-;* 								       "")))) */
-;* 						       l)))            */
-;* 					(when active-sensors           */
-;* 					   (after 200 loop)))))))      */
-;*        "Activate sensors")                                          */
-;*                                                                     */
-;*     (<DIV> :id "sensors")                                           */
-;*     (<IMG> :id "img-ori"                                            */
-;*        :src (make-file-path (hop-share-directory)                   */
-;* 			    "icons" "hop" "hop-128x128.png"))))        */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    <ANDROIDEMO:BATTERY> ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (<ANDROIDEMO:BATTERY>)                                      */
-;*    (list                                                            */
-;*     ~(add-event-listener! server "battery"                          */
-;* 	(lambda (e::event)                                             */
-;* 	   (let ((val e.value))                                        */
-;* 	      (gauge-value-set! "bat-level" (car val))                 */
-;* 	      (innerHTML-set! "bat-status" (symbol->string (caddr val))) */
-;* 	      (innerHTML-set! "bat-plug" (symbol->string (cadddr val))) */
-;* 	      (innerHTML-set! "bat-health" (symbol->string (cadr (cdddr val)))) */
-;* 	      (innerHTML-set! "bat-voltage" (caddr (cdddr val))))))    */
-;*     (<TABLE> :id "battery"                                          */
-;*        (<TR>                                                        */
-;* 	  (<TH> "charge level")                                        */
-;* 	  (<TH> "status")                                              */
-;* 	  (<TH> "plug")                                                */
-;* 	  (<TH> "health")                                              */
-;* 	  (<TH> "voltage"))                                            */
-;*        (<TR>                                                        */
-;* 	  (<TD> (<GAUGE> :id "bat-level"))                             */
-;* 	  (<TD> :id "bat-status" "")                                   */
-;* 	  (<TD> :id "bat-plug" "")                                     */
-;* 	  (<TD> :id "bat-health" "")                                   */
-;* 	  (<TD> :id "bat-voltage" "")))))                              */
+(define (<ANDROIDEMO:SENSORS>)
+   (list
+    ~(define active-sensors #f)
+
+    ~(add-event-listener! server "orientation"
+	(lambda (e)
+	   (let ((r (format "rotate(~adeg)" (car e.value))))
+	      (node-style-set! "img-ori"
+		 :MozTransform r
+		 :webkitTransform r))))
+       
+    (<DIV> "Sensor list:")
+
+    (<PRE> (map (lambda (l)
+		   (with-output-to-string
+		      (lambda ()
+			 (write l)
+			 (newline))))
+		(phone-sensor-list android)))
+
+    (<BUTTON> :onclick ~(if active-sensors
+			    (begin
+			       (innerHTML-set! this "Activate sensors")
+			       (set! active-sensors #f))
+			    (let ((img (dom-get-element-by-id "img"))
+				  (2PI (* 4 (atan 1)))
+				  (t (format "rotate(~adeg)" e.value)))
+			       (innerHTML-set! this "Deactive sensors")
+			       (let loop ()
+				  (with-hop ($androidemo/sensors)
+				     (lambda (l)
+					(innerHTML-set!
+					 "sensors"
+					 (<TABLE> (map (lambda (r)
+							  (<TR>
+							     (<TD> (symbol->string (car r)))
+							     (<TD> (if (pair? (cdr r))
+								       (<TT> (map (lambda (v)
+										     (list v " " ))
+										  (cdr r)))
+								       ""))))
+						       l)))
+					(when active-sensors
+					   (after 200 loop)))))))
+       "Activate sensors")
+
+    (<DIV> :id "sensors")
+    (<IMG> :id "img-ori"
+       :src (make-file-path (hop-share-directory)
+			    "icons" "hop" "hop-128x128.png"))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:BATTERY> ...                                         */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:BATTERY>)
+   (list
+      ~(define (update-battery! val)
+	  (gauge-value-set! "bat-level" (car val))
+	  (innerHTML-set! "bat-status" (symbol->string (caddr val)))
+	  (innerHTML-set! "bat-plug" (symbol->string (cadddr val)))
+	  (innerHTML-set! "bat-health" (symbol->string (cadr (cdddr val))))
+	  (innerHTML-set! "bat-voltage" (caddr (cdddr val))))
+	  
+    ~(add-event-listener! server "battery"
+	(lambda (e::event)
+	   (update-battery! e.value)))
+
+    (when (pair? battery-state)
+       ~(add-event-listener! "battery" "ready"
+	   (lambda (e)
+	      (update-battery! $battery-state))))
+
+    (<TABLE> :id "battery"
+       (<TR>
+	  (<TH> "charge level")
+	  (<TH> "status")
+	  (<TH> "plug")
+	  (<TH> "health")
+	  (<TH> "voltage"))
+       (<TR>
+	  (<TD> (<GAUGE> :id "bat-level" :max 100))
+	  (<TD> :id "bat-status" "")
+	  (<TD> :id "bat-plug" "")
+	  (<TD> :id "bat-health" "")
+	  (<TD> :id "bat-voltage" "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
@@ -516,24 +528,20 @@ Android phone. This demonstration does not use any HTML5 facility.")
 	 (<DIV> :id "database-audio"
 	    (<UL>
 	       (map (lambda (g)
-		       (tprint "genre=[" (car g) "]")
 		       (list
 			  (<LI> (html-string-encode (car g)))
 			  (<UL>
 			     (map (lambda (a)
-				     (tprint "Artist=[" a "]")
 				     (list
 					(<LI> (car a))
 					(<UL>
 					   (map (lambda (al)
-						   (tprint "Album=[" al "]")
 						   (list
 						      (<LI> (cadr (memq :album al)))
 						      (let ((i (memq :image al)))
 							 (when i
 							    (<IMG> :src (cadr i))))
 						      (map (lambda (t)
-							      (tprint "Track=[" t "]")
 							      (<PRE>
 								 (with-output-to-string
 								    (lambda ()

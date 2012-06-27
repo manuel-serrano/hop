@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jun 27 09:18:00 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 10:09:36 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -95,7 +95,7 @@
 			     ((query)
 			      (let ((msg (string-append
 					  "The file `" (cadr h)
-					  "' alread exists. Override it ?")))
+					  "' already exists. Override it ?")))
 				 (if (confirm msg)
 				     (with-hop ($wizard/save #t cadmin
 							     uname.value cuser udir.value
@@ -393,9 +393,6 @@ WebDAV server.]))))))
 			     webdav)
    (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
-      (tprint "WIZARD/SAVE rc=" rc " wd=" wd " force=" force
-	 " fexists rc=" (file-exists? rc)
-	 " fexists wd=" (file-exists? wd))
       (cond
 	 (force
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Jun 27 09:15:22 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 10:07:30 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -39,10 +39,9 @@ public class HopLauncher extends Activity {
    public static final int MSG_CONFIGURE_FAIL = 5;
    public static final int MSG_HOP_FAILED = 6;
    public static final int MSG_CONFIGURE = 7;
-   public static final int MSG_RESTART = 8;
-   public static final int MSG_HOPDROID_FAILED = 9;
-   public static final int MSG_START_HOP_SERVICE = 10;
-   public static final int MSG_RESTART_HOP_SERVICE = 11;
+   public static final int MSG_HOPDROID_FAILED = 8;
+   public static final int MSG_START_HOP_SERVICE = 9;
+   public static final int MSG_STOP_HOP_SERVICE = 10;
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -208,11 +207,14 @@ public class HopLauncher extends Activity {
 			hopconnected = true;
 			break;
 
-		     case MSG_RESTART_HOP_SERVICE:
-			Log.i( "HopLauncher", "Re-Starting Hop Service" );
+		     case MSG_STOP_HOP_SERVICE:
+			Log.i( "HopLauncher", "Stoping Hop Service" );
+			hopservice.kill();
+			unbindService( hopconnection );
 			stopService( hopintent );
-			startService( hopintent );
+			hopintent = null;
 			
+			handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
 			break;
 
 		     default:
@@ -241,10 +243,10 @@ public class HopLauncher extends Activity {
       Button buttonr = (Button)findViewById( R.id.restart );
       buttonr.setOnClickListener( new OnClickListener() {
 	    public void onClick( View v ) {
-	       Log.i( "HopLauncher", "restarting" );
+	       textbuffer.delete( 0, textbuffer.length() - 1 );
+	       write_console( "Restarting Hop..." );
 
-	       write_console( "\n\nRestarting session...\n" );
-	       handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
+	       handler.sendEmptyMessage( MSG_STOP_HOP_SERVICE );
 	    }
 	 } );
 

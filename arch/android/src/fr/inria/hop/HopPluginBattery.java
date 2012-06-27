@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Tue Jan 11 17:27:45 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Wed Jun 27 10:49:36 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -30,15 +30,15 @@ public class HopPluginBattery extends HopPlugin {
    BroadcastReceiver receiver = null;
    
    // constructor
-   public HopPluginBattery( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginBattery( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // kill
    public void kill() {
       super.kill();
 
-      if( receiver != null ) activity.unregisterReceiver( receiver );
+      if( receiver != null ) hopdroid.service.unregisterReceiver( receiver );
    }
    
    // sensor manager
@@ -111,15 +111,19 @@ public class HopPluginBattery extends HopPlugin {
 			      status = "not-charging";
 			}
 			   
-			handroid.pushEvent( "battery", "(" + level + " " + scale + " "
+			hopdroid.pushEvent( "battery", "(" + level + " " + scale + " "
 					    + status + " " + plugged + " " + health
 					    + " " + voltage + ")" );
 		     }
 		  };
 	       
 	       // first time we are called, install the receiver
-	       activity.registerReceiver(
-		  receiver, new IntentFilter( Intent.ACTION_BATTERY_CHANGED ) );
+	       Intent battery =
+		  hopdroid.service.registerReceiver(
+		     receiver, new IntentFilter( Intent.ACTION_BATTERY_CHANGED ) );
+
+	       // and emit the current battery state
+	       receiver.onReceive( null, battery );
 	    }
 	    break;
 	       
@@ -127,7 +131,7 @@ public class HopPluginBattery extends HopPlugin {
 	    if( --count == 0 ) {
 	       // unregister the recevier
 	       if( receiver != null ) {
-		  activity.unregisterReceiver( receiver );
+		  hopdroid.service.unregisterReceiver( receiver );
 	       }
 	    }
 	    break;

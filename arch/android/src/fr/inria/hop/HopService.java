@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Jun 27 08:28:02 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 10:06:18 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -28,16 +28,16 @@ public class HopService extends Service {
    private NotificationManager mNM;
    private int NOTIFICATION = R.string.hopservicestarted;
 
+   // instance variables
+   protected Hop hop = null;
+   protected HopDroid hopdroid = null;
+
    public class HopBinder extends Binder {
       HopService getService() {
 	 return HopService.this;
       }
    }
    
-   final Hop hop = new Hop( null, null );
-   final HopDroid hopdroid = new HopDroid( 8081, HopService.this );
-   
-
    private final IBinder hopbinder = new HopBinder();
    
    private void startThreadLog( Thread th ) {
@@ -50,8 +50,9 @@ public class HopService extends Service {
    @Override
    public void onCreate() {
       Log.i( "HopService", "service created..." );
+      
+      // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
-
       statusNotification();
    }
 
@@ -61,15 +62,30 @@ public class HopService extends Service {
 
       // status bar update
       mNM.cancel( NOTIFICATION );
-      
-      hop.kill();
-      hopdroid.kill();
+
+      kill();
       
       Log.i( "HopService", "<<< onDestroy..." );
    }
 
+   public void kill() {
+      if( hop != null ) {
+	 hop.kill();
+	 hop = null;
+      }
+      if( hopdroid != null ) {
+	 hopdroid.kill();
+	 hopdroid = null;
+      }
+   }
+
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
+      // create hop 
+      hop = new Hop( null, null );
+      // create hopdroid
+      hopdroid = new HopDroid( 8081, HopService.this );
+
       // starting hopdroid
       startThreadLog( hopdroid );
 
@@ -87,8 +103,12 @@ public class HopService extends Service {
 
    @Override
    public boolean onUnbind( Intent intent ) {
-      hop.handler = null;
-      hopdroid.handler = null;
+      if( hop != null ) {
+	 hop.handler = null;
+      }
+      if( hopdroid !=null ) {
+	 hopdroid.handler = null;
+      }
 
       return false;
    }

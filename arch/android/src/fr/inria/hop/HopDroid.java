@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Jun 27 08:27:44 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 10:39:20 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -65,12 +65,12 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginVibrate( this, "vibrate" ) );
 	 registerPlugin( new HopPluginMusicPlayer( this, "musicplayer" ) );
 	 registerPlugin( new HopPluginMediaAudio( this, "mediaaudio" ) );
-
-/* 	 registerPlugin( new HopPluginSensor( this, activity, "sensor" ) ); */
+	 registerPlugin( new HopPluginSensor( this, "sensor" ) );
+	 registerPlugin( new HopPluginBattery( this, "battery" ) );
+	 
 /* 	 registerPlugin( new HopPluginSms( this, activity, "sms" ) );  */
 /* 	 registerPlugin( new HopPluginContact( this, activity, "contact" ) ); */
 /* 	 registerPlugin( new HopPluginCall( this, activity, "call" ) ); */
-/* 	 registerPlugin( new HopPluginBattery( this, activity, "battery" ) ); */
 
 	 
 	 registerPlugin( new HopPluginTts( this, "tts" ) );
@@ -100,11 +100,11 @@ public class HopDroid extends Thread {
    // kill
    public synchronized void kill() {
       if( !killed ) {
-	 Log.i( "HopDroid", ">>> kill" );
+	 Log.i( "HopDroid", ">>> kill serv1=" + serv1 + " serv2=" + serv2 );
 	 killed = true;
 
-	 killPlugins();
 	 killServers();
+	 killPlugins();
 	 
 	 Log.i( "HopDroid", "<<< kill" );
       }
@@ -123,7 +123,6 @@ public class HopDroid extends Thread {
 	    while( true ) {
 	       final Socket sock = serv1.accept();
 
-	       Log.i( "HopDroid", "accept" + sock );
 	       // handle the session in a background thread (normally very
 	       // few of these threads are created so there is no need
 	       // to use a complexe machinery based on thread pool).
@@ -133,8 +132,8 @@ public class HopDroid extends Thread {
 		     }
 		  } ).start();
 	    }
-	 } catch( IOException e ) {
-	    ;
+	 } catch( Throwable e ) {
+	    abortError( e );
 	 }
       }
    }
@@ -146,7 +145,6 @@ public class HopDroid extends Thread {
 	       try {
 		  while( true ) {
 		     final Socket sock2 = serv2.accept();
-		     Log.i( "HopDroid", "accept2 " + sock2 );
 		     // handle the session in a background thread (normally very
 		     // few of these threads are created so there is no need
 		     // to use a complexe machinery based on thread pool).
@@ -285,18 +283,20 @@ public class HopDroid extends Thread {
 
    // killServers
    private synchronized void killServers() {
-      Log.v( "HopDroid", "killing...servers" );
+      Log.i( "HopDroid", ">>> killing...servers" );
       
       try {
 	 if( serv1 != null && !serv1.isClosed() ) {
-	    if( !serv1.isClosed() ) serv1.close();
+	    serv1.close();
 	 }
 	 if( serv2 != null && !serv2.isClosed() ) {
 	    serv2.close();
 	 }
-      } catch( Exception _ ) {
-	 ;
+      } catch( Exception e ) {
+	 Log.e( "HopDroid", "closing error: " + e.toString() + " exception=" + e.getClass().getName() );
       }
+      
+      Log.i( "HopDroid", "<<< servers killed" );
    }
 	 
    // hopPushEvent
@@ -306,6 +306,7 @@ public class HopDroid extends Thread {
    
    // pushEvent
    public void pushEvent( String event, String value ) {
+      //Log.d( "HopDroid", "pushEvent " + event + " " + value );
       synchronized( eventtable ) {
 	 Hashtable ht = (Hashtable)eventtable.get( event );
 

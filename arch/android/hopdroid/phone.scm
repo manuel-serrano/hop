@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Jun 27 08:55:04 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 10:27:27 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -70,7 +70,7 @@
       (set! %socket1 (make-client-socket host port1)))
    (unless vibrate-plugin
       (set! vibrate-plugin (android-load-plugin p "vibrate")))
-   #;(unless sensor-plugin
+   (unless sensor-plugin
       (set! sensor-plugin (android-load-plugin p "sensor"))))
 
 ;*---------------------------------------------------------------------*/
@@ -124,15 +124,14 @@
 	       (send-byte 1 op)
 	       (flush-output-port op))
 	    (cond
-;* 	       ((string=? event "battery")                             */
-;* 		(register-battery-listener! p))                        */
+	       ((string=? event "battery")
+		(register-battery-listener! p))
 	       ((string=? event "tts")
 		(register-tts-listener! p))
 ;* 	       ((string=? event "call")                                */
 ;* 		(register-call-listener! p))                           */
-;* 	       ((string=? event "orientation")                         */
-;* 		(register-orientation-listener! p)))))))               */
-	       )))))
+	       ((string=? event "orientation")
+		(register-orientation-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -161,19 +160,19 @@
 ;* 		  (send-byte 0 op)                                     */
 ;* 		  (flush-output-port op)))))))                         */
 ;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    register-battery-listener! ...                                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (register-battery-listener! p::androidphone)                */
-;*    (unless battery-plugin                                           */
-;*       (set! battery-plugin (android-load-plugin p "battery")))      */
-;*    (android-send-command p battery-plugin #\b))                     */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    remove-battery-listener! ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (remove-battery-listener! p::androidphone)                  */
-;*    (android-send-command p battery-plugin #\e))                     */
+;*---------------------------------------------------------------------*/
+;*    register-battery-listener! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (register-battery-listener! p::androidphone)
+   (unless battery-plugin
+      (set! battery-plugin (android-load-plugin p "battery")))
+   (android-send-command p battery-plugin #\b))
+
+;*---------------------------------------------------------------------*/
+;*    remove-battery-listener! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (remove-battery-listener! p::androidphone)
+   (android-send-command p battery-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-event-listener ...                                       */
@@ -185,9 +184,6 @@
 	    (let ((name (read ip)))
 	       (unless (eof-object? name)
 		  (let ((args (read ip)))
-		     (tprint "ANDROID-EVENT-LISTENER: "
-			(format "name=~s" name)
-			(format "args=~s" args))
 		     (unless (eof-object? args)
 			(let ((procs (with-lock %mutex
 					(lambda ()
@@ -251,8 +247,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
-;* (define-method (phone-sensor-list p::androidphone)                  */
-;*    (android-send-command/result p sensor-plugin #\i))               */
+(define-method (phone-sensor-list p::androidphone)
+   (android-send-command/result p sensor-plugin #\i))
 
 ;*---------------------------------------------------------------------*/
 ;*    sensor-type-number ...                                           */
@@ -271,25 +267,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
-;* (define-method (phone-sensor p::androidphone type . delay)          */
-;*    (android-send-command/result p sensor-plugin #\b                 */
-;* 				(sensor-type-number type)              */
-;* 				(with-access::androidphone p (sensor-ttl) */
-;* 				   sensor-ttl)                         */
-;* 				(if (pair? delay) (car delay) 0)))     */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    register-orientation-listener! ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (register-orientation-listener! p::androidphone)            */
-;*    (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation))) */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    remove-orientation-listener! ...                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (remove-orientation-listener! p::androidphone)              */
-;*    (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation))) */
-;*                                                                     */
+(define-method (phone-sensor p::androidphone type . delay)
+   (android-send-command/result p sensor-plugin #\b
+				(sensor-type-number type)
+				(with-access::androidphone p (sensor-ttl)
+				   sensor-ttl)
+				(if (pair? delay) (car delay) 0)))
+
+;*---------------------------------------------------------------------*/
+;*    register-orientation-listener! ...                               */
+;*---------------------------------------------------------------------*/
+(define (register-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation)))
+
+;*---------------------------------------------------------------------*/
+;*    remove-orientation-listener! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (remove-orientation-listener! p::androidphone)
+   (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
+
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    phone-sms-send ::androidphone ...                                *} */
 ;* {*---------------------------------------------------------------------*} */

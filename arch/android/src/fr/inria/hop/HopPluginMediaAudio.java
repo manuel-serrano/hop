@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Tue Jun 26 18:27:25 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 10:46:48 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -68,31 +68,26 @@ public class HopPluginMediaAudio extends HopPlugin {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'G':
 	    // query genres
-	    Log.d( "HopPluginMediaAudio", "queryGenres" );
 	    queryGenres( op );
 	    break;
 
 	 case (byte)'A':
 	    // query artists
-	    Log.d( "HopPluginMediaAudio", "queryArtists" );
 	    queryArtists( op );
 	    break;
 	    
 	 case (byte)'g':
 	    // query artists by genre
-	    Log.d( "HopPluginMediaAudio", "queryGenreArtists" );
 	    queryGenreArtists( op, HopDroid.read_string( ip ) );
 	    break;
 	    
 	 case (byte)'a':
 	    // query album songs
-	    Log.d( "HopPluginMediaAudio", "queryAlbum" );
 	    queryAlbum( op, HopDroid.read_string( ip ) );
 	    break;
 	    
 	 case (byte)'d':
 	    // query album by artist
-	    Log.d( "HopPluginMediaAudio", "queryArtistAlbum" );
 	    queryArtistAlbum( op, HopDroid.read_string( ip ) );
 	    break;
       }
@@ -118,7 +113,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     null );
       synchronized( op ) {
 	 if( cur == null ) {
-	    Log.d( "HopPluginMediaAudio", "NO GENRE!" );
+	    // Log.d( "HopPluginMediaAudio", "NO GENRE!" );
 	    op.write( "()".getBytes() );
 	 } else {
 	    op.write( "(".getBytes() );
@@ -127,13 +122,13 @@ public class HopPluginMediaAudio extends HopPlugin {
 	       do {
 		  String genre = cur.getString( i );
 		  
-		  Log.d( "HopPluginMediaAudio", "querying genre: [" + genre + "]");
+		  // Log.d( "HopPluginMediaAudio", "querying genre: [" + genre + "]");
 		  op.write( "\"".getBytes() );
 		  op.write( escapeBytes( genre ) );
 		  op.write( "\" ".getBytes() );
 	       } while( cur.moveToNext() );
 	    } else {
-	       Log.d( "HopPluginMediaAudio", "NO FIRST!" );
+	       // Log.d( "HopPluginMediaAudio", "NO FIRST!" );
 	       op.write( "\"<all>\"".getBytes() );
 	    }
 	    op.write( ")".getBytes() );
@@ -157,7 +152,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	    if( cur.moveToFirst() ) {
 	       int i = cur.getColumnIndex( Artists.ARTIST );
 	       do {
-		  Log.d( "HopPluginMediaAudio", "querying artist: [" + cur.getString( i ) + "]");
+		  // Log.d( "HopPluginMediaAudio", "querying artist: [" + cur.getString( i ) + "]");
 		  op.write( "\"".getBytes() );
 		  op.write( escapeBytes( cur.getString( i ) ) );
 		  op.write( "\" ".getBytes() );
@@ -177,7 +172,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     Media.ALBUM + "=?",
 			     new String[] { album },
 			     Media.TRACK + " ASC" );
-      Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
+      // Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
@@ -227,7 +222,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryArtistAlbum( OutputStream op, String artist )
       throws IOException {
-      Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
+      // Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
       ContentResolver cr = hopdroid.service.getContentResolver();
 
       // get the artist first
@@ -249,9 +244,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 				      null,
 				      null );
 
-	       Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur="
-		      + (cur == null ? "null" : cur.getCount())
-		  + " artistid=" + artistid );
+	       // Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur=" + (cur == null ? "null" : cur.getCount()) + " artistid=" + artistid );
 	       
 	       if( cur == null ) {
 		  op.write( "()".getBytes() );
@@ -263,7 +256,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
 		  if( cur.moveToFirst() ) {
 		     do {
-			Log.d( "HopPluginMediaAudio", "queryArtistAlbum, ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
+			// Log.d( "HopPluginMediaAudio", "queryArtistAlbum, ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
 			op.write( "(album: \"".getBytes() );
 			op.write( escapeBytes( cur.getString( j )) );
 			op.write( "\" image: \"".getBytes() );
@@ -297,7 +290,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryGenreArtists( OutputStream op, String genre )
       throws IOException {
-      Log.d( "hopPluginMediaAudio", "queryGenreArists genre=\"" + genre + "\"" );
+      // Log.d( "hopPluginMediaAudio", "queryGenreArists genre=\"" + genre + "\"" );
       if( genre.equals( "<all>" ) ) {
 	 queryArtists( op );
       } else {
@@ -307,11 +300,11 @@ public class HopPluginMediaAudio extends HopPlugin {
 				Genres.NAME + "=?",
 				new String[] { genre },
 				null );
-	 Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
+	 // Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
 	 synchronized( op ) {
 	    if( cur == null || cur.getCount() == 0 ) {
 	       cur.close();
-	       Log.d( "hopPluginMediaAudio", "cur null.1" );
+	       // Log.d( "hopPluginMediaAudio", "cur null.1" );
 	       op.write( "()".getBytes() );
 	       if( cur != null ) cur.close();
 	    } else {
@@ -331,7 +324,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 			do {
 			   String artist = c.getString( j );
 		     
-			   Log.d( "hopPluginMediaAudio", "artist=" + artist );
+			   // Log.d( "hopPluginMediaAudio", "artist=" + artist );
 
 			   if( !artist.equals( cartist ) ) {
 			      op.write( "\"".getBytes() );
