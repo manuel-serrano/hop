@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jun 27 09:17:27 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 09:18:00 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -91,7 +91,7 @@
 					    localp.checked lanp.checked
 					    webdav.checked)
 		       (lambda (h)
-			  (case (string->symbol (car h))
+			  (case (car h)
 			     ((query)
 			      (let ((msg (string-append
 					  "The file `" (cadr h)
