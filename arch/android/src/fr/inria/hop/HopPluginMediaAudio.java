@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Wed Mar 28 08:15:05 2012 (serrano)                */
+/*    Last change :  Tue Jun 26 18:27:25 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
@@ -58,8 +58,8 @@ public class HopPluginMediaAudio extends HopPlugin {
    };
    
    // constructor
-   public HopPluginMediaAudio( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginMediaAudio( HopDroid h, String n ) {
+      super( h, n );
    }
    
    // plugin server
@@ -110,7 +110,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
    
    private void queryGenres( OutputStream op ) throws IOException {
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
 			     GENRE_LOOKUP_PROJECTION,
 			     null,
@@ -143,7 +143,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
 
    private void queryArtists( OutputStream op ) throws IOException {
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       Cursor cur = cr.query( Artists.EXTERNAL_CONTENT_URI,
 			     ARTIST_LOOKUP_PROJECTION,
 			     null, 
@@ -171,7 +171,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
 
    private void queryAlbum( OutputStream op, String album ) throws IOException {
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       Cursor cur = cr.query( Media.EXTERNAL_CONTENT_URI,
 			     MEDIA_LOOKUP_PROJECTION,
 			     Media.ALBUM + "=?",
@@ -214,7 +214,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 		  op.write( "album: \"".getBytes() );
 		  op.write( escapeBytes( cur.getString( iv ) ) );
 		  op.write( "\" time: ".getBytes() );
-		  op.write( cur.getString( ti ).getBytes() );
+		  op.write( Integer.toString( Integer.parseInt( cur.getString( ti ) ) / 1000 ).getBytes() );
 		  op.write( ") ".getBytes() );
 	       } while( cur.moveToNext() );
 	       
@@ -228,7 +228,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    private void queryArtistAlbum( OutputStream op, String artist )
       throws IOException {
       Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
-      ContentResolver cr = activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
 
       // get the artist first
       Cursor acur = cr.query( Artists.EXTERNAL_CONTENT_URI,
@@ -301,7 +301,7 @@ public class HopPluginMediaAudio extends HopPlugin {
       if( genre.equals( "<all>" ) ) {
 	 queryArtists( op );
       } else {
-	 ContentResolver cr = activity.getContentResolver();
+	 ContentResolver cr = hopdroid.service.getContentResolver();
 	 Cursor cur = cr.query( Genres.EXTERNAL_CONTENT_URI,
 				GENRE_LOOKUP_PROJECTION,
 				Genres.NAME + "=?",

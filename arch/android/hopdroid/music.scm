@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/arch/android/hopdroid/music.scm       */
+;*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Jan 27 10:43:12 2012 (serrano)                */
+;*    Last change :  Tue Jun 26 18:09:31 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -77,6 +77,7 @@
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status)
 			 (with-access::musicstatus %status (songlength songpos)
+			    (tprint "VALUE=" (format "~s" value))
 			    (case (car value)
 			       ((position)
 				(set! songpos (/fx (cadr value) 1000))

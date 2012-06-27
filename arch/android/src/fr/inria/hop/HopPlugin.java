@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopPlugin.java       */
+/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopPlugin.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Mon Jan 17 17:06:38 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Tue Jun 26 17:40:00 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
 /*=====================================================================*/
@@ -32,14 +32,21 @@ public abstract class HopPlugin {
    
    // instance variables
    public HopDroid handroid;
-   public Activity activity;
+   public HopDroid hopdroid;
    public String name;
+   public Activity activity = null;
+
+   public HopPlugin( HopDroid h, String n ) {
+      Log.v( "HopPlugin", "creating plugin: " + n );
+      hopdroid = h;
+      name = n;
+   }
 
    public HopPlugin( HopDroid h, Activity a, String n ) {
       Log.v( "HopPlugin", "creating plugin: " + n );
       handroid = h;
-      activity = a;
       name = n;
+      activity = a;
    }
 
    // cleanup
@@ -64,10 +71,8 @@ public abstract class HopPlugin {
    }
 
    // getKey
-   private int getKey() {
-      synchronized( activity ) {
-	 return key++;
-      }
+   private synchronized int getKey() {
+      return key++;
    }
    
    // startHopActivityForResult
@@ -76,10 +81,10 @@ public abstract class HopPlugin {
       
       synchronized( atable ) {
 	 atable.put( key, this );
-
-	 Log.v( "HopPlugin", "Starting activity key=" + key );
       }
-      activity.startActivityForResult( intent, key );
+      
+      Log.v( "HopPlugin", "Starting activity key=" + key );
+      hopdroid.activity.startActivityForResult( intent, key );
 
       return key;
    }

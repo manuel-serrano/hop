@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/arch/android/hopdroid/phone.scm       */
+;*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/phone.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Jan 26 15:56:54 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 08:55:04 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -70,7 +70,7 @@
       (set! %socket1 (make-client-socket host port1)))
    (unless vibrate-plugin
       (set! vibrate-plugin (android-load-plugin p "vibrate")))
-   (unless sensor-plugin
+   #;(unless sensor-plugin
       (set! sensor-plugin (android-load-plugin p "sensor"))))
 
 ;*---------------------------------------------------------------------*/
@@ -124,55 +124,56 @@
 	       (send-byte 1 op)
 	       (flush-output-port op))
 	    (cond
-	       ((string=? event "battery")
-		(register-battery-listener! p))
+;* 	       ((string=? event "battery")                             */
+;* 		(register-battery-listener! p))                        */
 	       ((string=? event "tts")
 		(register-tts-listener! p))
-	       ((string=? event "call")
-		(register-call-listener! p))
-	       ((string=? event "orientation")
-		(register-orientation-listener! p)))))))
+;* 	       ((string=? event "call")                                */
+;* 		(register-call-listener! p))                           */
+;* 	       ((string=? event "orientation")                         */
+;* 		(register-orientation-listener! p)))))))               */
+	       )))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (remove-event-listener! p::androidphone event proc . capture)
-   (with-access::androidphone p (%mutex-listener %socket2 %evthread %evtable)
-      (with-lock %mutex-listener
-	 (lambda ()
-	    (when (hashtable? %evtable)
-	       (hashtable-update! %evtable event
-				  (lambda (l)
-				     (cond
-					((string=? event "battery")
-					 (remove-battery-listener! p))
-					((string=? event "tts")
-					 (remove-tts-listener! p))
-					((string=? event "call")
-					 (remove-call-listener! p))
-					((string=? event "orientation")
-					 (remove-call-listener! p)))
-				     (remq! proc l))
-				  '()))
-	    (when (socket? %socket2)
-	       (let ((op (socket-output %socket2)))
-		  (send-string event op)
-		  (send-byte 0 op)
-		  (flush-output-port op)))))))
-
-;*---------------------------------------------------------------------*/
-;*    register-battery-listener! ...                                   */
-;*---------------------------------------------------------------------*/
-(define (register-battery-listener! p::androidphone)
-   (unless battery-plugin
-      (set! battery-plugin (android-load-plugin p "battery")))
-   (android-send-command p battery-plugin #\b))
-
-;*---------------------------------------------------------------------*/
-;*    remove-battery-listener! ...                                     */
-;*---------------------------------------------------------------------*/
-(define (remove-battery-listener! p::androidphone)
-   (android-send-command p battery-plugin #\e))
+;* (define-method (remove-event-listener! p::androidphone event proc . capture) */
+;*    (with-access::androidphone p (%mutex-listener %socket2 %evthread %evtable) */
+;*       (with-lock %mutex-listener                                    */
+;* 	 (lambda ()                                                    */
+;* 	    (when (hashtable? %evtable)                                */
+;* 	       (hashtable-update! %evtable event                       */
+;* 				  (lambda (l)                          */
+;* 				     (cond                             */
+;* 					((string=? event "battery")    */
+;* 					 (remove-battery-listener! p)) */
+;* 					((string=? event "tts")        */
+;* 					 (remove-tts-listener! p))     */
+;* 					((string=? event "call")       */
+;* 					 (remove-call-listener! p))    */
+;* 					((string=? event "orientation") */
+;* 					 (remove-call-listener! p)))   */
+;* 				     (remq! proc l))                   */
+;* 				  '()))                                */
+;* 	    (when (socket? %socket2)                                   */
+;* 	       (let ((op (socket-output %socket2)))                    */
+;* 		  (send-string event op)                               */
+;* 		  (send-byte 0 op)                                     */
+;* 		  (flush-output-port op)))))))                         */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    register-battery-listener! ...                                   *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (register-battery-listener! p::androidphone)                */
+;*    (unless battery-plugin                                           */
+;*       (set! battery-plugin (android-load-plugin p "battery")))      */
+;*    (android-send-command p battery-plugin #\b))                     */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    remove-battery-listener! ...                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (remove-battery-listener! p::androidphone)                  */
+;*    (android-send-command p battery-plugin #\e))                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    android-event-listener ...                                       */
@@ -184,6 +185,9 @@
 	    (let ((name (read ip)))
 	       (unless (eof-object? name)
 		  (let ((args (read ip)))
+		     (tprint "ANDROID-EVENT-LISTENER: "
+			(format "name=~s" name)
+			(format "args=~s" args))
 		     (unless (eof-object? args)
 			(let ((procs (with-lock %mutex
 					(lambda ()
@@ -247,8 +251,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-sensor-list p::androidphone)
-   (android-send-command/result p sensor-plugin #\i))
+;* (define-method (phone-sensor-list p::androidphone)                  */
+;*    (android-send-command/result p sensor-plugin #\i))               */
 
 ;*---------------------------------------------------------------------*/
 ;*    sensor-type-number ...                                           */
@@ -267,142 +271,142 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-sensor p::androidphone type . delay)
-   (android-send-command/result p sensor-plugin #\b
-				(sensor-type-number type)
-				(with-access::androidphone p (sensor-ttl)
-				   sensor-ttl)
-				(if (pair? delay) (car delay) 0)))
-
-;*---------------------------------------------------------------------*/
-;*    register-orientation-listener! ...                               */
-;*---------------------------------------------------------------------*/
-(define (register-orientation-listener! p::androidphone)
-   (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation)))
-
-;*---------------------------------------------------------------------*/
-;*    remove-orientation-listener! ...                                 */
-;*---------------------------------------------------------------------*/
-(define (remove-orientation-listener! p::androidphone)
-   (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
-
-;*---------------------------------------------------------------------*/
-;*    phone-sms-send ::androidphone ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (phone-sms-send p::androidphone no::bstring msg::bstring)
-   (unless sms-plugin
-      (set! sms-plugin (android-load-plugin p "sms")))
-   (android-send-command p sms-plugin #\s no msg))
-
-;*---------------------------------------------------------------------*/
-;*    phone-contact ::androidphone ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (phone-contact p::androidphone)
-   (unless contact-plugin
-      (set! contact-plugin (android-load-plugin p "contact")))
-   (if contact-plugin
-       (map! (lambda (e)
-		(match-case e
-		   ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
-		    (let* ((face (let ((c (assq 'face notes)))
-				    (when (pair? c)
-				       (set! notes (remq! c notes))
-				       (cdr c))))
-			   (url (let ((c (assq 'url notes)))
-				   (when (pair? c)
-				      (set! notes (remq! c notes))
-				      (cdr c))))
-			   (notes (if (pair? akas)
-				      (cons (cons 'akas akas) notes)
-				      notes))
-			   (fn (if (string? first)
-				   (if (string? family)
-				       (string-append first " " family)
-				       first)
-				   (if (string? family)
-				       family
-				       ""))))
-		       (instantiate::vcard
-			  (fn fn)
-			  (familyname family)
-			  (firstname first)
-			  (org comp)
-			  (face face)
-			  (url url)
-			  (phones phones)
-			  (addresses addrs)
-			  (emails emails)
-			  (notes notes))))))
-	  (android-send-command/result p contact-plugin #\l))
-       '()))
-
-;*---------------------------------------------------------------------*/
-;*    phone-contact-add! ::androidphone ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (phone-contact-add! p::androidphone vcard::obj)
-   (unless contact-plugin
-      (set! contact-plugin (android-load-plugin p "contact")))
-   (when contact-plugin
-      (android-send-command/result p contact-plugin #\a vcard)))
-   
-;*---------------------------------------------------------------------*/
-;*    phone-contact-remove! ::androidphone ...                         */
-;*---------------------------------------------------------------------*/
-(define-method (phone-contact-remove! p::androidphone id::obj)
-   (unless contact-plugin
-      (set! contact-plugin (android-load-plugin p "contact")))
-   (when contact-plugin
-      (android-send-command/result p contact-plugin #\r id)))
-   
-;*---------------------------------------------------------------------*/
-;*    phone-call-log ::androidphone ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (phone-call-log p::androidphone . optional)
-   (unless call-plugin
-      (set! call-plugin (android-load-plugin p "call")))
-   (let ((n (if (pair? optional) (car optional) -1)))
-      (android-send-command/result p call-plugin #\l n)))
-
-;*---------------------------------------------------------------------*/
-;*    phone-call-info ::androidphone ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (phone-call-info p::androidphone)
-   (unless call-plugin
-      (set! call-plugin (android-load-plugin p "call")))
-      (android-send-command/result p call-plugin #\i))
-
-;*---------------------------------------------------------------------*/
-;*    register-call-listener! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (register-call-listener! p::androidphone)
-   (unless call-plugin
-      (set! call-plugin (android-load-plugin p "call")))
-   (android-send-command p call-plugin #\b))
-
-;*---------------------------------------------------------------------*/
-;*    remove-call-listener! ...                                        */
-;*---------------------------------------------------------------------*/
-(define (remove-call-listener! p::androidphone)
-   (unless call-plugin
-      (set! call-plugin (android-load-plugin p "call")))
-   (android-send-command p call-plugin #\e))
-
-;*---------------------------------------------------------------------*/
-;*    phone-call-start ::androidphone ...                              */
-;*---------------------------------------------------------------------*/
-(define-method (phone-call-start p::androidphone n::bstring . optional)
-   (unless call-plugin
-      (set! call-plugin (android-load-plugin p "call")))
-   (let ((window (if (pair? optional) (car optional) #f)))
-      (android-send-command p call-plugin #\c n window)))
-
-;*---------------------------------------------------------------------*/
-;*    phone-call-stop ::androidphone ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (phone-call-stop p::androidphone)
-   (when call-plugin
-      (android-send-command p call-plugin #\k)))
-
+;* (define-method (phone-sensor p::androidphone type . delay)          */
+;*    (android-send-command/result p sensor-plugin #\b                 */
+;* 				(sensor-type-number type)              */
+;* 				(with-access::androidphone p (sensor-ttl) */
+;* 				   sensor-ttl)                         */
+;* 				(if (pair? delay) (car delay) 0)))     */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    register-orientation-listener! ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (register-orientation-listener! p::androidphone)            */
+;*    (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    remove-orientation-listener! ...                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (remove-orientation-listener! p::androidphone)              */
+;*    (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-sms-send ::androidphone ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-sms-send p::androidphone no::bstring msg::bstring) */
+;*    (unless sms-plugin                                               */
+;*       (set! sms-plugin (android-load-plugin p "sms")))              */
+;*    (android-send-command p sms-plugin #\s no msg))                  */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-contact ::androidphone ...                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-contact p::androidphone)                      */
+;*    (unless contact-plugin                                           */
+;*       (set! contact-plugin (android-load-plugin p "contact")))      */
+;*    (if contact-plugin                                               */
+;*        (map! (lambda (e)                                            */
+;* 		(match-case e                                          */
+;* 		   ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-) */
+;* 		    (let* ((face (let ((c (assq 'face notes)))         */
+;* 				    (when (pair? c)                    */
+;* 				       (set! notes (remq! c notes))    */
+;* 				       (cdr c))))                      */
+;* 			   (url (let ((c (assq 'url notes)))           */
+;* 				   (when (pair? c)                     */
+;* 				      (set! notes (remq! c notes))     */
+;* 				      (cdr c))))                       */
+;* 			   (notes (if (pair? akas)                     */
+;* 				      (cons (cons 'akas akas) notes)   */
+;* 				      notes))                          */
+;* 			   (fn (if (string? first)                     */
+;* 				   (if (string? family)                */
+;* 				       (string-append first " " family) */
+;* 				       first)                          */
+;* 				   (if (string? family)                */
+;* 				       family                          */
+;* 				       ""))))                          */
+;* 		       (instantiate::vcard                             */
+;* 			  (fn fn)                                      */
+;* 			  (familyname family)                          */
+;* 			  (firstname first)                            */
+;* 			  (org comp)                                   */
+;* 			  (face face)                                  */
+;* 			  (url url)                                    */
+;* 			  (phones phones)                              */
+;* 			  (addresses addrs)                            */
+;* 			  (emails emails)                              */
+;* 			  (notes notes))))))                           */
+;* 	  (android-send-command/result p contact-plugin #\l))          */
+;*        '()))                                                        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-contact-add! ::androidphone ...                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-contact-add! p::androidphone vcard::obj)      */
+;*    (unless contact-plugin                                           */
+;*       (set! contact-plugin (android-load-plugin p "contact")))      */
+;*    (when contact-plugin                                             */
+;*       (android-send-command/result p contact-plugin #\a vcard)))    */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-contact-remove! ::androidphone ...                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-contact-remove! p::androidphone id::obj)      */
+;*    (unless contact-plugin                                           */
+;*       (set! contact-plugin (android-load-plugin p "contact")))      */
+;*    (when contact-plugin                                             */
+;*       (android-send-command/result p contact-plugin #\r id)))       */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-call-log ::androidphone ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-call-log p::androidphone . optional)          */
+;*    (unless call-plugin                                              */
+;*       (set! call-plugin (android-load-plugin p "call")))            */
+;*    (let ((n (if (pair? optional) (car optional) -1)))               */
+;*       (android-send-command/result p call-plugin #\l n)))           */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-call-info ::androidphone ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-call-info p::androidphone)                    */
+;*    (unless call-plugin                                              */
+;*       (set! call-plugin (android-load-plugin p "call")))            */
+;*       (android-send-command/result p call-plugin #\i))              */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    register-call-listener! ...                                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (register-call-listener! p::androidphone)                   */
+;*    (unless call-plugin                                              */
+;*       (set! call-plugin (android-load-plugin p "call")))            */
+;*    (android-send-command p call-plugin #\b))                        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    remove-call-listener! ...                                        *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (remove-call-listener! p::androidphone)                     */
+;*    (unless call-plugin                                              */
+;*       (set! call-plugin (android-load-plugin p "call")))            */
+;*    (android-send-command p call-plugin #\e))                        */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-call-start ::androidphone ...                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-call-start p::androidphone n::bstring . optional) */
+;*    (unless call-plugin                                              */
+;*       (set! call-plugin (android-load-plugin p "call")))            */
+;*    (let ((window (if (pair? optional) (car optional) #f)))          */
+;*       (android-send-command p call-plugin #\c n window)))           */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    phone-call-stop ::androidphone ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (phone-call-stop p::androidphone)                    */
+;*    (when call-plugin                                                */
+;*       (android-send-command p call-plugin #\k)))                    */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
 ;*---------------------------------------------------------------------*/

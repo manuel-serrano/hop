@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../project/hop/2.3.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/2.4.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Jan 26 10:25:13 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 08:43:04 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -39,13 +39,14 @@ public class Hop extends Thread {
    final static String SHELL = "/system/bin/sh";
    final static int HOP_RESTART = 5;
 
+   // global variables
+   static String root;
+   static String port = "8080";
+   static boolean debug = false;
+
    // instance variables
-   Activity activity;
-   File home;
-   String root;
-   String apk;
+   boolean killed = false;
    String msg;
-   String port = "8080";
    FileDescriptor HopFd;
    Handler handler;
    ArrayBlockingQueue<String> queue;
@@ -54,17 +55,9 @@ public class Hop extends Thread {
    String extra = "";
 
    // constructor
-   public Hop( Activity a, ArrayBlockingQueue<String>q, Handler h ) {
+   public Hop( ArrayBlockingQueue<String>q, Handler h ) {
       super();
 
-      // at this stage activity is not fully installation and it's
-      // not possible to use it to get the ApplictionInfo used to
-      // find the actual values of root and apk
-      apk = null;
-      root = null;
-      
-      activity = a;
-      home = HOME;
       queue = q;
       handler = h;
    }
@@ -79,13 +72,14 @@ public class Hop extends Thread {
       extra = arg;
       start();
    }
-   
+
    // run hop
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
-	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port + " " + extra;
+	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port
+	 + (debug ? " -g2" : " ") + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd );
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
@@ -100,24 +94,31 @@ public class Hop extends Thread {
       // background threads
       Thread watcher = new Thread( new Runnable() {
 	    public void run() {
+	       // wait for the termination of the Hop process
 	       int result = HopExec.waitFor( pid[ 0 ] );
 	       Log.i( "Hop", "process exited (pid="
-		      + pid[ 0 ] + ") with result=" + result );
-	       if( result == HOP_RESTART ) {
-		  Log.i( "Hop", "restarting hop..." );
-		  rerun();
-	       } else {
-		  boolean tosend = false;
-		  
-		  synchronized( currentpid ) {
-		     if( currentpid[ 0 ] == pid[ 0 ] ) {
-			tosend = true;
+		      + pid[ 0 ] + ") with result=" + result
+		      + " (/HOP_RESTART=" + HOP_RESTART + ")" );
+
+	       if( !killed ) {
+		  if( result == HOP_RESTART ) {
+		     if( handler != null ) {
+			handler.sendEmptyMessage( HopLauncher.MSG_START_HOP_SERVICE );
 		     }
-		  }
-		  if( tosend ) {
-		     handler.sendEmptyMessage( HopLauncher.MSG_PROC_END );
-		  }
-	       };
+
+		  } else {
+		     boolean tosend = false;
+		  
+		     synchronized( currentpid ) {
+			if( currentpid[ 0 ] == pid[ 0 ] ) {
+			   tosend = true;
+			}
+		     }
+		     if( tosend && handler != null ) {
+			handler.sendEmptyMessage( HopLauncher.MSG_HOP_ENDED );
+		     }
+		  };
+	       }
 	    }
 	 } );
 
@@ -130,25 +131,29 @@ public class Hop extends Thread {
 
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
-		     String s = new String( buffer, 0, l );
-		     if( log ) Log.v( "HopConsole", s );
-		     queue.put( s );
-		     handler.sendEmptyMessage( HopLauncher.MSG_OUTPUT_AVAILABLE );
-		  }
-	       } catch( Exception e ) {
-		  boolean tosend = false;
-		  
-		  Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
-			 + " currentpid=" + currentpid[ 0 ] 
-			 + ") exception=" +  e.getClass().getName() );
-		  synchronized( currentpid ) {
-		     if( currentpid[ 0 ] == pid[ 0 ] ) {
-			tosend = true;
+		     if( handler != null ) {
+			String s = new String( buffer, 0, l );
+			if( HopLauncher.hop_log ) Log.v( "HopConsole", s );
+			queue.put( s );
+			handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 		     }
 		  }
+	       } catch( Exception e ) {
+		  if( !killed ) {
+		     boolean tosend = false;
+		  
+		     Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
+			    + " currentpid=" + currentpid[ 0 ] 
+			    + ") exception=" +  e.getClass().getName() );
+		     synchronized( currentpid ) {
+			if( currentpid[ 0 ] == pid[ 0 ] ) {
+			   tosend = true;
+			}
+		     }
 
-		  if( tosend ) {
-		     handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_RUN_FAIL, e ) );
+		     if( tosend && handler != null ) {
+			handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOP_FAILED, e ) );
+		     }
 		  }
 	       }
 	    }
@@ -174,14 +179,24 @@ public class Hop extends Thread {
    
    // kill
    public void kill() {
-      synchronized( currentpid ) {
-	 if( currentpid[ 0 ] != 0 ) {
-	    Log.i( "Hop", "killing (pid=" + currentpid[ 0 ] + ")" );
-	    android.os.Process.killProcess( currentpid[ 0 ] );
-	    currentpid[ 0 ] = 0;
-	    Log.v( "Hop", "killed." );
+      if( !killed ) {
+	 killed = true;
+	 synchronized( currentpid ) {
+	    if( currentpid[ 0 ] != 0 ) {
+	       Log.i( "Hop", ">>> kill (pid=" + currentpid[ 0 ] + ")" );
+	    
+	       android.os.Process.killProcess( currentpid[ 0 ] );
+	       currentpid[ 0 ] = 0;
+	    
+	       Log.i( "Hop", "<<< kill" );
+	    }
 	 }
       }
+   }
+
+   // isRunning()
+   public boolean isRunning() {
+      return !killed && currentpid[ 0 ] != 0;
    }
 }
    

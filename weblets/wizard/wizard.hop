@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/2.4.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Mar 19 15:07:50 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 09:12:36 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -393,6 +393,9 @@ WebDAV server.]))))))
 			     webdav)
    (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
+      (tprint "WIZARD/SAVE rc=" rc " wd=" wd " force=" force
+	 " fexists rc=" (file-exists? rc)
+	 " fexists wd=" (file-exists? wd))
       (cond
 	 (force
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Fri Jan 27 11:33:06 2012 (serrano)                */
+/*    Last change :  Tue Jun 26 18:31:42 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -46,8 +46,8 @@ public class HopPluginMusicPlayer extends HopPlugin {
    int mplayervol = 100;
    
    // constructor
-   public HopPluginMusicPlayer( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginMusicPlayer( HopDroid h, String n ) {
+      super( h, n );
    }
    
    // create a media player
@@ -57,14 +57,18 @@ public class HopPluginMusicPlayer extends HopPlugin {
       mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
 	    public void onPrepared( MediaPlayer mp ) {
 	       mp.start();
-	       handroid.pushEvent( "androidmusic-event", 
+	       Log.v( "HopPlugingMusicPlayer", "start" );
+	       Log.v( "HopPlugingMusicPlayer", "mp=" + mp );
+	       Log.v( "HopPlugingMusicPlayer", "pos=" + mp.getCurrentPosition() );
+	       Log.v( "HopPlugingMusicPlayer", "dur=" + mp.getDuration() );
+	       hopdroid.pushEvent( "androidmusic-event", 
 				   "(position "
 				   + Integer.toString( mp.getCurrentPosition() )
 				   + " "
 				   + Integer.toString( mp.getDuration() )
 				   + ")" );
-	       handroid.pushEvent( "androidmusic-state", "play" );
-	       handroid.pushEvent( "androidmusic-volume",
+	       hopdroid.pushEvent( "androidmusic-state", "play" );
+	       hopdroid.pushEvent( "androidmusic-volume",
 				   Integer.toString( mplayervol ) );
 
 	    }
@@ -74,7 +78,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    public boolean onError( MediaPlayer mp, int what, int extra ) {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer error: " +
 		      what + " " + extra );
-	       handroid.pushEvent( "androidmusic-error",
+	       hopdroid.pushEvent( "androidmusic-error",
 				   "(" + what + " " + extra + ")" );
 	       return false;
 	    }
@@ -93,7 +97,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
       mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
 	    public void onCompletion( MediaPlayer mp ) {
-	       handroid.pushEvent( "androidmusic-state", "ended" );
+	       hopdroid.pushEvent( "androidmusic-state", "ended" );
 	       ended = true;
 	    }
 	 } );
@@ -126,7 +130,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    Log.v( "HopDroidMusicPlayer", "mediaplayer start" );
 	    if( mplayer != null ) {
 	       mplayerstate = MPLAYER_STATE_PLAY;	       
-	       handroid.pushEvent( "androidmusic-state", "play" );
+	       hopdroid.pushEvent( "androidmusic-state", "play" );
 	       mplayer.start();
 	    }
 	    return;
@@ -146,7 +150,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       Log.v( "HopDroidMusicPlayer", "mediaplayer set stop" );
 	       mplayer.stop();
 	       mplayerstate = MPLAYER_STATE_STOP;	       
-	       handroid.pushEvent( "androidmusic-state", "stop" );
+	       hopdroid.pushEvent( "androidmusic-state", "stop" );
 	    }
 	    return;
 	       
@@ -156,7 +160,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    if( mplayer != null ) {
 	       mplayer.pause();
 	       mplayerstate = MPLAYER_STATE_PAUSE;
-	       handroid.pushEvent( "androidmusic-state", "pause" );
+	       hopdroid.pushEvent( "androidmusic-state", "pause" );
 	    }
 	    return;
 
@@ -173,7 +177,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    File file = new File( uri );
 
 	    if( file.exists() ) {
-	       mplayer.setDataSource( activity, Uri.fromFile( file ) );
+	       mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
 	       mplayer.prepare();
 	       mplayer.start();
 	    } else {
@@ -195,7 +199,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    mplayervol = (voll + volr) / 2;
 
 	    mplayer.setVolume( (float)voll/100, (float)volr/100 );
-	    handroid.pushEvent( "androidmusic-volume",
+	    hopdroid.pushEvent( "androidmusic-volume",
 				Integer.toString( mplayervol ) );
 	    return;
 	    
@@ -244,6 +248,15 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    }
 	    
 	    return;
+      }
+   }
+
+   // cleanup
+   public void kill() {
+      super.kill();
+      if( mplayer != null && mplayer.isPlaying() ) {
+	 mplayer.stop();
+	 mplayer.release();
       }
    }
 }

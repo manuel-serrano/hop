@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/2.4.x/arch/android/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Dec 21 16:08:32 2011 (serrano)                */
-#*    Copyright   :  2010-11 Manuel Serrano                            */
+#*    Last change :  Tue Jun 26 15:42:35 2012 (serrano)                */
+#*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*=====================================================================*/
@@ -26,12 +26,13 @@ ANDROID_BUILD = Android.mk build.xml project.properties hop.keystore \
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
 ANDROID_RES = res/drawable/logo.png \
+  res/drawable/hopicon.png \
   res/layout/main.xml \
   res/xml/preferences.xml \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
-  HopExec.java HopLauncher.java \
+  HopExec.java HopLauncher.java HopService.java \
   HopDroid.java HopPlugin.java HopPluginInit.java HopPluginLocale.java \
   HopPluginMusicPlayer.java HopPluginVibrate.java HopPluginSensor.java \
   HopPluginSms.java HopPluginContact.java HopPluginWifi.java \

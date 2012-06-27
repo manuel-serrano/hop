@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.3.x/arch/android/src/fr/inria/hop/HopDroid.java        */
+/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Jan 26 11:42:48 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 08:27:44 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -35,87 +35,89 @@ public class HopDroid extends Thread {
    static HopDroid hopdroid = null;
 
    // instance variables
-   Activity activity;
+   boolean killed = false;
+   Activity activity = null;
+   Service service;
    int port;
    ServerSocket serv1;
    ServerSocket serv2;
-   Handler handler;
+   Handler handler = null;
    final Hashtable eventtable = new Hashtable();
-   
    // constructor
-   public HopDroid( Activity a, int p, Handler h ) {
+   public HopDroid( int p, Service s ) {
       super();
 
-      activity = a;
       port = p;
-      handler = h;
+      service = s;
+      hopdroid = this;
+      
 
       plugins = new Vector( 16 );
 
-      hopdroid = this;
-
       try {
 	 Log.i( "HopDroid", "starting servers port=" + p + ", " + (p + 1) );
-	 try {
-	    serv1 = new ServerSocket( p );
-	 } catch( Exception e ) {
-	    Log.e( "HopDroid", "Cannot start server localhost:" + p );
-	    throw e;
-	 }
-	 try {
-	    serv2 = new ServerSocket( p + 1 );
-	 } catch( Exception e ) {
-	    Log.e( "HopDroid", "Cannot start server localhost:" + (p + 1) );
-	    throw e;
-	 }
+	 serv1 = new ServerSocket( p );
+	 serv2 = new ServerSocket( p + 1 );
 
 	 // register the initial plugins
 	 registerPlugin( new HopPluginInit( this, activity, "init" ) );
-	 registerPlugin( new HopPluginLocale( this, activity, "locale" ) );
-	 registerPlugin( new HopPluginVibrate( this, activity, "vibrate" ) );
-	 registerPlugin( new HopPluginSensor( this, activity, "sensor" ) );
-	 registerPlugin( new HopPluginMusicPlayer( this, activity, "musicplayer" ) );
-	 registerPlugin( new HopPluginSms( this, activity, "sms" ) );
-	 registerPlugin( new HopPluginContact( this, activity, "contact" ) );
-	 registerPlugin( new HopPluginCall( this, activity, "call" ) );
-	 registerPlugin( new HopPluginBattery( this, activity, "battery" ) );
-	 registerPlugin( new HopPluginTts( this, activity, "tts" ) );
-	 registerPlugin( new HopPluginMediaAudio( this, activity, "mediaaudio" ) );
-	 registerPlugin( new HopPluginWifi( this, activity, "wifi" ) );
+	 registerPlugin( new HopPluginLocale( this, "locale" ) );
+	 registerPlugin( new HopPluginVibrate( this, "vibrate" ) );
+	 registerPlugin( new HopPluginMusicPlayer( this, "musicplayer" ) );
+	 registerPlugin( new HopPluginMediaAudio( this, "mediaaudio" ) );
+
+/* 	 registerPlugin( new HopPluginSensor( this, activity, "sensor" ) ); */
+/* 	 registerPlugin( new HopPluginSms( this, activity, "sms" ) );  */
+/* 	 registerPlugin( new HopPluginContact( this, activity, "contact" ) ); */
+/* 	 registerPlugin( new HopPluginCall( this, activity, "call" ) ); */
+/* 	 registerPlugin( new HopPluginBattery( this, activity, "battery" ) ); */
+
+	 
+	 registerPlugin( new HopPluginTts( this, "tts" ) );
+/* 	 registerPlugin( new HopPluginWifi( this, activity, "wifi" ) ); */
       } catch( Exception e ) {
-	 Log.v( "HopDroid", "init error: " + e.toString() + " exception=" +
-	    e.getClass().getName() );
-	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
+	 abortError( e );
       }
    }
 
-   // kill
-   synchronized public void kill() {
-      if( plugins != null ) {
-	 Log.v( "HopDroid", "killing...plugins" );
-	 killPlugins();
-      }
+   // abort
+   public synchronized void abortError( Throwable e ) {
+      if( !killed ) {
+	 Log.e( "HopDroid", "error: " + e.toString() + " exception=" + e.getClass().getName() );
       
-      try {
-	 if( serv1 != null && !serv1.isClosed() ) {
-	    Log.v( "HopDroid", "killing...serv1" );
-	    if( !serv1.isClosed() ) serv1.close();
-	    Log.v( "HopDroid", "killed...serv1" );
+	 kill();
+
+	 try {
+	    if( handler != null ) {
+	       handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOPDROID_FAILED, e ) );
+	    }
+	 } catch( Throwable _ ) {
+	    ;
 	 }
-	 if( serv2 != null && !serv2.isClosed() ) {
-	    Log.v( "HopDroid", "killing...serv2" );
-	    serv2.close();
-	    Log.v( "HopDroid", "killed...serv2" );
-	 }
-      } catch( Exception _ ) {
-	 ;
+      }
+   }
+   
+   // kill
+   public synchronized void kill() {
+      if( !killed ) {
+	 Log.i( "HopDroid", ">>> kill" );
+	 killed = true;
+
+	 killPlugins();
+	 killServers();
+	 
+	 Log.i( "HopDroid", "<<< kill" );
       }
    }
       
+   // isRunning()
+   public boolean isRunning() {
+      return !killed;
+   }
+   
    // run hop
    public void run() {
       if( serv1 != null ) {
-	 Log.i( "HopDroid", "run" );
 	 runPushEvent();
 	 try {
 	    while( true ) {
@@ -133,8 +135,6 @@ public class HopDroid extends Thread {
 	    }
 	 } catch( IOException e ) {
 	    ;
-	 } finally {
-	    kill();
 	 }
       }
    }
@@ -156,32 +156,28 @@ public class HopDroid extends Thread {
 			   }
 			} ).start();
 		  }
-	       } catch( IOException e ) {
-		  ;
-	       } finally {
-		  kill();
+	       } catch( Throwable e ) {
+		  abortError( e );
 	       }
 	    }
 	 } ).start();
    }
 
    // get plugin
-   static protected int getPlugin( String name ) {
-      synchronized( plugins ) {
-	 int s = plugins.size();
+   static protected synchronized int getPlugin( String name ) {
+      int s = plugins.size();
 
-	 for( int i = 0; i < s; i++ ) {
-	    HopPlugin p = (HopPlugin)plugins.get( i );
-	    if( name.equals( p.name ) )
-	       return i;
-	 }
-
-	 return -1;
+      for( int i = 0; i < s; i++ ) {
+	 HopPlugin p = (HopPlugin)plugins.get( i );
+	 if( name.equals( p.name ) )
+	    return i;
       }
+
+      return -1;
    }
    
    // register plugin
-   static protected int registerPlugin( HopPlugin p ) {
+   static protected synchronized int registerPlugin( HopPlugin p ) {
       synchronized( plugins ) {
 	 plugins.add( p );
 
@@ -190,8 +186,10 @@ public class HopDroid extends Thread {
    }
 
    // kill plugin
-   private void killPlugins() {
-      synchronized( plugins ) {
+   private synchronized void killPlugins() {
+      Log.v( "HopDroid", "killing...plugins" );
+      
+      if( plugins != null ) {
 	 int s = plugins.size();
 
 	 for( int i = 0; i < s; i++ ) {
@@ -231,19 +229,8 @@ public class HopDroid extends Thread {
 	       ;
 	    }
 	 }
-      } catch( IOException e ) {
-	 if( !sock.isClosed() ) {
-	    Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
-	 }
-      } finally {
-	 try {
-	    if( !sock.isClosed() ) {
-	       sock.close();
-	    }
-	 } catch( IOException _ ) {
-	    ;
-	 }
-	 kill();
+      } catch( Throwable e ) {
+	 abortError( e );
       }
    }
 	    
@@ -291,20 +278,27 @@ public class HopDroid extends Thread {
 	       }
 	    }
 	 }
-      } catch( IOException e ) {
-	 if( !sock2.isClosed() ) {
-	    Log.v( "HopDroid", "Plugin IOException: " + e.getMessage() );
-	 }
-      } finally {
-	 try {
-	    if(! sock2.isClosed() ) sock2.close();
-	 } catch( IOException _ ) {
-	    ;
-	 }
-	 kill();
+      } catch( Throwable e ) {
+	 abortError( e );
       }
    }
 
+   // killServers
+   private synchronized void killServers() {
+      Log.v( "HopDroid", "killing...servers" );
+      
+      try {
+	 if( serv1 != null && !serv1.isClosed() ) {
+	    if( !serv1.isClosed() ) serv1.close();
+	 }
+	 if( serv2 != null && !serv2.isClosed() ) {
+	    serv2.close();
+	 }
+      } catch( Exception _ ) {
+	 ;
+      }
+   }
+	 
    // hopPushEvent
    static void hopPushEvent( String event, String value ) {
       hopdroid.pushEvent( event, value );
@@ -344,7 +338,7 @@ public class HopDroid extends Thread {
       int c = ip.read();
 
       if( c < 0 ) {
-	 throw new IOException( "read_int: end-of-file" );
+	 throw new EOFException( "read_int: end-of-file" );
       }
 
       return c;
@@ -358,7 +352,7 @@ public class HopDroid extends Thread {
       int b3 = ip.read();
 
       if( b0 < 0 || b1 < 0 || b2 < 0 || b3 < 0 ) {
-	 throw new IOException( "read_int32: end-of-file" );
+	 throw new EOFException( "read_int32: end-of-file" );
       }
 	 
       return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;

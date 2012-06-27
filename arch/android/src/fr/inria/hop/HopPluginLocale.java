@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginLocale.java     */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginLocale.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Tue Jan 11 17:32:17 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Tue Jun 26 17:17:37 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the phone locales                                            */
 /*=====================================================================*/
@@ -34,8 +34,8 @@ public class HopPluginLocale extends HopPlugin {
    String string;
 
    // constructor
-   public HopPluginLocale( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginLocale( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // server

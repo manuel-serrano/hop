@@ -4,6 +4,7 @@
    <string name="preferences">Preferences</string>
    <string name="hopversion">Hop @HOPVERSION@</string>
    <string name="hopurl">@HOPURL@</string>
+   <string name="hopservicestarted">Hop</string>
 
    <!-- Preference dialog -->
    <string name="text_preferences">Text</string>

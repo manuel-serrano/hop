@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.3.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Thu Jan 26 09:18:35 2012 (serrano)                */
+/*    Last change :  Tue Jun 26 08:57:11 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -38,23 +38,27 @@ public class HopInstaller extends Thread {
    final static String CHMOD = "/system/bin/chmod 755";
    
    // instance variables
-   Hop hop;
+   Handler handler;
    ProgressDialog progress;
-
+   String apk;
+   String root;
+   
    String chmodbuf = "";
    int chmodbuflen = 0;
 
    // constructor
-   public HopInstaller( Hop h, ProgressDialog p ) {
+   public HopInstaller( Handler h, ProgressDialog p, String a, String r ) {
       super();
 
-      hop = h;
+      handler = h;
       progress = p;
+      apk = a;
+      root = r;
    }
 
    // static method
-   public static boolean installed( Hop hop ) {
-      return new File( hop.root, "/bin/hop" ).exists();
+   public static boolean installed( String root ) {
+      return new File( root, "/bin/hop" ).exists();
    }
    
    // chmodflush
@@ -95,7 +99,7 @@ public class HopInstaller extends Thread {
       do {
 	 chmod( pdir );
 	 pdir = new File( pdir ).getParent();
-      } while( !pdir.equals( hop.root ) );
+      } while( !pdir.equals( root ) );
    }
 
    // extract one stream from the zip archive
@@ -133,15 +137,15 @@ public class HopInstaller extends Thread {
 
    // unpacking the zip file
    public void unpack() throws IOException {
-      File zipFile = new File( hop.apk );
+      File zipFile = new File( apk );
 
       if( !zipFile.exists() ) {
-	 Log.e( "HopInstaller", "file not found: " + hop.apk );
-	 throw new FileNotFoundException( hop.apk );
+	 Log.e( "HopInstaller", "file not found: " + apk );
+	 throw new FileNotFoundException( apk );
       }
       
       long zipLastModified = zipFile.lastModified();
-      ZipFile zip = new ZipFile( hop.apk );
+      ZipFile zip = new ZipFile( apk );
       Vector<ZipEntry> files = filesFromZip( zip );
       final Hashtable dirtable = new Hashtable();
       Enumeration entries = files.elements();
@@ -159,7 +163,7 @@ public class HopInstaller extends Thread {
 	 path = patchHopFilename( path );
 
 	 // copy the new file
-	 File outputFile = new File( hop.root, path );
+	 File outputFile = new File( root, path );
 	 File dir = outputFile.getParentFile();
 	    
 	 if( !dirtable.containsKey( dir ) ) {
@@ -193,7 +197,7 @@ public class HopInstaller extends Thread {
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
    void externalstorage() throws IOException {
-      File file = new File( hop.root, "etc/" + "externalstorage.hop" );
+      File file = new File( root, "etc/" + "externalstorage.hop" );
       OutputStream op = new FileOutputStream( file );
       
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
@@ -215,7 +219,7 @@ public class HopInstaller extends Thread {
 	 if( msg == null ) msg = e.getClass().getName();
 	 
 	 Log.e( "HopInstaller", msg );
-	 hop.handler.sendMessage( android.os.Message.obtain( hop.handler, HopLauncher.MSG_INSTALL_FAIL, e ) );
+	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_INSTALL_FAILED, e ) );
 
 	 // loop for ever
 	 while( true ) {

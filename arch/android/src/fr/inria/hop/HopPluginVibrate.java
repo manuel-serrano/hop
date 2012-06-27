@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Tue Jan 11 17:30:18 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Tue Jun 26 17:24:39 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
 /*=====================================================================*/
@@ -31,13 +31,13 @@ public class HopPluginVibrate extends HopPlugin {
    Vibrator vibrator = null;
    
    // constructor
-   HopPluginVibrate( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   HopPluginVibrate( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // get the system vibrator
    private Vibrator make_vibrator() {
-      return (Vibrator)activity.getSystemService( Context.VIBRATOR_SERVICE );
+      return (Vibrator)hopdroid.service.getSystemService( Context.VIBRATOR_SERVICE );
    }
    
    // vibrator player

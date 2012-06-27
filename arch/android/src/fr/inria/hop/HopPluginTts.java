@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Tue Jan 11 17:28:10 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Tue Jun 26 17:45:34 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
 /*=====================================================================*/
@@ -51,8 +51,8 @@ public class HopPluginTts extends HopPlugin
    String initstatus = null;
 
    // constructor
-   public HopPluginTts( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginTts( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // cleanup
@@ -87,7 +87,7 @@ public class HopPluginTts extends HopPlugin
       Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
 	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
-	 tts = new TextToSpeech( activity, this );
+	 tts = new TextToSpeech( hopdroid.service, this );
       } else {
 	 synchronized( condv ) {
 	    // missing data, install it
@@ -95,7 +95,7 @@ public class HopPluginTts extends HopPlugin
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
 	    Log.v( "HopPluginTts", "onHopActivityResult.4: starting activity for install..." );
-	    activity.startActivity( installIntent );
+	    hopdroid.service.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();
 	 }
@@ -121,7 +121,7 @@ public class HopPluginTts extends HopPlugin
 
    // speak completed
    public void onUtteranceCompleted( String value ) {
-      handroid.pushEvent( "tts-completed", value );
+      hopdroid.pushEvent( "tts-completed", value );
    }
 
    // server
