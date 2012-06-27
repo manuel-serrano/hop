@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jun 27 09:12:36 2012 (serrano)                */
+;*    Last change :  Wed Jun 27 09:17:27 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -95,7 +95,7 @@
 			     ((query)
 			      (let ((msg (string-append
 					  "The file `" (cadr h)
-					  "' alread exists. Overide it ?")))
+					  "' alread exists. Override it ?")))
 				 (if (confirm msg)
 				     (with-hop ($wizard/save #t cadmin
 							     uname.value cuser udir.value
