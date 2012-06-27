@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Jun 27 09:07:18 2012 (serrano)                */
+/*    Last change :  Wed Jun 27 09:15:22 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -424,7 +424,9 @@ public class HopLauncher extends Activity {
 	 }
       
 	 Log.i( "HopLauncher", "Stopping service..." );
-	 stopService( hopintent );
+	 if( hopintent != null ) {
+	    stopService( hopintent );
+	 }
 	 Log.i( "HopLauncher", "Finishing activity..." );
 	 finish();
       
