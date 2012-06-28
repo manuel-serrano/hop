@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Jun 28 09:35:00 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 09:39:11 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -20,7 +20,7 @@
    
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
-	      (sdk-version::int (default -1))
+	      (sdk::int (default -1))
 	      (port1::int read-only (default 8081))
 	      (port2::int read-only (default 8082))
 	      (protocol::byte read-only (default 1))
