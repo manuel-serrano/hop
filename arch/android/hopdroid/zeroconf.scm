@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Thu Jun 28 09:42:09 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 15:01:33 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -30,7 +30,7 @@
       (set! plugin
 	 (android-load-plugin
 	    android
-	    (make-file-name (hopbonjour-dir) "etc/HopPluginJmDns.jar")))
+	    (make-file-name (hop-lib-directory) "etc/HopPluginJmDns.jar")))
       (hop-verb 1
 	 (format "Zeroconf (jmdns/??? ~a) setup...\n"
 	    (android-send-command/result android plugin #\v)))))
