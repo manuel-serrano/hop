@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 28 09:30:23 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 15:21:35 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -40,12 +40,46 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopPluginCall.java HopSms.java HopAndroidAudioRecorder.java \
   HopPluginBuild.java
 
+JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
+  NetworkTopologyDiscovery.java ServiceTypeListener.java \
+  NetworkTopologyEvent.java NetworkTopologyListener.java package-info.java \
+  ServiceEvent.java \
+
+JMDNS_IMPL_JAVA = DNSCache.java JmmDNSImpl.java DNSEntry.java \
+  ListenerStatus.java DNSIncoming.java NameRegister.java \
+  DNSListener.java NetworkTopologyDiscoveryImpl.java DNSMessage.java \
+  NetworkTopologyEventImpl.java DNSOutgoing.java ServiceEventImpl.java \
+  DNSQuestion.java ServiceInfoImpl.java DNSRecord.java SocketListener.java \
+  DNSStatefulObject.java DNSTaskStarter.java package-info.java HostInfo.java \
+  JmDNSImpl.java
+
+JMDNS_CNSTS_JAVA = DNSConstants.java DNSOptionCode.java DNSResultCode.java \
+  DNSLabel.java DNSRecordClass.java DNSState.java \
+  DNSOperationCode.java DNSRecordType.java package-info.java \
+
+JMDNS_TASKS_JAVA = DNSTask.java Responder.java RecordReaper.java \
+  package-info.java
+
+JMDNS_RESOLVER_JAVA = DNSResolverTask.java ServiceResolver.java \
+  package-info.java ServiceInfoResolver.java TypeResolver.java
+
+JMDNS_STATE_JAVA = Announcer.java DNSStateTask.java Renewer.java
+  Canceler.java Prober.java package-info.java
+
+ANDROID_JVMDS_JAVA = $(JMDNS_JAVA) \
+  $(JMDNS_IMPL_JAVA:%=impl/%) \
+  $(JMDNS_CNSTS_JAVA:%=impl/constants/%) \
+  $(JMDNS_TASKS_JAVA:%=impl/tasks/%) \
+  $(JMDNS_RESOLVER_JAVA:%=impl/tasks/resolver/%)
+  $(JMDNS_STATE_JAVA:%=impl/tasks/state/%)
+
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
   $(ANDROID_JAVA:%=src/fr/inria/hop/%)
+  $(ANDROID_JAVA:%=javax/jmdns/%)
 
 POPDIRS = hopdroid androidemo
 

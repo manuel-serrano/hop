@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Tue Jun 26 08:57:11 2012 (serrano)                */
+/*    Last change :  Thu Jun 28 15:32:55 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -199,6 +199,7 @@ public class HopInstaller extends Thread {
    void externalstorage() throws IOException {
       File file = new File( root, "etc/" + "externalstorage.hop" );
       OutputStream op = new FileOutputStream( file );
+      Log.i( "HopInstaller", "generating externalstorage \"" + file + "\"" );
       
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
       op.write( "\"".getBytes() );
