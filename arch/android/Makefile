@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 28 15:21:35 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 15:37:06 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -63,7 +63,7 @@ JMDNS_TASKS_JAVA = DNSTask.java Responder.java RecordReaper.java \
 JMDNS_RESOLVER_JAVA = DNSResolverTask.java ServiceResolver.java \
   package-info.java ServiceInfoResolver.java TypeResolver.java
 
-JMDNS_STATE_JAVA = Announcer.java DNSStateTask.java Renewer.java
+JMDNS_STATE_JAVA = Announcer.java DNSStateTask.java Renewer.java \
   Canceler.java Prober.java package-info.java
 
 ANDROID_JVMDS_JAVA = $(JMDNS_JAVA) \
