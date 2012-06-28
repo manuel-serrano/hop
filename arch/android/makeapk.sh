@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Jun 28 15:49:53 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 16:25:57 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -271,11 +271,12 @@ done
 $ANDROIDNDK/ndk-build -C $android V=1 || exit 1
 
 # build the jmdns jar file
-(cd $android/arch/android && 
+(cd $tmp/hop-$HOPVERSION/arch/android && 
+ mkdir build && 
  javac -d build javax/jmdns/JmmDNS.java && 
- cd build && jar cvf jmdns.jar javax && cd .. &&
- $ANDDROIDGIT/out/host/linux-x86/bin/dx --dex \
-   --output=$android/lib/jmdns.jar \
+ cd build && jar cf jmdns.jar javax && cd .. &&
+ $ANDROIDGIT/out/host/linux-x86/bin/dx --dex \
+   --output=$android/assets/hoplib/jmdns.jar \
    build/jmdns.jar)
 
 # cleanup old apk

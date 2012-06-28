@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:13:46 2011                          */
-;*    Last change :  Mon Jun 25 09:58:03 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 16:39:48 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dummy (fake) Zeroconf implementation                             */
@@ -13,6 +13,5 @@
 ;*    Register the dummy-backend                                       */
 ;*---------------------------------------------------------------------*/
 (zeroconf-register-backend!
-   (instantiate::zeroconf
-      (name "dummy")))
+   (instantiate::zeroconf))
       
