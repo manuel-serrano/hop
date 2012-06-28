@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Tue Jun 26 17:45:34 2012 (serrano)                */
+/*    Last change :  Thu Jun 28 15:12:28 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -51,8 +51,8 @@ public class HopPluginTts extends HopPlugin
    String initstatus = null;
 
    // constructor
-   public HopPluginTts( HopDroid h, String n ) {
-      super( h, n );
+   public HopPluginTts( HopDroid h, Activity a, String n ) {
+      super( h, a, n );
    }
 
    // cleanup
