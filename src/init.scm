@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jun 28 08:26:42 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 08:43:40 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */

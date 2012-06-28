@@ -9,13 +9,9 @@
                  android:screenOrientation="landscape"
                  android:persistent="true"
                  android:icon="@drawable/logo">
-        <activity android:name="fr.inria.hop.hop"
-                  android:screenOrientation="landscape"
-                  android:launchMode="singleInstance"
-                  android:label="@string/hop">
-        </activity>
         <activity android:name="fr.inria.hop.HopLauncher"
                   android:screenOrientation="landscape"
+                  android:launchMode="singleInstance"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
                   android:label="@string/hop">
             <intent-filter>
