@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 28 15:37:06 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 15:38:59 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -66,11 +66,11 @@ JMDNS_RESOLVER_JAVA = DNSResolverTask.java ServiceResolver.java \
 JMDNS_STATE_JAVA = Announcer.java DNSStateTask.java Renewer.java \
   Canceler.java Prober.java package-info.java
 
-ANDROID_JVMDS_JAVA = $(JMDNS_JAVA) \
+ANDROID_JMDNS_JAVA = $(JMDNS_JAVA) \
   $(JMDNS_IMPL_JAVA:%=impl/%) \
   $(JMDNS_CNSTS_JAVA:%=impl/constants/%) \
   $(JMDNS_TASKS_JAVA:%=impl/tasks/%) \
-  $(JMDNS_RESOLVER_JAVA:%=impl/tasks/resolver/%)
+  $(JMDNS_RESOLVER_JAVA:%=impl/tasks/resolver/%) \
   $(JMDNS_STATE_JAVA:%=impl/tasks/state/%)
 
 #*---------------------------------------------------------------------*/
@@ -78,8 +78,8 @@ ANDROID_JVMDS_JAVA = $(JMDNS_JAVA) \
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
-  $(ANDROID_JAVA:%=src/fr/inria/hop/%)
-  $(ANDROID_JAVA:%=javax/jmdns/%)
+  $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
+  $(ANDROID_JMDNS_JAVA:%=javax/jmdns/%)
 
 POPDIRS = hopdroid androidemo
 
