@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Thu Jun 28 15:06:24 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 17:41:26 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -27,13 +27,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-start o::androidzeroconf)
    (with-access::androidzeroconf o (android plugin)
-      (set! plugin
-	 (android-load-plugin
-	    android
-	    (make-file-name (hop-lib-directory) "HopPluginJmDns.jar")))
-      (hop-verb 1
-	 (format "Zeroconf (jmdns/??? ~a) setup...\n"
-	    (android-send-command/result android plugin #\v)))))
+      (set! plugin (android-load-plugin android "zeroconf"))
+      (hop-verb 1 (format "Zeroconf (~a) setup...\n"
+		     (with-access::androidphone android (sdk)
+			(if (>= sdk 16) "android" "jmdns"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish-service! ::androidzeroconf ...                  */
@@ -46,7 +43,7 @@
 	  event))
       ((string=? event "")
        (with-access::androidzeroconf o (plugin android)
-	  (add-event-listener! android "jmdns-add-service"
+	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
 		(with-access::event e (value)
 		   (match-case value
