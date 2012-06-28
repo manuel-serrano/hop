@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Jun 25 09:42:25 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 08:26:42 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -520,23 +520,24 @@
 ;*    init-zeroconf! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (init-zeroconf!)
-   (zeroconf-start!
-      (lambda ()
+   (add-event-listener! (zeroconf-backend) "onready"
+      (lambda (o)
 	 (let ((name "Hop"))
 	    ;; publish main Hop service
-	    (zeroconf-publish! :name name
+	    (zeroconf-publish! o :name name
 	       :type "_http._tcp"
 	       :port (hop-port)
 	       (format "version=~a" (hop-version))
 	       (format "path=~a" (hop-service-base)))
 	    ;; publish webdav service
 	    (when (hop-enable-webdav)
-	       (zeroconf-publish! :name name
+	       (zeroconf-publish! o :name name
 		  :type "_webdav._tcp"
 		  :port (hop-port)))
 	    ;; publish hop available services
 	    (for-each (lambda (wi)
-			 (apply zeroconf-publish! :name (format "~a" (cadr wi))
+			 (apply zeroconf-publish! o :name (format "~a" (cadr wi))
 			    (cddr wi)))
-	       (get-weblets-zeroconf))))))
+	       (get-weblets-zeroconf)))))
+   (zeroconf-start (zeroconf-backend)))
 

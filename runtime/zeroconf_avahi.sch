@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Jun 25 09:48:58 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 08:34:02 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -34,11 +34,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    avahi-wait-ready! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (avahi-wait-ready! o::avahi thunk)
+(define (avahi-wait-ready! o::avahi proc)
    ;; wait for the initialization to be completed
    (with-access::avahi o (lock condv state)
       (if (eq? state 'ready)
-	  (thunk)
+	  (proc o)
 	  (with-lock lock
 	     (lambda ()
 		(let loop ()
@@ -47,12 +47,12 @@
 		       (condition-variable-wait! condv lock)
 		       (loop))
 		      ((ready)
-		       (thunk)))))))))
+		       (proc o)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-start-backend! ::avahi ...                              */
+;*    zeroconf-start ::avahi ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-start-backend! o::avahi thunk)
+(define-method (zeroconf-start o::avahi)
    
    ;; start the avahi thread
    (thread-start!
@@ -69,12 +69,13 @@
 			   (format "Zeroconf (avahi ~a) setup...\n" version)))
 		     (avahi-simple-poll-loop poll))))))
 
-   (avahi-wait-ready! o thunk))
+   (with-access::zeroconf o (onready)
+      (avahi-wait-ready! o onready)))
    
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-close! ::avahi ...                                      */
+;*    zeroconf-stop ::avahi ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-close! o::avahi)
+(define-method (zeroconf-stop o::avahi)
    (with-access::avahi o (poll state lock)
       (avahi-simple-poll-timeout poll
 	 0
@@ -126,7 +127,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-publish-service! o::avahi name port type opts)
    (avahi-wait-ready! o
-      (lambda ()
+      (lambda (o)
 	 (with-access::avahi o (client poll)
 	    (avahi-simple-poll-timeout poll
 	       1
@@ -157,7 +158,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi zd type proc)
    (avahi-wait-ready! o
-      (lambda ()
+      (lambda (o)
 	 (with-access::avahi o (client poll)
 	    (instantiate::avahi-service-browser
 	       (client client)
@@ -208,7 +209,7 @@
 	  event))
       ((string=? event "")
        (avahi-wait-ready! o
-	  (lambda ()
+	  (lambda (o)
 	     (with-access::avahi o (client)
 		(with-access::avahi-client client (poll)
 		   (instantiate::avahi-service-type-browser
@@ -218,7 +219,7 @@
 				  (service-browser o zd type proc))))))))))
       (else
        (avahi-wait-ready! o
-	  (lambda ()
+	  (lambda (o)
 	     (service-browser o zd event proc))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,6 +3,8 @@
       package="fr.inria.hop"
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
+    <uses-sdk android:minSdkVersion="5"
+              android:targetSdkVersion="10"/>
     <application android:label="@string/hop"
                  android:screenOrientation="landscape"
                  android:persistent="true"
