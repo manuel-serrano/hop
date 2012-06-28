@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Jun 27 14:00:37 2012 (serrano)                */
+/*    Last change :  Thu Jun 28 09:31:41 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -51,7 +51,6 @@ public class HopDroid extends Thread {
       port = p;
       service = s;
       hopdroid = this;
-      
 
       plugins = new Vector( 16 );
 
@@ -62,6 +61,7 @@ public class HopDroid extends Thread {
 
 	 // register the initial plugins
 	 registerPlugin( new HopPluginInit( this, activity, "init" ) );
+	 registerPlugin( new HopPluginInit( this, "build" ) );
 	 registerPlugin( new HopPluginLocale( this, "locale" ) );
 	 registerPlugin( new HopPluginVibrate( this, "vibrate" ) );
 	 registerPlugin( new HopPluginMusicPlayer( this, "musicplayer" ) );

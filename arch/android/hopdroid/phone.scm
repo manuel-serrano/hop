@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Jun 27 12:00:47 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 09:35:00 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -20,6 +20,7 @@
    
    (export (class androidphone::phone
 	      (host::bstring read-only (default "localhost"))
+	      (sdk-version::int (default -1))
 	      (port1::int read-only (default 8081))
 	      (port2::int read-only (default 8082))
 	      (protocol::byte read-only (default 1))
@@ -61,17 +62,17 @@
 (define call-plugin #f)
 (define battery-plugin #f)
 (define locale-plugin #f)
+(define build-plugin #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
-   (with-access::androidphone p (host port1 %socket1)
-      (set! %socket1 (make-client-socket host port1)))
-   (unless vibrate-plugin
-      (set! vibrate-plugin (android-load-plugin p "vibrate")))
-   (unless sensor-plugin
-      (set! sensor-plugin (android-load-plugin p "sensor"))))
+   (with-access::androidphone p (host port1 %socket1 sdk)
+      (set! %socket1 (make-client-socket host port1))
+      (set! build-plugin (android-load-plugin p "build"))
+      (set! sdk (android-send-command/result p build-plugin #\v))
+      (tprint "SDK VERSION: " sdk)))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */
@@ -230,6 +231,8 @@
 ;*    phone-vibrate ::androidphone ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-vibrate p::androidphone vibration::obj repeat)
+   (unless vibrate-plugin
+      (set! vibrate-plugin (android-load-plugin p "vibrate")))
    (cond
       ((vector? vibration)
        (android-send-command p vibrate-plugin #\p vibration repeat))
@@ -242,12 +245,16 @@
 ;*    phone-vibrate-stop ::androidphone ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-vibrate-stop p::androidphone)
+   (unless vibrate-plugin
+      (set! vibrate-plugin (android-load-plugin p "vibrate")))
    (android-send-command p vibrate-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor-list ::androidphone ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor-list p::androidphone)
+   (unless sensor-plugin
+      (set! sensor-plugin (android-load-plugin p "sensor")))
    (android-send-command/result p sensor-plugin #\i))
 
 ;*---------------------------------------------------------------------*/
@@ -268,11 +275,13 @@
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-sensor p::androidphone type . delay)
+   (unless sensor-plugin
+      (set! sensor-plugin (android-load-plugin p "sensor")))
    (android-send-command/result p sensor-plugin #\b
-				(sensor-type-number type)
-				(with-access::androidphone p (sensor-ttl)
-				   sensor-ttl)
-				(if (pair? delay) (car delay) 0)))
+      (sensor-type-number type)
+      (with-access::androidphone p (sensor-ttl)
+	 sensor-ttl)
+      (if (pair? delay) (car delay) 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-orientation-listener! ...                               */

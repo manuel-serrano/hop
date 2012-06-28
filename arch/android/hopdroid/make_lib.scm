@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.3.x/arch/android/hopdroid/make_lib.scm         */
+;*    .../project/hop/2.4.x/arch/android/hopdroid/make_lib.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Jan 17 10:43:34 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 09:06:38 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPDROID heap file.                 */
@@ -27,4 +27,5 @@
 	   (class androidphone)
 	   (class androidmusic)
 	   (class androidtts)
-	   (class androidmpd-database)))
+	   (class androidmpd-database)
+	   (class androidzeroconf)))
