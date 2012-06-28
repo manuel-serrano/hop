@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Thu Jun 28 09:34:35 2012 (serrano)                */
+/*    Last change :  Thu Jun 28 15:08:41 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -25,10 +25,6 @@ import java.io.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopPluginBuild extends HopPlugin {
-   static boolean buildInitp = false;
-   private String inittext = null;
-   TextToSpeech build;
-   String string;
 
    // constructor
    public HopPluginBuild( HopDroid h, String n ) {
@@ -41,7 +37,7 @@ public class HopPluginBuild extends HopPlugin {
       switch( HopDroid.read_int( ip ) ) {
 	 // sdk version
 	 case (byte)'v':
-	    op.write( Integer.toString( android.os.Build.VERSION.SDK ).getBytes() );
+	    op.write( android.os.Build.VERSION.SDK.getBytes() );
 	    return;
       }
    }

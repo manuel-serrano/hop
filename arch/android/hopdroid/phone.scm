@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Jun 28 09:39:11 2012 (serrano)                */
+;*    Last change :  Thu Jun 28 15:10:32 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -71,8 +71,7 @@
    (with-access::androidphone p (host port1 %socket1 sdk)
       (set! %socket1 (make-client-socket host port1))
       (set! build-plugin (android-load-plugin p "build"))
-      (set! sdk (android-send-command/result p build-plugin #\v))
-      (tprint "SDK VERSION: " sdk)))
+      (set! sdk (android-send-command/result p build-plugin #\v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */
