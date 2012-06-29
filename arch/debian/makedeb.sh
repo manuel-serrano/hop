@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Fri Jun 29 19:18:16 2012 (serrano)                */
+#*    Last change :  Fri Jun 29 20:07:12 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -15,8 +15,8 @@
 #*---------------------------------------------------------------------*/
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
-VERSION=2.4.0-pre1
-DISTRIB=
+VERSION=2.4.0
+MINOR=-pre1
 BIGLOOVERSION=3.8d
 
 REPOSITORY=/users/serrano/prgm/distrib
@@ -43,10 +43,10 @@ mkdir -p $TMP
 #*---------------------------------------------------------------------*/
 #*    Untar the standard Hop version                                   */
 #*---------------------------------------------------------------------*/
-tar xfz $REPOSITORY/hop-$VERSION$DISTRIB.tar.gz -C $TMP
+tar xfz $REPOSITORY/hop-$VERSION$MINOR.tar.gz -C $TMP
 
-if [ "$DISTRIB " != " " ]; then
-  mv $TMP/hop-$VERSION$DISTRIB $TMP/hop-$VERSION
+if [ "$MINOR " != " " ]; then
+  mv $TMP/hop-$VERSION$MINOR $TMP/hop-$VERSION
 fi
 
 #*---------------------------------------------------------------------*/
