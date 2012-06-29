@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Jun 21 09:34:44 2012 (serrano)                */
+#*    Last change :  Fri Jun 29 19:18:16 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -15,9 +15,9 @@
 #*---------------------------------------------------------------------*/
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
-VERSION=2.4.0
+VERSION=2.4.0-pre1
 DISTRIB=
-BIGLOOVERSION=3.8c
+BIGLOOVERSION=3.8d
 
 REPOSITORY=/users/serrano/prgm/distrib
 ICONS="hop-16x16.png hop-26x26.png hop-40x40.png hop-64x64.png"
