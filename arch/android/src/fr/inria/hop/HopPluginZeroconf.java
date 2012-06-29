@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jun 29 12:37:35 2012 (serrano)                */
+/*    Last change :  Fri Jun 29 14:27:27 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -128,7 +128,6 @@ public class HopPluginZeroconf extends HopPlugin {
 
    // addServiceListener
    public synchronized void addTypeListener( final String type ) {
-      Log.v( "HopPluginZeroconf", "ADD TYPE LISTENER: " + type );
       addServiceTypeListener( type + ".local.", "zeroconf-add-service-" + type );
    }
 
@@ -139,9 +138,6 @@ public class HopPluginZeroconf extends HopPlugin {
 	 int port = HopDroid.read_int32( ip );
 	 String type = HopDroid.read_string( ip ) + ".local.";
 	 String txt = HopDroid.read_string( ip );
-
-	 Log.i( "HopPluginZeroconf", "publish service name=" + name
-		+ " port=" + port + " type=" + type + " txt=[" + txt + "]" );
 
 	 ServiceInfo si = ServiceInfo.create( type, name, port, txt );
 	 jmdns.registerService( si );

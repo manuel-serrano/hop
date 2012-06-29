@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Fri Jun 29 12:39:41 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 14:26:49 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -59,7 +59,6 @@
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
-		       (tprint "EVENT: " (car value))
 		       (proc (instantiate::zeroconf-service-event
 				(name name)
 				(target zd)
@@ -76,12 +75,10 @@
 		       #f)))))))
       (else
        (with-access::androidzeroconf o (plugin android)
-	  (tprint "REGISTER TYPE LISTENER: " event)
 	  (android-send-command android plugin #\t event)
 	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
 	     (lambda (e::event)
 		(with-access::event e (value)
-		   (tprint "EVENT: " value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)
 		       (proc (instantiate::zeroconf-service-event
