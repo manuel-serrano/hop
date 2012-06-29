@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jun 29 14:27:27 2012 (serrano)                */
+/*    Last change :  Fri Jun 29 15:10:20 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -152,7 +152,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	 synchronized( jmdns ) {
 	    Log.d( "HopPluginZeroconf", "Unregistering and cleaning plugin..." );
 	    jmdns.unregisterAllServices();
-	    Log.d( "HopPluginZeroconf", "services unregisterd" );
+	    Log.d( "HopPluginZeroconf", "services unregistered" );
 	    try {
 	       jmdns.close();
 	       Log.d( "HopPluginZeroconf", "jmdns closed" );
