@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Fri Jun 29 20:07:12 2012 (serrano)                */
+#*    Last change :  Fri Jun 29 20:48:35 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -15,8 +15,8 @@
 #*---------------------------------------------------------------------*/
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
-VERSION=2.4.0
-MINOR=-pre1
+VERSION=2.4.0       # Hop major version e.g. VERSION=2.4.0
+MINOR=-pre1         # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=3.8d
 
 REPOSITORY=/users/serrano/prgm/distrib
@@ -228,6 +228,10 @@ cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
    $TMP/hop-$VERSION/debian/changelog
 
 (cd $TMP/hop-$VERSION && dpkg-buildpackage -rfakeroot)
+
+if [ "$MINOR " != " " ]; then
+  mv $TMP/hop_"$VERSION"_*.deb hop_"$VERSION""$MINOR"_*.deb
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Copy the deb file                                                */
