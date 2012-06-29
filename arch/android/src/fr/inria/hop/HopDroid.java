@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Jun 28 20:05:53 2012 (serrano)                */
+/*    Last change :  Fri Jun 29 11:37:20 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -307,7 +307,7 @@ public class HopDroid extends Thread {
    
    // pushEvent
    public void pushEvent( String event, String value ) {
-      //Log.d( "HopDroid", "pushEvent " + event + " " + value );
+      // Log.d( "HopDroid", "pushEvent " + event + " " + value );
       synchronized( eventtable ) {
 	 Hashtable ht = (Hashtable)eventtable.get( event );
 

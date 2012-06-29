@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Thu Jun 28 17:41:26 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 12:39:41 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -26,11 +26,21 @@
 ;*    zeroconf-start ::androidzeroconf ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-start o::androidzeroconf)
-   (with-access::androidzeroconf o (android plugin)
-      (set! plugin (android-load-plugin android "zeroconf"))
+   (with-access::androidzeroconf o (android plugin onready)
+      (unless plugin
+	 (set! plugin (android-load-plugin android "zeroconf")))
+      (when (android-send-command/result android plugin #\s)
+	 (onready o))
       (hop-verb 1 (format "Zeroconf (~a) setup...\n"
 		     (with-access::androidphone android (sdk)
 			(if (>= sdk 16) "android" "jmdns"))))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-stop ::androidzeroconf ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (zeroconf-stop o::androidzeroconf)
+   (with-access::androidzeroconf o (android plugin)
+      (android-send-command android plugin #\e)))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish-service! ::androidzeroconf ...                  */
@@ -43,11 +53,13 @@
 	  event))
       ((string=? event "")
        (with-access::androidzeroconf o (plugin android)
+	  (android-send-command android plugin #\l)
 	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
+		       (tprint "EVENT: " (car value))
 		       (proc (instantiate::zeroconf-service-event
 				(name name)
 				(target zd)
@@ -63,4 +75,34 @@
 		      (else
 		       #f)))))))
       (else
-       (tprint "TODO"))))
+       (with-access::androidzeroconf o (plugin android)
+	  (tprint "REGISTER TYPE LISTENER: " event)
+	  (android-send-command android plugin #\t event)
+	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
+	     (lambda (e::event)
+		(with-access::event e (value)
+		   (tprint "EVENT: " value)
+		   (match-case value
+		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)
+		       (proc (instantiate::zeroconf-service-event
+				(name name)
+				(target zd)
+				(interface intf)
+				(protocol proto)
+				(value svc)
+				(type event)
+				(domain domain)
+				(hostname host)
+				(port port)
+				(address addr)
+				(options txt))))
+		      (else
+		       #f)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-publish-service! ::androidzeroconf ...                  */
+;*---------------------------------------------------------------------*/
+(define-method (zeroconf-publish-service! o::androidzeroconf name port type opts)
+   (with-access::androidzeroconf o (android plugin)
+      (android-send-command android plugin #\p name port type
+	 (format "~( )" opts))))

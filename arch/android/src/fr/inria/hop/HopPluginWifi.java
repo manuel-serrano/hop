@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Wed Jun 27 13:51:42 2012 (serrano)                */
+/*    Last change :  Fri Jun 29 10:14:20 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -38,7 +38,7 @@ public class HopPluginWifi extends HopPlugin {
       
       if( mclock == null ) {
 	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
-	 wifi.createMulticastLock( "hop-multicast-lock" );
+	 mclock = wifi.createMulticastLock( "hop-multicast-lock" );
       }
    }
 	 
