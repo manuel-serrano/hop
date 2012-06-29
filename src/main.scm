@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun 19 08:59:38 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 07:38:23 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -96,7 +96,7 @@
       (when (hop-enable-webdav) (init-webdav!))
       (when (hop-enable-fast-server-event) (init-flash!))
       ;; start zeroconf
-      (when (hop-enable-zeroconf) (init-zeroconf!))
+      (init-zeroconf!)
       ;; close filters and users registration before starting
       (hop-filters-close!)
       (users-close!)

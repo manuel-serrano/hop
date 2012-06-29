@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Jun 28 17:36:49 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 20:03:29 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -270,14 +270,17 @@ done
 
 $ANDROIDNDK/ndk-build -C $android V=1 || exit 1
 
-# build the jmdns jar file
-(cd $tmp/hop-$HOPVERSION/arch/android && 
- mkdir build && 
- javac -d build javax/jmdns/JmmDNS.java && 
- cd build && jar cf jmdns.jar javax && cd .. &&
- $ANDROIDGIT/out/host/linux-x86/bin/dx --dex \
-   --output=$android/assets/hoplib/jmdns.jar \
-   build/jmdns.jar)
+#* # build the jmdns jar file                                          */
+#* echo "> ====================================================="      */
+#* (cd $tmp/hop-$HOPVERSION/arch/android &&                            */
+#*  mkdir build &&                                                     */
+#*  javac -d build javax/jmdns/JmmDNS.java &&                          */
+#*  (cd $android/src && javac -d . -classpath .:$tmp/hop-$HOPVERSION/arch/android/build:$ANDROIDGIT/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes fr/inria/hop/HopPluginJmDns.java) && */
+#*  cd build && jar cf jmdns.jar javax && cd .. &&                     */
+#*  $ANDROIDGIT/out/host/linux-x86/bin/dx --dex \                      */
+#*    --output=$android/assets/hoplib/jmdns.jar \                      */
+#*    fr/inria/hop/HopPluginJmDns.class build/jmdns.jar)               */
+#* echo "< ====================================================="      */
 
 # cleanup old apk
 for p in $tmp/hop-$HOPVERSION/android/bin/*.apk; do

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Jun 17 08:58:28 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 05:14:55 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -504,11 +504,12 @@
 	 ;; the bytes of the response to the client.
 	 (when debug-websocket
 	    (tprint "websocket-register, protocol-version: " version))
-	 (let ((resp (case (string->integer version)
-			((7 8 9 10 11 12 13 14 15 16 17)
-			 (websocket-hybi-protocol header req))
-			(else
-			 (websocket-hixie-protocol header req)))))
+	 (let* ((v (string->integer version))
+		(resp (cond
+			 ((and (>=fx v 7) (<=fx v 25))
+			  (websocket-hybi-protocol header req))
+			 (else
+			  (websocket-hixie-protocol header req)))))
 	    ;; register the websocket
 	    (with-lock *event-mutex*
 	       (lambda ()

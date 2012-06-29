@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Jun  2 06:46:34 2012 (serrano)                */
+/*    Last change :  Fri Jun 29 07:55:05 2012 (serrano)                */
 /*    Copyright   :  2004-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -183,19 +183,24 @@ function hop_anim_32_32( title ) {
 /*    hop_default_anim ...                                             */
 /*---------------------------------------------------------------------*/
 var hop_default_anim = hop_anim_32_32;
+var hop_anim_container = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-hop-default-anim-set!) (arity #t)) */
-function hop_default_anim_set( anim ) {
+/*** META ((export with-hop-default-anim-set!) (arity -2)) */
+function hop_default_anim_set( anim, container ) {
    var old = hop_default_anim;
    if( typeof( anim ) == "string" ) {
       var img = hop_anim_32_32( "custom" ).firstChild;
 
       img.src = anim;
    }
-	 
+
+   if( container ) {
+      hop_anim_container = container;
+   }
+   
    return old;
 }
 
@@ -238,7 +243,14 @@ function hop_start_anim( service, user_anim ) {
    var anim = user_anim( service );
 
    if( !anim.count ) {
-      document.body.appendChild( anim );
+      if( typeof( hop_anim_container ) === "string" ) {
+	 hop_anim_container = document.getElementById( hop_anim_container );
+	 }
+      if( !hop_anim_container ) {
+	 hop_anim_container = document.body;
+      }
+
+      hop_anim_container.appendChild( anim );
       anim.count = 2;
    } else {
       anim.count++;
@@ -427,7 +439,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
    if( !sync ) {
       xhr.open( "PUT", svc, true );
-      hop_tprint( "hop-request.js", -1, sc_list( "OPEN: " + svc ) );
       
       if( hop_config.uint8array ) {
 	 xhr.responseType = "arraybuffer";

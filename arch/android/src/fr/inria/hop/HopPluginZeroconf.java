@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Thu Jun 28 17:46:57 2012 (serrano)                */
+/*    Last change :  Thu Jun 28 20:06:37 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -28,25 +28,12 @@ public class HopPluginZeroconf extends HopPlugin {
    JmDNS jmdns = null;
    
    // constructor
-   public HopPluginJmDns( HopDroid h, String n ) {
+   public HopPluginZeroconf( HopDroid h, String n ) {
       super( h, n );
-      Log.d( "HopPluginJmDns", "Plugin registered..." );
+      Log.d( "HopPluginJmDnsZeroconf", "Plugin registered..." );
       
       try {
-	 String tmp =
-	    Environment.getExternalStorageDirectory().getAbsolutePath();
-	 DexClassLoader dexLoader = new DexClassLoader(
-	    "jmdns.jar", tmp, null, HopDroid.class.getClassLoader() );
-
-	 Log.v( "HopPluginZeroconf", "Loading class \"" + cname + "\""
-		   + " from JAR file \"" + name + "\"" );
-	 Class<?> clazz = dexLoader.loadClass( cname );
-	    
-	 Method create = clazz.getMethod( "create", null );
-	 jmdns = create.invoke( null, null );
-	 Log.v( "HopPlulgZeroconf", "jmdns=" + jmdns );
-
-/* 	    JmDNS.create();                                            */
+	 jmdns = JmDNS.create();
 	 
 /* 	 jmdns.addServiceListener( "_http._tcp.local.", new ServiceListener() { */
 /* 	       public void serviceResolved( ServiceEvent ev ) {        */

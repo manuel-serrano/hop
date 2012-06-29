@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 28 17:39:45 2012 (serrano)                */
+#*    Last change :  Thu Jun 28 20:03:54 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -79,7 +79,7 @@ ANDROID_JMDNS_JAVA = $(JMDNS_JAVA) \
 POPULATION = Makefile makeapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
   $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
-  $(ANDROID_JMDNS_JAVA:%=javax/jmdns/%)
+  $(ANDROID_JMDNS_JAVA:%=src/javax/jmdns/%)
 
 POPDIRS = hopdroid androidemo
 

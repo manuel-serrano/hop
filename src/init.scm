@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Jun 28 08:43:40 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 07:41:49 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -520,6 +520,8 @@
 ;*    init-zeroconf! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (init-zeroconf!)
+   (unless (hop-enable-zeroconf)
+      (zeroconf-register-backend! (instantiate::zeroconf)))
    (add-event-listener! (zeroconf-backend) "onready"
       (lambda (o)
 	 (let ((name "Hop"))
@@ -536,8 +538,8 @@
 		  :port (hop-port)))
 	    ;; publish hop available services
 	    (for-each (lambda (wi)
-			 (apply zeroconf-publish! o :name (format "~a" (cadr wi))
+			 (apply zeroconf-publish! o
+			    :name (format "~a" (cadr wi))
 			    (cddr wi)))
 	       (get-weblets-zeroconf)))))
    (zeroconf-start (zeroconf-backend)))
-

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Jun 17 08:55:36 2012 (serrano)                */
+#*    Last change :  Fri Jun 29 07:41:27 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -71,7 +71,7 @@ INCLUDES = http_lib.sch \
            verbose.sch verbose_expd.sch \
            enable_thread.sch disable_thread.sch \
            wiki_syntax.sch wiki_parser.sch \
-           zeroconf_avahi.sch zeroconf_dummy.sch
+           zeroconf_avahi.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -164,7 +164,7 @@ o/service.o ./service.class: service.sch
 o/html_img.o ./html_img.class: param.sch xml.sch 
 o/xdomain.o ./xdomain.class: service.sch 
 o/css.o css.class: xml.sch service.sch hss.sch 
-o/zeroconf.o zeroconf.class: zeroconf_avahi.sch zeroconf_dummy.sch 
+o/zeroconf.o zeroconf.class: zeroconf_avahi.sch
 o/hop_inline.o hop_inline.class: xml.sch 
 o/hop_rss.o hop_rss.class: xml.sch 
 o/http_shoutcast.o http_shoutcast.class: http_lib.sch 
