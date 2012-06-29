@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Fri Jun 29 07:40:46 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 09:07:48 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -36,7 +36,8 @@
 
 	   (abstract-class zeroconf-discoverer)
 	   
-	   (class zeroconf-service-discoverer::zeroconf-discoverer)
+	   (class zeroconf-service-discoverer::zeroconf-discoverer
+	      (zeroconf::zeroconf (default (zeroconf-backend))))
 
 	   (class zeroconf-service-event::server-event
 	      (interface::int read-only)
@@ -112,8 +113,8 @@
 ;*    add-event-listener! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! zd::zeroconf-service-discoverer evt proc . capture)
-   (when (isa? *zeroconf-backend* zeroconf)
-      (zeroconf-add-service-event-listener! *zeroconf-backend* zd evt proc)))
+   (with-access::zeroconf-service-discoverer zd (zeroconf)
+      (zeroconf-add-service-event-listener! zeroconf zd evt proc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish! ...                                            */

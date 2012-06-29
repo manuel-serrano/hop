@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Jun 28 16:39:24 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 08:49:19 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -24,7 +24,7 @@
    
    (library avahi pthread)
    
-   (static (class avahi::zeroconf
+   (export (class avahi::zeroconf
 	      (lock::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (state::symbol (default 'init))

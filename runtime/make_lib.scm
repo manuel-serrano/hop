@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Tue Jun 19 14:44:24 2012 (serrano)                */
+;*    Last change :  Fri Jun 29 08:50:28 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -129,5 +129,13 @@
 	   (class zeroconf-discoverer)
 	   (class zeroconf-service-discoverer)
 
-	   (class zeroconf-service-event)))
+	   (class zeroconf-service-event))
+
+   (cond-expand
+      ((library avahi)
+       (library avahi)))
+      
+   (cond-expand
+      ((library avahi)
+       (eval (class avahi)))))
 
