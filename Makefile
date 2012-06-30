@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Jun 25 09:37:53 2012 (serrano)                */
+#*    Last change :  Sat Jun 30 07:39:29 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -204,6 +204,7 @@ clean-quick:
 	$(MAKE) -C runtime clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
+	$(MAKE) -C hophz clean
 	$(MAKE) -C hopc clean
 	$(MAKE) -C hopreplay clean
 	$(MAKE) -C weblets clean
@@ -216,6 +217,7 @@ clean:
 	$(MAKE) -C hopscheme clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
+	$(MAKE) -C hophz clean
 	$(MAKE) -C hopc clean
 	$(MAKE) -C hopreplay clean
 	$(MAKE) -C etc clean
@@ -228,6 +230,7 @@ devclean:
 	$(MAKE) -C src devclean
 	$(MAKE) -C hopc devclean
 	$(MAKE) -C hopsh devclean
+	$(MAKE) -C hophz devclean
 	$(MAKE) -C hopreplay devclean
 	$(MAKE) -C widget devclean
 	$(MAKE) -C share devclean
@@ -236,6 +239,7 @@ distclean: clean devclean
 	/bin/rm -f etc/Makefile.hopconfig
 	/bin/rm -f etc/hop.man
 	/bin/rm -f etc/hopsh.man
+	/bin/rm -f etc/hophz.man
 	/bin/rm -f etc/hopreplay.man
 	/bin/rm -f lib/hop.init
 	/bin/rm -f lib/scheme2js.init
