@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Fri Jun 29 20:48:35 2012 (serrano)                */
+#*    Last change :  Sat Jun 30 06:32:48 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -229,13 +229,18 @@ cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
 
 (cd $TMP/hop-$VERSION && dpkg-buildpackage -rfakeroot)
 
+# adjust the package file name
 if [ "$MINOR " != " " ]; then
-  mv $TMP/hop_"$VERSION"_*.deb hop_"$VERSION""$MINOR"_*.deb
+  minor=`echo $MINOR | sed -e "s/-//"`
+  for p in $TMP/hop_"$VERSION"_*.deb; do
+    np=`echo $p | sed -e "s/${VERSION}/${VERSION}${minor}/"`
+    mv $p $np
+  done
 fi
 
 #*---------------------------------------------------------------------*/
 #*    Copy the deb file                                                */
 #*---------------------------------------------------------------------*/
 if [ -d $REPOSITORY/$debianversion ]; then
-  cp $TMP/hop_"$VERSION"_*.deb $REPOSITORY/$debianversion
+  cp $TMP/hop_"$VERSION"*.deb $REPOSITORY/$debianversion
 fi
