@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Fri Jun 29 09:07:48 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:15:08 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_zeroconf
+
+   (include "zeroconf_dummy.sch")
    
    (cond-expand
       ((and enable-avahi (library pthread) (library avahi))
@@ -30,14 +32,9 @@
 	   __hop_event
 	   __hop_user)
    
-   (export (class zeroconf
+   (export (abstract-class zeroconf
 	      (zeroconf-init!)
 	      (onready::procedure (default list)))
-
-	   (abstract-class zeroconf-discoverer)
-	   
-	   (class zeroconf-service-discoverer::zeroconf-discoverer
-	      (zeroconf::zeroconf (default (zeroconf-backend))))
 
 	   (class zeroconf-service-event::server-event
 	      (interface::int read-only)
@@ -50,17 +47,20 @@
 	      (options::pair-nil read-only (default '())))
 
 	   (generic zeroconf-init! ::zeroconf)
-
-	   (zeroconf-backend)
 	   (zeroconf-register-backend! ::zeroconf)
 	   
-	   (generic zeroconf-start ::zeroconf)
-	   (generic zeroconf-stop ::zeroconf)
-	   (zeroconf-publish! ::zeroconf #!key name port type #!rest opts)
-	   (generic zeroconf-publish-service! ::zeroconf
+	   (generic zeroconf-backend-start ::zeroconf)
+	   
+	   (generic zeroconf-backend-publish-service! ::zeroconf
 	      ::bstring ::int ::bstring ::pair-nil)
-	   (generic zeroconf-add-service-event-listener! ::zeroconf
-	      ::zeroconf-discoverer ::obj ::procedure)))
+	   (generic zeroconf-backend-add-service-event-listener! ::zeroconf
+	      ::obj ::procedure)
+
+	   ;; public api
+	   (zeroconf-backend)
+	   (zeroconf-started?)
+	   (zeroconf-start)
+	   (zeroconf-publish! #!key name port type #!rest opts)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *zeroconf-backend* ...                                           */
@@ -71,7 +71,9 @@
 ;*    zeroconf-register-backend! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-register-backend! o::zeroconf)
-   (set! *zeroconf-backend* o))
+   (when (or (not (isa? *zeroconf-backend* zeroconf))
+	     (isa? *zeroconf-backend* zeroconf-dummy))
+      (set! *zeroconf-backend* o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend ...                                             */
@@ -86,41 +88,61 @@
    o)
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-start ...                                               */
+;*    *zeroconf-started* ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-generic (zeroconf-start o::zeroconf)
-   #f)
+(define *zeroconf-started* #f)
+(define *zeroconf-mutex* (make-mutex))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-stop ::zeroconf ...                                     */
+;*    zeroconf-started? ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-generic (zeroconf-stop o::zeroconf)
+(define (zeroconf-started?)
+   *zeroconf-started*)
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-start ...                                               */
+;*---------------------------------------------------------------------*/
+(define (zeroconf-start)
+   (mutex-lock! *zeroconf-mutex*)
+   (set! *zeroconf-started* #t)
+   (zeroconf-backend-start (zeroconf-backend))
+   (mutex-unlock! *zeroconf-mutex*))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-backend-start ...                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (zeroconf-backend-start o::zeroconf)
    #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish-service! ::zeroconf ...                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (zeroconf-publish-service! o::zeroconf name port type opts)
-   #f)
+(define (zeroconf-publish-service! name port type opts)
+   (zeroconf-backend-publish-service! (zeroconf-backend) name port type opts))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-add-service-event-listener! ::zeroconf ...              */
+;*    zeroconf-backend-add-service-event-listener! ::zeroconf ...      */
 ;*---------------------------------------------------------------------*/
-(define-generic (zeroconf-add-service-event-listener! o::zeroconf zd evt proc)
+(define-generic (zeroconf-backend-add-service-event-listener! o::zeroconf evt proc)
    #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! zd::zeroconf-service-discoverer evt proc . capture)
-   (with-access::zeroconf-service-discoverer zd (zeroconf)
-      (zeroconf-add-service-event-listener! zeroconf zd evt proc)))
+(define-method (add-event-listener! o::zeroconf evt proc . capture)
+   (zeroconf-backend-add-service-event-listener! o evt proc))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-backend-publish-service! ::zeroconf ...                 */
+;*---------------------------------------------------------------------*/
+(define-generic (zeroconf-backend-publish-service! o::zeroconf name port type opts)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-publish! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (zeroconf-publish! zc::zeroconf #!key name port type #!rest opts)
-   (zeroconf-publish-service! zc name port type opts))
+(define (zeroconf-publish! #!key name port type #!rest opts)
+   (zeroconf-backend-publish-service! (zeroconf-backend) name port type opts))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::zeroconf ...                               */

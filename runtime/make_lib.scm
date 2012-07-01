@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Jun 29 09:25:14 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 06:52:21 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -122,13 +122,10 @@
 
 	   (class event)
 
-	   (class discover-event)
 	   (class discoverer)
+	   (class discover-event)
 
 	   (class zeroconf)
-	   (class zeroconf-discoverer)
-	   (class zeroconf-service-discoverer)
-
 	   (class zeroconf-service-event))
 
    (cond-expand

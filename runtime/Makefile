@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jun 29 07:41:27 2012 (serrano)                */
+#*    Last change :  Sun Jul  1 06:25:01 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -71,7 +71,7 @@ INCLUDES = http_lib.sch \
            verbose.sch verbose_expd.sch \
            enable_thread.sch disable_thread.sch \
            wiki_syntax.sch wiki_parser.sch \
-           zeroconf_avahi.sch
+           zeroconf_avahi.sch zeroconf_dummy.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Fri Jun 29 14:26:49 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:12:57 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -19,14 +19,15 @@
    (import __hopdroid-phone)
    
    (export (class androidzeroconf::zeroconf
-	      (android::androidphone read-only)
+	      (android::androidphone (default #f))
 	      (plugin (default #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-start ::androidzeroconf ...                             */
+;*    zeroconf-backend-start ::androidzeroconf ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-start o::androidzeroconf)
+(define-method (zeroconf-backend-start o::androidzeroconf)
    (with-access::androidzeroconf o (android plugin onready)
+      (set! android opt)
       (unless plugin
 	 (set! plugin (android-load-plugin android "zeroconf")))
       (when (android-send-command/result android plugin #\s)
@@ -38,14 +39,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-stop ::androidzeroconf ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-stop o::androidzeroconf)
-   (with-access::androidzeroconf o (android plugin)
-      (android-send-command android plugin #\e)))
+;* (define-method (zeroconf-backend-stop o::androidzeroconf)           */
+;*    (with-access::androidzeroconf o (android plugin)                 */
+;*       (android-send-command android plugin #\e)))                   */
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-publish-service! ::androidzeroconf ...                  */
+;*    zeroconf-backend-publish-service! ::androidzeroconf ...          */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-add-service-event-listener! o::androidzeroconf zd event proc)
+(define-method (zeroconf-backend-publish-service! o::androidzeroconf name port type opts)
+   (with-access::androidzeroconf o (android plugin)
+      (android-send-command android plugin #\p name port type
+	 (format "~( )" opts))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-backend-add-service-listener! ::androidzeroconf ...     */
+;*---------------------------------------------------------------------*/
+(define-method (zeroconf-backend-add-service-event-listener! o::androidzeroconf event proc)
    (cond
       ((not (string? event))
        (error "add-event-listener! ::zeroconf-service-discoverer"
@@ -61,7 +70,7 @@
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
 		       (proc (instantiate::zeroconf-service-event
 				(name name)
-				(target zd)
+				(target o)
 				(interface intf)
 				(protocol proto)
 				(value svc)
@@ -83,7 +92,7 @@
 		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)
 		       (proc (instantiate::zeroconf-service-event
 				(name name)
-				(target zd)
+				(target o)
 				(interface intf)
 				(protocol proto)
 				(value svc)
@@ -97,9 +106,10 @@
 		       #f)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-publish-service! ::androidzeroconf ...                  */
+;*    Register the avahi backend                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-publish-service! o::androidzeroconf name port type opts)
-   (with-access::androidzeroconf o (android plugin)
-      (android-send-command android plugin #\p name port type
-	 (format "~( )" opts))))
+(tprint "HOPDROID ZEROCONF INIT")
+(zeroconf-register-backend!
+   (instantiate::androidzeroconf
+      (android (android))))
+

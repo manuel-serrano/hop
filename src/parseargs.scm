@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 16 17:51:57 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:24:16 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -303,6 +303,16 @@
       (init-hop-services!)
       (init-hop-widgets!)
       
+      (hop-verb 1 "Hop v" (hop-version))
+      (hop-verb 2 " (" (hop-backend)
+	 (cond-expand
+	    (enable-threads
+	       (format ", ~a scheduler" (hop-scheduling)))
+	    (else
+	     ", single-threaded"))
+	 ")")
+      (hop-verb 1 "\n")
+   
       ;; hoprc
       (if loadp
 	  (begin
@@ -365,16 +375,7 @@
 ;*    hello-world ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hello-world)
-   (hop-verb 1 "Hop v" (hop-version))
-   (hop-verb 2
-	     " (" (hop-backend)
-	     (cond-expand
-		(enable-threads
-		 (format ", ~a scheduler" (hop-scheduling)))
-		(else
-		 ", single-threaded"))
-	     ")")
-   (hop-verb 1 ", "
+   (hop-verb 1 
 	     (if (hop-enable-https)
 		   (format "https (~a):" (hop-https-protocol)) "http:")
 	     (hop-port)
@@ -405,7 +406,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-rc path)
    (when (and (string? path) (file-exists? path))
-      (hop-verb 2 "Loading \"" path "\"...\n")
+      (hop-verb 2 "loading \"" path "\"...\n")
       (hop-load path)
       path))
 

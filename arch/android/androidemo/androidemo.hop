@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Wed Jun 27 12:01:11 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:11:59 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -19,9 +19,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define android (instantiate::androidphone))
-(define amusic (instantiate::androidmusic (phone android)))
-(define atts (instantiate::androidtts (phone android)))
+(define amusic (instantiate::androidmusic (phone (android))))
+(define atts (instantiate::androidtts (phone (android))))
 
 (define battery-state '())
 

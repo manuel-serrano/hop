@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Sat Jun 30 09:42:28 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:24:19 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -50,10 +50,9 @@
 		       (proc o)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-start ::avahi ...                                       */
+;*    zeroconf-backend-start ::avahi ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-start o::avahi)
-   
+(define-method (zeroconf-backend-start o::avahi)
    ;; start the avahi thread
    (thread-start!
       (instantiate::pthread
@@ -64,26 +63,23 @@
 				     (proc (lambda (c s)
 					      (client-callback c s o)))
 				     (poll poll)))
-		     (with-access::avahi-client client (version)
-			(hop-verb 1
-			   (format "Zeroconf (avahi ~a) setup...\n" version)))
 		     (avahi-simple-poll-loop poll))))))
 
    (with-access::zeroconf o (onready)
       (avahi-wait-ready! o onready)))
    
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-stop ::avahi ...                                        */
+;*    zeroconf-backend-stop ::avahi ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-stop o::avahi)
-   (with-access::avahi o (poll state lock)
-      (avahi-simple-poll-timeout poll
-	 0
-	 (lambda ()
-	    (avahi-simple-poll-quit poll)))
-      (mutex-lock! lock)
-      (set! state 'close)
-      (mutex-unlock! lock)))
+;* (define-method (zeroconf-backend-stop o::avahi)                     */
+;*    (with-access::avahi o (poll state lock)                          */
+;*       (avahi-simple-poll-timeout poll                               */
+;* 	 0                                                             */
+;* 	 (lambda ()                                                    */
+;* 	    (avahi-simple-poll-quit poll)))                            */
+;*       (mutex-lock! lock)                                            */
+;*       (set! state 'close)                                           */
+;*       (mutex-unlock! lock)))                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    client-callback ...                                              */
@@ -98,6 +94,8 @@
 	  #unspecified)
 	 ((avahi-client-running)
 	  (set! state 'ready)
+	  (with-access::avahi-client client (version)
+	     (hop-verb 1 (format "zeroconf: ~a\n" version)))
 	  (mutex-lock! lock)
 	  (condition-variable-broadcast! condv)
 	  (mutex-unlock! lock))
@@ -123,9 +121,9 @@
 	     (avahi-client-error-message (-> egroup client)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-publish-service! ::avahi ...                            */
+;*    zeroconf-backend-publish-service! ::avahi ...                    */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-publish-service! o::avahi name port type opts)
+(define-method (zeroconf-backend-publish-service! o::avahi name port type opts)
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
@@ -156,7 +154,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    service-browser ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (service-browser o::avahi zd type proc)
+(define (service-browser o::avahi type proc)
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
@@ -186,7 +184,7 @@
 							 "unknown")))
 					      (evt (instantiate::zeroconf-service-event
 						      (name name)
-						      (target zd)
+						      (target o)
 						      (interface intf)
 						      (protocol proto)
 						      (value svc)
@@ -199,9 +197,9 @@
 					  (proc evt)))))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-publish-service! ::avahi ...                            */
+;*    zeroconf-backend-add-service-event-listener! ::avahi ...         */
 ;*---------------------------------------------------------------------*/
-(define-method (zeroconf-add-service-event-listener! o::avahi zd event proc)
+(define-method (zeroconf-backend-add-service-event-listener! o::avahi event proc)
    (cond
       ((not (string? event))
        (error "add-event-listener! ::zeroconf-service-discoverer"
@@ -216,11 +214,11 @@
 		      (client client)
 		      (proc (lambda (b intf proto event type domain flags)
 			       (when (eq? event 'avahi-browser-new)
-				  (service-browser o zd type proc))))))))))
+				  (service-browser o type proc))))))))))
       (else
        (avahi-wait-ready! o
 	  (lambda (o)
-	     (service-browser o zd event proc))))))
+	     (service-browser o event proc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Register the avahi backend                                       */

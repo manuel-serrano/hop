@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Jun 28 15:10:32 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 07:11:23 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -33,6 +33,8 @@
 
 	   (class androidevent::event)
 
+	   (android)
+	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
 	   (android-send-command/result ::androidphone ::int . args))
@@ -63,6 +65,21 @@
 (define battery-plugin #f)
 (define locale-plugin #f)
 (define build-plugin #f)
+
+;*---------------------------------------------------------------------*/
+;*    *android* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define *android* #f)
+
+;*---------------------------------------------------------------------*/
+;*    android ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (android)
+   (mutex-lock! *android-mutex*)
+   (unless (isa? *android* androidphone)
+      (set! *android* (instantiate::androidphone)))
+   (mutex-unlock! *android-mutex*)
+   *android*)
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
