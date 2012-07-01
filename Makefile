@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Jun 30 07:39:29 2012 (serrano)                */
+#*    Last change :  Sun Jul  1 19:59:42 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -391,3 +391,4 @@ predistrib:
 	$(MAKE)
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
+	$(MAKE) -C hophz predistrib

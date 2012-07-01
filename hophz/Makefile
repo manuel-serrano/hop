@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jun 25 09:40:23 2012 (serrano)                */
+#*    Last change :  Sun Jul  1 20:09:13 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -136,7 +136,16 @@ o/%.o: %.scm .afile
 	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm .afile
+	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-srfi hopc, -c,$< -o $@)
+
+o/%.o: o/%.scm
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),-srfi hopc, -c,$< -o $@)
+
+$(CLASS_DIR)/%.class: o/%.scm .afile
 	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
+
+o/%.scm: ../weblets/hz/%.hop .afile
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 o/%.o: ../weblets/hz/%.hop .afile
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
@@ -162,6 +171,25 @@ ude:
 
 getsources:
 	@ echo $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    predistrib                                                       */
+#*---------------------------------------------------------------------*/
+.PHONY: predistrib predistrib-src predistrib-clean
+
+predistrib:
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(MAKE) predistrib-src)
+
+predistrib-src: $(HOPMODULES:%=o/%.scm)
+
+predistrib-clean:
+	$(RM) $(HOPMODULES:%=o/%.scm)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

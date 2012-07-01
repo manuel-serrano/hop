@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Jun  6 16:11:09 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 20:12:27 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -13,7 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hz_weblet
-   
+
+   (cond-expand
+      (hopc
+       (library hop)))
+
    (import hz_config)
    
    (export (class weblet

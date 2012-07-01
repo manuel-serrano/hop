@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hz/config.hop             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/config.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
-;*    Last change :  Wed May 30 08:07:52 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 20:44:01 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
@@ -13,6 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hz_config
+   
+   (cond-expand
+      (hopc
+       (library hop hopwidget)))
+   
    (export (hz-version)
 	   (hz-date)
 	   (hz-author)

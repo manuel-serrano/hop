@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Fri Jun 29 19:47:31 2012 (serrano)                */
+#*    Last change :  Sun Jul  1 20:48:01 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -201,6 +201,7 @@ if [ $action_install = "yes" ]; then
   if [ "$link" = "static" ]; then
     /bin/rm $android/assets/bin/hop-$branch
     /bin/rm $android/assets/bin/hopc
+    /bin/rm $android/assets/bin/hophz
     /bin/rm $android/assets/bin/hopsh
     /bin/rm $android/assets/hoplib/hop/$branch/*.so
     /bin/rm $android/assets/hoplib/hop/$branch/*.heap
