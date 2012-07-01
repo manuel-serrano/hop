@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jul  1 07:11:23 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 18:52:04 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -70,6 +70,7 @@
 ;*    *android* ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define *android* #f)
+(define *android-mutex* (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    android ...                                                      */

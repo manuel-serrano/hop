@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Sun Jul  1 07:12:57 2012 (serrano)                */
+;*    Last change :  Sun Jul  1 18:52:55 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -19,7 +19,7 @@
    (import __hopdroid-phone)
    
    (export (class androidzeroconf::zeroconf
-	      (android::androidphone (default #f))
+	      (android::androidphone (default (android)))
 	      (plugin (default #f)))))
 
 ;*---------------------------------------------------------------------*/
@@ -27,7 +27,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
    (with-access::androidzeroconf o (android plugin onready)
-      (set! android opt)
       (unless plugin
 	 (set! plugin (android-load-plugin android "zeroconf")))
       (when (android-send-command/result android plugin #\s)
