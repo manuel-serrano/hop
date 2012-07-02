@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jul  2 08:21:39 2012 (serrano)                */
+#*    Last change :  Mon Jul  2 09:03:27 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -17,7 +17,7 @@ do: build
 -include ../etc/Makefile.version
 
 BLFLAGS		= 
-BLINKFLAGS 	= -suffix hop -I ../weblets/hz
+BLINKFLAGS 	= -suffix hop
 
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
@@ -144,7 +144,7 @@ o/%.o: o/%.scm
 $(CLASS_DIR)/%.class: o/%.scm .afile
 	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
 
-o/%.scm: ../weblets/hz/%.hop .afile
+o/%.scm: ../weblets/hz/%.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 o/%.o: ../weblets/hz/%.hop .afile

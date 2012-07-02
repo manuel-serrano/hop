@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Jul  2 08:10:44 2012 (serrano)                */
+;*    Last change :  Mon Jul  2 08:46:09 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -28,6 +28,7 @@
 	      (lock::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (state::symbol (default 'init))
+	      (exception::obj (default #f))
 	      (poll::avahi-simple-poll (default (class-nil avahi-simple-poll)))
 	      (client::avahi-client (default (class-nil avahi-client))))))
 
@@ -36,7 +37,7 @@
 ;*---------------------------------------------------------------------*/
 (define (avahi-wait-ready! o::avahi proc)
    ;; wait for the initialization to be completed
-   (with-access::avahi o (lock condv state)
+   (with-access::avahi o (lock condv state exception)
       (if (eq? state 'ready)
 	  (proc o)
 	  (with-lock lock
@@ -46,6 +47,15 @@
 		      ((init)
 		       (condition-variable-wait! condv lock)
 		       (loop))
+		      ((failure)
+		       (hop-verb 1 "zeroconf: "
+			  (hop-color 4 "error" "")
+			  (if (isa? exception &error)
+			      (with-access::&error exception (msg)
+				 
+				 (format " (~a)\n" msg))
+			      "\n"))
+		       #f)
 		      ((ready)
 		       (proc o)))))))))
 
@@ -57,13 +67,21 @@
    (thread-start!
       (instantiate::pthread
 	 (body (lambda ()
-		  (with-access::avahi o (poll client lock condv state)
-		     (set! poll (instantiate::avahi-simple-poll))
-		     (set! client (instantiate::avahi-client
-				     (proc (lambda (c s)
-					      (client-callback c s o)))
-				     (poll poll)))
-		     (avahi-simple-poll-loop poll))))))
+		  (with-access::avahi o (poll client lock condv state exception)
+		     (with-handler
+			(lambda (e)
+			   (with-lock lock
+			      (lambda ()
+				 (set! state 'failure)
+				 (set! exception e)
+				 (condition-variable-broadcast! condv))))
+			(begin
+			   (set! poll (instantiate::avahi-simple-poll))
+			   (set! client (instantiate::avahi-client
+					   (proc (lambda (c s)
+						    (client-callback c s o)))
+					   (poll poll)))
+			   (avahi-simple-poll-loop poll))))))))
 
    (with-access::zeroconf o (onready)
       (avahi-wait-ready! o onready)))
