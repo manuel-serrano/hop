@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jul  1 07:24:16 2012 (serrano)                */
+;*    Last change :  Mon Jul  2 08:16:01 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -174,7 +174,7 @@
 	  (hop-enable-discovery-set! #f))
 	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp)))
 	  (set! dp (string->integer port)))
-	 (("--zeroconf" (help "Enable zeroconf support"))
+	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
 	  (hop-enable-zeroconf-set! #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
 	  (hop-enable-zeroconf-set! #f))
@@ -303,7 +303,7 @@
       (init-hop-services!)
       (init-hop-widgets!)
       
-      (hop-verb 1 "Hop v" (hop-version))
+      (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)))
       (hop-verb 2 " (" (hop-backend)
 	 (cond-expand
 	    (enable-threads
@@ -378,18 +378,20 @@
    (hop-verb 1 
 	     (if (hop-enable-https)
 		   (format "https (~a):" (hop-https-protocol)) "http:")
-	     (hop-port)
+	     (hop-color 2 "" (hop-port))
 	     (if (hop-enable-fast-server-event)
-		 (format ", comet-port:~a" (hop-fast-server-event-port))
+		 (format ", comet-port:~a"
+		    (hop-color 2 "" (hop-fast-server-event-port)))
 		 "")
 	     (if (hop-enable-discovery)
-		 (format ", discovery-port:~a" (hop-discovery-port))
+		 (format ", discovery-port:~a"
+		    (hop-color 2 "" (hop-discovery-port)))
 		 "")
 	     ", security:"
 	     (with-access::security-manager (hop-security-manager) (name)
-		name)
+		(hop-color 2 "" name))
 	     " [" (hop-security) "]")
-   (hop-verb 3 ", session:" (hop-session))
+   (hop-verb 3 ", session:" (hop-color 2 "" (hop-session)))
    (hop-verb 1 "\n"))
 
 ;*---------------------------------------------------------------------*/
@@ -406,7 +408,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-rc path)
    (when (and (string? path) (file-exists? path))
-      (hop-verb 2 "loading \"" path "\"...\n")
+      (hop-verb 3 "loading \"" (hop-color 3 "" path) "\"...\n")
       (hop-load path)
       path))
 

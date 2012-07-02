@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Jul  1 20:09:13 2012 (serrano)                */
+#*    Last change :  Mon Jul  2 08:21:39 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -227,7 +227,6 @@ clean:
 	/bin/rm -f .afile
 	/bin/rm -f $(OBJECTS)
 	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -rf o
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
 	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
 	/bin/rm -rf META-INF

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Sun Jul  1 07:24:19 2012 (serrano)                */
+;*    Last change :  Mon Jul  2 08:10:44 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -95,7 +95,7 @@
 	 ((avahi-client-running)
 	  (set! state 'ready)
 	  (with-access::avahi-client client (version)
-	     (hop-verb 1 (format "zeroconf: ~a\n" version)))
+	     (hop-verb 1 (format "zeroconf: ~a\n" (hop-color 2 "" version))))
 	  (mutex-lock! lock)
 	  (condition-variable-broadcast! condv)
 	  (mutex-unlock! lock))

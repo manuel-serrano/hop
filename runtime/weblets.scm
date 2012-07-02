@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun Jun 17 08:59:42 2012 (serrano)                */
+;*    Last change :  Mon Jul  2 08:14:20 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -307,8 +307,8 @@
 		   ((pair? autopred)
 		    (when (cadr autopred)
 		       (hashtable-put! *weblet-table* name path)
-		       (hop-verb 2 "Setting autoload " path " on "
-				 (cadr autopred) "\n")
+		       (hop-verb 3 "Setting autoload " (hop-color 4 "" path)
+			  " when " (cadr autopred) "\n")
 		       (autoload path (eval (cadr autopred)))))
 		   (else
 		    (hashtable-put! *weblet-table* name svc)
