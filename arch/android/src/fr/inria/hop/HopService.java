@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Jun 27 10:06:18 2012 (serrano)                */
+/*    Last change :  Tue Jul  3 09:16:19 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -69,6 +69,9 @@ public class HopService extends Service {
    }
 
    public void kill() {
+      if( hop != null ) hop.inkill = true;
+      if( hopdroid != null ) hopdroid.inkill = true;
+      
       if( hop != null ) {
 	 hop.kill();
 	 hop = null;

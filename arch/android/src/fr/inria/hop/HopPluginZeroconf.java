@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jun 29 15:10:20 2012 (serrano)                */
+/*    Last change :  Tue Jul  3 09:21:02 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -31,6 +31,7 @@ import javax.jmdns.*;
 public class HopPluginZeroconf extends HopPlugin {
    JmDNS jmdns = null;
    android.net.wifi.WifiManager.MulticastLock multicast_lock;
+   boolean inkill = false;
    
    // constructor
    public HopPluginZeroconf( HopDroid h, String n ) {
@@ -139,8 +140,18 @@ public class HopPluginZeroconf extends HopPlugin {
 	 String type = HopDroid.read_string( ip ) + ".local.";
 	 String txt = HopDroid.read_string( ip );
 
-	 ServiceInfo si = ServiceInfo.create( type, name, port, txt );
-	 jmdns.registerService( si );
+	 if( !inkill ) {
+	    synchronized( jmdns ) {
+	       if( jmdns != null ) {
+		  Log.d( "HopPluginZeroconf", ">>> register-service type=" +
+			 type + " name=" + name );
+		  ServiceInfo si = ServiceInfo.create( type, name, port, txt );
+		  jmdns.registerService( si );
+		  Log.d( "HopPluginZeroconf", "<<< register-service type=" +
+			 type + " name=" + name );
+	       }
+	    }
+	 }
       } catch( Exception e ) {
 	 Log.d( "HopPluginZeroconf", "cannot register service", e );
       }
@@ -148,29 +159,31 @@ public class HopPluginZeroconf extends HopPlugin {
       
    // stopJmDns()
    public synchronized void stopJmDns() {
+      Log.d( "HopPluginZeroconf", ">>> stopJmDns" );
+
       if( jmdns != null ) {
 	 synchronized( jmdns ) {
-	    Log.d( "HopPluginZeroconf", "Unregistering and cleaning plugin..." );
-	    jmdns.unregisterAllServices();
-	    Log.d( "HopPluginZeroconf", "services unregistered" );
 	    try {
+	       Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
 	       jmdns.close();
-	       Log.d( "HopPluginZeroconf", "jmdns closed" );
+	       Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
 	    } catch( Throwable _ ) {
 	       ;
 	    }
-	    jmdns = null;
 	 }
       }
 
+      Log.d( "HopPluginZeroconf", "--- release multicast lock" );
       if( multicast_lock != null ) {
 	 multicast_lock.release();
 	 multicast_lock = null;
       }
+      Log.d( "HopPluginZeroconf", "<<< stopJmDns" );
    }      
 
    // kill
    public synchronized void kill() {
+      inkill = true;
       super.kill();
 
       stopJmDns();

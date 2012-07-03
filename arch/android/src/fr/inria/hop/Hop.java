@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Jun 27 13:56:11 2012 (serrano)                */
+/*    Last change :  Tue Jul  3 08:57:08 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -46,6 +46,7 @@ public class Hop extends Thread {
 
    // instance variables
    boolean killed = false;
+   boolean inkill = false;
    String msg;
    FileDescriptor HopFd;
    Handler handler;
@@ -139,7 +140,7 @@ public class Hop extends Thread {
 		     }
 		  }
 	       } catch( Throwable e ) {
-		  if( !killed ) {
+		  if( !killed && !inkill ) {
 		     boolean tosend = false;
 		  
 		     Log.e( "Hop", "process exception (pid=" + pid[ 0 ]

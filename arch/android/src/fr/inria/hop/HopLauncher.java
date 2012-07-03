@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Jun 27 10:07:30 2012 (serrano)                */
+/*    Last change :  Tue Jul  3 09:21:42 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -210,6 +210,7 @@ public class HopLauncher extends Activity {
 		     case MSG_STOP_HOP_SERVICE:
 			Log.i( "HopLauncher", "Stoping Hop Service" );
 			hopservice.kill();
+			hopconnected = false;
 			unbindService( hopconnection );
 			stopService( hopintent );
 			hopintent = null;
@@ -243,7 +244,7 @@ public class HopLauncher extends Activity {
       Button buttonr = (Button)findViewById( R.id.restart );
       buttonr.setOnClickListener( new OnClickListener() {
 	    public void onClick( View v ) {
-	       textbuffer.delete( 0, textbuffer.length() - 1 );
+	       textbuffer.delete( 0, textbuffer.length() );
 	       write_console( "Restarting Hop..." );
 
 	       handler.sendEmptyMessage( MSG_STOP_HOP_SERVICE );
@@ -422,6 +423,7 @@ public class HopLauncher extends Activity {
 	 }
 	 if( hopconnected ) {
 	    Log.i( "HopLauncher", "Unbinding service..." );
+	    hopconnected = false;
 	    unbindService( hopconnection );
 	 }
       

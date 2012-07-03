@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Mon Jul  2 10:03:24 2012 (serrano)                */
+;*    Last change :  Tue Jul  3 08:43:25 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -26,13 +26,10 @@
 ;*    zeroconf-backend-start ::androidzeroconf ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
-   (tprint "HOPDROID ZEROCONF BACKEND START")
    (with-access::androidzeroconf o (android plugin onready)
       (unless plugin
 	 (set! plugin (android-load-plugin android "zeroconf")))
-      (tprint "HOPDROID ZEROCONF OBTAINING VERSION")
       (when (android-send-command/result android plugin #\s)
-	 (tprint "HOPDROID ZEROCONF FULLY INITIALIZED")
 	 (onready o)
 	 (hop-verb 1 (format "Zeroconf (~a) setup...\n"
 			(with-access::androidphone android (sdk)
@@ -110,7 +107,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    Register the avahi backend                                       */
 ;*---------------------------------------------------------------------*/
-(tprint "HOPDROID ZEROCONF INIT")
 (zeroconf-register-backend!
    (instantiate::androidzeroconf
       (android (android))))

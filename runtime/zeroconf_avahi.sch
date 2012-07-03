@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Tue Jul  3 07:59:18 2012 (serrano)                */
+;*    Last change :  Tue Jul  3 10:03:03 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -29,7 +29,7 @@
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (state::symbol (default 'init))
 	      (exception::obj (default #f))
-	      (poll::avahi-threaded-poll (default (class-nil avahi-threaded-poll)))
+	      (poll::avahi-simple-poll (default (class-nil avahi-simple-poll)))
 	      (client::avahi-client (default (class-nil avahi-client))))))
 
 ;*---------------------------------------------------------------------*/
@@ -79,12 +79,12 @@
 				 (set! exception e)
 				 (condition-variable-broadcast! condv))))
 			(begin
-			   (set! poll (instantiate::avahi-threaded-poll))
+			   (set! poll (instantiate::avahi-simple-poll))
 			   (set! client (instantiate::avahi-client
 					   (proc (lambda (c s)
 						    (client-callback c s o)))
 					   (poll poll)))
-			   (avahi-threaded-poll-loop poll))))))))
+			   (avahi-simple-poll-loop poll))))))))
 
    (with-access::zeroconf o (onready)
       (avahi-wait-ready! o onready)))
@@ -94,10 +94,10 @@
 ;*---------------------------------------------------------------------*/
 ;* (define-method (zeroconf-backend-stop o::avahi)                     */
 ;*    (with-access::avahi o (poll state lock)                          */
-;*       (avahi-threaded-poll-timeout poll                               */
+;*       (avahi-simple-poll-timeout poll                               */
 ;* 	 0                                                             */
 ;* 	 (lambda ()                                                    */
-;* 	    (avahi-threaded-poll-quit poll)))                            */
+;* 	    (avahi-simple-poll-quit poll)))                            */
 ;*       (mutex-lock! lock)                                            */
 ;*       (set! state 'close)                                           */
 ;*       (mutex-unlock! lock)))                                        */
@@ -148,7 +148,7 @@
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
-	    (avahi-threaded-poll-timeout poll
+	    (avahi-simple-poll-timeout poll
 	       1
 	       (lambda ()
 		  (let ((group (instantiate::avahi-entry-group
