@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jun 12 07:11:35 2012 (serrano)                */
+;*    Last change :  Mon Jul  2 09:57:05 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -339,4 +339,4 @@
 ;*    hop-enable-zeroconf ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-zeroconf
-   #f)
+   #t)
