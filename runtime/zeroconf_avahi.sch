@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Jul  4 09:21:54 2012 (serrano)                */
+;*    Last change :  Thu Jul  5 07:31:09 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -28,7 +28,6 @@
 	      (lock::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (state::symbol (default 'init))
-	      (exception::obj (default #f))
 	      (poll::avahi-simple-poll (default (class-nil avahi-simple-poll)))
 	      (client::avahi-client (default (class-nil avahi-client))))))
 
@@ -36,58 +35,68 @@
 ;*    avahi-wait-ready! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (avahi-wait-ready! o::avahi proc)
+   
+   (define (avahi-apply proc o)
+      (with-access::avahi o (lock poll)
+	 (mutex-lock! lock)
+	 (avahi-simple-poll-timeout poll 1 (lambda () (proc o)))
+	 (mutex-unlock! lock)))
+   
    ;; wait for the initialization to be completed
-   (with-access::avahi o (lock condv state exception)
+   (with-access::avahi o (lock condv state client poll)
       (if (eq? state 'ready)
-	  (proc o)
-	  (with-lock lock
-	     (lambda ()
-		(let loop ()
-		   (case state
-		      ((init)
-		       (condition-variable-wait! condv lock)
-		       (loop))
-		      ((failure)
-		       (mutex-lock! *zeroconf-mutex*)
-		       (set! *zeroconf-started* #f)
-		       (mutex-unlock! *zeroconf-mutex*)
-		       (hop-verb 1 "zeroconf: "
-			  (hop-color 4 "error" "")
-			  (if (isa? exception &error)
-			      (with-access::&error exception (msg)
-				 
-				 (format " (~a)\n" msg))
-			      "\n"))
-		       #f)
-		      ((ready)
-		       (proc o)))))))))
+	  (avahi-apply proc o)
+	  (let loop ()
+	     (case state
+		((init)
+		 (mutex-lock! lock)
+		 (condition-variable-wait! condv lock)
+		 (mutex-unlock! lock)
+		 (loop))
+		((failure)
+		 (warning "avahi failure, action ignored")
+		 #f)
+		((ready)
+		 (avahi-apply proc o)))))))
 
+;*---------------------------------------------------------------------*/
+;*    avahi-failure ...                                                */
+;*---------------------------------------------------------------------*/
+(define (avahi-failure o #!optional err)
+   (with-access::avahi o (poll client lock condv state)
+      (with-lock lock
+	 (lambda ()
+	    (set! state 'failure)
+	    (hop-verb 1 "zeroconf:"
+	       (hop-color 4 "error" "")
+	       (cond
+		  ((string? err)
+		   (format " (~a)\n" err))
+		  ((isa? err &error)
+		   (with-access::&error err (msg)
+		      (format " (~a)\n" msg)))
+		  (else
+		   "\n")))
+	    (condition-variable-broadcast! condv)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ::avahi ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::avahi)
-   ;; start the avahi thread
    (thread-start!
       (instantiate::pthread
 	 (body (lambda ()
 		  (with-access::avahi o (poll client lock condv state exception)
 		     (with-handler
 			(lambda (e)
-			   (with-lock lock
-			      (lambda ()
-				 (set! state 'failure)
-				 (set! exception e)
-				 (condition-variable-broadcast! condv))))
+			   (avahi-failure o e))
 			(begin
 			   (set! poll (instantiate::avahi-simple-poll))
 			   (set! client (instantiate::avahi-client
 					   (proc (lambda (c s)
 						    (client-callback c s o)))
 					   (poll poll)))
-			   (avahi-simple-poll-loop poll))))))))
-
-   (with-access::zeroconf o (onready)
-      (avahi-wait-ready! o onready)))
+			   (avahi-simple-poll-loop poll)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-stop ::avahi ...                                */
@@ -106,17 +115,17 @@
 ;*    client-callback ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (client-callback client::avahi-client cstate::symbol o::avahi)
-   (with-access::avahi o (lock condv state)
+   (with-access::avahi o (lock condv state onready)
       (case cstate
 	 ((avahi-client-failure)
-	  (set! state 'failure)
-	  (warning "zeroconf" (avahi-client-error-message client) " -- " state))
+	  (avahi-failure o (avahi-client-error-message client)))
 	 ((avahi-client-collision avahi-client-registering avahi-client-connecting)
 	  #unspecified)
 	 ((avahi-client-running)
 	  (set! state 'ready)
 	  (with-access::avahi-client client (version)
-	     (hop-verb 1 (format "zeroconf: ~a\n" (hop-color 2 "" version))))
+	     (hop-verb 1 (format "zeroconf:~a\n" (hop-color 2 "" version))))
+	  (onready o)
 	  (mutex-lock! lock)
 	  (condition-variable-broadcast! condv)
 	  (mutex-unlock! lock))
@@ -148,29 +157,26 @@
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
-	    (avahi-simple-poll-timeout poll
-	       1
-	       (lambda ()
-		  (let ((group (instantiate::avahi-entry-group
-				  (proc entry-group-callback)
-				  (client client))))
-		     (let loop ((name name))
-			(with-handler
-			   (lambda (e)
-			      (if (isa? e &avahi-collision-error)
-				  (begin
-				     (avahi-entry-group-reset! group)
-				     (loop (avahi-alternative-service-name name)))
-				  (raise e)))
-			   (begin
-			      ;; add the service for hop
-			      (apply avahi-entry-group-add-service! group
-				 :name name
-				 :type type
-				 :port (hop-port)
-				 opts)
-			      ;; tell the server to register the service
-			      (avahi-entry-group-commit group)))))))))))
+	    (let ((group (instantiate::avahi-entry-group
+			    (proc entry-group-callback)
+			    (client client))))
+	       (let loop ((name name))
+		  (with-handler
+		     (lambda (e)
+			(if (isa? e &avahi-collision-error)
+			    (begin
+			       (avahi-entry-group-reset! group)
+			       (loop (avahi-alternative-service-name name)))
+			    (raise e)))
+		     (begin
+			;; add the service for hop
+			(apply avahi-entry-group-add-service! group
+			   :name name
+			   :type type
+			   :port (hop-port)
+			   opts)
+			;; tell the server to register the service
+			(avahi-entry-group-commit group)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-browser ...                                              */

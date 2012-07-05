@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Tue Jul  3 08:43:25 2012 (serrano)                */
+;*    Last change :  Thu Jul  5 07:31:56 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -31,9 +31,10 @@
 	 (set! plugin (android-load-plugin android "zeroconf")))
       (when (android-send-command/result android plugin #\s)
 	 (onready o)
-	 (hop-verb 1 (format "Zeroconf (~a) setup...\n"
-			(with-access::androidphone android (sdk)
-			   (if (>= sdk 16) "android" "jmdns")))))))
+	 (hop-verb 1 (format "zeroconf:~a\n"
+			(hop-color 2 ""
+			   (with-access::androidphone android (sdk)
+			      (if (>= sdk 16) "android" "jmdns"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-stop ::androidzeroconf ...                              */
