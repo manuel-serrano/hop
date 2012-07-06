@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Jul  6 09:37:00 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 12:01:54 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -42,8 +42,14 @@ public class HopPluginWifi extends HopPlugin {
 
       wifi = null;
    }
-   
+
    // init
+   static void initWifi( HopDroid hopdroid ) {
+      if( wifi == null ) {
+	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
+      }
+   }
+      
    static void initMulticastLock( HopDroid hopdroid ) {
       Log.d( "HopPluginWifi", "init multicastlock" );
 
@@ -113,6 +119,13 @@ public class HopPluginWifi extends HopPlugin {
 	    } else {
 	       op.write( "#f".getBytes() );
 	    }
+	    return;
+
+	 case (byte)'i':
+	    initWifi( hopdroid );
+	    op.write( "(wifi ssid: ".getBytes() );
+	    op.write( wifi.getConnectionInfo().getSSID().getBytes() );
+	    op.write( ")".getBytes() );
 	    return;
       }
    }

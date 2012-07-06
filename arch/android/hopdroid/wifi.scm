@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/arch/android/hopdroid/wifi.scm        */
+;*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/wifi.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 17 07:08:41 2011                          */
-;*    Last change :  Sat Dec 17 14:46:28 2011 (serrano)                */
-;*    Copyright   :  2011 Manuel Serrano                               */
+;*    Last change :  Fri Jul  6 11:58:44 2012 (serrano)                */
+;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wifi control                                                     */
 ;*=====================================================================*/
@@ -21,7 +21,10 @@
    (export (class androidwifi
 	      (androidwifi-init)
 	      (%mutex::mutex (default (make-mutex)))
-	      (phone::androidphone read-only))
+	      (phone::androidphone read-only)
+	      (info read-only
+		 (get (lambda (o::androidwifi)
+			 (android-send-command/result o.phone wifi-plugin #\i)))))
 
 	   (androidwifi-init ::androidwifi)))
 
