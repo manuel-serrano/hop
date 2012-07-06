@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Tue Jul  3 09:21:02 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 12:38:12 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -135,22 +135,30 @@ public class HopPluginZeroconf extends HopPlugin {
    // publishJmDns
    public void publishJmDns( InputStream ip ) {
       try {
-	 String name = HopDroid.read_string( ip );
-	 int port = HopDroid.read_int32( ip );
-	 String type = HopDroid.read_string( ip ) + ".local.";
-	 String txt = HopDroid.read_string( ip );
+	 final String name = HopDroid.read_string( ip );
+	 final int port = HopDroid.read_int32( ip );
+	 final String type = HopDroid.read_string( ip ) + ".local.";
+	 final String txt = HopDroid.read_string( ip );
 
 	 if( !inkill ) {
-	    synchronized( jmdns ) {
-	       if( jmdns != null ) {
-		  Log.d( "HopPluginZeroconf", ">>> register-service type=" +
-			 type + " name=" + name );
-		  ServiceInfo si = ServiceInfo.create( type, name, port, txt );
-		  jmdns.registerService( si );
-		  Log.d( "HopPluginZeroconf", "<<< register-service type=" +
-			 type + " name=" + name );
-	       }
-	    }
+	    new Thread( new Runnable() {
+		  public void run() {
+		     synchronized( jmdns ) {
+			if( jmdns != null ) {
+			   Log.d( "HopPluginZeroconf", ">>> register-service type=" +
+				  type + " name=" + name );
+			   ServiceInfo si = ServiceInfo.create( type, name, port, txt );
+			   try {
+			      jmdns.registerService( si );
+			   } catch( Exception e ) {
+			      Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e );
+			   }
+			   Log.d( "HopPluginZeroconf", "<<< register-service type=" +
+				  type + " name=" + name );
+			}
+		     }
+		  }
+	       } ).start();
 	 }
       } catch( Exception e ) {
 	 Log.d( "HopPluginZeroconf", "cannot register service", e );

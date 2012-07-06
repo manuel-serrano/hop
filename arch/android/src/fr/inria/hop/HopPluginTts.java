@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Fri Jul  6 12:09:06 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 12:35:59 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -88,19 +88,26 @@ public class HopPluginTts extends HopPlugin
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
 	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
 	 tts = new TextToSpeech( hopdroid.service, this );
-      } else {
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) {
 	 synchronized( condv ) {
 	    // missing data, install it
-	    Log.v( "HopPluginTts", "onHopActivityResult.3: missing data..." );
+	    Log.v( "HopPluginTts", "onHopActivityResult.3a: missing data..." );
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	    Log.v( "HopPluginTts", "onHopActivityResult.4: starting activity for install..." );
+	    Log.v( "HopPluginTts", "onHopActivityResult.3b: starting activity for install..." );
 	    
-	    myIntent.setFlags( installIntent.FLAG_ACTIVITY_NEW_TASK );
-	    hopdroid.service.startActivity( installIntent );
+/* 	    installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );   */
+/* 	    hopdroid.service.startActivity( installIntent );           */
+	    hopdroid.activity.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();
 	 }
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) {
+	 Log.v( "HopPluginTts", "onHopActivityResult.4: bad_data..." );
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) {
+	 Log.v( "HopPluginTts", "onHopActivityResult.5: missing volume..." );
+      } else {
+	 Log.v( "HopPluginTts", "onHopActivityResult.6: tts error..." );
       }
    }
 
