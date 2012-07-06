@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul  5 17:42:47 2012                          */
-/*    Last change :  Fri Jul  6 09:35:12 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 09:46:46 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with network connections.                                */
@@ -24,8 +24,6 @@ import java.util.*;
 
 // http://developer.android.com/reference/android/net/ConnectivityManager.html
 
-// NetworkInfo info = (NetworkInfo) intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO) and then info.getType() and check for ConnectivityManager.TYPE_WIFI
-   
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/

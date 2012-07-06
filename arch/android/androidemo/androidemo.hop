@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Sun Jul  1 07:11:59 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 09:49:03 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -80,6 +80,9 @@ END:VCARD"))
 (add-event-listener! android "orientation"
    (lambda (e::event)
       (hop-event-broadcast! "orientation" e.value)))
+(add-event-listener! android "connectivity"
+   (lambda (e::event)
+      (hop-event-broadcast! "connectivity" e.value)))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -248,6 +251,8 @@ missed.")
     (<ANDROIDEMO:SENSORS>)
     (<H3> "Battery")
     (<ANDROIDEMO:BATTERY>)
+    (<H3> "Connectivity")
+    (<ANDROIDEMO:CONNECTIVITY>)
     ))
 
 ;*---------------------------------------------------------------------*/
@@ -338,6 +343,16 @@ missed.")
 	  (<TD> :id "bat-plug" "")
 	  (<TD> :id "bat-health" "")
 	  (<TD> :id "bat-voltage" "")))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROID:CONNECTIVITY> ...                                       */
+;*---------------------------------------------------------------------*/
+(define (<ANDROID:CONNECTIVITY>)
+   (<DIV>
+      ~(add-event-listener! server "connectivity"
+	  (lambda (e)
+	     (innerHTML-set! "connectivity" (format "~s" e.value))))
+      (<DIV> :id connectivity "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
