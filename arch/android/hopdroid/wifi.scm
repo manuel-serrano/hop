@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 17 07:08:41 2011                          */
-;*    Last change :  Fri Jul  6 12:12:24 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 12:16:11 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wifi control                                                     */
@@ -24,7 +24,7 @@
 	      (phone::androidphone read-only)
 	      (info read-only
 		 (get (lambda (o)
-			 (with-access::androidwifi (phone)
+			 (with-access::androidwifi o (phone)
 			       (android-send-command/result phone wifi-plugin #\i))))))
 
 	   (androidwifi-init ::androidwifi)))
