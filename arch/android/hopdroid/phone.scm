@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jul  1 18:52:04 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 09:44:56 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -59,6 +59,7 @@
 ;*---------------------------------------------------------------------*/
 (define vibrate-plugin #f)
 (define sensor-plugin #f)
+(define connectivity-plugin #f)
 (define sms-plugin #f)
 (define contact-plugin #f)
 (define call-plugin #f)
@@ -149,7 +150,9 @@
 	       ((string=? event "call")
 		(register-call-listener! p))
 	       ((string=? event "orientation")
-		(register-orientation-listener! p)))))))
+		(register-orientation-listener! p))
+	       ((string=? event "connectivity")
+		(register-connectivity-listener! p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ...                                       */
@@ -169,7 +172,9 @@
 					((string=? event "call")
 					 (remove-call-listener! p))
 					((string=? event "orientation")
-					 (remove-call-listener! p)))
+					 (remove-call-listener! p))
+					((string=? event "connectivity")
+					 (remove-connectivity-listener! p)))
 				     (remq! proc l))
 				  '()))
 	    (when (socket? %socket2)
@@ -311,6 +316,22 @@
 ;*---------------------------------------------------------------------*/
 (define (remove-orientation-listener! p::androidphone)
    (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
+
+;*---------------------------------------------------------------------*/
+;*    register-connectivity-listener! ...                              */
+;*---------------------------------------------------------------------*/
+(define (register-connectivity-listener! p::androidphone)
+   (unless connectivity-plugin
+      (set! connectivity-plugin (android-load-plugin p "connectivity")))
+   (android-send-command p connectivity-plugin #\c))
+
+;*---------------------------------------------------------------------*/
+;*    remove-connectivity-listener! ...                                */
+;*---------------------------------------------------------------------*/
+(define (remove-connectivity-listener! p::androidphone)
+   (unless connectivity-plugin
+      (set! connectivity-plugin (android-load-plugin p "connectivity")))
+   (android-send-command p connectivity-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-sms-send ::androidphone ...                                */

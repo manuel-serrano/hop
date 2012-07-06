@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 28 20:03:54 2012 (serrano)                */
+#*    Last change :  Thu Jul  5 17:43:15 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -38,7 +38,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopPluginSms.java HopPluginContact.java HopPluginWifi.java \
   HopPluginBattery.java HopPluginTts.java HopPluginMediaAudio.java \
   HopPluginCall.java HopSms.java HopAndroidAudioRecorder.java \
-  HopPluginBuild.java HopPluginZeroconf.java
+  HopPluginBuild.java HopPluginConnectivity.java HopPluginZeroconf.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \

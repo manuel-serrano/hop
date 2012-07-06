@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Jun 29 10:14:20 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 09:37:00 2012 (serrano)                */
 /*    Copyright   :  2011-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -19,7 +19,7 @@ import android.content.*;
 import android.os.Bundle;
 import android.util.Log;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.MulticastLock;
+import android.net.wifi.WifiManager.*;
 
 import java.io.*;
 
@@ -30,15 +30,42 @@ import java.io.*;
 /*---------------------------------------------------------------------*/
 public class HopPluginWifi extends HopPlugin {
    static MulticastLock mclock = null;
-   static WifiManager wifi;
+   static WifiLock wlock = null;
+   static WifiManager wifi = null;
 
+   // kill
+   public void kill() {
+      super.kill();
+      
+      if( mclock != null ) mclock.release();
+      if( wlock != null ) wlock.release();
+
+      wifi = null;
+   }
+   
    // init
    static void initMulticastLock( HopDroid hopdroid ) {
       Log.d( "HopPluginWifi", "init multicastlock" );
+
+      if( wifi == null ) {
+	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
+      }
       
       if( mclock == null ) {
-	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
 	 mclock = wifi.createMulticastLock( "hop-multicast-lock" );
+      }
+   }
+	 
+   // init
+   static void initWifiLock( HopDroid hopdroid ) {
+      Log.d( "HopPluginWifi", "init wifilock" );
+
+      if( wifi == null ) {
+	 wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
+      }
+      
+      if( wlock == null ) {
+	 wlock = wifi.createWifiLock( "hop-wifi-lock" );
       }
    }
 	 
@@ -64,6 +91,24 @@ public class HopPluginWifi extends HopPlugin {
 	    
 	 case (byte)'s':
 	    if( mclock != null && mclock.isHeld() ) {
+	       op.write( "#t".getBytes() );
+	    } else {
+	       op.write( "#f".getBytes() );
+	    }
+	    return;
+	    
+	 case (byte)'w':
+	    initWifiLock( hopdroid );
+	    wlock.acquire();
+	    return;
+
+	 case (byte)'W':
+	    if( wlock != null )
+	       wlock.release();
+	    return;
+	    
+	 case (byte)'t':
+	    if( wlock != null && wlock.isHeld() ) {
 	       op.write( "#t".getBytes() );
 	    } else {
 	       op.write( "#f".getBytes() );

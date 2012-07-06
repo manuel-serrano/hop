@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Wed Jun 27 10:49:36 2012 (serrano)                */
+/*    Last change :  Thu Jul  5 17:47:29 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Dealing with SMS                                                 */
+/*    Dealing with Battery                                             */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -41,7 +41,7 @@ public class HopPluginBattery extends HopPlugin {
       if( receiver != null ) hopdroid.service.unregisterReceiver( receiver );
    }
    
-   // sensor manager
+   // battery manager
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
