@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 17 07:08:41 2011                          */
-;*    Last change :  Fri Jul  6 11:58:44 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 12:12:24 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wifi control                                                     */
@@ -23,8 +23,9 @@
 	      (%mutex::mutex (default (make-mutex)))
 	      (phone::androidphone read-only)
 	      (info read-only
-		 (get (lambda (o::androidwifi)
-			 (android-send-command/result o.phone wifi-plugin #\i)))))
+		 (get (lambda (o)
+			 (with-access::androidwifi (phone)
+			       (android-send-command/result phone wifi-plugin #\i))))))
 
 	   (androidwifi-init ::androidwifi)))
 
