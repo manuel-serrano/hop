@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Thu Jun 28 15:12:28 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 12:09:06 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -95,6 +95,8 @@ public class HopPluginTts extends HopPlugin
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
 	    Log.v( "HopPluginTts", "onHopActivityResult.4: starting activity for install..." );
+	    
+	    myIntent.setFlags( installIntent.FLAG_ACTIVITY_NEW_TASK );
 	    hopdroid.service.startActivity( installIntent );
 	    initstatus = "missing data";
 	    condv.notify();
