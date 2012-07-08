@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.2.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
+/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Mon Jan 17 17:49:21 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Fri Jul  6 16:35:41 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
 /*=====================================================================*/
@@ -30,13 +30,12 @@ import java.lang.reflect.*;
 public class HopPluginInit extends HopPlugin {
    final Class[] classes = new Class[ 3 ];
    
-   HopPluginInit( HopDroid h, Activity a, String n ) throws ClassNotFoundException {
-      super( h, a, n );
+   HopPluginInit( HopDroid h, String n ) throws ClassNotFoundException {
+      super( h, n );
 
       try {
 	 classes[ 0 ] = Class.forName( "fr.inria.hop.HopDroid" );
-	 classes[ 1 ] = Class.forName( "android.app.Activity" );
-	 classes[ 2 ] = Class.forName( "java.lang.String" );
+	 classes[ 1 ] = Class.forName( "java.lang.String" );
       } catch( ClassNotFoundException e ) {
 	 Log.e( "HopPluginInit", "server error "
 		+ e.toString() + " class not found." );
@@ -67,7 +66,7 @@ public class HopPluginInit extends HopPlugin {
 	    Class<?> clazz = dexLoader.loadClass( cname );
 	    
 	    Constructor constr = clazz.getConstructor( classes );
-	    Object[] args = { handroid, activity, name };
+	    Object[] args = { handroid, name };
 	    HopPlugin p = (HopPlugin)constr.newInstance( args );
 
 	    id = HopDroid.registerPlugin( p );

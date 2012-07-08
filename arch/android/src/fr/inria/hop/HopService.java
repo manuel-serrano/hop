@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Tue Jul  3 09:16:19 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 16:52:15 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -109,7 +109,7 @@ public class HopService extends Service {
       if( hop != null ) {
 	 hop.handler = null;
       }
-      if( hopdroid !=null ) {
+      if( hopdroid != null ) {
 	 hopdroid.handler = null;
       }
 

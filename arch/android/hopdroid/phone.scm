@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Jul  6 09:44:56 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 18:17:51 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -309,12 +309,16 @@
 ;*    register-orientation-listener! ...                               */
 ;*---------------------------------------------------------------------*/
 (define (register-orientation-listener! p::androidphone)
+   (unless sensor-plugin
+      (set! sensor-plugin (android-load-plugin p "sensor")))
    (android-send-command p sensor-plugin #\a (sensor-type-number 'orientation)))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-orientation-listener! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (remove-orientation-listener! p::androidphone)
+   (unless sensor-plugin
+      (set! sensor-plugin (android-load-plugin p "sensor")))
    (android-send-command p sensor-plugin #\r (sensor-type-number 'orientation)))
 
 ;*---------------------------------------------------------------------*/

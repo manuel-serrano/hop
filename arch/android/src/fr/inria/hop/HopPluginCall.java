@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Wed Jun 27 14:04:54 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 18:24:37 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -40,13 +40,13 @@ public class HopPluginCall extends HopPlugin {
 	 public void onCallStateChanged( int state, String in ) {
 	    switch( state ) {
 	       case TelephonyManager.CALL_STATE_RINGING:
-		  handroid.pushEvent( "call", "(call-state ringing " + in + " )" );
+		  hopdroid.pushEvent( "call", "(call-state ringing " + in + " )" );
 		  break;
 	       case TelephonyManager.CALL_STATE_OFFHOOK:
-		  handroid.pushEvent( "call", "(call-state offhook " + in + " )" );
+		  hopdroid.pushEvent( "call", "(call-state offhook " + in + " )" );
 		  break;
 	       case TelephonyManager.CALL_STATE_IDLE:
-		  handroid.pushEvent( "call", "(call-state idle " + in + " )" );
+		  hopdroid.pushEvent( "call", "(call-state idle " + in + " )" );
 		  break;
 	       default:
 		  Log.d( "HopPluginCall", "Unknown phone state=" + state );
@@ -56,16 +56,16 @@ public class HopPluginCall extends HopPlugin {
 	 public void onDataConnectionStateChanged( int state ) {
 	    switch( state ) {
 	       case TelephonyManager.DATA_DISCONNECTED:
-		  handroid.pushEvent( "call", "(data disconnected)" );
+		  hopdroid.pushEvent( "call", "(data disconnected)" );
 		  break;
 	       case TelephonyManager.DATA_CONNECTING:
-		  handroid.pushEvent( "call", "(data connecting)" );
+		  hopdroid.pushEvent( "call", "(data connecting)" );
 		  break;
 	       case TelephonyManager.DATA_CONNECTED:
-		  handroid.pushEvent( "call", "(data connected)" );
+		  hopdroid.pushEvent( "call", "(data connected)" );
 		  break;
 	       case TelephonyManager.DATA_SUSPENDED:
-		  handroid.pushEvent( "call", "(data suspended)" );
+		  hopdroid.pushEvent( "call", "(data suspended)" );
 		  break;
 	       default:
 		  Log.d( "HopPluginCall", "Unknown phone state=" + state );
@@ -75,13 +75,13 @@ public class HopPluginCall extends HopPlugin {
 	 public void onServiceStateChanged( ServiceState sstate ) {
 	    switch( sstate.getState() ) {
 	       case ServiceState.STATE_EMERGENCY_ONLY:
-		  handroid.pushEvent( "call", "(state emergency-only)" );
+		  hopdroid.pushEvent( "call", "(state emergency-only)" );
 		  break;
 	       case ServiceState.STATE_IN_SERVICE:
-		  handroid.pushEvent( "call", "(state in-service)" );
+		  hopdroid.pushEvent( "call", "(state in-service)" );
 		  break;
 	       case ServiceState.STATE_OUT_OF_SERVICE:
-		  handroid.pushEvent( "call", "(state out-of-service)" );
+		  hopdroid.pushEvent( "call", "(state out-of-service)" );
 		  break;
 	       case ServiceState.STATE_POWER_OFF:
 		  Log.d( "HopPluginCall", "state: power-off" );
@@ -91,8 +91,8 @@ public class HopPluginCall extends HopPlugin {
       };
    
    // constructor
-   HopPluginCall( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   HopPluginCall( HopDroid h, String n ) {
+      super( h, n );
    }
 
     // calllog manager
@@ -278,7 +278,7 @@ public class HopPluginCall extends HopPlugin {
 
       Log.d( "HopPluginCall", "Intent created..." );
 
-      if( true || newactivity ) {
+      if( newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
 	 Log.d( "HopPluginCall", "Activity started..." );
@@ -286,7 +286,7 @@ public class HopPluginCall extends HopPlugin {
 	 
 	 ci = callIntent;
 	 ca = 0;
-	 activity.startService( callIntent );
+	 hopdroid.activity.startService( callIntent );
       }
    }
 
@@ -294,7 +294,7 @@ public class HopPluginCall extends HopPlugin {
    void stopCall() {
       if( ci != null ) {
 	 Log.d( "HopPluginCall", "stopping service..." );
-	 activity.stopService( ci );
+	 hopdroid.activity.stopService( ci );
 	 Log.d( "HopPluginCall", "service stopped." );
       }
       if( ca > 0 ) {
@@ -302,22 +302,22 @@ public class HopPluginCall extends HopPlugin {
 	 // as of 10 Jan 2010, switching to airplane mode is apparantly
 	 // the only way to abort a phone call
 	 android.provider.Settings.System.putInt(
-	    activity.getContentResolver(),
+	    hopdroid.activity.getContentResolver(),
 	    android.provider.Settings.System.AIRPLANE_MODE_ON, 1 );
 
 	 Intent intent = new Intent( Intent.ACTION_AIRPLANE_MODE_CHANGED );
 	 intent.putExtra( "state", 1 );
-	 activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
-	 activity.sendBroadcast( intent );
+	 hopdroid.activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 hopdroid.activity.sendBroadcast( intent );
 	 android.provider.Settings.System.putInt(
-	    activity.getContentResolver(),
+	    hopdroid.activity.getContentResolver(),
 	    android.provider.Settings.System.AIRPLANE_MODE_ON,
 	    0 );
 
 	 intent.putExtra( "state", 0 );
-	 activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
-	 activity.sendBroadcast( intent );
-	 activity.finishActivity( ca );
+	 hopdroid.activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 hopdroid.activity.sendBroadcast( intent );
+	 hopdroid.activity.finishActivity( ca );
 	 Log.d( "HopPluginCall", "Activity finished" );
       }
    }

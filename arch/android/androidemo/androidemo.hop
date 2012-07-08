@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Jul  6 09:49:03 2012 (serrano)                */
+;*    Last change :  Fri Jul  6 18:22:10 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -56,31 +56,31 @@ END:VCARD"))
 ;*---------------------------------------------------------------------*/
 ;*    server listener                                                  */
 ;*---------------------------------------------------------------------*/
-(add-event-listener! android "sms-delivered"
+(add-event-listener! (android) "sms-delivered"
    (lambda (e)
       (hop-event-broadcast! "sms-delivered" #t)))
-(add-event-listener! android "sms-sent"
+(add-event-listener! (android) "sms-sent"
    (lambda (e)
       (hop-event-broadcast! "sms-sent" #t)))
-(add-event-listener! android "sms-received"
+(add-event-listener! (android) "sms-received"
    (lambda (e::event)
       (let ((val e.value))
 	 (hop-event-broadcast! "sms-received" val)
 	 (tts-speak atts (cadr val)))))
-(add-event-listener! android "battery"
+(add-event-listener! (android) "battery"
    (lambda (e::event)
       (set! battery-state e.value)
       (hop-event-broadcast! "battery" e.value)))
-(add-event-listener! android "tts"
+(add-event-listener! (android) "tts"
    (lambda (e::event)
       (hop-event-broadcast! "tts" e.value)))
-(add-event-listener! android "call"
+(add-event-listener! (android) "call"
    (lambda (e::event)
       (hop-event-broadcast! "call" e.value)))
-(add-event-listener! android "orientation"
+(add-event-listener! (android) "orientation"
    (lambda (e::event)
       (hop-event-broadcast! "orientation" e.value)))
-(add-event-listener! android "connectivity"
+(add-event-listener! (android) "connectivity"
    (lambda (e::event)
       (hop-event-broadcast! "connectivity" e.value)))
 
@@ -140,19 +140,19 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;*---------------------------------------------------------------------*/
 (define-service (androidemo/sensors)
    (list (cons 'orientation
-	       (phone-sensor android 'orientation))
+	       (phone-sensor (android) 'orientation))
 	 (cons 'magnetic
-	       (phone-sensor android 'magnetic-field))
+	       (phone-sensor (android) 'magnetic-field))
 	 (cons 'accelerometer
-	       (phone-sensor android 'accelerometer))
+	       (phone-sensor (android) 'accelerometer))
 	 (cons 'temperature
-	       (phone-sensor android 'temperature))
+	       (phone-sensor (android) 'temperature))
 	 (cons 'light
-	       (phone-sensor android 'light))
+	       (phone-sensor (android) 'light))
 	 (cons 'pressure
-	       (phone-sensor android 'pressure))
+	       (phone-sensor (android) 'pressure))
 	 (cons 'proximity
-	       (phone-sensor android 'proximity))))
+	       (phone-sensor (android) 'proximity))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BODY> ...                                            */
@@ -208,7 +208,7 @@ Android phone. This demonstration does not use any HTML5 facility.")
 
        (<DIV>
 	  (<BUTTON> :onclick ~(with-hop ($(service (no text)
-					     (phone-sms-send android no text))
+					     (phone-sms-send (android) no text))
 					  (let ((no (dom-get-element-by-id "smsno")))
 					     no.value)
 					  (let ((txt (dom-get-element-by-id "smstext")))
@@ -246,7 +246,7 @@ missed.")
 (define (<ANDROIDEMO:HARDWARE>)
    (list
     (<BUTTON> :onclick ~(with-hop ($(service ()
-				       (phone-vibrate android sos-vibrations -1))))
+				       (phone-vibrate (android) sos-vibrations -1))))
        "Vibrate (SOS)")
     (<ANDROIDEMO:SENSORS>)
     (<H3> "Battery")
@@ -260,54 +260,52 @@ missed.")
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:SENSORS>)
    (list
-    ~(define active-sensors #f)
-
-    ~(add-event-listener! server "orientation"
-	(lambda (e)
-	   (let ((r (format "rotate(~adeg)" (car e.value))))
-	      (node-style-set! "img-ori"
-		 :MozTransform r
-		 :webkitTransform r))))
-       
-    (<DIV> "Sensor list:")
-
-    (<PRE> (map (lambda (l)
-		   (with-output-to-string
-		      (lambda ()
-			 (write l)
-			 (newline))))
-		(phone-sensor-list android)))
-
-    (<BUTTON> :onclick ~(if active-sensors
-			    (begin
-			       (innerHTML-set! this "Activate sensors")
-			       (set! active-sensors #f))
-			    (let ((img (dom-get-element-by-id "img"))
-				  (2PI (* 4 (atan 1)))
-				  (t (format "rotate(~adeg)" e.value)))
-			       (innerHTML-set! this "Deactive sensors")
-			       (let loop ()
-				  (with-hop ($androidemo/sensors)
-				     (lambda (l)
-					(innerHTML-set!
-					 "sensors"
-					 (<TABLE> (map (lambda (r)
-							  (<TR>
-							     (<TD> (symbol->string (car r)))
-							     (<TD> (if (pair? (cdr r))
-								       (<TT> (map (lambda (v)
-										     (list v " " ))
-										  (cdr r)))
-								       ""))))
-						       l)))
-					(when active-sensors
-					   (after 200 loop)))))))
-       "Activate sensors")
-
-    (<DIV> :id "sensors")
-    (<IMG> :id "img-ori"
-       :src (make-file-path (hop-share-directory)
-			    "icons" "hop" "hop-128x128.png"))))
+      ~(define active-sensors #f)
+      
+      ~(add-event-listener! server "orientation"
+	  (lambda (e)
+	     (let ((r (format "rotate(~adeg)" (car e.value))))
+		(node-style-set! "img-ori"
+		   :MozTransform r
+		   :webkitTransform r))))
+      
+      (<DIV> "Sensor list:")
+      
+      (<PRE> (map (lambda (l)
+		     (with-output-to-string
+			(lambda ()
+			   (write l)
+			   (newline))))
+		(phone-sensor-list (android))))
+      
+      (<BUTTON> :onclick ~(if active-sensors
+			      (begin
+				 (innerHTML-set! this "Activate sensors")
+				 (set! active-sensors #f))
+			      (begin
+				 (innerHTML-set! this "Deactive sensors")
+				 (let loop ()
+				    (with-hop ($androidemo/sensors)
+				       (lambda (l)
+					  (innerHTML-set!
+					     "sensors"
+					     (<TABLE> (map (lambda (r)
+							      (<TR>
+								 (<TD> (symbol->string (car r)))
+								 (<TD> (if (pair? (cdr r))
+									   (<TT> (map (lambda (v)
+											 (list v " " ))
+										    (cdr r)))
+									   ""))))
+							 l)))
+					  (when active-sensors
+					     (after 200 loop)))))))
+	 "Activate sensors")
+      
+      (<DIV> :id "sensors")
+      (<IMG> :id "img-ori"
+	 :src (make-file-path (hop-share-directory)
+		 "icons" "hop" "hop-128x128.png"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:BATTERY> ...                                         */
@@ -345,14 +343,14 @@ missed.")
 	  (<TD> :id "bat-voltage" "")))))
 
 ;*---------------------------------------------------------------------*/
-;*    <ANDROID:CONNECTIVITY> ...                                       */
+;*    <ANDROIDEMO:CONNECTIVITY> ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (<ANDROID:CONNECTIVITY>)
+(define (<ANDROIDEMO:CONNECTIVITY>)
    (<DIV>
       ~(add-event-listener! server "connectivity"
 	  (lambda (e)
 	     (innerHTML-set! "connectivity" (format "~s" e.value))))
-      (<DIV> :id connectivity "")))
+      (<DIV> :id "connectivity" "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */
@@ -438,7 +436,7 @@ missed.")
     (<TABLE> :class "callinfo"
        (map (lambda (e)
 	       (<TR> (<TH> (symbol->string (car e))) (<TD> (cadr e))))
-	    (phone-call-info android)))
+	    (phone-call-info (android))))
     (<BR>)
     (<DIV> :class "short-note"
        "Call Events")
@@ -463,14 +461,14 @@ missed.")
 				(letrec ((h (lambda (e::event)
 					       (match-case e.value
 						  ((call-state offhook)
-						   (remove-event-listener! android "call" h)
+						   (remove-event-listener! (android) "call" h)
 						   (tts-speak atts "text"))))))
-				   (add-event-listener! android "call" h)
-				   (phone-call-start android number))))
+				   (add-event-listener! (android) "call" h)
+				   (phone-call-start (android) number))))
 			   eln.value elt.value)))
 	  "Place call")
        (<BUTTON> :onclick ~(with-hop ($(service ()
-					  (phone-call-stop android))))
+					  (phone-call-stop (android)))))
 	  "End call"))))
 
 ;*---------------------------------------------------------------------*/
@@ -487,7 +485,7 @@ missed.")
 		     (<TD> (seconds->date date))
 		     (<TD> duration)
 		     (<TD> name)))))
-	   (phone-call-log android 10))))
+	   (phone-call-log (android) 10))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SPEECH> ...                                          */
@@ -499,7 +497,7 @@ missed.")
 	   (alert "tts done: " e.value)))
     (<TEXTAREA> :id "speech" "")
     (<DIV> "language: "
-       (let ((locale (phone-current-locale android)))
+       (let ((locale (phone-current-locale (android))))
 	  (<SELECT> :id "language"
 	     :onchange ~(with-hop ($(service (s)
 				       (let ((l (call-with-input-string s read)))
@@ -514,7 +512,7 @@ missed.")
 					       (write l)))
 				  :selected (equal? l locale)
 				  (list-ref l 3))))
-			 (phone-locales android)))))
+			 (phone-locales (android))))))
     (<TABLE> :id "speech-conf"
        (<TR>
 	  (<TH> "pitch: ")
@@ -538,7 +536,7 @@ missed.")
    (list
       (<H3> "Music database")
       (let ((mpd (instantiate::androidmpd-database
-		    (phone android))))
+		    (phone (android)))))
 	 (<DIV> :id "database-audio"
 	    (<UL>
 	       (map (lambda (g)

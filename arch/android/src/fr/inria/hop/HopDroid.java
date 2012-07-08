@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Jul  5 17:43:47 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 17:20:23 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -52,7 +52,7 @@ public class HopDroid extends Thread {
       port = p;
       service = s;
       hopdroid = this;
-
+      
       plugins = new Vector( 16 );
 
       try {
@@ -61,7 +61,7 @@ public class HopDroid extends Thread {
 	 serv2 = new ServerSocket( p + 1 );
 
 	 // register the initial plugins
-	 registerPlugin( new HopPluginInit( this, activity, "init" ) );
+	 registerPlugin( new HopPluginInit( this, "init" ) );
 	 
 	 registerPlugin( new HopPluginBuild( this, "build" ) );
 	 registerPlugin( new HopPluginLocale( this, "locale" ) );
@@ -76,8 +76,8 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginContact( this, "contact" ) );
 	 registerPlugin( new HopPluginZeroconf( this, "zeroconf" ) );
 	 
-	 registerPlugin( new HopPluginCall( this, activity, "call" ) );
-	 registerPlugin( new HopPluginTts( this, activity, "tts" ) );
+	 registerPlugin( new HopPluginCall( this, "call" ) );
+	 registerPlugin( new HopPluginTts( this, "tts" ) );
       } catch( Exception e ) {
 	 abortError( e );
       }

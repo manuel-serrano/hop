@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Wed Jun 27 12:02:07 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 16:35:18 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -34,20 +34,11 @@ public abstract class HopPlugin {
    public HopDroid handroid;
    public HopDroid hopdroid;
    public String name;
-   public Activity activity = null;
 
    public HopPlugin( HopDroid h, String n ) {
       Log.v( "HopPlugin", "creating plugin: " + n );
       hopdroid = h;
       name = n;
-   }
-
-   public HopPlugin( HopDroid h, Activity a, String n ) {
-      Log.v( "HopPlugin", "creating plugin: " + n );
-      hopdroid = h;
-      handroid = h;
-      name = n;
-      activity = a;
    }
 
    // cleanup
@@ -60,7 +51,7 @@ public abstract class HopPlugin {
 
    // onActivityResult (called by HopLauncher)
    static public void onActivityResult( int key, int result, Intent intent ) {
-      Log.v( "HopPlugin", "onActivityResult key=" + key );
+      Log.v( "HopPlugin", "onActivityResult key=" + key + " result=" + result + " intent=" + intent );
       synchronized( atable ) {
 	 HopPlugin p = (HopPlugin)atable.get( key );
 
@@ -84,7 +75,8 @@ public abstract class HopPlugin {
 	 atable.put( key, this );
       }
       
-      Log.v( "HopPlugin", "Starting activity key=" + key );
+      Log.v( "HopPlugin", "Starting activity key=" + key + " intent=" + intent
+	 + " activity=" + hopdroid.activity );
       hopdroid.activity.startActivityForResult( intent, key );
 
       return key;

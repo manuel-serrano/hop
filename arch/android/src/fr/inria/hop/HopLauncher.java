@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Jul  3 09:21:42 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 18:07:57 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -123,17 +123,17 @@ public class HopLauncher extends Activity {
    
    final ServiceConnection hopconnection = new ServiceConnection() {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
+	    Log.i( "HopLauncher", "Launcher connected... activity=" + activity );
 	    hopservice = ((HopService.HopBinder)service).getService();
 	    hopservice.hop.handler = handler;
 	    hopservice.hop.queue = queue;
 	    hopservice.hopdroid.handler = handler;
 	    hopservice.hopdroid.activity = activity;
-	    Log.i( "HopLauncher", "Launcher connected..." );
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
-	    hopservice = null;
 	    Log.i( "HopLauncher", "Launcher disconnected..." );
+	    hopservice = null;
 	 }
       };
 
@@ -202,6 +202,10 @@ public class HopLauncher extends Activity {
 			   hopintent = new Intent( getApplicationContext(), HopService.class );
 			}
 
+			final TextView port = (TextView)activity.findViewById( R.id.port );
+			setHopPort( port.getText().toString() );
+			Hop.debug = checkbox3.isChecked();
+		     
 			startService( hopintent );
 			bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
 			hopconnected = true;
@@ -295,6 +299,7 @@ public class HopLauncher extends Activity {
 	 // to get the disk location of the package
 	 String apk = activity.getApplicationInfo().sourceDir;
 	 Hop.root = activity.getApplicationInfo().dataDir;
+	 final TextView port = (TextView)activity.findViewById( R.id.port );
 
 	 setHopPort( Hop.port );
 
@@ -314,11 +319,6 @@ public class HopLauncher extends Activity {
 
 		     Log.v( "HopLauncher", "installation complete" );
 
-		     TextView port = (TextView)activity.findViewById( R.id.port );
-		     setHopPort( port.getText().toString() );
-
-		     Hop.debug = checkbox3.isChecked();
-		     
 		     if( !HopConfigurer.configured( Hop.HOME ) ) {
 			Log.v( "HopLauncher", "progress=" + progress );
 			handler.sendEmptyMessage( MSG_CONFIGURE );
@@ -399,7 +399,7 @@ public class HopLauncher extends Activity {
    }
 
    protected void onActivityResult( int reqcode, int rescode, Intent intent ) {
-      Log.v( "HopLauncher", "onActivityResult reqcode=" + reqcode );
+      Log.v( "HopLauncher", "onActivityResult reqcode=" + reqcode + " rescode=" + rescode + " intent=" + intent + " activity=" + this );
       HopPlugin.onActivityResult( reqcode, rescode, intent );
       super.onActivityResult( reqcode, rescode, intent );
    }

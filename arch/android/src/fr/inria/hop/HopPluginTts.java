@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Fri Jul  6 12:35:59 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 17:58:37 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -51,8 +51,8 @@ public class HopPluginTts extends HopPlugin
    String initstatus = null;
 
    // constructor
-   public HopPluginTts( HopDroid h, Activity a, String n ) {
-      super( h, a, n );
+   public HopPluginTts( HopDroid h, String n ) {
+      super( h, n );
    }
 
    // cleanup
@@ -75,7 +75,7 @@ public class HopPluginTts extends HopPlugin
 	 try {
 	    Log.v( "HopPluginTts", "initTts.4: waiting for activity..." );
 	    condv.wait();
-	    Log.v( "HopPluginTts", "initTts.5: completed" + initstatus );
+	    Log.v( "HopPluginTts", "initTts.5: " + initstatus );
 	 } catch( InterruptedException _ ) {
 	    initstatus = "initialization interrupted";
 	 }
@@ -85,29 +85,37 @@ public class HopPluginTts extends HopPlugin
    // onActivityResult
    public void onHopActivityResult( int result, Intent intent ) {
       Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
-      if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
-	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
-	 tts = new TextToSpeech( hopdroid.service, this );
-      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) {
-	 synchronized( condv ) {
+      synchronized( condv ) {
+	 if( true || result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
+	    Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
+	    tts = new TextToSpeech( hopdroid.service, this );
+/* 	    tts = new TextToSpeech( hopdroid.activity, this );         */
+	    return;
+	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) {
 	    // missing data, install it
 	    Log.v( "HopPluginTts", "onHopActivityResult.3a: missing data..." );
 	    Intent installIntent = new Intent();
 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
 	    Log.v( "HopPluginTts", "onHopActivityResult.3b: starting activity for install..." );
 	    
-/* 	    installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );   */
-/* 	    hopdroid.service.startActivity( installIntent );           */
-	    hopdroid.activity.startActivity( installIntent );
+	    installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+	    hopdroid.service.startActivity( installIntent );
+/* 	    hopdroid.activity.startActivity( installIntent );          */
 	    initstatus = "missing data";
-	    condv.notify();
+	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) {
+	    Log.v( "HopPluginTts", "onHopActivityResult.4: bad_data..." );
+	    initstatus = "bad data";
+	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) {
+	    Log.v( "HopPluginTts", "onHopActivityResult.5: missing volume..." );
+	    initstatus = "missing volume";
+	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_FAIL ) {
+	    Log.v( "HopPluginTts", "onHopActivityResult.5: data fail..." );
+	    initstatus = "data fail";
+	 } else {
+	    Log.v( "HopPluginTts", "onHopActivityResult.6: tts error..." );
+	    initstatus = "tts error";
 	 }
-      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) {
-	 Log.v( "HopPluginTts", "onHopActivityResult.4: bad_data..." );
-      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) {
-	 Log.v( "HopPluginTts", "onHopActivityResult.5: missing volume..." );
-      } else {
-	 Log.v( "HopPluginTts", "onHopActivityResult.6: tts error..." );
+	 condv.notify();
       }
    }
 

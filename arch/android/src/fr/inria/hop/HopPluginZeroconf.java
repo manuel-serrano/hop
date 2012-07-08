@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jul  6 12:38:12 2012 (serrano)                */
+/*    Last change :  Fri Jul  6 13:41:29 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -170,15 +170,21 @@ public class HopPluginZeroconf extends HopPlugin {
       Log.d( "HopPluginZeroconf", ">>> stopJmDns" );
 
       if( jmdns != null ) {
-	 synchronized( jmdns ) {
-	    try {
-	       Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
-	       jmdns.close();
-	       Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
-	    } catch( Throwable _ ) {
-	       ;
-	    }
-	 }
+	 new Thread( new Runnable() {
+	       public void run() {
+		  synchronized( jmdns ) {
+		     if( jmdns != null ) {
+			try {
+			   Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
+			   jmdns.close();
+			   Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
+			} catch( Throwable _ ) {
+			   ;
+			}
+		     }
+		  }
+	       }
+	    } ).start();
       }
 
       Log.d( "HopPluginZeroconf", "--- release multicast lock" );
