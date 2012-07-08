@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Fri Jul  6 16:35:18 2012 (serrano)                */
+/*    Last change :  Sun Jul  8 07:59:48 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
