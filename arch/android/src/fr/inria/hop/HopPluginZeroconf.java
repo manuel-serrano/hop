@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jul  6 13:41:29 2012 (serrano)                */
+/*    Last change :  Tue Jul 10 14:57:00 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -143,18 +143,20 @@ public class HopPluginZeroconf extends HopPlugin {
 	 if( !inkill ) {
 	    new Thread( new Runnable() {
 		  public void run() {
-		     synchronized( jmdns ) {
-			if( jmdns != null ) {
-			   Log.d( "HopPluginZeroconf", ">>> register-service type=" +
-				  type + " name=" + name );
-			   ServiceInfo si = ServiceInfo.create( type, name, port, txt );
-			   try {
-			      jmdns.registerService( si );
-			   } catch( Exception e ) {
-			      Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e );
+		     if( jmdns != null ) {
+			synchronized( jmdns ) {
+			   if( jmdns != null ) {
+			      Log.d( "HopPluginZeroconf", ">>> register-service type=" +
+				     type + " name=" + name );
+			      ServiceInfo si = ServiceInfo.create( type, name, port, txt );
+			      try {
+				 jmdns.registerService( si );
+			      } catch( Exception e ) {
+				 Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e );
+			      }
+			      Log.d( "HopPluginZeroconf", "<<< register-service type=" +
+				     type + " name=" + name );
 			   }
-			   Log.d( "HopPluginZeroconf", "<<< register-service type=" +
-				  type + " name=" + name );
 			}
 		     }
 		  }
@@ -172,14 +174,16 @@ public class HopPluginZeroconf extends HopPlugin {
       if( jmdns != null ) {
 	 new Thread( new Runnable() {
 	       public void run() {
-		  synchronized( jmdns ) {
-		     if( jmdns != null ) {
-			try {
-			   Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
-			   jmdns.close();
-			   Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
-			} catch( Throwable _ ) {
-			   ;
+		  if( jmdns != null ) {
+		     synchronized( jmdns ) {
+			if( jmdns != null ) {
+			   try {
+			      Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
+			      jmdns.close();
+			      Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
+			   } catch( Throwable _ ) {
+			      ;
+			   }
 			}
 		     }
 		  }

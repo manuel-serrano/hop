@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Wed Jun 20 09:39:16 2012 (serrano)                */
+/*    Last change :  Tue Jul 10 14:37:45 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
@@ -49,7 +49,7 @@ $(define-hss-type sptab "div[data-hss-tag=hop-sptab]")
 $(define-hss-type spbody "div[data-hss-tag=hop-spbody]")
 
 $(define-hss-type sptabhead "div[data-hss-tag=hop-sptabhead]")
-$(define-hss-type sptabheadbody "span[data-hss-tag=hop-sptabhead-body]")
+$(define-hss-type sptabheadbody "div[data-hss-tag=hop-sptabhead-body]")
 $(define-hss-type sppushbutton "div[data-hss-tag=hop-sppushbutton]")
 
 /*---------------------------------------------------------------------*/
@@ -133,6 +133,8 @@ sptabhead {
 
 sptabheadbody {
   overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 2em;
 }
 
 sppushbutton {

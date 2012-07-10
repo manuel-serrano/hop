@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Wed Jun 20 09:26:53 2012 (serrano)                */
+;*    Last change :  Tue Jul 10 12:51:48 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -147,5 +147,5 @@
       (tag 'div)
       (attributes `(:data-hss-tag "hop-sptabhead" ,@attr))
       (id id)
-      (body (list (<SPAN> :data-hss-tag "hop-sptabhead-body" body)
+      (body (list (<DIV> :data-hss-tag "hop-sptabhead-body" body)
 	       (<DIV> :data-hss-tag "hop-sppushbutton" "")))))

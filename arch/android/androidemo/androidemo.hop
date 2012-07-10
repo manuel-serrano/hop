@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Jul  6 18:22:10 2012 (serrano)                */
+;*    Last change :  Tue Jul 10 15:42:05 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -23,6 +23,8 @@
 (define atts (instantiate::androidtts (phone (android))))
 
 (define battery-state '())
+
+(define connectivity-state '())
 
 (define sos-vibrations
    (let ((dot #l200)
@@ -82,6 +84,7 @@ END:VCARD"))
       (hop-event-broadcast! "orientation" e.value)))
 (add-event-listener! (android) "connectivity"
    (lambda (e::event)
+      (set! connectivity-state e.value)
       (hop-event-broadcast! "connectivity" e.value)))
 
 ;*---------------------------------------------------------------------*/
@@ -350,7 +353,7 @@ missed.")
       ~(add-event-listener! server "connectivity"
 	  (lambda (e)
 	     (innerHTML-set! "connectivity" (format "~s" e.value))))
-      (<DIV> :id "connectivity" "")))
+      (<DIV> :id "connectivity" (format "~s" connectivity-state))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:CONTACT> ...                                         */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul  5 17:42:47 2012                          */
-/*    Last change :  Fri Jul  6 18:32:03 2012 (serrano)                */
+/*    Last change :  Tue Jul 10 15:17:51 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Dealing with network connections.                                */
@@ -66,10 +66,21 @@ public class HopPluginConnectivity extends HopPlugin {
 	       receiver = new BroadcastReceiver() {
 		     @Override
 		     public void onReceive( Context arg0, Intent intent ) {
+			Log.d( "HopPluginConnectivity", "intent=" + intent );
+			
 			final NetworkInfo info = conn_manager.getActiveNetworkInfo();
-			   
-			hopdroid.pushEvent( "connectivity", "(" + info.getTypeName() + " " + info.getType() + " "
-					    + info.isConnected() + ")" );
+
+			if( info != null ) {
+			   Log.d( "HopPluginConnectivity", "info=" + info );
+			   Log.d( "HopPluginConnectivity", "push (" + info.getTypeName() + " " + info.getSubtypeName() + " "
+					       + info.isConnected() + ")" );
+
+			   hopdroid.pushEvent( "connectivity", "(" + info.getTypeName() + " " + info.getSubtypeName() + " "
+					       + info.isConnected() + ")" );
+			} else {
+			   hopdroid.pushEvent( "connectivity", "(down)" );
+			   Log.d( "HopPluginConnectivity", "info(null)" );
+			}
 		     }
 		  };
 	       
