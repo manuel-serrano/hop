@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Fri Jul 13 09:56:42 2012 (serrano)                */
+;*    Last change :  Fri Jul 13 14:40:10 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -88,6 +88,15 @@
 				(options txt))))
 		      (else
 		       #f)))))))
+      ((string=? event "onready")
+       (with-access::androidzeroconf o (plugin android onready)
+	  (if plugin
+	      (proc o)
+	      (let ((old onready))
+		 (set! onready
+		    (lambda (o)
+		       (old o)
+		       (proc o)))))))
       (else
        (with-access::androidzeroconf o (plugin android)
 	  (android-send-command android plugin #\t event)
