@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Mon Jul  2 19:36:14 2012 (serrano)                */
+;*    Last change :  Thu Jul 12 16:40:13 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -146,10 +146,3 @@
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-publish! #!key name port type #!rest opts)
    (zeroconf-backend-publish-service! (zeroconf-backend) name port type opts))
-
-;*---------------------------------------------------------------------*/
-;*    add-event-listener! ::zeroconf ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! zc::zeroconf evt proc . captuer)
-   (with-access::zeroconf zc (onready)
-      (set! onready proc)))

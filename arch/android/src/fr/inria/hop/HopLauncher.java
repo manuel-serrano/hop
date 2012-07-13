@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Jul  8 08:02:06 2012 (serrano)                */
+/*    Last change :  Fri Jul 13 09:05:19 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -61,7 +61,7 @@ public class HopLauncher extends Activity {
    
    int maxlines = 0;
    StringBuffer textbuffer = new StringBuffer( 2048 );
-   CheckBox checkbox, checkbox2, checkbox3;
+   CheckBox checkbox, checkbox2, checkbox3, checkbox4;
    TextView textview;
    ScrollView scrollview;
    final ArrayBlockingQueue<String> queue =
@@ -205,6 +205,7 @@ public class HopLauncher extends Activity {
 			final TextView port = (TextView)activity.findViewById( R.id.port );
 			setHopPort( port.getText().toString() );
 			Hop.debug = checkbox3.isChecked();
+			Hop.zeroconf = checkbox4.isChecked();
 		     
 			startService( hopintent );
 			bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
@@ -286,6 +287,10 @@ public class HopLauncher extends Activity {
       // setup the debug button
       checkbox3 = (CheckBox)findViewById( R.id.debug );
       checkbox3.setChecked( Hop.debug );
+      
+      // setup the zeroconf button
+      checkbox4 = (CheckBox)findViewById( R.id.zeroconf );
+      checkbox4.setChecked( Hop.zeroconf );
       
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );

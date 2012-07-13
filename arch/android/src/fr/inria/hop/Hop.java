@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Tue Jul  3 08:57:08 2012 (serrano)                */
+/*    Last change :  Fri Jul 13 09:06:16 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -43,6 +43,7 @@ public class Hop extends Thread {
    static String root;
    static String port = "8080";
    static boolean debug = false;
+   static boolean zeroconf = false;
 
    // instance variables
    boolean killed = false;
@@ -80,7 +81,7 @@ public class Hop extends Thread {
       String sh = SHELL;
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
 	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port
-	 + (debug ? " -g2" : " ") + " " + extra;
+	 + (debug ? " -g2" : " ") + (zeroconf ? " -z" : " ") + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd );
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );

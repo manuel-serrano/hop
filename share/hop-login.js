@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-login.js                */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-login.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:20:17 2008                          */
-/*    Last change :  Fri Aug 20 09:49:13 2010 (serrano)                */
-/*    Copyright   :  2008-10 Manuel Serrano                            */
+/*    Last change :  Fri Jul 13 12:21:11 2012 (serrano)                */
+/*    Copyright   :  2008-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login panel                                                  */
 /*=====================================================================*/
@@ -13,14 +13,14 @@
 /*    hop_login_prompt ...                                             */
 /*---------------------------------------------------------------------*/
 function  hop_login_prompt( id, user, pass ) {
-   return "<table hssclass='hop-login-prompt'>"
+   return "<table data-hss-tag='hop-login-prompt'>"
       + ((user || (user instanceof String) || (typeof user === "string")) ?
 	 " <tr><th>Name</th><td><input type='text' id='hop_login_user_" + id + "' value='" + user + "'></input></td></tr>" : "")
       + " <tr><th>Password</th><td><input type='password' id='hop_login_password_" + id + "' value='" + (pass ? pass : "") + "'></input></td></tr>"
       + " <tr class='schema'><th>Encryption</th><td>basic<input type='radio' name='hop_login_schema_" + id + "'></input>digest<input type='radio' id='hop_login_schema_digest_" + id + "' checked name='hop_login_schema_" + id + "'></input></td></tr>"
       + " <tr>"
       + "  <td colspan=2>"
-      + "   <table hssclass='hop-login-buttons'>"
+      + "   <table data-hss-tag='hop-login-buttons'>"
       + "    <tr>"
       + "     <td><button class='hop-login-login' id='hop_login_login_" + id + "'>Ok</td>"
       + "     <td><button class='hop-login-cancel' id='hop_login_cancel_" + id + "'>Cancel</td>"
@@ -49,18 +49,18 @@ function hop_login_class( base, opt ) {
 function hop_make_login_panel( id, user, pass, uclass ) {
    var login = document.createElement( "div" );
    var klass = (hop_config.cpu_speed == 100) ? "fast-gpu" : "slow-gpu";
-   login.setAttribute( "hssclass", "hop-login-panel" );
+   login.setAttribute( "data-hss-tag", "hop-login-panel" );
    if( uclass ) login.className = uclass;
 
    login.innerHTML =
       "<div " + hop_login_class( 'hop-login-panel-background', klass ) + "></div>"
       + "<div align='center' " + hop_login_class( 'hop-login-main', klass ) + ">"
-      + " <table hssclass='hop-login-main-table'>"
+      + " <table data-hss-tag='hop-login-main-table'>"
       + "  <tr>"
-      + "   <td class='hop-login-logo'><div hssclass='hop-login-logo' id='hop_login_logo_" + id + "'></div></td>"
+      + "   <td class='hop-login-logo'><div data-hss-tag='hop-login-logo' id='hop_login_logo_" + id + "'></div></td>"
       + "   <td>"
       + "    <table class='hop-login-panel'>"
-      + "     <tr><td hssclass='hop-login-message' id='hop_login_message_" + id + "'></td></tr>"
+      + "     <tr><td data-hss-tag='hop-login-message' id='hop_login_message_" + id + "'></td></tr>"
       + "     <tr><td>" + hop_login_prompt( id, user, pass ) + "</td></tr>"
       + "    </table>"
       + "   </td>"

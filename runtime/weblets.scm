@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Jul  2 08:14:20 2012 (serrano)                */
+;*    Last change :  Thu Jul 12 11:46:12 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -513,7 +513,7 @@
 		      (((and (? string?) ?type) ?port . ?rest)
 		       (set! *weblets-zeroconf*
 			  (cons `(:name ,name :type ,type
-				    :port ,(or port (hop-port))
+				    :port ,(if (integer? port) port (hop-port))
 				    ,@rest)
 			     *weblets-zeroconf*)))))
 	 zc)))

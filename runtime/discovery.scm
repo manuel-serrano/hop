@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Fri Jun 22 20:21:31 2012 (serrano)                */
+;*    Last change :  Fri Jul 13 11:23:17 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -108,10 +108,16 @@
 	 (datagram-socket-receive serv 1024)
 	 (let ((l (string-split msg)))
 	    (when debug-discovery
-	       (tprint "DISCOVERY-LOOP: " l))
+	       (tprint "DISCOVERY-LOOP(" (hop-port) "): " l))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
 		     (clientport (string->number (car l))))
+		  (when debug-discovery
+		     (tprint "DISCOVERY-LOOP(" (hop-port) "),resp: "
+			" clientport=" clientport
+			" clienthost=" clienthost
+			" discovery-host-ip=" discovery-host-ip
+			" svc=" svc))
 		  (when (and (or (not (=fx clientport (hop-port)))
 				 (not discovery-host-ip)
 				 (not (string=? clienthost discovery-host-ip)))
@@ -148,9 +154,6 @@
 	       ;; now we have our own name
 	       (unless discovery-host-ip
 		  (set! discovery-host-ip (socket-local-address socket)))
-	       (when debug-discovery
-		  (tprint "public/discovery.2 discover-host-ip="
-		     discovery-host-ip))
 	       ;; find all the discovers that match that event
 	       (let* ((ip (host (socket-host-address socket)))
 		      (hname (socket-hostname socket))
@@ -160,7 +163,7 @@
 					  (filter hname port key service))))
 			    discovers)))
 		  (when debug-discovery
-		     (tprint "public/discovery.3 ip=" ip
+		     (tprint "public/discovery.2 ip=" ip
 			" hname=" hname " d=" (map typeof d)))
 		  (mutex-unlock! discovery-mutex)
 		  ;; invoke all the discovers

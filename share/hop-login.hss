@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-login.hss               */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-login.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Mar  9 16:52:54 2008                          */
-/*    Last change :  Fri Aug 20 09:48:19 2010 (serrano)                */
-/*    Copyright   :  2008-10 Manuel Serrano                            */
+/*    Last change :  Fri Jul 13 12:21:18 2012 (serrano)                */
+/*    Copyright   :  2008-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop login                                                        */
 /*=====================================================================*/
@@ -17,12 +17,12 @@ $(module hoplogin_hss)
 /*---------------------------------------------------------------------*/
 /*    HSS declarations                                                 */
 /*---------------------------------------------------------------------*/
-$(define-hss-type hop-login-panel "div[hssclass=hop-login-panel]")
-$(define-hss-type hop-login "table[hssclass=hop-login-main-table]")
-$(define-hss-type hop-login-message "td[hssclass=hop-login-message]")
-$(define-hss-type hop-login-logo "div[hssclass=hop-login-logo]")
-$(define-hss-type hop-login-prompt "table[hssclass=hop-login-prompt]")
-$(define-hss-type hop-login-buttons "table[hssclass=hop-login-buttons]")
+$(define-hss-type hop-login-panel "div[data-hss-tag=hop-login-panel]")
+$(define-hss-type hop-login "table[data-hss-tag=hop-login-main-table]")
+$(define-hss-type hop-login-message "td[data-hss-tag=hop-login-message]")
+$(define-hss-type hop-login-logo "div[data-hss-tag=hop-login-logo]")
+$(define-hss-type hop-login-prompt "table[data-hss-tag=hop-login-prompt]")
+$(define-hss-type hop-login-buttons "table[data-hss-tag=hop-login-buttons]")
 
 /*---------------------------------------------------------------------*/
 /*    login                                                            */
@@ -78,10 +78,6 @@ hop-login-panel div.hop-login-panel-background-slow-gpu {
   background-color: transparent;
 }
 
-hop-login-panel div.hop-login-main {
-  margin-top: 0;
-}
-
 hop-login-panel div.body {
   width: 100%;
   max-width: 100%;
@@ -93,6 +89,7 @@ hop-login-panel div.hop-login-main {
   left: 10%;
   right: 10%;
   z-index: 1000;
+  margin-top: 0;
 }
 
 hop-login-panel div.hop-login-main-fast-gpu {
@@ -106,10 +103,12 @@ hop-login-panel div.hop-login-main-slow-gpu {
 
 hop-login-panel hop-login {
   border: 5px dashed blue;
-  width: 100%;
   padding-left: 1em;
   padding-right: 1em;
   border-radius: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 hop-login-panel hop-login td.hop-login-logo {

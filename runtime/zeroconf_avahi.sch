@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Jul  5 07:31:09 2012 (serrano)                */
+;*    Last change :  Thu Jul 12 16:39:51 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -26,7 +26,6 @@
    
    (export (class avahi::zeroconf
 	      (lock::mutex read-only (default (make-mutex)))
-	      (condv::condvar read-only (default (make-condition-variable)))
 	      (state::symbol (default 'init))
 	      (poll::avahi-simple-poll (default (class-nil avahi-simple-poll)))
 	      (client::avahi-client (default (class-nil avahi-client))))))
@@ -35,24 +34,14 @@
 ;*    avahi-wait-ready! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (avahi-wait-ready! o::avahi proc)
-   
-   (define (avahi-apply proc o)
-      (with-access::avahi o (lock poll)
-	 (mutex-lock! lock)
-	 (avahi-simple-poll-timeout poll 1 (lambda () (proc o)))
-	 (mutex-unlock! lock)))
-   
-   ;; wait for the initialization to be completed
-   (with-access::avahi o (lock condv state client poll)
+   ;; apply proc is already initialized, otherwise, register the callback
+   (with-access::avahi o (lock state client poll onready)
       (if (eq? state 'ready)
 	  (avahi-apply proc o)
 	  (let loop ()
 	     (case state
 		((init)
-		 (mutex-lock! lock)
-		 (condition-variable-wait! condv lock)
-		 (mutex-unlock! lock)
-		 (loop))
+		 (avahi-add-onready-listener! o proc))
 		((failure)
 		 (warning "avahi failure, action ignored")
 		 #f)
@@ -60,10 +49,32 @@
 		 (avahi-apply proc o)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    avahi-apply ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (avahi-apply proc o)
+   (with-access::avahi o (lock poll)
+      (mutex-lock! lock)
+      (avahi-simple-poll-timeout poll 1 (lambda () (proc o)))
+      (mutex-unlock! lock)))
+
+;*---------------------------------------------------------------------*/
+;*    avahi-add-onready-listener! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (avahi-add-onready-listener! o proc)
+   (with-access::avahi o (lock onready)
+      (mutex-lock! lock)
+      (let ((old onready))
+	 (set! onready
+	    (lambda (o)
+	       (old o)
+	       (avahi-apply proc o))))
+      (mutex-unlock! lock)))
+
+;*---------------------------------------------------------------------*/
 ;*    avahi-failure ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (avahi-failure o #!optional err)
-   (with-access::avahi o (poll client lock condv state)
+   (with-access::avahi o (poll client lock state)
       (with-lock lock
 	 (lambda ()
 	    (set! state 'failure)
@@ -76,8 +87,7 @@
 		   (with-access::&error err (msg)
 		      (format " (~a)\n" msg)))
 		  (else
-		   "\n")))
-	    (condition-variable-broadcast! condv)))))
+		   "\n")))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ::avahi ...                               */
@@ -86,9 +96,10 @@
    (thread-start!
       (instantiate::pthread
 	 (body (lambda ()
-		  (with-access::avahi o (poll client lock condv state exception)
+		  (with-access::avahi o (poll client lock state exception)
 		     (with-handler
 			(lambda (e)
+			   (tprint "E=" e)
 			   (avahi-failure o e))
 			(begin
 			   (set! poll (instantiate::avahi-simple-poll))
@@ -115,7 +126,7 @@
 ;*    client-callback ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (client-callback client::avahi-client cstate::symbol o::avahi)
-   (with-access::avahi o (lock condv state onready)
+   (with-access::avahi o (lock state onready)
       (case cstate
 	 ((avahi-client-failure)
 	  (avahi-failure o (avahi-client-error-message client)))
@@ -125,10 +136,7 @@
 	  (set! state 'ready)
 	  (with-access::avahi-client client (version)
 	     (hop-verb 1 (format "zeroconf:~a\n" (hop-color 2 "" version))))
-	  (onready o)
-	  (mutex-lock! lock)
-	  (condition-variable-broadcast! condv)
-	  (mutex-unlock! lock))
+	  (onready o))
 	 (else
 	  (set! state 'failure)
 	  (warning "zeroconf" "cannot connect to daemon" " -- " state)))))
@@ -242,6 +250,8 @@
 		      (proc (lambda (b intf proto event type domain flags)
 			       (when (eq? event 'avahi-browser-new)
 				  (service-browser o type proc))))))))))
+      ((string=? event "onready")
+       (avahi-add-onready-listener! o proc))
       (else
        (avahi-wait-ready! o
 	  (lambda (o)

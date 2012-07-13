@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Jul  6 18:17:51 2012 (serrano)                */
+;*    Last change :  Fri Jul 13 10:04:06 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -535,6 +535,8 @@
        (send-obj (list->vector o) op))
       ((pair? o)
        (send-obj (car o) op) (send-obj (cdr o) op))
+      ((null? o)
+       (send-vector '#() op))
       ((symbol? o)
        (send-string (symbol->string! o) op))
       (else

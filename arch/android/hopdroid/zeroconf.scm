@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Thu Jul  5 07:31:56 2012 (serrano)                */
+;*    Last change :  Fri Jul 13 09:56:42 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -49,7 +49,13 @@
 (define-method (zeroconf-backend-publish-service! o::androidzeroconf name port type opts)
    (with-access::androidzeroconf o (android plugin)
       (android-send-command android plugin #\p name port type
-	 (format "~( )" opts))))
+	 (append-map (lambda (s)
+			(let ((i (string-index s #\=)))
+			   (if i
+			       (list (substring s 0 i)
+				  (substring s (+fx i 1)))
+			       (list "misc" s))))
+	    opts))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-add-service-listener! ::androidzeroconf ...     */

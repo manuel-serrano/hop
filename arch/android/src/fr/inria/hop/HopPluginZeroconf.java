@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Tue Jul 10 14:57:00 2012 (serrano)                */
+/*    Last change :  Fri Jul 13 09:57:31 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -138,9 +138,15 @@ public class HopPluginZeroconf extends HopPlugin {
 	 final String name = HopDroid.read_string( ip );
 	 final int port = HopDroid.read_int32( ip );
 	 final String type = HopDroid.read_string( ip ) + ".local.";
-	 final String txt = HopDroid.read_string( ip );
+	 final String[] props = HopDroid.read_stringv( ip );
 
 	 if( !inkill ) {
+	    final HashMap<String, String> values = new HashMap<String, String>();
+
+	    for( int i = 0; i < props.length; i += 2 ) {
+	       values.put( props[ i ], props[ i + 1 ] );
+	    }
+	    
 	    new Thread( new Runnable() {
 		  public void run() {
 		     if( jmdns != null ) {
@@ -148,7 +154,7 @@ public class HopPluginZeroconf extends HopPlugin {
 			   if( jmdns != null ) {
 			      Log.d( "HopPluginZeroconf", ">>> register-service type=" +
 				     type + " name=" + name );
-			      ServiceInfo si = ServiceInfo.create( type, name, port, txt );
+			      ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values );
 			      try {
 				 jmdns.registerService( si );
 			      } catch( Exception e ) {

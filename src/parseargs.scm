@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jul  2 08:16:01 2012 (serrano)                */
+;*    Last change :  Thu Jul 12 14:20:23 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -107,7 +107,6 @@
           (cond
 	     ((string=? level "")
 	      (hop-clientc-debug-unbound-set! 1)
-	      (bigloo-debug-module-set! (+fx 1 (bigloo-debug-module)))
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug))))
 	     ((string=? level "clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 1))
@@ -117,7 +116,7 @@
 	      #f)
 	     (else
 	      (let ((l (string->integer level)))
-		 (bigloo-debug-module-set! l)
+		 (bigloo-debug-module-set! (-fx l 1))
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
 	 (("--devel" (help "Enable devel mode"))
