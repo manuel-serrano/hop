@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -423,6 +423,8 @@ function sc_isStringSuffix(cs1, cs2) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_stringSplit(s, sep) {
+    if (arguments.length === 1)
+       return sc_vector2list(s.val.split(" "));
     if (sep.val.length === 1)
 	return sc_vector2list(s.val.split(sep.val));
     return sc_vector2list(s.val.split(sc_pregexpCreateCharsetMatcher(sep.val)));

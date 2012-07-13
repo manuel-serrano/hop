@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -402,8 +402,10 @@ function sc_isStringSuffix(cs1, cs2) {
     return tmp !== false && tmp >= 0 && tmp === cs2.length - cs1.length;
 }
 
-/*** META ((export #t) (arity #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_stringSplit(s, sep) {
+    if (arguments.length === 1)
+       return sc_vector2list(s.split(" "));
     if (sep.length === 1)
 	return sc_vector2list(s.split(sep));
     return sc_vector2list(s.split(sc_pregexpCreateCharsetMatcher(sep)));
