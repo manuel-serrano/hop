@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Jul 13 09:06:16 2012 (serrano)                */
+/*    Last change :  Tue Jul 17 17:40:50 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -35,7 +35,7 @@ public class Hop extends Thread {
    // global constants
    final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
    final static String HOP = "/bin/hop";
-   final static String HOPARGS = "-v2 --no-color";
+   final static String HOPARGS = "-v --no-color";
    final static String SHELL = "/system/bin/sh";
    final static int HOP_RESTART = 5;
 

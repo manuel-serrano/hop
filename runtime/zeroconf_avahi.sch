@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Jul 12 16:39:51 2012 (serrano)                */
+;*    Last change :  Mon Jul 16 06:11:45 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -54,7 +54,13 @@
 (define (avahi-apply proc o)
    (with-access::avahi o (lock poll)
       (mutex-lock! lock)
-      (avahi-simple-poll-timeout poll 1 (lambda () (proc o)))
+      (avahi-simple-poll-timeout poll 1
+	 (lambda ()
+	    (with-handler
+	       (lambda (e)
+		  (exception-notify e)
+		  #f))
+	    (proc o)))
       (mutex-unlock! lock)))
 
 ;*---------------------------------------------------------------------*/
@@ -99,7 +105,7 @@
 		  (with-access::avahi o (poll client lock state exception)
 		     (with-handler
 			(lambda (e)
-			   (tprint "E=" e)
+			   (exception-notify e)
 			   (avahi-failure o e))
 			(begin
 			   (set! poll (instantiate::avahi-simple-poll))
@@ -229,7 +235,11 @@
 						      (port port)
 						      (address addr)
 						      (options txtlst))))
-					  (proc evt)))))))))))))
+					  (with-handler
+					     (lambda (e)
+						(exception-notify e)
+						#f)
+					     (proc evt))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-add-service-event-listener! ::avahi ...         */

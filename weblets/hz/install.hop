@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Thu Jun 21 21:30:10 2012 (serrano)                */
+;*    Last change :  Tue Jul 17 18:11:48 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -177,8 +177,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall-weblet w)
    (hz-db-init!)
-   (when (isa? w weblet)
+      (when (isa? w weblet)
       (with-access::weblet w (name install)
-	 (when (delete-path (make-file-path (hz-weblets-directory) name))
-	    (set! install "")
-	    (hz-db-update! w)))))
+	 (delete-path (make-file-path (hz-weblets-directory) name))
+	 (set! install "")
+	 (hz-db-update! w))))
