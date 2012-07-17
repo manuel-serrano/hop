@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Tue Jul 17 18:11:48 2012 (serrano)                */
+;*    Last change :  Tue Jul 17 19:16:32 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
@@ -20,7 +20,7 @@
 	   hz_db)
    
    (export (hz-load ::bstring)
-	   (hz-install-weblet ::weblet)
+	   (hz-install-weblet ::weblet #!key override)
 	   (hz-download-url ::bstring #!key auth weblet override)
 	   (hz-install-url ::bstring #!key auth weblet override publisher)
 	   (hz-uninstall-weblet ::weblet)))
@@ -68,9 +68,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-weblet ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-weblet e)
+(define (hz-install-weblet e #!key override)
    (with-access::weblet e (name url authorization)
-      (hz-install-url url :auth authorization :weblet e)))
+      (hz-install-url url :auth authorization :weblet e :override override)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-url ...                                              */
