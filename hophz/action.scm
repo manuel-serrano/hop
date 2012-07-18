@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Tue Jul 17 18:08:45 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 18:14:35 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -113,23 +113,25 @@
 	     (display-color 'out-of-date "[installed " install "]")))
       (unless installable
 	 (display-color 'error "[incompatible]"))
-      (newline)
-      (when (>=fx verb 1)
-	 (when (>fx (string-length title) 0)
-	    (print "    " title)))
       (when (>=fx verb 2)
-	 (display-color 'keyword "\n    url: ") (print url)
+	 (display-color 'keyword "\n  url: ") (print url)
 	 (when (string? publisher)
-	    (display-color 'keyword "    publisher: ") (print publisher))
+	    (display-color 'keyword "  publisher: ") (print publisher))
 	 (when (pair? depends)
-	    (display-color 'keyword "    depends: ")
+	    (display-color 'keyword "  depends: ")
 	    (printf "~(, )"
 	       (map (lambda (x)
 		       (format "~l" x))
-		  depends))
-	    (newline)))
+		  depends)))
+	 (newline))
+      (newline)
+      (when (>=fx verb 1)
+	 (when (>fx (string-length title) 0)
+	    (print title ":")))
       (when (and (>=fx verb 3) (not (string-null? comment)))
-	 (print "\n    " comment))))
+	 (print "    " comment))
+      (when (>=fx verb 1)
+	 (newline))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-with-hop ...                                                  */
@@ -308,17 +310,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (action-exec a::depends-action)
    (with-access::depends-action a (name args)
-      (hz-with-hop (hz/weblet/depends
+      (hz-with-hop (hz/find/weblet
 		      :name name
 		      :category (when (pair? args) (car args)))
-	 (lambda (l)
-	    (let loop ((l l)
-		       (m ""))
-	       (when (pair? l)
-		  (display m)
-		  (show-weblet (car l) 0)
-		  (let ((nm (string-append m "    ")))
-		     (for-each (lambda (d) (loop d nm)) (cdr l)))))))))
+	 (lambda (w)
+	    (when w
+	       (hz-with-hop (hz/weblet/depends :weblet w)
+		  (lambda (l)
+		     (let loop ((l l)
+				(m ""))
+			(when (pair? l)
+			   (display m)
+			   (show-weblet (car l) 0)
+			   (let ((nm (string-append m "    ")))
+			      (for-each (lambda (d) (loop d nm)) (cdr l))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    action-exec ::clean-action ...                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jul 12 14:20:23 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 18:30:18 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -311,7 +311,7 @@
 	     ", single-threaded"))
 	 ")")
       (hop-verb 1 "\n")
-   
+
       ;; hoprc
       (if loadp
 	  (begin

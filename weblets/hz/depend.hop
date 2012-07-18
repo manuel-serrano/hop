@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hz/depend.hop             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/depend.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 31 05:54:23 2012                          */
-;*    Last change :  Fri Jun  1 09:09:52 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 18:20:43 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with Weblet dependencies                                 */
@@ -26,22 +26,19 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-weblet-depends w::weblet)
    (let ((t (make-hashtable)))
-      (hashtable-put! t w #t)
       (let loop ((w::weblet w))
-	 (filter-map (lambda (d)
-			(let ((sw (hz-db-find-by-name (symbol->string (car d)))))
-			   (cond
-			      ((not (isa? sw weblet))
-			       (error "hz-weblet-depends"
-				  "Cannot find weblet"
-				  (car d)))
-			      ((hashtable-get t sw)
-			       #f)
-			      (else
-			       (with-access::weblet sw (depends)
-				  (hashtable-put! t w #t)
-				  (list sw (map loop depends)))))))
-	    w.depends))))
+	 (hashtable-put! t w.name #t)
+	 (cons w
+	    (filter-map (lambda (d)
+			   (let ((sw (hz-db-find-by-name (symbol->string (car d)))))
+			      (unless (isa? sw weblet)
+				 (error "hz-weblet-depends"
+				    "Cannot find weblet"
+				    (car d)))
+			      (let ((sw::weblet sw))
+				 (unless (hashtable-get t sw.name)
+				    (loop sw)))))
+	       w.depends)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-weblet-check-depend? ...                                      */

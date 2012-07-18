@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Jan 12 15:23:25 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 18:33:42 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -325,18 +325,16 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-path
    (list "."
-	 (hop-share-directory)
-	 (hop-weblets-directory)
-	 (hop-contribs-directory)))
+      (hop-rc-directory)
+      (hop-share-directory)
+      (hop-weblets-directory)
+      (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-var-directory ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-var-directory
-   (or (hop-configure-var-directory) (hop-rc-directory))
-   (lambda (v)
-      (hop-path-set! (cons* v (make-file-name v "cache") (hop-path)))
-      v))
+   (or (hop-configure-var-directory) (hop-rc-directory)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-cache-directory ...                                          */
