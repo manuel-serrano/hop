@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Fri Jul 13 11:23:17 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 06:47:56 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -195,14 +195,18 @@
 	   (port::int (hop-discovery-port))
 	   service
 	   (broadcast::bool #t))
-   (let* ((sock (make-datagram-client-socket address port broadcast))
-	  (msg (format "~a ~a" (hop-port)
-		  (if (string? service) service "*"))))
-      (when debug-discovery
-	 (tprint "HOP-DISCOVER addr=" address " port=" port " svc=" service))
-      (display msg (datagram-socket-output-port sock))
-      (datagram-socket-close sock)
-      #t))
+   (with-handler
+      (lambda (e)
+	 (exception-notify e)
+	 #f)
+      (let* ((sock (make-datagram-client-socket address port broadcast))
+	     (msg (format "~a ~a" (hop-port)
+		     (if (string? service) service "*"))))
+	 (when debug-discovery
+	    (tprint "HOP-DISCOVER addr=" address " port=" port " svc=" service))
+	 (display msg (datagram-socket-output-port sock))
+	 (datagram-socket-close sock)
+	 #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::discoverer ...                             */

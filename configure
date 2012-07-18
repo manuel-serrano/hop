@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jun 29 15:59:31 2012 (serrano)                */
+#*    Last change :  Wed Jul 18 05:39:32 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -103,7 +103,9 @@ fi
 ssl=""
 locevent="true"
 threads=""
-zeroconf=""
+
+zeroconf="#f"
+zeroconfbe=""
 avahi=""
 
 hopsrfis=""
@@ -519,7 +521,8 @@ if [ "$avahi" = "yes" ]; then
   fi
 
   hopsrfis="$hopsrfis enable-avahi"
-  zeroconf="avahi $zeroconf"
+  zeroconf="#t"
+  zeroconfbe="avahi $zeroconf"
   libraries="$libraries avahi"
   bglcloselibs="$bglcloselibs avahi"
 fi
@@ -722,6 +725,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@HOPJS@|$hopjs|" \
             -e "s|@HOPJSFILES@|$hopjsfiles|" \
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPZEROCONF@|$zeroconf|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
@@ -945,7 +949,7 @@ echo
 echo "Optional features:"
 echo "  multi-threading....................... $threads"
 echo "  https support......................... $ssl"
-echo "  zeroconf.............................. $zeroconf"
+echo "  zeroconf.............................. $zeroconfbe"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"

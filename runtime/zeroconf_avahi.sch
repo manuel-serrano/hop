@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Jul 16 06:11:45 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 06:43:33 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -148,42 +148,38 @@
 	  (warning "zeroconf" "cannot connect to daemon" " -- " state)))))
 
 ;*---------------------------------------------------------------------*/
-;*    entry-group-callback ...                                         */
-;*---------------------------------------------------------------------*/
-(define (entry-group-callback egroup::avahi-entry-group state::symbol)
-   (with-access::avahi-entry-group egroup (client)
-      (case state
-	 ((avahi-entry-group-collision)
-	  (raise
-	     (instantiate::&avahi-collision-error
-		(proc "zeroconf-avahi")
-		(msg "Service name collision")
-		(obj egroup))))
-	 ((avahi-entry-group-failure)
-	  (error "zeroconfg-avahi"
-	     "Cannot register service"
-	     (avahi-client-error-message (-> egroup client)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-publish-service! ::avahi ...                    */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-publish-service! o::avahi name port type opts)
    (avahi-wait-ready! o
       (lambda (o)
-	 (with-access::avahi o (client poll)
-	    (let ((group (instantiate::avahi-entry-group
-			    (proc entry-group-callback)
-			    (client client))))
-	       (let loop ((name name))
+	 (let loop ((name name))
+	    
+	    (define (entry-group-callback egroup state)
+	       (case state
+		  ((avahi-entry-group-collision)
+		   (collision egroup))
+		  ((avahi-entry-group-failure)
+		   (with-access::avahi-entry-group egroup (client)
+		      (error "zeroconfg-avahi"
+			 "Cannot register service"
+			 (avahi-client-error-message client))))))
+
+	    (define (collision group)
+	       (avahi-entry-group-close group)
+	       (loop (avahi-alternative-service-name name)))
+	    
+	    (with-access::avahi o (client poll)
+	       (let ((group (instantiate::avahi-entry-group
+			       (proc entry-group-callback)
+			       (client client))))
+		  ;; add the service for hop
 		  (with-handler
 		     (lambda (e)
 			(if (isa? e &avahi-collision-error)
-			    (begin
-			       (avahi-entry-group-reset! group)
-			       (loop (avahi-alternative-service-name name)))
+			    (collision group)
 			    (raise e)))
 		     (begin
-			;; add the service for hop
 			(apply avahi-entry-group-add-service! group
 			   :name name
 			   :type type

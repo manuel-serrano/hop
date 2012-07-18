@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Thu Jul 12 16:40:13 2012 (serrano)                */
+;*    Last change :  Wed Jul 18 06:36:06 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -118,12 +118,6 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    zeroconf-publish-service! ::zeroconf ...                         */
-;*---------------------------------------------------------------------*/
-(define (zeroconf-publish-service! name port type opts)
-   (zeroconf-backend-publish-service! (zeroconf-backend) name port type opts))
-
-;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-add-service-event-listener! ::zeroconf ...      */
 ;*---------------------------------------------------------------------*/
 (define-generic (zeroconf-backend-add-service-event-listener! o::zeroconf evt proc)
@@ -145,4 +139,5 @@
 ;*    zeroconf-publish! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-publish! #!key name port type #!rest opts)
-   (zeroconf-backend-publish-service! (zeroconf-backend) name port type opts))
+   (zeroconf-backend-publish-service! (zeroconf-backend)
+      (string-append name "@" (hostname)) port type opts))
