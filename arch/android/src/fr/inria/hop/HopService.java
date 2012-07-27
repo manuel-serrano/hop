@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri Jul 27 05:46:24 2012 (serrano)                */
+/*    Last change :  Fri Jul 27 05:59:22 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -94,7 +94,7 @@ public class HopService extends Service {
       hop = new Hop( null, null );
       
       // create hopdroid
-      hopdroid = new HopDroid( 8081, HopService.this );
+      hopdroid = new HopDroid( 8081, 8082, HopService.this );
 
       // starting hopdroid
       startThreadLog( hopdroid );
@@ -134,7 +134,7 @@ public class HopService extends Service {
    }
    
    private void statusNotification() {
-      CharSequence text = getText (R.string.hopservicestarted );
+      CharSequence text = getText( R.string.hopservicestarted );
 
       // Set the icon, scrolling text and timestamp
       Notification notification =
@@ -142,7 +142,7 @@ public class HopService extends Service {
 
       PendingIntent contentIntent =
 	 PendingIntent.getActivity(
-	    this, 0, new Intent( this, HopService.class ), 0);
+	    this, 0, new Intent( this, HopService.class ), 0 );
 
       notification.setLatestEventInfo(
 	 this, getText( R.string.hopversion ), text, contentIntent );
