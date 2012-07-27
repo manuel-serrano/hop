@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Sun Jul  1 20:12:01 2012 (serrano)                */
+;*    Last change :  Fri Jul 27 20:16:42 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
@@ -128,7 +128,7 @@
 ;*---------------------------------------------------------------------*/
 (define-weblet-service (hz/weblet/depends #!key weblet)
    (when (isa? weblet (@ weblet hz_weblet))
-      (cons weblet (hz-weblet-depends weblet))))
+      (hz-weblet-depends weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/update ...                                                    */
