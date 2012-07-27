@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Jul 13 09:05:19 2012 (serrano)                */
+/*    Last change :  Thu Jul 26 21:25:32 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -41,7 +41,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_CONFIGURE = 7;
    public static final int MSG_HOPDROID_FAILED = 8;
    public static final int MSG_START_HOP_SERVICE = 9;
-   public static final int MSG_STOP_HOP_SERVICE = 10;
+   public static final int MSG_RESTART_HOP_SERVICE = 10;
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -212,9 +212,8 @@ public class HopLauncher extends Activity {
 			hopconnected = true;
 			break;
 
-		     case MSG_STOP_HOP_SERVICE:
-			Log.i( "HopLauncher", "Stoping Hop Service" );
-			hopservice.kill();
+		     case MSG_RESTART_HOP_SERVICE:
+			Log.i( "HopLauncher", "Stopping Hop Service" );
 			hopconnected = false;
 			unbindService( hopconnection );
 			stopService( hopintent );
@@ -252,7 +251,7 @@ public class HopLauncher extends Activity {
 	       textbuffer.delete( 0, textbuffer.length() );
 	       write_console( "Restarting Hop..." );
 
-	       handler.sendEmptyMessage( MSG_STOP_HOP_SERVICE );
+	       handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
 	    }
 	 } );
 
@@ -396,11 +395,17 @@ public class HopLauncher extends Activity {
       super.onResume();
    }
 
+   @Override
+   public void onStop() {
+      Log.d( "HopLauncher", ">>> onStop..." );
+      super.onStop();
+      Log.d( "HopLauncher", "<<< onStop..." );
+   }
+
    public void onDestroy() {
-/*       hop.kill();                                                   */
-/*       hopdroid.kill();                                              */
-/*       stopService( hopintent );                                     */
+      Log.d( "HopLauncher", ">>> onDestroy..." );
       super.onDestroy();
+      Log.d( "HopLauncher", "<<< onDestroy..." );
    }
 
    @Override

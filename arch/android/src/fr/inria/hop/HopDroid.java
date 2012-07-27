@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Jul 13 09:12:21 2012 (serrano)                */
+/*    Last change :  Fri Jul 27 05:48:05 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -42,11 +42,13 @@ public class HopDroid extends Thread {
    int port;
    ServerSocket serv1;
    ServerSocket serv2;
+   Thread thread1 = null;
+   Thread thread2 = null;
    Handler handler = null;
    final Hashtable eventtable = new Hashtable();
    
    // constructor
-   public HopDroid( int p, Service s ) {
+   public HopDroid( int port, int porte, Service s ) {
       super();
 
       port = p;
@@ -57,8 +59,8 @@ public class HopDroid extends Thread {
 
       try {
 	 Log.i( "HopDroid", "starting servers port=" + p + ", " + (p + 1) );
-	 serv1 = new ServerSocket( p );
-	 serv2 = new ServerSocket( p + 1 );
+	 serv1 = new ServerSocket( port );
+	 serv2 = new ServerSocket( porte );
 
 	 // register the initial plugins
 	 registerPlugin( new HopPluginInit( this, "init" ) );
@@ -79,14 +81,14 @@ public class HopDroid extends Thread {
 	 registerPlugin( new HopPluginCall( this, "call" ) );
 	 registerPlugin( new HopPluginTts( this, "tts" ) );
       } catch( Exception e ) {
-	 abortError( e );
+	 abortError( e, "HopDroid" );
       }
    }
 
    // abort
-   public synchronized void abortError( Throwable e ) {
+   public void abortError( Throwable e, String proc ) {
       if( !killed && !inkill ) {
-	 Log.e( "HopDroid", "error: " + e.toString() + " exception=" + e.getClass().getName(), e );
+	 Log.e( "HopDroid", "error(" + proc + "): " + e.toString() + " exception=" + e.getClass().getName(), e );
       
 	 kill();
 
@@ -120,48 +122,61 @@ public class HopDroid extends Thread {
    
    // run hop
    public void run() {
+      // handle the session in a background thread (normally very
+      // few of these threads are created so there is no need
+      // to use a complexe machinery based on thread pool).
       if( serv1 != null ) {
-	 runPushEvent();
-	 try {
-	    while( true ) {
-	       final Socket sock = serv1.accept();
+	 thread1 = new Thread( new Runnable () {
+	       public void run() {
+		  try {
+		     while( true ) {
+			final Socket sock = serv1.accept();
 
-	       // handle the session in a background thread (normally very
-	       // few of these threads are created so there is no need
-	       // to use a complexe machinery based on thread pool).
-	       new Thread( new Runnable() {
-		     public void run() {
-			server( sock );
+			new Thread( new Runnable() {
+			      public void run() {
+				 server( sock );
+			      }
+			   } ).start();
 		     }
-		  } ).start();
-	    }
-	 } catch( Throwable e ) {
-	    abortError( e );
-	 }
-      }
-   }
-
-   // Android push event
-   public void runPushEvent() {
-      new Thread( new Runnable () {
-	    public void run() {
-	       try {
-		  while( true ) {
-		     final Socket sock2 = serv2.accept();
-		     // handle the session in a background thread (normally very
-		     // few of these threads are created so there is no need
-		     // to use a complexe machinery based on thread pool).
-		     new Thread( new Runnable() {
-			   public void run() {
-			      serverEvent( sock2 );
-			   }
-			} ).start();
+		  } catch( Throwable e ) {
+		     abortError( e, "run" );
 		  }
-	       } catch( Throwable e ) {
-		  abortError( e );
 	       }
-	    }
-	 } ).start();
+	    } );
+	 thread1.start();
+      }
+
+      if( serv2 != null ) {
+	 thread2 = new Thread( new Runnable () {
+	       public void run() {
+		  try {
+		     while( true ) {
+			final Socket sock2 = serv2.accept();
+		     
+			new Thread( new Runnable() {
+			      public void run() {
+				 serverEvent( sock2 );
+			      }
+			   } ).start();
+		     }
+		  } catch( Throwable e ) {
+		     abortError( e, "runPushEvent" );
+		  }
+	       }
+	    } );
+	 thread2.start();
+      }
+
+      try {
+	 thread1.join();
+      } catch( Throwable _ ) {
+	 ;
+      }
+      try {
+	 thread2.join();
+      } catch( Throwable _ ) {
+	 ;
+      }
    }
 
    // get plugin
@@ -204,7 +219,6 @@ public class HopDroid extends Thread {
    
    // handle a session with one client connected to the HopDroid server
    private void server( Socket sock ) {
-      Log.i( "HopDroid", "server " + sock );
       try {
 	 InputStream ip = sock.getInputStream();
 	 OutputStream op = sock.getOutputStream();
@@ -231,7 +245,10 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 abortError( e );
+	 Log.d( "HopDroid", "server error: " +
+		e.toString() + " exception=" + e.getClass().getName(),
+		e );
+	 abortError( e, "server" );
       }
    }
 	    
@@ -280,20 +297,31 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 abortError( e );
+	 Log.d( "HopDroid", "serverEvent error: " +
+		e.toString() + " exception=" + e.getClass().getName(),
+		e );
+	 abortError( e, "serverEvent" );
       }
    }
 
    // killServers
    private synchronized void killServers() {
-      Log.i( "HopDroid", ">>> killing...servers" );
+      Log.i( "HopDroid", ">>> killing servers..." );
       
       try {
 	 if( serv1 != null && !serv1.isClosed() ) {
 	    serv1.close();
+	    if( thread1 != null ) {
+	       thread1.join();
+	       thread1 = null;
+	    }
 	 }
 	 if( serv2 != null && !serv2.isClosed() ) {
 	    serv2.close();
+	    if( thread2 != null ) {
+	       thread2.join();
+	       thread2 = null;
+	    }
 	 }
       } catch( Exception e ) {
 	 Log.e( "HopDroid", "closing error: " + e.toString() + " exception=" + e.getClass().getName() );

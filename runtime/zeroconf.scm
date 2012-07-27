@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Jul 18 06:36:06 2012 (serrano)                */
+;*    Last change :  Fri Jul 27 05:39:57 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -139,5 +139,8 @@
 ;*    zeroconf-publish! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-publish! #!key name port type #!rest opts)
-   (zeroconf-backend-publish-service! (zeroconf-backend)
-      (string-append name "@" (hostname)) port type opts))
+   (let* ((h (hostname))
+	  (i (string-index h #\.)))
+      (zeroconf-backend-publish-service! (zeroconf-backend)
+	 (string-append name "@" (if i (substring h 0 i) h))
+	 port type opts)))

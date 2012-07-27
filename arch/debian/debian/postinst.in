@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    .../prgm/project/hop/2.3.x/arch/debian/debian/postinst.in        */
+#*    .../prgm/project/hop/2.4.x/arch/debian/debian/postinst.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Tue Apr 17 13:19:12 2012 (serrano)                */
+#*    Last change :  Fri Jul 20 07:06:26 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -75,10 +75,17 @@ fi
 #*---------------------------------------------------------------------*/
 if [ "@DEBIAN@ " = "maemo " ]; then
   init=true
-elif @HOPPREFIX@/bin/hop --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
-  init=true
 else
-  init=false
+  # MS 20 jul 2012, don't understand why ldconfig is not sufficient, it appears,
+  # that it is also needed to adjust LD_LIBRARY_PATH for the init script 
+  # questioning below
+  export LD_LIBRARY_PATH=@HOPPREFIX@/lib:$LD_LIBRARY_PATH
+
+  if @HOPPREFIX@/bin/hop --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
+    init=true
+  else
+    init=false
+  fi
 fi
 
 if [ "$init " = "true " ]; then

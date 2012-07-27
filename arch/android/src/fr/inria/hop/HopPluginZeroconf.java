@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jul 13 09:57:31 2012 (serrano)                */
+/*    Last change :  Fri Jul 27 05:45:40 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -17,11 +17,13 @@ package fr.inria.hop;
 import android.app.*;
 import android.content.*;
 import android.util.Log;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.MulticastLock;
+import android.net.wifi.WifiManager.*;
 
 import java.io.*;
 import java.util.*;
+import java.net.InetAddress;
 
 import javax.jmdns.*;
 
@@ -39,13 +41,15 @@ public class HopPluginZeroconf extends HopPlugin {
    }
 
    // enableMulticast
-   public synchronized void enableMulticast() {
+   public void enableMulticast() {
       if( multicast_lock == null ) {
+	 Log.d( ">>> HopPluginZeroconf", "multicast lock acquired" );
 	 WifiManager wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
+	 
 	 multicast_lock = wifi.createMulticastLock( "hop-zeroconf-lock" );
 	 multicast_lock.setReferenceCounted( true );
 	 multicast_lock.acquire();
-	 Log.v( "HopPluginZeroconf", "multicast lock acquired" );
+	 Log.d( "<<< HopPluginZeroconf", "multicast lock acquired" );
       }
    }
    
@@ -53,10 +57,23 @@ public class HopPluginZeroconf extends HopPlugin {
    public synchronized void startJmDns() {
       if( jmdns == null ) {
 	 try {
-	    jmdns = JmDNS.create();
-	    Log.v( "HopPluginZeroconf", "jmdns created" );
-	    
+	    WifiManager wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
+	    WifiInfo wifiinfo = wifi.getConnectionInfo();
+	    int intaddr = wifiinfo.getIpAddress();
+
 	    enableMulticast();
+	    
+	    if( intaddr != 0 ) {
+	       byte[] byteaddr = new byte[] {
+		  (byte) (intaddr & 0xff), (byte) (intaddr >> 8 & 0xff),
+		  (byte) (intaddr >> 16 & 0xff), (byte) (intaddr >> 24 & 0xff)
+	       };
+	       InetAddress addr = InetAddress.getByAddress( byteaddr );
+
+	       jmdns = JmDNS.create( addr, "hop" );
+	    } else {
+	       jmdns = JmDNS.create();
+	    }
 	 } catch( Exception e ) {
 	    Log.e( "HopPluginZeroconf", "Cannot start JmDns", e );
 	 }
@@ -71,6 +88,11 @@ public class HopPluginZeroconf extends HopPlugin {
 		  ServiceInfo si = ev.getInfo();
 		  String[] addrs = si.getHostAddresses();
 
+		  Log.i( "HopPluginZeroconf", "ServiceResolved: name=" +
+			 ev.getName() + " type=" + type +
+			 " server=" + si.getServer() +
+			 " port=" + si.getPort() + " addr=" +
+			 (addrs.length > 0 ? addrs[ 0 ] : "") );
 		  if( addrs.length > 0 ) {
 		     hopdroid.pushEvent( event
 					 ,"(\"add\" 1 \"" +
@@ -92,14 +114,16 @@ public class HopPluginZeroconf extends HopPlugin {
 	       }
 			
 	       public void serviceRemoved( ServiceEvent ev ) {
-		  Log.d( "HopPluginZeroconf", "Service removed: " + ev.getName());
+		  Log.i( "HopPluginZeroconf", "Service removed: " + ev.getName());
 	       }
 	       
 	       public void serviceAdded( ServiceEvent ev ) {
 		  // Required to force serviceResolved to be
 		  // called again (after the first search)
-		  jmdns.requestServiceInfo( type, ev.getName(), 1 );
-	       }	
+		  Log.i( "HopPluginZeroconf", "serviceAdded: " + ev.getName() );
+			 
+		  jmdns.requestServiceInfo( type, ev.getName() );
+	       }
 	    } );
       } catch( Exception e ) {
 	 Log.e( "HopPluginZeroconf", "Cannot add ServiceTypeListener", e );
@@ -114,6 +138,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	       public void serviceTypeAdded( ServiceEvent ev ) {
 		  final String type = ev.getType();
 
+		  Log.d( "hopPluginZeroconf", "addServiceTypeListener: " + type );
 		  addServiceTypeListener( type, "zeroconf-add-service" );
 	       }
 
@@ -128,7 +153,7 @@ public class HopPluginZeroconf extends HopPlugin {
    }	 
 
    // addServiceListener
-   public synchronized void addTypeListener( final String type ) {
+   public void addTypeListener( final String type ) {
       addServiceTypeListener( type + ".local.", "zeroconf-add-service-" + type );
    }
 
@@ -147,26 +172,25 @@ public class HopPluginZeroconf extends HopPlugin {
 	       values.put( props[ i ], props[ i + 1 ] );
 	    }
 	    
-	    new Thread( new Runnable() {
-		  public void run() {
-		     if( jmdns != null ) {
-			synchronized( jmdns ) {
-			   if( jmdns != null ) {
-			      Log.d( "HopPluginZeroconf", ">>> register-service type=" +
-				     type + " name=" + name );
-			      ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values );
-			      try {
-				 jmdns.registerService( si );
-			      } catch( Exception e ) {
-				 Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e );
-			      }
-			      Log.d( "HopPluginZeroconf", "<<< register-service type=" +
-				     type + " name=" + name );
-			   }
-			}
-		     }
-		  }
-	       } ).start();
+/* 	    new Thread( new Runnable() {                               */
+/* 		  public void run() {                                  */
+/* 		     if( jmdns != null ) {                             */
+/* {* 			synchronized( jmdns ) {                        *} */
+/* 			if( !inkill ) {                                */
+/* 			   Log.d( "HopPluginZeroconf", ">>> register-service type=" + */
+/* 				  type + " name=" + name );            */
+/* 			   ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values ); */
+/* 			   try {                                       */
+/* 			      jmdns.registerService( si );             */
+/* 			   } catch( Exception e ) {                    */
+/* 			      Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e ); */
+/* 			   }                                           */
+/* 			   Log.d( "HopPluginZeroconf", "<<< register-service type=" + */
+/* 				  type + " name=" + name );            */
+/* 			}                                              */
+/* 		     }                                                 */
+/* 		  }                                                    */
+/* 	       } ).start();                                            */
 	 }
       } catch( Exception e ) {
 	 Log.d( "HopPluginZeroconf", "cannot register service", e );
@@ -178,27 +202,17 @@ public class HopPluginZeroconf extends HopPlugin {
       Log.d( "HopPluginZeroconf", ">>> stopJmDns" );
 
       if( jmdns != null ) {
-	 new Thread( new Runnable() {
-	       public void run() {
-		  if( jmdns != null ) {
-		     synchronized( jmdns ) {
-			if( jmdns != null ) {
-			   try {
-			      Log.d( "HopPluginZeroconf", ">>> jmdns.close" );
-			      jmdns.close();
-			      Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
-			   } catch( Throwable _ ) {
-			      ;
-			   }
-			}
-		     }
-		  }
-	       }
-	    } ).start();
+	 try {
+	    Log.d( "HopPluginZeroconf", "--- jmdns.close" );
+	    jmdns.close();
+	 } catch( Throwable _ ) {
+	    ;
+	 }
+	 Log.d( "HopPluginZeroconf", "<<< jmdns.close" );
       }
 
-      Log.d( "HopPluginZeroconf", "--- release multicast lock" );
       if( multicast_lock != null ) {
+	 Log.d( "HopPluginZeroconf", "--- release multicast lock" );
 	 multicast_lock.release();
 	 multicast_lock = null;
       }
@@ -209,8 +223,6 @@ public class HopPluginZeroconf extends HopPlugin {
    public synchronized void kill() {
       inkill = true;
       super.kill();
-
-      stopJmDns();
    }
 
    // server
@@ -228,7 +240,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	    op.write( "#t".getBytes() );
 	    return;
 	    
-	 // begin
+	 // end
 	 case (byte)'e':
 	    stopJmDns();
 	    

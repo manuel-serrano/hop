@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Tue Jul 17 17:40:50 2012 (serrano)                */
+/*    Last change :  Thu Jul 26 20:13:15 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -46,8 +46,8 @@ public class Hop extends Thread {
    static boolean zeroconf = false;
 
    // instance variables
-   boolean killed = false;
-   boolean inkill = false;
+   private boolean killed = false;
+   public boolean inkill = false;
    String msg;
    FileDescriptor HopFd;
    Handler handler;
