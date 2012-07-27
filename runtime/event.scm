@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Jun 29 05:14:55 2012 (serrano)                */
+;*    Last change :  Fri Jul 27 06:45:40 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1470,8 +1470,9 @@
 			(cons (cons obj proc) listeners))))))))
 
    (define (get-hopsocket! host port auth key)
+      (tprint "get-hopsocket host=" host " port=" port " auth=" auth " key=" key)
       (let* ((sock (make-client-socket host port))
-	     (path (format "~a/server-event/websocket?key=~a"
+	     (path (format "~a/public/server-event/websocket?key=~a"
 		      (hop-service-base)
 		      key)))
 	 (letrec* ((th (cond-expand
@@ -1605,7 +1606,8 @@
       (parse-authenticated-host event)
       (mutex-lock! *listener-mutex*)
       (let ((hs (hashtable-get *server-listeners* event)))
-	 (tprint "ADD-SERVER-LISTENER obj=" obj " event=" event " -> HS=" hs)
+	 (tprint "ADD-SERVER-LISTENER obj=" obj " event=" event
+	    " -> hopsocket=" hs)
 	 (mutex-unlock! *listener-mutex*)
 	 (if (isa? hs hopsocket)
 	     (register-event! host port auth hs)
@@ -1613,6 +1615,7 @@
 		:host host :port port
 		:authorization auth
 		(lambda (v)
+		   (tprint "port-service -> " v)
 		   (let ((key (vector-ref v 2)))
 		      (with-lock *listener-mutex*
 			 (lambda ()
