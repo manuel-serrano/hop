@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Jul 26 21:25:32 2012 (serrano)                */
+/*    Last change :  Fri Aug  3 18:30:55 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -395,18 +395,18 @@ public class HopLauncher extends Activity {
       super.onResume();
    }
 
-   @Override
-   public void onStop() {
-      Log.d( "HopLauncher", ">>> onStop..." );
-      super.onStop();
-      Log.d( "HopLauncher", "<<< onStop..." );
-   }
-
-   public void onDestroy() {
-      Log.d( "HopLauncher", ">>> onDestroy..." );
-      super.onDestroy();
-      Log.d( "HopLauncher", "<<< onDestroy..." );
-   }
+/*    @Override                                                        */
+/*    public void onStop() {                                           */
+/*       Log.d( "HopLauncher", ">>> onStop..." );                      */
+/*       super.onStop();                                               */
+/*       Log.d( "HopLauncher", "<<< onStop..." );                      */
+/*    }                                                                */
+/*                                                                     */
+/*    public void onDestroy() {                                        */
+/*       Log.d( "HopLauncher", ">>> onDestroy..." );                   */
+/*       super.onDestroy();                                            */
+/*       Log.d( "HopLauncher", "<<< onDestroy..." );                   */
+/*    }                                                                */
 
    @Override
    public void startActivityForResult( Intent intent, int requestCode ) {
