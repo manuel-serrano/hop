@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Wed Jul 25 06:27:56 2012 (serrano)                */
+;*    Last change :  Mon Aug  6 09:07:29 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -79,7 +79,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    debug-discovery                                                  */
 ;*---------------------------------------------------------------------*/
-(define debug-discovery #f)
+(define debug-discovery #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-discovery-server ...                                         */
