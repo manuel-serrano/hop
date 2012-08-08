@@ -1,16 +1,16 @@
 # Contributor: Manuel Serrano <Manuel.Serrano@inria.fr>
 
 pkgname=hop
-pkgver=2.4.0
+pkgver=2.4.0-pre1
 pkgrel=1
 pkgdesc="a Software Development Kit for the Web"
 url='http://hop.inria.fr'
 license=('GPL' 'LGPL')
 arch=('i686' 'x86_64' 'arm')
-depends=('bigloo>=3.8c')
-makedepends=('bigloo>=3.8c')
+depends=('bigloo>=3.8d')
+makedepends=('bigloo>=3.8d')
 install=hop.install
-source=(ftp://ftp-sop.inria.fr/mimosa/fp/Hop/$pkgname-$pkgver.tar.gz)
+source=(ftp://ftp-sop.inria.fr/indes/fp/Hop/$pkgname-$pkgver.tar.gz)
 md5sums=('@MD5SUM@')
 
 build() {

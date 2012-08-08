@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Jul 27 05:45:40 2012 (serrano)                */
+/*    Last change :  Wed Aug  8 10:59:59 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -94,8 +94,8 @@ public class HopPluginZeroconf extends HopPlugin {
 			 " port=" + si.getPort() + " addr=" +
 			 (addrs.length > 0 ? addrs[ 0 ] : "") );
 		  if( addrs.length > 0 ) {
-		     hopdroid.pushEvent( event
-					 ,"(\"add\" 1 \"" +
+		     hopdroid.pushEvent( event ,
+					 "(\"found\" 1 \"" +
 					 si.getProtocol() +
 					 "\" \"" +
 					 ev.getName() +
@@ -115,6 +115,18 @@ public class HopPluginZeroconf extends HopPlugin {
 			
 	       public void serviceRemoved( ServiceEvent ev ) {
 		  Log.i( "HopPluginZeroconf", "Service removed: " + ev.getName());
+		  hopdroid.pushEvent( event,
+				      "(\"removed\" 1\"" +
+					 "\" \"" +
+					 ev.getName() +
+					 "\" \"" +
+					 type +
+					 "\" \"" +
+					 "\" \"" +
+					 "\" " +
+					 0 +
+					 " \"" +
+					 "\" ())" );
 	       }
 	       
 	       public void serviceAdded( ServiceEvent ev ) {
