@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Aug  8 10:51:40 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 13:40:00 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -105,7 +105,6 @@
 		  (with-access::avahi o (poll client lock state exception)
 		     (with-handler
 			(lambda (e)
-			   (exception-notify e)
 			   (avahi-failure o e))
 			(begin
 			   (set! poll (instantiate::avahi-simple-poll))

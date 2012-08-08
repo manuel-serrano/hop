@@ -20,9 +20,7 @@ PORT=8080
 LOGDIR=/var/log/hop
 LOGFILE=$LOGDIR/$NAME.log
 DAEMON=/usr/bin/hop
-DAEMON=/usr/local/bin/hop
 DAEMONUSER=hop
-DAEMONUSER=serrano
 DAEMON_ARGS="--log-file $LOGFILE"
 
 # Read configuration variable file if it is present
