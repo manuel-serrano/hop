@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Jul 27 06:45:40 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 07:38:33 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -83,7 +83,7 @@
 	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
 	    (generic stop-event-propagation ::event ::bool)
 
-	    (hop-event-init! ::obj)
+	    (hop-event-init!)
 	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
@@ -528,7 +528,7 @@
 ;*        http://www.adobe.com/devnet/flashplayer/articles/            */
 ;*          fplayer9_security.html                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-event-init! port)
+(define (hop-event-init!)
    (with-lock *event-mutex*
       (lambda ()
 	 (when (=fx *client-key* 0)

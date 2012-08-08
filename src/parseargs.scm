@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 18 18:30:18 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 08:06:33 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -167,12 +167,12 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
-	 (("--discovery" (help "Start the discovery loop (default)"))
-	  (hop-enable-discovery-set! #t))
-	 (("--no-discovery" (help "Do not start the discovery loop"))
-	  (hop-enable-discovery-set! #f))
-	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp)))
-	  (set! dp (string->integer port)))
+;* 	 (("--discovery" (help "Start the discovery loop (default)"))  */
+;* 	  (hop-enable-discovery-set! #t))                              */
+;* 	 (("--no-discovery" (help "Do not start the discovery loop"))  */
+;* 	  (hop-enable-discovery-set! #f))                              */
+;* 	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp))) */
+;* 	  (set! dp (string->integer port)))                            */
 	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
 	  (hop-enable-zeroconf-set! #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
@@ -233,9 +233,9 @@
       ;; http port
       (hop-port-set! p)
       (when (eq? ep #unspecified) (set! ep p))
-      (if (eq? dp #unspecified)
-	  (hop-discovery-port-set! (-fx p 1))
-	  (hop-discovery-port-set! dp))
+;*       (if (eq? dp #unspecified)                                     */
+;* 	  (hop-discovery-port-set! (-fx p 1))                          */
+;* 	  (hop-discovery-port-set! dp))                                */
       
       ;; log
       (when log-file
@@ -301,16 +301,9 @@
       
       (init-hop-services!)
       (init-hop-widgets!)
-      
-      (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)))
-      (hop-verb 2 " (" (hop-backend)
-	 (cond-expand
-	    (enable-threads
-	       (format ", ~a scheduler" (hop-scheduling)))
-	    (else
-	     ", single-threaded"))
-	 ")")
-      (hop-verb 1 "\n")
+
+      ;; Hop version
+      (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
       ;; hoprc
       (if loadp
@@ -374,24 +367,29 @@
 ;*    hello-world ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hello-world)
-   (hop-verb 1 
-	     (if (hop-enable-https)
-		   (format "https (~a):" (hop-https-protocol)) "http:")
-	     (hop-color 2 "" (hop-port))
-	     (if (hop-enable-fast-server-event)
-		 (format ", comet-port:~a"
-		    (hop-color 2 "" (hop-fast-server-event-port)))
-		 "")
-	     (if (hop-enable-discovery)
-		 (format ", discovery-port:~a"
-		    (hop-color 2 "" (hop-discovery-port)))
-		 "")
-	     ", security:"
-	     (with-access::security-manager (hop-security-manager) (name)
-		(hop-color 2 "" name))
-	     " [" (hop-security) "]")
-   (hop-verb 3 ", session:" (hop-color 2 "" (hop-session)))
-   (hop-verb 1 "\n"))
+   ;; ports and various configuration
+   (hop-verb 1
+      (if (hop-enable-https)
+	  (format "  https (~a): " (hop-https-protocol)) "  http: ")
+      (hop-color 2 "" (hop-port)) "\n")
+   (hop-verb 2
+      (if (and (hop-enable-fast-server-event)
+	       (not (=fx (hop-port) (hop-fast-server-event-port))))
+	  (format "  comet-port: ~a\n"
+	     (hop-color 2 "" (hop-fast-server-event-port)))
+	  "")
+      "  security: "
+      (with-access::security-manager (hop-security-manager) (name)
+	 (hop-color 2 "" name))
+      " [" (hop-security) "]\n")
+   (hop-verb 3 "  session: " (hop-color 2 "" (hop-session)) "\n")
+   (hop-verb 3 "  backend: " (hop-color 2 "" (hop-backend)) "\n")
+   (hop-verb 3 "  scheduler: "
+      (hop-color 2 ""
+	 (cond-expand
+	    (enable-threads (hop-scheduling))
+	    (else "single-threaded")))
+      "\n"))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ...                                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jul  1 06:52:21 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 07:55:37 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -63,7 +63,7 @@
            __hop_wiki-toc
 	   __hop_hz
 	   __hop_security
-	   __hop_discovery
+;* 	   __hop_discovery                                             */
 	   __hop_zeroconf)
 	   
    (eval   (export-all)
@@ -122,8 +122,8 @@
 
 	   (class event)
 
-	   (class discoverer)
-	   (class discover-event)
+;* 	   (class discoverer)                                          */
+;* 	   (class discover-event)                                      */
 
 	   (class zeroconf)
 	   (class zeroconf-service-event))

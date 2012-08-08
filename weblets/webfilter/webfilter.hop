@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/2.4.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Nov 27 06:55:28 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Aug  8 07:49:35 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -56,7 +56,7 @@
 ;*---------------------------------------------------------------------*/
 (define (load-blacklist t f)
    (when (file-exists? f)
-      (hop-verb 2 "Loading domain blacklist `" f "'...\n")
+      (hop-verb 3 "Loading domain blacklist `" f "'...\n")
       (with-input-from-file f
 	 (lambda ()
 	    (let loop ()

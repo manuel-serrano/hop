@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Jul 18 18:33:42 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 08:02:11 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -65,9 +65,9 @@
 	    (hop-port::int)
 	    (hop-port-set! ::int)
 
-	    (hop-discovery-port::int)
-	    (hop-discovery-port-set! ::int)
-	    
+;* 	    (hop-discovery-port::int)                                  */
+;* 	    (hop-discovery-port-set! ::int)                            */
+;* 	                                                               */
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
 	    
@@ -433,11 +433,11 @@
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
 
-;*---------------------------------------------------------------------*/
-;*    hop-discovery-port ...                                           */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-discovery-port
-   (-fx (hop-port) 1))
+;* {*---------------------------------------------------------------------*} */
+;* {*    hop-discovery-port ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-parameter hop-discovery-port                                */
+;*    (-fx (hop-port) 1))                                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */

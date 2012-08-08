@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May  1 17:02:55 2011                          */
-;*    Last change :  Mon Aug  6 09:07:29 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 07:55:27 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop discovery mechanism (for automatically discovery other       */
@@ -13,7 +13,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_discovery
+(module __hop_discovery_TOBEREMOVED
    
    (cond-expand
       (enable-threads
@@ -62,9 +62,9 @@
 (define discovery-service #f)
 
 ;*---------------------------------------------------------------------*/
-;*    discovery-host-ip ...                                            */
+;*    discovery-host-ips ...                                           */
 ;*---------------------------------------------------------------------*/
-(define discovery-host-ip #f)
+(define discovery-host-ips (list (host (hostname))))
 
 ;*---------------------------------------------------------------------*/
 ;*    discovers ...                                                    */
@@ -107,22 +107,20 @@
       (multiple-value-bind (msg clienthost)
 	 (datagram-socket-receive serv 1024)
 	 (let ((l (string-split msg)))
-	    (when debug-discovery
-	       (tprint "DISCOVERY-LOOP(" (hop-port) "): " l))
 	    (when (=fx (length l) 2)
 	       (let ((svc (cadr l))
 		     (clientport (string->number (car l))))
-		  (when debug-discovery
-		     (tprint "DISCOVERY-LOOP(" (hop-port) "),resp: "
-			" clientport=" clientport
-			" clienthost=" clienthost
-			" discovery-host-ip=" discovery-host-ip
-			" svc=" svc))
 		  (when (and (or (not (=fx clientport (hop-port)))
-				 (not discovery-host-ip)
-				 (not (string=? clienthost discovery-host-ip)))
+				 (not (member clienthost discovery-host-ips)))
 			     (or (string=? svc "*")
 				 (service-exists? svc)))
+		     (when debug-discovery
+			(tprint "DISCOVERY-LOOP"
+			   " localport=" (hop-port)
+			   " clientport=" clientport
+			   " clienthost=" clienthost
+			   " discovery-host-ips=" discovery-host-ips
+			   " svc=" svc))
 		     (hop-discovery-reply clienthost clientport svc id))))))
       (loop (-fx id 1))))
 
@@ -151,9 +149,10 @@
 	       (tprint "public/discovery.1 port=" port " key=" key " service=" service " session=" session " localclientp=" localclientp))
 	    (unless (and localclientp (=fx (string->integer port) (hop-port)))
 	       (mutex-lock! discovery-mutex)
-	       ;; now we have our own name
-	       (unless discovery-host-ip
-		  (set! discovery-host-ip (socket-local-address socket)))
+	       ;; now we have our own ip
+	       (let ((addr (socket-local-address socket)))
+		  (unless (member addr discovery-host-ips)
+		     (set! discovery-host-ips (cons addr discovery-host-ips))))
 	       ;; find all the discovers that match that event
 	       (let* ((ip (host (socket-host-address socket)))
 		      (hname (socket-hostname socket))
@@ -199,14 +198,17 @@
       (lambda (e)
 	 (exception-notify e)
 	 #f)
-      (let* ((sock (make-datagram-client-socket address port broadcast))
-	     (msg (format "~a ~a" (hop-port)
-		     (if (string? service) service "*"))))
-	 (when debug-discovery
-	    (tprint "HOP-DISCOVER addr=" address " port=" port " svc=" service))
-	 (display msg (datagram-socket-output-port sock))
-	 (datagram-socket-close sock)
-	 #t)))
+      (unless (and (member address discovery-host-ips)
+		   (=fx port (hop-discovery-port)))
+	 (let* ((sock (make-datagram-client-socket address port broadcast))
+		(msg (format "~a ~a" (hop-port)
+			(if (string? service) service "*"))))
+	    (when debug-discovery
+	       (tprint "EXEC (hop-discover :address " address " :port " port
+		  " :service " service " :broadcast " broadcast))
+	    (display msg (datagram-socket-output-port sock))
+	    (datagram-socket-close sock)
+	    #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::discoverer ...                             */

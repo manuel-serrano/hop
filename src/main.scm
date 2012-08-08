@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul 18 18:30:50 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 08:00:36 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -96,35 +96,13 @@
       (when (hop-enable-webdav) (init-webdav!))
       (when (hop-enable-fast-server-event) (init-flash!))
       ;; start zeroconf
-      (init-zeroconf!)
+      (when (hop-enable-zeroconf) (init-zeroconf!))
       ;; close filters and users registration before starting
       (hop-filters-close!)
       (users-close!)
-      ;; create the scheduler
+      ;; create the scheduler (unless the rc file has already created one)
       (unless (isa? (hop-scheduler) scheduler)
-	 (cond-expand
-	    (enable-threads
-	       (case (hop-scheduling)
-		  ((nothread)
-		   (hop-scheduler-set! (instantiate::nothread-scheduler)))
-		  ((queue)
-		   (hop-scheduler-set! (instantiate::queue-scheduler
-					  (size (hop-max-threads)))))
-		  ((one-to-one)
-		   (hop-scheduler-set! (instantiate::one-to-one-scheduler
-					  (size (hop-max-threads)))))
-		  ((pool)
-		   (hop-scheduler-set! (instantiate::pool-scheduler
-					  (size (hop-max-threads)))))
-		  ((accept-many)
-		   (hop-scheduler-set! (instantiate::accept-many-scheduler
-					  (size (hop-max-threads)))))
-		  (else
-		   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
-	    (else
-	     (unless (eq? (hop-scheduling) 'nothread)
-		(warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
-	     (hop-scheduler-set! (instantiate::nothread-scheduler)))))
+	 (set-scheduler!))
       ;; start the hop scheduler loop (i.e. the hop main loop)
       (with-handler
 	 (lambda (e)
@@ -150,11 +128,11 @@
 		   (hop-repl (hop-scheduler))
 		   (error "hop" "No thread available for the REPL" "aborting.")))
 	    ;; when needed, start the HOP discovery thread
-	    (hop-discovery-init!)
-	    (when (hop-enable-discovery)
-	       (if (>fx (hop-max-threads) 1)
-		   (hop-discovery-server (hop-discovery-port))
-		   (error "hop" "No thread available for discovery" "aborting.")))
+;* 	    (hop-discovery-init!)                                      */
+;* 	    (when (hop-enable-discovery)                               */
+;* 	       (if (>fx (hop-max-threads) 1)                           */
+;* 		   (hop-discovery-server (hop-discovery-port))         */
+;* 		   (error "hop" "No thread available for discovery" "aborting."))) */
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -173,7 +151,7 @@
 		  ;; preload the user files
 		  (for-each load-command-line-weblet files)
 		  ;; unset the dummy request
-		  (thread-request-set! #unspecified #unspecified)))	 
+		  (thread-request-set! #unspecified #unspecified)))
 	    ;; preload all the forced services
 	    (for-each (lambda (svc)
 			 (let* ((path (string-append (hop-service-base) "/" svc))
@@ -195,6 +173,34 @@
 	    (current-request-set! #f #f)
 	    ;; start the main loop
 	    (scheduler-accept-loop (hop-scheduler) serv #t)))))
+
+;*---------------------------------------------------------------------*/
+;*    set-scheduler! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (set-scheduler!)
+   (cond-expand
+      (enable-threads
+	 (case (hop-scheduling)
+	    ((nothread)
+	     (hop-scheduler-set! (instantiate::nothread-scheduler)))
+	    ((queue)
+	     (hop-scheduler-set! (instantiate::queue-scheduler
+				    (size (hop-max-threads)))))
+	    ((one-to-one)
+	     (hop-scheduler-set! (instantiate::one-to-one-scheduler
+				    (size (hop-max-threads)))))
+	    ((pool)
+	     (hop-scheduler-set! (instantiate::pool-scheduler
+				    (size (hop-max-threads)))))
+	    ((accept-many)
+	     (hop-scheduler-set! (instantiate::accept-many-scheduler
+				    (size (hop-max-threads)))))
+	    (else
+	     (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
+      (else
+       (unless (eq? (hop-scheduling) 'nothread)
+	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
+       (hop-scheduler-set! (instantiate::nothread-scheduler)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
@@ -274,16 +280,16 @@
    (cond
       ((not (hop-enable-fast-server-event))
        ;; fast event are disabled
-       (hop-event-init! #f))
+       (hop-event-init!))
       ((=fx (hop-fast-server-event-port) (hop-port))
        ;; will use the regular HOP port
-       (hop-event-init! (hop-port)))
+       (hop-event-init!))
       ((<=fx (with-access::scheduler scd (size) size) 1)
        ;; disable fast event because no thread is available
        ;; and extra port is needed
-       (hop-event-init! #f))
+       (hop-event-init!))
       (else
        ;; run in a separate thread
-       (hop-event-init! (hop-fast-server-event-port))
+       (hop-event-init!)
        (let ((serv (make-server-socket (hop-fast-server-event-port))))
 	  (scheduler-accept-loop scd serv #f)))))

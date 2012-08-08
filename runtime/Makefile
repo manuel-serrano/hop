@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Jul  1 06:25:01 2012 (serrano)                */
+#*    Last change :  Wed Aug  8 08:05:35 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ _OBJECTS = param misc priv types read module \
            http_error http_filter \
            hop_inline \
            event color weblets preferences expanders \
-           security discovery xdomain zeroconf
+           security xdomain zeroconf
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o

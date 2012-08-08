@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Jul 18 06:43:33 2012 (serrano)                */
+;*    Last change :  Wed Aug  8 10:51:40 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -84,7 +84,7 @@
       (with-lock lock
 	 (lambda ()
 	    (set! state 'failure)
-	    (hop-verb 1 "zeroconf:"
+	    (hop-verb 1 "  zeroconf: "
 	       (hop-color 4 "error" "")
 	       (cond
 		  ((string? err)
@@ -141,7 +141,7 @@
 	 ((avahi-client-running)
 	  (set! state 'ready)
 	  (with-access::avahi-client client (version)
-	     (hop-verb 1 (format "zeroconf:~a\n" (hop-color 2 "" version))))
+	     (hop-verb 1 (format "  zeroconf: ~a\n" (hop-color 2 "" version))))
 	  (onready o))
 	 (else
 	  (set! state 'failure)
@@ -192,6 +192,20 @@
 ;*    service-browser ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi type proc)
+   
+   (define (apply-error proc arg)
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e)
+	    #f))
+      (proc arg))
+
+   (define (avahi-protocol proto)
+      (case proto
+	 ((avahi-proto-inet) "ipv4")
+	 ((avahi-proto-inet6) "ipv6")
+	 (else "unknown")))
+   
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
@@ -199,43 +213,44 @@
 	       (client client)
 	       (type type)
 	       (proc (lambda (b intf proto event name type domain flags)
-			(when (or (eq? event 'avahi-browser-new)
-				  (eq? event 'avahi-browser-remove))
-			   (instantiate::avahi-service-resolver
-			      (client client)
-			      (interface intf)
-			      (protocol proto)
-			      (name name)
-			      (type type)
-			      (domain domain)
-			      (proc (lambda (r intf proto event svc type domain
-					       host addr port txtlst flags)
-				       (let* ((name (if (eq? event 'avahi-resolver-found)
-							"add" "remove"))
-					      (proto (case proto
-							((avahi-proto-inet)
-							 "ipv4")
-							((avahi-proto-inet6)
-							 "ipv6")
-							(else
-							 "unknown")))
-					      (evt (instantiate::zeroconf-service-event
-						      (name name)
-						      (target o)
-						      (interface intf)
-						      (protocol proto)
-						      (value svc)
-						      (type type)
-						      (domain domain)
-						      (hostname host)
-						      (port port)
-						      (address addr)
-						      (options txtlst))))
-					  (with-handler
-					     (lambda (e)
-						(exception-notify e)
-						#f)
-					     (proc evt))))))))))))))
+			(case event
+			   ((avahi-browser-new)
+			    (instantiate::avahi-service-resolver
+			       (client client)
+			       (interface intf)
+			       (protocol proto)
+			       (name name)
+			       (type type)
+			       (domain domain)
+			       (proc (lambda (r intf proto event value type domain
+						host addr port txtlst flags)
+					(when (eq? event 'avahi-resolver-found)
+					   (let ((evt (instantiate::zeroconf-service-event
+							 (name "found")
+							 (target o)
+							 (interface intf)
+							 (protocol (avahi-protocol proto))
+							 (value name)
+							 (type type)
+							 (domain domain)
+							 (hostname host)
+							 (port port)
+							 (address addr)
+							 (options txtlst))))
+					      (apply-error proc evt)))))))
+			   ((avahi-browser-remove)
+			    (let ((evt (instantiate::zeroconf-service-event
+					  (name "removed")
+					  (target o)
+					  (interface intf)
+					  (protocol (avahi-protocol proto))
+					  (value name)
+					  (type type)
+					  (domain domain)
+					  (hostname name)
+					  (options '()))))
+			       (apply-error proc evt)))))))))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-add-service-event-listener! ::avahi ...         */
