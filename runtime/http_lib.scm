@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/http_lib.scm              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/http_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Sun Nov  7 09:00:53 2010 (serrano)                */
-;*    Copyright   :  2004-10 Manuel Serrano                            */
+;*    Last change :  Thu Aug 16 09:07:37 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -276,11 +276,8 @@
 		   (if (pair? h)
 		       (let ((k (car h))
 			     (v (cdr h)))
-			  (if (keyword? k)
-			      (begin
-				 (trace-item (keyword->string! k) ": " v)
-				 (http-write-line p (keyword->string! k) ": " v))
-			      (error 'http-write-header "Illegal header" h)))
+			  (trace-item (keyword->string! k) ": " v)
+			  (http-write-line p (keyword->string! k) ": " v))
 		       (http-write-line p h)))
 		header)
       (flush-output-port p)))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Feb  3 13:51:43 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 09:26:26 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -92,46 +92,50 @@
 	      (userinfo read-only (default #f))
 	      (remote-timeout read-only (default (hop-read-timeout)))
 	      (connection-timeout read-only (default (hop-connection-timeout))))
+	      
+	   (class http-response-proxy::http-response-remote)
 
+	   (class http-response-proxy-websocket::http-response-proxy)
+	   
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
 	      (statusf::procedure (default (lambda (x) x)))
 	      (headerf::procedure (default (lambda (x) x)))
 	      bodyf::procedure)
 
-	   (abstract-class %http-response-local::%http-response
+	   (abstract-class %http-response-server::%http-response
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
-	   (class http-response-autoload::%http-response-local)
+	   (class http-response-autoload::%http-response-server)
 
-	   (class http-response-xml::%http-response-local
+	   (class http-response-xml::%http-response-server
 	      (backend read-only)
 	      (xml read-only))
 	   
-	   (class http-response-hop::%http-response-local
+	   (class http-response-hop::%http-response-server
 	      (backend read-only)
 	      (padding::obj (default #f))
 	      (value::obj read-only))
 	   
-	   (class http-response-procedure::%http-response-local
+	   (class http-response-procedure::%http-response-server
 	      (proc::procedure read-only))
 	   
-	   (class http-response-raw::%http-response-local
+	   (class http-response-raw::%http-response-server
 	      (connection::obj read-only (default #f))
 	      (proc::procedure read-only))
 
-	   (class http-response-file::%http-response-local
+	   (class http-response-file::%http-response-server
 	      (file::bstring read-only))
 	   
 	   (class http-response-shoutcast::http-response-file)
 	   
-	   (class http-response-string::%http-response-local
+	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
 
 	   (class http-response-authentication::http-response-string)
 
-	   (class http-response-websocket::%http-response-local
+	   (class http-response-websocket::%http-response-server
 	      (connection::symbol read-only (default 'Upgrade))
 	      (origin::obj read-only (default #f))
 	      (location::obj read-only (default #f))
@@ -141,7 +145,7 @@
 
 	   (class http-response-error::http-response-string)
 
-	   (class http-response-cgi::%http-response-local
+	   (class http-response-cgi::%http-response-server
 	      (cgibin::bstring read-only))
 
 	   (class http-response-persistent::%http-response
@@ -150,7 +154,7 @@
 	   (class http-response-chunked::%http-response
 	      (body (default #f)))
 	   
-	   (class http-response-put::%http-response-local
+	   (class http-response-put::%http-response-server
 	      (uri::bstring read-only))
 
 	   (class hop-service

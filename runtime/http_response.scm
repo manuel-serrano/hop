@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.4.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May  4 12:30:44 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:48:22 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -87,52 +87,6 @@
 	    (when bodyp (display body p))
 	    (flush-output-port p)
 	    connection))))
-
-;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-websocket ...                      */
-;*    -------------------------------------------------------------    */
-;*    websocket are described at:                                      */
-;*    http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol      */
-;*                                                                     */
-;*    They impose a strict ordering and case for the reply. Thus Hop   */
-;*    uses a dedicated class instead of a generic response-string.     */
-;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-websocket socket)
-   (with-trace 3 "http-response::http-response-string"
-      (with-access::http-response-websocket r (start-line
-					       connection
-					       origin
-					       location
-					       timeout
-					       protocol
-					       sec
-					       accept)
-	 (let ((p (socket-output socket)))
-	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
-	    (http-write-line-string p start-line)
-	    (http-write-line-string p "Upgrade: WebSocket")
-	    (http-write-line p "Connection: " connection)
-	    (cond
-	       (accept
-		  (http-write-line p "Sec-WebSocket-Accept: " accept)
-		  (when protocol
-		     (http-write-line p "WebSocket-Protocol: " protocol))
-		  (http-write-line p))
-	       (sec
-		  (http-write-line p "Sec-WebSocket-Origin: " origin)
-		  (http-write-line p "Sec-WebSocket-Location: " location)
-		  (when protocol
-		     (http-write-line p "Sec-WebSocket-Protocol: " protocol))
-		  (http-write-line p)
-		  (display sec p))
-	       (else
-		(http-write-line p "WebSocket-Origin: " origin)
-		(http-write-line p "WebSocket-Location: " location)
-		(when protocol
-		   (http-write-line p "WebSocket-Protocol: " protocol))
-		(http-write-line p)))
-	    (flush-output-port p)
-	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */

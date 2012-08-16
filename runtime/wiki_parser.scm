@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Jun  6 08:49:43 2012 (serrano)                */
+;*    Last change :  Mon Aug 13 09:14:45 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -506,6 +506,35 @@
 	    (else
 	     s)))
 
+      (define (enumerate s val args)
+	 ;; this is a common mistake so we impose the paragraph ending.
+	 (when (is-state? 'p) (pop-state!))
+	 (let* ((c (string-ref s 0))
+		(id (if (char=? c #\*) 'ul 'ol))
+		(st (in-state (lambda (s n)
+				 (with-access::state s (markup value)
+				    (and (eq? markup 'li)
+					 (=fx value val)
+					 (eq? (state-markup (car n)) id)))))))
+	    (if st
+		(unwind-state! st)
+		(let ((st (in-bottom-up-state
+			     (lambda (s n)
+				(when (pair? n)
+				   (with-access::state (car n) (markup value)
+				      (when (and (eq? markup 'li)
+						 (>=fx value val))
+					 s)))))))
+		   (when st (unwind-state! st))
+		   (enter-block! id
+		      (if (char=? c #\*)
+			  (lambda expr
+			     (apply (wiki-syntax-ul syn) (append args expr)))
+			  (lambda expr
+			     (apply (wiki-syntax-ol syn) (append args expr))))
+		      #f #f)))
+	    (enter-block! 'li (wiki-syntax-li syn) val #t)))
+
       ;; utf-8 bom
       ((bof (: #a239 #a187 #a191))
        (set! charset (charset-converter! 'UTF-8 (hop-charset)))
@@ -597,10 +626,12 @@
 			  (wiki-parse-ident (the-substring 3 (the-length)))
 			  `(:class ,class :id ,ident)))))
 	  (enter-block! 'p
+;* 			(lambda expr                                   */
+;* 			   (let ((rev (reverse! expr)))                */
+;* 			      (apply (wiki-syntax-p syn)               */
+;* 				     (append args (reverse! rev)))))   */
 			(lambda expr
-			   (let ((rev (reverse! expr)))
-			      (apply (wiki-syntax-p syn)
-				     (append args (reverse! rev)))))
+			   (apply (wiki-syntax-p syn) (append args expr)))
 			#f
 			#f))
        (read/rp skip-space-grammar (the-port))
@@ -698,33 +729,24 @@
 	      (add-expr! (the-html-substring 2 (the-length)))
 	      (add-expr! (html-string-encode (charset (read-line (the-port)))))
 	      (add-expr! "\n"))
- 	   (begin
-              ;; this is a common mistake so we impose the paragraph ending.
-	      (when (is-state? 'p) (pop-state!))
-	      (let* ((s (the-html-substring (-fx (the-length) 1) (the-length)))
-		     (c (string-ref s 0))
-		     (val (the-length))
-		     (id (if (char=? c #\*) 'ul 'ol))
-		     (st (in-state (lambda (s n)
-				      (with-access::state s (markup value)
-					 (and (eq? markup 'li)
-					      (=fx value val)
-					      (eq? (state-markup (car n)) id)))))))
-		 (if st
-		     (unwind-state! st)
-		     (let ((st (in-bottom-up-state
-				(lambda (s n)
-				   (when (pair? n)
-				      (with-access::state (car n) (markup value)
-					 (when (and (eq? markup 'li)
-						    (>=fx value val))
-					    s)))))))
-			(when st (unwind-state! st))
-			(if (char=? c #\*)
-			    (enter-block! id (wiki-syntax-ul syn) #f #f)
-			    (enter-block! id (wiki-syntax-ol syn) #f #f))))
-		 (enter-block! 'li (wiki-syntax-li syn) val #t))))
-       (ignore))
+	   (begin
+	      (enumerate (the-substring (-fx (the-length) 1) (the-length))
+		 (the-length) '())
+	      (ignore))))
+      ((bol (: "  " (* " ") (in "*-") (: #\: (+ (out " \t\n")))))
+       ;; if we are in a pre, just add the entire line
+       (if (is-state? 'pre)
+	   (begin
+	      (add-expr! (the-html-substring 2 (the-length)))
+	      (add-expr! (html-string-encode (charset (read-line (the-port)))))
+	      (add-expr! "\n"))
+	   (let* ((s (the-string))
+		  (i (string-index-right s #\:)))
+	      (multiple-value-bind (ident class)
+		 (wiki-parse-ident (substring s i))
+		 (enumerate (substring s (-fx i 1) i)
+		    i `(:class ,class :id ,ident))
+		 (ignore)))))
 
       ;; comments
       ((bol (: (or ";*" ";;") (+ all) (? #\Newline)))

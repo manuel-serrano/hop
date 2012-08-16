@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Aug  8 07:38:33 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:48:18 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -40,9 +40,10 @@
 	    __hop_read
 	    __hop_service
 	    __hop_http-response
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_websocket)
 
-   (static  (class http-response-event::%http-response-local
+   (static  (class http-response-event::%http-response-server
 	       (name::bstring read-only))
 	    
 	    (class ajax-connection
@@ -406,97 +407,7 @@
 	 (if (pair? c)
 	     (cdr c)
 	     default)))
-   
-   (define (websocket-server-location host)
-      (with-access::http-request req ((h host) (p port))
-	 (format "ws://~a/~a/public/server-event/websocket?key=~a"
-	    (or host (format "~a:~a" h p))
-	    (hop-initial-weblet)
-	    key)))
-   
-   (define (protocol76-key-value s)
-      (let ((l (string-length s)))
-	 (let loop ((i 0)
-		    (n #l0)
-		    (b #l0))
-	    (if (=fx i l)
-		(/llong n b)
-		(let ((c (string-ref s i)))
-		   (cond
-		      ((char-numeric? c)
-		       (let ((k (fixnum->llong
-				   (-fx (char->integer c) (char->integer #\0)))))
-			  (loop (+fx i 1) (+llong (*llong n #l10) k) b)))
-		      ((char=? c #\space)
-		       (loop (+fx i 1) n (+llong b #l1)))
-		      (else
-		       (loop (+fx i 1) n b))))))))
-   
-   (define (blit-string-int32-big-endian! n::llong buf::bstring o::int)
-      (let ((b3 (llong->fixnum (bit-andllong n #l255)))
-	    (b2 (llong->fixnum (bit-andllong (bit-rshllong n 8) #l255)))
-	    (b1 (llong->fixnum (bit-andllong (bit-rshllong n 16) #l255)))
-	    (b0 (llong->fixnum (bit-andllong (bit-urshllong n 24) #l255))))
-	 (string-set! buf (+fx o 3) (integer->char b3))
-	 (string-set! buf (+fx o 2) (integer->char b2))
-	 (string-set! buf (+fx o 1) (integer->char b1))
-	 (string-set! buf o (integer->char b0))))
-   
-   (define (webwocket-hixie-protocol-76 key1 key2 req)
-      (when debug-websocket
-	 (tprint "websocket-protocol76 key1=[" key1 "] key2=[" key2 "]"))
-      ;; Handshake known as draft-hixie-thewebsocketprotocol-76
-      ;; see http://www.whatwg.org/specs/web-socket-protocol/
-      ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-03
-      ;; for each key, compute the following:
-      ;;   extract numerics (0-9) from value, and convert to int base 10.
-      ;;   Divide by number of space characters in value!
-      (with-access::http-request req (socket) 
-	 (let ((k1 (protocol76-key-value key1))
-	       (k2 (protocol76-key-value key2))
-	       (key3 (read-chars 8 (socket-input socket)))
-	       (buf (make-string 16 #\0)))
-	    (blit-string-int32-big-endian! k1 buf 0)
-	    (blit-string-int32-big-endian! k2 buf 4)
-	    (blit-string! key3 0 buf 8 8)
-	    (string-hex-intern! (md5sum buf)))))
-   
-   (define (websocket-sec-challenge req header)
-      ;; newer websocket protocols includes a 3 keys challenge
-      ;; we check which version we are asked.
-      (let ((key1 (get-header header sec-websocket-key1: #f)))
-	 (when key1
-	    (let ((key2 (get-header header sec-websocket-key2: #f)))
-	       (when key2
-		  (webwocket-hixie-protocol-76 key1 key2 req))))))
-   
-   (define (websocket-hixie-protocol header read)
-      (instantiate::http-response-websocket
-	 (request req)
-	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
-	 (location (websocket-server-location (get-header header host: #f)))
-	 (origin (get-header header origin: "localhost"))
-	 (protocol (get-header header WebSocket-Protocol: #f))
-	 (connection 'Upgrade)
-	 (sec (websocket-sec-challenge req header))))      
-   
-   (define (websocket-hybi-protocol header req)
-      ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
-      (when debug-websocket
-	 (tprint "websocket-hybi-protocol-08, header: " header))
-      (let* ((key (get-header header sec-websocket-key: #f))
-	     (i (string-index key #\space))
-	     (pkey (if i (car (string-split key #\space)) key))
-	     (guid "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
-	     (akey (string-append pkey guid))
-	     (skey (sha1sum-string akey)))
-	 (instantiate::http-response-websocket
-	    (request req)
-	    (start-line "HTTP/1.1 101 Switching Protocols")
-	    (connection 'Upgrade)
-	    (protocol (get-header header WebSocket-Protocol: #f))
-	    (accept (base64-encode (string-hex-intern! skey))))))
-   
+
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
 	    (version (get-header header sec-websocket-version: "-1")))
@@ -504,12 +415,7 @@
 	 ;; the bytes of the response to the client.
 	 (when debug-websocket
 	    (tprint "websocket-register, protocol-version: " version))
-	 (let* ((v (string->integer version))
-		(resp (cond
-			 ((and (>=fx v 7) (<=fx v 25))
-			  (websocket-hybi-protocol header req))
-			 (else
-			  (websocket-hixie-protocol header req)))))
+	 (let ((resp (websocket-server-response req key)))
 	    ;; register the websocket
 	    (with-lock *event-mutex*
 	       (lambda ()

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Aug  8 07:49:35 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:33:25 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -445,9 +445,9 @@ Google, each containing a forward pointer to the actual URL.])))
 			  (flush-output-port op))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    Remote hook                                                      */
+;*    proxy hook                                                       */
 ;*---------------------------------------------------------------------*/
-(hop-http-response-remote-hook-add!
+(hop-http-response-proxy-hook-add!
  (lambda (req resp)
     (or (blacklist req)
 	(google req)

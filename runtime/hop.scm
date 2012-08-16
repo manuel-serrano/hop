@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Jun 17 08:58:41 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:29:37 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -147,7 +147,7 @@
 	     (if (or (not (isa? req http-proxy-request))
 		     (not (hop-enable-proxing)))
 		 (hop-request-hook m (http-file-not-found path))
-		 (let* ((n (instantiate::http-response-remote
+		 (let* ((n (instantiate::http-response-proxy
 			      (scheme scheme)
 			      (method method)
 			      (host host)
@@ -161,12 +161,12 @@
 			      (request m)
 			      (remote-timeout (hop-read-timeout))
 			      (connection-timeout (hop-connection-timeout))))
-			(r (hop-run-hook (hop-http-response-remote-hooks) m n)))
+			(r (hop-run-hook (hop-http-response-proxy-hooks) m n)))
 		    (hop-request-hook m r))))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((isa? n %http-response)
-		 (let ((r (hop-run-hook (hop-http-response-local-hooks) m n)))
+		 (let ((r (hop-run-hook (hop-http-response-server-hooks) m n)))
 		    (hop-request-hook m r)))
 		((eq? n m)
 		 (loop m (cdr filters)))
@@ -417,13 +417,13 @@
    (when (procedure? success) (success obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    with-hop-local ::http-response-remote ...                        */
+;*    with-hop-local ::http-response-proxy ...                         */
 ;*    -------------------------------------------------------------    */
 ;*    This method is used for imported services. These services        */
 ;*    are called locally but they are still remote.                    */
 ;*---------------------------------------------------------------------*/
-(define-method (with-hop-local obj::http-response-remote success fail auth)
-   (with-access::http-response-remote obj (path host port)
+(define-method (with-hop-local obj::http-response-proxy success fail auth)
+   (with-access::http-response-proxy obj (path host port)
       (with-hop-remote path success fail
 	 :host host :port port :authorization auth)))
 

@@ -12,7 +12,7 @@ by itself (for instance, when implementing caching) or it may redirect
 the request to another server. In addition to being used for
 implementing ,(<APIREF> (<I> "weblet") "service.wiki") as demonstrated
 in the other tutorials, a HOP server might also be used to filters
-remote requests. This tutorial focuses on this last aspect.
+proxy requests. This tutorial focuses on this last aspect.
 
 == Transforming Web sites ==
 
@@ -27,11 +27,11 @@ of the word //Linux// with //Xunil//.
 at the heart of the implementation. For this particular exercice we are
 only using hooks that are applied by HOP when it receives a request
 for a remote server. Such hooks are installed by the means of the
-++hop-http-response-remote-hook-add!++ function. That is, when HOP
+++hop-http-response-proxy-hook-add!++ function. That is, when HOP
 intercepts a request that targets a remote server, it builds an
-object of the class :http-response-remote. Then, it applies all
-the remote hook to the request //and// the response. For this example,
-the remote hook constructs a new response that filters the original one.
+object of the class ::http-response-proxy. Then, it applies all
+the proxy hook to the request //and// the response. For this example,
+the proxy hook constructs a new response that filters the original one.
 
 ~~ This new response //wraps// the initial one. It actually contact the
 remote server in order to fulfilled the initial request. It then filter
@@ -58,7 +58,7 @@ constitute the HOP respond.
                            (display s2 op)
                            (flush-output-port op))))))))
 
-  (hop-http-response-remote-hook-add!
+  (hop-http-response-proxy-hook-add!
    (lambda (req resp)
       (or (linux-kernel-hooking req resp)
           resp)))

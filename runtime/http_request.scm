@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/2.4.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Apr 19 21:33:59 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:27:22 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -26,7 +26,8 @@
 	    __hop_http-lib
 	    __hop_user
 	    __hop_misc
-	    __hop_charset)
+	    __hop_charset
+	    __hop_websocket)
    
    (export  (http-parse-request::http-request ::socket ::int ::int)))
 
@@ -118,9 +119,7 @@
 	    (set! userinfo u)
 	    (set! http-version (read/rp http-version-grammar pi))
 	    (trace-item "http=" http-version " scheme=" s " user=" u
-			" host=" h " port=" p " path=[" a "]")
-	    (when (input-string-port? pi)
-	       (close-input-port pi)))
+	       " host=" h " port=" p " path=[" a "]"))
 	 (multiple-value-bind (header actual-host actual-port cl te auth pauth co)
 	    (http-parse-header pi po)
 	    (let* ((i (string-index path #\?))
@@ -146,10 +145,10 @@
 					   'close))
 				   'close)))
 	       (trace-item "abspath=" abspath
-			   " query=" query
-			   " connection=" connection
-			   " content-length=" cl
-			   " header=" header)
+		  " query=" query
+		  " connection=" connection
+		  " content-length=" cl
+		  " header=" header)
 	       (let* ((ip (input-port-name pi))
 		      (user (or (and (string? auth)
 				     (find-authenticated-user auth abspath method ip))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Aug  8 08:05:35 2012 (serrano)                */
+#*    Last change :  Thu Aug 16 08:51:52 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -43,10 +43,10 @@ _OBJECTS = param misc priv types read module \
            job mime user password cache \
            hop_wiki wiki_syntax wiki_parser wiki_toc hz \
            http_lib http_request \
-           http_response http_shoutcast http_remote http_webdav \
+           http_response http_shoutcast http_proxy http_webdav \
            http_error http_filter \
            hop_inline \
-           event color weblets preferences expanders \
+           event websocket color weblets preferences expanders \
            security xdomain zeroconf
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o

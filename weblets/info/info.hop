@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun  8 18:06:56 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:31:31 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -80,7 +80,7 @@
 ;*    remote-hook ...                                                  */
 ;*---------------------------------------------------------------------*/
 (when (> (bigloo-debug) 0)
-   (hop-http-response-remote-hook-add! traffic-hook))
+   (hop-http-response-proxy-hook-add! traffic-hook))
 
 ;*---------------------------------------------------------------------*/
 ;*    info-fonts ...                                                   */
@@ -321,7 +321,7 @@
 	       (<TD> :align 'left (hop-keep-alive-timeout)))
 	    (<TR>
 	       (<TH> :align 'right "Remote keep alive timeout")
-	       (<TD> :align 'left (hop-remote-keep-alive-timeout))))
+	       (<TD> :align 'left (hop-proxy-keep-alive-timeout))))
 	 (<H1> "Weblets")
 	 (<DIV> :class "autoload"
 	    (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))

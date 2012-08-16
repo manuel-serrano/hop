@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Aug  8 07:55:37 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 09:25:02 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -44,7 +44,7 @@
 	   __hop_http-lib
 	   __hop_http-request
 	   __hop_http-response
-	   __hop_http-remote
+	   __hop_http-proxy
 	   __hop_http-shoutcast
 	   __hop_http-webdav
 	   __hop_http-error
@@ -53,6 +53,7 @@
 	   __hop_svg
 	   __hop_mathml
 	   __hop_event
+	   __hop_websocket
 	   __hop_color
 	   __hop_preferences
 	   __hop_weblets
@@ -63,7 +64,6 @@
            __hop_wiki-toc
 	   __hop_hz
 	   __hop_security
-;* 	   __hop_discovery                                             */
 	   __hop_zeroconf)
 	   
    (eval   (export-all)
@@ -75,7 +75,9 @@
 	   (class http-server-request)
 	   (class http-proxy-request)
 	   (class %http-response)
+	   (class http-response-proxy)
 	   (class http-response-remote)
+	   (class %http-response-server)
 	   (class http-response-autoload)
 	   (class http-response-filter)
 	   (class http-response-xml)
@@ -121,9 +123,6 @@
   	   (class wiki-syntax)
 
 	   (class event)
-
-;* 	   (class discoverer)                                          */
-;* 	   (class discover-event)                                      */
 
 	   (class zeroconf)
 	   (class zeroconf-service-event))

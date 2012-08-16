@@ -1,18 +1,18 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_remote.scm           */
+;*    serrano/prgm/project/hop/2.4.x/runtime/http_proxy.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Jun 17 08:59:03 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:51:46 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    The HTTP remote response                                         */
+;*    The HTTP proxy response                                          */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hop_http-remote
+(module __hop_http-proxy
 
    (include "http_lib.sch"
             "verbose.sch")
@@ -41,13 +41,13 @@
 	       (wstart?::bool (default #f))
 	       date::elong))
    
-   (export  (response-remote-start-line ::http-response-remote)))
+   (export  (response-remote-start-line ::http-response-proxy)))
 
 ;*---------------------------------------------------------------------*/
 ;*    response-remote-start-line ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (response-remote-start-line resp)	    
-   (with-access::http-response-remote resp (scheme host port path http method userinfo)
+   (with-access::http-response-proxy resp (scheme host port path http method userinfo)
       (let ((p (if (string? userinfo)
 		   (string-append userinfo "@" path)
 		   path)))
@@ -66,18 +66,18 @@
 (define *debug-mutex* (make-mutex))
 
 ;*---------------------------------------------------------------------*/
-;*    http-response ::http-response-remote ...                         */
+;*    http-response ::http-response-proxy ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-remote socket)
+(define-method (http-response r::http-response-proxy socket)
    (let ((count (+ 1 *debug-count*)))
       (mutex-lock! *debug-mutex*)
       (set! *debug-open* (cons count *debug-open*))
       (set! *debug-count* count)
       (mutex-unlock! *debug-mutex*)
       (unwind-protect
-	 (with-trace 3 "http-response::http-response-remote"
+	 (with-trace 3 "http-response::http-response-proxy"
 	    (let loop ()
-	       (with-access::http-response-remote r (scheme host port header content-length remote-timeout request connection-timeout)
+	       (with-access::http-response-proxy r (scheme host port header content-length remote-timeout request connection-timeout)
 		  (trace-item "remotehost=" host
 		     " remoteport=" port
 		     " connection-timeout=" connection-timeout)
@@ -175,17 +175,17 @@
       (let ((cp (hop-capture-port)))
 	 (display "---------------------------------------------------------\n" cp)
 	 (fprintf cp "http://~a:~a~a\n\n" host port path)
-	 (with-access::http-response-remote r (header)
+	 (with-access::http-response-proxy r (header)
 	    (remote-header header cp r))
 	 (flush-output-port cp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-header ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (remote-header header::pair-nil rp::output-port r::http-response-remote)
+(define (remote-header header::pair-nil rp::output-port r::http-response-proxy)
    (http-write-line rp (response-remote-start-line r))
    (http-write-header rp (http-filter-proxy-header header))
-   (when (hop-enable-remote-keep-alive)
+   (when (hop-enable-proxy-keep-alive)
       (let ((h (if (hop-use-proxy-host)
 		   "proxy-connection: keep-alive"
 		   "connection: keep-alive")))
@@ -209,8 +209,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (remote-body r::http-response-remote socket remote::connection)
-   (with-access::http-response-remote r (host port timeout request)
+(define (remote-body r::http-response-proxy socket remote::connection)
+   (with-access::http-response-proxy r (host port timeout request)
       ;; the body
       (with-trace 4 "http-response-body"
 	 (let* ((wstart #f)
@@ -286,7 +286,7 @@
 			  (eq? connection 'close)
 			  (and (not connection)
 			       (string=? http-version "HTTP/1.0"))
-			  (not (hop-enable-remote-keep-alive)))
+			  (not (hop-enable-proxy-keep-alive)))
 		      (with-trace 4 "connection-close@remote-body"
 			 (trace-item "remote=" remote)
 			 (connection-close! remote))
@@ -376,7 +376,7 @@
 (define (connection-timeout? c now)
    (with-access::connection c (date)
       (let ((age (*fx 1000 (elong->fixnum (-elong now date)))))
-	 (>=fx age (hop-remote-keep-alive-timeout)))))
+	 (>=fx age (hop-proxy-keep-alive-timeout)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-table-add! ...                                        */
@@ -480,7 +480,7 @@
 
    (with-trace 4 "remote-get-connection"
       (trace-item "host=" host)
-      (if (not (hop-enable-remote-keep-alive))
+      (if (not (hop-enable-proxy-keep-alive))
 	  (let ((id (+fx 1 *connection-id*)))
 	     ;; id is not used unless remote connections are kept alive then
 	     ;; we don't really a lock here to ensure a correct value
@@ -492,7 +492,7 @@
 ;*    too-many-keep-alive-connection? ...                              */
 ;*---------------------------------------------------------------------*/
 (define (too-many-keep-alive-connection?)
-   (>=fx *keep-alive-connection-number* (hop-max-remote-keep-alive-connection)))
+   (>=fx *keep-alive-connection-number* (hop-max-proxy-keep-alive-connection)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-keep-alive! ...                                       */

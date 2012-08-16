@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Aug  8 08:26:47 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:44:09 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -73,8 +73,11 @@
 ;*    http-get ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-get req)
-   (with-access::http-request req (abspath query)
+   (with-access::http-request req (abspath query connection header)
       (cond
+	 ((and (eq? connection 'upgrade)
+	       (websocket-proxy-request? header))
+	  (websocket-proxy-response req))
 	 ((not (authorized-path? req abspath))
 	  (user-access-denied req))
 	 ((not (file-exists? abspath))
@@ -112,6 +115,18 @@
 	  (let ((lm (date->rfc2822-date
 		       (seconds->date (file-modification-time abspath)))))
 	     (http-get-file req lm #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-connect ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (http-connect req)
+   (with-access::http-request req (host port)
+      (if (isa? req http-proxy-request)
+	  ;; okay for proxying connect response (probably used for websocket)
+	  (websocket-proxy-connect! host port)
+	  ;; refused
+	  (instantiate::http-response-abort
+	     (request req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -348,8 +363,8 @@
       ;; request
       (fprintf port "\"~a ~a ~a\" " method abspath http)
       ;; Return code
-      (if (isa? resp %http-response-local)
-	  (with-access::%http-response-local resp ((str start-line))
+      (if (isa? resp %http-response-server)
+	  (with-access::%http-response-server resp ((str start-line))
 	     (let ((len (string-length str)))
 		(let loop ((i 0)
 			   (sp 0))
@@ -474,19 +489,23 @@
    (add-http-handler! 'GET http-get)
    (add-http-handler! 'HEAD http-head)
    (add-http-handler! 'OPTIONS http-options)
+   (add-http-handler! 'CONNECT http-connect)
 
    ;; local filter (Fallback local file filter)
    (hop-filter-add-always-last!
-    (lambda (req)
-       (when (isa? req http-server-request)
-	  (with-access::http-request req (method)
-	     (let ((handler (http-find-method-handler method)))
-		(if (procedure? handler)
-		    (handler req)
-		    (http-method-error req)))))))
+      (lambda (req)
+	 (with-access::http-request req (method)
+	    (cond
+	       ((isa? req http-server-request)
+		(let ((handler (http-find-method-handler method)))
+		   (if (procedure? handler)
+		       (handler req)
+		       (http-method-error req))))
+	       ((eq? method 'CONNECT)
+		(http-connect req))))))
    
-   ;; remote hooks
-   (hop-http-response-remote-hook-add!
+   ;; proxy hooks
+   (hop-http-response-proxy-hook-add!
     (lambda (req resp)
        (with-access::http-request req (localclientp)
 	  (cond
@@ -509,10 +528,10 @@
    
    ;; logging
    (when (output-port? (hop-log-file))
-      (hop-http-response-local-hook-add!
+      (hop-http-response-server-hook-add!
        (lambda (req resp)
 	  (log-local-response (hop-log-file) req resp)))
-      (hop-http-response-remote-hook-add!
+      (hop-http-response-proxy-hook-add!
        (lambda (req resp)
 	  (log-remote-response (hop-log-file) req resp)))))
 

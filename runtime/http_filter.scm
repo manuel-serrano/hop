@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sun Jun 17 08:58:50 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:52:19 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -27,7 +27,7 @@
 	    __hop_http-lib
 	    __hop_http-error
 	    __hop_http-response
-	    __hop_http-remote)
+	    __hop_http-proxy)
 	    
    (export  (generic http-filter::symbol ::%http-response ::http-response-filter ::socket)))
 
@@ -38,10 +38,10 @@
    (http-response r socket))
 
 ;*---------------------------------------------------------------------*/
-;*    http-filter ::http-response-remote ...                           */
+;*    http-filter ::http-response-proxy ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-filter r::http-response-remote f socket)
-   (with-access::http-response-remote r (scheme host port header content-length timeout request)
+(define-method (http-filter r::http-response-proxy f socket)
+   (with-access::http-response-proxy r (scheme host port header content-length timeout request)
       (trace-item "remotehost=" host
 		  " remoteport=" port
 		  " timeout=" timeout)

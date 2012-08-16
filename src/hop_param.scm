@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug  8 08:01:56 2012 (serrano)                */
+;*    Last change :  Wed Aug 15 07:32:10 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -71,9 +71,6 @@
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
 
-;* 	    (hop-enable-discovery::bool)                               */
-;* 	    (hop-enable-discovery-set! ::bool)                         */
-;*                                                                     */
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
 
@@ -276,12 +273,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
    #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-enable-discovery ...                                         */
-;*---------------------------------------------------------------------*/
-;* (define-parameter hop-enable-discovery                              */
-;*    #t)                                                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-webdav ...                                            */

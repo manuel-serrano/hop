@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug  8 08:02:11 2012 (serrano)                */
+;*    Last change :  Thu Aug 16 08:32:01 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -65,9 +65,6 @@
 	    (hop-port::int)
 	    (hop-port-set! ::int)
 
-;* 	    (hop-discovery-port::int)                                  */
-;* 	    (hop-discovery-port-set! ::int)                            */
-;* 	                                                               */
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
 	    
@@ -113,15 +110,15 @@
 	    (hop-filter-add-always-first! ::procedure)
 	    (hop-filter-add-always-last! ::procedure)
 	    
-	    (hop-http-response-local-hooks::pair-nil)
-	    (hop-http-response-local-hooks-set! ::pair-nil)
-	    (hop-http-response-local-hook-add! ::procedure)
-	    (hop-http-response-local-hook-remove! ::procedure)
+	    (hop-http-response-server-hooks::pair-nil)
+	    (hop-http-response-server-hooks-set! ::pair-nil)
+	    (hop-http-response-server-hook-add! ::procedure)
+	    (hop-http-response-server-hook-remove! ::procedure)
 	    
-	    (hop-http-response-remote-hooks::pair-nil)
-	    (hop-http-response-remote-hooks-set! ::pair-nil)
-	    (hop-http-response-remote-hook-add! ::procedure)
-	    (hop-http-response-remote-hook-remove! ::procedure)
+	    (hop-http-response-proxy-hooks::pair-nil)
+	    (hop-http-response-proxy-hooks-set! ::pair-nil)
+	    (hop-http-response-proxy-hook-add! ::procedure)
+	    (hop-http-response-proxy-hook-remove! ::procedure)
 	    
 	    (hop-password::pair-nil)
 	    (hop-password-set! ::pair-nil)
@@ -155,6 +152,9 @@
 
 	    (hop-enable-proxing::bool)
 	    (hop-enable-proxing-set! ::bool)
+	    
+	    (hop-enable-websocket-proxing::bool)
+	    (hop-enable-websocket-proxing-set! ::bool)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -212,20 +212,20 @@
 	    (hop-enable-keep-alive::bool) 
 	    (hop-enable-keep-alive-set! ::bool)
 
-	    (hop-enable-remote-keep-alive::bool) 
-	    (hop-enable-remote-keep-alive-set! ::bool)
+	    (hop-enable-proxy-keep-alive::bool) 
+	    (hop-enable-proxy-keep-alive-set! ::bool)
 
 	    (hop-keep-alive-timeout::int) 
 	    (hop-keep-alive-timeout-set! ::int)
 
-	    (hop-remote-keep-alive-timeout::int) 
-	    (hop-remote-keep-alive-timeout-set! ::int)
+	    (hop-proxy-keep-alive-timeout::int) 
+	    (hop-proxy-keep-alive-timeout-set! ::int)
 
 	    (hop-keep-alive-threshold::int)
 	    (hop-keep-alive-threshold-set! ::int)
 
-	    (hop-max-remote-keep-alive-connection::int)
-	    (hop-max-remote-keep-alive-connection-set! ::int)
+	    (hop-max-proxy-keep-alive-connection::int)
+	    (hop-max-proxy-keep-alive-connection-set! ::int)
 
 	    (hop-remanent-timeout::int) 
 	    (hop-remanent-timeout-set! ::int)
@@ -433,12 +433,6 @@
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    hop-discovery-port ...                                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-parameter hop-discovery-port                                */
-;*    (-fx (hop-port) 1))                                              */
-
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -639,60 +633,60 @@
    (%hop-filter-add! proc 'last))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-local-hooks ...                                */
+;*    hop-http-response-server-hooks ...                               */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-http-response-local-hooks
+(define-parameter hop-http-response-server-hooks
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error "hop-http-response-local-hook-set!" "Hooks closed" #f)
+	  (error "hop-http-response-server-hook-set!" "Hooks closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-local-hook-add! ...                            */
+;*    hop-http-response-server-hook-add! ...                           */
 ;*---------------------------------------------------------------------*/
-(define (hop-http-response-local-hook-add! proc)
+(define (hop-http-response-server-hook-add! proc)
    (with-lock (hop-filter-mutex)
       (lambda ()
-	 (hop-http-response-local-hooks-set!
-	  (cons proc (hop-http-response-local-hooks))))))
+	 (hop-http-response-server-hooks-set!
+	  (cons proc (hop-http-response-server-hooks))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-local-hook-remove! ...                         */
+;*    hop-http-response-server-hook-remove! ...                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-http-response-local-hook-remove! proc)
+(define (hop-http-response-server-hook-remove! proc)
    (with-lock (hop-filter-mutex)
       (lambda ()
-	 (hop-http-response-local-hooks-set!
-	  (remq! proc (hop-http-response-local-hooks))))))
+	 (hop-http-response-server-hooks-set!
+	  (remq! proc (hop-http-response-server-hooks))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-remote-hooks ...                               */
+;*    hop-http-response-proxy-hooks ...                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-http-response-remote-hooks
+(define-parameter hop-http-response-proxy-hooks
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error "hop-http-response-remote-hook-set!" "Hooks closed" #f)
+	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" #f)
 	  v)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-remote-hook-add! ...                           */
+;*    hop-http-response-proxy-hook-add! ...                            */
 ;*---------------------------------------------------------------------*/
-(define (hop-http-response-remote-hook-add! proc)
+(define (hop-http-response-proxy-hook-add! proc)
    (with-lock (hop-filter-mutex)
       (lambda ()
-	 (hop-http-response-remote-hooks-set!
-	  (cons proc (hop-http-response-remote-hooks))))))
+	 (hop-http-response-proxy-hooks-set!
+	  (cons proc (hop-http-response-proxy-hooks))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-http-response-remote-hook-remove! ...                        */
+;*    hop-http-response-proxy-hook-remove! ...                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-http-response-remote-hook-remove! proc)
+(define (hop-http-response-proxy-hook-remove! proc)
    (with-lock (hop-filter-mutex)
       (lambda ()
-	 (hop-http-response-remote-hooks-set!
-	  (remq! proc (hop-http-response-remote-hooks))))))
+	 (hop-http-response-proxy-hooks-set!
+	  (remq! proc (hop-http-response-proxy-hooks))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-password ...                                                 */
@@ -792,6 +786,9 @@
 ;*    longer acts as proxy.                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-proxing
+   #t)
+
+(define-parameter hop-enable-websocket-proxing
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -1002,10 +999,10 @@
       ;; in a single env, it does not
       (else #f))
    (lambda (v)
-      (unless v (hop-enable-remote-keep-alive-set! v))
+      (unless v (hop-enable-proxy-keep-alive-set! v))
       v))
 
-(define-parameter hop-enable-remote-keep-alive
+(define-parameter hop-enable-proxy-keep-alive
    ;; does hop support keep-alive remote connection (when proxying)
    (cond-expand
       (enable-threads #t)
@@ -1019,7 +1016,7 @@
    ;; of abandonned keep-alive connections.
    (*fx 5 1000))
 
-(define-parameter hop-remote-keep-alive-timeout
+(define-parameter hop-proxy-keep-alive-timeout
    ;; the number of milli-seconds to keep alive remote connections
    (*fx 3 1000))
 
@@ -1027,12 +1024,12 @@
    ;; the max number of connections above which keep-alive are closed
    256)
    
-(define-parameter hop-max-remote-keep-alive-connection
+(define-parameter hop-max-proxy-keep-alive-connection
    ;; the max number of keep-alive remote (proxing) connections
    8
    (lambda (v)
       (if (<fx v 4)
-	  (error "hop-max-remote-keep-alive-connection-set!"
+	  (error "hop-max-proxy-keep-alive-connection-set!"
 		 "value should be greater or equal to 4"
 		 v)
 	  v)))
