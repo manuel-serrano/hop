@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Aug 16 09:19:30 2012 (serrano)                */
+;*    Last change :  Sun Aug 19 07:32:57 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -74,7 +74,7 @@
    (if (and (hop-enable-proxing) (hop-enable-websocket-proxing))
        (begin
 	  (mutex-lock! connect-mutex)
-	  (hashtable-put! *connect-host-table* host #t)
+	  (hashtable-put! *connect-host-table* (format "~a:~a" host port) #t)
 	  (mutex-unlock! connect-mutex)
 	  (instantiate::http-response-string
 	     (body "Ok")))
@@ -84,6 +84,7 @@
 ;*    websocket-proxy-request? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (websocket-proxy-request? header)
+   
    (when (string=? (get-header header upgrade: "") "websocket")
       (let ((host (get-header header host: #f)))
 	 (mutex-lock! connect-mutex)
@@ -293,23 +294,26 @@
 		(i (string-index host #\:))
 		(name (if i (substring host 0 i) host))
 		(port (if i (string->integer (substring host (+fx i 1))) 80))
-		(rsocket (make-client-socket/timeout host port timeout request #f))
+		(rsocket (make-client-socket/timeout name port timeout request #f))
 		(rop (socket-output rsocket))
 		(rip (socket-input rsocket))
 		(op (socket-output socket)))
-	    (tprint ">>> starting webosocket-tunel..." host ":" port " " path)
+	    (tprint ">>> starting webosocket-tunel..." name ":" port " " path)
 	    (http-write-line rop (format "GET ~a HTTP/1.1" path))
 	    (http-write-header rop (cons
 				      "connection: Upgrade"
 				      (http-filter-proxy-header header)))
+	    (http-write-line rop)
+	    (flush-output-port rop)
 	    (let loop ()
-	       (let ((l (read-line-newline rip)))
-		  (if (eof-object? l)
+	       (let ((c (read-char rip)))
+		  (if (eof-object? c)
 		      (begin
-			 (tprint ">>> closing tunel..." host ":" port " " path)
+			 (tprint ">>> closing tunel..." name ":" port " " path)
 			 (socket-close socket))
 		      (begin
-			 (display l op)
+			 (display c op)
+			 (flush-output-port op)
 			 (loop)))))))))
 	 
 	    

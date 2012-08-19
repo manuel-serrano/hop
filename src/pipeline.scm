@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Aug 14 15:49:09 2012 (serrano)                */
+;*    Last change :  Sun Aug 19 06:31:57 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -104,7 +104,7 @@
                                        (if (eq? mode 'keep-alive)
 					   (format " REQUEST.serv (+~a)" num)
 					   " REQUEST.serv")))
-		      (if (>=fx (hop-verbose) 2)
+		      (if (>=fx (hop-verbose) 3)
 			  (format " ~a~a: " thread (scheduler-stat scd))
 			  ": ")
 		      method " " scheme "://"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Thu Aug 16 08:52:19 2012 (serrano)                */
+;*    Last change :  Sat Aug 18 07:43:04 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
@@ -58,7 +58,7 @@
 	    (begin
 	       ;; the header
 	       (with-trace 4 "http-response-header"
-		  (http-write-line rp (response-remote-start-line r))
+		  (http-write-line rp (response-proxy-start-line r))
 		  (http-write-header rp (http-filter-proxy-header header))
 		  (http-write-line rp)
 		  ;; the content of the request

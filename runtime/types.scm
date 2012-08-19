@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Aug 16 09:26:26 2012 (serrano)                */
+;*    Last change :  Sun Aug 19 06:27:46 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -82,7 +82,7 @@
 
 	   (class http-response-abort::%http-response)
 	   
-	   (class http-response-remote::%http-response
+	   (class http-response-proxy::%http-response
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
 	      (scheme::symbol read-only (default 'http))
@@ -92,8 +92,9 @@
 	      (userinfo read-only (default #f))
 	      (remote-timeout read-only (default (hop-read-timeout)))
 	      (connection-timeout read-only (default (hop-connection-timeout))))
-	      
-	   (class http-response-proxy::http-response-remote)
+
+	   ;; http-response-remote is a weblet backward compatibiilty type
+	   (class http-response-remote::http-response-proxy)
 
 	   (class http-response-proxy-websocket::http-response-proxy)
 	   

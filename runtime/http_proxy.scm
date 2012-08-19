@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu Aug 16 08:51:46 2012 (serrano)                */
+;*    Last change :  Sat Aug 18 07:43:41 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
@@ -41,12 +41,12 @@
 	       (wstart?::bool (default #f))
 	       date::elong))
    
-   (export  (response-remote-start-line ::http-response-proxy)))
+   (export  (response-proxy-start-line ::http-response-proxy)))
 
 ;*---------------------------------------------------------------------*/
-;*    response-remote-start-line ...                                   */
+;*    response-proxy-start-line ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (response-remote-start-line resp)	    
+(define (response-proxy-start-line resp)	    
    (with-access::http-response-proxy resp (scheme host port path http method userinfo)
       (let ((p (if (string? userinfo)
 		   (string-append userinfo "@" path)
@@ -139,8 +139,8 @@
 				 ;; the header and the request
 				 (with-trace 4 "http-response-header"
 				    (trace-item "start-line: "
-				       (response-remote-start-line r))
-				    (remote-header header rp r)
+				       (response-proxy-start-line r))
+				    (proxy-header header rp r)
 				    ;; if a char is ready and is eof,
 				    ;; it means that the
 				    ;; connection is closed
@@ -176,14 +176,14 @@
 	 (display "---------------------------------------------------------\n" cp)
 	 (fprintf cp "http://~a:~a~a\n\n" host port path)
 	 (with-access::http-response-proxy r (header)
-	    (remote-header header cp r))
+	    (proxy-header header cp r))
 	 (flush-output-port cp))))
 
 ;*---------------------------------------------------------------------*/
-;*    remote-header ...                                                */
+;*    proxy-header ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (remote-header header::pair-nil rp::output-port r::http-response-proxy)
-   (http-write-line rp (response-remote-start-line r))
+(define (proxy-header header::pair-nil rp::output-port r::http-response-proxy)
+   (http-write-line rp (response-proxy-start-line r))
    (http-write-header rp (http-filter-proxy-header header))
    (when (hop-enable-proxy-keep-alive)
       (let ((h (if (hop-use-proxy-host)

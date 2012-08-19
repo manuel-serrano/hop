@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Thu Aug 16 08:44:09 2012 (serrano)                */
+;*    Last change :  Sun Aug 19 07:11:43 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -75,8 +75,7 @@
 (define (http-get req)
    (with-access::http-request req (abspath query connection header)
       (cond
-	 ((and (eq? connection 'upgrade)
-	       (websocket-proxy-request? header))
+	 ((and (eq? connection 'upgrade) (websocket-proxy-request? header))
 	  (websocket-proxy-response req))
 	 ((not (authorized-path? req abspath))
 	  (user-access-denied req))

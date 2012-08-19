@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Aug 16 08:48:18 2012 (serrano)                */
+;*    Last change :  Sun Aug 19 07:33:32 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -441,74 +441,78 @@
 	    (set! *client-key* (elong->fixnum (current-seconds)))
 	    
 	    (set! *websocket-service*
-		  (service :name "public/server-event/websocket" :id server-event
-		     (#!key key)
-		     (when debug-websocket
-			(tprint "!!! start websocket service key=" key))
-		     (websocket-register-new-connection! (current-request) key)))
+	       (service :name "public/server-event/websocket" :id server-event
+		  (#!key key)
+		  (when debug-websocket
+		     (tprint "!!! start websocket service key=" key))
+		  (let ((req (current-request)))
+		     (with-access::http-request req (header)
+			(if (websocket-proxy-request? header)
+			    (websocket-proxy-response req)
+			    (websocket-register-new-connection! req key))))))
 	    
 	    (set! *port-service*
-		  (service :name "public/server-event/info" :id server-event ()
-		     (let* ((req (current-request))
-			    (hd (with-access::http-request req (header) header))
-			    (host (assq host: hd))
-			    (key (get-server-event-key req))
-			    (port (with-access::http-request req (port) port)))
-			(if (pair? host)
-			    (let ((s (string-split (cdr host) ":")))
-			       (vector (car s) port key))
-			    (with-access::http-request req (host)
-			       (vector host port key))))))
+	       (service :name "public/server-event/info" :id server-event ()
+		  (let* ((req (current-request))
+			 (hd (with-access::http-request req (header) header))
+			 (host (assq host: hd))
+			 (key (get-server-event-key req))
+			 (port (with-access::http-request req (port) port)))
+		     (if (pair? host)
+			 (let ((s (string-split (cdr host) ":")))
+			    (vector (car s) port key))
+			 (with-access::http-request req (host)
+			    (vector host port key))))))
 	    
 	    (set! *init-service*
-		  (service :name "public/server-event/init" :id server-event
-		     (#!key key)
-		     (with-lock *event-mutex*
-			(lambda ()
-			   (let ((req (current-request)))
-			      ;; read the Flash's ending zero byte
-			      (read-byte
-			       (socket-input (with-access::http-request req (socket) socket)))
-			      (set! *flash-request-list*
-				    (cons (list (string->symbol key)
-						req
-						(current-seconds))
-					  *flash-request-list*))
-			      ;; increments the number of connected clients
-			      (set! *clients-number* (+fx *clients-number* 1))
-			      (instantiate::http-response-event
-				 (request req)
-				 (name key)))))))
-
+	       (service :name "public/server-event/init" :id server-event
+		  (#!key key)
+		  (with-lock *event-mutex*
+		     (lambda ()
+			(let ((req (current-request)))
+			   ;; read the Flash's ending zero byte
+			   (read-byte
+			      (socket-input (with-access::http-request req (socket) socket)))
+			   (set! *flash-request-list*
+			      (cons (list (string->symbol key)
+				       req
+				       (current-seconds))
+				 *flash-request-list*))
+			   ;; increments the number of connected clients
+			   (set! *clients-number* (+fx *clients-number* 1))
+			   (instantiate::http-response-event
+			      (request req)
+			      (name key)))))))
+	    
 	    (set! *policy-file-service
-		  (service :name "public/server-event/policy-file" :id server-event
-		     (#!key port key)
-		     (instantiate::http-response-string
-			(request (current-request))
-			(content-type "application/xml")
-			(body (hop-event-policy port)))))
-
+	       (service :name "public/server-event/policy-file" :id server-event
+		  (#!key port key)
+		  (instantiate::http-response-string
+		     (request (current-request))
+		     (content-type "application/xml")
+		     (body (hop-event-policy port)))))
+	    
 	    (set! *close-service*
-		  (service :name "public/server-event/close" (#!key key)
-		     :id server-event
-		     (with-lock *event-mutex*
-			(lambda ()
-			   (let ((key (string->symbol key)))
-			      (set! *clients-number* (-fx *clients-number* 1))
-			      (set! *flash-request-list*
-				    (filter! (lambda (e)
-						(not (eq? (car e) key)))
-					     *flash-request-list*)))))))
-
+	       (service :name "public/server-event/close" (#!key key)
+		  :id server-event
+		  (with-lock *event-mutex*
+		     (lambda ()
+			(let ((key (string->symbol key)))
+			   (set! *clients-number* (-fx *clients-number* 1))
+			   (set! *flash-request-list*
+			      (filter! (lambda (e)
+					  (not (eq? (car e) key)))
+				 *flash-request-list*)))))))
+	    
 	    (set! *unregister-service*
-		  (service :name "public/server-event/unregister" :id server-event
-		     (#!key event key)
-		     (server-event-unregister event key)))
+	       (service :name "public/server-event/unregister" :id server-event
+		  (#!key event key)
+		  (server-event-unregister event key)))
 	    
 	    (set! *register-service*
-		  (service :name "public/server-event/register" :id server-event
-		     (#!key event key mode padding)
-		     (server-event-register event key mode padding)))))))
+	       (service :name "public/server-event/register" :id server-event
+		  (#!key event key mode padding)
+		  (server-event-register event key mode padding)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-ajax-table ...                                              */
