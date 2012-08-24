@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Aug  8 13:40:00 2012 (serrano)                */
+;*    Last change :  Mon Aug 20 20:48:15 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -90,8 +90,8 @@
 		  ((string? err)
 		   (format " (~a)\n" err))
 		  ((isa? err &error)
-		   (with-access::&error err (msg)
-		      (format " (~a)\n" msg)))
+		   (with-access::&error err (proc obj msg)
+		      (format " (~a: ~a -- ~a)\n" proc msg obj)))
 		  (else
 		   "\n")))))))
    

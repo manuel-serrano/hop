@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/package.hop       */
+;*    serrano/prgm/project/hop/2.4.x/weblets/weblets/package.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Nov 16 16:46:29 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Wed Aug 22 14:59:41 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -76,27 +76,34 @@
 ;*    package-info ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (package-info url)
+   
+   (define (read-info ip info)
+      (let ((len (string-length info)))
+	 (let loop ()
+	    (let ((h (tar-read-header ip)))
+	       (when (isa? h tar-header)
+		  (with-access::tar-header h (name type)
+		     (tprint "name=" name " type=" type)
+		     (case type
+			((dir)
+			 (loop))
+			((normal)
+			 (let ((b (tar-read-block h ip))
+			       (n name))
+			    (if (substring-at? n info (-fx (string-length n) len))
+				(charset-convert b (hop-locale) (hop-charset))
+				(loop))))
+			(else
+			 #f))))))))
+   
    (multiple-value-bind (base version)
       (package-name-parse (basename url))
       (let* ((ip (open-input-gzip-file url))
-	     (info (make-file-path base "etc" "weblet.info"))
-	     (len (string-length info)))
+	     (path (make-file-path base "etc" "weblet.info")))
 	 (unwind-protect
-	    (let loop ()
-	       (let ((h (tar-read-header ip)))
-		  (when (isa? h tar-header)
-		     (with-access::tar-header h (name type)
-			(case type
-			   ((dir)
-			    (loop))
-			   ((normal)
-			    (let ((b (tar-read-block h ip))
-				  (n name))
-			       (if (substring-at? n info (-fx (string-length n) len))
-				   (charset-convert b (hop-locale) (hop-charset))
-				   (loop))))
-			   (else
-			    #f))))))
+	    (let ((info (read-info ip path)))
+	       (or info
+		   (format "((name \"~a\") (version \"~a\"))" base version)))
 	    (close-input-port ip)))))
 
 

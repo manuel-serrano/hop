@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Aug 13 09:14:45 2012 (serrano)                */
+;*    Last change :  Mon Aug 20 11:33:37 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -626,14 +626,10 @@
 			  (wiki-parse-ident (the-substring 3 (the-length)))
 			  `(:class ,class :id ,ident)))))
 	  (enter-block! 'p
-;* 			(lambda expr                                   */
-;* 			   (let ((rev (reverse! expr)))                */
-;* 			      (apply (wiki-syntax-p syn)               */
-;* 				     (append args (reverse! rev)))))   */
-			(lambda expr
-			   (apply (wiki-syntax-p syn) (append args expr)))
-			#f
-			#f))
+	     (lambda expr
+		(apply (wiki-syntax-p syn) (append args expr)))
+	     #f
+	     #f))
        (read/rp skip-space-grammar (the-port))
        (ignore))
       
@@ -642,7 +638,8 @@
        (let* ((str (the-string))
 	      (len (the-length))
 	      (i (string-index str #\:))
-	      (lv (if i (-fx i 2) (-fx (the-length) 2))))
+	      (lv (if i (-fx i 2) (-fx (the-length) 2)))
+	      (id #f))
 	  (if (> lv 4)
 	      (begin
 		 (add-expr! ((wiki-syntax-hr syn)))
@@ -654,10 +651,11 @@
 			    ((0) (wiki-syntax-h1 syn))
 			    (else (wiki-syntax-h5 syn))))
 		     (hx (if i
-			     (multiple-value-bind (id cla)
+			     (multiple-value-bind (i cla)
 				(wiki-parse-ident (substring str
 							     (+fx i 1)
 							     (the-length)))
+				(set! id i)
 				(lambda l
 				   (apply hx (cons* :id id :class cla l))))
 			     hx))
@@ -687,12 +685,12 @@
 		 (enter-state! 'section sx lv)
 		 (enter-expr! '==
 			      (lambda expr
-				 (let ((name (wiki-name expr)))
+				 (let ((name (or id (wiki-name expr))))
 				    (when (wiki-debug?)
 				       (fprint (current-error-port) ";;" name))
 				    (list (<A> :name name)
-					  (apply hx :data-wiki-name name
-					     (remove-surrounding-spaces expr)))))
+				       (apply hx :data-wiki-name name
+					  (remove-surrounding-spaces expr)))))
 			      #f)
 		 (ignore)))))
       
