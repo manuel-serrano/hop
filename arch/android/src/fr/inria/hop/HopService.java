@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Aug 29 10:53:59 2012 (serrano)                */
+/*    Last change :  Wed Aug 29 11:06:53 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -147,7 +147,7 @@ public class HopService extends Service {
       notification.setLatestEventInfo(
 	 this, getText( R.string.hopversion ), text, contentIntent );
 
-      notification.n.flags |= FLAG_NO_CLEAR | FLAG_FOREGROUND_SERVICE;
+      notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_FOREGROUND_SERVICE;
 
       // Send the notification.
       mNM.notify( NOTIFICATION, notification );
