@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Aug 30 09:58:03 2012 (serrano)                */
+;*    Last change :  Thu Aug 30 11:00:57 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -357,7 +357,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(else
 		 (error "<HEAD>"
 		    (format "Can't find include \"~s\" in path" f)
-		    path))
+		    path)))
 	     res)))
 
    (define incs '())
