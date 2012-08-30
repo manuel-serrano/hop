@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/2.4.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Feb 13 18:57:12 2012 (serrano)                */
+;*    Last change :  Thu Aug 30 09:58:03 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -346,7 +346,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
-		 (error "<HEAD>" "can't find include" f))
+		 (error "<HEAD>" (format "Can't find include \"~s\" in path" f)
+		    path))
 		((or (is-suffix? f "hss") (is-suffix? f "css"))
 		 (list (css f #f inl)))
 		((or (is-suffix? f "scm") (is-suffix? f "hop"))
@@ -354,7 +355,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		((is-suffix? f "js")
 		 (list (script f inl)))
 		(else
-		 (error "<HEAD>" "Can't find include file" f)))
+		 (error "<HEAD>"
+		    (format "Can't find include \"~s\" in path" f)
+		    path))
 	     res)))
 
    (define incs '())
@@ -425,7 +428,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 ((:packed)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
-		      (error "<HEAD>" "Illegal :inline" (cadr a))))
+		      (error "<HEAD>" "Illegal :packed" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
 		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
