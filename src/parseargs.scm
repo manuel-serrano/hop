@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Aug  8 08:06:33 2012 (serrano)                */
+;*    Last change :  Sun Sep  2 09:16:19 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -112,6 +112,8 @@
 	      (hop-clientc-debug-unbound-set! 1))
 	     ((string=? level "no-clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 0))
+	     ((string=? level "module")
+	      (bigloo-debug-module-set! 2))
 	     ((string=? level "0")
 	      #f)
 	     (else

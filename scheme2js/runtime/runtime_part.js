@@ -533,7 +533,7 @@ function sc_quotient(x, y) {
     return parseInt(x / y);
 }
 
-/*** META ((export remainder remainderfl) (arity #t)
+/*** META ((export remainder remainderfx remainderfl) (arity #t)
            (peephole (infix 2 2 "%")))
 */
 function sc_remainder(x, y) {
@@ -668,14 +668,14 @@ var sc_expt = Math.pow;
 // LIMITATION: make-rectangular, make-polar, real-part, imag-part, magnitude, angle
 // LIMITATION: 2 argument atan
 
-/*** META ((export #t) (arity #t)
+/*** META ((export exact->inexact fixnum->flonum) (arity #t)
            (peephole (id)))
 */
 function sc_exact2inexact(x) {
     return x;
 }
 
-/*** META ((export #t) (arity #t)
+/*** META ((export inexact->exact flonum->fixnum) (arity #t)
            (peephole (postfix "<< 0")))
 */
 function sc_inexact2exact(x) {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Aug 22 14:59:41 2012 (serrano)                */
+;*    Last change :  Sun Sep  2 11:30:12 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
@@ -83,7 +83,6 @@
 	    (let ((h (tar-read-header ip)))
 	       (when (isa? h tar-header)
 		  (with-access::tar-header h (name type)
-		     (tprint "name=" name " type=" type)
 		     (case type
 			((dir)
 			 (loop))
