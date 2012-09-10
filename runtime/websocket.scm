@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Sun Aug 19 07:32:57 2012 (serrano)                */
+;*    Last change :  Mon Sep 10 12:22:24 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -210,6 +210,8 @@
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
 	    (version (get-header header sec-websocket-version: "-1")))
+	 ;; set a timeout on the socket to prevent signal or broadcast to block
+	 (socket-timeout-set! socket 0 1000)
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
 	 (when debug-websocket

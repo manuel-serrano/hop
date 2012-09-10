@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Jun  8 08:57:32 2012 (serrano)                */
+/*    Last change :  Mon Sep 10 08:10:52 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -354,10 +354,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 // after a reconnection, the onerror listener must be removed
 	 ws.onerror = undefined;
 	 
-	 if( hop_debug() >= 3 ) {
-	    alert( "hop-event.js: ONOPEN..." );
-	 }
-
 	 // we are ready to register now
 	 hop_server.state = 2;
 	 hop_servevt_proxy.register = register;
@@ -379,11 +375,6 @@ function start_servevt_websocket_proxy( key, host, port ) {
       ws.onclose = function( e ) {
 	 hop_server.state = 3;
 	 hop_serverready_triggered = false
-	 if( hop_debug() >= 3 ) {
-	    alert( "WS CLOSE: "
-		   + (sc_currentSeconds() - hop_servevt_proxy.opentime) + "s "
-		   + ((sc_currentSeconds() - hop_servevt_proxy.opentime) / 60) + "m" );
-	 }
 	 hop_servevt_onclose();
       }
       ws.onmessage = function ( e ) {
@@ -414,22 +405,18 @@ function start_servevt_websocket_proxy( key, host, port ) {
       var ws = make_websocket( hop_servevt_proxy.reconnect_url ); 
 
       ws.onerror = function( e ) {
-         alert( "Reconnecting error...wait=" + wait + " max=" + max
-		+ " error=" + e );
 	    
 	 if( !wait ) wait = 1000;
 
 	 if( max == -1 ) {
-	    return sc_error( "servevt",
-			     "Cannot reconnect to server",
-			     host + ":" + port );
+	    hop_trigger_servererror_event( "Cannot reconnect" );
+	 } else {
+	    after( wait, function() {
+	       var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
+	       var nmax = max === undefined ? max : max - 1;
+	       reconnect( nwait, nmax );
+	    } );
 	 }
-	    
-	 after( wait, function() {
-	    var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
-	    var nmax = max === undefined ? max : max - 1;
-	    reconnect( nwait, nmax );
-	 } );
       }
    }
 
@@ -1097,6 +1084,8 @@ function hop_add_server_event_listener( event, proc, capture ) {
       return hop_add_serverdown_listener( this, proc );
    } else if( event === "ready" ) {
       hop_add_serverready_listener( this, proc );
+   } else if( event === "error" ) {
+      hop_add_servererror_listener( this, proc );
    } else {
       return hop_add_server_listener( event, proc, capture );
    }
@@ -1110,6 +1099,8 @@ function hop_remove_server_event_listener( event, proc, capture ) {
       return hop_remove_serverdown_listener( this, proc );
    } else if( event === "ready" ) {
       hop_remove_serverready_listener( this, proc );
+   } else if( event === "error" ) {
+      hop_remove_servererror_listener( this, proc );
    } else {
       return hop_remove_server_listener( event, proc, capture );
    }
@@ -1298,6 +1289,62 @@ function hop_remove_serverready_listener( obj, proc ) {
       return true;
    } else {
       throw new Error( "remove-event-listener!: Illegal `serverready' recipient"
+		       + obj );
+      return false;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_servererror_list ...                                         */
+/*---------------------------------------------------------------------*/
+var hop_servererror_list = null;
+
+/*---------------------------------------------------------------------*/
+/*    HopServerErrorEvent ...                                          */
+/*---------------------------------------------------------------------*/
+function HopServerErrorEvent( v ) {
+   var o = new Object();
+   o.isStopped = false;
+   o.value = v;
+   
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_trigger_servererror_event ...                                */
+/*---------------------------------------------------------------------*/
+function hop_trigger_servererror_event( v ) {
+   var evt = new HopServerErrorEvent( v);
+   var l = hop_servererror_list;
+      
+   while( sc_isPair( l ) ) {
+      l.car( evt );
+      if( evt.isStopped ) break;
+      l = l.cdr;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_add_servererror_listener ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_add_servererror_listener( obj, proc ) {
+   if( obj === hop_server || obj === document ) {
+      hop_servererror_list = sc_cons( proc, hop_servererror_list );
+   } else {
+      throw new Error( "add-event-listener!: Illegal `servererror' recipient"
+		       + obj );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_remove_servererror_listener ...                              */
+/*---------------------------------------------------------------------*/
+function hop_remove_servererror_listener( obj, proc ) {
+   if( obj === hop_server || obj === document ) {
+      hop_servererror_list = sc_remqBang( proc, hop_servererror_list );
+      return true;
+   } else {
+      throw new Error( "remove-event-listener!: Illegal `servererror' recipient"
 		       + obj );
       return false;
    }

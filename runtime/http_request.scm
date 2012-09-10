@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Aug 16 08:27:22 2012 (serrano)                */
+;*    Last change :  Sat Sep  8 07:42:01 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -156,8 +156,15 @@
 				     (find-authenticated-user pauth abspath method ip))
 				(and (string? userinfo)
 				     (find-authenticated-user userinfo abspath method ip))
-				(anonymous-user))))
-		  (if (string? host)
+				(anonymous-user)))
+		      (port (or actual-port port (hop-port))))
+		  (cond
+		     ((not (fixnum? port))
+		      (parse-error "http-parse-method-request"
+			 "Illegal port"
+			 (format "~a://~a:~a/~a" scheme host port path)
+			 pi))
+		     ((string? host)
 		      (instantiate::http-proxy-request
 			 (id id)
 			 (method method)
@@ -168,13 +175,14 @@
 			 (abspath abspath)
 			 (query query)
 			 (header header)
-			 (port (or actual-port port (hop-port)))
+			 (port port)
 			 (host (or actual-host host))
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)
 			 (connection connection)
-			 (user user))
+			 (user user)))
+		     (else
 		      (instantiate::http-server-request
 			 (id id)
 			 (method method)
@@ -185,13 +193,13 @@
 			 (abspath (charset-convert abspath (hop-charset) (hop-locale)))
 			 (query query)
 			 (header header)
-			 (port (or actual-port port (hop-port)))
+			 (port port)
 			 (host (or actual-host (hostname)))
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization auth)
 			 (connection connection)
-			 (user user)))))))))
+			 (user user))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */

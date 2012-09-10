@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Aug 19 07:33:32 2012 (serrano)                */
+;*    Last change :  Mon Sep 10 15:58:37 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1060,6 +1060,7 @@
 	 (let ((p (socket-output socket)))
 	    (with-handler
 	       (lambda (e)
+		  (tprint "WS ERROR: " e " socket=" p)
 		  (when debug-websocket
 		     (tprint "WEBSOCKET EVENT ERROR: " e
 			" thread=" (current-thread)
@@ -1067,6 +1068,7 @@
 			" len=" (string-length vstr)))
 		  (if (isa? e &io-error)
 		      (begin
+			 (tprint "WS CLOSE resp=" resp)
 			 (set! *clients-number* (-fx *clients-number* 1))
 			 (websocket-close-request! resp))
 		      (raise e)))
