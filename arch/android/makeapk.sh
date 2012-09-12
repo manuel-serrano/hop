@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Wed Sep 12 17:18:41 2012 (serrano)                */
+#*    Last change :  Wed Sep 12 17:42:56 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -24,11 +24,12 @@ ANDROIDROOT=/misc/virtual/android/r07
 ANDROIDGIT=$ANDROIDROOT/eclair-git
 ANDROIDSDK=$ANDROIDROOT/android-sdk-linux_x86
 ANDROIDNDK=$ANDROIDROOT/android-ndk-r4b
+ANDROIDTARGET=android-7
 
 BIGLOO=bigloo
 AFILE=bglafile
-ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
 
+ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
 CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
 
 PREFIX=/data/data/fr.inria.hop
@@ -76,7 +77,9 @@ while : ; do
       HOPVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --android-root=*)
-      ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";;
+      ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";
+      ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION;
+      CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc;;
 
     --android-sdk=*)
       ANDROIDSDK="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -86,6 +89,9 @@ while : ; do
 
     --android-git=*)
       ANDROIDGIT="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-target=*)
+      ANDROIDTARGET="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --droid-gcc=*)
       CC="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -233,14 +239,15 @@ for p in local.properties ant.properties; do
     > $android/$p || exit 1
 done
 
-for p in build.xml project.properties Android.mk; do \
+for p in build.xml Android.mk; do \
   cp $basedir/$p $android
 done
 
-for p in AndroidManifest.xml; do \
+for p in AndroidManifest.xml project.properties; do \
   rm -f $android/$p.in
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$HOPVERSION|" \
+          -e "s|@ANDROIDTARGET@|$ANDROIDTARGET|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
 

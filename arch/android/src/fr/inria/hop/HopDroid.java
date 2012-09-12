@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Sep 12 11:31:49 2012 (serrano)                */
+/*    Last change :  Wed Sep 12 17:47:56 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -170,7 +170,6 @@ public class HopDroid extends Thread {
 		     abortError( e, "run" );
 		  } finally {
 		     closeConnections( serv1conn );
-		     }
 		  }
 	       }
 	    } );
