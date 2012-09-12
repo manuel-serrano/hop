@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Jul 27 06:14:37 2012 (serrano)                */
+/*    Last change :  Wed Sep 12 11:31:49 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -41,6 +41,8 @@ public class HopDroid extends Thread {
    Service service;
    ServerSocket serv1;
    ServerSocket serv2;
+   Vector serv1conn;
+   Vector serv2conn;
    Thread thread1 = null;
    Thread thread2 = null;
    Handler handler = null;
@@ -59,6 +61,9 @@ public class HopDroid extends Thread {
 	 Log.i( "HopDroid", "starting servers port=" + port + ", " + porte );
 	 serv1 = new ServerSocket( port );
 	 serv2 = new ServerSocket( porte );
+	 
+	 serv1conn = new Vector();
+	 serv2conn = new Vector();
 
 	 // register the initial plugins
 	 registerPlugin( new HopPluginInit( this, "init" ) );
@@ -117,7 +122,22 @@ public class HopDroid extends Thread {
    public boolean isRunning() {
       return !killed;
    }
-   
+
+   // close all background connections
+   private static synchronized void closeConnections( Vector conn ) {
+      synchronized( serv1conn ) {
+	 Enumeration socks = serv1conn.elements();
+
+	 while( socks.hasMoreElements() ) {
+	    Socket s = (Socket)socks.nextElement();
+	    
+	    if( !s.isClosed() ) {
+	       s.close();
+	    }
+	 }
+      }
+   }
+      
    // run hop
    public void run() {
       // handle the session in a background thread (normally very
@@ -130,14 +150,27 @@ public class HopDroid extends Thread {
 		     while( true ) {
 			final Socket sock = serv1.accept();
 
+			synchronized( serv1conn ) {
+			   serv1conn.add( sock );
+			}
+
 			new Thread( new Runnable() {
 			      public void run() {
-				 server( sock );
+				 try {
+				    server( sock );
+				 } finally {
+				    synchronized( serv1conn ) {
+				       serv1conn.remove( sock );
+				    }
+				 }
 			      }
 			   } ).start();
 		     }
 		  } catch( Throwable e ) {
 		     abortError( e, "run" );
+		  } finally {
+		     closeConnections( serv1conn );
+		     }
 		  }
 	       }
 	    } );
@@ -151,14 +184,26 @@ public class HopDroid extends Thread {
 		     while( true ) {
 			final Socket sock2 = serv2.accept();
 		     
+			synchronized( serv2conn ) {
+			   serv2conn.add( sock2 );
+			}
+			
 			new Thread( new Runnable() {
 			      public void run() {
-				 serverEvent( sock2 );
+				 try {
+				    serverEvent( sock2 );
+				 } finally {
+				    synchronized( serv2conn ) {
+				       serv2conn.remove( sock );
+				    }
+				 }
 			      }
 			   } ).start();
 		     }
 		  } catch( Throwable e ) {
 		     abortError( e, "runPushEvent" );
+		  } finally {
+		     closeConnections( serv2conn );
 		  }
 	       }
 	    } );
@@ -243,7 +288,7 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.d( "HopDroid", "server error: " +
+	 Log.d( "HopDroid", "server error, socket=" + sock + " " +
 		e.toString() + " exception=" + e.getClass().getName(),
 		e );
 	 abortError( e, "server" );
@@ -308,18 +353,22 @@ public class HopDroid extends Thread {
       
       try {
 	 if( serv1 != null && !serv1.isClosed() ) {
+	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv1.close();
 	    if( thread1 != null ) {
 	       thread1.join();
 	       thread1 = null;
 	    }
+	    Log.i( "HopDroid", "<<< server1...killed" );
 	 }
 	 if( serv2 != null && !serv2.isClosed() ) {
+	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv2.close();
 	    if( thread2 != null ) {
 	       thread2.join();
 	       thread2 = null;
 	    }
+	    Log.i( "HopDroid", "<<< server2...killed" );
 	 }
       } catch( Exception e ) {
 	 Log.e( "HopDroid", "closing error: " + e.toString() + " exception=" + e.getClass().getName() );
