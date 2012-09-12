@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Sep 12 17:47:56 2012 (serrano)                */
+/*    Last change :  Wed Sep 12 18:19:25 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -124,15 +124,19 @@ public class HopDroid extends Thread {
    }
 
    // close all background connections
-   private static synchronized void closeConnections( Vector conn ) {
-      synchronized( serv1conn ) {
-	 Enumeration socks = serv1conn.elements();
+   private void closeConnections( Vector conn ) {
+      synchronized( conn ) {
+	 Enumeration socks = conn.elements();
 
 	 while( socks.hasMoreElements() ) {
 	    Socket s = (Socket)socks.nextElement();
 	    
 	    if( !s.isClosed() ) {
-	       s.close();
+	       try {
+		  s.close();
+	       } catch( Throwable _ ) {
+		  ;
+	       }
 	    }
 	 }
       }
@@ -170,6 +174,7 @@ public class HopDroid extends Thread {
 		     abortError( e, "run" );
 		  } finally {
 		     closeConnections( serv1conn );
+		     thread1 = null;
 		  }
 	       }
 	    } );
@@ -193,7 +198,7 @@ public class HopDroid extends Thread {
 				    serverEvent( sock2 );
 				 } finally {
 				    synchronized( serv2conn ) {
-				       serv2conn.remove( sock );
+				       serv2conn.remove( sock2 );
 				    }
 				 }
 			      }
@@ -202,7 +207,10 @@ public class HopDroid extends Thread {
 		  } catch( Throwable e ) {
 		     abortError( e, "runPushEvent" );
 		  } finally {
+		     Log.i( "HopDroid", ">>> Closing Connections serv2..." );
 		     closeConnections( serv2conn );
+		     Log.i( "HopDroid", ">>> Closing Connections serv2..." );
+		     thread2 = null;
 		  }
 	       }
 	    } );
