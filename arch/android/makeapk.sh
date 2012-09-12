@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sun Jul  1 20:48:01 2012 (serrano)                */
+#*    Last change :  Wed Sep 12 17:18:41 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -75,14 +75,17 @@ while : ; do
     --hopversion=*)
       HOPVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --androidroot=*)
+    --android-root=*)
       ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --androidsdk=*)
+    --android-sdk=*)
       ANDROIDSDK="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --androidndk=*)
+    --android-ndk=*)
       ANDROIDNDK="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-git=*)
+      ANDROIDGIT="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --droid-gcc=*)
       CC="`echo $1 | sed 's/^[^=]*=//'`";;
