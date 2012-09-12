@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Aug 20 20:48:15 2012 (serrano)                */
+;*    Last change :  Wed Sep 12 09:06:10 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -192,7 +192,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi type proc)
    
-   (define (apply-error proc arg)
+   (define (apply-safe proc arg)
       (with-handler
 	 (lambda (e)
 	    (exception-notify e)
@@ -204,7 +204,18 @@
 	 ((avahi-proto-inet) "ipv4")
 	 ((avahi-proto-inet6) "ipv6")
 	 (else "unknown")))
-   
+
+   (define (client-find-resolver client::avahi-client intf proto nme typ dmain)
+      (with-access::avahi-client client (resolvers)
+	 (find (lambda (r::avahi-service-resolver)
+		  (with-access::avahi-service-resolver r (interface protocol type domain name)
+		     (and (=fx interface intf)
+			  (eq? protocol proto)
+			  (string=? type typ)
+			  (string=? domain dmain)
+			  (string=? name nme))))
+	    resolvers)))
+			   
    (avahi-wait-ready! o
       (lambda (o)
 	 (with-access::avahi o (client poll)
@@ -236,8 +247,11 @@
 							 (port port)
 							 (address addr)
 							 (options txtlst))))
-					      (apply-error proc evt)))))))
+					      (apply-safe proc evt)))))))
 			   ((avahi-browser-remove)
+			    (let ((rv (client-find-resolver client intf proto name type domain)))
+			       (when rv
+				  (avahi-service-resolver-close rv)))
 			    (let ((evt (instantiate::zeroconf-service-event
 					  (name "removed")
 					  (target o)
@@ -248,7 +262,7 @@
 					  (domain domain)
 					  (hostname name)
 					  (options '()))))
-			       (apply-error proc evt)))))))))))
+			       (apply-safe proc evt)))))))))))
 
 
 ;*---------------------------------------------------------------------*/

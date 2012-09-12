@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Sep 10 15:58:37 2012 (serrano)                */
+;*    Last change :  Tue Sep 11 09:11:49 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1314,14 +1314,13 @@
 			       (multipart-signal req val))
 		     l))))))
 
-   (mutex-lock! *event-mutex*)
-   (unwind-protect
-      (begin
+   (with-lock *event-mutex*
+      (lambda ()
 	 (ajax-event-broadcast! name value)
 	 (websocket-event-broadcast! name value)
 	 (multipart-event-broadcast! name value)
-	 (flash-event-broadcast! name value))
-      (mutex-unlock! *event-mutex*))
+	 (flash-event-broadcast! name value)))
+   
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
