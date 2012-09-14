@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/xml_expd.sch              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/xml_expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Thu Dec  1 08:12:43 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Fri Sep 14 09:10:09 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -221,9 +221,9 @@
       (error "define-xml-alias" "Illegal form" x)))
 
 ;*---------------------------------------------------------------------*/
-;*    define-compound ...                                              */
+;*    define-tag ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (define-compound m el bindings body)
+(define (define-tag m el bindings body)
    
    (define (predicate type id)
       (if (memq type '(int long string bstring bool char symbol keword double
@@ -337,8 +337,8 @@
 		    (set! body (remq! (car css) body))
 		    `(begin
 			(hop-hss-type! ,(symbol->string el) ,new)
-			,(define-compound id el bindings body)))
-		 (define-compound id el bindings body)))
+			,(define-tag id el bindings body)))
+		 (define-tag id el bindings body)))
 	  (error "define-xml-compound" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
@@ -377,7 +377,7 @@
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1)))))
-	     (define-compound id el bindings body))
+	     (define-tag id el bindings body))
 	  (error "define-tag" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/

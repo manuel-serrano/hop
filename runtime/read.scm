@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Feb 21 09:10:19 2012 (serrano)                */
+;*    Last change :  Fri Sep 14 10:45:34 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -55,12 +55,14 @@
 			   #!key
 			   (env (interaction-environment))
 			   (menv #f)
+			   (mode 'load)
 			   (charset (hop-locale))
 			   (abase #t))
 	    (hop-load-modified ::bstring
 			       #!key
 			       (env (interaction-environment))
 			       (menv #f)
+			       (mode 'load)
 			       (charset (hop-locale))
 			       (abase #t))
 	    (hop-load-once-unmark! ::bstring)
@@ -1016,7 +1018,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env menv charset modifiedp abase)
+(define (%hop-load-once file env menv charset modifiedp abase mode)
    (with-trace 1 "%hop-load-once"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
@@ -1063,7 +1065,7 @@
 			    (mutex-unlock! *load-once-mutex*)
 			    (raise e))
 			 (hop-load f
-				   :mode 'load
+				   :mode mode
 				   :env env
 				   :menv menv
 				   :charset charset
@@ -1081,8 +1083,9 @@
 		       (env (interaction-environment))
 		       (menv #f)
 		       (charset (hop-locale))
+		       (mode 'load)
 		       (abase #t))
-   (%hop-load-once file env menv charset #f abase))
+   (%hop-load-once file env menv charset #f abase mode))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -1092,8 +1095,9 @@
 			   (env (interaction-environment))
 			   (menv #f)
 			   (charset (hop-locale))
+			   (mode 'load)
 			   (abase #t))
-   (%hop-load-once file env menv charset #t abase))
+   (%hop-load-once file env menv charset #t abase mode))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once-unmark! ...                                        */

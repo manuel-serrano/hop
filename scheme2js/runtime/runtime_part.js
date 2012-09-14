@@ -462,10 +462,10 @@ function sc_isEven(x) {
     return (x % 2 === 0);
 }
 
-/*** META ((export #t)
+/*** META ((export max maxfl maxfx)
            (arity -2)) */
 var sc_max = Math.max;
-/*** META ((export #t)
+/*** META ((export min minfl minfx)
            (arity -2)) */
 var sc_min = Math.min;
 
