@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Aug 30 12:21:30 2012 (serrano)                */
+;*    Last change :  Mon Sep 17 11:14:45 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -488,7 +488,7 @@ WebDAV server.]))))))
 	 (lambda ()
 	    (print ";; generated file, Hop Wizard " (current-date))
 	    (print ";; anonymous user")
-	    (write `(add-user! "anonymous" :services '(public)))
+	    (write `(add-user! "anonymous" :services '(public shutdown/kill)))
 	    (newline)
 	    (newline)
 	    (print ";; admin")

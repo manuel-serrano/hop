@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -35,7 +35,6 @@
 	      cloned-fun::Lambda)
 	   (wide-class Inlined-Local::Var))
    (export (inline! tree::Module full?::bool)))
-
 
 (define (inline! tree full?)
    (if (config 'do-inlining)
@@ -135,8 +134,16 @@
 	 (> counter 0))))
 
 
-(define-nmethod (Node.clone nested-counter)
-   (default-walk this nested-counter))
+(define-generic (clone this::Node env nested-counter)
+  (letrec*
+    ((default-walk
+       (lambda (node nested-counter)
+          (walk1 node env clone nested-counter)))
+     (walk (lambda (node nested-counter)
+              (clone node env nested-counter))))
+    (default-walk this nested-counter)))
+;* (define-nmethod (Node.clone nested-counter)                         */
+;*    (default-walk this nested-counter))                              */
 
 (define-nmethod (Call.clone nested-counter)
    (define (good-for-inlining? var::Var nested-counter)
