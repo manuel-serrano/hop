@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Sep 10 08:10:52 2012 (serrano)                */
+/*    Last change :  Mon Sep 17 18:11:58 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -353,6 +353,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       ws.onopen = function() {
 	 // after a reconnection, the onerror listener must be removed
 	 ws.onerror = undefined;
+	 ws.registry = {};
 	 
 	 // we are ready to register now
 	 hop_server.state = 2;
@@ -381,24 +382,32 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 e.responseText = e.data;
 	 hop_servevt_envelope_parse( e.data, e );
       }
-      
+
       return ws;
    }
       
    var register = function( id ) {
-      var svc = hop_service_base() +
-	 "/public/server-event/register?event=" + id +
-	 "&key=" + key  + "&mode=websocket";
 
-      hop_send_request( svc, false, function() { ; }, false, false, [] );
+      if( !(id in ws.registry) ) {
+	 ws.registry[ id ] = true;
+	 var svc = hop_service_base() +
+	    "/public/server-event/register?event=" + id +
+	    "&key=" + key  + "&mode=websocket";
+
+	 hop_send_request( svc, false, function() { ; }, false, false, [] );
       }
+   };
 
    var unregister = function( id ) {
-      var svc = hop_service_base() +
-	 "/public/server-event/unregister?event=" + id +
-	 "&key=" + key;
+      if( id in ws.registry ) {
+	 delete ws.registry[ id ];
 	 
-      hop_send_request( svc, false, function() { ; }, false, false, [] );
+	 var svc = hop_service_base() +
+	    "/public/server-event/unregister?event=" + id +
+	    "&key=" + key;
+	 
+	 hop_send_request( svc, false, function() { ; }, false, false, [] );
+      }
    };
 
    var reconnect = function( wait, max ) {
@@ -440,61 +449,69 @@ function start_servevt_websocket_proxy( key, host, port ) {
 function start_servevt_xhr_multipart_proxy( key ) {
    if( !hop_servevt_proxy.httpreq ) {
       var server_ready = false;
+      var registry = {};
 
       var register = function( id ) {
-	 var svc = hop_service_base() +
-	    "/public/server-event/register?event=" + id +
-	    "&key=" + key  + "&mode=xhr-multipart";
-
-	 var success = function( val, xhr ) {
-	    hop_servevt_envelope_parse( val, xhr );
-	 }
-
-	 var failure = function( xhr ) {
-	    if( xhr.exception ) {
-	       if( typeof hop_report_exception === "function" ) {
-		  hop_report_exception( xhr.exception );
-	       }
-	    }
+	 if( !(id in registry) ) {
+	    registry[ id ] = true;
 	    
-	    if( "hop_servevt_onclose" in window )
-	       hop_servevt_onclose();
-	 }
+	    var svc = hop_service_base() +
+	       "/public/server-event/register?event=" + id +
+	       "&key=" + key  + "&mode=xhr-multipart";
+	    
+	    var success = function( val, xhr ) {
+	       hop_servevt_envelope_parse( val, xhr );
+	    }
 
-	 var req = hop_make_xml_http_request();
-	 req.multipart = true;
+	    var failure = function( xhr ) {
+	       if( xhr.exception ) {
+		  if( typeof hop_report_exception === "function" ) {
+		     hop_report_exception( xhr.exception );
+		  }
+	       }
+	    
+	       if( "hop_servevt_onclose" in window )
+		  hop_servevt_onclose();
+	    }
 
-	 hop_servevt_proxy.httpreq =
-	    hop_send_request( svc,
-			      // asynchronous call
-			      false,
-			      // success callback
-			      success,
-			      // failure callback
-			      failure,
-			      // no anim
-			      false,
-			      // no environment
-			      [],
-			      // no authentication
-			      false,
-			      // no timeout
-			      false,
-			      // xhr request
-	                      req );
+	    var req = hop_make_xml_http_request();
+	    req.multipart = true;
 
-      }
+	    hop_servevt_proxy.httpreq =
+	       hop_send_request( svc,
+				 // asynchronous call
+				 false,
+				 // success callback
+				 success,
+				 // failure callback
+				 failure,
+				 // no anim
+				 false,
+				 // no environment
+				 [],
+				 // no authentication
+				 false,
+				 // no timeout
+				 false,
+				 // xhr request
+				 req );
+	    }
+      };
 
       var unregister = function( id ) {
-	 hop_servevt_proxy.httpreq.abort();
+	 if( id in registry ) {
+	    delete registry[ id ];
+	    
+	    hop_servevt_proxy.httpreq.abort();
 
-	 var svc = hop_service_base() +
-	    "/public/server-event/unregister?event=" + id +
-   	    "&key=" + hop_servevt_proxy.key;
+	    var svc = hop_service_base() +
+	       "/public/server-event/unregister?event=" + id +
+   	       "&key=" + hop_servevt_proxy.key;
 	 
-	 hop_servevt_proxy.httpreq = hop_send_request( svc, false,
-						       function() { ; }, false,
-						       false, [] );
+	    hop_servevt_proxy.httpreq = hop_send_request( svc, false,
+							  function() { ; }, false,
+							  false, [] );
+	 }
       };
 
       // complete the proxy definition
@@ -855,6 +872,7 @@ function hop_servevt_proxy_flash_init() {
    hop_config.server_event = "flash";
 
    var pending_events = 0;
+   var registry = {};
 
    hop_servevt_proxy = document.getElementById( hop_servevt_id );
    hop_servevt_proxy.ready = true;
@@ -885,37 +903,43 @@ function hop_servevt_proxy_flash_init() {
    }
 
    var register = function( id ) {
-      var svc = hop_service_base() + "/public/server-event/register?event=" + id
-         + "&key=" + hop_servevt_proxy.key + "&mode=flash";
-      
-      var success = function( e ) {
-	 if( pending_events > 0 ) {
-	    if( pending_events == 1 ) {
-	       hop_trigger_serverready_event();
+      if( !(id in registry) ) {
+	 registry[ id ] = true;
+	 var svc = hop_service_base() + "/public/server-event/register?event=" + id
+            + "&key=" + hop_servevt_proxy.key + "&mode=flash";
+	 
+	 var success = function( e ) {
+	    if( pending_events > 0 ) {
+	       if( pending_events == 1 ) {
+		  hop_trigger_serverready_event();
+	       }
+	       pending_events--;
 	    }
-	    pending_events--;
 	 }
-      }
 
-      hop_servevt_proxy.httpreq =
-	 hop_send_request( svc,
-			   // asynchronous call
-			   false,
-			   // success callback
-			   success,
-			   // failure callback
-			   failure,
-			   // no anim
-			   false,
-			   // no environment
-			   [] );
-   }
+	 hop_servevt_proxy.httpreq =
+	    hop_send_request( svc,
+			      // asynchronous call
+			      false,
+			      // success callback
+			      success,
+			      // failure callback
+			      failure,
+			      // no anim
+			      false,
+			      // no environment
+			      [] );
+      }
+   };
 
    hop_servevt_proxy.register = register;
    hop_servevt_proxy.unregister = function( id ) {
-      // This function does not close the socket, otherwise, no event
-      // could take place because they all share the same socket.
-      abort( id );
+      if( id in registry ) {
+	 delete registry[ id ];
+	 // This function does not close the socket, otherwise, no event
+	 // could take place because they all share the same socket.
+	 abort( id );
+      }
    }
 
    // register the event event deregistration
