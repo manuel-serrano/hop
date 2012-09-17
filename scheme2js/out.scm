@@ -1167,17 +1167,45 @@
 
 
 (define-nmethod (Pragma.compile p stmt?)
-   (with-access::Pragma this (str)
-      (with-access::Out-Env env (pp? pragmas)
-	 (when pp?
-	    (add-pragma! pragmas str))
-	 (let ((to-be-displayed (if pp?
-				    ;; placeholder
-				    #a000
-				    str)))
-	    (template-display p
-	       (?@ stmt? "~@;\n")
-	       "(~a)" to-be-displayed)))))
+   
+   (define (pragma->str p)
+      (with-access::Pragma p (str args)
+	 (if (null? args)
+	     str
+	     (let* ((sport (open-input-string str))
+		    (oport (open-output-string))
+		    (args (list->vector args))
+		    (parser (regular-grammar ()
+			       ((: #\$ (+ (in (#\0 #\9))))
+				(let* ((str   (the-string))
+				       (len   (the-length))
+				       (index (string->number
+						 (substring str 1 len))))
+				   (walk (vector-ref args (-fx index 1))
+				      oport #f)
+				   (ignore)))
+			       ("$$"
+				  (display "$" oport)
+				  (ignore))
+			       ((+ (out #\$))
+				(display (the-string) oport)
+				(ignore))
+			       (else
+				(the-failure)))))
+	     (read/rp parser sport)
+	     (close-input-port sport)
+	     (close-output-port oport)))))
+      
+   (with-access::Out-Env env (pp? pragmas)
+      (when pp?
+	 (add-pragma! pragmas (pragma->str this)))
+      (let ((to-be-displayed (if pp?
+				 ;; placeholder
+				 #a000
+				 (pragma->str this))))
+	 (template-display p
+	    (?@ stmt? "~@;\n")
+	    "(~a)" to-be-displayed))))
 
 (define (add-pragma! pragmas::Pragmas p)
    (with-access::Pragmas pragmas (lock last-pragma)

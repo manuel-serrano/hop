@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -151,7 +151,8 @@
 	   (rt-expand-list! body env))
 	  ((define ?var ?expr)
 	   (rt-expand! expr env))
-	  ((pragma ?str) 'do-nothing)
+	  ((pragma ?str . ?args)
+	   (rt-expand! args env))
 	  ((runtime-ref ?id (? procedure?))
 	   'do-nothing)
 	  ((?operator . ?operands)

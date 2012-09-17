@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -311,6 +311,8 @@
        this))
 
 (define-nmethod (Pragma.stmts! surrounding-fun stmt-begin)
+   (with-access::Pragma this (args)
+      (for-each (lambda (a) (walk! a surrounding-fun #f)) args))
    this)
 
 ;; Tail-rec and Tail-rec-Call do not exist anymore.

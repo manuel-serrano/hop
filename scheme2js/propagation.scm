@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -485,6 +485,8 @@
    this)
 
 (define-nmethod (Pragma.propagate! var/vals)
+   (with-access::Pragma this (args)
+      (for-each (lambda (a) (walk! a var/vals)) args))
    (default-walk! this var/vals))
 
 ;; Tail-rec and Tail-rec-Call must not exist anymore.

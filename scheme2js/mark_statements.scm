@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -141,6 +141,8 @@
    #t)
 
 (define-nmethod (Pragma.mark)
+   (with-access::Pragma this (args)
+      (for-each walk args))
    #f)
 
 (define-nmethod (While.mark)

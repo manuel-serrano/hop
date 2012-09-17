@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/scheme2js/pobject_conv.scm        */
+;*    serrano/prgm/project/hop/2.4.x/scheme2js/pobject_conv.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Wed May 16 17:48:00 2012 (serrano)                */
+;*    Last change :  Mon Sep 17 12:27:02 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -283,9 +283,13 @@
 					  (id (id-of-id var)))
 			 (location (cdr exp))))
 	      (val (scheme->pobject expr (location (cddr exp))))))
-	  ((pragma ?str)
+	  ((pragma ?str . ?args)
 	   (if (string? str)
-	       (instantiate::Pragma (str str))
+	       (instantiate::Pragma
+		  (str str)
+		  (args (map (lambda (a)
+				(scheme->pobject a (location args)))
+			   args)))
 	       (scheme2js-error #f "bad pragma-form" exp exp)))
 	  ((runtime-ref ?id (? procedure?))
 	   (instantiate::Runtime-Ref

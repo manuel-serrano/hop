@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -151,7 +151,8 @@
     (final-class Continue::Node
        label::Label)
     (final-class Pragma::Node
-       str::bstring)
+       str::bstring
+       args::pair-nil)
     (final-class Tail-rec::Scope
        ;; inits are Set!s (no particular order)
        inits::pair-nil

@@ -288,3 +288,27 @@ JavaScript expressions are enclosed in angle brackets (,(<CODE> "{...}")).
     (<BUTTON> :onclick ~(js_foo 1) "A HOP client expression")
     (<BUTTON> :onclick {js_foo( 1 )} "A JavaScript client expression"))
 </code>
+
+
+~~ HOP has a special form which allows the inclusion of JavaScript text
+into the produced code. Its syntax is as follows:
+
+  <pragma> := (pragma <string> <expression> <expression> ...)
+
+
+~~ This force HOP to include ++string++ in the produced JavaScript
+code as a regular JavaScript fragment of code. This form must not be
+used without an in depth understanding of HOP JavaScript code production;
+with unskilled use, the produced incorrect JavaScript files.
+
+~~ Values can be passed to a ++pragma++ form, being referenced in
+++string++ by expressions of the form ++//number//++. Such expression
+are replaced by the corresponding values, the number of referenced
+values in ++string++ being exactly the number of values
+provided. Here is an example of ++pragma++ usage:
+
+@smalllisp
+(define (fibo x)
+   (pragma "alert( \"fib(\" + $1 + \"):\" + $2 )" x (fib x)))
+@end smalllisp
+

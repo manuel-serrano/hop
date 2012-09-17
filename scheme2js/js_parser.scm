@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -716,7 +716,7 @@
    (define (js-pragma)
       (consume! 'PRAGMA)
       (let ((prag (next-pragma!)))
-	 (instantiate::Pragma (str prag))))
+	 (instantiate::Pragma (str prag) (args '()))))
 
    (define (array-literal)
       (consume! 'LBRACKET)

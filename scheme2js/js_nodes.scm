@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -119,7 +119,8 @@
        fun::Node
        args::pair-nil)
     (final-class Pragma::Node
-       str::bstring)
+       str::bstring
+       args::pair-nil)
     (final-class Array::Node
        els::pair-nil
        len::bint)

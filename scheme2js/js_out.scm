@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -837,5 +837,29 @@
 
 (define-method (expr-out this::Pragma in-for-init? stmt-begin?
 			 indent p compress?)
-   (with-access::Pragma this (str)
-      (display str p)))
+   (with-access::Pragma this (str args)
+      (if (null? args)
+	  (display str p)
+	  (let* ((sport (open-input-string str))
+		 (args (list->vector args))
+		 (parser (regular-grammar ()
+			    ((: #\$ (+ (in (#\0 #\9))))
+			     (let* ((str   (the-string))
+				    (len   (the-length))
+				    (index (string->number
+					    (substring str 1 len))))
+				(expr-out
+				   (vector-ref args (-fx index 1))
+				   in-for-init? stmt-begin? indent p compress?)
+				(ignore)))
+			    ("$$"
+			     (display "$" p)
+			     (ignore))
+			    ((+ (out #\$))
+			     (display (the-string) p)
+			     (ignore))
+			    (else
+			     (the-failure)))))
+	     (read/rp parser sport)
+	     (close-input-port sport)
+	     #t))))

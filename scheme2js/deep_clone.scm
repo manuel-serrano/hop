@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -122,9 +122,11 @@
 	  #f))
 
 (define-method (clone this::Pragma)
-   ;; duplicated Pragmas will be (later) hoisted to the top-level so they are
-   ;; only used once.
-   this)
+;*    ;; duplicated Pragmas will be (later) hoisted to the top-level so they are */
+;*    ;; only used once.                                               */
+   (with-access::Pragma this (args)
+      (duplicate::Pragma this
+	 (args (map clone args)))))
 
 ;; define-do-clone clones the given class, but calls 'clone' on the fields.
 (define-macro (define-do-clone class . fields)

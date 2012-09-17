@@ -189,7 +189,7 @@
 (gen-walks Labeled body)
 (gen-walks Break val)
 (gen-walks Continue)
-(gen-walks Pragma)
+(gen-walks Pragma (args))
 (gen-walks Tail-rec (inits) body)
 (gen-walks Tail-rec-Call (updates))
 (gen-walks While init test body)

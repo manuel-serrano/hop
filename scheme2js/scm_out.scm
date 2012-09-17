@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -155,8 +155,8 @@
       `(,(label-out label) #unspecified)))
 
 (define-nmethod (Pragma.scm)
-   (with-access::Pragma this (str)
-      str))
+   (with-access::Pragma this (str args)
+      `(pragma ,str ,@args)))
 
 (define-nmethod (Tail-rec.scm)
    (with-access::Tail-rec this (scope-vars inits body label)
