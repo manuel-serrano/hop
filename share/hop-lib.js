@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Jan 28 07:14:22 2012 (serrano)                */
+/*    Last change :  Tue Sep 18 18:27:42 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -753,7 +753,7 @@ function hop_jsobject2alist( obj ) {
    var l = null;
 
    for( p in obj ) {
-      var c = sc_cons( sc_jsstring2keyword( p ), sc_cons( o[ p ], null ) );
+      var c = sc_cons( sc_jsstring2keyword( p ), sc_cons( obj[ p ], null ) );
       l = sc_cons( c, l );
    }
 
