@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Sep 18 16:46:17 2012 (serrano)                */
+/*    Last change :  Tue Sep 18 16:49:47 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -130,7 +130,7 @@ public class HopDroid extends Thread {
 	 Enumeration socks = conn.elements();
 
 	 while( socks.hasMoreElements() ) {
-	    Socket s = (Socket)socks.nextElement();
+	    LocalSocket s = (LocalSocket)socks.nextElement();
 	    
 	    if( !s.isClosed() ) {
 	       try {
@@ -360,7 +360,6 @@ public class HopDroid extends Thread {
       Log.i( "HopDroid", ">>> killing servers..." );
       
       try {
-//	 if( serv1 != null && !serv1.isClosed() ) {
 	 if( serv1 != null ) {
 	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv1.close();
@@ -371,7 +370,6 @@ public class HopDroid extends Thread {
 	    }
 	    Log.i( "HopDroid", "<<< server1...killed" );
 	 }
-//	 if( serv2 != null && !serv2.isClosed() ) {
 	 if( serv2 != null  ) {
 	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv2.close();
