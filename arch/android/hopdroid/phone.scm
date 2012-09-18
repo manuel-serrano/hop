@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Sep 18 14:35:18 2012 (serrano)                */
+;*    Last change :  Tue Sep 18 15:31:09 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -74,7 +74,7 @@
 (define-method (phone-init p::androidphone)
    (with-access::androidphone p (host port1 %socket1 sdk)
       ;; (set! %socket1 (make-client-socket host port1))
-      (set! %socket1 (make-client-socket (format "hop-~a" port1) 0 :domain 'unix))
+      (set! %socket1 (make-client-socket (format "\000hop-~a" port1) 0 :domain 'unix))
       (set! build-plugin (android-load-plugin p "build"))
       (set! sdk (android-send-command/result p build-plugin #\v))))
 
@@ -117,7 +117,7 @@
 	    (unless (socket? %socket2)
 	       ;; (set! %socket2 (make-client-socket host port2))
 	       (set! %socket2
-		  (make-client-socket (format "hop-~a" port2) 0
+		  (make-client-socket (format "\000hop-~a" port2) 0
 		     :domain 'unix)))
 	    (unless (isa? %evthread thread)
 	       (set! %evthread

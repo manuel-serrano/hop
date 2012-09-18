@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Sep 18 14:31:25 2012 (serrano)                */
+/*    Last change :  Tue Sep 18 15:24:45 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -157,7 +157,8 @@ public class HopDroid extends Thread {
 	       public void run() {
 		  try {
 		     while( true ) {
-			final Socket sock = serv1.accept();
+			// final Socket sock = serv1.accept();
+			final LocalSocket sock = serv1.accept();
 
 			synchronized( serv1conn ) {
 			   serv1conn.add( sock );
@@ -191,7 +192,8 @@ public class HopDroid extends Thread {
 	       public void run() {
 		  try {
 		     while( true ) {
-			final Socket sock2 = serv2.accept();
+			// final Socket sock2 = serv2.accept();
+			final LocalSocket sock2 = serv2.accept();
 		     
 			synchronized( serv2conn ) {
 			   serv2conn.add( sock2 );
@@ -273,7 +275,7 @@ public class HopDroid extends Thread {
    }
    
    // handle a session with one client connected to the HopDroid server
-   private void server( Socket sock ) {
+   private void server( LocalSocket sock ) {
       try {
 	 InputStream ip = sock.getInputStream();
 	 OutputStream op = sock.getOutputStream();
@@ -308,7 +310,7 @@ public class HopDroid extends Thread {
    }
 	    
    // registerEvent
-   private void serverEvent( Socket sock2 ) {
+   private void serverEvent( LocalSocket sock2 ) {
       Log.i( "HopDroid", "serverEvent " + sock2 );
       try {
 	 InputStream ip = sock2.getInputStream();
@@ -364,18 +366,22 @@ public class HopDroid extends Thread {
       Log.i( "HopDroid", ">>> killing servers..." );
       
       try {
-	 if( serv1 != null && !serv1.isClosed() ) {
+//	 if( serv1 != null && !serv1.isClosed() ) {
+	 if( serv1 != null ) {
 	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv1.close();
+	    serv1 = null;
 	    if( thread1 != null ) {
 	       thread1.join();
 	       thread1 = null;
 	    }
 	    Log.i( "HopDroid", "<<< server1...killed" );
 	 }
-	 if( serv2 != null && !serv2.isClosed() ) {
+//	 if( serv2 != null && !serv2.isClosed() ) {
+	 if( serv2 != null  ) {
 	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv2.close();
+	    serv2 = null;
 	    if( thread2 != null ) {
 	       thread2.join();
 	       thread2 = null;
