@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Fri Jul 13 10:04:06 2012 (serrano)                */
+;*    Last change :  Tue Sep 18 14:35:18 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -37,22 +37,7 @@
 	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
-	   (android-send-command/result ::androidphone ::int . args))
-
-   (cond-expand
-      (bigloo3.5a
-       (export (generic (phone-locales ::phone))
-	       (generic (phone-current-locale ::phone))
-	       (generic (phone-current-locale-set! ::phone ::obj))))))
-
-;*---------------------------------------------------------------------*/
-;*    backward compatibility                                           */
-;*---------------------------------------------------------------------*/
-(cond-expand
-   (bigloo3.5a
-    (define-generic (phone-current-locale ::phone))
-    (define-generic (phone-current-locale-set! ::phone ::obj))
-    (define-generic (phone-locales p::phone))))
+	   (android-send-command/result ::androidphone ::int . args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Standard plugins                                                 */
@@ -88,7 +73,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
    (with-access::androidphone p (host port1 %socket1 sdk)
-      (set! %socket1 (make-client-socket host port1))
+      ;; (set! %socket1 (make-client-socket host port1))
+      (set! %socket1 (make-client-socket (format "hop-~a" port1) 0 :domain 'unix))
       (set! build-plugin (android-load-plugin p "build"))
       (set! sdk (android-send-command/result p build-plugin #\v))))
 
@@ -129,7 +115,10 @@
 	    (unless (hashtable? %evtable)
 	       (set! %evtable (make-hashtable 8)))
 	    (unless (socket? %socket2)
-	       (set! %socket2 (make-client-socket host port2)))
+	       ;; (set! %socket2 (make-client-socket host port2))
+	       (set! %socket2
+		  (make-client-socket (format "hop-~a" port2) 0
+		     :domain 'unix)))
 	    (unless (isa? %evthread thread)
 	       (set! %evthread
 		     (thread-start!

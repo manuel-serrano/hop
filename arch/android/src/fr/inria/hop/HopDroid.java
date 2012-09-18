@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Sep 12 18:19:25 2012 (serrano)                */
+/*    Last change :  Tue Sep 18 14:31:25 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -39,8 +39,10 @@ public class HopDroid extends Thread {
    boolean inkill = false;
    Activity activity = null;
    Service service;
-   ServerSocket serv1;
-   ServerSocket serv2;
+//   ServerSocket serv1;
+//   ServerSocket serv2;
+   LocalServerSocket serv1;
+   LocalServerSocket serv2;
    Vector serv1conn;
    Vector serv2conn;
    Thread thread1 = null;
@@ -59,8 +61,11 @@ public class HopDroid extends Thread {
 
       try {
 	 Log.i( "HopDroid", "starting servers port=" + port + ", " + porte );
-	 serv1 = new ServerSocket( port );
-	 serv2 = new ServerSocket( porte );
+
+//	 serv1 = new ServerSocket( port );
+//	 serv2 = new ServerSocket( porte );
+	 serv1 = new LocalServerSocket( "hop-" + port );
+	 serv2 = new LocalServerSocket( "hop-" + porte );
 	 
 	 serv1conn = new Vector();
 	 serv2conn = new Vector();
