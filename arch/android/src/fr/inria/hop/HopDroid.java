@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Sep 18 15:24:45 2012 (serrano)                */
+/*    Last change :  Tue Sep 18 16:46:17 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -39,8 +39,6 @@ public class HopDroid extends Thread {
    boolean inkill = false;
    Activity activity = null;
    Service service;
-//   ServerSocket serv1;
-//   ServerSocket serv2;
    LocalServerSocket serv1;
    LocalServerSocket serv2;
    Vector serv1conn;
@@ -62,8 +60,6 @@ public class HopDroid extends Thread {
       try {
 	 Log.i( "HopDroid", "starting servers port=" + port + ", " + porte );
 
-//	 serv1 = new ServerSocket( port );
-//	 serv2 = new ServerSocket( porte );
 	 serv1 = new LocalServerSocket( "hop-" + port );
 	 serv2 = new LocalServerSocket( "hop-" + porte );
 	 
@@ -157,7 +153,6 @@ public class HopDroid extends Thread {
 	       public void run() {
 		  try {
 		     while( true ) {
-			// final Socket sock = serv1.accept();
 			final LocalSocket sock = serv1.accept();
 
 			synchronized( serv1conn ) {
@@ -192,7 +187,6 @@ public class HopDroid extends Thread {
 	       public void run() {
 		  try {
 		     while( true ) {
-			// final Socket sock2 = serv2.accept();
 			final LocalSocket sock2 = serv2.accept();
 		     
 			synchronized( serv2conn ) {
@@ -410,7 +404,7 @@ public class HopDroid extends Thread {
 	    Enumeration s = ht.keys();
 
 	    while( s.hasMoreElements() ) {
-	       Socket sock = (Socket)s.nextElement();
+	       LocalSocket sock = (LocalSocket)s.nextElement();
 	       try {
 		  OutputStream op = sock.getOutputStream();
 		  
