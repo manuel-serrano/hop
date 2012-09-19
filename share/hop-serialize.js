@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Jun 17 18:09:03 2012 (serrano)                */
+/*    Last change :  Wed Sep 19 14:38:36 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -428,7 +428,7 @@ function hop_serialize_date( item ) {
 /*---------------------------------------------------------------------*/
 function hop_serialize_html( item ) {
    if( "outerHTML" in item ) {
-      return hop_serialize_string( item.outHTML );
+      return hop_serialize_string( item.outerHTML );
    } else {
       if( item.nodeType == 1 ) {
 	 var str = "<" + item.tagName + " id='" + item.id + "' "

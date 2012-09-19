@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 19 13:58:48 2012 (serrano)                */
+;*    Last change :  Wed Sep 19 15:27:52 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -853,19 +853,17 @@
 ;*    This assumes that the event-mutex has been acquired.             */
 ;*---------------------------------------------------------------------*/
 (define (websocket-close-request! resp::http-response-websocket)
-   (when (and debug-websocket (>fx (bigloo-debug) 0))
-      (tprint "websocket-close-request!.1..."))
    (with-access::http-response-websocket resp ((req request))
       ;; close the socket
       (with-access::http-request req (socket)
-	 (socket-close socket))
+	 (socket-close socket)
+	 (when (and debug-websocket (>fx (bigloo-debug) 0))
+	    (tprint "!!! websocket-close-request! " socket)))
       ;; remove the request from the *websocket-response-list*
       (set! *websocket-response-list*
 	 (filter! (lambda (e)
 		     (not (eq? (cdr e) resp)))
 	    *websocket-response-list*))
-      (when (and debug-websocket (>fx (bigloo-debug) 0))
-	 (tprint "websocket-close-request!.2..."))
       ;; remove the response from the *websocket-socket-table*
       (hashtable-for-each *websocket-socket-table*
 	 (lambda (k l)
@@ -873,11 +871,7 @@
 	       k
 	       (lambda (l) (delete! resp l))
 	       '())))
-      (when (and debug-websocket (>fx (bigloo-debug) 0))
-	 (tprint "websocket-close-request!.3..."))
-      (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l)))
-      (when (and debug-websocket (>fx (bigloo-debug) 0))
-	 (tprint "websocket-close-request!.4..."))))
+      (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
@@ -1060,7 +1054,7 @@
 	 (let ((p (socket-output socket)))
 	    (with-handler
 	       (lambda (e)
-		  (tprint "WS ERROR: " e " socket=" p)
+		  (tprint "WS ERROR: " e " socket=" socket)
 		  (when (and debug-websocket (>fx (bigloo-debug) 0))
 		     (tprint "WEBSOCKET EVENT ERROR: " e
 			" thread=" (current-thread)
@@ -1299,7 +1293,7 @@
 	    (lambda (l)
 	       (when (and debug-websocket (>fx (bigloo-debug) 0))
 		  (tprint ">>> websocket-event-broadcast name=" name
-		     (if (pair? l) (length l) 0)
+		     " " (if (pair? l) (length l) 0)
 		     " clients connected"))
 	       (when (pair? l)
 		  (for-each (lambda (resp)
