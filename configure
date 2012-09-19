@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Jul 18 05:39:32 2012 (serrano)                */
+#*    Last change :  Wed Sep 19 15:35:37 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -44,7 +44,8 @@ bcflagspmem2="-pmem2 -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
 bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 
-bcflagsrts="-unsafe -safee"
+#bcflagsrts="-unsafe -safee"
+bcflagsrts="-safee"
 bscm2jsflags="-unsafe"
 
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
