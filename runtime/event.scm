@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Sep 11 09:11:49 2012 (serrano)                */
+;*    Last change :  Wed Sep 19 12:57:25 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define debug-websocket #f)
+(define debug-websocket #t)
 (define debug-multipart #f)
 (define debug-flash #f)
 
@@ -1074,8 +1074,9 @@
 		      (raise e)))
 	       (with-access::http-response-websocket resp (accept)
 		  (when debug-websocket
-		     (tprint "websocket signal: "
-			(if accept "hybi" "hixie")))
+		     (tprint "!!! websocket signal: "
+			(if accept "hybi" "hixie")
+			" " socket))
 		  (if accept
 		      (hybi-signal-value vstr p)
 		      (hixie-signal-value vstr p))))))))
@@ -1297,11 +1298,14 @@
 	    name
 	    (lambda (l)
 	       (when debug-websocket
-		  (tprint "websocket-event-broadcast name=" name " l=" l))
+		  (tprint ">>> websocket-event-broadcast name=" name
+		     " # of clients=" (length l)))
 	       (when (pair? l)
 		  (for-each (lambda (resp)
 			       (websocket-signal resp val))
-		     l))))))
+		     l))
+	       (when debug-websocket
+		  (tprint "<<< websocket-event-broadcast name=" name))))))
        
    (define (multipart-event-broadcast! name value)
       (let ((val (multipart-value name value)))

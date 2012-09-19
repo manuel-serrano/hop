@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Sep 18 16:49:47 2012 (serrano)                */
+/*    Last change :  Wed Sep 19 07:06:45 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -296,7 +296,7 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.d( "HopDroid", "server error, socket=" + sock + " " +
+	 Log.e( "HopDroid", "server error, socket=" + sock + " " +
 		e.toString() + " exception=" + e.getClass().getName(),
 		e );
 	 abortError( e, "server" );
