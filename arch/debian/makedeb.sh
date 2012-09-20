@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Sep 20 08:17:30 2012 (serrano)                */
+#*    Last change :  Thu Sep 20 08:39:53 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -30,6 +30,25 @@ HOPPREFIX=/opt/bigloo
 PREFIX=/usr
 HOPUSER=hop
 HOPCONFIGUREOPT=
+
+fakeroot=fakeroot
+
+while : ; do
+  case $1 in
+    "")
+      break;;
+    -h|--help)
+      echo "usage makedeb.sh opt1 opt2 ...";
+      exit 1;;
+    --fakeroot)
+      shift;
+      fakeroot=$1;;
+    *)
+      HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
+
+  esac
+  shift
+done
 
 if [ "$REPODIR " != " " ]; then
   REPOSITORY=$REPODIR;
@@ -229,7 +248,7 @@ cat $TMP/hop-$VERSION/ChangeLog | grep -v "^[ \\t]*[.]$$" > \
 cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
    $TMP/hop-$VERSION/debian/changelog
 
-(cd $TMP/hop-$VERSION && dpkg-buildpackage -rfakeroot)
+(cd $TMP/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
 
 # adjust the package file name
 if [ "$MINOR " != " " ]; then
