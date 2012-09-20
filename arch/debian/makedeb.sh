@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Sat Jun 30 06:32:48 2012 (serrano)                */
+#*    Last change :  Thu Sep 20 08:17:30 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -29,6 +29,7 @@ MAEMODIR=$BASEDIR/maemo
 HOPPREFIX=/opt/bigloo
 PREFIX=/usr
 HOPUSER=hop
+HOPCONFIGUREOPT=
 
 if [ "$REPODIR " != " " ]; then
   REPOSITORY=$REPODIR;
@@ -186,6 +187,7 @@ for p in control rules postinst postrm; do
     cat $BASEDIR/debian/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@HOPUSER@/$HOPUSER/g" \
+            -e "s/@HOPCONFIGUREOPT@/$HOPCONFIGUREOPT/g" \
             -e "s/@MAEMO@/$maemo/g" \
             -e "s/@DEBIAN@/$debian/g" \
             -e "s/@EXTRADEPEND@/$extradepend/g" \
