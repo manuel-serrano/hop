@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 19 15:27:52 2012 (serrano)                */
+;*    Last change :  Wed Sep 26 09:44:21 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1025,9 +1025,12 @@
       (flush-output-port p))
    
    (define (hybi-signal-value vstr p)
+      (when (and debug-websocket (>fx (bigloo-debug) 0))
+	 (tprint ">!! websocket hybi signal.1"))
       (let ((l (string-length vstr)))
 	 ;; FIN=1, OPCODE=x1 (text)
 	 (display (integer->char #x81) p)
+	 (tprint "~!! websocket hybi signal.2")
 	 (cond
 	    ((<=fx l 125)
 	     ;; 1 byte length
@@ -1047,7 +1050,10 @@
 	     (display (integer->char (bit-and l #xff)) p)))
 	 ;; payload data
 	 (display-string vstr p)
-	 (flush-output-port p)))
+	 (tprint "~!! websocket hybi signal.3")
+	 (flush-output-port p)
+	 (when (and debug-websocket (>fx (bigloo-debug) 0))
+	 (tprint "<!! websocket hybi signal.4"))))
    
    (with-access::http-response-websocket resp ((req request))
       (with-access::http-request req (socket)
@@ -1068,12 +1074,14 @@
 		      (raise e)))
 	       (with-access::http-response-websocket resp (accept)
 		  (when (and debug-websocket (>fx (bigloo-debug) 0))
-		     (tprint "!!! websocket signal: "
+		     (tprint ">>! websocket signal: "
 			(if accept "hybi" "hixie")
 			" " socket))
 		  (if accept
 		      (hybi-signal-value vstr p)
-		      (hixie-signal-value vstr p))))))))
+		      (hixie-signal-value vstr p))
+		  (when (and debug-websocket (>fx (bigloo-debug) 0))
+		     (tprint "<<! websocket signal: " " " socket))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    enveloppe-value ...                                              */
