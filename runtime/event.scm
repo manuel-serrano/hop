@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 26 13:00:06 2012 (serrano)                */
+;*    Last change :  Fri Sep 28 08:53:22 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -414,16 +414,18 @@
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
 	 (when (and debug-websocket (>fx (bigloo-debug) 0))
-	    (tprint "websocket-register, protocol-version: " version))
+	    (tprint "websocket-register-new-connection, protocol-version: " version))
 	 (let ((resp (websocket-server-response req key)))
 	    ;; register the websocket
 	    (with-lock *event-mutex*
 	       (lambda ()
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
-		     (tprint "websocket-register-websocket key=" key))
 		  (set! *websocket-response-list*
 		     (cons (cons (string->symbol key) resp)
-			*websocket-response-list*))))
+			*websocket-response-list*))
+		  (when (and debug-websocket (>fx (bigloo-debug) 0))
+		     (tprint "websocket-register-new-connection, key=" key
+			" connected clients: "
+			(length *websocket-response-list*)))))
 	    resp))))
 
 ;*---------------------------------------------------------------------*/
@@ -813,6 +815,7 @@
    ;; close the socket
    (with-access::http-request req (socket)
       (socket-close socket))
+   (set! *clients-number* (-fx *clients-number* 1))
    ;; remove the request from the *flash-request-list*
    (set! *flash-request-list*
 	 (filter! (lambda (e) (not (eq? (cadr e) req))) *flash-request-list*))
@@ -834,6 +837,7 @@
    ;; close the socket
    (with-access::http-request req (socket)
       (socket-close socket))
+   (set! *clients-number* (-fx *clients-number* 1))
    ;; remove the request from the *multipart-request-list*
    (set! *multipart-request-list*
 	 (filter! (lambda (e) (not (eq? (cdr e) req)))
@@ -859,6 +863,8 @@
 	 (socket-close socket)
 	 (when (and debug-websocket (>fx (bigloo-debug) 0))
 	    (tprint "!!! websocket-close-request! " socket)))
+      ;; decrement the current number of connected clients
+      (set! *clients-number* (-fx *clients-number* 1))
       ;; remove the request from the *websocket-response-list*
       (set! *websocket-response-list*
 	 (filter! (lambda (e)
@@ -976,9 +982,7 @@
 	       (when debug-flash
 		  (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread)))
 	       (if (isa? e &io-error)
-		   (begin
-		      (set! *clients-number* (-fx *clients-number* 1))
-		      (flash-close-request! req))
+		   (flash-close-request! req)
 		   (raise e)))
 	    (begin
 	       (let ((p (current-error-port)))
@@ -1003,9 +1007,7 @@
 		  (tprint "MULTIPART EVENT ERROR: "
 		     e " thread=" (current-thread)))
 	       (if (isa? e &io-error)
-		   (begin
-		      (set! *clients-number* (-fx *clients-number* 1))
-		      (multipart-close-request! req))
+		   (multipart-close-request! req)
 		   (raise e)))
 	    (begin
 	       (fprintf p "Content-type: text/xml\n\n")
@@ -1027,8 +1029,6 @@
    
    (define (hybi-signal-value vstr socket)
       (let ((p (socket-output socket)))
-	 (when (and debug-websocket (>fx (bigloo-debug) 0))
-	    (tprint ">!! websocket hybi " socket))
 	 (let ((l (string-length vstr)))
 	    ;; FIN=1, OPCODE=x1 (text)
 	    (display (integer->char #x81) p)
@@ -1051,36 +1051,32 @@
 		(display (integer->char (bit-and l #xff)) p)))
 	    ;; payload data
 	    (display-string vstr p)
-	    (flush-output-port p)
-	    (when (and debug-websocket (>fx (bigloo-debug) 0))
-	       (tprint "<!! websocket hybi signal.4 " socket)))))
+	    (flush-output-port p))))
    
    (with-access::http-response-websocket resp ((req request))
       (with-access::http-request req (socket)
+	 (bind-exit (esc)
 	    (with-handler
 	       (lambda (e)
-		  (tprint "WS ERROR: " e " socket=" socket)
 		  (when (and debug-websocket (>fx (bigloo-debug) 0))
 		     (tprint "WEBSOCKET EVENT ERROR: " e
+			" socket=" socket
 			" thread=" (current-thread)
-			" req=" req " value=" vstr
-			" len=" (string-length vstr)))
+			" req=" req 
+			" vlen=" (string-length vstr)))
 		  (if (isa? e &io-error)
 		      (begin
-			 (tprint "WS CLOSE resp=" resp)
-			 (set! *clients-number* (-fx *clients-number* 1))
-			 (websocket-close-request! resp))
+			 (when (and debug-websocket (>fx (bigloo-debug) 0))
+			    (tprint ">>> WS CLOSE " socket))
+			 (websocket-close-request! resp)
+			 (when (and debug-websocket (>fx (bigloo-debug) 0))
+			    (tprint "<<< WS CLOSED " socket))
+			 (esc #f))
 		      (raise e)))
 	       (with-access::http-response-websocket resp (accept)
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
-		     (tprint ">>! websocket signal: "
-			(if accept "hybi" "hixie")
-			" " socket))
 		  (if accept
 		      (hybi-signal-value vstr socket)
-		      (hixie-signal-value vstr socket))
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
-		     (tprint "<<! websocket signal: " " " socket)))))))
+		      (hixie-signal-value vstr socket))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    enveloppe-value ...                                              */
@@ -1299,15 +1295,18 @@
 	    name
 	    (lambda (l)
 	       (when (and debug-websocket (>fx (bigloo-debug) 0))
-		  (tprint ">>> websocket-event-broadcast name=" name
-		     " " (if (pair? l) (length l) 0)
-		     " clients connected"))
+		  (tprint "!!! websocket-event-broadcast \"" name "\" "
+		     (length l)
+		     " clients "
+		     (map (lambda (resp)
+			     (with-access::http-response-websocket resp (request)
+				(with-access::http-request request (socket)
+				   socket)))
+			l)))
 	       (when (pair? l)
 		  (for-each (lambda (resp)
 			       (websocket-signal resp val))
-		     l))
-	       (when (and debug-websocket (>fx (bigloo-debug) 0))
-		  (tprint "<<< websocket-event-broadcast name=" name))))))
+		     l))))))
        
    (define (multipart-event-broadcast! name value)
       (let ((val (multipart-value name value)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Sep 17 18:11:58 2012 (serrano)                */
+/*    Last change :  Fri Sep 28 11:19:24 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -388,8 +388,8 @@ function start_servevt_websocket_proxy( key, host, port ) {
       
    var register = function( id ) {
 
-      if( !(id in ws.registry) ) {
-	 ws.registry[ id ] = true;
+      if( !(id in hop_servevt_proxy.ws.registry) ) {
+	 hop_servevt_proxy.ws.registry[ id ] = true;
 	 var svc = hop_service_base() +
 	    "/public/server-event/register?event=" + id +
 	    "&key=" + key  + "&mode=websocket";
@@ -399,8 +399,8 @@ function start_servevt_websocket_proxy( key, host, port ) {
    };
 
    var unregister = function( id ) {
-      if( id in ws.registry ) {
-	 delete ws.registry[ id ];
+      if( id in hop_servevt_proxy.ws.registry ) {
+	 delete hop_servevt_proxy.ws.registry[ id ];
 	 
 	 var svc = hop_service_base() +
 	    "/public/server-event/unregister?event=" + id +
@@ -411,20 +411,23 @@ function start_servevt_websocket_proxy( key, host, port ) {
    };
 
    var reconnect = function( wait, max ) {
-      var ws = make_websocket( hop_servevt_proxy.reconnect_url ); 
+      if( hop_server.state != 4 ) {
+	 hop_server.state = 4;
 
-      ws.onerror = function( e ) {
-	    
-	 if( !wait ) wait = 1000;
+	 hop_servevt_proxy.ws = make_websocket( hop_servevt_proxy.reconnect_url );
+      
+	 hop_servevt_proxy.ws.onerror = function( e ) {
+	    if( !wait ) wait = 1000;
 
-	 if( max == -1 ) {
-	    hop_trigger_servererror_event( "Cannot reconnect" );
-	 } else {
-	    after( wait, function() {
-	       var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
-	       var nmax = max === undefined ? max : max - 1;
-	       reconnect( nwait, nmax );
-	    } );
+	    if( max == -1 ) {
+	       hop_trigger_servererror_event( "Cannot reconnect" );
+	    } else {
+	       after( wait, function() {
+		  var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
+		  var nmax = max === undefined ? max : max - 1;
+		  reconnect( nwait, nmax );
+	       } );
+	    }
 	 }
       }
    }
@@ -432,13 +435,12 @@ function start_servevt_websocket_proxy( key, host, port ) {
    if( !hop_servevt_proxy.websocket ) {
       var url = "ws://" + host + ":" + port +
 	 hop_service_base() + "/public/server-event/websocket?key=" + key;
-      var ws = make_websocket( url );
 
-      // complete the proxy definition
-      hop_servevt_proxy.websocket = ws;
       hop_servevt_proxy.key = key;
       hop_servevt_proxy.host = host;
       hop_servevt_proxy.port = port;
+
+      hop_servevt_proxy.ws = make_websocket( url );
    }
 }
 

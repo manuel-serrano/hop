@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Sep 26 16:04:36 2012 (serrano)                */
+;*    Last change :  Wed Sep 26 18:57:33 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -267,7 +267,7 @@
 	    (flush-output-port p)
 	    ;; set the socket in non blocking mode to prevent
 	    ;; down connections to block all event broadcasts
-	    (output-timeout-set! p 500)
+	    (output-timeout-set! p 1000)
 	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
