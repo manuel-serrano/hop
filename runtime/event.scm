@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Sep 28 08:53:22 2012 (serrano)                */
+;*    Last change :  Fri Sep 28 16:31:03 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -424,6 +424,7 @@
 			*websocket-response-list*))
 		  (when (and debug-websocket (>fx (bigloo-debug) 0))
 		     (tprint "websocket-register-new-connection, key=" key
+			" socket=" socket 
 			" connected clients: "
 			(length *websocket-response-list*)))))
 	    resp))))

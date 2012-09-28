@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Sep 26 18:57:33 2012 (serrano)                */
+;*    Last change :  Fri Sep 28 16:01:12 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -17,8 +17,11 @@
    (include "http_lib.sch"
             "verbose.sch")
 
-   (library web
-	    pthread)
+   (library web)
+
+   (cond-expand
+      (enable-threads
+       (library pthread)))
 
    (import __hop_configure
 	    __hop_param
