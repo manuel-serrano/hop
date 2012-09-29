@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Sep 28 17:12:08 2012 (serrano)                */
+/*    Last change :  Sat Sep 29 09:39:41 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -349,7 +349,7 @@ function hop_servevt_envelope_parse_error( xhr ) {
 function start_servevt_websocket_proxy( key, host, port ) {
    var reconnect_debug = 0;
    
-   function make_websocket( url ) {
+   function open_websocket( url ) {
       var ws = new WebSocket( url );
 
       ws.onopen = function() {
@@ -358,8 +358,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 ws.registry = {};
 
 	 if( reconnect_debug > 0 ) {
-	    alert( "reconnect onopen dbg=" + reconnect_debug + " tm=" +
-		   new Date() );
+	    alert( "reconnect onopen" );
 	 }
 	 
 	 // we are ready to register now
@@ -373,7 +372,11 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 
 	 if( reconnect_debug > 0 ) {
 	    var s = "";
-	    for( var p in hop_servevt_table ) { s += p + " "; }
+	    for( var p in hop_servevt_table ) {
+	       if( sc_isPair( hop_servevt_table[ p ] ) ) {
+		  s += p + " ";
+	       }
+	    }
 	    
 	    alert( "reconnect register: " + s );
 	    
@@ -387,7 +390,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 }
 
 	 if( reconnect_debug > 0 ) {
-	    alert( "reconnect trigger ready tm=" + new Date() );
+	    alert( "reconnect trigger ready" );
 	 }
 	 hop_trigger_serverready_event();
 	 
@@ -407,20 +410,22 @@ function start_servevt_websocket_proxy( key, host, port ) {
    }
       
    var register = function( id ) {
-
-      if( !(id in hop_servevt_proxy.ws.registry) ) {
-	 hop_servevt_proxy.ws.registry[ id ] = true;
+      if( !(id in hop_servevt_proxy.websocket.registry) ) {
+	 hop_servevt_proxy.websocket.registry[ id ] = true;
 	 var svc = hop_service_base() +
 	    "/public/server-event/register?event=" + id +
 	    "&key=" + key  + "&mode=websocket";
 
+	 if( reconnect_debug > 0 ) {
+	    alert( "re-registering: " + id );
+	 }
 	 hop_send_request( svc, false, function() { ; }, false, false, [] );
       }
    };
 
    var unregister = function( id ) {
-      if( id in hop_servevt_proxy.ws.registry ) {
-	 delete hop_servevt_proxy.ws.registry[ id ];
+      if( id in hop_servevt_proxy.websocket.registry ) {
+	 delete hop_servevt_proxy.websocket.registry[ id ];
 	 
 	 var svc = hop_service_base() +
 	    "/public/server-event/unregister?event=" + id +
@@ -432,16 +437,12 @@ function start_servevt_websocket_proxy( key, host, port ) {
 
    var reconnect = function( wait, max ) {
       if( hop_server.state != 4 ) {
-	 reconnect_debug++;
+//	 reconnect_debug++;
 	 hop_server.state = 4;
 
-	 alert( "reconnect dbg=" + reconnect_debug +
-		" url=" + hop_servevt_proxy.reconnect_url +
-		" wait=" + wait + " max=" + max +
-		" tm=" + new Date() );
-	 make_websocket( hop_servevt_proxy.reconnect_url );
+	 open_websocket( hop_servevt_proxy.reconnect_url );
       
-	 hop_servevt_proxy.ws.onerror = function( e ) {
+	 hop_servevt_proxy.websocket.onerror = function( e ) {
 	    if( !wait ) wait = 1000;
 
 	    if( max == -1 ) {
@@ -465,7 +466,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
       hop_servevt_proxy.host = host;
       hop_servevt_proxy.port = port;
 
-      hop_servevt_proxy.ws = make_websocket( url );
+      open_websocket( url );
    }
 }
 

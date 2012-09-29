@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Sep 19 07:06:45 2012 (serrano)                */
+/*    Last change :  Sat Sep 29 10:03:16 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -109,13 +109,13 @@ public class HopDroid extends Thread {
    // kill
    public synchronized void kill() {
       if( !killed ) {
-	 Log.i( "HopDroid", ">>> kill serv1=" + serv1 + " serv2=" + serv2 );
+	 Log.i( "HopDroid", ">>> kill servers, serv1=" + serv1 + " serv2=" + serv2 );
 	 killed = true;
 
 	 killServers();
 	 killPlugins();
 	 
-	 Log.i( "HopDroid", "<<< kill" );
+	 Log.i( "HopDroid", "<<< kill servers" );
       }
    }
       
@@ -126,12 +126,14 @@ public class HopDroid extends Thread {
 
    // close all background connections
    private void closeConnections( Vector conn ) {
+      Log.d( "HopDroid", ">>> closeConnections..." );
       synchronized( conn ) {
 	 Enumeration socks = conn.elements();
 
 	 while( socks.hasMoreElements() ) {
 	    LocalSocket s = (LocalSocket)socks.nextElement();
 	    
+	    Log.d( "HopDroid", "closeConnections closing connection: " + s );
 	    if( !s.isClosed() ) {
 	       try {
 		  s.close();
@@ -141,6 +143,7 @@ public class HopDroid extends Thread {
 	    }
 	 }
       }
+      Log.d( "HopDroid", "<<< closeConnections..." );
    }
       
    // run hop
@@ -164,17 +167,22 @@ public class HopDroid extends Thread {
 				 try {
 				    server( sock );
 				 } finally {
+				    Log.d( "HopDroid", ">>> Thread1, finally close..." );
 				    synchronized( serv1conn ) {
 				       serv1conn.remove( sock );
 				    }
+				    Log.d( "HopDroid", "<<< Thread1, finally close done." );
 				 }
 			      }
 			   } ).start();
 		     }
 		  } catch( Throwable e ) {
+		     Log.d( "HopDroid", "Thread1, catch error: " + e );
 		     abortError( e, "run" );
 		  } finally {
+		     Log.d( "HopDroid", ">>> Closing connections serv1..." );
 		     closeConnections( serv1conn );
+		     Log.d( "HopDroid", "<<< Closing connections serv1." );
 		     thread1 = null;
 		  }
 	       }
@@ -208,9 +216,9 @@ public class HopDroid extends Thread {
 		  } catch( Throwable e ) {
 		     abortError( e, "runPushEvent" );
 		  } finally {
-		     Log.i( "HopDroid", ">>> Closing Connections serv2..." );
+		     Log.d( "HopDroid", ">>> Closing Connections serv2..." );
 		     closeConnections( serv2conn );
-		     Log.i( "HopDroid", ">>> Closing Connections serv2..." );
+		     Log.d( "HopDroid", ">>> Closing Connections serv2." );
 		     thread2 = null;
 		  }
 	       }
@@ -363,6 +371,7 @@ public class HopDroid extends Thread {
 	 if( serv1 != null ) {
 	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
 	    serv1.close();
+	    Log.i( "HopDroid", ">>> server1 closeed, waiting thread..." );
 	    serv1 = null;
 	    if( thread1 != null ) {
 	       thread1.join();
