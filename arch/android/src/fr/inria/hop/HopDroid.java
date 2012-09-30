@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Sep 29 10:03:16 2012 (serrano)                */
+/*    Last change :  Sat Sep 29 21:02:40 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -45,6 +45,8 @@ public class HopDroid extends Thread {
    Vector serv2conn;
    Thread thread1 = null;
    Thread thread2 = null;
+   boolean thread1dead = false;
+   boolean thread2dead = false;
    Handler handler = null;
    final Hashtable eventtable = new Hashtable();
    
@@ -134,12 +136,12 @@ public class HopDroid extends Thread {
 	    LocalSocket s = (LocalSocket)socks.nextElement();
 	    
 	    Log.d( "HopDroid", "closeConnections closing connection: " + s );
-	    if( !s.isClosed() ) {
-	       try {
+	    try {
+	       if( !s.isClosed() ) {
 		  s.close();
-	       } catch( Throwable _ ) {
-		  ;
 	       }
+	    } catch( Throwable _ ) {
+	       ;
 	    }
 	 }
       }
@@ -152,11 +154,12 @@ public class HopDroid extends Thread {
       // few of these threads are created so there is no need
       // to use a complexe machinery based on thread pool).
       if( serv1 != null ) {
+	 final LocalServerSocket serv = serv1;
 	 thread1 = new Thread( new Runnable () {
 	       public void run() {
 		  try {
 		     while( true ) {
-			final LocalSocket sock = serv1.accept();
+			final LocalSocket sock = serv.accept();
 
 			synchronized( serv1conn ) {
 			   serv1conn.add( sock );
@@ -167,23 +170,23 @@ public class HopDroid extends Thread {
 				 try {
 				    server( sock );
 				 } finally {
-				    Log.d( "HopDroid", ">>> Thread1, finally close..." );
 				    synchronized( serv1conn ) {
 				       serv1conn.remove( sock );
 				    }
-				    Log.d( "HopDroid", "<<< Thread1, finally close done." );
 				 }
 			      }
 			   } ).start();
 		     }
 		  } catch( Throwable e ) {
-		     Log.d( "HopDroid", "Thread1, catch error: " + e );
 		     abortError( e, "run" );
 		  } finally {
 		     Log.d( "HopDroid", ">>> Closing connections serv1..." );
 		     closeConnections( serv1conn );
+		     synchronized( thread1 ) {
+			thread1dead = true;
+			thread1.notifyAll();
+		     }
 		     Log.d( "HopDroid", "<<< Closing connections serv1." );
-		     thread1 = null;
 		  }
 	       }
 	    } );
@@ -191,23 +194,29 @@ public class HopDroid extends Thread {
       }
 
       if( serv2 != null ) {
+	 final LocalServerSocket serv = serv2;
 	 thread2 = new Thread( new Runnable () {
 	       public void run() {
 		  try {
 		     while( true ) {
-			final LocalSocket sock2 = serv2.accept();
+			final LocalSocket sock = serv.accept();
 		     
+			Log.d( "HopDroid", ">>> Thread2, apres accept..." );
+			
 			synchronized( serv2conn ) {
-			   serv2conn.add( sock2 );
+			   serv2conn.add( sock );
 			}
 			
 			new Thread( new Runnable() {
 			      public void run() {
 				 try {
-				    serverEvent( sock2 );
+				    serverEvent( sock );
 				 } finally {
+				    Log.d( "HopDroid", ">>> Thread2, finally close..." );
+				    thread2 = null;
 				    synchronized( serv2conn ) {
-				       serv2conn.remove( sock2 );
+				       serv2conn.remove( sock );
+				       Log.d( "HopDroid", "<<< Thread2, finally close done." );
 				    }
 				 }
 			      }
@@ -218,8 +227,11 @@ public class HopDroid extends Thread {
 		  } finally {
 		     Log.d( "HopDroid", ">>> Closing Connections serv2..." );
 		     closeConnections( serv2conn );
+		     synchronized( thread2 ) {
+			thread2dead = true;
+			thread2.notifyAll();
+		     }
 		     Log.d( "HopDroid", ">>> Closing Connections serv2." );
-		     thread2 = null;
 		  }
 	       }
 	    } );
@@ -304,9 +316,6 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "server error, socket=" + sock + " " +
-		e.toString() + " exception=" + e.getClass().getName(),
-		e );
 	 abortError( e, "server" );
       }
    }
@@ -356,38 +365,55 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.d( "HopDroid", "serverEvent error: " +
-		e.toString() + " exception=" + e.getClass().getName(),
-		e );
 	 abortError( e, "serverEvent" );
       }
    }
+
+   // threadJoin
+   private static void threadJoin( Thread th, boolean sem )
+      throws InterruptedException {
+      // Android join is wrong, it hangs on an already terminated thread!
+      synchronized( th ) {
+	 if( !sem ) {
+	    th.wait();
+	 }
+      }
+   }
+   
 
    // killServers
    private synchronized void killServers() {
       Log.i( "HopDroid", ">>> killing servers..." );
       
       try {
-	 if( serv1 != null ) {
-	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
-	    serv1.close();
-	    Log.i( "HopDroid", ">>> server1 closeed, waiting thread..." );
-	    serv1 = null;
-	    if( thread1 != null ) {
-	       thread1.join();
-	       thread1 = null;
-	    }
-	    Log.i( "HopDroid", "<<< server1...killed" );
-	 }
 	 if( serv2 != null  ) {
-	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
+	    // connect a socket otherwise accept will not throw an exception
+	    LocalSocket ls = new LocalSocket();
+	    ls.connect( serv2.getLocalSocketAddress() );
+	    
+	    Log.i( "HopDroid", ">>> killing server2..." + serv2 );
 	    serv2.close();
 	    serv2 = null;
-	    if( thread2 != null ) {
-	       thread2.join();
-	       thread2 = null;
-	    }
+	    ls.close();
+	    
+	    Log.i( "HopDroid", ">>> server2 closed, waiting thread..." );
+	    threadJoin( thread2, thread2dead );
 	    Log.i( "HopDroid", "<<< server2...killed" );
+	 }
+	 if( serv1 != null ) {
+	    // connect a socket otherwise accept will not throw an exception
+	    LocalSocket ls = new LocalSocket();
+	    ls.connect( serv1.getLocalSocketAddress() );
+	    
+	    Log.i( "HopDroid", ">>> killing server1..." + serv1 );
+	    serv1.close();
+	    serv1 = null;
+	    ls.close();
+	    
+	    Log.i( "HopDroid", ">>> server1 closed, waiting thread..." );
+
+	    threadJoin( thread1, thread1dead );
+	    Log.i( "HopDroid", "<<< server1...killed" );
 	 }
       } catch( Exception e ) {
 	 Log.e( "HopDroid", "closing error: " + e.toString() + " exception=" + e.getClass().getName() );

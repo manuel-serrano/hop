@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/share/hop-gauge.scm               */
+;*    serrano/prgm/project/hop/2.4.x/share/hop-gauge.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Thu May  3 08:54:27 2012 (serrano)                */
+;*    Last change :  Sun Sep 30 08:20:54 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
@@ -64,17 +64,19 @@
    (let ((el (dom-get-element-by-id id))
 	 (fel (dom-get-element-by-id fid))
 	 (tel (dom-get-element-by-id tid)))
-      (set! el.hop_add_event_listener add-gauge-event-listener!)
-      (set! el.format fmt)
-      (set! el.min min)
-      (set! el.max max)
-      (set! el.fill fel)
-      (set! el.tel tel)
-      (gauge-text-set! el (format fmt value max min))
-      (if listener
-	  (add-gauge-event-listener! el "change" listener #t)
-	  (set! el.onchange #f))
-      (gauge-value-set! el value)))
+      (after 1
+	 (lambda ()
+	    (set! el.hop_add_event_listener add-gauge-event-listener!)
+	    (set! el.format fmt)
+	    (set! el.min min)
+	    (set! el.max max)
+	    (set! el.fill fel)
+	    (set! el.tel tel)
+	    (gauge-text-set! el (format fmt value max min))
+	    (if listener
+		(add-gauge-event-listener! el "change" listener #t)
+		(set! el.onchange #f))
+	    (gauge-value-set! el value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-gauge-event-listener! ...                                    */

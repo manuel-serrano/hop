@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Aug 29 11:06:53 2012 (serrano)                */
+/*    Last change :  Sat Sep 29 21:08:31 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -59,17 +59,17 @@ public class HopService extends Service {
    @Override
    public void onDestroy() {
       Log.d( "HopService", ">>> onDestroy..." );
+      kill();
+      
       // status bar update
       mNM.cancel( NOTIFICATION );
-
-      kill();
-      Log.d( "HopService", "<<< onDestroy..." );
+      
+      Log.d( "HopService", "~~~ onDestroy..." );
       super.onDestroy();
+      Log.d( "HopService", "<<< onDestroy..." );
    }
 
    public void kill() {
-      Log.d( "HopService", ">>> kill..." );
-
       if( hop != null ) hop.inkill = true;
       if( hopdroid != null ) hopdroid.inkill = true;
       
@@ -82,8 +82,6 @@ public class HopService extends Service {
 	 hopdroid.kill();
 	 hopdroid = null;
       }
-
-      Log.d( "HopService", "<<< kill..." );
    }
 
    @Override
@@ -147,7 +145,8 @@ public class HopService extends Service {
       notification.setLatestEventInfo(
 	 this, getText( R.string.hopversion ), text, contentIntent );
 
-      notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_FOREGROUND_SERVICE;
+//      notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_FOREGROUND_SERVICE;
+      notification.flags = Notification.FLAG_NO_CLEAR;
 
       // Send the notification.
       mNM.notify( NOTIFICATION, notification );
