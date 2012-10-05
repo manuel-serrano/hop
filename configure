@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Sep 19 15:37:34 2012 (serrano)                */
+#*    Last change :  Fri Oct  5 07:36:02 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -211,9 +211,6 @@ while : ; do
     --bhflags=*)
       bhflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
-    --brflags=*)
-      brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
-
     --bcflagsdev=*)
       bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -327,12 +324,11 @@ while : ; do
       echo "   --gzip................ The GNU zipper ($gzip)" >&2;
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
-      echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
-      echo "   --brflags=args........ The heap options" >&2;
-      echo "   --ccflags=args........ The heap options" >&2;
+      echo "   --ccflags=args........ The C compilation options" >&2;
       echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
       echo "   --pmem[2]............. Enables memory profiling mode" >&2;
