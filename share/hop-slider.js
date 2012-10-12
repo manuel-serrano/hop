@@ -1,13 +1,18 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Sat Jun  2 07:13:31 2012 (serrano)                */
+/*    Last change :  Fri Oct 12 20:49:58 2012 (serrano)                */
 /*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    slidertouch ...                                                  */
+/*---------------------------------------------------------------------*/
+var slidertouch = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_slider_value_set ...                                         */
@@ -101,6 +106,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.rules = "none";
    slider.cellpadding = 0;
    slider.cellspacing = 0;
+   
    parent.appendChild( slider );
 
    tbody = document.createElement( "tbody" );
@@ -222,6 +228,45 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    if( slider.onchange != undefined )
       slider.onchange( {value : value, target: slider } );
+
+   // touchmove of mobile platforms
+   if( !slidertouch ) {
+      slidertouch = document.createElement( "div" );
+      slidertouch.setAttribute( "data-hss-tag", "hop-slider-touch" );
+      document.body.appendChild( slidertouch );
+   }
+   
+   slider.addEventListener(
+      "touchstart", 
+      function( evt ) {
+	 evt.preventDefault();
+	 var touches = evt.changedTouches;
+	 var t = touches[ touches.length - 1];
+	 
+	 node_style_set( slidertouch, "left", (hop_event_mouse_x( t ) - 32) + "px" );
+	 node_style_set( slidertouch, "top", (hop_event_mouse_y( t ) -48) + "px" );
+	 node_style_set( slidertouch, "display", "block" );
+	 slidertouch.innerHTML = "";
+      },
+      false );
+   
+   slider.addEventListener(
+      "touchend", 
+      function( evt ) {
+	 evt.preventDefault();
+	 node_style_set( slidertouch, "display", "none" );
+      },
+      false );
+   
+   slider.addEventListener(
+      "touchmove",
+      function( evt ) {
+	 evt.preventDefault();
+	 var touches = evt.changedTouches;
+	 hop_slider_mousemove( touches[ touches.length - 1], slider );
+	 slidertouch.innerHTML = slider.value + "";
+      },
+      false );
 
    return slider;
 }
