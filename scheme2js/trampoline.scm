@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -75,9 +75,9 @@
 	    (and (runtime-ref? target)
 		 (not (higher-order-runtime-ref? target))
 		 ;; finally weed things like: (+ (f ..) (let ...))
-		 (every? (lambda (op)
-			    (or (isa? op Const)
-				(isa? op Ref)))
+		 (every (lambda (op)
+			   (or (isa? op Const)
+			       (isa? op Ref)))
 			 operands)))))
 
    (let ((hoisted '()))

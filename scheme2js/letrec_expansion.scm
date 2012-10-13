@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -94,9 +94,9 @@
       (default-walk this)
       (when (and (eq? kind 'letrec)
 		 (with-access::Env env (call/cc?) call/cc?)
-		 (any? (lambda (binding)
-			  (with-access::Set! binding (val)
-			     (not (letrec-constant? val))))
+		 (any (lambda (binding)
+			 (with-access::Set! binding (val)
+			    (not (letrec-constant? val))))
 		       bindings))
 	 (let* ((tmp-vars (map (lambda (ign) (gensym 'ltr-tmp))
 			       bindings))

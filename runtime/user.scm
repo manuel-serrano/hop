@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Jun 17 08:59:34 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:09 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -145,7 +145,7 @@
 	    (else
 	     (case (car a)
 		((:groups)
-		 (if (not (and (list? (cadr a)) (every? symbol? (cadr a))))
+		 (if (not (and (list? (cadr a)) (every symbol? (cadr a))))
 		     (error "add-user!" "Illegal group" (cadr a))
 		     (set! g (cadr a))))
 		((:password)
@@ -154,7 +154,7 @@
 		     (set! p (cadr a))))
 		((:services)
 		 (if (not (or (eq? (cadr a) '*)
-			      (and (list? (cadr a)) (every? symbol? (cadr a)))))
+			      (and (list? (cadr a)) (every symbol? (cadr a)))))
 		     (error "add-user!" "Illegal services" (cadr a))
 		     (unless (eq? s '*)
 			(set! s (cadr a)))))
@@ -163,7 +163,7 @@
 		    (cond
 		       ((eq? (cadr a) '*)
 			(set! d '*))
-		       ((and (list? (cadr a)) (every? string? (cadr a)))
+		       ((and (list? (cadr a)) (every string? (cadr a)))
 			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
 		       (else
 			(error "add-user!" "Illegal directories" (cadr a))))))
@@ -479,12 +479,12 @@
 (define (user-authorized-path? user path)
    
    (define (path-member path dirs)
-      (any? (lambda (d)
-	       (and (substring-at? path d 0)
-		    (or (=fx (string-length d) (string-length path))
-			(and (>fx (string-length path) (string-length d))
-			     (char=? (string-ref path (string-length d))
-				(file-separator))))))
+      (any (lambda (d)
+	      (and (substring-at? path d 0)
+		   (or (=fx (string-length d) (string-length path))
+		       (and (>fx (string-length path) (string-length d))
+			    (char=? (string-ref path (string-length d))
+			       (file-separator))))))
 	 dirs))
    
    (and (with-access::user user (directories name)

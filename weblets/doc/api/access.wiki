@@ -178,8 +178,8 @@ is granted the permission to read that file.
 ~~ The parameter ++hop-path-access-control++ defaults to:
 
    (lambda (req path)
-      (any? (lambda (p)
-	       (substring-at? path p 0))
+      (any (lambda (p)
+	      (substring-at? path p 0))
 	    (hop-path)))
 
 </parameter>

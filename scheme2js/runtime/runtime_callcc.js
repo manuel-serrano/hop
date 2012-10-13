@@ -274,15 +274,6 @@ function sc_any_callcc(proc, l) {
     }
 }
 
-/*** META ((export any?)
-           (call/cc? #t)
-           (call/cc-params (1)))
-*/
-function sc_anyPred_callcc(proc, l) {
-    return sc_sequence_callcc(function() { return sc_any_callcc(proc, l); },
-			      function(v) { return v !== false; });
-}
-
 /*** META ((export every)
            (call/cc? #t)
            (call/cc-params (0)))
@@ -308,15 +299,6 @@ function sc_every_callcc(proc, l) {
 	}
 	throw e;
     }
-}
-
-/*** META ((export every?)
-           (call/cc? #t)
-           (call/cc-params (1)))
-*/
-function sc_everyPred_callcc(proc, l) {
-    return sc_sequence_callcc(function() { return sc_every_callcc(proc, l); },
-			      function(v) { return v !== false; });
 }
 
 /*** META ((export force)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/hop_wiki.scm              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/hop_wiki.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Sat Feb  4 08:03:07 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:18 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
@@ -39,7 +39,7 @@
        (values "" env i))
       ((not (pair? obj))
        (values (format ",(vector-ref ~a ~a)" id i) (cons obj env) (+fx i 1)))
-      ((and (pair? obj) (every? string? obj))
+      ((and (pair? obj) (every string? obj))
        (values (html-string-decode (apply string-append obj)) env i))
       (else
        (multiple-value-bind (str env i)

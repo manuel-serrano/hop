@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Jun 15 18:04:23 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:46:35 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -218,7 +218,7 @@
    (cond
       ((string? val)
        (hss-string->ruleset val))
-      ((and (list? val) (every? string? val))
+      ((and (list? val) (every string? val))
        (append-map hss-string->ruleset val))
       (else
        (bigloo-type-error 'hss-property->ruleset-list
@@ -592,9 +592,9 @@
 
    (with-access::css-ruleset o (selector+ declaration*)
       (if (and (pair? (cdr selector+))
-	       (any? (lambda (s)
-			(find-compiler (car (last-pair s))))
-		     selector+))
+	       (any (lambda (s)
+		       (find-compiler (car (last-pair s))))
+		  selector+))
 	  ;; the ruleset is unfolded iff:
 	  ;;    it uses several selectors
 	  ;;    one of the selector refers to a compiler in the last position

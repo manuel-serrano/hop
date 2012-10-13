@@ -38,10 +38,10 @@
 		   (eq? p2 p3)
 		   (eq? p1 p3)))))
 
-   (every? equal-or-different?
-	   (vector-ref board (car set))
-	   (vector-ref board (cadr set))
-	   (vector-ref board (caddr set))))
+   (every equal-or-different?
+	  (vector-ref board (car set))
+	  (vector-ref board (cadr set))
+	  (vector-ref board (caddr set))))
    
 (define (new-board)
    (define (possible-configuration? board)

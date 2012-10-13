@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/info/info.scm             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/info/info.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 25 18:43:56 2010                          */
-;*    Last change :  Fri Dec 30 19:43:52 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Sat Oct 13 08:03:13 2012 (serrano)                */
+;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side of the INFO weblet                                   */
 ;*=====================================================================*/
@@ -51,7 +51,7 @@
 (define (make-script-kont n kont)
    (lambda (s)
       (set-car! (list-tail script-scores n) s)
-      (if (every? number? script-scores)
+      (if (every number? script-scores)
 	  (kont (apply + script-scores))
 	  (kont #f))))
 
@@ -169,7 +169,7 @@
 (define (make-network-kont n kont)
    (lambda (s)
       (set-car! (list-tail network-scores n) s)
-      (if (every? number? network-scores)
+      (if (every number? network-scores)
 	  (kont (apply + network-scores))
 	  (kont #f))))
 

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/2.4.x/hopscheme/precompilation.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Tue Feb 14 10:20:07 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:45:35 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -59,7 +59,7 @@
 			      rev-others))
 		       ((and (pair? (car import-names))
 			     (symbol? (caar import-names)))
-			(unless (every? string? (cdar import-names))
+			(unless (every string? (cdar import-names))
 			   (error "hopscheme" "Illegal module clause" header))
 			(module-add-access! (caar import-names)
 					    (cdar import-names)

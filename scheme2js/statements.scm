@@ -169,7 +169,7 @@
 	  (shrink! this)
 	  (default-walk! this surrounding-fun #f))
 	 ((and (car stmt-exprs)
-	       (not (any? (lambda (x) x) (cdr stmt-exprs))))
+	       (not (any (lambda (x) x) (cdr stmt-exprs))))
 	  (shrink! this)
 	  ;; only the first expression is in stmt-form.
 	  ;; simply pass the stmt-begin to it.

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/scheme2js/module.scm              */
+;*    serrano/prgm/project/hop/2.4.x/scheme2js/module.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Thu May 31 15:57:39 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:42:40 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -214,10 +214,10 @@
    
 (define (cond-expand-headers! m::WIP-Unit)
    (with-access::WIP-Unit m (header)
-      (when (any? (lambda (h)
-		     (match-case h
-			((cond-expand . ?L) #t)
-			(else #f)))
+      (when (any (lambda (h)
+		    (match-case h
+		       ((cond-expand . ?L) #t)
+		       (else #f)))
 	       header)
 	 ;; make a copy so we can physically modify the list.
 	 (let ((copy (make-ecopy header)))
@@ -740,10 +740,10 @@
    (unless (and (list? pragma)
 		(pair? pragma)
 		(symbol? (car pragma))
-		(every? (lambda (p)
-			   (list? p)
-			   (pair? p)
-			   (symbol? (car p)))
+		(every (lambda (p)
+			  (list? p)
+			  (pair? p)
+			  (symbol? (car p)))
 			(cdr pragma)))
       (scheme2js-error "scheme2js-module"
 		       "invalid pragma clause"
@@ -922,10 +922,10 @@
       ((and (pair? ex)
 	    (list? ex)
 	    (symbol? (car ex))
-	    (every? (lambda (p)
-		       (and (pair? p)
-			    (list? p)
-			    (symbol? (car p))))
+	    (every (lambda (p)
+		      (and (pair? p)
+			   (list? p)
+			   (symbol? (car p))))
 		    (cdr ex)))
        'ok)
       (else

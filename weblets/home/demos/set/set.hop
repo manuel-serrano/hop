@@ -157,8 +157,8 @@
 		      "Game has already finished.")))
 	       ((or (not (string? login))
 		    (string=? "" login)
-		    (any? (lambda (player::Player)
-			     (string=? login player.login))
+		    (any (lambda (player::Player)
+			    (string=? login player.login))
 		       (with-access::Game (cdr g) (players) players)))
 		(<HTML>
 		   (<BODY>
@@ -184,8 +184,8 @@
 		   "Login is invalid")))
 	    ((or (not (string? name))
 		 (string=? "" name)
-		 (any? (lambda (g)
-			  (string=? name (car g)))
+		 (any (lambda (g)
+			 (string=? name (car g)))
 		       *games*))
 	     (<HTML>
 		(<BODY>

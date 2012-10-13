@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sun Aug 19 07:11:43 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 08:04:40 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -62,12 +62,12 @@
 ;*    hop-gzipped-directory? ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hop-gzipped-directory? abspath)
-   (any? (lambda (p)
-	    (let ((l (string-length p)))
-	       (and (>fx (string-length abspath) l)
-		    (string-prefix? p abspath)
-		    (char=? (string-ref abspath l) (file-separator)))))
-	 (hop-gzipped-directories)))
+   (any (lambda (p)
+	   (let ((l (string-length p)))
+	      (and (>fx (string-length abspath) l)
+		   (string-prefix? p abspath)
+		   (char=? (string-ref abspath l) (file-separator)))))
+      (hop-gzipped-directories)))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-get ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Jul 12 11:46:12 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:35 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -127,7 +127,7 @@
 ;*---------------------------------------------------------------------*/
 (define (weblet-features-supported? x)
    (let ((features (assq 'features x)))
-      (or (not features) (every? eval-srfi? (cadr features)))))
+      (or (not features) (every eval-srfi? (cadr features)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet-features-error-msg ...                                    */

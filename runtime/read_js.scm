@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/read_js.scm               */
+;*    serrano/prgm/project/hop/2.4.x/runtime/read_js.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Tue Feb 21 09:10:10 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:46:20 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
@@ -119,7 +119,7 @@
 	       ((null? (cdr exp))
 		(car exp))
 	       (else
-		(if (every? string? exp)
+		(if (every string? exp)
 		    (apply string-append exp)
 		    `(string-append ,@exp))))))))
 		

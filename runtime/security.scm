@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/security.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Jan 11 15:28:21 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:56 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -242,7 +242,7 @@
 	      (with-access::xml-element a2 (body)
 		 (normalize-ast body)))
 	   (xml-compare-error a1 a2)))
-      ((and (any? (lambda (a) (isa? a xml-tilde)) (dom-get-attributes a1))
+      ((and (any (lambda (a) (isa? a xml-tilde)) (dom-get-attributes a1))
 	    (pair? a2) (pair? (cdr a2)) (null? (cddr a2))
 	    (isa? (cadr a2) xml-cdata))
        (xml-compare a1 (car a2)))

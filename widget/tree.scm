@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Mar 13 08:31:57 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:48:09 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -68,7 +68,7 @@
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
 	 (set! body (cdr body)))
-      (when (any? (lambda (e) (not (xml-markup-is? e 'trbody))) body)
+      (when (any (lambda (e) (not (xml-markup-is? e 'trbody))) body)
 	 (error (if (string? id) (format "<TREE id='~a'>" id) "<TREE>")
 		"Illegal body"
 		body))

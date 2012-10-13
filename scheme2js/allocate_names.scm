@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -57,8 +57,8 @@
 	    ;; free vars might be free for surrounding too.
 	    (with-access::Execution-Unit surrounding-fun (free-vars)
 	       (for-each (lambda (var)
-			    (unless (or (any? (lambda (s) (memq var s))
-					      declared-vars-list)
+			    (unless (or (any (lambda (s) (memq var s))
+					   declared-vars-list)
 					(memq var free-vars))
 			       (cons-set! free-vars var)))
 			 this-free-vars))))))
@@ -75,7 +75,7 @@
    (with-access::Execution-Unit surrounding-fun (free-vars)
       (with-access::Ref this (var)
 	 (unless (or (eq? (with-access::Var var (kind) kind) 'this)
-		     (any? (lambda (l) (memq var l)) declared-vars-list)
+		     (any (lambda (l) (memq var l)) declared-vars-list)
 		     (memq var free-vars))
 	    (cons-set! free-vars var)))))
 ;; --------------------------------------------------------

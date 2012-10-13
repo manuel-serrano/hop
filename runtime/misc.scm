@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Wed Apr 11 05:18:12 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:45:47 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -271,7 +271,7 @@
       ((not (file-exists? path))
        #t)
       ((directory? path)
-       (when (every? delete-path (directory->path-list path))
+       (when (every delete-path (directory->path-list path))
 	  (delete-directory path)
 	  #t))
       (else

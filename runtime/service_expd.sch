@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/2.4.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Thu Jan 26 16:15:43 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:28 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -85,7 +85,7 @@
 	  (mkurl (if (and (pair? args)
 			  (list? args)
 			  (eq? (car args) #!key)
-			  (every? symbol? (cdr args)))
+			  (every symbol? (cdr args)))
 		     `(hop-apply-nice-url ,path (list ,@actuals))
 		     `(hop-apply-url ,path (list ,@actuals)))))
       `(let* ((,path ,url)

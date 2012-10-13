@@ -444,7 +444,7 @@
       (if (and (with-access::Prop-Env env (bigloo-runtime-eval?) bigloo-runtime-eval?)
 	       (isa? operator Ref)
 	       (runtime-ref? operator)
-	       (every? constant-value? operands))
+	       (every constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)
 	  ;;

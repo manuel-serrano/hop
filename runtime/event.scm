@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Sep 28 16:31:03 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:47:48 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -891,25 +891,25 @@
    (define (multipart-event-client-ready? name)
       (let ((l (hashtable-get *multipart-socket-table* name)))
 	 (and (pair? l)
-	      (any? (lambda (req)
-		       (with-access::http-request req (socket)
-			  (not (socket-down? socket))))
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
 		    l))))
    
    (define (websocket-event-client-ready? name)
       (let ((l (hashtable-get *websocket-socket-table* name)))
 	 (and (pair? l)
-	      (any? (lambda (req)
-		       (with-access::http-request req (socket)
-			  (not (socket-down? socket))))
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
 		    l))))
    
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
 	 (and (pair? l)
-	      (any? (lambda (req)
-		       (with-access::http-request req (socket)
-			  (not (socket-down? socket))))
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
 		 l))))
    
    (or (multipart-event-client-ready? name)

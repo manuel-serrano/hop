@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Mon Sep 17 12:27:02 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:43:16 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -111,7 +111,7 @@
       (vaarg-list! arguments)
       
       (unless (and (list? formals)
-		   (every? symbol? formals))
+		   (every symbol? formals))
 	 (scheme2js-error "Object-conv"
 	    "Invalid arguments-clause"
 	    arguments

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug 15 07:32:10 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 08:02:05 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -286,7 +286,7 @@
 (define-parameter hop-gzipped-directories
    (list (hop-share-directory))
    (lambda (v)
-      (if (every? string? v)
+      (if (every string? v)
 	  v
 	  (error "hop-gzipped-directories" "Illegal gzipped directory list" v))))
 

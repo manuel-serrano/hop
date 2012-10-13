@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Sep 20 15:01:22 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:46:09 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -505,9 +505,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 				       (not (xml-markup-is? x 'base)))
 				    body0))
 		     body0))
-	  (body2 (if (not (any? (lambda (x)
-				   (and (xml-markup-is? x 'meta)
-					(dom-get-attribute x "http-equiv")))
+	  (body2 (if (not (any (lambda (x)
+				  (and (xml-markup-is? x 'meta)
+				       (dom-get-attribute x "http-equiv")))
 				body0))
 		     (let ((meta (<META> :http-equiv "Content-Type"
 				    :content "~a; charset=~a")))

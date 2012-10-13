@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/scheme2js/expanders.scm           */
+;*    serrano/prgm/project/hop/2.4.x/scheme2js/expanders.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Wed Apr  4 17:06:17 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:42:55 2012 (serrano)                */
 ;*    Copyright   :  2007011-12 Florian Loitsch, Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -69,12 +69,12 @@
 
 (define (->expander x e)
    (cond
-      ((every? symbol? x)
+      ((every symbol? x)
        (loc-attach
 	  `(,(car x) ,(e (cadr x) e) ,@(cddr x))
 	  x (cdr x)))
       ((match-case x
-	  ((-> (pragma . ?-) . (? (lambda (x) (every? symbol? x)))) #t)
+	  ((-> (pragma . ?-) . (? (lambda (x) (every symbol? x)))) #t)
 	  (else #f))
        (loc-attach
 	  `(,(car x) ,(e (cadr x) e) ,@(cddr x))
@@ -189,11 +189,11 @@
    ;; we know it's of form (?- (? list?) . ?-)
    (let* ((bindings (cadr x))
 	  (body (cddr x)))
-      (unless (every? (lambda (b)
-			 (and (pair? b)
-			      (pair? (cdr b))
-			      (null? (cddr b))
-			      (symbol? (car b))))
+      (unless (every (lambda (b)
+			(and (pair? b)
+			     (pair? (cdr b))
+			     (null? (cddr b))
+			     (symbol? (car b))))
 		      bindings)
 	 (scheme2js-error "let expand"
 			  "Invalid 'let' form"

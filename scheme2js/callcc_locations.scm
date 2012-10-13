@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -165,13 +165,13 @@
 	     ;; higher-params contains a list of parameters that are treated as
 	     ;; functions. If any of them is .call/cc? then the call is unsafe.
 	     ;; The other parameters are safe (never invoked).
-	     (when (any? (lambda (param-nb)
-			    (if (>fx param-nb nb-params)
-				;; not enough arguments. This will yield an
-				;; error, but not a call/cc-call.
-				#f
-				(unsafe-param? (list-ref operands param-nb)
-				   this current-fun env)))
+	     (when (any (lambda (param-nb)
+			   (if (>fx param-nb nb-params)
+			       ;; not enough arguments. This will yield an
+			       ;; error, but not a call/cc-call.
+			       #f
+			       (unsafe-param? (list-ref operands param-nb)
+				  this current-fun env)))
 		      (with-access::Var var (export-desc)
 			 (with-access::Export-Desc export-desc (higher-params) higher-params)))
 		(unless (not current-fun) (mark-call/cc-fun current-fun))
@@ -209,7 +209,9 @@
    ;; as call/cc.
    ;; the surrounding function however has already been marked correctly.
    (with-access::Call/cc-Call this (verify-later-targets call/cc?)
-      (when (any? (lambda (v) (with-access::Lambda v (call/cc?) call/cc?)) verify-later-targets)
+      (when (any (lambda (v)
+		    (with-access::Lambda v (call/cc?) call/cc?))
+	       verify-later-targets)
 	 (set! call/cc? #t))))
 
 (define (shrink tree)

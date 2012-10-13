@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/hop/hop.hop               */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hop/hop.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Jun  2 07:02:46 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 08:02:43 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -268,7 +268,7 @@
 	     (cmp (hop-version) (cadr version))))
 
       (define (features-supported? features)
-	 (or (not features) (every? eval-srfi? (cadr features))))
+	 (or (not features) (every eval-srfi? (cadr features))))
       
       (or (not (cmpversion (assq 'minhop x) string>=?))
 	  (not (cmpversion (assq 'maxhop x) string<=?))

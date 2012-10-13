@@ -1965,14 +1965,6 @@ function sc_any(proc, l1, l2) {
     return false;
 }
 
-/*** META ((export any?) (arity -2)
-           (peephole (hole 2 "sc_any(" proc "," l ") !== false")))
-*/
-function sc_anyPred(proc, l) {
-    return sc_any(proc, l) !== false;
-}
-
-
 function sc_every1(proc, l) {
     var revres = null;
     var tmp = true;
@@ -2003,15 +1995,6 @@ function sc_every(proc, l1, l2) {
 	if (tmp === false) return false;
     }
     return tmp;
-}
-
-/*** META ((export every?) (arity -2)
-           (peephole (hole 2 "sc_every(" proc "," l ") !== false")))
-*/
-function sc_everyPred(proc, l) {
-    var tmp = sc_every(proc, l);
-    if (tmp !== false) return true;
-    return false;
 }
 
 /*** META ((export #t) (arity #t)

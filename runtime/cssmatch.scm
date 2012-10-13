@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/cssmatch.scm              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/cssmatch.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Mon Jun  4 15:22:15 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:46:52 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -199,10 +199,10 @@
    (with-access::css-ruleset rule (selector+)
       (let ((s (car (last-pair (car selector+)))))
 	 (with-access::css-selector s (attr*)
-	    (any? (lambda (a)
-		     (and (isa? a css-selector-pseudo)
-			  (with-access::css-selector-pseudo a (expr)
-			     (equal? expr pseudo))))
+	    (any (lambda (a)
+		    (and (isa? a css-selector-pseudo)
+			 (with-access::css-selector-pseudo a (expr)
+			    (equal? expr pseudo))))
 	       attr*)))))
 
 ;*---------------------------------------------------------------------*/
@@ -250,10 +250,10 @@
 ;*    css-media-tex? ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (css-media-tex? medium+)
-   (any? (lambda (q)
-	    (with-access::css-media-query q (operator type)
-	       (and (string=? type "tex")
-		    (or (not operator) (eq? operator 'only)))))
+   (any (lambda (q)
+	   (with-access::css-media-query q (operator type)
+	      (and (string=? type "tex")
+		   (or (not operator) (eq? operator 'only)))))
 	 medium+))
 
 ;*---------------------------------------------------------------------*/
@@ -419,7 +419,7 @@
 (define-method (css-selector-match? selector::css-selector el)
    (with-access::css-selector selector (element attr*)
       (and (or (not element) (css-selector-match? element el))
-	   (every? (lambda (a) (css-selector-match? a el)) attr*))))
+	   (every (lambda (a) (css-selector-match? a el)) attr*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-name ...                      */

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -40,7 +40,7 @@
 	    (with-access::Execution-Unit surrounding-fun (free-vars)
 	       ;; free vars could be free for surrounding fun too.
 	       (for-each (lambda (var)
-			    (unless (or (any? (lambda (s) (memq var s))
+			    (unless (or (any (lambda (s) (memq var s))
 					      visible-vars-list)
 					(memq var free-vars))
 			       (cons-set! free-vars var)))
@@ -59,8 +59,7 @@
 (define-nmethod (Ref.find-free surrounding-fun visible-vars-list)
    (with-access::Ref this (var)
       (unless (or (eq? (with-access::Var var (kind) kind) 'this)
-		  (any? (lambda (s) (memq var s))
-			visible-vars-list))
+		  (any (lambda (s) (memq var s)) visible-vars-list))
 	 (with-access::Execution-Unit surrounding-fun (free-vars)
 	    (unless (memq var free-vars)
 	       (cons-set! free-vars var)))
@@ -74,6 +73,5 @@
 	 (with-access::Var var (escapes? mutated-outside-local?)
 	    (when (and escapes?
 		       (not mutated-outside-local?) ;; already marked
-		       (not (any? (lambda (s) (memq var s))
-				  visible-vars-list)))
+		       (not (any (lambda (s) (memq var s)) visible-vars-list)))
 	       (set! mutated-outside-local? #t))))))

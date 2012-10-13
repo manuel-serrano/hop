@@ -101,7 +101,7 @@
 (define-nmethod (Begin.mark)
    (with-access::Begin this (exprs)
       (let* ((tmp (map walk exprs))
-	     (contains-stmt? (any? (lambda (x) x) tmp)))
+	     (contains-stmt? (any (lambda (x) x) tmp)))
 	 (widen!::Stmt-Begin this
 	    (stmt-exprs (and contains-stmt? tmp)))
 	 contains-stmt?)))
@@ -110,7 +110,7 @@
    (with-access::Call this (operator operands)
       (let* ((operator-tmp (walk operator))
 	     (operands-tmp (map walk operands))
-	     (operands-contain-stmt? (any? (lambda (x) x) operands-tmp))
+	     (operands-contain-stmt? (any (lambda (x) x) operands-tmp))
 	     (call-contains-stmt? (or operator-tmp operands-contain-stmt?)))
 	 (widen!::Stmt-Call this
 	    (stmt-operator? operator-tmp)

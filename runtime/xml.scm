@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 10 07:07:08 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:45:56 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -915,7 +915,7 @@
    (cond
       ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
        (instantiate::xml-verbatim (body (car obj))))
-      ((every? string? obj)
+      ((every string? obj)
        (instantiate::xml-verbatim (body (apply string-append obj))))
       (else
        (error "<PRAGMA>" "Illegal arguments" obj))))

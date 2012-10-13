@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/arch/android/hopdroid/tts.scm     */
+;*    serrano/prgm/project/hop/2.4.x/arch/android/hopdroid/tts.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Thu Jan 26 11:35:45 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:49:00 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
@@ -112,7 +112,7 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-locale-set! t::androidtts locale)
    (with-access::androidtts t (phone %mutex %open)
-      (if (and (list? locale) (every? string? locale))
+      (if (and (list? locale) (every string? locale))
 	  (with-lock %mutex
 	     (lambda ()
 		(when %open
@@ -124,7 +124,7 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-locale-check t::androidtts locale)
    (with-access::androidtts t (phone %mutex %open)
-      (if (and (list? locale) (every? string? locale))
+      (if (and (list? locale) (every string? locale))
 	  (with-lock %mutex
 	     (lambda ()
 		(when %open

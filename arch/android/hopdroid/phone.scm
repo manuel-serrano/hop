@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue Sep 18 16:47:45 2012 (serrano)                */
+;*    Last change :  Sat Oct 13 07:48:51 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -98,7 +98,7 @@
 (define-method (phone-current-locale-set! p::androidphone l)
    (unless locale-plugin
       (set! locale-plugin (android-load-plugin p "locale")))
-   (if (and (list? l) (every? string? l))
+   (if (and (list? l) (every string? l))
        (android-send-command p locale-plugin #\s l)
        (error "phone-current-locale-set!" "Illegal locale" l)))
 
