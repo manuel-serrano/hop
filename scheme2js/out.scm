@@ -269,16 +269,6 @@
 (define (compile-value obj p host-compiler host-register loc)
    (let ((cache (register-value obj host-register)))
       (when (pair? cache)
-;* 	 (tprint                                                       */
-;* 	    (call-with-output-string                                   */
-;* 	       (lambda (p)                                             */
-;* 		  (let ((cache (register-value obj host-register)))    */
-;* 		     (let ((len (length cache)))                       */
-;* 			(display "sc_circle(" p)                       */
-;* 			(display len p)                                */
-;* 			(display ", function( cache ) { return " p))   */
-;* 		     (compile-value-circle obj p host-compiler loc cache) */
-;* 		     (display ";})" p)))))                             */
 	 (let ((len (length cache)))
 	    (display "sc_circle(" p)
 	    (display len p)
@@ -377,6 +367,26 @@
 		 (separated ", " 
 		    (lambda (e) "~e" (compile e p))
 		    val))))
+	 ((u8vector? val)
+	  (fprintf p "new Uint8Array([ ~(,) ])" (u8vector->list val)))
+	 ((s8vector? val)
+	  (fprintf p "new Int8Array([ ~(,) ])" (s8vector->list val)))
+	 ((u16vector? val)
+	  (fprintf p "new Uint16Array([ ~(,) ])" (u16vector->list val)))
+	 ((s16vector? val)
+	  (fprintf p "new Int16Array([ ~(,) ])" (s16vector->list val)))
+	 ((u32vector? val)
+	  (fprintf p "new Uint32Array([ ~(,) ])" (u32vector->list val)))
+	 ((s32vector? val)
+	  (fprintf p "new Int32Array([ ~(,) ])" (s32vector->list val)))
+	 ((u64vector? val)
+	  (fprintf p "new Uint64Array([ ~(,) ])" (u64vector->list val)))
+	 ((s64vector? val)
+	  (fprintf p "new Int64Array([ ~(,) ])" (s64vector->list val)))
+	 ((f32vector? val)
+	  (fprintf p "new Float32Array([ ~(,) ])" (f32vector->list val)))
+	 ((f64vector? val)
+	  (fprintf p "new Float64Array([ ~(,) ])" (f64vector->list val)))
 	 (else
 	  (host-compiler val p compile))))
 

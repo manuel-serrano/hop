@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Sep 19 14:38:36 2012 (serrano)                */
+/*    Last change :  Sun Oct 14 18:59:21 2012 (serrano)                */
 /*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -22,6 +22,14 @@ hop_serialize_context.key = 1;
 /*    object serialization                                             */
 /*---------------------------------------------------------------------*/
 sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
+Int8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s8vector;
+Uint8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u8vector;
+Int16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s16vector;
+Uint16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u16vector;
+Int32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s32vector;
+Uint32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u32vector;
+Float32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f32vector;
+Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
@@ -79,15 +87,15 @@ function hop_bigloo_serialize_context( item ) {
       return "%23" + hop_serialize_word( item.hop_serialize_context_def );
    }
 
+   if( item && ("hop_bigloo_serialize" in item) ) {
+      return hop_bigloo_serialize_custom( item );
+   }
+
    if( item instanceof Array )
       return hop_serialize_array( item );
    
    if( item instanceof Date )
       return hop_serialize_date( item );
-
-   if( item && ("hop_bigloo_serialize" in item) ) {
-      return hop_bigloo_serialize_custom( item );
-   }
 
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
@@ -212,23 +220,21 @@ function hop_size_of_word( word ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_serialize_word ...                                           */
+/*    hop_serialize_word_size ...                                      */
 /*---------------------------------------------------------------------*/
-function hop_serialize_word( word ) {
-   var s = hop_size_of_word( word );
-
-   if( s == 0 ) {
+function hop_serialize_word_size( word, size ) {
+   if( size == 0 ) {
       return "%00";
    } else {
-      var i1 = (s >> 4);
-      var i2 = (s & 0xf);
+      var i1 = (size >> 4);
+      var i2 = (size & 0xf);
       var c1 = i1 + ((i1 < 10) ? 48 : 55);
       var c2 = i2 + ((i2 < 10) ? 48 : 55);
       var rw = String.fromCharCode( 37, c1, c2 );
 
-      s--;
-      while( s >= 0 ) {
-         var c = ((word >> (s << 3)) & 0xff);
+      size--;
+      while( size >= 0 ) {
+         var c = ((word >> (size << 3)) & 0xff);
 
          if( (c >= 46) && (c < 127) ) {
 	    if( c == 92 )
@@ -251,11 +257,18 @@ function hop_serialize_word( word ) {
             rw += String.fromCharCode( 37, c1, c2 );
          }
          
-         s--;
+         size--;
       }
 
       return rw;
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_serialize_word ...                                           */
+/*---------------------------------------------------------------------*/
+function hop_serialize_word( word ) {
+   return hop_serialize_word_size( word, hop_size_of_word( word ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -408,6 +421,113 @@ function hop_serialize_array( item ) {
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_hvector ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_hvector( item, tag, size ) {
+   var l = item.length;
+   var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
+   var i;
+
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
+   for( i = 0; i < l; i++ ) {
+      ra += hop_serialize_word_size( item[ i ], size );
+   }
+
+   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_fvector ...                                 */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_fvector( item, tag, size ) {
+   var l = item.length;
+   var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
+   var i;
+
+   item.hop_serialize_context_key = hop_serialize_context.key;
+   item.hop_serialize_context_def = hop_serialize_context.def++;
+
+   for( i = 0; i < l; i++ ) {
+      var s = item[ i ].toString();
+      ra += hop_serialize_word( s.length ) + s;
+   }
+
+   return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_s8vector ...                                */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_s8vector() {
+   return hop_bigloo_serialize_hvector( this, 's8', 1 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_u8vector ...                                */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_u8vector() {
+   return hop_bigloo_serialize_hvector( this, 'u8', 1 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_s16vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_s16vector() {
+   return hop_bigloo_serialize_hvector( this, 's16', 2 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_u16vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_u16vector() {
+   return hop_bigloo_serialize_hvector( this, 'u16', 2 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_s32vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_s32vector() {
+   return hop_bigloo_serialize_hvector( this, 's32', 4 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_u32vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_u32vector() {
+   return hop_bigloo_serialize_hvector( this, 'u32', 4 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_s64vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_s64vector() {
+   return hop_bigloo_serialize_hvector( this, 's64', 8 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_u64vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_u64vector() {
+   return hop_bigloo_serialize_hvector( this, 'u64', 8 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_f32vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_f32vector() {
+   return hop_bigloo_serialize_fvector( this, 'f32', 4 );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_f64vector ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_f64vector() {
+   return hop_bigloo_serialize_fvector( this, 'f64', 8 );
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_date ...                                           */
 /*---------------------------------------------------------------------*/
