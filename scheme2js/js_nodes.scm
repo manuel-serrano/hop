@@ -12,131 +12,131 @@
 
 (module js-nodes
    (export
-    (abstract-class Node)
-    (final-class Program::Node
-       body::Node)
-    (final-class Block::Node
+    (abstract-class JsNode)
+    (final-class JsProgram::JsNode
+       body::JsNode)
+    (final-class JsBlock::JsNode
        stmts::pair-nil)
-    (class Ref::Node
+    (class JsRef::JsNode
        id::symbol)
-    (final-class This::Node)
-    (final-class Decl::Ref)
-    (final-class Var-Decl-List::Node ;; can be used as stmt and expression
-       vars::pair-nil) ;; list of Nodes. might be Vassigs.
-    (final-class NOP::Node)
-    (final-class If::Node
-       test::Node
-       then::Node
-       else::Node)
-    (final-class For::Node
+    (final-class JsThis::JsNode)
+    (final-class JsDecl::JsRef)
+    (final-class JsVar-Decl-List::JsNode ;; can be used as stmt and expression
+       vars::pair-nil) ;; list of JsNodes. might be Vassigs.
+    (final-class JsNOP::JsNode)
+    (final-class JsIf::JsNode
+       test::JsNode
+       then::JsNode
+       else::JsNode)
+    (final-class JsFor::JsNode
        init ;; might be #f
        test ;; might be #f
        incr ;; might be #f
-       body::Node)
-    (final-class For-In::Node
-       lhs::Node
-       obj::Node
-       body::Node)
-    (final-class While::Node
-       test::Node
-       body::Node)
-    (final-class Do::Node
-       body::Node
-       test::Node)
-    (final-class Continue::Node
+       body::JsNode)
+    (final-class JsFor-In::JsNode
+       lhs::JsNode
+       obj::JsNode
+       body::JsNode)
+    (final-class JsWhile::JsNode
+       test::JsNode
+       body::JsNode)
+    (final-class JsDo::JsNode
+       body::JsNode
+       test::JsNode)
+    (final-class JsContinue::JsNode
        id)
-    (final-class Break::Node
+    (final-class JsBreak::JsNode
        id)
-    (final-class Return::Node
+    (final-class JsReturn::JsNode
        val)
-    (final-class With::Node
-       obj::Node
-       body::Node)
-    (final-class Switch::Node
-       key::Node
+    (final-class JsWith::JsNode
+       obj::JsNode
+       body::JsNode)
+    (final-class JsSwitch::JsNode
+       key::JsNode
        cases::pair-nil)
-    (final-class Case::Node
-       expr::Node
-       body::Node)
-    (final-class Default::Node
-       body::Node)
-    (final-class Throw::Node
-       expr::Node)
-    (final-class Try::Node
-       body::Node
+    (final-class JsCase::JsNode
+       expr::JsNode
+       body::JsNode)
+    (final-class JsDefault::JsNode
+       body::JsNode)
+    (final-class JsThrow::JsNode
+       expr::JsNode)
+    (final-class JsTry::JsNode
+       body::JsNode
        catch
        finally)
-    (final-class Catch::Node
-       exception::Param
-       body::Node)
-    (final-class Labeled::Node
+    (final-class JsCatch::JsNode
+       exception::JsParam
+       body::JsNode)
+    (final-class JsLabeled::JsNode
        id::symbol
-       body::Node)
+       body::JsNode)
     ;; Fun-Binding is a stmt even though it inherits from Vassig
-    (final-class Fun-Binding::Vassig)
+    (final-class JsFun-Binding::JsVassig)
 
     ;; Expressions ---------------------------------------------------
-    (class Assig::Node
-       lhs::Node
-       rhs::Node)
-    (class Assig-op::Assig
+    (class JsAssig::JsNode
+       lhs::JsNode
+       rhs::JsNode)
+    (class JsAssig-op::JsAssig
        op::symbol)
-    (class Vassig::Assig)
-    (final-class Accsig::Assig)
-    (final-class Vassig-op::Assig-op)
-    (final-class Accsig-op::Assig-op)
-    (final-class Init::Vassig)
-    (final-class Param::Ref)
-    (final-class Named-Fun::Node
-       name::Node
-       fun::Fun)
-    (final-class Fun::Node
+    (class JsVassig::JsAssig)
+    (final-class JsAccsig::JsAssig)
+    (final-class JsVassig-op::JsAssig-op)
+    (final-class JsAccsig-op::JsAssig-op)
+    (final-class JsInit::JsVassig)
+    (final-class JsParam::JsRef)
+    (final-class JsNamed-Fun::JsNode
+       name::JsNode
+       fun::JsFun)
+    (final-class JsFun::JsNode
        params::pair-nil ;; of Param
-       body::Node)
-    (final-class Sequence::Node
+       body::JsNode)
+    (final-class JsSequence::JsNode
        exprs::pair-nil)
-    (final-class Cond::Node
-       test::Node
-       then::Node
-       else::Node)
-    (final-class Binary::Node ;; could inherit from calls.
-       lhs::Node
+    (final-class JsCond::JsNode
+       test::JsNode
+       then::JsNode
+       else::JsNode)
+    (final-class JsBinary::JsNode ;; could inherit from calls.
+       lhs::JsNode
        op::symbol
-       rhs::Node)
-    (final-class Unary::Node ;; could inherit from calls
+       rhs::JsNode)
+    (final-class JsUnary::JsNode ;; could inherit from calls
        op::symbol
-       expr::Node)
-    (final-class Postfix::Node ;; could inherit from calls
-       expr::Node
+       expr::JsNode)
+    (final-class JsPostfix::JsNode ;; could inherit from calls
+       expr::JsNode
        op::symbol)
-    (final-class New::Node
-       class::Node
+    (final-class JsNew::JsNode
+       class::JsNode
        args::pair-nil)
-    (final-class Access::Node
-       obj::Node
-       field::Node)
-    (final-class Call::Node
-       fun::Node
+    (final-class JsAccess::JsNode
+       obj::JsNode
+       field::JsNode)
+    (final-class JsCall::JsNode
+       fun::JsNode
        args::pair-nil)
-    (final-class Pragma::Node
+    (final-class JsPragma::JsNode
        str::bstring
        args::pair-nil)
-    (final-class Array::Node
+    (final-class JsArray::JsNode
        els::pair-nil
        len::bint)
-    (final-class Array-Element::Node
+    (final-class JsArray-Element::JsNode
        index::bint
-       expr::Node)
-    (final-class Obj-Init::Node
+       expr::JsNode)
+    (final-class JsObj-Init::JsNode
        inits::pair-nil)
-    (final-class Property-Init::Node
+    (final-class JsProperty-Init::JsNode
        name
-       val::Node)
-    (abstract-class Literal::Node
+       val::JsNode)
+    (abstract-class JsLiteral::JsNode
        val)
-    (final-class String::Literal) ;; val includes the delimiting chars (' or ")
-    (final-class Number::Literal) ;; number is in string-form
-    (final-class Undefined::Literal)
-    (final-class Null::Literal)
-    (final-class Bool::Literal)
-    (final-class RegExp::Node pattern::bstring)))
+    (final-class JsString::JsLiteral) ;; val includes the delimiting chars (' or ")
+    (final-class JsNumber::JsLiteral) ;; number is in string-form
+    (final-class JsUndefined::JsLiteral)
+    (final-class JsNull::JsLiteral)
+    (final-class JsBool::JsLiteral)
+    (final-class JsRegExp::JsNode pattern::bstring)))

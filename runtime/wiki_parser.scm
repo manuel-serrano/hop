@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Mon Aug 20 11:33:37 2012 (serrano)                */
+;*    Last change :  Sun Oct 14 20:34:23 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -26,16 +26,16 @@
 	    __hop_wiki-syntax
 	    __hop_svg)
 
-   (static  (class state
+   (static  (class WikiState
 	       markup::symbol
 	       syntax::procedure
 	       (expr::pair-nil (default '()))
 	       (attr::pair-nil (default '()))
 	       value::obj)
-	    (class expr::state)
-	    (class block::state
+	    (class WikiExpr::WikiState)
+	    (class WikiBlock::WikiState
 	       (is-subblock read-only (default #f)))
-	    (class plugin::state))
+	    (class plugin::WikiState))
 
    (include "wiki_syntax.sch"
 	    "wiki_parser.sch")
@@ -255,7 +255,7 @@
       ;; result and expression
       (define (add-expr! str)
 	 (if (pair? state)
-	     (with-access::state (car state) (expr)
+	     (with-access::WikiState (car state) (expr)
 		(set! expr (cons str expr)))
 	     (set! result (cons str result))))
 
@@ -269,8 +269,8 @@
 	    (fprint (current-error-port)
 		    (make-string (length state) #\space) ">>> " st
 		    "." dbgcount " [state] "
-		    (map state-markup state)))
-	 (let ((st (instantiate::state
+		    (map WikiState-markup state)))
+	 (let ((st (instantiate::WikiState
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
@@ -283,7 +283,7 @@
 	    (fprint (current-error-port)
 		    (make-string (length state) #\space) ">>> " st
 		    "." dbgcount " [plugin] "
-		    (map state-markup state)))
+		    (map WikiState-markup state)))
 	 (let ((st (instantiate::plugin
 		      (markup st)
 		      (syntax fun)
@@ -297,8 +297,8 @@
 	    (fprint (current-error-port)
 		    (make-string (length state) #\space) ">>> " st
 		    "." dbgcount " [expr] "
-		    (map state-markup state)))
-	 (let ((st (instantiate::expr
+		    (map WikiState-markup state)))
+	 (let ((st (instantiate::WikiExpr
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
@@ -312,8 +312,8 @@
 	    (fprint (current-error-port)
 		    (make-string (length state) #\space) ">>> " st
 		    "." dbgcount " [block] "
-		    (map state-markup state)))
-	 (let ((st (instantiate::block
+		    (map WikiState-markup state)))
+	 (let ((st (instantiate::WikiBlock
 		      (markup st)
 		      (syntax fun)
 		      (expr '())
@@ -326,7 +326,7 @@
 			((procedure? condition)
 			 condition)
 			((symbol? condition)
-			 (lambda (s _) (eq? (state-markup s) condition)))
+			 (lambda (s _) (eq? (WikiState-markup s) condition)))
 			((isa? condition state)
 			 (lambda (s _) (eq? s condition)))
 			(else
@@ -338,7 +338,7 @@
 			((procedure? condition)
 			 condition)
 			((symbol? condition)
-			 (lambda (s _) (eq? (state-markup s) condition)))
+			 (lambda (s _) (eq? (WikiState-markup s) condition)))
 			((isa? condition state)
 			 (lambda (s _) (eq? s condition)))
 			(else
@@ -362,18 +362,18 @@
       
       ;; unwind the state until the stack is empty or the state is found
       (define (unwind-state! s . args)
-	 (when (and (wiki-debug?) (or (isa? s block) (wiki-debug2?)))
+	 (when (and (wiki-debug?) (or (isa? s WikiBlock) (wiki-debug2?)))
 	    (fprint (current-error-port)
 		    (make-string (max 0 (- (length state) 1)) #\space) "<<< "
-		    (when s (state-markup s)) " "
-		    (map state-markup state)))
+		    (when s (WikiState-markup s)) " "
+		    (map WikiState-markup state)))
 	 (let loop ((st state)
 		    (el #f))
 	    (if (null? st)
 		(begin
 		   (set! state '())
 		   (when el (add-expr! el)))
-		(with-access::state (car st) (markup syntax expr attr)
+		(with-access::WikiState (car st) (markup syntax expr attr)
 		   (let ((ar (reverse! (if el (cons el expr) expr))))
 		      (if (eq? s (car st))
 			  (let ((ne (apply syntax ar attr args)))
@@ -414,9 +414,9 @@
 
       (define (table-last-row-cell char leftp cs)
 	 (let ((st (in-state 'tc)))
-	    (if (state? st)
+	    (if (isa? st WikiState)
 		(let ((align (cond
-				((state-value st)
+				((WikiState-value st)
 				 (if leftp
 				     "text-align:center"
 				     "text-align: right"))
@@ -433,9 +433,9 @@
 
       (define (table-cell char leftp rightp cs)
 	 (let ((st (in-state 'tc)))
-	    (if (state? st)
+	    (if (isa? st WikiState)
 		(let ((align (cond
-				((state-value st)
+				((WikiState-value st)
 				 (if leftp
 				     "text-align:center"
 				     "text-align: right"))
@@ -512,16 +512,16 @@
 	 (let* ((c (string-ref s 0))
 		(id (if (char=? c #\*) 'ul 'ol))
 		(st (in-state (lambda (s n)
-				 (with-access::state s (markup value)
+				 (with-access::WikiState s (markup value)
 				    (and (eq? markup 'li)
 					 (=fx value val)
-					 (eq? (state-markup (car n)) id)))))))
+					 (eq? (WikiState-markup (car n)) id)))))))
 	    (if st
 		(unwind-state! st)
 		(let ((st (in-bottom-up-state
 			     (lambda (s n)
 				(when (pair? n)
-				   (with-access::state (car n) (markup value)
+				   (with-access::WikiState (car n) (markup value)
 				      (when (and (eq? markup 'li)
 						 (>=fx value val))
 					 s)))))))
@@ -557,7 +557,7 @@
        (ignore))
 
       ((bol (: (>= 2 (in " \t")) (? #\Return) #\Newline))
-       (let ((st (or (in-bottom-up-state (lambda (n _) (isa? n expr)))
+       (let ((st (or (in-bottom-up-state (lambda (n _) (isa? n WikiExpr)))
 		     (is-state? 'p))))
 	  (when st (unwind-state! st)))
        (add-expr! (the-html-substring 2 (the-length)))
@@ -568,7 +568,7 @@
        (case (the-length)
 	  ((1)
 	   ;; a blank line: end of expr
- 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
+ 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n WikiExpr)))))
 	      (cond
 		 (st
   	          (unwind-state! st))
@@ -577,8 +577,8 @@
 	  ((2)
 	   ;; two consecutive blank lines: end of block
 	   (let ((st (in-state (lambda (n _)
-				  (and (isa? n block)
-				       (not (block-is-subblock n)))))))
+				  (and (isa? n WikiBlock)
+				       (not (WikiBlock-is-subblock n)))))))
 	      (when st (unwind-state! st))))
 	  (else
 	   (unwind-state! #f)))
@@ -590,7 +590,7 @@
        (case (the-length)
 	  ((2)
 	   ;; a blank line: end of expr
- 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n expr)))))
+ 	   (let ((st (in-bottom-up-state (lambda (n _) (isa? n WikiExpr)))))
 	      (cond
 		 (st
   	          (unwind-state! st))
@@ -599,8 +599,8 @@
 	  ((4)
 	   ;; two consecutive blank lines: end of block
 	   (let ((st (in-state (lambda (n _)
-				  (and (isa? n block)
-				       (not (block-is-subblock n)))))))
+				  (and (isa? n WikiBlock)
+				       (not (WikiBlock-is-subblock n)))))))
 	      (when st (unwind-state! st))))
 	  (else
 	   (unwind-state! #f)))
@@ -667,7 +667,7 @@
 			    (else (wiki-syntax-section5 syn))))
 		     (st (or (in-bottom-up-state
 			      (lambda (s _)
-				 (with-access::state s (markup value)
+				 (with-access::WikiState s (markup value)
 				    (and (eq? markup 'section)
 					 (>=fx value lv)))))
 			     (in-state
@@ -677,7 +677,7 @@
 				    (when (pair? n)
 				       (if (isa? s plugin)
 					   (loop (car n) (cdr n))
-					   (with-access::state (car n)
+					   (with-access::WikiState (car n)
 						 (markup value)
 					      (and (eq? markup 'section)
 						   (<fx value lv)))))))))))
@@ -915,7 +915,7 @@
 		     (proc ((wiki-syntax-plugins syn) id)))
 		 (if (procedure? proc)
 		     (let ((st (in-state id)))
-			(if (isa? st (@ state __hop_wiki-parser))
+			(if (isa? st WikiState)
 			    (unwind-state! st)
 			    (add-expr! (the-html-string))))
 		     (add-expr! (the-html-string)))

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -20,7 +20,7 @@
 	   free-vars
 	   captured-vars)
    (static (wide-class Call/cc-Let::Let)
-	   (wide-class Call/cc-Lambda::Lambda)
+	   (wide-class Scope-Call/cc-Lambda::Lambda)
 	   (wide-class Call/cc-Tail-rec::Tail-rec
 	      contains-call/cc?::bool
 	      modified-vars::pair-nil)
@@ -305,7 +305,7 @@
 		      (hashtable-put! ht var this))
 		   scope-vars)
 	 (default-walk this (list this) ht)
-	 (when (isa? this Call/cc-Lambda)
+	 (when (isa? this Scope-Call/cc-Lambda)
 	    (for-each (lambda (var)
 			 (with-access::Scope-Var var (call/cc-when-alive?)
 			    (set! call/cc-when-alive? #t)))
@@ -389,7 +389,7 @@
    (when (with-access::Call this (call/cc?) call/cc?)
       (for-each (lambda (scope)
 		   (cond
-		      ((isa? scope Lambda) (widen!::Call/cc-Lambda scope))
+		      ((isa? scope Lambda) (widen!::Scope-Call/cc-Lambda scope))
 		      ((isa? scope Let) (widen!::Call/cc-Let scope))
 		      ((isa? scope Call/cc-Tail-rec)
 		       (with-access::Call/cc-Tail-rec scope (contains-call/cc?)
@@ -409,7 +409,7 @@
 		      ;; are in the bindings-part of a 'let').
 		      ;; -> the variable can not be '.modified-after-call/cc?'.
 		      'do-nothing)
-		     ((or (isa? scope Call/cc-Lambda)
+		     ((or (isa? scope Scope-Call/cc-Lambda)
 			  (isa? scope Call/cc-Let))
 		      ;; there was already a call/cc in the scope of the var
 		      (set! modified-after-call/cc? #t))

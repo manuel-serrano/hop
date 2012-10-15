@@ -19,7 +19,7 @@
 	   walk
 	   verbose
 	   gen-js)
-   (static (final-class Env
+   (static (final-class Letrec-Env
 	      (call/cc?::bool read-only)))
    (export (letrec-expansion! tree::Module)))
 
@@ -72,7 +72,7 @@
 
 (define (letrec-expansion! tree)
    (verbose "letrec-expansion")
-   (letrec-expand tree (instantiate::Env (call/cc? (config 'call/cc)))))
+   (letrec-expand tree (instantiate::Letrec-Env (call/cc? (config 'call/cc)))))
 
 (define-nmethod (Node.letrec-expand)
    (default-walk this))
@@ -93,7 +93,7 @@
       (set! body (defines->letrec! body))
       (default-walk this)
       (when (and (eq? kind 'letrec)
-		 (with-access::Env env (call/cc?) call/cc?)
+		 (with-access::Letrec-Env env (call/cc?) call/cc?)
 		 (any (lambda (binding)
 			 (with-access::Set! binding (val)
 			    (not (letrec-constant? val))))

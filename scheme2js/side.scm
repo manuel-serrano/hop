@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -17,13 +17,13 @@
 	   export-desc
 	   walk
 	   verbose)
-   (static (class Env
+   (static (class Side-Env
 	      runtime-is-constant?::bool))
    (export (side-effect tree::Module)))
 
 (define (side-effect tree)
    (verbose "side-effect")
-   (side tree (instantiate::Env (runtime-is-constant? (config 'runtime-is-constant)))))
+   (side tree (instantiate::Side-Env (runtime-is-constant? (config 'runtime-is-constant)))))
 
 (define-nmethod (Node.side)
    (default-walk this))
@@ -33,7 +33,7 @@
       (for-each (lambda (js-var)
 		   (with-access::Var js-var (already-defined? constant? value)
 		      (set! already-defined? #t)
-		      (set! constant? (with-access::Env env (runtime-is-constant?) runtime-is-constant?))
+		      (set! constant? (with-access::Side-Env env (runtime-is-constant?) runtime-is-constant?))
 		      (set! value #f)))
 		runtime-vars)
       (for-each (lambda (js-var)

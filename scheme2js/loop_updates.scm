@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -29,7 +29,7 @@
 	      (pending? (default #f)))
 	   (class Shallow-Env
 	      escaping-vars)
-	   (class List-Box
+	   (class Loop-List-Box
 	      l::pair-nil))
    (export (loop-updates-free-order loop-vars::pair-nil assigs::pair-nil)))
 
@@ -70,9 +70,9 @@
 
       (for-each (lambda (var)
 		   (with-access::Update-Var var (new-val referenced-vars)
-		      (let ((box (instantiate::List-Box (l '()))))
+		      (let ((box (instantiate::Loop-List-Box (l '()))))
 			 (shallow-refs new-val shallow-refs-env var box)
-			 (set! referenced-vars (with-access::List-Box box (l) l)))))
+			 (set! referenced-vars (with-access::Loop-List-Box box (l) l)))))
 		vars)
       ;; fill rev-pointers.
       (for-each (lambda (var)
@@ -90,8 +90,8 @@
 		vars)))
 
 ;; traverse new values
-(define (potential-uses use-vars self-var b::List-Box)
-   (with-access::List-Box b (l)
+(define (potential-uses use-vars self-var b::Loop-List-Box)
+   (with-access::Loop-List-Box b (l)
       (for-each (lambda (v)
 		   ;; don't count self.
 		   (when (and (not (eq? v self-var))
@@ -100,9 +100,9 @@
 		      (cons-set! l v)))
 	     use-vars)))
       
-(define-nmethod (Node.shallow-refs self-var b::List-Box)
+(define-nmethod (Node.shallow-refs self-var b::Loop-List-Box)
    (default-walk this self-var b))
-(define-nmethod (Ref.shallow-refs self-var b::List-Box)
+(define-nmethod (Ref.shallow-refs self-var b::Loop-List-Box)
    (with-access::Ref this (var)
       (potential-uses (list var) self-var b)))
 (define-nmethod (Call.shallow-refs self-var b)

@@ -13,7 +13,7 @@
 (module js-parser
    (import js-nodes
 	   js-lexer)
-   (export (parse::Node port::input-port next-pragma::procedure)))
+   (export (parse::JsNode port::input-port next-pragma::procedure)))
 
 (define (my-error ip msg obj token)
    (let ((l (read-line ip)))
@@ -101,13 +101,13 @@
       (eq? (peek-token-type) 'EOF))
    
    (define (program)
-      (instantiate::Program
+      (instantiate::JsProgram
 	 (body (source-elements))))
    
    (define (source-elements)
       (let loop ((rev-ses '()))
 	 (if (eof?)
-	     (instantiate::Block
+	     (instantiate::JsBlock
 		(stmts (reverse! rev-ses)))
 	     (loop (cons (source-element) rev-ses)))))
 
@@ -143,7 +143,7 @@
 	 (case (peek-token-type)
 	    ((RBRACE)
 	     (consume-any!)
-	     (instantiate::Block (stmts (reverse! rev-stats))))
+	     (instantiate::JsBlock (stmts (reverse! rev-stats))))
 	    ;; errors will be handled in the statemente-clause
 	    (else (loop (cons (statement) rev-stats))))))
    
@@ -153,7 +153,7 @@
 	 (case (peek-token-type)
 	    ((SEMICOLON) (if (not in-for-init?)
 			     (consume-any!))
-			 (instantiate::Var-Decl-List
+			 (instantiate::JsVar-Decl-List
 			    (vars (reverse! rev-vars))))
 	    ((COMMA) (consume-any!)
 		     (loop (cons (var in-for-init?) rev-vars)))
@@ -163,12 +163,12 @@
 				"in"
 				(peek-token)))
 		     (else
-		      (instantiate::Var-Decl-List
+		      (instantiate::JsVar-Decl-List
 			 (vars rev-vars)))))
 	    (else (if (and (not in-for-init?)
 			   (or (at-new-line-token?)
 			       (eq? (peek-token-type) 'EOF)))
-		      (instantiate::Var-Decl-List
+		      (instantiate::JsVar-Decl-List
 			 (vars (reverse! rev-vars)))
 		      (let ((t (consume-any!)))
 			 (my-error input-port "unexpected token, error or EOF"
@@ -180,14 +180,14 @@
 	 (case (peek-token-type)
 	    ((=) (consume-any!)
 		 (let ((expr (assig-expr in-for-init?)))
-		    (instantiate::Init
-		       (lhs (instantiate::Decl (id id)))
+		    (instantiate::JsInit
+		       (lhs (instantiate::JsDecl (id id)))
 		       (rhs expr))))
-	    (else (instantiate::Decl (id id))))))
+	    (else (instantiate::JsDecl (id id))))))
 
    (define (empty-statement)
       (consume! 'SEMICOLON)
-      (instantiate::NOP))
+      (instantiate::JsNOP))
 
    (define (iff)
       (consume-any!) ;; the 'if'
@@ -198,14 +198,14 @@
 	    (case (peek-token-type)
 	       ((else) (consume-any!)
 		       (let ((else (statement)))
-			  (instantiate::If
+			  (instantiate::JsIf
 			     (test test)
 			     (then then)
 			     (else else))))
-	       (else (instantiate::If
+	       (else (instantiate::JsIf
 			(test test)
 			(then then)
-			(else (instantiate::NOP))))))))
+			(else (instantiate::JsNOP))))))))
 
    (define (iteration)
       (case (peek-token-type)
@@ -239,7 +239,7 @@
 			(else (expression #f)))))
 	    (consume! 'RPAREN)
 	    (let* ((body (statement)))
-	       (instantiate::For
+	       (instantiate::JsFor
 		  (init init)
 		  (test test)
 		  (incr incr)
@@ -254,26 +254,26 @@
 	    (ignore-RPAREN (consume! 'RPAREN))
 	    (body (statement)))
 	 (cond
-	    ((isa? lhs Var-Decl-List)
-	     (let ((lhs-vars (with-access::Var-Decl-List lhs (vars) vars)))
+	    ((isa? lhs JsVar-Decl-List)
+	     (let ((lhs-vars (with-access::JsVar-Decl-List lhs (vars) vars)))
 		(unless (null? (cdr lhs-vars))
 		   (my-error input-port "Only one variable allowed in 'for ... in' loop"
-			     (with-access::Ref (cadr lhs-vars) (id) id)
+			     (with-access::JsRef (cadr lhs-vars) (id) id)
 			     error-token))
-		(instantiate::For-In
+		(instantiate::JsFor-In
 		   (lhs lhs)
 		   (obj obj)
 		   (body body))))
-	    ((or (isa? lhs Sequence)
-		 (isa? lhs Assig)
-		 (isa? lhs Binary)
-		 (isa? lhs Unary)
-		 (isa? lhs Postfix))
+	    ((or (isa? lhs JsSequence)
+		 (isa? lhs JsAssig)
+		 (isa? lhs JsBinary)
+		 (isa? lhs JsUnary)
+		 (isa? lhs JsPostfix))
 	     (my-error input-port "Bad left-hand side in 'for ... in' loop construct"
 		       (class-name (object-class lhs))
 		       error-token))
 	    (else
-	     (instantiate::For-In
+	     (instantiate::JsFor-In
 		(lhs lhs)
 		(obj obj)
 		(body body))))))
@@ -284,7 +284,7 @@
       (let ((test (expression #f)))
 	 (consume! 'RPAREN)
 	 (let ((body (statement)))
-	    (instantiate::While
+	    (instantiate::JsWhile
 	       (test test)
 	       (body body)))))
 
@@ -296,7 +296,7 @@
 	 (let ((test (expression #f)))
 	    (consume! 'RPAREN)
 	    (consume-statement-semicolon!)
-	    (instantiate::Do
+	    (instantiate::JsDo
 	       (body body)
 	       (test test)))))
 
@@ -306,10 +306,10 @@
 	       (not (at-new-line-token?)))
 	  (let ((id (consume! 'ID)))
 	     (consume-statement-semicolon!)
-	     (instantiate::Continue (id id)))
+	     (instantiate::JsContinue (id id)))
 	  (begin
 	     (consume-statement-semicolon!)
-	     (instantiate::Continue (id #f)))))
+	     (instantiate::JsContinue (id #f)))))
 
    (define (break)
       (consume! 'break)
@@ -317,10 +317,10 @@
 	       (not (at-new-line-token?)))
 	  (let ((id (consume! 'ID)))
 	     (consume-statement-semicolon!)
-	     (instantiate::Break (id id)))
+	     (instantiate::JsBreak (id id)))
 	  (begin
 	     (consume-statement-semicolon!)
-	     (instantiate::Break (id #f)))))
+	     (instantiate::JsBreak (id #f)))))
 
    (define (return)
       (consume! 'return)
@@ -328,10 +328,10 @@
 	      (at-new-line-token?))
 	  (begin
 	     (consume-statement-semicolon!)
-	     (instantiate::Return (val #f)))
+	     (instantiate::JsReturn (val #f)))
 	  (let ((expr (expression #f)))
 	     (consume-statement-semicolon!)
-	     (instantiate::Return (val expr)))))
+	     (instantiate::JsReturn (val expr)))))
 
    (define (with)
       (consume! 'with)
@@ -339,7 +339,7 @@
       (let ((expr (expression #f)))
 	 (consume! 'RPAREN)
 	 (let ((body (statement)))
-	    (instantiate::With
+	    (instantiate::JsWith
 	       (obj expr)
 	       (body body)))))
 
@@ -349,7 +349,7 @@
       (let ((key (expression #f)))
 	 (consume! 'RPAREN)
 	 (let ((cases (case-block)))
-	    (instantiate::Switch
+	    (instantiate::JsSwitch
 	       (key key)
 	       (cases cases)))))
 
@@ -374,21 +374,21 @@
       (let ((expr (expression #f)))
 	 (consume! ':)
 	 (let ((body (switch-clause-statements)))
-	    (instantiate::Case
+	    (instantiate::JsCase
 	       (expr expr)
 	       (body body)))))
    
    (define (default-clause)
       (consume! 'default)
       (consume! ':)
-      (instantiate::Default
+      (instantiate::JsDefault
 	 (body (switch-clause-statements))))
 
    (define (switch-clause-statements)
       (let loop ((rev-stats '()))
 	 (case (peek-token-type)
 	    ((RBRACE EOF ERROR default case)
-	     (instantiate::Block
+	     (instantiate::JsBlock
 		(stmts (reverse! rev-stats))))
 	    (else (loop (cons (statement) rev-stats))))))
    
@@ -398,7 +398,7 @@
 	 (error "throw must have a value" #f (peek-token)))
       (let ((expr (expression #f)))
 	 (consume-statement-semicolon!)
-	 (instantiate::Throw
+	 (instantiate::JsThrow
 	    (expr expr))))
 
    (define (trie)
@@ -410,7 +410,7 @@
 		(set! catch-part (catch)))
 	    (if (eq? (peek-token-type) 'finally)
 		(set! finally-part (finally)))
-	    (instantiate::Try
+	    (instantiate::JsTry
 	       (body body)
 	       (catch catch-part)
 	       (finally finally-part)))))
@@ -423,8 +423,8 @@
 	 (let ((body (block)))
 	    ;; not sure, if 'Param' is a really good choice.
 	    ;; we'll see...
-	    (instantiate::Catch
-	       (exception (instantiate::Param (id id)))
+	    (instantiate::JsCatch
+	       (exception (instantiate::JsParam (id id)))
 	       (body body)))))
 
    (define (finally)
@@ -448,7 +448,7 @@
    (define (labeled)
       (let ((id (consume! 'ID)))
 	 (consume! ':)
-	 (instantiate::Labeled
+	 (instantiate::JsLabeled
 	    (id id)
 	    (body (statement)))))
 
@@ -467,14 +467,14 @@
 	     (params (params))
 	     (body (fun-body)))
 	 (if declaration?
-	     (instantiate::Fun-Binding
-		(lhs (instantiate::Decl (id id)))
-		(rhs (instantiate::Fun  (params params) (body body))))
+	     (instantiate::JsFun-Binding
+		(lhs (instantiate::JsDecl (id id)))
+		(rhs (instantiate::JsFun  (params params) (body body))))
 	     (if id
-		 (instantiate::Named-Fun
-		    (name (instantiate::Decl (id id)))
-		    (fun (instantiate::Fun  (params params) (body body))))
-		 (instantiate::Fun (params params) (body body))))))
+		 (instantiate::JsNamed-Fun
+		    (name (instantiate::JsDecl (id id)))
+		    (fun (instantiate::JsFun (params params) (body body))))
+		 (instantiate::JsFun (params params) (body body))))))
    
    (define (params)
       (consume! 'LPAREN)
@@ -482,11 +482,11 @@
 	  (begin
 	     (consume-any!)
 	     '())
-	  (let loop ((rev-params (list (instantiate::Param (id (consume! 'ID))))))
+	  (let loop ((rev-params (list (instantiate::JsParam (id (consume! 'ID))))))
 	     (if (eq? (peek-token-type) 'COMMA)
 		 (begin
 		    (consume-any!)
-		    (loop (cons (instantiate::Param (id (consume! 'ID)))
+		    (loop (cons (instantiate::JsParam (id (consume! 'ID)))
 				rev-params)))
 		 (begin
 		    (consume! 'RPAREN)
@@ -498,7 +498,7 @@
 	 (if (eq? (peek-token-type) 'RBRACE)
 	     (begin
 		(consume-any!)
-		(instantiate::Block (stmts (reverse! rev-ses))))
+		(instantiate::JsBlock (stmts (reverse! rev-ses))))
 	     (loop (cons (source-element) rev-ses)))))
 
    (define (expression in-for-init?)
@@ -510,7 +510,7 @@
 		   (loop (cons (assig-expr in-for-init?) rev-exprs)))
 		(if (null? (cdr rev-exprs))
 		    (car rev-exprs)
-		    (instantiate::Sequence (exprs (reverse! rev-exprs))))))))
+		    (instantiate::JsSequence (exprs (reverse! rev-exprs))))))))
 
    (define (assig-operator? x)
       (case x
@@ -532,21 +532,21 @@
 		    (rhs (assig-expr in-for-init?)))
 		;; TODO: weed out bad lhs exprs
 		(cond
-		   ((and (eq? op '=) (isa? expr Access))
-		    (instantiate::Accsig
+		   ((and (eq? op '=) (isa? expr JsAccess))
+		    (instantiate::JsAccsig
 		       (lhs expr)
 		       (rhs rhs)))
 		   ((eq? op '=)
-		    (instantiate::Vassig
+		    (instantiate::JsVassig
 		       (lhs expr)
 		       (rhs rhs)))
-		   ((isa? expr Access)
-		    (instantiate::Accsig-op
+		   ((isa? expr JsAccess)
+		    (instantiate::JsAccsig-op
 		       (lhs expr)
 		       (op (with-out-= op))
 		       (rhs rhs)))
 		   (else
-		    (instantiate::Vassig-op
+		    (instantiate::JsVassig-op
 		       (lhs expr)
 		       (op (with-out-= op))
 		       (rhs rhs)))))
@@ -559,7 +559,7 @@
 		    (then (assig-expr #f))
 		    (ignore-colon (consume! ':))
 		    (else (assig-expr in-for-init?)))
-		(instantiate::Cond
+		(instantiate::JsCond
 		   (test expr)
 		   (then then)
 		   (else else)))
@@ -595,7 +595,7 @@
 		      ((=fx new-level level)
 		       ;; ops are in car
 		       (let ((token-op (car (consume-any!))))
-			  (loop (instantiate::Binary
+			  (loop (instantiate::JsBinary
 				   (lhs expr)
 				   (op token-op)
 				   (rhs (binary-aux (+fx level 1)))))))
@@ -606,7 +606,7 @@
    (define (unary)
       (case (peek-token-type)
 	 ((delete void typeof ~ ! ++ -- + -)
-	  (instantiate::Unary
+	  (instantiate::JsUnary
 	     (op (car (consume-any!)))
 	     (expr (unary))))
 	 (else
@@ -618,7 +618,7 @@
 	     (case (peek-token-type)
 		((++ --)
 		 (let ((op (car (consume-any!))))
-		    (instantiate::Postfix
+		    (instantiate::JsPostfix
 		       (expr expr)
 		       (op op))))
 		(else
@@ -641,7 +641,7 @@
 		 (args (if (eq? (peek-token-type) 'LPAREN)
 			   (arguments)
 			   '())))
-	     (instantiate::New
+	     (instantiate::JsNew
 		(class class)
 		(args args)))
 	  (access-or-call (primary) #f)))
@@ -652,18 +652,18 @@
 	    ((LBRACKET) (let* ((ignore (consume-any!))
 			       (field (expression #f))
 			       (ignore-too (consume! 'RBRACKET)))
-			   (loop (instantiate::Access
+			   (loop (instantiate::JsAccess
 				    (obj expr)
 				    (field field)))))
 	    ((DOT) (let* ((ignore (consume-any!))
 			  (field (consume! 'ID))
 			  (field-str (format "'~a'" field)))
-		      (loop (instantiate::Access
+		      (loop (instantiate::JsAccess
 			       (obj expr)
-			       (field (instantiate::String
+			       (field (instantiate::JsString
 					 (val field-str)))))))
 	    ((LPAREN) (if call-allowed?
-			  (loop (instantiate::Call
+			  (loop (instantiate::JsCall
 				   (fun expr)
 				   (args (arguments))))
 			  expr))
@@ -689,8 +689,8 @@
 	 ((PRAGMA) (js-pragma))
 	 ((function) (function-expression))
 	 ((this) (consume-any!)
-		 (instantiate::This))
-	 ((ID) (instantiate::Ref (id (consume! 'ID))))
+		 (instantiate::JsThis))
+	 ((ID) (instantiate::JsRef (id (consume! 'ID))))
 	 ((LPAREN) (let ((ignore (consume-any!))
 			 (expr (expression #f))
 			 (ignore-too (consume! 'RPAREN)))
@@ -698,17 +698,17 @@
 	 ((LBRACKET) (array-literal))
 	 ((LBRACE) (object-literal))
 	 ((null) (consume-any!)
-		 (instantiate::Null (val 'null)))
-	 ((true false) (instantiate::Bool (val (eq? (car (consume-any!)) 'true))))
-	 ((NUMBER) (instantiate::Number (val (consume! 'NUMBER)))) ;; still as string!
-	 ((STRING) (instantiate::String (val (consume! 'STRING))))
+		 (instantiate::JsNull (val 'null)))
+	 ((true false) (instantiate::JsBool (val (eq? (car (consume-any!)) 'true))))
+	 ((NUMBER) (instantiate::JsNumber (val (consume! 'NUMBER)))) ;; still as string!
+	 ((STRING) (instantiate::JsString (val (consume! 'STRING))))
 	 ((EOF) (my-error input-port "unexpected end of file" #f (peek-token)))
 	 ((/ /=) (let ((pattern (read-regexp (peek-token-type))))
 		    ;; consume-any *must* be after having read the reg-exp,
 		    ;; so that the read-regexp works. Only then can we remove
 		    ;; the peeked token.
 		    (consume-any!) ;; the / or /=
-		    (instantiate::RegExp (pattern pattern))))
+		    (instantiate::JsRegExp (pattern pattern))))
 	 (else
 	  (let ((t (peek-token)))
 	     (my-error input-port "unexpected token: " t t)))))
@@ -716,7 +716,7 @@
    (define (js-pragma)
       (consume! 'PRAGMA)
       (let ((prag (next-pragma!)))
-	 (instantiate::Pragma (str prag) (args '()))))
+	 (instantiate::JsPragma (str prag) (args '()))))
 
    (define (array-literal)
       (consume! 'LBRACKET)
@@ -724,13 +724,13 @@
 		 (length 0))
 	 (case (peek-token-type)
 	    ((RBRACKET) (consume-any!)
-			(instantiate::Array
+			(instantiate::JsArray
 			   (els (reverse! rev-els))
 			   (len length)))
 	    ((COMMA)
 	     (consume-any!)
 	     (loop rev-els (+fx length 1)))
-	    (else (let ((array-el (instantiate::Array-Element
+	    (else (let ((array-el (instantiate::JsArray-Element
 				     (index length)
 				     (expr (assig-expr #f)))))
 		     (if (eq? (peek-token-type) 'COMMA)
@@ -740,7 +740,7 @@
 				  (+fx length 1)))
 			 (begin
 			    (consume! 'RBRACKET)
-			    (instantiate::Array
+			    (instantiate::JsArray
 			       (els (reverse! (cons array-el rev-els)))
 			       (len (+fx length 1))))))))))
 
@@ -749,18 +749,18 @@
 	 (case (peek-token-type)
 	    ;; IDs are automatically transformed to strings.
 	    ((ID)
-	     (instantiate::String
+	     (instantiate::JsString
 		(val (string-append "\""
 				    (symbol->string (consume! 'ID))
 				    "\""))))
-	    ((STRING) (instantiate::String (val (consume! 'STRING))))
-	    ((NUMBER) (instantiate::Number (val (consume! 'NUMBER))))))
+	    ((STRING) (instantiate::JsString (val (consume! 'STRING))))
+	    ((NUMBER) (instantiate::JsNumber (val (consume! 'NUMBER))))))
       
       (define (property-init)
 	 (let* ((name (property-name))
 		(ignore (consume! ':))
 		(val (assig-expr #f)))
-	    (instantiate::Property-Init
+	    (instantiate::JsProperty-Init
 	       (name name)
 	       (val val))))
       
@@ -768,12 +768,12 @@
       (if (eq? (peek-token-type) 'RBRACE)
 	  (begin
 	     (consume-any!)
-	     (instantiate::Obj-Init (inits '())))
+	     (instantiate::JsObj-Init (inits '())))
 	  (let loop ((rev-props (list (property-init))))
 	     (if (eq? (peek-token-type) 'RBRACE)
 		 (begin
 		    (consume-any!)
-		    (instantiate::Obj-Init
+		    (instantiate::JsObj-Init
 		       (inits (reverse! rev-props))))
 		 (begin
 		    (consume! 'COMMA)

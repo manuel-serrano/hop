@@ -26,7 +26,7 @@
 			      imports::pair-nil
 			      exports::pair-nil)
 	   (runtime-reference id::symbol))
-   (static (final-class Env
+   (static (final-class Symbol-Env
 	      runtime
 	      imports
 	      exports
@@ -72,7 +72,7 @@
 (define (symbol-resolution tree imports exports)
    (verbose "symbol-resolution")
    (resolve! tree
-	     (instantiate::Env
+	     (instantiate::Symbol-Env
 		(runtime (select-runtime))
 		(imports imports)
 		(exports exports)
@@ -171,12 +171,12 @@
     
 (define-nmethod (Module.resolve! symbol-table)
    (let* ((runtime-scope (make-lazy-scope
-			    (lazy-imported-lookup `((* . ,(with-access::Env env (runtime) runtime)))
+			    (lazy-imported-lookup `((* . ,(with-access::Symbol-Env env (runtime) runtime)))
 			       #f)))
 	  (imported-scope (make-lazy-scope
-			     (lazy-imported-lookup (with-access::Env env (imports) imports) #t)))
+			     (lazy-imported-lookup (with-access::Symbol-Env env (imports) imports) #t)))
 	  ;; module-scope might grow, but 'length' is just an indication. 
-	  (module-scope (make-scope (length (with-access::Env env (exports) exports))))
+	  (module-scope (make-scope (length (with-access::Symbol-Env env (exports) exports))))
 	  (extended-symbol-table (cons* module-scope
 				    imported-scope
 				    runtime-scope
@@ -193,14 +193,14 @@
       
       ;; insert exported variables
       (for-each (lambda (meta) (js-symbol-add! module-scope meta #f))
-	 (with-access::Env env (exports) exports))
+	 (with-access::Symbol-Env env (exports) exports))
       
       ;; we need to reference runtime-variables from other passes. Export
       ;; a function allowing access to them.
       (runtime-reference-init! (lambda (id::symbol)
 				  (symbol-var runtime-scope id)))
       
-      (with-access::Env env ((rs runtime-scope)
+      (with-access::Symbol-Env env ((rs runtime-scope)
 			     allow-unresolved?
 			     unbound-add!)
 	 (set! rs runtime-scope)
@@ -356,7 +356,7 @@
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
 		    symbol-table)))
-	 (with-access::Env env (allow-unresolved? unbound-add!)
+	 (with-access::Symbol-Env env (allow-unresolved? unbound-add!)
 	    (cond
 	       (v (set! var v))
 	       ((allow-unresolved? id this)
@@ -370,7 +370,7 @@
 ;; intermediate scopes).
 (define-nmethod (Runtime-Ref.resolve! symbol-table)
    (with-access::Runtime-Ref this (id var)
-      (let ((v (symbol-var (with-access::Env env (runtime-scope) runtime-scope) id)))
+      (let ((v (symbol-var (with-access::Symbol-Env env (runtime-scope) runtime-scope) id)))
 	 ;; error should never happen (programming error)
 	 (when (not v) (error "Runtime-Var-Ref.resolve!"
 			      "Internal Error: Runtime-variable not found"
@@ -412,7 +412,7 @@
 		(cond
 		   (var
 		    'do-nothing)
-		   ((with-access::Env env (export-globals) export-globals)
+		   ((with-access::Symbol-Env env (export-globals) export-globals)
 		    (let* ((js-id (mangle-JS-sym id))
 			   (desc (instantiate::Export-Desc
 				    (id id)

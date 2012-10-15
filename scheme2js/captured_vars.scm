@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -17,7 +17,7 @@
 	   free-vars
 	   side
 	   verbose)
-   (static (class Env
+   (static (class Capture-Env
 	      token::symbol)
 	   (wide-class Capture-Lambda::Lambda
 	      token::symbol))
@@ -35,7 +35,7 @@
    (verbose " collect captured")
    (free-vars tree)
    (side-effect tree)
-   (captured tree (instantiate::Env (token (gensym 'token)))))
+   (captured tree (instantiate::Capture-Env (token (gensym 'token)))))
 
 (define (clean-var v::Var)
    (with-access::Var v (captured? id)
@@ -43,7 +43,7 @@
 
 ;; cleans lambda, if it's the first time we encounter the lambda.
 (define (clean-lambda l::Lambda env)
-   (with-access::Env env (token)
+   (with-access::Capture-Env env (token)
       (unless (and (isa? l Capture-Lambda)
 		   (eq? (with-access::Capture-Lambda l (token) token) token))
 	 (widen!::Capture-Lambda l (token token))
