@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Tue Jun 12 07:09:45 2012 (serrano)                */
+;*    Last change :  Thu Oct 18 09:26:03 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -83,8 +83,9 @@
 	  =>
 	  (lambda (m) (format "~a-~a\\..*" base (cadr m))))
 	 ((string=? "*" version)
-	  => 
-	  (lambda (m) (format "~a-.+" base)))
+	  =>
+;* 	  (lambda (m) (format "~a-.+" base)))                          */
+	  (lambda (m) (format "~a-([0-9]+[.]).+" base)))
 	 (else
 	  (pregexp-quote url)))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Sat Oct 13 08:02:43 2012 (serrano)                */
+;*    Last change :  Fri Oct 19 08:17:47 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP initial weblet.                                              */
@@ -40,7 +40,7 @@
       ;; builtin weblets
       (for-each (lambda (w)
 		   (hashtable-put! t w #t))
-		(hop-builtin-weblets))
+	 (hop-builtin-weblets))
       ;; user defined weblets
       (for-each (lambda (a)
 		   (let ((n (cadr (assq 'name a))))
@@ -49,14 +49,13 @@
 				(c (if (pair? cp)
 				       (string-capitalize (cadr cp))
 				       "Misc")))
-			    (hashtable-update! ct
-					       c
-					       (lambda (o)
-						  (if (assoc n o)
-						      o
-						      (cons (cons n a) o)))
-					       (list (cons n a)))))))
-		(append-map find-weblets-in-directory (hop-autoload-directories)))
+			    (hashtable-update! ct c
+			       (lambda (o)
+				  (if (assoc n o)
+				      o
+				      (cons (cons n a) o)))
+			       (list (cons n a)))))))
+	 (append-map find-weblets-in-directory (hop-autoload-directories)))
       (values t ct)))
 
 ;*---------------------------------------------------------------------*/
@@ -101,37 +100,37 @@
 ;*    hop-panel ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-panel #!key
-		   (showtitle #t) (width 48) (height 48) (icons '())
-		   (directories '()) (open #f))
+	   (showtitle #t) (width 48) (height 48) (icons '())
+	   (directories '()) (open #f))
    (let ((open (or open (if showtitle 'replace 'tab))))
       (multiple-value-bind (t ct)
 	 (hop-make-hashtables)
 	 (list
-	  (<WEBLETS> "System"
-		     (hop-builtin-row :showtitle showtitle
-			:width width :height height :icons icons :open open))
-	  (if (hop-view-by-category?)
-	      (map! (lambda (k)
-		       (let ((ws (map cdr (hashtable-get ct k))))
-			  (<WEBLETS> k (hop-additional-row ws :open open))))
-		    (sort (hashtable-key-list ct) string<?))
-	      (let* ((ws (map cdr (apply append (hashtable->list ct))))
-		     (dirs (hop-panel-directories directories ws)))
-		 (filter-map (lambda (dir)
-				(let ((name (car dir)))
-				   (if (or (null? directories)
-					   (memq name directories))
-				       (<WEBLETS>
-					  (string-capitalize
-					   (symbol->string name))
-					  (hop-additional-row
-					   (reverse! (cdr dir))
-					   :showtitle showtitle
-					   :width width
-					   :height height
-					   :icons icons
-					   :open open)))))
-			     (sort-directories dirs))))))))
+	    (<WEBLETS> "System"
+	       (hop-builtin-row :showtitle showtitle
+		  :width width :height height :icons icons :open open))
+	    (if (hop-view-by-category?)
+		(map! (lambda (k)
+			 (let ((ws (map cdr (hashtable-get ct k))))
+			    (<WEBLETS> k (hop-additional-row ws :open open))))
+		   (sort (hashtable-key-list ct) string<?))
+		(let* ((ws (map cdr (apply append (hashtable->list ct))))
+		       (dirs (hop-panel-directories directories ws)))
+		   (filter-map (lambda (dir)
+				  (let ((name (car dir)))
+				     (if (or (null? directories)
+					     (memq name directories))
+					 (<WEBLETS>
+					    (string-capitalize
+					       (symbol->string name))
+					    (hop-additional-row
+					       (reverse! (cdr dir))
+					       :showtitle showtitle
+					       :width width
+					       :height height
+					       :icons icons
+					       :open open)))))
+		      (sort-directories dirs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop/panel ...                                                    */
@@ -244,15 +243,15 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-builtin-row #!key showtitle width height icons open)
    (cons (<WEBLET> (hop-weblets-directory)
-		   :hz "home" :url (hop-url)
-		   :showtitle showtitle
-		   :width width :height :height :icons icons :open open)
-	 (map (lambda (x)
-		 (<WEBLET> (hop-weblets-directory)
-			   :hz x
-			   :showtitle showtitle
-			   :width width :height :height :icons icons :open open))
-	      (hop-builtin-weblets))))
+	    :hz "home" :url (hop-url)
+	    :showtitle showtitle
+	    :width width :height :height :icons icons :open open)
+      (map (lambda (x)
+	      (<WEBLET> (hop-weblets-directory)
+		 :hz x
+		 :showtitle showtitle
+		 :width width :height :height :icons icons :open open))
+	 (hop-builtin-weblets))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-additional-row ...                                           */
@@ -266,7 +265,7 @@
 	     (not (string? (cadr version)))
 	     (string=? (cadr version) "")
 	     (cmp (hop-version) (cadr version))))
-
+      
       (define (features-supported? features)
 	 (or (not features) (every eval-srfi? (cadr features))))
       
@@ -286,13 +285,13 @@
 				 (cadr c))
 			     w))))
 	       (<WEBLET> (dirname (dirname w)) :hz hz :svc svc :title d
-			 :showtitle showtitle
-			 :incompatible (not (weblet-compatible? a))
-			 :width width :height height :icons icons :open open)))
-	 (sort ws (lambda (a b)
-		     (let ((namea (cadr (assq 'name a)))
-			   (nameb (cadr (assq 'name b))))
-			(string<? namea nameb))))))
+		  :showtitle showtitle
+		  :incompatible (not (weblet-compatible? a))
+		  :width width :height height :icons icons :open open)))
+      (sort ws (lambda (a b)
+		  (let ((namea (cadr (assq 'name a)))
+			(nameb (cadr (assq 'name b))))
+		     (string<? namea nameb))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    panel-event ...                                                  */
