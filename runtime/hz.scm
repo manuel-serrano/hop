@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Thu Oct 18 09:26:03 2012 (serrano)                */
+;*    Last change :  Sun Oct 21 09:16:30 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -23,9 +23,9 @@
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
 	   (hz-package-info ::bstring)
-	   (hz-cache-path ::bstring  #!key (dir (make-cache-name "api")))
-	   (hz-download-to-cache ::bstring #!key (dir (make-cache-name "api")))
-	   (hz-resolve-name ::bstring ::pair-nil)))
+	   (hz-local-weblet-path ::bstring ::pair-nil)
+	   (hz-cache-path ::bstring)
+	   (hz-download-to-cache ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-filename? ...                                         */
@@ -75,19 +75,19 @@
 (define (hz-package-pattern->regexp url)
    (multiple-value-bind (base version)
       (hz-package-name-parse-sans-url url)
-      (cond
-	 ((pregexp-match "([0-9]+)\\.([0-9]+)\\.[*]" version)
-	  =>
-	  (lambda (m) (format "~a-~a\\.~a\\..*" base (cadr m) (caddr m))))
-	 ((pregexp-match "([0-9]+)\\.[*]" version)
-	  =>
-	  (lambda (m) (format "~a-~a\\..*" base (cadr m))))
-	 ((string=? "*" version)
-	  =>
-;* 	  (lambda (m) (format "~a-.+" base)))                          */
-	  (lambda (m) (format "~a-([0-9]+[.]).+" base)))
-	 (else
-	  (pregexp-quote url)))))
+      (values base version
+	 (cond
+	    ((pregexp-match "([0-9]+)\\.([0-9]+)\\.[*]" version)
+	     =>
+	     (lambda (m) (format "~a\\.~a\\..*" (cadr m) (caddr m))))
+	    ((pregexp-match "([0-9]+)\\.[*]" version)
+	     =>
+	     (lambda (m) (format "~a\\..*" (cadr m))))
+	    ((string=? "*" version)
+	     =>
+	     (lambda (m) "([0-9]+[.]).+"))
+	    (else
+	     (pregexp-quote url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-name-parse ...                                        */
@@ -167,10 +167,43 @@
 		   (basename s)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-local-weblet-path ...                                         */
+;*    -------------------------------------------------------------    */
+;*    This function search the URL hz package names in the list of     */
+;*    locally available weblets.                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-local-weblet-path url path)
+   
+   (define (find-in-dir base regexp dir parent)
+      (when (string=? dir base)
+	 ;; directory name matches
+	 (let ((info (make-file-path parent dir "etc" "weblet.info")))
+	    (when (file-exists? info)
+	       ;; there is a weblet.info file
+	       (let ((e (call-with-input-file info read)))
+		  (when (pair? e)
+		     ;; the weblet.info file has the correct format
+		     (let ((v (assq 'version e)))
+			(when (pair? v)
+			   ;; there is a version number
+			   (let ((n (cadr v)))
+			      (when (string? n)
+				 (when (pregexp-match regexp n)
+				    ;; the version number matches.
+				    (make-file-path parent dir))))))))))))
+   
+   (multiple-value-bind (base version regexp)
+      (hz-package-pattern->regexp url)
+      (findv (lambda (dir)
+		(findv (lambda (p) (find-in-dir base regexp p dir))
+		   (directory->list dir)))
+	 path)))
+
+;*---------------------------------------------------------------------*/
 ;*    hz-cache-path ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hz-cache-path url #!key (dir (make-cache-name "api")))
-   (let ((cache (hz-resolve-name url (list dir))))
+(define (hz-cache-path url)
+   (let ((cache (hz-resolve-name url (list (make-cache-name "api")))))
       (when (directory? cache)
 	 (multiple-value-bind (base version)
 	    (hz-package-name-parse (basename url))
@@ -181,66 +214,68 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-to-cache ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hz-download-to-cache url #!key (dir (make-cache-name "api")))
-   (or (hz-cache-path url :dir dir)
-       (multiple-value-bind (scheme _ host port abspath)
-	  (url-parse url)
-	  (let ((apath (abspath->filename abspath)))
-	     (multiple-value-bind (base version)
-		(hz-package-name-parse apath)
-		(let* ((dest dir)
-		       (dir (if host
-				(make-file-name dest
-				   (format "~a_~a~a"
-				      host port
-				      (prefix (basename apath))))
-				(make-file-name dest (prefix (basename apath))))))
-		   (cond
-		      ((directory? dir)
-		       (make-file-name dir base))
-		      ((file-exists? url)
-		       (download-url url dir)
-		       (make-file-name dir base))
-		      ((not (string=? scheme "*"))
-		       (error "hz" "Cannot find module" url))
-		      (else
-		       (let* ((name (hz-server-resolve-name url))
-			      (dir (make-file-name dest (prefix name)))
-			      (url (string-append
-				      (hop-hz-server)
-				      "/hop/weblets/download?weblet=" name)))
-			  (download-url url dir)
-			  (make-file-name dir base))))))))))
+(define (hz-download-to-cache hzurl hzrepo)
+   (let ((url (hz-resolve-name hzurl hzrepo)))
+      (multiple-value-bind (scheme _ host port abspath)
+	 (url-parse url)
+	 (let ((apath (abspath->filename abspath)))
+	    (multiple-value-bind (base version)
+	       (hz-package-name-parse apath)
+	       (let* ((dest (make-cache-name "api"))
+		      (dir (if host
+			       (make-file-name dest
+				  (format "~a_~a~a"
+				     host port
+				     (prefix (basename apath))))
+			       (make-file-name dest (prefix (basename apath))))))
+		  (cond
+		     ((directory? dir)
+		      (make-file-name dir base))
+		     ((file-exists? url)
+		      (download-url url dir)
+		      (make-file-name dir base))
+		     ((not (string=? scheme "*"))
+		      (error "hz" "Cannot find module" url))
+		     (else
+		      (let* ((name (hz-server-resolve-name url))
+			     (dir (make-file-name dest (prefix name)))
+			     (url (string-append
+				     (hop-hz-server)
+				     "/hop/weblets/download?weblet=" name)))
+			 (download-url url dir)
+			 (make-file-name dir base))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-resolve-name ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This function accepts as parameter a HZ specification and        */
-;*    returns an actual local file name that contains that HZ          */
-;*    package. This function may download from the web the package.    */
+;*    returns an actual local file name containing that HZ package.    */
 ;*---------------------------------------------------------------------*/
-(define (hz-resolve-name url path)
-   (if (or (string-prefix? "http://" url)
-	   (string-prefix? "https://" url))
+(define (hz-resolve-name url hzrepo)
+   (if (or (string-prefix? "http://" url) (string-prefix? "https://" url))
        url
        (or ((hop-hz-resolver) url)
-	   (let ((regexp (hz-package-pattern->regexp url)))
-	      (or (find-val (lambda (p) (hz/repository regexp p)) path)
+	   (multiple-value-bind (base version regexp)
+	      (hz-package-pattern->regexp url)
+	      (or (findv (lambda (p)
+			    (let ((bregexp (string-append base "-" regexp)))
+			       (hz/repository base bregexp p)))
+		     hzrepo)
 		  url)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/repository ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hz/repository regexp dir)
+(define (hz/repository base regexp dir)
    
    (define (find dir dir->files)
       (let ((files (sort (dir->files dir)
-			 (lambda (f1 f2)
-			    (>fx (string-natural-compare3 f1 f2) 0)))))
-	 (find-val (lambda (f)
-		      (when (pregexp-match regexp f)
-			 (make-file-path dir f)))
-		   files)))
+		      (lambda (f1 f2)
+			 (>fx (string-natural-compare3 f1 f2) 0)))))
+	 (findv (lambda (f)
+		   (when (pregexp-match regexp f)
+		      (make-file-path dir f)))
+	    files)))
    
    (cond
       ((not (string? dir))
@@ -254,11 +289,13 @@
 	     (find dir webdav-directory->list))))))
 
 ;*---------------------------------------------------------------------*/
-;*    find-val ...                                                     */
+;*    findv ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    As FIND but returns the result of (proc x) instead of x.         */
 ;*---------------------------------------------------------------------*/
-(define (find-val pred lst)
+(define (findv proc lst)
    (when (pair? lst)
-      (let ((v (pred (car lst))))
-	 (or v (find-val pred (cdr lst))))))
+      (let ((v (proc (car lst))))
+	 (or v (findv proc (cdr lst))))))
       
        

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sat Oct 13 07:47:35 2012 (serrano)                */
+;*    Last change :  Sun Oct 21 07:01:22 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -58,6 +58,7 @@
 ;*    find-weblets-in-directory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-weblets-in-directory dir)
+   
    (define (get-weblet-details dir name)
       (let* ((infos (get-weblet-info dir name))
 	     (main (assoc 'main-file infos))
@@ -68,6 +69,7 @@
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
 	    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))
+   
    (let loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/2.4.x/runtime/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Jan  4 08:14:37 2012 (serrano)                */
+;*    Last change :  Sun Oct 21 09:16:39 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -19,7 +19,8 @@
 	    __hop_param
 	    __hop_hz
 	    __hop_types
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_weblets)
    
    (export  (hop-module-extension-handler ::obj)
 	    (make-hop-module-resolver ::procedure)))
@@ -98,15 +99,12 @@
 	    (module-abase-set! abase))))
    
    (define (resolve-default)
-      (let* ((url (hz-resolve-name url (hop-hz-repositories)))
-	     (dir (hz-download-to-cache url)))
+      (let ((dir (hz-download-to-cache url (hop-hz-repositories))))
 	 (if (directory? dir)
-	     ;; resolve the module
 	     (resolve-in-dir dir)
 	     '())))
-   
-   ;; feed the cache
-   (let ((cache (hz-cache-path url)))
-      (if (and (string? cache) (directory? cache))
-	  (resolve-in-dir cache)
-	  (resolve-default))))
+
+   (cond
+      ((hz-local-weblet-path url (get-autoload-directories)) => resolve-in-dir)
+      ((hz-cache-path url) => resolve-in-dir)
+      (else (resolve-default))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Sep 14 10:45:34 2012 (serrano)                */
+;*    Last change :  Sun Oct 21 09:06:24 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -26,6 +26,7 @@
 	    __hop_charset
 	    __hop_clientc
 	    __hop_hz
+	    __hop_weblets
 	    __hop_types
 	    __hop_xml-types
 	    __hop_xml
@@ -902,9 +903,9 @@
 ;*    hz-dir ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (hz-dir fname)
-   (or (hz-cache-path fname)
-       (let ((url (hz-resolve-name fname (hop-hz-repositories))))
-	  (hz-download-to-cache url))))
+   (or (hz-local-weblet-path fname (get-autoload-directories))
+       (hz-cache-path fname)
+       (hz-download-to-cache fname (hop-hz-repositories))))
        
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-from-hz ...                                             */
