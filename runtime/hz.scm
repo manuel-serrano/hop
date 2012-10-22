@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sun Oct 21 09:16:30 2012 (serrano)                */
+;*    Last change :  Mon Oct 22 20:02:24 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -25,6 +25,7 @@
 	   (hz-package-info ::bstring)
 	   (hz-local-weblet-path ::bstring ::pair-nil)
 	   (hz-cache-path ::bstring)
+	   (hz-resolve-name ::bstring ::pair-nil)
 	   (hz-download-to-cache ::bstring ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
