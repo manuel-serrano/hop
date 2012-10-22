@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/scheme2js/module_library.scm      */
+;*    serrano/prgm/project/hop/2.4.x/scheme2js/module_library.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Thu May 31 15:36:05 2012 (serrano)                */
+;*    Last change :  Mon Oct 22 12:24:40 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -52,13 +52,16 @@
 	       header))
 	 (for-each (lambda (lib)
 		      (with-access::Lib-Unit (scheme2js-get-library m lib)
-			    (macros imports)
+			    (macros imports name)
 			 (with-access::WIP-Unit m ((wip-macros macros)
 						   (wip-imports imports))
-			    (set! wip-macros (append macros wip-macros))
+			    (set! wip-macros
+			       (append macros wip-macros))
 			    (for-each (lambda (wim)
 					 (with-access::Compilation-Unit wim
-					       (exports name)
+					       (exports name exported-macros)
+					    (set! wip-macros
+					       (cons exported-macros wip-macros))
 					    (set! wip-imports
 					       (cons (cons name exports)
 						  wip-imports))))
@@ -139,8 +142,8 @@
 		  (let ((m (find (lambda (l) (eq? (cadr l) i)) modules)))
 		     (if (pair? m)
 			 (parse-imported-module i m
-			    (lambda l
-			       (call-with-input-string "" read)) #f)
+			    (lambda l (call-with-input-string "" read))
+			    #f)
 			 (scheme2js-error "scheme2js-module"
 			    "cannot find library module" i lib))))
 	     (cdr imports)))

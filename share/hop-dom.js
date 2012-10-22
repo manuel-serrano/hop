@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Sep 25 14:06:47 2012 (serrano)                */
+/*    Last change :  Mon Oct 22 14:11:36 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1272,7 +1272,7 @@ function hop_bounding_box( e, m ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export bounding-box->list) (arity #t)) */
 function hop_bounding_box_to_list( bbox ) {
-   return sc_vector2list( bbox );
+   return sc_list( bbox.left, bbox.top, bbox.width, bbox.height );
 }
 
 /*---------------------------------------------------------------------*/

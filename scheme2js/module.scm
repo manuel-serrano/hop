@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Sat Oct 13 07:42:40 2012 (serrano)                */
+;*    Last change :  Mon Oct 22 12:23:25 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -567,7 +567,6 @@
 	   (bigloo-modules? #t)
 	   (store-exports-in-ht? #f)
 	   (store-exported-macros-in-ht? #f))
-   
    (cond
       ((or (not (pair? module-clause))
 	   (not (eq? (car module-clause) 'module)))

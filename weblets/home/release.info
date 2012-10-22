@@ -2,5 +2,5 @@
  (#!/bin/sh )
  (major 2.4.0)
  (state rc)
- (minor 1)
+ (minor 2)
 )

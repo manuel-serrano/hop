@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/scheme2js/module_class.scm        */
+;*    serrano/prgm/project/hop/2.4.x/scheme2js/module_class.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Wed Jan 18 13:52:43 2012 (serrano)                */
+;*    Last change :  Mon Oct 22 14:25:34 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */

@@ -1769,6 +1769,39 @@ function sc_vectorAppend() {
    }
 }
 
+function sc_vectorMapRes(res, proc, args) {
+   var nbApplyArgs = args.length - 1;
+   var applyArgs = new Array(nbApplyArgs);
+   var len = res.length;
+   var res = sc_makeVector(len);
+   
+   for (var i = 0; i < len; i++) {
+      for (var j = 0; j < nbApplyArgs; j++) {
+	 applyArgs[j] = args[j + 1][ i ];
+      }
+      res[ i ] = proc.apply(null, applyArgs);
+   }
+   return res;
+}
+
+/*** META ((export #t) (arity -2)) */
+function sc_vectorMap(proc, v1) {
+   if (l1 === undefined) {
+      return sc_makeVector(0);
+   } else {
+      return sc_vectorMapRes(new sc_Vector(v1.length), proc, arguments);
+   }
+}
+
+/*** META ((export #t) (arity -2)) */
+function sc_vectorMapBang(proc, v1) {
+   if (l1 === undefined) {
+      return false;
+   } else {
+      return sc_vectorMapRes(v1, proc, arguments);
+   }
+}
+
 /*** META ((export #t) (arity #t)
            (type bool)
            (peephole (hole 1 "typeof " o " === 'function'")))
