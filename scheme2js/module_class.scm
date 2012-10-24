@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Mon Oct 22 14:25:34 2012 (serrano)                */
+;*    Last change :  Wed Oct 24 17:25:53 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS class compiler                                         */
@@ -588,6 +588,14 @@
 ;*    parse-module-class! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (parse-module-class! m::WIP-Unit x definep::bool exportp::bool)
+
+   (define (imported-classes m::WIP-Unit)
+       (with-access::WIP-Unit m (import-units)
+	  (append-map (lambda (u)
+			 (with-access::WIP-Unit u (classes name)
+			    classes))
+	     import-units)))
+   
    (match-case x
       ((?class ?id . ?clauses)
        (with-access::WIP-Unit m (classes class-expr exports name)
@@ -595,9 +603,10 @@
 	     (decompose-ident id)
 	     (let* ((loc (get-source-location x))
 		    (sid (or sid 'object))
-		    (super (scheme2js-find-class sid classes)))
+		    (super (or (scheme2js-find-class sid classes)
+			       (scheme2js-find-class sid (imported-classes m)))))
 		(if (not super)
-		    (class-error loc "scheme2js" "Cannot find super class" sid)
+		    (class-error loc "scheme2js" "Cannot find super class" id)
 		    (multiple-value-bind (constructor slots)
 		       (parse-class loc clauses classes)
 		       (with-access::sjsclass super ((superholder holder)

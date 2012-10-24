@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Mon Oct 22 12:24:40 2012 (serrano)                */
+;*    Last change :  Wed Oct 24 18:12:59 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -54,17 +54,20 @@
 		      (with-access::Lib-Unit (scheme2js-get-library m lib)
 			    (macros imports name)
 			 (with-access::WIP-Unit m ((wip-macros macros)
-						   (wip-imports imports))
-			    (set! wip-macros
-			       (append macros wip-macros))
+						   (wip-imports imports)
+						   (wip-units import-units))
+			    (set! wip-macros (append macros wip-macros))
 			    (for-each (lambda (wim)
 					 (with-access::Compilation-Unit wim
-					       (exports name exported-macros)
+					       (exports name exported-macros
+						  import-units)
 					    (set! wip-macros
 					       (cons exported-macros wip-macros))
 					    (set! wip-imports
 					       (cons (cons name exports)
-						  wip-imports))))
+						  wip-imports))
+					    (set! wip-units
+					       (append wip-units imports))))
 			       imports))))
 	    lib-list))))
 
@@ -138,17 +141,25 @@
    (let ((heap (with-input-from-file jsheap read)))
       (match-case heap
 	 ((heap ?library ?modules ?imports)
-	  (map (lambda (i)
-		  (let ((m (find (lambda (l) (eq? (cadr l) i)) modules)))
-		     (if (pair? m)
-			 (parse-imported-module i m
-			    (lambda l (call-with-input-string "" read))
-			    #f)
-			 (scheme2js-error "scheme2js-module"
-			    "cannot find library module" i lib))))
-	     (cdr imports)))
+	  ;; start building the import environment
+	  (let loop ((modules modules)
+		     (env '()))
+	     (if (null? modules)
+		 (map (lambda (i)
+			 (let ((c (assq i env)))
+			    (if (pair? c)
+				(cdr c)
+				(scheme2js-error "scheme2js-library"
+				   "cannot find heap module" jsheap i))))
+		    (cdr imports))
+		 (let* ((id (cadr (car modules)))
+			(im (parse-imported-module id (car modules)
+			      (lambda l (call-with-input-string "" read))
+			      #f :module-cache env :ignore-missing-modules #t)))
+		    (loop (cdr modules)
+		       (cons (cons id im) env))))))
 	 (else
-	  (scheme2js-error "scheme2js-module"
+	  (scheme2js-error "scheme2js-library"
 	     "illegal jsheap file" jsheap lib)))))
 
 
