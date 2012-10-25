@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Mon Oct 22 08:07:25 2012 (serrano)                */
+#*    Last change :  Thu Oct 25 17:55:20 2012 (serrano)                */
 #*    Copyright   :  2007-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -16,7 +16,7 @@
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
 VERSION=2.4.0       # Hop major version e.g. VERSION=2.4.0
-MINOR=-rc2          # Hop minor release e.g. MINOR=-pre1
+MINOR=-rc3          # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=3.9a
 
 REPOSITORY=/users/serrano/prgm/distrib
