@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Oct 21 09:06:24 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:01:17 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -843,7 +843,7 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
-   
+
    (define (add-dir f)
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f

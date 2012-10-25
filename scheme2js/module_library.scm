@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Wed Oct 24 18:12:59 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:13:11 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -25,7 +25,7 @@
 	      (macros::pair-nil read-only)
 	      (imports read-only)))
 
-   (export (module-read-libraries! ::WIP-Unit ::obj ::obj ::pair-nil)))
+   (export (module-read-libraries! ::WIP-Unit ::obj ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *libraries* ...                                                  */
@@ -42,7 +42,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    module-read-libraries! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (module-read-libraries! m::WIP-Unit module-resolver reader lib-list)
+(define (module-read-libraries! m::WIP-Unit reader lib-list)
    (when (pair? lib-list)
       (with-access::WIP-Unit m (header imports macros)
 	 (unless (every symbol? lib-list)

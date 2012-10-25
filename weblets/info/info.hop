@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Aug 16 08:31:31 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:00:48 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -17,7 +17,7 @@
    ~(import weblet_info-client)
    ~(js navigator)
    
-   (import maze)
+   (import weblet_info-maze)
    
    (export info/perfs/script/server
 	   info/perfs/network/keepalive

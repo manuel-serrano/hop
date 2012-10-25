@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Thu Oct 25 14:48:48 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:52:24 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -48,7 +48,9 @@
 	      ;; a list of import units
 	      (import-units::pair-nil (default '()))
 	      ;; #t if the file/unit contained a module header.
-	      (declared-module?::bool (default #f)))
+	      (declared-module?::bool (default #f))
+	      ;; the source file
+	      (src (default #f)))
 	   (wide-class WIP-Unit::Compilation-Unit ;; work in progress
 	      header
 	      (class-expr::pair-nil (default '())))
@@ -63,10 +65,10 @@
 	      (store-exported-macros-in-ht? #f))
 	   (parse-imported-module module-name module-clause reader ip
 	      #!key
+	      (src #f)
 	      (bigloo-modules? #t)
 	      (store-exports-in-ht? #f)
 	      (store-exported-macros-in-ht? #f)
-	      (module-resolver #f)
 	      (module-cache '())
 	      (ignore-missing-modules #f))
 	   (module-exported-macro-add! m::Compilation-Unit macro::pair)))
@@ -313,7 +315,8 @@
 		   (top-level top-level)
 		   (exported-macros '())
 		   (exports '())
-		   (declared-module? header-sexp?))))
+		   (declared-module? header-sexp?)
+		   (src file))))
 	 (when header-sexp? (check-module-clause header))
 	 (widen!::WIP-Unit m
 	    (header header))
@@ -373,21 +376,18 @@
    (let* ((include-paths (cons file-path (config 'include-paths)))
 	  (module-preprocessor (config 'module-preprocessor))
 	  (module-postprocessor (config 'module-postprocessor))
-	  (bigloo-modules? (config 'bigloo-modules))
-	  (module-resolver (or (config 'module-resolver)
-			       (extension-resolver include-paths))))
+	  (bigloo-modules? (config 'bigloo-modules)))
       (when module-preprocessor
 	 (module-preprocessor m #f))
       (merge-headers! m override-headers)
       (set-name! m)
-      (with-access::WIP-Unit m (header)
+      (with-access::WIP-Unit m (header name)
 	 (when header
 	    (cond-expand-headers! m)
 	    (normalize-module-header! m)
 	    (read-includes! m include-paths reader)
-	    (read-imports! m module-resolver reader bigloo-modules? '() #f)
-	    (module-read-libraries! m module-resolver reader
-	       (module-entries header 'library))
+	    (read-imports! m reader bigloo-modules? '() #f)
+	    (module-read-libraries! m reader (module-entries header 'library))
 	    (normalize-JS-imports! m)
 	    (normalize-statics! m bigloo-modules? #t)
 	    (normalize-exports! m bigloo-modules?))
@@ -547,17 +547,14 @@
 	  (reverse! rev-res))
 	 ((epair? L)
 	  (loop (cdr L)
-		(cons (f (car L) (cer L))
-		      rev-res)))
+	     (cons (f (car L) (cer L))
+		rev-res)))
 	 ((pair? L)
 	  (loop (cdr L)
-		(cons (f (car L) #f)
-		      rev-res)))
+	     (cons (f (car L) #f)
+		rev-res)))
 	 (else
-	  (scheme2js-error "module"
-			   "bad module clause"
-			   L
-			   L)))))
+	  (scheme2js-error "module" "bad module clause" L L)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-includes! ...                                               */
@@ -612,6 +609,7 @@
 	    (let ((module-clause (reader ip #t)))
 	       (parse-imported-module module-name module-clause
 		  reader ip
+		  :src file
 		  :bigloo-modules? bigloo-modules?
 		  :store-exports-in-ht? store-exports-in-ht?
 		  :store-exported-macros-in-ht? store-exported-macros-in-ht?))
@@ -622,15 +620,14 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-imported-module module-name module-clause reader ip
 	   #!key
+	   (src #f)
 	   (bigloo-modules? #t)
 	   (store-exports-in-ht? #f)
 	   (store-exported-macros-in-ht? #f)
-	   (module-resolver #f)
 	   (module-cache '())
 	   (ignore-missing-modules #f))
    (cond
-      ((or (not (pair? module-clause))
-	   (not (eq? (car module-clause) 'module)))
+      ((or (not (pair? module-clause)) (not (eq? (car module-clause) 'module)))
        #f)
       ((not (verify-module-clause module-clause))
        (warning "scheme2js module"
@@ -641,19 +638,21 @@
        #f)
       (else
        (let ((im (instantiate::Compilation-Unit ;; import-module
+		    (src src)
 		    (name module-name)
 		    (top-level #f)
 		    (exports '())
 		    (exported-macros '())))
 	     (module-preprocessor (config 'module-preprocessor))
-	     (module-postprocessor (config 'module-postprocessor))
-	     (module-resolver (or module-resolver (config 'module-resolver))))
+	     (module-postprocessor (config 'module-postprocessor)))
 	  (widen!::WIP-Unit im (header module-clause))
 	  (when module-preprocessor
 	     (module-preprocessor im #t))
 	  (cond-expand-headers! im)
 	  (normalize-module-header! im)
-	  (read-imports! im module-resolver reader bigloo-modules? module-cache ignore-missing-modules)
+	  (read-imports! im reader bigloo-modules? module-cache ignore-missing-modules)
+	  (with-access::WIP-Unit im (header)
+	     (module-read-libraries! im reader (module-entries header 'library)))
 	  ;; normalize-exports might need the 'ip' in
 	  ;; case it needs to search for macros.
 	  (normalize-statics! im bigloo-modules? #f)
@@ -681,17 +680,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    read-imports! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (read-imports! m::WIP-Unit module-resolver reader bigloo-modules? module-cache ignore-missing-modules)
+(define (read-imports! m::WIP-Unit reader bigloo-modules? module-cache ignore-missing-modules)
    
    (define (get-import-list header)
       (let ((import-list (module-entries header 'import)))
 	 (unless (every (lambda (im)
-			   (or (symbol? im) (isa? im Compilation-Unit)))
+			   (match-case im
+			      ((? symbol?) #t)
+			      (((? symbol?) (? string?)) #t)
+			      (else (isa? im Compilation-Unit))))
 		    import-list)
 	    (scheme2js-error "scheme2js-module"
 	       ;; we allow compilation units too, but this should
 	       ;; not appear in error message.
-	       "only symbols are allowed in import-list"
+	       "illegal import list"
 	       import-list
 	       header))
 	 import-list))
@@ -701,7 +703,7 @@
 	 (when (pair? c)
 	    (cdr c))))
    
-   (with-access::WIP-Unit m (header imports macros import-units)
+   (with-access::WIP-Unit m (header imports macros import-units name src)
       (let loop ((imported-modules (get-import-list header))
 		 (new-macros '())
 		 (new-imports imports))
@@ -722,6 +724,24 @@
 		      (if (empty-exports? exports)
 			  new-imports
 			  (cons (cons name exports) new-imports))))))
+	    ((pair? (car imported-modules))
+	     (with-access::Compilation-Unit m (src)
+		(let* ((mod (car imported-modules))
+		       (file (cadr mod))
+		       (im (read-imported-module-file
+			      (car mod)
+			      file
+			      reader
+			      :bigloo-modules? bigloo-modules?)))
+		      (if (not im)
+			  (scheme2js-error "scheme2js module"
+			     "cannot find imported module"
+			     name
+			     mod)
+			  ;; just reuse the cond-clause above.
+			  (loop (cons im (cdr imported-modules))
+			     new-macros
+			     new-imports)))))
 	    ((symbol? (car imported-modules))
 	     (let ((mod (car imported-modules)))
 		(cond
@@ -731,17 +751,8 @@
 		       (loop (cons im (cdr imported-modules))
 			  new-macros
 			  new-imports)))
-		   ((not module-resolver)
-		    (if ignore-missing-modules
-			(loop (cdr imported-modules)
-			   new-macros
-			   new-imports)
-			(scheme2js-error "scheme2js module"
-			   "cannot find imported module"
-			   mod
-			   header)))
 		   (else
-		    (let ((module-files (module-resolver mod)))
+		    (let ((module-files (scheme2js-module-resolver mod src)))
 		       (let liip ((files module-files))
 			  (cond
 			     ((null? files)

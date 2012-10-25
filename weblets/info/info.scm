@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 25 18:43:56 2010                          */
-;*    Last change :  Sat Oct 13 08:03:13 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:00:56 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side of the INFO weblet                                   */
@@ -16,7 +16,7 @@
    
    $(import weblet_info)
 
-   (import  maze)
+   (import weblet_info-maze)
    
    (export (make-script-default-kont id kont)
 	   (make-network-default-kont id kont)

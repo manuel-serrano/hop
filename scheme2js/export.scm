@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -32,19 +32,20 @@
    (or (null? l/ht)
        (and (hashtable? l/ht)
 	    (zerofx? (hashtable-size l/ht)))))
+
 (define (find-desc-in-exports sym l/ht)
    (cond
       ((pair? l/ht)
        (any (lambda (desc)
 	       (and (eq? (with-access::Export-Desc desc (id) id) sym)
 		    desc))
-	    l/ht))
-      (hashtable? l/ht
+	  l/ht))
+      ((hashtable? l/ht)
        (hashtable-get l/ht sym))
+      ((null? l/ht)
+       #f)
       (else
-       (error "export.scm"
-	      "internal error"
-	      l/ht))))
+       (error "export.scm" "internal error" sym))))
 
 (define (entry-val sym l)
    (let ((try (assq sym (cdr l))))

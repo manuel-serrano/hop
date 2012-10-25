@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Sat Oct 13 07:45:35 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:20:03 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -46,7 +46,7 @@
 	      (rev-others '()))
       (if (null? headers)
 	  `(merge-first ,@(reverse! rev-others)
-			(import ,@(reverse! rev-imports)))
+	      (import ,@(reverse! rev-imports)))
 	  (let ((header (car headers)))
 	     (match-case header
 		((import ?i1 . ?Lis)
@@ -55,25 +55,25 @@
 		    (cond
 		       ((null? import-names)
 			(loop (cdr headers)
-			      rev-imports
-			      rev-others))
+			   rev-imports
+			   rev-others))
 		       ((and (pair? (car import-names))
 			     (symbol? (caar import-names)))
 			(unless (every string? (cdar import-names))
 			   (error "hopscheme" "Illegal module clause" header))
 			(module-add-access! (caar import-names)
-					    (cdar import-names)
-					    "hopscheme")
+			   (cdar import-names)
+			   "hopscheme")
 			(liip (cons (caar import-names) (cdr import-names))
-			      rev-imports))
+			   rev-imports))
 		       ((not (symbol? (car import-names)))
 			(error "hopscheme" "Illegal module clause" header))
 		       (else
 			(liip (cdr import-names)
-			      (cons (precompile-module (car import-names)
-						       (bigloo-module-resolver))
-				    rev-imports))))))
+			   (cons (precompile-module (car import-names)
+				    (bigloo-module-resolver))
+			      rev-imports))))))
 		(else
 		 (loop (cdr headers)
-		       rev-imports
-		       (cons header rev-others))))))))
+		    rev-imports
+		    (cons header rev-others))))))))

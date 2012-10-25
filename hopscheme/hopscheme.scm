@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/2.4.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Wed Jan  4 08:13:43 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 17:17:57 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */

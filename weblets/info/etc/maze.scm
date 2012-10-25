@@ -50,7 +50,7 @@
 ;;; 
 ;;; - The record type descriptor:
 ;;;     type/employee
-(module maze
+(module weblet_info-maze
    (export (maze num)))
 
 (define (make-maze-port)
