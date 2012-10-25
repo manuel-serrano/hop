@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Oct 24 18:10:14 2012 (serrano)                */
+;*    Last change :  Thu Oct 25 14:48:48 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -731,6 +731,15 @@
 		       (loop (cons im (cdr imported-modules))
 			  new-macros
 			  new-imports)))
+		   ((not module-resolver)
+		    (if ignore-missing-modules
+			(loop (cdr imported-modules)
+			   new-macros
+			   new-imports)
+			(scheme2js-error "scheme2js module"
+			   "cannot find imported module"
+			   mod
+			   header)))
 		   (else
 		    (let ((module-files (module-resolver mod)))
 		       (let liip ((files module-files))

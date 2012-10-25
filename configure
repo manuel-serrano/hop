@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct 16 08:40:29 2012 (serrano)                */
+#*    Last change :  Thu Oct 25 12:45:48 2012 (serrano)                */
 #*    Copyright   :  2004-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -334,8 +334,8 @@ while : ; do
       echo "   --pmem[2]............. Enables memory profiling mode" >&2;
       echo "   --profile............. Enables Bigloo profiling mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
-      echo "   --enable-ssl.......... Enables SSL support" >&2;
-      echo "   --disable-ssl......... Disables SSL support (default)" >&2;
+      echo "   --enable-ssl.......... Enables SSL support (default)" >&2;
+      echo "   --disable-ssl......... Disables SSL support" >&2;
       echo "   --enable-locevent..... Enables location event support (default)" >&2;
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
