@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Sat Oct 13 07:43:16 2012 (serrano)                */
+;*    Last change :  Fri Oct 26 12:24:55 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -147,7 +147,7 @@
 				     (location binding)))
 	    (val (scheme->pobject val (location (cdr binding)))))))
 
-   (let ((pobject-bindings (map! binding->pobject bindings)))
+   (let ((pobject-bindings (map binding->pobject bindings)))
       (instantiate::Let
 	 (bindings pobject-bindings)
 	 (body (expr-list->Begin body))
