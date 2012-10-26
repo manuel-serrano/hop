@@ -1773,7 +1773,6 @@ function sc_vectorMapRes(res, proc, args) {
    var nbApplyArgs = args.length - 1;
    var applyArgs = new Array(nbApplyArgs);
    var len = res.length;
-   var res = sc_makeVector(len);
    
    for (var i = 0; i < len; i++) {
       for (var j = 0; j < nbApplyArgs; j++) {
