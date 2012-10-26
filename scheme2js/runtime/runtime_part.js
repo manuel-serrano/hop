@@ -1786,7 +1786,7 @@ function sc_vectorMapRes(res, proc, args) {
 
 /*** META ((export #t) (arity -2)) */
 function sc_vectorMap(proc, v1) {
-   if (l1 === undefined) {
+   if (v1 === undefined) {
       return sc_makeVector(0);
    } else {
       return sc_vectorMapRes(new sc_Vector(v1.length), proc, arguments);
@@ -1795,7 +1795,7 @@ function sc_vectorMap(proc, v1) {
 
 /*** META ((export #t) (arity -2)) */
 function sc_vectorMapBang(proc, v1) {
-   if (l1 === undefined) {
+   if (v1 === undefined) {
       return false;
    } else {
       return sc_vectorMapRes(v1, proc, arguments);
