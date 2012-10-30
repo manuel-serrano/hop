@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Aug 16 08:48:22 2012 (serrano)                */
+;*    Last change :  Sun Oct 28 21:15:29 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -231,7 +231,6 @@
 	       (let ((ctype (or content-type mime-type)))
 		  (http-write-content-type p ctype charset)))
 	    (http-write-line-string p "Server: " server)
-	    (http-write-line-string p "Hhop: true")
 	    (if chunked
 		(begin
 		   (flush-output-port p)
@@ -431,7 +430,12 @@
 			(let ((cvt (charset-converter (hop-locale) (hop-charset))))
 			   (<PRE>
 			      (unless (string=? dir "/")
-				 (<A> :href (dirname dir) "..\n"))
+				 (<A> :href
+				    (if (char=? (string-ref dir (-fx (string-length dir) 1)) (file-separator))
+					(string-append (dirname (substring dir 0 (-fx (string-length dir) 1)))
+					   "/")
+					(dirname dir))
+				    "..\n"))
 			      (map! (lambda (f)
 				       (let* ((fe (cvt f))
 					      (path (make-file-name dir fe)))

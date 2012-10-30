@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug 16 08:32:01 2012 (serrano)                */
+;*    Last change :  Sat Oct 27 07:53:16 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1226,20 +1226,19 @@
 (define (hop-proxy-sniffer-add! proc)
    (let ((old (hop-proxy-sniffer)))
       (hop-proxy-sniffer-set!
-       (lambda (req)
-	  (let ((old (old req))
-		(new (proc req)))
-	     (if (output-port? old)
-		 (let ((p (open-output-procedure
-			   (lambda (s)
-			      (display s old)
-			      (display s new)))))
-		    (output-port-close-hook-set!
-		     p
-		     (lambda (p)
-			(close-output-port old)
-			(close-output-port new))))
-		 new))))))
+	 (lambda (req)
+	    (let ((old (old req))
+		  (new (proc req)))
+	       (if (output-port? old)
+		   (let ((p (open-output-procedure
+			       (lambda (s)
+				  (display s old)
+				  (display s new)))))
+		      (output-port-close-hook-set! p
+			 (lambda (p)
+			    (close-output-port old)
+			    (close-output-port new))))
+		   new))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-hz-resolver ...                                              */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/2.4.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu May  3 08:48:00 2012 (serrano)                */
+;*    Last change :  Fri Oct 26 18:19:08 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -101,15 +101,9 @@
 	 (node-style-set! spage.spwindow
 	    :width (format "~apx" spage.spwidth))
 	 (node-style-set! spage.spviewport
-	    :width (format "~apx" spage.spscrollwidth))
+            :width (format "~apx" spage.spscrollwidth))
 	 (node-style-set! (dom-first-child spage.spviewport)
-	    :width (format "~apx" spage.spbodywidth))
-	 ;; MS 28aug2011 why should the following be needed?
-	 ;; If needed, this must be fixed, because it makes the first tab
-	 ;; appears below (if taller) the current tab
-	 '(when (eq? spage.transitionstyle 'slide)
-	    (node-style-set! (dom-first-child spage.spviewport)
-	       :left (format "~apx"spage.spoffset))))))
+	    :width (format "~apx" spage.spbodywidth)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    spage-add-event-listener! ...                                    */
