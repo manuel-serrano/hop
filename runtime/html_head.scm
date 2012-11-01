@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Oct 21 09:06:39 2012 (serrano)                */
+;*    Last change :  Thu Nov  1 09:12:25 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -211,7 +211,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    head-parse ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (head-parse args)
-
+   
    (define (absolute-path p dir)
       (cond
 	 ((not dir)
@@ -241,10 +241,10 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		      ((<HEAD> . ?head) head)
 		      ((module (? symbol?) . ?-) (loop (hop-read in)))
 		      (else '())))))))
-
+   
    (define (favicon p inl)
       (<LINK> :rel "shortcut icon" :href p :inline inl))
-
+   
    (define (css p base inl)
       ;; force pre-loading the hss file in order to force
       ;; pre-evaluating hss type declarations.
@@ -254,7 +254,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	 :rel "stylesheet"
 	 :type (hop-configure-css-mime-type)
 	 :href p))
-
+   
    (define (hz-get-weblet-info-files path)
       (let ((info (make-file-path path "etc" "weblet.info")))
 	 (when (file-exists? info)
@@ -263,16 +263,16 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		  (let ((c (assq 'client l)))
 		     (when (pair? c)
 			(cadr c))))))))
-      
+   
    (define (hz-get-files path)
       (or (hz-get-weblet-info-files path)
 	  (directory->list path)))
-
+   
    (define (read-file file)
       (call-with-input-file file
 	 (lambda (ip)
 	    (display (read-string ip)))))
-
+   
    (define (hz-path f path)
       (or (hz-local-weblet-path f (get-autoload-directories))
 	  (hz-cache-path f)
@@ -286,22 +286,22 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	     (jscript1 (string-append base "-client.hop"))
 	     (jscript2 (string-append base ".scm")))
 	 `(:with-base ,path
-		      (,@(if (member hss hzfiles) (list :css hss) '())
-			 ,@(apply append
-				  (filter-map (lambda (f)
-						 (when (string-suffix? ".js" f)
-						    (list :jscript
-						       (make-file-name path f))))
-					      hzfiles))
-			 ,@(if (member jscript1 hzfiles)
-			       (cons* :jscript jscript1
-				  (find-head (make-file-name path jscript1)))
-			       '())
-			 ,@(if (member jscript2 hzfiles)
-			       (cons* :jscript jscript2
-				  (find-head (make-file-name path jscript2)))
-			       '())))))
-
+	     (,@(if (member hss hzfiles) (list :css hss) '())
+		,@(apply append
+		     (filter-map (lambda (f)
+				    (when (string-suffix? ".js" f)
+				       (list :jscript
+					  (make-file-name path f))))
+			hzfiles))
+		,@(if (member jscript1 hzfiles)
+		      (cons* :jscript jscript1
+			 (find-head (make-file-name path jscript1)))
+		      '())
+		,@(if (member jscript2 hzfiles)
+		      (cons* :jscript jscript2
+			 (find-head (make-file-name path jscript2)))
+		      '())))))
+   
    (define (find-incl-dep f path)
       (let* ((path (append path (list (hop-share-directory))))
 	     (scm (find-file/path (string-append f ".scm") path)))
@@ -311,7 +311,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(if (string? hop)
 		    (find-head hop)
 		    '())))))
-
+   
    (define (incl f inl path)
       (let* ((res '())
 	     (path (append path (list (hop-share-directory))))
@@ -319,8 +319,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			 (p (find-file/path f path)))
 		     (when (string? p)
 			(let ((gw (make-file-path (hop-share-directory)
-						  "flash"
-						  "JavaScriptFlashGateway.js")))
+				     "flash"
+				     "JavaScriptFlashGateway.js")))
 			   (set! res (cons (script gw inl) res))))))
 	     (js (let ((p (find-file/path (string-append f ".js") path)))
 		    (when (and (string? p)
@@ -360,9 +360,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		    (format "Can't find include \"~s\" in path" f)
 		    path)))
 	     res)))
-
+   
    (define incs '())
-
+   
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)
@@ -429,7 +429,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 ((:packed)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
-		      (error "<HEAD>" "Illegal :packed" (cadr a))))
+		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
 		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
@@ -437,8 +437,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			       (append (reverse! wbels) els)))))
 		 (else
 		  (error "<HEAD>"
-			 (format "Unknown ~a argument" (car a))
-			 (cadr a))))))
+		     (format "Unknown ~a argument" (car a))
+		     (cadr a))))))
 	 ((string? (car a))
 	  (case mode
 	     ((:css)
@@ -499,17 +499,17 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
    (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))
-			 body0))
+		    body0))
 	  (body1 (if (pair? ubase)
 		     (cons (car (last-pair ubase))
-			   (filter! (lambda (x)
-				       (not (xml-markup-is? x 'base)))
-				    body0))
+			(filter! (lambda (x)
+				    (not (xml-markup-is? x 'base)))
+			   body0))
 		     body0))
 	  (body2 (if (not (any (lambda (x)
 				  (and (xml-markup-is? x 'meta)
 				       (dom-get-attribute x "http-equiv")))
-				body0))
+			     body0))
 		     (let ((meta (<META> :http-equiv "Content-Type"
 				    :content "~a; charset=~a")))
 			(cons meta body1))
