@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sat Sep 29 21:08:31 2012 (serrano)                */
+/*    Last change :  Sun Nov  4 17:32:05 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -64,14 +64,12 @@ public class HopService extends Service {
       // status bar update
       mNM.cancel( NOTIFICATION );
       
-      Log.d( "HopService", "~~~ onDestroy..." );
       super.onDestroy();
       Log.d( "HopService", "<<< onDestroy..." );
    }
 
    public void kill() {
       if( hop != null ) hop.inkill = true;
-      if( hopdroid != null ) hopdroid.inkill = true;
       
       if( hop != null ) {
 	 hop.kill();
@@ -92,7 +90,7 @@ public class HopService extends Service {
       hop = new Hop( null, null );
       
       // create hopdroid
-      hopdroid = new HopDroid( 8081, 8082, HopService.this );
+      hopdroid = new HopDroid( HopService.this );
 
       // starting hopdroid
       startThreadLog( hopdroid );
@@ -103,6 +101,10 @@ public class HopService extends Service {
       Log.d( "HopService", "<<< onStartCommand..." );
       // sticky service
       return START_STICKY;
+   }
+
+   public static boolean isBackground() {
+      return HopDroid.isBackground();
    }
 
    @Override

@@ -16,17 +16,18 @@
  -->
 
 <resources>
-    <string-array name="entries_fontsize_preference">
-        <item>4 x 8 pixels</item>
-        <item>6 pt</item>
-        <item>7 pt</item>
-        <item>8 pt</item>
-        <item>9 pt</item>
-        <item>10 pt</item>
-        <item>12 pt</item>
-        <item>14 pt</item>
-        <item>16 pt</item>
-        <item>20 pt</item>
+    <string-array name="entries_debug_preference">
+        <item>disable</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <string-array name="entriesvalues_debug_preference">
+        <item></item>
+        <item>-g</item>
+        <item>-g2</item>
+        <item>-g3</item>
     </string-array>
 
 	<!-- Do not localize entryvalues -->

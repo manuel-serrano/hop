@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Sep 12 17:46:15 2012 (serrano)                */
+#*    Last change :  Sat Nov  3 11:53:25 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -32,13 +32,14 @@ ANDROID_RES = res/drawable/logo.png \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
-  HopExec.java HopLauncher.java HopService.java \
+  HopExec.java HopLauncher.java HopService.java HopBootReceiver.java \
   HopDroid.java HopPlugin.java HopPluginInit.java HopPluginLocale.java \
   HopPluginMusicPlayer.java HopPluginVibrate.java HopPluginSensor.java \
   HopPluginSms.java HopPluginContact.java HopPluginWifi.java \
   HopPluginBattery.java HopPluginTts.java HopPluginMediaAudio.java \
   HopPluginCall.java HopSms.java HopAndroidAudioRecorder.java \
-  HopPluginBuild.java HopPluginConnectivity.java HopPluginZeroconf.java
+  HopPluginBuild.java HopPluginConnectivity.java HopSettings.java \
+  HopPluginZeroconf.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \

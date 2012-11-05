@@ -4,9 +4,39 @@
    <string name="preferences">Preferences</string>
    <string name="hopversion">Hop @HOPVERSION@</string>
    <string name="hopurl">@HOPURL@</string>
+   <string name="hopport">@HOPPORT@</string>
    <string name="hopservicestarted">Hop</string>
 
+   <!-- Activities -->
+   <string name="activity_hop">Hop</string>
+   <string name="activity_hopversion">Hop @HOPVERSION@</string>
+   <string name="activity_settings">Hop Settings</string>
+
+   <!-- Main UI -->
+   <string name="ui_scroll">Enable console scrolling</string>
+   <!-- Option menu -->
+   <string name="menu_quit">Quit</string>
+   <string name="menu_settings">Settings</string>
+   <string name="menu_restart">Restart</string>
+   <string name="menu_about">About</string>
+   <string name="menu_clear">Clear console</string>
+ 
    <!-- Preference dialog -->
+   <string name="prefs_hop_options">Options</string>
+
+   <string name="prefs_port">Port</string>
+   <string name="prefs_port_summary">Hop port number (requires restarting Hop)</string>
+   <string name="prefs_zeroconf">Zeroconf</string>
+   <string name="prefs_zeroconf_summary">Enable zeroconf (prior to 4.2 this slightly drains the battery)</string>
+
+   <string name="prefs_devel">Development</string>
+
+   <string name="prefs_log">Log</string>
+   <string name="prefs_log_summary">Enable ADB logging</string>
+
+   <string name="prefs_debug">Debug</string>
+   <string name="prefs_debug_summary">Debugging mode (requires restarting Hop)</string>
+
    <string name="text_preferences">Text</string>
 
    <string name="title_fontsize_preference">Font size</string>

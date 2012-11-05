@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue Oct 30 20:42:47 2012 (serrano)                */
+#*    Last change :  Sat Nov  3 19:00:25 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -15,6 +15,7 @@
 #*---------------------------------------------------------------------*/
 HOPVERSION=2.4.0-rc3
 HOPURL=http://hop.inria.fr
+HOPPORT=8080
 BIGLOOVERSION=3.9b
 ANDROID=2.1
 
@@ -248,6 +249,7 @@ for p in AndroidManifest.xml project.properties; do \
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$HOPVERSION|" \
           -e "s|@ANDROIDTARGET@|$ANDROIDTARGET|" \
+          -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
 
@@ -259,6 +261,7 @@ for p in res/values/strings.xml; do \
   rm -f $android/$p.in
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$HOPVERSION|" \
+          -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
 

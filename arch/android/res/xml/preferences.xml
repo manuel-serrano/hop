@@ -14,60 +14,70 @@
      limitations under the License.
 -->
 
-<PreferenceScreen
-        xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory
-            android:title="@string/text_preferences">
+    <PreferenceCategory android:title="@string/prefs_hop_options">
 
-        <ListPreference
-                android:key="fontsize"
-                android:defaultValue="@string/default_value_fontsize_preference"
-                android:title="@string/title_fontsize_preference"
-                android:summary="@string/summary_fontsize_preference"
-                android:entries="@array/entries_fontsize_preference"
-                android:entryValues="@array/entryvalues_fontsize_preference"
-                android:dialogTitle="@string/dialog_title_fontsize_preference" />
+        <EditTextPreference android:title="@string/prefs_port" 
+           android:defaultValue="@string/hopport"
+           android:key="hop_port"
+           android:persistent="true" 
+           android:numeric="integer"
+           android:maxLength="6"
+           android:summary="@string/prefs_port_summary">
+        </EditTextPreference>
 
-        <ListPreference
-                android:key="color"
-                android:defaultValue="@string/default_value_color_preference"
-                android:title="@string/title_color_preference"
-                android:summary="@string/summary_color_preference"
-                android:entries="@array/entries_color_preference"
-                android:entryValues="@array/entryvalues_color_preference"
-                android:dialogTitle="@string/dialog_title_color_preference" />
+        <CheckBoxPreference
+           android:key="hop_zeroconf"
+           android:persistent="true" 
+           android:defaultValue="true"
+           android:title="@string/prefs_zeroconf"
+           android:summary="@string/prefs_zeroconf_summary">
+        </CheckBoxPreference>
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-            android:title="@string/keyboard_preferences">
+    <PreferenceCategory android:title="@string/prefs_devel">
+
+        <CheckBoxPreference
+           android:key="hop_log"
+           android:persistent="true" 
+           android:defaultValue="false"
+           android:title="@string/prefs_log"
+           android:summary="@string/prefs_log_summary">
+        </CheckBoxPreference>
 
         <ListPreference
-                android:key="controlkey"
-                android:defaultValue="@string/default_value_controlkey_preference"
-                android:title="@string/title_controlkey_preference"
-                android:summary="@string/summary_controlkey_preference"
-                android:entries="@array/entries_controlkey_preference"
-                android:entryValues="@array/entryvalues_controlkey_preference"
-                android:dialogTitle="@string/dialog_title_controlkey_preference" />
+                android:key="hop_debug"
+                android:defaultValue=""
+                android:title="@string/prefs_debug"
+                android:summary="@string/prefs_debug_summary"
+                android:entries="@array/entries_debug_preference"
+                android:entryValues="@array/entriesvalues_debug_preference"
+                android:dialogTitle="@string/prefs_debug" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/shell_preferences">
 
-    <EditTextPreference
-            android:key="shell"
+      <EditTextPreference
+            android:key="hop_shell"
             android:defaultValue="@string/default_value_shell_preference"
             android:title="@string/title_shell_preference"
             android:summary="@string/summary_shell_preference"
             android:dialogTitle="@string/dialog_title_shell_preference" />
-    <EditTextPreference
+      <EditTextPreference
             android:key="initialcommand"
             android:defaultValue="@string/default_value_initialcommand_preference"
             android:title="@string/title_initialcommand_preference"
             android:summary="@string/summary_initialcommand_preference"
             android:dialogTitle="@string/dialog_title_initialcommand_preference" />
     </PreferenceCategory>
+
+    <PreferenceCategory
+       android:title="Category Title"
+       android:layout="@layout/host">
+    </PreferenceCategory>
+   
 </PreferenceScreen>

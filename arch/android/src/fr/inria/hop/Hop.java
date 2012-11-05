@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Jul 26 20:13:15 2012 (serrano)                */
+/*    Last change :  Mon Nov  5 08:59:06 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -40,10 +40,11 @@ public class Hop extends Thread {
    final static int HOP_RESTART = 5;
 
    // global variables
-   static String root;
-   static String port = "8080";
-   static boolean debug = false;
+   static String root = "/data/data/fr.inria.hop";
+   static String debug = "";
    static boolean zeroconf = false;
+
+   static String port = "8080";
 
    // instance variables
    private boolean killed = false;
@@ -79,17 +80,18 @@ public class Hop extends Thread {
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
+
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
 	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port
-	 + (debug ? " -g2" : " ") + (zeroconf ? " -z" : " ") + " " + extra;
+	 + " " + debug + (zeroconf ? " -z" : "") + " " + extra;
 
-      Log.i( "Hop", "executing [" + sh + " -c " + cmd );
+      Log.i( "Hop", "executing [" + sh + " -c " + cmd + "]");
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
+      Log.i( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
 
       extra = "";
       
       synchronized( currentpid ) {
-	 Log.i( "Hop", "new hop process start pid=" + pid[ 0 ] );
 	 currentpid[ 0 ] = pid[ 0 ];
       }
 
@@ -199,7 +201,13 @@ public class Hop extends Thread {
 
    // isRunning()
    public boolean isRunning() {
+      Log.e( "Hop", "isRunning killed=" + killed + " pid=" + currentpid[ 0 ] );
       return !killed && currentpid[ 0 ] != 0;
+   }
+   
+   // isBackground()
+   public static boolean isBackground() {
+      return HopService.isBackground();
    }
 }
    

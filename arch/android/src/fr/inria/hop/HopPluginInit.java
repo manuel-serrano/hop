@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Fri Jul  6 16:35:41 2012 (serrano)                */
+/*    Last change :  Fri Nov  2 08:44:48 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -54,7 +54,6 @@ public class HopPluginInit extends HopPlugin {
 	 int j = name.lastIndexOf( '.' );
 	 String cname = "fr.inria.hop."
 	    + name.substring( (i < 0 ? 0 : i + 1), (j < i ? name.length() : j) );
-		 
 	 String tmp =
 	    Environment.getExternalStorageDirectory().getAbsolutePath();
 	    

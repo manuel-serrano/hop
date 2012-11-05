@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Wed Aug  8 10:59:59 2012 (serrano)                */
+/*    Last change :  Fri Nov  2 06:37:48 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -132,7 +132,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	       public void serviceAdded( ServiceEvent ev ) {
 		  // Required to force serviceResolved to be
 		  // called again (after the first search)
-		  Log.i( "HopPluginZeroconf", "serviceAdded: " + ev.getName() );
+		  Log.i( "HopPluginZeroconf", "serviceAdded: " + ev.getName() + " type=" + type );
 			 
 		  jmdns.requestServiceInfo( type, ev.getName() );
 	       }
@@ -177,6 +177,8 @@ public class HopPluginZeroconf extends HopPlugin {
 	 final String type = HopDroid.read_string( ip ) + ".local.";
 	 final String[] props = HopDroid.read_stringv( ip );
 
+	 Log.d( "HopPluginZeroconf", "publish-service " + name + " type=" + type );
+	 
 	 if( !inkill ) {
 	    final HashMap<String, String> values = new HashMap<String, String>();
 
@@ -184,25 +186,21 @@ public class HopPluginZeroconf extends HopPlugin {
 	       values.put( props[ i ], props[ i + 1 ] );
 	    }
 	    
-/* 	    new Thread( new Runnable() {                               */
-/* 		  public void run() {                                  */
-/* 		     if( jmdns != null ) {                             */
-/* {* 			synchronized( jmdns ) {                        *} */
-/* 			if( !inkill ) {                                */
-/* 			   Log.d( "HopPluginZeroconf", ">>> register-service type=" + */
-/* 				  type + " name=" + name );            */
-/* 			   ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values ); */
-/* 			   try {                                       */
-/* 			      jmdns.registerService( si );             */
-/* 			   } catch( Exception e ) {                    */
-/* 			      Log.d( "HopPluginZeroconf", "!!! register-service: cannot register service", e ); */
-/* 			   }                                           */
-/* 			   Log.d( "HopPluginZeroconf", "<<< register-service type=" + */
-/* 				  type + " name=" + name );            */
-/* 			}                                              */
-/* 		     }                                                 */
-/* 		  }                                                    */
-/* 	       } ).start();                                            */
+	    new Thread( new Runnable() {
+		  public void run() {
+		     if( !inkill ) {
+			ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values );
+			if( jmdns != null ) {
+			   try {
+			      jmdns.registerService( si );
+			   } catch( Exception e ) {
+			      Log.d( "HopPluginZeroconf", "!!! publish-service error, " + name + " type=" + type
+				     + " err=" + e );
+			   }
+			}
+		     }
+		  }
+	       } ).start();
 	 }
       } catch( Exception e ) {
 	 Log.d( "HopPluginZeroconf", "cannot register service", e );
@@ -217,6 +215,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	 try {
 	    Log.d( "HopPluginZeroconf", "--- jmdns.close" );
 	    jmdns.close();
+	    jmdns = null;
 	 } catch( Throwable _ ) {
 	    ;
 	 }
@@ -233,7 +232,10 @@ public class HopPluginZeroconf extends HopPlugin {
 
    // kill
    public synchronized void kill() {
-      inkill = true;
+      if( !inkill ) {
+	 stopJmDns();
+	 inkill = true;
+      }
       super.kill();
    }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Aug  3 18:30:55 2012 (serrano)                */
+/*    Last change :  Mon Nov  5 09:26:04 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -15,13 +15,16 @@
 package fr.inria.hop;
 
 import android.app.*;
+import android.preference.*;
 import android.os.*;
 import android.util.Log;
 import android.content.*;
+import android.content.res.*;
 import android.widget.*;
 import android.view.*;
 import android.view.View.*;
 import android.net.*;
+import android.text.*;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
@@ -58,6 +61,11 @@ public class HopLauncher extends Activity {
    boolean hopconnected = false;
 
    ProgressDialog progress = null;
+
+   // Preferences listeners are stored in a weakhash tables! To prevent
+   // the Hop preference listener to be collected we store it into an
+   // instance variable
+   SharedPreferences.OnSharedPreferenceChangeListener prefslistener = null;
    
    int maxlines = 0;
    StringBuffer textbuffer = new StringBuffer( 2048 );
@@ -85,45 +93,44 @@ public class HopLauncher extends Activity {
 
    // write a line on Hop console
    private void write_console( String line ) {
-      synchronized( textview ) {
-	 textbuffer.append( line );
-	 textview.setText( textbuffer );
+      int lineh = textview.getLineHeight();
+
+      textbuffer.append( line );
+      textview.setText( textbuffer );
 			   
-	 int lc = textview.getLineCount();
-
-	 if( lc > maxlines - 20 ) {
-	    int index = 0;
-
-	    for( int counter = 0; counter < 20; counter++ ) {
-	       int i = textbuffer.indexOf( "\n", index );
-
-	       if( i > 0 ) {
-		  index = i;
-	       } else {
-		  break;
-	       }
-	    }
-
-	    // if no lines found remove a bunch of chars
-	    if( index == 0 ) index = 1024;
-
-	    textbuffer.delete( 0, index );
-	    textview.setText( textbuffer );
-	    lc = textview.getLineCount();
-	 }
-			   
-	 if( checkbox.isChecked() ) {
-	    int y = textview.getLineHeight() * lc;
-	    scrollview.scrollTo( 0, y );
-	 }
+      int lc = textview.getLineCount();
 	 
-	 hop_log = checkbox2.isChecked();
+      if( lc > maxlines - 20 ) {
+	 int index = 0;
+
+	 for( int counter = 0; counter < 20; counter++ ) {
+	    int i = textbuffer.indexOf( "\n", index );
+
+	    if( i > 0 ) {
+	       index = i;
+	    } else {
+	       break;
+	    }
+	 }
+
+	 // if no lines found remove a bunch of chars
+	 if( index == 0 ) index = 1024;
+
+	 textbuffer.delete( 0, index );
+	 textview.setText( textbuffer );
+	 lc = textview.getLineCount();
+      }
+
+      if( checkbox.isChecked() ) {
+	 textview.setTextColor( getResources().getColor( R.color.scrollColor ) );
+	 scrollview.fullScroll( View.FOCUS_DOWN );
+      } else {
+	 textview.setTextColor( getResources().getColor( R.color.noScrollColor ) );
       }
    }
    
    final ServiceConnection hopconnection = new ServiceConnection() {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
-	    Log.i( "HopLauncher", "Launcher connected... activity=" + activity );
 	    hopservice = ((HopService.HopBinder)service).getService();
 	    hopservice.hop.handler = handler;
 	    hopservice.hop.queue = queue;
@@ -132,7 +139,6 @@ public class HopLauncher extends Activity {
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
-	    Log.i( "HopLauncher", "Launcher disconnected..." );
 	    hopservice = null;
 	 }
       };
@@ -202,12 +208,12 @@ public class HopLauncher extends Activity {
 			   hopintent = new Intent( getApplicationContext(), HopService.class );
 			}
 
-			final TextView port = (TextView)activity.findViewById( R.id.port );
-			setHopPort( port.getText().toString() );
-			Hop.debug = checkbox3.isChecked();
-			Hop.zeroconf = checkbox4.isChecked();
-		     
-			startService( hopintent );
+			if( !Hop.isBackground() ) {
+			   startService( hopintent );
+			} else {
+			   write_console( "Hop connected...\n" );
+			}
+			
 			bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
 			hopconnected = true;
 			break;
@@ -218,7 +224,7 @@ public class HopLauncher extends Activity {
 			unbindService( hopconnection );
 			stopService( hopintent );
 			hopintent = null;
-			
+
 			handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
 			break;
 
@@ -231,7 +237,6 @@ public class HopLauncher extends Activity {
    
    @Override public void onCreate( Bundle bundle ) {
       super.onCreate( bundle );
-      Log.i( "HopLauncher", "onCreate" );
 
       // switch to fullscreen
       this.getWindow().setFlags(
@@ -239,57 +244,15 @@ public class HopLauncher extends Activity {
 	 WindowManager.LayoutParams.FLAG_FULLSCREEN );
 
       // install our view
+      requestWindowFeature( Window.FEATURE_LEFT_ICON );
       setContentView( R.layout.main );
-
-      // setup the hostname and hostip
-      setupHostname();
-
-      // setup the restart button
-      Button buttonr = (Button)findViewById( R.id.restart );
-      buttonr.setOnClickListener( new OnClickListener() {
-	    public void onClick( View v ) {
-	       textbuffer.delete( 0, textbuffer.length() );
-	       write_console( "Restarting Hop..." );
-
-	       handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
-	    }
-	 } );
-
-      // setup the exit button
-      Button buttone = (Button)findViewById( R.id.exit );
-      buttone.setOnClickListener( new OnClickListener() {
-	    public void onClick( View v ) {
-	       // the documentation for onDestroy says that the method is
-	       // not necessarily invoked when the application is finished
-	       // so we force killing hop and hopdroid first.
-	       kill( 0 );
-	    }
-	 } );
-
-      // setup the clear button
-      Button buttonc = (Button)findViewById( R.id.clearconsole );
-      buttonc.setOnClickListener( new OnClickListener() {
-	    public void onClick( View v ) {
-	       textbuffer.delete( 0, textbuffer.length() - 1 );
-	       write_console( "" );
-	    }
-	 } );
+      getWindow().setFeatureDrawableResource(
+	 Window.FEATURE_LEFT_ICON,
+	 R.drawable.favicon );
       
       // setup the scroll button
       checkbox = (CheckBox)findViewById( R.id.scrollconsole );
       checkbox.setChecked( true );
-      
-      // setup the log button
-      checkbox2 = (CheckBox)findViewById( R.id.log );
-      checkbox2.setChecked( hop_log );
-      
-      // setup the debug button
-      checkbox3 = (CheckBox)findViewById( R.id.debug );
-      checkbox3.setChecked( Hop.debug );
-      
-      // setup the zeroconf button
-      checkbox4 = (CheckBox)findViewById( R.id.zeroconf );
-      checkbox4.setChecked( Hop.zeroconf );
       
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );
@@ -298,14 +261,15 @@ public class HopLauncher extends Activity {
       //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
       maxlines = 500;
 
+      // loadPreferences
+      loadPreferences();
+      
       try {
 	 // now that the activity is fully initialized, it's possible
 	 // to get the disk location of the package
 	 String apk = activity.getApplicationInfo().sourceDir;
 	 Hop.root = activity.getApplicationInfo().dataDir;
-	 final TextView port = (TextView)activity.findViewById( R.id.port );
-
-	 setHopPort( Hop.port );
+/* 	 final TextView port = (TextView)activity.findViewById( R.id.port ); */
 
 	 if( !HopInstaller.installed( Hop.root ) ) {
 
@@ -353,9 +317,66 @@ public class HopLauncher extends Activity {
       }
    }
 
+   @Override public boolean onCreateOptionsMenu( Menu menu ) {
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate( R.menu.hop_menu, menu );
+      return true;
+   }
+
+   @Override
+   public boolean onOptionsItemSelected( MenuItem item ) {
+      // Handle item selection
+      switch( item.getItemId() ) {
+	 case R.id.menu_settings:
+	    Log.d( "HopLauncher", "starting preference activity" );
+	    Intent intent = new Intent( getBaseContext(), HopSettings.class );
+	    startActivity( intent );
+	    return true;
+	    
+	 case R.id.menu_quit:
+ 	    kill( 0 );
+            return true;
+	    
+	 case R.id.menu_clear:
+            textbuffer.delete( 0, textbuffer.length() - 1 );
+	    write_console( "" );
+            return true;
+	    
+	 case R.id.menu_restart:
+	    restart();
+            return true;
+
+	 case R.id.menu_about:
+	    about();
+	    return true;
+	    
+	 default:
+            return super.onOptionsItemSelected( item );
+      }
+   }
+   
    private void setHopPort( String port ) {
+      Log.d( "HopLauncher", "set port=" + port );
       Hop.port = port;
-      hop_wizard_url = "http://localhost:" + Hop.port + "/hop/wizard";
+      hop_wizard_url = "http://localhost:" + port + "/hop/wizard";
+   }
+
+   private void about() {
+      AlertDialog.Builder builder = new AlertDialog.Builder( this );
+      final View aview = getLayoutInflater().inflate(R.layout.about, null, false);
+      builder.setView( aview );
+      final AlertDialog dialog = builder.create();
+
+      Button dialogButton = (Button)aview.findViewById( R.id.dialogButtonOK );
+
+      dialogButton.setOnClickListener (new OnClickListener() {
+	    @Override
+	    public void onClick( View v ) {
+	       dialog.dismiss();
+	    }
+	 } );
+ 
+      dialog.show();
    }
    
    private void configure() {
@@ -371,42 +392,61 @@ public class HopLauncher extends Activity {
       hopconfigurer.start();
    }
 
-   public void setupHostname() {
-      TextView hostname = (TextView)activity.findViewById( R.id.hostname );
-      TextView hostip = (TextView)activity.findViewById( R.id.hostip );
-      
-      try {
-	 InetAddress addr = java.net.InetAddress.getLocalHost();
-	 hostname.append( addr.getCanonicalHostName() );
-	 hostip.append( addr.getHostAddress() );
-      } catch( Exception _ ) {
-	 hostname.append( "" );
-	 hostip.append( "" );
-      }
-   }
 
+   @Override
    public void onStart() {
       super.onStart();
 
       if( progress != null ) progress.show();
    }
 
+   @Override
+   public void onStop() {
+      super.onStop();
+   }
+
+   private void loadPreferences() {
+      final Resources res = getResources();
+      final SharedPreferences sp =
+	 PreferenceManager.getDefaultSharedPreferences( this );
+
+      final String defaultport = res.getString( R.string.hopport );
+      
+      setHopPort( sp.getString( "hop_port", defaultport ) );
+      Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+      hop_log = sp.getBoolean( "hop_log", false );
+
+
+      if( prefslistener == null ) {
+	 prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+	       public void onSharedPreferenceChanged( SharedPreferences sp, String key ) {
+		  if( key.equals( "hop_port" ) ) {
+		     setHopPort( sp.getString( "hop_port", defaultport ) );
+		     return;
+		  } 
+		  if( key.equals( "hop_zeroconf" ) ) {
+		     Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+		     return;
+		  }
+		  if( key.equals( "hop_log" ) ) {
+		     hop_log = sp.getBoolean( "hop_log", false );
+		     return;
+		  }
+		  if( key.equals( "hop_debug" ) ) {
+		     Hop.debug = sp.getString( "hop_debug", "" );
+		     return;
+		  }
+	       }
+	    };
+	 
+	 sp.registerOnSharedPreferenceChangeListener( prefslistener );
+      }
+   }
+   
+   @Override
    public void onResume() {
       super.onResume();
    }
-
-/*    @Override                                                        */
-/*    public void onStop() {                                           */
-/*       Log.d( "HopLauncher", ">>> onStop..." );                      */
-/*       super.onStop();                                               */
-/*       Log.d( "HopLauncher", "<<< onStop..." );                      */
-/*    }                                                                */
-/*                                                                     */
-/*    public void onDestroy() {                                        */
-/*       Log.d( "HopLauncher", ">>> onDestroy..." );                   */
-/*       super.onDestroy();                                            */
-/*       Log.d( "HopLauncher", "<<< onDestroy..." );                   */
-/*    }                                                                */
 
    @Override
    public void startActivityForResult( Intent intent, int requestCode ) {
@@ -419,7 +459,7 @@ public class HopLauncher extends Activity {
       super.onActivityResult( reqcode, rescode, intent );
    }
 
-   synchronized private void kill( int waitms ) {
+   private synchronized void kill( int waitms ) {
       if( !killed ) {
 	 Log.i( "HopLauncher", ">>> kill" );
 	 killed = true;
@@ -451,5 +491,12 @@ public class HopLauncher extends Activity {
       
 	 Log.i( "HopLauncher", "<<< kill" );
       }
+   }
+
+   private synchronized void restart() {
+      textbuffer.delete( 0, textbuffer.length() );
+      write_console( "Restarting Hop...\n" );
+      
+      handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
    }
 }

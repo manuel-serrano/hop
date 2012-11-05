@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Fri Jul 13 14:40:10 2012 (serrano)                */
+;*    Last change :  Mon Nov  5 10:25:57 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -19,21 +19,26 @@
    (import __hopdroid-phone)
    
    (export (class androidzeroconf::zeroconf
-	      (android::androidphone (default (android)))
+	      (android::androidphone read-only (default (instantiate::androidphone)))
 	      (plugin (default #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-debug ...                                               */
+;*---------------------------------------------------------------------*/
+(define zeroconf-debug #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ::androidzeroconf ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
-   (with-access::androidzeroconf o (android plugin onready)
+   (with-access::androidzeroconf o ((aphone android) plugin onready)
       (unless plugin
-	 (set! plugin (android-load-plugin android "zeroconf")))
-      (when (android-send-command/result android plugin #\s)
+	 (set! plugin (android-load-plugin aphone "zeroconf")))
+      (when (android-send-command/result aphone plugin #\s)
 	 (onready o)
-	 (hop-verb 1 (format "zeroconf:~a\n"
+	 (hop-verb 1 (format "  zeroconf: ~a\n"
 			(hop-color 2 ""
-			   (with-access::androidphone android (sdk)
+			   (with-access::androidphone aphone (sdk)
 			      (if (>= sdk 16) "android" "jmdns"))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -47,6 +52,9 @@
 ;*    zeroconf-backend-publish-service! ::androidzeroconf ...          */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-publish-service! o::androidzeroconf name port type opts)
+   (when zeroconf-debug
+      (tprint "zeroconf-backend-publish-service name=" name " port=" port
+	 " type=" type))
    (with-access::androidzeroconf o (android plugin)
       (android-send-command android plugin #\p name port type
 	 (append-map (lambda (s)
@@ -71,6 +79,8 @@
 	  (android-send-command android plugin #\l)
 	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
+		(when zeroconf-debug
+		   (tprint "zeroconf-add-service listener" e))
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
@@ -102,6 +112,8 @@
 	  (android-send-command android plugin #\t event)
 	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
 	     (lambda (e::event)
+		(when zeroconf-debug
+		   (tprint "zeroconf-add-service listener" e))
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)
@@ -124,5 +136,4 @@
 ;*    Register the avahi backend                                       */
 ;*---------------------------------------------------------------------*/
 (zeroconf-register-backend!
-   (instantiate::androidzeroconf
-      (android (android))))
+   (instantiate::androidzeroconf))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sun Jul  8 07:59:48 2012 (serrano)                */
+/*    Last change :  Sat Nov  3 09:49:58 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -77,7 +77,10 @@ public abstract class HopPlugin {
       
       Log.v( "HopPlugin", "Starting activity key=" + key + " intent=" + intent
 	 + " activity=" + hopdroid.activity );
-      hopdroid.activity.startActivityForResult( intent, key );
+
+      if( hopdroid.activity != null ) {
+	 hopdroid.activity.startActivityForResult( intent, key );
+      }
 
       return key;
    }
