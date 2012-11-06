@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Thu Oct 25 17:17:57 2012 (serrano)                */
+;*    Last change :  Tue Nov  6 07:56:26 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -41,23 +41,15 @@
 ;*    hopscheme-compile-file ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-file file env)
-   (let ((abase (module-abase)))
-      (unwind-protect
-	 (with-output-to-string
-	    (lambda ()
-	       (set-abase! file)
-	       (scheme2js-compile-file file              ;; input-files
-		  "-"               ;; output-file
-		  `(                ;; headers-overrides
-		    (merge-first (import ,@(hop-runtime-modules)))
-		    ,@env)
-		  (extend-config (get-cached-config)
-		     'module-resolver
-		     (lambda (mod)
-			((bigloo-module-resolver)
-			 mod (module-abase))))
-		  :reader *hop-reader*)))
-	 (module-abase-set! abase))))
+   (with-output-to-string
+      (lambda ()
+	 (scheme2js-compile-file file   ;; input-files
+	    "-"               ;; output-file
+	    `(                ;; headers-overrides
+	      (merge-first (import ,@(hop-runtime-modules)))
+	      ,@env)
+	    (get-cached-config)
+	    :reader *hop-reader*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *cached-config* ...                                              */
@@ -75,15 +67,3 @@
 			    ;; do an 'eval' on $s and 'eval' new module clause
 			    `((hop-module-compilation . #t)))))
    *cached-config*)
-
-;*---------------------------------------------------------------------*/
-;*    set-abase! ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (set-abase! file)
-   (let loop ((dir (dirname file)))
-      (if (file-exists? (make-file-name dir ".afile"))
-	  (module-abase-set! dir)
-	  (let ((ndir (dirname dir)))
-	     (unless (string=? dir ndir)
-		(loop ndir))))))
-

@@ -21,17 +21,23 @@
 ;*    scheme2js-module-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (scheme2js-module-resolver mod file)
-   (cond
-      ((config 'module-resolver)
-       =>
-       (lambda (resolver) (resolver mod)))
-      ((string? file)
-       (let ((dir (dirname file)))
-	  (or ((bigloo-module-resolver) mod dir)
-	      (extension-resolver mod (cons dir (config 'include-paths))))))
-      (else
-       (extension-resolver mod (config 'include-paths)))))
-       
+   (with-abase file
+      (lambda ()
+	 (or ((config 'module-resolver) mod (module-abase))
+	     ((bigloo-module-resolver) mod (module-abase))
+	     (let ((path (if (string? file)
+			     (cons (dirname file) (config 'include-paths))
+			     (config 'include-paths))))
+		(extension-resolver mod path))))))
+
+;*---------------------------------------------------------------------*/
+;*    config-runtime-resolver ...                                      */
+;*---------------------------------------------------------------------*/
+(define (config-runtime-resolver mod dir)
+   (let ((cfg (config 'module-runtime-resolver)))
+      (when (procedure? cfg)
+	 (cfg mod))))
+
 ;*---------------------------------------------------------------------*/
 ;*    *module-extensions* ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -56,3 +62,27 @@
       (if module-file
 	  (list module-file)
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    with-abase ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (with-abase file proc)
+   
+   (define (set-abase! file)
+      (let loop ((dir (dirname file)))
+	 (if (file-exists? (make-file-name dir ".afile"))
+	     (module-abase-set! dir)
+	     (let ((ndir (dirname dir)))
+		(unless (string=? dir ndir)
+		   (loop ndir))))))
+   
+   (if (string? file)
+       (let ((abase (module-abase)))
+	  (set-abase! file)
+	  (let ((r (proc)))
+	     (module-abase-set! abase)
+	     r))
+       (proc)))
+
+
+

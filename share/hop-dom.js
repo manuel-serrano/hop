@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Mon Oct 22 14:11:36 2012 (serrano)                */
+/*    Last change :  Tue Nov  6 08:08:05 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1281,13 +1281,13 @@ function hop_bounding_box_to_list( bbox ) {
 /*** META ((export bounding-box-x) (arity -2)) */
 function hop_bounding_box_x( bbox, loc ) {
    if( arguments.length == 1 )
-      return bbox[ 0 ];
+      return bbox.left;
    if( (loc == "w") || (loc == "nw") || (loc == "sw") )
-      return bbox[ 0 ];
+      return bbox.left;
    if( (loc == "n") || (loc == "s"))
-      return bbox[ 0 ] + (bbox[ 2 ]/2);
+      return bbox.left + (bbox.width/2);
    if( (loc == "ne") || (loc == "e") || (loc == "se") )
-      return bbox[ 0 ] + bbox[ 2 ];
+      return bbox.left + bbox.width;
    return 0;
 }
 
@@ -1297,12 +1297,12 @@ function hop_bounding_box_x( bbox, loc ) {
 /*** META ((export bounding-box-y) (arity -2)) */
 function hop_bounding_box_y( bbox, loc ) {
    if( arguments.length == 1 )
-      return bbox[ 1 ];
+      return bbox.top;
    if( (loc == "nw") || (loc == "n") || (loc == "ne") )
-      return bbox[ 1 ];
+      return bbox.top;
    if( (loc == "e") || (loc == "w"))
-      return bbox[ 1 ] + (bbox[ 3 ]/2);
+      return bbox.top + (bbox.height/2);
    if( (loc == "se") || (loc == "s") || (loc == "sw") )
-      return bbox[ 1 ] + bbox[ 3 ];
+      return bbox.top + bbox.height;
    return 0;
 }

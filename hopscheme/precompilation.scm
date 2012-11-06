@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Thu Oct 25 17:20:03 2012 (serrano)                */
+;*    Last change :  Tue Nov  6 07:42:00 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
@@ -24,14 +24,12 @@
 (define (precompile-module m resolver)
    (let* ((files (resolver m '*))
 	  (compiled (any (lambda (f)
-			    (precompile-imported-module-file
-			     m
-			     f
-			     *hop-reader*
-			     (hopscheme-config #f)
-			     :bigloo-modules? #t
-			     :store-exports-in-ht? #t
-			     :store-exported-macros-in-ht? #t))
+			    (precompile-imported-module-file m f
+			       *hop-reader*
+			       (hopscheme-config #f)
+			       :bigloo-modules? #t
+			       :store-exports-in-ht? #t
+			       :store-exported-macros-in-ht? #t))
 			 files)))
       (if compiled
 	  compiled

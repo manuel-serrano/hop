@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/hopscheme/hopscheme_config.scm        */
+;*    .../prgm/project/hop/2.4.x/hopscheme/hopscheme_config.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Fri Jan 20 15:18:07 2012 (serrano)                */
+;*    Last change :  Tue Nov  6 07:39:55 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -86,9 +86,11 @@
 		  (host-register . ,*hop-register*)
 		  ;; library path
 		  (library-path . ,*hop-library-path*)
+		  ;; runtime resolver
+		  (module-resolver . ,hopscheme-runtime-resolver)
 		  ;; pp in debug mode
-		  (pp . ,(>fx (bigloo-debug) 1))))))
-	  *cached-config*))
+		  (pp . ,(>fx (bigloo-debug) 1)))))
+	  *cached-config*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-config ...                                             */
