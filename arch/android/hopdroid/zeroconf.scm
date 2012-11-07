@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Mon Nov  5 10:25:57 2012 (serrano)                */
+;*    Last change :  Wed Nov  7 15:03:38 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -25,7 +25,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-debug ...                                               */
 ;*---------------------------------------------------------------------*/
-(define zeroconf-debug #f)
+(define (zeroconf-debug)
+   (>= (bigloo-debug) 1))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ::androidzeroconf ...                     */
@@ -38,8 +39,7 @@
 	 (onready o)
 	 (hop-verb 1 (format "  zeroconf: ~a\n"
 			(hop-color 2 ""
-			   (with-access::androidphone aphone (sdk)
-			      (if (>= sdk 16) "android" "jmdns"))))))))
+			   (android-send-command/result aphone plugin #\v)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-stop ::androidzeroconf ...                              */
@@ -52,7 +52,7 @@
 ;*    zeroconf-backend-publish-service! ::androidzeroconf ...          */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-publish-service! o::androidzeroconf name port type opts)
-   (when zeroconf-debug
+   (when (zeroconf-debug)
       (tprint "zeroconf-backend-publish-service name=" name " port=" port
 	 " type=" type))
    (with-access::androidzeroconf o (android plugin)
@@ -69,6 +69,8 @@
 ;*    zeroconf-backend-add-service-listener! ::androidzeroconf ...     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-add-service-event-listener! o::androidzeroconf event proc)
+   (when (zeroconf-debug)
+      (tprint "zeroconf-backend-add-service-event-listener event=" event))
    (cond
       ((not (string? event))
        (error "add-event-listener! ::zeroconf-service-discoverer"
@@ -79,7 +81,7 @@
 	  (android-send-command android plugin #\l)
 	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
-		(when zeroconf-debug
+		(when (zeroconf-debug)
 		   (tprint "zeroconf-add-service listener" e))
 		(with-access::event e (value)
 		   (match-case value
@@ -112,7 +114,7 @@
 	  (android-send-command android plugin #\t event)
 	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
 	     (lambda (e::event)
-		(when zeroconf-debug
+		(when (zeroconf-debug)
 		   (tprint "zeroconf-add-service listener" e))
 		(with-access::event e (value)
 		   (match-case value

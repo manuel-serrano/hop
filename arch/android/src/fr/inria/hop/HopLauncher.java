@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Nov  5 09:26:04 2012 (serrano)                */
+/*    Last change :  Wed Nov  7 10:09:07 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -132,6 +132,8 @@ public class HopLauncher extends Activity {
    final ServiceConnection hopconnection = new ServiceConnection() {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
 	    hopservice = ((HopService.HopBinder)service).getService();
+	    Log.d( "HopLauncher", "hopservice=" + hopservice );
+	    
 	    hopservice.hop.handler = handler;
 	    hopservice.hop.queue = queue;
 	    hopservice.hopdroid.handler = handler;
@@ -209,8 +211,10 @@ public class HopLauncher extends Activity {
 			}
 
 			if( !Hop.isBackground() ) {
+			   Log.d( "HopLauncher", "staring new service..." );
 			   startService( hopintent );
 			} else {
+			   Log.d( "HopLauncher", "background service already running..." );
 			   write_console( "Hop connected...\n" );
 			}
 			
@@ -461,7 +465,7 @@ public class HopLauncher extends Activity {
 
    private synchronized void kill( int waitms ) {
       if( !killed ) {
-	 Log.i( "HopLauncher", ">>> kill" );
+	 Log.i( "HopLauncher", ">>> kill launcher" );
 	 killed = true;
 	 
 	 // give time to read the console messages
@@ -477,23 +481,25 @@ public class HopLauncher extends Activity {
 	    hopconf.kill();
 	 }
 	 if( hopconnected ) {
-	    Log.i( "HopLauncher", "Unbinding service..." );
+	    Log.d( "HopLauncher", "Unbinding service..." );
 	    hopconnected = false;
 	    unbindService( hopconnection );
 	 }
       
-	 Log.i( "HopLauncher", "Stopping service..." );
+	 Log.d( "HopLauncher", "Stopping service..." );
 	 if( hopintent != null ) {
 	    stopService( hopintent );
 	 }
-	 Log.i( "HopLauncher", "Finishing activity..." );
+	 Log.d( "HopLauncher", "Finishing activity..." );
 	 finish();
       
-	 Log.i( "HopLauncher", "<<< kill" );
+	 Log.i( "HopLauncher", "<<< kill launcher" );
       }
    }
 
    private synchronized void restart() {
+      Log.i( "HopLauncher", "Restarting Hop..." );
+      
       textbuffer.delete( 0, textbuffer.length() );
       write_console( "Restarting Hop...\n" );
       

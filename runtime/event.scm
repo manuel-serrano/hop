@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Oct 13 07:47:48 2012 (serrano)                */
+;*    Last change :  Wed Nov  7 15:38:13 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -96,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define debug-websocket #t)
+(define (debug-websocket) (>= (bigloo-debug) 2))
 (define debug-multipart #f)
 (define debug-flash #f)
 
@@ -413,7 +413,7 @@
 	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (when (and debug-websocket (>fx (bigloo-debug) 0))
+	 (when (debug-websocket)
 	    (tprint "websocket-register-new-connection, protocol-version: " version))
 	 (let ((resp (websocket-server-response req key)))
 	    ;; register the websocket
@@ -422,7 +422,7 @@
 		  (set! *websocket-response-list*
 		     (cons (cons (string->symbol key) resp)
 			*websocket-response-list*))
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
+		  (when (debug-websocket)
 		     (tprint "websocket-register-new-connection, key=" key
 			" socket=" socket 
 			" connected clients: "
@@ -446,7 +446,7 @@
 	    (set! *websocket-service*
 	       (service :name "public/server-event/websocket" :id server-event
 		  (#!key key)
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
+		  (when (debug-websocket)
 		     (tprint "!!! start websocket service key=" key))
 		  (let ((req (current-request)))
 		     (with-access::http-request req (header)
@@ -706,7 +706,7 @@
    (define (websocket-register-event! req key name)
       (with-trace 3 "websocket-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
-	    (when (and debug-websocket (>fx (bigloo-debug) 0))
+	    (when (debug-websocket)
 	       (tprint "websocket-register-event key=" key " name=" name " c=" c))
 	    (if (pair? c)
 		(let ((resp (cdr c)))
@@ -722,7 +722,7 @@
    (with-trace 2 "server-register-event!"
       (with-lock *event-mutex*
 	 (lambda ()
-	    (when (or debug-ajax (and debug-websocket (>fx (bigloo-debug) 0)) debug-multipart debug-flash)
+	    (when (or debug-ajax (debug-websocket) debug-multipart debug-flash)
 	       (tprint ">>> server-event-register: event=[" event "] key="
 		  key " mode=" mode " padding=" padding))
 	    (if (<fx *clients-number* (hop-event-max-clients))
@@ -862,7 +862,7 @@
       ;; close the socket
       (with-access::http-request req (socket)
 	 (socket-close socket)
-	 (when (and debug-websocket (>fx (bigloo-debug) 0))
+	 (when (debug-websocket)
 	    (tprint "!!! websocket-close-request! " socket)))
       ;; decrement the current number of connected clients
       (set! *clients-number* (-fx *clients-number* 1))
@@ -1059,7 +1059,7 @@
 	 (bind-exit (esc)
 	    (with-handler
 	       (lambda (e)
-		  (when (and debug-websocket (>fx (bigloo-debug) 0))
+		  (when (debug-websocket)
 		     (tprint "WEBSOCKET EVENT ERROR: " e
 			" socket=" socket
 			" thread=" (current-thread)
@@ -1067,10 +1067,10 @@
 			" vlen=" (string-length vstr)))
 		  (if (isa? e &io-error)
 		      (begin
-			 (when (and debug-websocket (>fx (bigloo-debug) 0))
+			 (when (debug-websocket)
 			    (tprint ">>> WS CLOSE " socket))
 			 (websocket-close-request! resp)
-			 (when (and debug-websocket (>fx (bigloo-debug) 0))
+			 (when (debug-websocket)
 			    (tprint "<<< WS CLOSED " socket))
 			 (esc #f))
 		      (raise e)))
@@ -1295,7 +1295,7 @@
 	    *websocket-socket-table*
 	    name
 	    (lambda (l)
-	       (when (and debug-websocket (>fx (bigloo-debug) 0))
+	       (when (debug-websocket)
 		  (tprint "!!! websocket-event-broadcast \"" name "\" "
 		     (length l)
 		     " clients "

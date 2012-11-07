@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Nov  4 17:32:05 2012 (serrano)                */
+/*    Last change :  Wed Nov  7 10:46:32 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -42,14 +42,12 @@ public class HopService extends Service {
    
    private void startThreadLog( Thread th ) {
       String name = th.getClass().getName();
-      Log.d( "HopService", ">>> " + name + " starting..." );
       th.start();
-      Log.d( "HopService", "<<< " + name + " started..." );
    }
    
    @Override
    public void onCreate() {
-      Log.d( "HopService", "service created..." );
+      Log.i( "HopService", "onCreate..." );
       
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
@@ -58,18 +56,17 @@ public class HopService extends Service {
 
    @Override
    public void onDestroy() {
-      Log.d( "HopService", ">>> onDestroy..." );
+      Log.i( "HopService", "onDestroy..." );
       kill();
       
       // status bar update
       mNM.cancel( NOTIFICATION );
       
       super.onDestroy();
-      Log.d( "HopService", "<<< onDestroy..." );
    }
 
    public void kill() {
-      if( hop != null ) hop.inkill = true;
+      Log.i( "HopService", ">>> kill service..." );
       
       if( hop != null ) {
 	 hop.kill();
@@ -80,12 +77,12 @@ public class HopService extends Service {
 	 hopdroid.kill();
 	 hopdroid = null;
       }
+      
+      Log.i( "HopService", "<<< kill service..." );
    }
 
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopService", ">>> onStartCommand..." );
-      
       // create hop 
       hop = new Hop( null, null );
       
@@ -98,7 +95,6 @@ public class HopService extends Service {
       // starting hop
       startThreadLog( hop );
 
-      Log.d( "HopService", "<<< onStartCommand..." );
       // sticky service
       return START_STICKY;
    }
@@ -114,14 +110,11 @@ public class HopService extends Service {
 
    @Override
    public void onRebind( Intent intent ) {
-      Log.d( "HopService", ">>> onRebind..." );
       super.onRebind( intent );
-      Log.d( "HopService", "<<< onRebind..." );
    }
 
    @Override
    public boolean onUnbind( Intent intent ) {
-      Log.d( "HopService", ">>> onUnbind..." );
       if( hop != null ) {
 	 hop.handler = null;
       }
@@ -129,7 +122,6 @@ public class HopService extends Service {
 	 hopdroid.handler = null;
       }
 
-      Log.d( "HopService", "<<< onUnbind..." );
       return false;
    }
    

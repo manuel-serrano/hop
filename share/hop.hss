@@ -133,7 +133,7 @@ div[hssclass=hop-error-body] {
   margin-bottom: 20px;
   padding-bottom: 20px;
   font-family: sans-serif;
-  font-weight: 90%;
+  font-weight: normal;
 }
 
 pre[hssclass=hop-error-notification] {
@@ -142,7 +142,6 @@ pre[hssclass=hop-error-notification] {
 }
 
 div[hssclass=hop-error-msg] tt {
-  font-weight: bold;
   font-family: monospace;
   font-weight: 200;
   font-size: 105%;

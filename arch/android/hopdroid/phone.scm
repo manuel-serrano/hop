@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Nov  5 10:34:21 2012 (serrano)                */
+;*    Last change :  Wed Nov  7 15:31:44 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -22,7 +22,6 @@
 	      (sdk::int read-only (get get-android-sdk))
 	      (protocol::byte read-only (default 2))
 	      (initid::int read-only (default 1))
-	      (%evthread (default #unspecified))
 	      (%mutex::mutex read-only (default (make-mutex))))
 
 	   (class androidevent::event)
@@ -68,10 +67,10 @@
       (unless sock-plugin
 	 ;; hopdroid sockets
 	 (set! sock-plugin
-	    (make-client-socket (format "\000hop-plugin:~a" (hop-port))
+	    (make-client-socket (format "\000hopdroid-plugin:~a" (hop-port))
 	       0 :domain 'unix))
 	 (set! sock-event
-	    (make-client-socket (format "\000hop-event:~a" (hop-port))
+	    (make-client-socket (format "\000hopdroid-event:~a" (hop-port))
 	       0 :domain 'unix))
 	 ;; hopdroid event table
 	 (set! event-table (make-hashtable 8))
@@ -138,8 +137,6 @@
 	    (let ((op (socket-output sock-event)))
 	       ;; protocol version
 	       (write-byte protocol op)
-	       ;; exec command
-	       (write-byte 2 op)
 	       ;; event name
 	       (send-string event op)
 	       ;; add command
@@ -186,8 +183,6 @@
 	    (let ((op (socket-output sock-event)))
 	       ;; protocol version
 	       (write-byte protocol op)
-	       ;; exec command
-	       (write-byte 2 op)
 	       ;; event name
 	       (send-string event op)
 	       ;; remove command
@@ -214,6 +209,23 @@
 ;*    android-event-listener ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (android-event-listener)
+   
+   (define phone-events '())
+   
+   (define (add-phone-event! phone name args)
+      (let ((event (instantiate::androidevent
+		      (name name)
+		      (target phone)
+		      (value args))))
+	 (set! phone-events (cons (cons phone event) phone-events))
+	 event))
+   
+   (define (get-phone-event phone name args)
+      (let ((c (assq phone phone-events)))
+	 (if (pair? c)
+	     (cdr c)
+	     (add-phone-event! phone name args))))
+   
    (let ((ip (socket-input sock-event)))
       (let loop ()
 	 (let ((name (read ip)))
@@ -222,22 +234,25 @@
 		  (unless (eof-object? args)
 		     (let ((procs (with-lock event-mutex
 				     (lambda ()
-					(hashtable-get event-table name)))))
+					(hashtable-get event-table name))))
+			   (phones '()))
+			(tprint "ANDROID-EVENT-LISTENER name=" name
+			   (format " args=~s" args)
+			   " procs=" (length procs))
 			(when (pair? procs)
-			   (let ((event (instantiate::androidevent
-					   (name name)
-					   (target (cdr (car procs)))
-					   (value args))))
-			      (let liip ((procs procs))
-				 (when (pair? procs)
-				    (with-handler
-				       (lambda (e)
-					  (exception-notify e)
-					  #f)
-				       ((caar procs) event))
-				    (with-access::androidevent event (stopped)
-				       (unless stopped
-					  (liip (cdr procs))))))))))))
+			   (let liip ((procs procs))
+			      (when (pair? procs)
+				 (with-handler
+				    (lambda (e)
+				       (exception-notify e)
+				       #f)
+				    (let* ((proc (caar procs))
+					   (phone (cdar procs))
+					   (evt (get-phone-event phone name args)))
+				       (proc evt)
+				       (with-access::androidevent evt (stopped)
+					  (unless stopped
+					     (liip (cdr procs)))))))))))))
 	    (loop)))))
 
 ;*---------------------------------------------------------------------*/
@@ -582,8 +597,6 @@
       (let ((op (socket-output sock-plugin)))
 	 ;; protocol version
 	 (write-byte protocol op)
-	 ;; exec command
-	 (write-byte 2 op)
 	 ;; plugin name
 	 (send-int32 plugin op)
 	 (for-each (lambda (o) (send-obj o op)) args)
@@ -598,9 +611,6 @@
    (with-access::androidphone p (%mutex)
       (with-lock *android-mutex*
 	 (lambda ()
-	    (when (>=fx (bigloo-debug) 2)
-	       (tprint "ANDROID-SEND-COMMAND plugin=" plugin " args="
-		  (typeof args)))
 	    (android-send p plugin args)))))
 
 ;*---------------------------------------------------------------------*/

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sat Nov  3 19:00:25 2012 (serrano)                */
+#*    Last change :  Wed Nov  7 14:33:23 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -17,7 +17,6 @@ HOPVERSION=2.4.0-rc3
 HOPURL=http://hop.inria.fr
 HOPPORT=8080
 BIGLOOVERSION=3.9b
-ANDROID=2.1
 
 REPOSITORY=/users/serrano/prgm/distrib
 
@@ -25,7 +24,11 @@ ANDROIDROOT=/misc/virtual/android/r07
 ANDROIDGIT=$ANDROIDROOT/eclair-git
 ANDROIDSDK=$ANDROIDROOT/android-sdk-linux_x86
 ANDROIDNDK=$ANDROIDROOT/android-ndk-r4b
-ANDROIDTARGET=android-7
+
+ANDROIDSDKVERSION=10
+ANDROIDSDKVERSION=16
+
+ANDROIDTARGET=android-$ANDROIDSDKVERSION
 
 BIGLOO=bigloo
 AFILE=bglafile
@@ -248,6 +251,7 @@ for p in AndroidManifest.xml project.properties; do \
   rm -f $android/$p.in
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$HOPVERSION|" \
+          -e "s|@ANDROIDSDKVERSION@|$ANDROIDSDKVERSION|" \
           -e "s|@ANDROIDTARGET@|$ANDROIDTARGET|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
