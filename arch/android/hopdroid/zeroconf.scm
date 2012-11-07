@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Nov  7 15:03:38 2012 (serrano)                */
+;*    Last change :  Wed Nov  7 15:42:37 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -82,7 +82,7 @@
 	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
 		(when (zeroconf-debug)
-		   (tprint "zeroconf-add-service listener" e))
+		   (tprint "zeroconf-add-service listener " e))
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
@@ -115,7 +115,7 @@
 	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
 	     (lambda (e::event)
 		(when (zeroconf-debug)
-		   (tprint "zeroconf-add-service listener" e))
+		   (tprint "zeroconf-add-service listener " e))
 		(with-access::event e (value)
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)

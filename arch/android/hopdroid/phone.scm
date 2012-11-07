@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Nov  7 15:31:44 2012 (serrano)                */
+;*    Last change :  Wed Nov  7 15:45:24 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -231,6 +231,7 @@
 	 (let ((name (read ip)))
 	    (unless (eof-object? name)
 	       (let ((args (read ip)))
+		  (set! phone-events '())
 		  (unless (eof-object? args)
 		     (let ((procs (with-lock event-mutex
 				     (lambda ()
