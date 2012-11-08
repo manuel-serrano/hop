@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Wed Nov  7 18:40:08 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 16:02:33 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -195,18 +195,19 @@ public class HopJmDns extends HopZeroconf {
    public void publish( final String name, final int port, final String type, final String[] props ) {
       try {
 	 Log.d( "HopJmDns", "publish-service " + name + " type=" + type );
-	 
+
 	 final HashMap<String, String> values = new HashMap<String, String>();
 
 	 for( int i = 0; i < props.length; i += 2 ) {
 	    values.put( props[ i ], props[ i + 1 ] );
 	 }
-	 
+
 	 new Thread( new Runnable() {
 	       public void run() {
 		  ServiceInfo si = ServiceInfo.create( type + ".local.", name, port, 0, 0, values );
 		  if( jmdns != null ) {
 		     try {
+			;
 			jmdns.registerService( si );
 		     } catch( Exception e ) {
 			Log.d( "HopJmDns", "!!! publish-service error, "
@@ -220,7 +221,7 @@ public class HopJmDns extends HopZeroconf {
 	 Log.d( "HopJmDns", "cannot register service", e );
       }
    }
-      
+
    // enableMulticast
    public void enableMulticast() {
       if( multicast_lock == null ) {

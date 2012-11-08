@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Nov  8 09:56:33 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 16:07:39 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -35,9 +35,9 @@ public class HopDroid extends Thread {
    static HopDroid hopdroid = null;
    static final int protocol = 2;
 
-   static final byte SERVER_STOP_CMD = 0;
-   static final byte SERVER_PING_CMD = 1;
-   static final byte SERVER_EXEC_CMD = 2;
+   static final byte SERVER_STOP_CMD = 10;
+   static final byte SERVER_PING_CMD = 11;
+   static final byte SERVER_EXEC_CMD = 12;
 
    static final int HOPDROID_STATE_NULL = 0;
    static final int HOPDROID_STATE_INIT = 1;
@@ -129,7 +129,9 @@ public class HopDroid extends Thread {
 	 Log.e( "HopDroid", "error(" + proc + "): "
 		+ e.toString() + " exception=" +
 		e.getClass().getName(), e );
-      
+
+	 Log.i( "HopDroid", "killing after error..." );
+	 
 	 kill();
 
 	 try {
@@ -146,11 +148,11 @@ public class HopDroid extends Thread {
    
    private static boolean execCmd( LocalSocketAddress addr, byte cmd )
       throws Exception {
+      Log.d( "HopDroid", ">>> execCmd.1 cmd=" + cmd );
       LocalSocket ls = new LocalSocket();
       
-      Log.d( "HopDroid", ">>> execCmd..." + cmd );
       ls.connect( addr );
-      Log.d( "HopDroid", "<<< execCmd..." + cmd + " connected" );
+      Log.d( "HopDroid", "~~~ execCmd.2 cmd=" + cmd );
       
       final OutputStream op = ls.getOutputStream();
 
@@ -162,15 +164,17 @@ public class HopDroid extends Thread {
          
       // end mark
       op.write( 127 );
+      Log.d( "HopDroid", "~~~ execCmd.3 cmd=" + cmd );
+      op.flush();
 
       ls.close();
-      Log.d( "HopDroid", "<<< execCmd..." + cmd + " close" );
+      Log.d( "HopDroid", "<<< execCmd.4 cmd=" + cmd );
 
       return true;
    }
       
    // serverStop
-   private void serverStop( LocalSocketAddress addr ) {
+   private static void serverStop( LocalSocketAddress addr ) {
       try {
          execCmd( addr, SERVER_STOP_CMD );
       } catch( Exception _ ) {
@@ -180,15 +184,22 @@ public class HopDroid extends Thread {
 
    // serverStop
    private static boolean serverPing( LocalSocketAddress addr ) {
-      Log.d( "HopDroid", ">>> ping..." );
       try {
           return execCmd( addr, SERVER_PING_CMD );
       } catch( Exception _ ) {
-	 Log.d( "HopDroid", "<<< ping ... false" );
          return false;
       }
    }
 
+   // killBackground()
+   protected static void killBackground() {
+      LocalSocketAddress addr =
+         new LocalSocketAddress( "hopdroid-cmd:" + Hop.port );
+      
+      serverStop( addr );
+   }
+
+   
    // isBackground()
    protected static boolean isBackground() {
       LocalSocketAddress addr =
@@ -370,6 +381,8 @@ public class HopDroid extends Thread {
 	 final LocalSocket sock = cmdserv.accept();
 	 final InputStream ip = sock.getInputStream();
 
+	 Log.d( "HopDroid", "serverCmd connection established " + sock );
+
 	 final int version = ip.read();
 
 	 if( version != protocol ) {
@@ -383,6 +396,8 @@ public class HopDroid extends Thread {
 	 final int cmd = ip.read();
 	 final int m = ip.read();
 
+	 Log.d( "HopDroid", "serverCmd read cmd=" + cmd );
+	 
 	 if( m != 127 ) {
 	    Log.e( "HopDroid", "protocol error: illegal ping mark " + m );
 	    return;
@@ -427,7 +442,7 @@ public class HopDroid extends Thread {
       if( eventserv != null ) {
 	 try { eventserv.close(); } catch( Exception _ ) { ; }
 	 eventserv = null;
-      }
+      } 
 
       if( eventclient != null ) {
 	 try { eventclient.close(); } catch( Exception _ ) { ; }

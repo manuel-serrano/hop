@@ -35,6 +35,14 @@
            android:summary="@string/prefs_zeroconf_summary">
         </CheckBoxPreference>
 
+        <CheckBoxPreference
+           android:key="hop_autostart"
+           android:persistent="true" 
+           android:defaultValue="false"
+           android:title="@string/prefs_autostart"
+           android:summary="@string/prefs_autostart_summary">
+        </CheckBoxPreference>
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/prefs_devel">

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov  8 07:46:12 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 16:00:07 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -133,11 +133,19 @@ public class HopLauncher extends Activity {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
 	    hopservice = ((HopService.HopBinder)service).getService();
 	    Log.d( "HopLauncher", "hopservice=" + hopservice );
-	    
-	    hopservice.hop.handler = handler;
-	    hopservice.hop.queue = queue;
-	    hopservice.hopdroid.handler = handler;
-	    hopservice.hopdroid.activity = activity;
+
+	    try {
+	       hopservice.hop.handler = handler;
+	       hopservice.hop.queue = queue;
+	       hopservice.hopdroid.handler = handler;
+	       hopservice.hopdroid.activity = activity;
+	    } catch( Exception e ) {
+	       Log.e( "HopLauncher", "error while connecting to service: " +
+		      e.toString() );
+	       e.printStackTrace();
+	       Log.e( "HopLauncher", "killing background hop because of error..." );
+	       kill( 0 );
+	    }
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
@@ -211,7 +219,7 @@ public class HopLauncher extends Activity {
 			}
 
 			if( !Hop.isBackground() ) {
-			   Log.d( "HopLauncher", "staring new service..." );
+			   Log.d( "HopLauncher", "starting new service..." );
 			   startService( hopintent );
 			} else {
 			   Log.d( "HopLauncher", "background service already running..." );
@@ -427,7 +435,6 @@ public class HopLauncher extends Activity {
       setHopPort( sp.getString( "hop_port", defaultport ) );
       Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
       hop_log = sp.getBoolean( "hop_log", false );
-
 
       if( prefslistener == null ) {
 	 prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {

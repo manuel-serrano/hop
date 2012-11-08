@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Sat Oct 13 08:02:16 2012 (serrano)                */
+;*    Last change :  Thu Nov  8 14:51:02 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -101,7 +101,8 @@
 				      (if localclientp
 					  (<DOC/emacs> port title expr)
 					  (<DOC/edit> port title expr))
-				      (<WIKI-DOC> port title expr))))))
+				      (<WIKI-DOC> port title expr))
+				   (<WIKI-DOC> port title expr)))))
 			(else
 			 (with-access::wiki-syntax initial-syntax (plugins)
 			    (plugins id)))))))))

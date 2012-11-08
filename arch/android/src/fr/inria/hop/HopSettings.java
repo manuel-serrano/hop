@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Nov  3 11:48:50 2012                          */
-/*    Last change :  Sun Nov  4 09:14:25 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 13:24:29 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop preferences                                                  */
@@ -46,20 +46,20 @@ public class HopSettings extends PreferenceActivity {
 /* 	  } );                                                         */
     }
    
-   public void setupHostname() {
-      TextView hostname = (TextView)this.findViewById( R.id.hostname );
-      TextView hostip = (TextView)this.findViewById( R.id.hostip );
-
-      Log.d( "HopSettings", "hostname=" + hostname );
-      Log.d( "HopSettings", "hostip=" + hostip );
-      
-      try {
-	 InetAddress addr = java.net.InetAddress.getLocalHost();
-	 hostname.append( addr.getCanonicalHostName() );
-	 hostip.append( addr.getHostAddress() );
-      } catch( Exception _ ) {
-	 hostname.append( "" );
-	 hostip.append( "" );
-      }
-   }
+/*    public void setupHostname() {                                    */
+/*       TextView hostname = (TextView)this.findViewById( R.id.hostname ); */
+/*       TextView hostip = (TextView)this.findViewById( R.id.hostip ); */
+/*                                                                     */
+/*       Log.d( "HopSettings", "hostname=" + hostname );               */
+/*       Log.d( "HopSettings", "hostip=" + hostip );                   */
+/*                                                                     */
+/*       try {                                                         */
+/* 	 InetAddress addr = java.net.InetAddress.getLocalHost();       */
+/* 	 hostname.append( addr.getCanonicalHostName() );               */
+/* 	 hostip.append( addr.getHostAddress() );                       */
+/*       } catch( Exception _ ) {                                      */
+/* 	 hostname.append( "" );                                        */
+/* 	 hostip.append( "" );                                          */
+/*       }                                                             */
+/*    }                                                                */
 }

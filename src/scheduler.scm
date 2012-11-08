@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sat Nov 12 08:56:07 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Thu Nov  8 13:48:48 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -18,7 +18,9 @@
    
    (cond-expand
       (enable-threads
-       (library pthread)))
+       (library pthread))
+      (else
+       (export (class pthread::thread))))
    
    (export (class hopthread::pthread
 	      (proc::procedure (default (lambda (t) #f)))

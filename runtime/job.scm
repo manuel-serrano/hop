@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Sun Mar 18 10:38:09 2012 (serrano)                */
+;*    Last change :  Thu Nov  8 13:48:31 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
@@ -16,13 +16,7 @@
 
    (cond-expand
       (enable-threads
-       (library pthread))
-      (else
-       (export (class pthread::nothread))))
-
-   (cond-expand
-      ((not enable-threads)
-       (eval (class pthread))))
+       (library pthread)))
    
    (import  __hop_param
 	    __hop_read)
@@ -66,43 +60,48 @@
 ;*    job-start-scheduler-inner! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (job-start-scheduler-inner!)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (thread-start!	(instantiate::pthread
-			   (name "job-scheduler")
-			   (body job-scheduler)))
-	 (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
-	    (when (file-exists? f)
-	       (hop-load f))))))
+   (cond-expand
+      (enable-threads
+       (with-lock *job-mutex*
+	  (lambda ()
+	     (thread-start!
+		(instantiate::pthread
+		   (name "job-scheduler")
+		   (body job-scheduler)))
+	     (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
+		(when (file-exists? f)
+		   (hop-load f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    start-job! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (start-job! job)
-   (with-access::job job (proc name %thread date interval repeat)
-      (let ((t (instantiate::pthread
-		  (name name)
-		  (body (lambda ()
-			   (let ((res (proc job)))
-			      (set! %thread #unspecified)
-			      (set! *jobs-run* (remq! job *jobs-run*))
-			      (cond
-				 ((<fx repeat 0)
-				  (when res
-				     (set! date (+llong interval (current-milliseconds)))
-				     (job-add! job)))
-				 ((>fx repeat 1)
-				  (set! repeat (-fx repeat 1))
-				  (set! date (+llong interval (current-milliseconds))) 
-				  (job-add! job))
-				 (else
-				  (set! repeat 0)))))))))
-	 (set! %thread t)
-	 (set! *jobs-run* (cons job *jobs-run*))
-	 (when (pair? *jobs-queue*)
-	    (jobs-dump))
-	 (thread-start! t)
-	 job)))
+   (cond-expand
+      (enable-threads
+       (with-access::job job (proc name %thread date interval repeat)
+	  (let ((t (instantiate::pthread
+		      (name name)
+		      (body (lambda ()
+			       (let ((res (proc job)))
+				  (set! %thread #unspecified)
+				  (set! *jobs-run* (remq! job *jobs-run*))
+				  (cond
+				     ((<fx repeat 0)
+				      (when res
+					 (set! date (+llong interval (current-milliseconds)))
+					 (job-add! job)))
+				     ((>fx repeat 1)
+				      (set! repeat (-fx repeat 1))
+				      (set! date (+llong interval (current-milliseconds))) 
+				      (job-add! job))
+				     (else
+				      (set! repeat 0)))))))))
+	     (set! %thread t)
+	     (set! *jobs-run* (cons job *jobs-run*))
+	     (when (pair? *jobs-queue*)
+		(jobs-dump))
+	     (thread-start! t)
+	     job)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-queue ...                                                   */

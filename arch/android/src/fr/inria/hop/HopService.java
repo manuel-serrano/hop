@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Nov  7 10:46:32 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 15:30:10 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -74,8 +74,14 @@ public class HopService extends Service {
       }
       
       if( hopdroid != null ) {
+	 Log.i( "HopService", "~~~ kill foreground hopdroid..." );
 	 hopdroid.kill();
 	 hopdroid = null;
+      } else {
+	 if( hopdroid.isBackground() ) {
+	    Log.i( "HopService", "~~~ kill background hopdroid..." );
+	    hopdroid.killBackground();
+	 }
       }
       
       Log.i( "HopService", "<<< kill service..." );

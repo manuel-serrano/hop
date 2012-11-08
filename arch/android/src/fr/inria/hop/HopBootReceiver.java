@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Nov  2 17:49:08 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 16:29:15 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Boot Receiver                                                */
@@ -18,6 +18,8 @@ import android.app.*;
 import android.os.*;
 import android.content.*;
 import android.util.Log;
+import android.preference.*;
+import android.content.res.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -25,15 +27,22 @@ import android.util.Log;
 public class HopBootReceiver extends BroadcastReceiver {
    @Override
    public void onReceive( Context context, Intent intent ) {
-      Log.i( "HopBootReceiver", "onReceive action=" + intent.getAction() );
-      
       if( "android.intent.action.BOOT_COMPLETED".equals( intent.getAction() ) ) {
-	 Intent hopintent = new Intent( context, HopService.class );
-	 Hop.root = context.getApplicationInfo().dataDir;
+	 final Resources res = context.getResources();
+	 final SharedPreferences sp =
+	    PreferenceManager.getDefaultSharedPreferences( context );
+
+	 Log.i( "HopBootReceiver", "hop_autostart=" +
+		sp.getBoolean( "hop_autostart", false ) );
 	 
-	 Log.i( "HopBootReceiver", "starting Hop service" );
+	 if( sp.getBoolean( "hop_autostart", false ) ) {
+	    Intent hopintent = new Intent( context, HopService.class );
+	    Hop.root = context.getApplicationInfo().dataDir;
 	 
-	 context.startService( hopintent );
+	    Log.i( "HopBootReceiver", "starting Hop service" );
+	 
+	    context.startService( hopintent );
+	 }
       }
    }
 }
