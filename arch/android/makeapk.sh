@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Wed Nov  7 14:33:23 2012 (serrano)                */
+#*    Last change :  Wed Nov  7 21:24:32 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -27,8 +27,6 @@ ANDROIDNDK=$ANDROIDROOT/android-ndk-r4b
 
 ANDROIDSDKVERSION=10
 ANDROIDSDKVERSION=16
-
-ANDROIDTARGET=android-$ANDROIDSDKVERSION
 
 BIGLOO=bigloo
 AFILE=bglafile
@@ -94,8 +92,8 @@ while : ; do
     --android-git=*)
       ANDROIDGIT="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --android-target=*)
-      ANDROIDTARGET="`echo $1 | sed 's/^[^=]*=//'`";;
+    --android-sdkversion=*)
+      ANDROIDSDKVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --droid-gcc=*)
       CC="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -252,7 +250,6 @@ for p in AndroidManifest.xml project.properties; do \
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$HOPVERSION|" \
           -e "s|@ANDROIDSDKVERSION@|$ANDROIDSDKVERSION|" \
-          -e "s|@ANDROIDTARGET@|$ANDROIDTARGET|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done

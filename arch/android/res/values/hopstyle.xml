@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="hopstyle" parent="android:Theme.Black">
+    <style name="hopstyle" parent="android:Theme.Holo"> 
 <!--
+    <style name="hopstyle">
+-->
+<!--    
         <item name="android:textSize">12px</item>
         <item name="android:background">#ff0000</item>
         <item name="android:foreground">#00ff00</item>
         <item name="android:textColor">#00ff00</item>
 -->
-
+        <item name="android:windowTitleSize">56px</item>
         <item name="android:textColor">#fff</item>
     </style>
 

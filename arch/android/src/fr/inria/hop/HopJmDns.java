@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Wed Nov  7 15:22:33 2012 (serrano)                */
+/*    Last change :  Wed Nov  7 18:40:08 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -97,7 +97,7 @@ public class HopJmDns extends HopZeroconf {
    }
    
    // addServiceTypeListener
-   public void addServiceTypeListener( final String utype, final String type, final String event ) {
+   private void addServiceTypeListener( final String utype, final String type, final String event ) {
       try {
 	 jmdns.addServiceListener( type, new ServiceListener() {
 	       
@@ -158,8 +158,12 @@ public class HopJmDns extends HopZeroconf {
       } catch( Exception e ) {
 	 Log.e( "HopJmDns", "Cannot add ServiceTypeListener", e );
       }
-   }	 
-      
+   }
+
+   // addServiceTypeListener
+   public void addServiceTypeListener( final String type, final String event ) {
+      addServiceTypeListener( type, type, event );
+   }
       
    // addServiceListener
    public synchronized void addServiceListener() {
@@ -190,7 +194,6 @@ public class HopJmDns extends HopZeroconf {
    // publishJmDns
    public void publish( final String name, final int port, final String type, final String[] props ) {
       try {
-
 	 Log.d( "HopJmDns", "publish-service " + name + " type=" + type );
 	 
 	 final HashMap<String, String> values = new HashMap<String, String>();
@@ -201,12 +204,13 @@ public class HopJmDns extends HopZeroconf {
 	 
 	 new Thread( new Runnable() {
 	       public void run() {
-		  ServiceInfo si = ServiceInfo.create( type, name, port, 0, 0, values );
+		  ServiceInfo si = ServiceInfo.create( type + ".local.", name, port, 0, 0, values );
 		  if( jmdns != null ) {
 		     try {
 			jmdns.registerService( si );
 		     } catch( Exception e ) {
-			Log.d( "HopJmDns", "!!! publish-service error, " + name + " type=" + type
+			Log.d( "HopJmDns", "!!! publish-service error, "
+			       + name + " type=" + type
 			       + " err=" + e );
 		     }
 		  }

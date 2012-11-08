@@ -58,26 +58,18 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/shell_preferences">
+    <PreferenceCategory android:title="@string/prefs_misc">
 
-      <EditTextPreference
-            android:key="hop_shell"
-            android:defaultValue="@string/default_value_shell_preference"
-            android:title="@string/title_shell_preference"
-            android:summary="@string/summary_shell_preference"
-            android:dialogTitle="@string/dialog_title_shell_preference" />
-      <EditTextPreference
-            android:key="initialcommand"
-            android:defaultValue="@string/default_value_initialcommand_preference"
-            android:title="@string/title_initialcommand_preference"
-            android:summary="@string/summary_initialcommand_preference"
-            android:dialogTitle="@string/dialog_title_initialcommand_preference" />
+      <PreferenceScreen
+          android:key="hop_about"
+          android:title="@string/prefs_about"
+          android:persistent="false">
+        <PreferenceCategory
+           android:title="Category Title"
+           android:layout="@layout/about">
+        </PreferenceCategory>
+      </PreferenceScreen>
     </PreferenceCategory>
 
-    <PreferenceCategory
-       android:title="Category Title"
-       android:layout="@layout/host">
-    </PreferenceCategory>
    
 </PreferenceScreen>

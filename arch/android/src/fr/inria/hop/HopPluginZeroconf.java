@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Wed Nov  7 15:05:37 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 08:51:21 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
@@ -45,12 +45,23 @@ public class HopPluginZeroconf extends HopPlugin {
 
    // getZeroconf, find the most efficient zeroconf available backend
    HopZeroconf getZeroconf( HopDroid h ) {
-      if( HopNsdManager.isAvailable() ) {
+      if( isNsdAvailable() ) {
 	 Log.d( "HopPluginZeroconf", "NSDMANAGER" );
 	 return new HopNsdManager( h );
       } else {
 	 Log.d( "HopPluginZeroconf", "JMDNS" );
 	 return new HopJmDns( h );
+      }
+   }
+   
+   // availability
+   public static boolean isNsdAvailable() {
+      try {
+	 Class.forName( "android.net.nsd.NsdManager" );
+
+	 return true;
+      } catch( ClassNotFoundException e ) {
+	 return false;
       }
    }
    
@@ -99,7 +110,7 @@ public class HopPluginZeroconf extends HopPlugin {
       if( !inkill ) {
 	 final String name = HopDroid.read_string( ip );
 	 final int port = HopDroid.read_int32( ip );
-	 final String type = HopDroid.read_string( ip ) + ".local.";
+	 final String type = HopDroid.read_string( ip );
 	 final String[] props = HopDroid.read_stringv( ip );
 
 	 zeroconf.publish( name, port, type, props );

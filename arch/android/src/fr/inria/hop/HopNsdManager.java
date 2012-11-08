@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Wed Nov  7 15:01:16 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 09:45:30 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
@@ -19,67 +19,220 @@ import android.util.Log;
 import android.app.*;
 import android.content.*;
 
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.*;
 import android.net.nsd.*;
 
-import java.net.InetAddress;
+import java.net.*;
 import java.util.*;
-
-
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopNsdManager extends HopZeroconf {
-   static Class nsdinfoclass;
+   NsdManager nsd;
+   NsdManager.RegistrationListener reglistener;
+   NsdManager.DiscoveryListener discoverylistener;
+   NsdManager.ResolveListener resolvelistener;
    
-   Object nsd;
+   Hashtable dlisteners = new Hashtable();
 
-   // availability
-   public static boolean isAvailable() {
-      try {
-	 nsdinfoclass = Class.forName( "android.net.nsd.NsdManager" );
-
-	 return true;
-      } catch( ClassNotFoundException e ) {
-	 return false;
-      }
-   }
-   
    // constructor
    public HopNsdManager( HopDroid h ) {
       super( h );
+
+      reglistener = new NsdManager.RegistrationListener() {
+	    public void onRegistrationFailed( NsdServiceInfo si, int err ) {
+	       Log.d( "HopNsdManager", "registration failed: " + si );
+	    }
+	    public void onServiceRegistered( NsdServiceInfo si ) {
+	       Log.d( "HopNsdManager", "registration succeeded: " + si );
+	    }
+	    public void onServiceUnregistered( NsdServiceInfo si ) { ; }
+	    public void onUnregistrationFailed( NsdServiceInfo si, int err ) { ; }
+	 };
    }
    
    public void start() {
       if( nsd == null ) {
-	 nsd = hopdroid.service.getSystemService( Context.NSD_SERVICE ); 
+	 nsd = (NsdManager)hopdroid.service.getSystemService( Context.NSD_SERVICE );
+	 Log.d( "HopNsdManager", "nsd=" + nsd );
       }
    }
    
    public void stop() {
-      ;
+      if( nsd != null ) {
+	 Enumeration l = dlisteners.elements();
+
+	 while( l.hasMoreElements() ) {
+	    DiscoveryListener s = (DiscoveryListener)l.nextElement();
+	    nsd.stopServiceDiscovery( s );
+	 }
+	    
+	 // nsd.unregisterService( mRegistrationListener );
+	 //nsd.stopServiceDiscovery( mDiscoveryListener );
+      }
    }
    
    public String version() {
-      return "NsdManager";
+      return "NsdManager " + android.os.Build.VERSION.SDK_INT;
    }
-   
-   public void addServiceTypeListener( final String utype, final String type, final String event ) {
-      ;
+
+   public void addServiceTypeListener( final String type, final String event ) {
+      DiscoveryListener l = (DiscoveryListener)dlisteners.get( type );
+
+      if( l != null ) {
+	 l.events.add( event );
+      } else {
+	 l = new DiscoveryListener( hopdroid, nsd, type, event );
+	 dlisteners.put( type, l );
+	 nsd.discoverServices( type, NsdManager.PROTOCOL_DNS_SD, l );
+      }
    }
-   
+
    public void addServiceListener() {
       ;
    }
    
    public void addTypeListener( final String type ) {
-      ;
+      addServiceTypeListener( type, "zeroconf-add-service-" + type );
+   }
+   
+   public InetAddress getLocalIpAddress() throws Exception {
+      for( Enumeration<NetworkInterface> en = NetworkInterface
+	      .getNetworkInterfaces(); en.hasMoreElements(); ) {
+	 NetworkInterface intf = en.nextElement();
+	 Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();
+
+	 Log.d( "HopNsdManager", "interface=" + intf + " more="
+		+ enumIpAddr.hasMoreElements() );
+
+	 while( enumIpAddr.hasMoreElements() ) {
+	    InetAddress inetAddress = enumIpAddr.nextElement();
+
+	    Log.d( "HopNsdManager", "checkiing local ip=" +
+		   inetAddress.getHostAddress().toString() );
+
+	    if( !inetAddress.isLoopbackAddress() ) {
+	       return inetAddress;
+	    }
+	 }
+      }
+
+      return null;
    }
    
    public void publish( final String name, final int port, final String type, final String[] props ) {
-      ;
+      Log.d( "HopNsdManager", "publish name=" + name + " type=" + type + " port=" + port );
+
+/*       NsdServiceInfo si = new NsdServiceInfo();                     */
+/*                                                                     */
+/*       si.setServiceName( name );                                    */
+/*       si.setPort( port );                                           */
+/*       si.setServiceType( type + "." );                              */
+/*                                                                     */
+/*       nsd.registerService( si, NsdManager.PROTOCOL_DNS_SD, reglistener ); */
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    DiscoveryListener                                                */
+/*---------------------------------------------------------------------*/
+class DiscoveryListener implements NsdManager.DiscoveryListener {
+   final NsdManager nsd;
+   final String type;
+   final Vector events = new Vector( 1 );
+   HopDroid hopdroid;
+
+   NsdManager.ResolveListener makeResolveListener( final String event ) {
+      return new NsdManager.ResolveListener() {
+	 @Override
+	 public void onResolveFailed( NsdServiceInfo svc, int errorCode ) {
+	    Log.e( "HopNsdManager", "Resolve failed r=" + errorCode
+		   + " " + NsdErrorMessage( errorCode )
+		   + " event=" + event + " si.event=" + svc.getServiceName() );
+	 }
+
+	 @Override
+	 public void onServiceResolved( NsdServiceInfo svc ) {
+	    Enumeration e = events.elements();
+	    
+	    Log.d( "HopNsdManager", "service resolved name="
+		   + svc.getServiceName()
+		   + " type=" + svc.getServiceType()
+		   + " port=" + svc.getPort()
+		   + " host=" + svc.getHost().getHostAddress() );
+
+	    while( e.hasMoreElements() ) {
+	       String event = (String)e.nextElement();
+
+	       hopdroid.pushEvent( event,
+				   "(\"found\" 1 \""
+				   + "tcp"
+				   + "\" \""
+				   + svc.getServiceName()
+				   + "\" \""
+				   + type
+				   + "\" \""
+				   + "local"
+				   + "\" \""
+				   + svc.getHost().getHostAddress()
+				   + "\" "
+				   + svc.getPort()
+				   + " \""
+				   + svc.getHost().getHostAddress()
+				   + "\" ())" );
+	    }
+	 }
+      };
+   }
+   
+   // constructor
+   DiscoveryListener( final HopDroid h, final NsdManager n, final String t, final String e ) {
+      nsd = n;
+      type = t;
+      hopdroid = h;
+      events.add( e );
+   }
+
+   String NsdErrorMessage( int err ) {
+      if( err == NsdManager.FAILURE_ALREADY_ACTIVE ) {
+	 return "already active";
+      }
+      if( err == NsdManager.FAILURE_INTERNAL_ERROR ) {
+	 return "internal error";
+      }
+      if( err == NsdManager.FAILURE_MAX_LIMIT ) {
+	 return "max limit";
+      }
+      return "unknown error";
+   }
+	
+      
+   @Override public void onDiscoveryStarted( String regType ) { ; }
+
+   @Override public void onServiceFound( NsdServiceInfo svc ) {
+      String event = svc.getServiceName();
+      Log.d( "HopNsdManager", "service found name=" + event
+	     + " type=" + svc.getServiceType() );
+	 
+      nsd.resolveService( svc, makeResolveListener( event ) );
+   }
+
+   @Override public void onServiceLost( NsdServiceInfo service ) {
+      Log.e( "HopNsdManager", "service lost" + service );
+   }
+
+   @Override public void onDiscoveryStopped( String serviceType ) {
+      Log.i( "HopNsdManager", "Discovery stopped: " + serviceType );
+   }
+
+   @Override public void onStartDiscoveryFailed( String serviceType, int errorCode ) {
+      Log.e( "HopNsdManager", "Discovery failed: Error code:" + errorCode );
+      nsd.stopServiceDiscovery(this);
+   }
+
+   @Override public void onStopDiscoveryFailed( String serviceType, int errorCode ) {
+      Log.e( "HopNsdManager", "Discovery failed: Error code:" + errorCode );
+      nsd.stopServiceDiscovery( this );
+   }
+}
+      

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Nov  7 10:09:07 2012 (serrano)                */
+/*    Last change :  Thu Nov  8 07:46:12 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -243,17 +243,25 @@ public class HopLauncher extends Activity {
       super.onCreate( bundle );
 
       // switch to fullscreen
-      this.getWindow().setFlags(
-	 WindowManager.LayoutParams.FLAG_FULLSCREEN, 
-	 WindowManager.LayoutParams.FLAG_FULLSCREEN );
+/*       this.getWindow().setFlags(                                    */
+/* 	 WindowManager.LayoutParams.FLAG_FULLSCREEN,                   */
+/* 	 WindowManager.LayoutParams.FLAG_FULLSCREEN );                 */
 
       // install our view
-      requestWindowFeature( Window.FEATURE_LEFT_ICON );
-      setContentView( R.layout.main );
-      getWindow().setFeatureDrawableResource(
-	 Window.FEATURE_LEFT_ICON,
-	 R.drawable.favicon );
+      if( android.os.Build.VERSION.SDK_INT < 11 ) {
+	 // adding an incon to SDK >= 11 prevent the action bar to
+	 // be displayed
+	 requestWindowFeature( Window.FEATURE_LEFT_ICON );
+      }
       
+      setContentView( R.layout.main );
+
+      if( android.os.Build.VERSION.SDK_INT < 11 ) {
+	 getWindow().setFeatureDrawableResource(
+	    Window.FEATURE_LEFT_ICON,
+	    R.drawable.logo );
+      }
+
       // setup the scroll button
       checkbox = (CheckBox)findViewById( R.id.scrollconsole );
       checkbox.setChecked( true );
@@ -273,7 +281,6 @@ public class HopLauncher extends Activity {
 	 // to get the disk location of the package
 	 String apk = activity.getApplicationInfo().sourceDir;
 	 Hop.root = activity.getApplicationInfo().dataDir;
-/* 	 final TextView port = (TextView)activity.findViewById( R.id.port ); */
 
 	 if( !HopInstaller.installed( Hop.root ) ) {
 
@@ -336,24 +343,24 @@ public class HopLauncher extends Activity {
 	    Intent intent = new Intent( getBaseContext(), HopSettings.class );
 	    startActivity( intent );
 	    return true;
-	    
+
 	 case R.id.menu_quit:
  	    kill( 0 );
             return true;
-	    
-	 case R.id.menu_clear:
-            textbuffer.delete( 0, textbuffer.length() - 1 );
-	    write_console( "" );
-            return true;
-	    
+
+/* 	 case R.id.menu_clear:                                         */
+/*             textbuffer.delete( 0, textbuffer.length() - 1 );        */
+/* 	    write_console( "" );                                       */
+/*             return true;                                            */
+
 	 case R.id.menu_restart:
 	    restart();
             return true;
 
-	 case R.id.menu_about:
-	    about();
+	 case R.id.menu_info:
+	    info();
 	    return true;
-	    
+
 	 default:
             return super.onOptionsItemSelected( item );
       }
@@ -365,9 +372,9 @@ public class HopLauncher extends Activity {
       hop_wizard_url = "http://localhost:" + port + "/hop/wizard";
    }
 
-   private void about() {
+   private void info() {
       AlertDialog.Builder builder = new AlertDialog.Builder( this );
-      final View aview = getLayoutInflater().inflate(R.layout.about, null, false);
+      final View aview = getLayoutInflater().inflate( R.layout.info, null, false );
       builder.setView( aview );
       final AlertDialog dialog = builder.create();
 
@@ -376,6 +383,7 @@ public class HopLauncher extends Activity {
       dialogButton.setOnClickListener (new OnClickListener() {
 	    @Override
 	    public void onClick( View v ) {
+	       activity.openOptionsMenu();
 	       dialog.dismiss();
 	    }
 	 } );

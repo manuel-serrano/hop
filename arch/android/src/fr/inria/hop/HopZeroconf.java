@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:01:04 2012                          */
-/*    Last change :  Wed Nov  7 12:27:37 2012 (serrano)                */
+/*    Last change :  Wed Nov  7 18:34:51 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Java abstract class for Zeroconf implementations                 */
@@ -28,7 +28,7 @@ public abstract class HopZeroconf {
    public abstract void start();
    public abstract void stop();
    public abstract String version();
-   public abstract void addServiceTypeListener( final String utype, final String type, final String event );
+   public abstract void addServiceTypeListener( final String type, final String event );
    public abstract void addServiceListener();
    public abstract void addTypeListener( final String type );
    public abstract void publish( final String name, final int port, final String type, final String[] props );
