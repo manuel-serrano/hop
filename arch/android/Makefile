@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Nov  7 14:10:07 2012 (serrano)                */
+#*    Last change :  Thu Nov  8 10:28:07 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -26,10 +26,30 @@ ANDROID_BUILD = Android.mk build.xml project.properties.in hop.keystore \
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
 ANDROID_RES = res/drawable/logo.png \
+  res/drawable-v10/favicon.png \
+  res/drawable-v10/hopicon.png \
+  res/drawable-v10/hopicon2.png \
+  res/drawable-v10/ic_menu_block.png \
+  res/drawable-v10/ic_menu_clear_playlist.png \
+  res/drawable-v10/ic_menu_info_details.png \
+  res/drawable-v10/ic_menu_preferences.png \
+  res/drawable-v10/ic_menu_refresh.png \
+  res/drawable-v10/ic_menu_stop.png \
+  res/drawable-v10/logo.png \
+  res/drawable-v10/logo128.png \
+  res/drawable/hopicon2.png \
+  res/drawable/ic_menu_block.png \
+  res/drawable/ic_menu_clear_playlist.png \
+  res/drawable/ic_menu_info_details.png \
+  res/drawable/ic_menu_preferences.png \
+  res/drawable/ic_menu_refresh.png \
+  res/drawable/ic_menu_stop.png \
+  res/drawable/logo128.png \
   res/drawable/hopicon.png \
   res/layout/main.xml \
   res/xml/preferences.xml \
-  res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in
+  res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
+  res/menu/hop_menu.xml
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
   HopExec.java HopLauncher.java HopService.java HopBootReceiver.java \
@@ -44,7 +64,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
   NetworkTopologyEvent.java NetworkTopologyListener.java package-info.java \
-  ServiceEvent.java \
+  ServiceEvent.java
 
 JMDNS_IMPL_JAVA = DNSCache.java JmmDNSImpl.java DNSEntry.java \
   ListenerStatus.java DNSIncoming.java NameRegister.java \
