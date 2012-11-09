@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Nov  1 20:25:57 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 17:02:50 2012 (serrano)                */
 /*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -242,9 +242,24 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 	 evt.preventDefault();
 	 var touches = evt.changedTouches;
 	 var t = touches[ touches.length - 1];
-	 
-	 node_style_set( slidertouch, "left", (hop_event_mouse_x( t ) - 32) + "px" );
-	 node_style_set( slidertouch, "top", (hop_event_mouse_y( t ) -48) + "px" );
+	 var bbox = hop_bounding_box( slider, 0 );
+
+	 if( bbox ) {
+	    var w = parseInt( node_computed_style_get( slidertouch, "width" ) );
+
+	    if( w == 0 ) w = 96;
+	    
+	    node_style_set( slidertouch, "left", (bbox.left + (bbox.width/2) - w/2) + "px" );
+	    if( bbox.top > 48 ) {
+	       node_style_set( slidertouch, "top", (bbox.top - 48) + "px" );
+	    } else {
+	       node_style_set( slidertouch, "top", (bbox.bottom + 16) + "px" );
+	    }
+	 } else {
+	    node_style_set( slidertouch, "left", (hop_event_mouse_x( t ) - 32) + "px" );
+	    node_style_set( slidertouch, "top", (hop_event_mouse_y( t ) - 48) + "px" );
+	 }
+
 	 node_style_set( slidertouch, "display", "block" );
 	 slidertouch.innerHTML = slider.value + "";
       },

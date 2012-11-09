@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:04:10 2005                          */
-/*    Last change :  Fri Oct 12 20:52:09 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 16:53:43 2012 (serrano)                */
 /*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider CSS                                                   */
@@ -131,6 +131,7 @@ slidertouch {
   top: 10px;
   left: 10px;
   text-align: center;
+  overflow: hidden;
 }
 
 @media all and (max-device-width: 800px) {
