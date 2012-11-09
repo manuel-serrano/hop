@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Nov  7 15:42:37 2012 (serrano)                */
+;*    Last change :  Fri Nov  9 14:37:05 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -52,9 +52,6 @@
 ;*    zeroconf-backend-publish-service! ::androidzeroconf ...          */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-publish-service! o::androidzeroconf name port type opts)
-   (when (zeroconf-debug)
-      (tprint "zeroconf-backend-publish-service name=" name " port=" port
-	 " type=" type))
    (with-access::androidzeroconf o (android plugin)
       (android-send-command android plugin #\p name port type
 	 (append-map (lambda (s)
@@ -69,8 +66,6 @@
 ;*    zeroconf-backend-add-service-listener! ::androidzeroconf ...     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-add-service-event-listener! o::androidzeroconf event proc)
-   (when (zeroconf-debug)
-      (tprint "zeroconf-backend-add-service-event-listener event=" event))
    (cond
       ((not (string? event))
        (error "add-event-listener! ::zeroconf-service-discoverer"
@@ -81,9 +76,9 @@
 	  (android-send-command android plugin #\l)
 	  (add-event-listener! android "zeroconf-add-service"
 	     (lambda (e::event)
-		(when (zeroconf-debug)
-		   (tprint "zeroconf-add-service listener " e))
 		(with-access::event e (value)
+		   (when (zeroconf-debug)
+		      (tprint (format "service discovered: ~s" value)))
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?type ?domain ?host ?port ?addr ?txt)
 		       (proc (instantiate::zeroconf-service-event
@@ -114,9 +109,9 @@
 	  (android-send-command android plugin #\t event)
 	  (add-event-listener! android (string-append "zeroconf-add-service-" event)
 	     (lambda (e::event)
-		(when (zeroconf-debug)
-		   (tprint "zeroconf-add-service listener " e))
 		(with-access::event e (value)
+		   (when (zeroconf-debug)
+		      (tprint (format "service discovered: ~s" value)))
 		   (match-case value
 		      ((?name ?intf ?proto ?svc ?- ?domain ?host ?port ?addr ?txt)
 		       (proc (instantiate::zeroconf-service-event

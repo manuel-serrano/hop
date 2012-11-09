@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Thu Nov  8 09:45:30 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 15:12:17 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
@@ -66,7 +66,8 @@ public class HopNsdManager extends HopZeroconf {
 	    DiscoveryListener s = (DiscoveryListener)l.nextElement();
 	    nsd.stopServiceDiscovery( s );
 	 }
-	    
+
+	 nsd = null;
 	 // nsd.unregisterService( mRegistrationListener );
 	 //nsd.stopServiceDiscovery( mDiscoveryListener );
       }
@@ -79,11 +80,15 @@ public class HopNsdManager extends HopZeroconf {
    public void addServiceTypeListener( final String type, final String event ) {
       DiscoveryListener l = (DiscoveryListener)dlisteners.get( type );
 
+      Log.d( "HopNsdManager", "addServiceTypeListener type=" + type
+	     + " event=" + event );
+      
       if( l != null ) {
 	 l.events.add( event );
       } else {
 	 l = new DiscoveryListener( hopdroid, nsd, type, event );
 	 dlisteners.put( type, l );
+
 	 nsd.discoverServices( type, NsdManager.PROTOCOL_DNS_SD, l );
       }
    }
@@ -109,7 +114,7 @@ public class HopNsdManager extends HopZeroconf {
 	    InetAddress inetAddress = enumIpAddr.nextElement();
 
 	    Log.d( "HopNsdManager", "checkiing local ip=" +
-		   inetAddress.getHostAddress().toString() );
+		   inetAddress.getHostAddress() );
 
 	    if( !inetAddress.isLoopbackAddress() ) {
 	       return inetAddress;
@@ -123,13 +128,13 @@ public class HopNsdManager extends HopZeroconf {
    public void publish( final String name, final int port, final String type, final String[] props ) {
       Log.d( "HopNsdManager", "publish name=" + name + " type=" + type + " port=" + port );
 
-/*       NsdServiceInfo si = new NsdServiceInfo();                     */
-/*                                                                     */
-/*       si.setServiceName( name );                                    */
-/*       si.setPort( port );                                           */
-/*       si.setServiceType( type + "." );                              */
-/*                                                                     */
-/*       nsd.registerService( si, NsdManager.PROTOCOL_DNS_SD, reglistener ); */
+      NsdServiceInfo si = new NsdServiceInfo();
+
+      si.setServiceName( name );
+      si.setPort( port );
+      si.setServiceType( type );
+
+      nsd.registerService( si, NsdManager.PROTOCOL_DNS_SD, reglistener );
    }
 }
 
@@ -155,18 +160,23 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 	 public void onServiceResolved( NsdServiceInfo svc ) {
 	    Enumeration e = events.elements();
 	    
-	    Log.d( "HopNsdManager", "service resolved name="
-		   + svc.getServiceName()
-		   + " type=" + svc.getServiceType()
-		   + " port=" + svc.getPort()
-		   + " host=" + svc.getHost().getHostAddress() );
-
 	    while( e.hasMoreElements() ) {
 	       String event = (String)e.nextElement();
+	       InetAddress addr = svc.getHost();
+	       String proto = (addr instanceof Inet4Address) ? "ipv4"
+			: (addr instanceof Inet6Address) ? "ipv6" : "tcp";
+
+	       Log.d( "HopNsdManager", "service resolved name="
+		      + svc.getServiceName()
+		      + " type=" + svc.getServiceType()
+		      + " proto=" + proto
+		      + " port=" + svc.getPort()
+		      + " host=" + addr.getHostName()
+		      + " addr=" + addr.getHostAddress() );
 
 	       hopdroid.pushEvent( event,
 				   "(\"found\" 1 \""
-				   + "tcp"
+				   + proto
 				   + "\" \""
 				   + svc.getServiceName()
 				   + "\" \""
@@ -174,11 +184,11 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 				   + "\" \""
 				   + "local"
 				   + "\" \""
-				   + svc.getHost().getHostAddress()
+				   + addr.getHostName()
 				   + "\" "
 				   + svc.getPort()
 				   + " \""
-				   + svc.getHost().getHostAddress()
+				   + addr.getHostAddress()
 				   + "\" ())" );
 	    }
 	 }

@@ -920,8 +920,10 @@ public class ServiceInfoImpl extends ServiceInfo implements DNSListener, DNSStat
             if (serviceUpdated && this.hasData()) {
                 JmDNSImpl dns = this.getDns();
                 if (dns != null) {
-                    ServiceEvent event = ((DNSRecord) rec).getServiceEvent(dns);
-                    event = new ServiceEventImpl(dns, event.getType(), event.getName(), this);
+/*                     ServiceEvent event = ((DNSRecord) rec).getServiceEvent(dns); */
+/*                     event = new ServiceEventImpl(dns, event.getType(), event.getName(), this); */
+		   // Path due to Pierre Frish: http://sourceforge.net/tracker/?func=detail&aid=3517826&group_id=93852&atid=605791
+		   ServiceEvent event = new ServiceEventImpl(dns, this.getType(), this.getName(), this);
                     dns.handleServiceResolved(event);
                 }
             }

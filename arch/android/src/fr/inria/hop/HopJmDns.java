@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Fri Nov  9 09:28:51 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 14:42:13 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -23,7 +23,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.*;
 
-import java.net.InetAddress;
+import java.net.*;
 import java.util.*;
 
 import javax.jmdns.*;
@@ -100,17 +100,23 @@ public class HopJmDns extends HopZeroconf {
 	       public void serviceResolved( ServiceEvent ev ) {
 		  ServiceInfo si = ev.getInfo();
 		  String[] addrs = si.getHostAddresses();
+		  InetAddress[] iaddrs = si.getInetAddresses();
 
-		  Log.i( "HopJmDns", "ServiceResolved: name=" +
-			 ev.getName() + " type=" + utype +
-			 " server=" + si.getServer() +
-			 " port=" + si.getPort() + " addr=" +
-			 (addrs.length > 0 ? addrs[ 0 ] : "") );
-		  
-		  if( addrs.length > 0 ) {
+		  for( int i = iaddrs.length - 1; i >= 0; i-- ) {
+		     String proto = (iaddrs[ i ] instanceof Inet4Address) ? "ipv4"
+			: (iaddrs[ i ] instanceof Inet6Address) ? "ipv6" : "tcp";
+
+		     Log.i( "HopJmDns", "ServiceResolved name="
+			    + ev.getName()
+			    + " type=" + utype
+			    + " proto=" + proto
+			    + " server=" + si.getServer()
+			    + " port=" + si.getPort()
+			    + " addr=" + iaddrs[ i ].getHostAddress() );
+			
 		     hopdroid.pushEvent( event,
 					 "(\"found\" 1 \"" +
-					 si.getProtocol() +
+					 proto +
 					 "\" \"" +
 					 ev.getName() +
 					 "\" \"" +
@@ -122,7 +128,7 @@ public class HopJmDns extends HopZeroconf {
 					 "\" " +
 					 si.getPort() +
 					 " \"" +
-					 addrs[ 0 ] +
+					 iaddrs[ i ].getHostAddress() +
 					 "\" ())" );
 		  }
 	       }
@@ -201,7 +207,7 @@ public class HopJmDns extends HopZeroconf {
 
 	 new Thread( new Runnable() {
 	       public void run() {
-		  ServiceInfo si = ServiceInfo.create( type + ".local.", name, port, 0, 0, values );
+		  ServiceInfo si = ServiceInfo.create( type + ".local.", name, port, 0, 0, true, values );
 		  if( jmdns != null ) {
 		     try {
 			;

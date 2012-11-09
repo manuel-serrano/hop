@@ -31,8 +31,8 @@
    <string name="prefs_zeroconf">Zeroconf</string>
    <string name="prefs_zeroconf_summary">Enable zeroconf (prior to 4.2 this slightly drains the battery)</string>
 
-   <string name="prefs_webdav">Webdav</string>
-   <string name="prefs_webdav_summary">Enable webdav support</string>
+   <string name="prefs_webdav">WebDav</string>
+   <string name="prefs_webdav_summary">Act as WebDav server</string>
 
    <string name="prefs_autostart">Start on boot</string>
    <string name="prefs_autostart_summary">Start automatically Hop in background on boot</string>
