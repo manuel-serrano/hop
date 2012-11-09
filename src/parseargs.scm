@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Sep  2 09:16:19 2012 (serrano)                */
+;*    Last change :  Fri Nov  9 09:40:01 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -43,6 +43,8 @@
 	 (be #f)
 	 (files '())
 	 (killp #f)
+	 (webdav #unspecified)
+	 (zeroconf #unspecified)
 	 (clear-cache #f))
       
       (bigloo-debug-set! 0)
@@ -169,20 +171,19 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
-;* 	 (("--discovery" (help "Start the discovery loop (default)"))  */
-;* 	  (hop-enable-discovery-set! #t))                              */
-;* 	 (("--no-discovery" (help "Do not start the discovery loop"))  */
-;* 	  (hop-enable-discovery-set! #f))                              */
-;* 	 (("--discovery-port" ?port (help (format "Disocvery event port number [~s]" dp))) */
-;* 	  (set! dp (string->integer port)))                            */
 	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
-	  (hop-enable-zeroconf-set! #t))
+	  (set! zeroconf #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
-	  (hop-enable-zeroconf-set! #f))
-	 ((("-x" "--xml-backend") ?ident
-				  (help (format "Set XML backend [~s]"
-					   (with-access::xml-backend (hop-xml-backend)
-						 (id) id))))
+	  (set! zeroconf #f))
+	 ((("-d" "--webdav") (help "Enable webdav support"))
+	  (set! webdav #t))
+	 (("--no-webdav" (help "Disable webdav support"))
+	  (set! webdav #f))
+	 ((("-x" "--xml-backend")
+	   ?ident
+	   (help (format "Set XML backend [~s]"
+		    (with-access::xml-backend (hop-xml-backend)
+			  (id) id))))
 	  (set! be ident))
 	 (("--accept-kill" (help "Enable remote kill commands (see -k)"))
 	  (hop-accept-kill-set! #t))
@@ -325,7 +326,15 @@
 		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
 		(error "hop-kill" "Cannot find process key" (key-filepath p)))
 	    (exit 0)))
-      
+
+      ;; webdav
+      (when (boolean? webdav)
+	 (hop-enable-webdav-set! webdav))
+	 
+      ;; zeroconf
+      (when (boolean? zeroconf)
+	 (hop-enable-zeroconf-set! zeroconf))
+	 
       ;; hello world
       (hello-world)
       

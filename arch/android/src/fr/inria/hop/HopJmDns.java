@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Thu Nov  8 16:02:33 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 09:28:51 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -78,18 +78,14 @@ public class HopJmDns extends HopZeroconf {
 
       if( jmdns != null ) {
 	 try {
-	    Log.d( "HopJmDns", ">>> jmdns.closing" );
 	    jmdns.close();
-	    Log.d( "HopJmDns", "<<< jmdns.closed" );
 	    jmdns = null;
 	 } catch( Throwable _ ) {
 	    ;
 	 }
-	 Log.d( "HopJmDns", "<<< stopJmDns" );
       }
 
       if( multicast_lock != null ) {
-	 Log.d( "HopJmDns", "--- release multicast lock" );
 	 multicast_lock.release();
 	 multicast_lock = null;
       }
@@ -110,6 +106,7 @@ public class HopJmDns extends HopZeroconf {
 			 " server=" + si.getServer() +
 			 " port=" + si.getPort() + " addr=" +
 			 (addrs.length > 0 ? addrs[ 0 ] : "") );
+		  
 		  if( addrs.length > 0 ) {
 		     hopdroid.pushEvent( event,
 					 "(\"found\" 1 \"" +
@@ -225,13 +222,11 @@ public class HopJmDns extends HopZeroconf {
    // enableMulticast
    public void enableMulticast() {
       if( multicast_lock == null ) {
-	 Log.d( ">>> HopJmDns", "multicast lock acquired" );
 	 WifiManager wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
 	 
 	 multicast_lock = wifi.createMulticastLock( "hop-zeroconf-lock" );
 	 multicast_lock.setReferenceCounted( true );
 	 multicast_lock.acquire();
-	 Log.d( "<<< HopJmDns", "multicast lock acquired" );
       }
    }
 }

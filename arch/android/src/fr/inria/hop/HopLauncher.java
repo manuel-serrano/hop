@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov  8 16:00:07 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 09:42:26 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -434,6 +434,7 @@ public class HopLauncher extends Activity {
       
       setHopPort( sp.getString( "hop_port", defaultport ) );
       Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+      Hop.webdav = sp.getBoolean( "hop_webdav", false );
       hop_log = sp.getBoolean( "hop_log", false );
 
       if( prefslistener == null ) {
@@ -445,6 +446,10 @@ public class HopLauncher extends Activity {
 		  } 
 		  if( key.equals( "hop_zeroconf" ) ) {
 		     Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+		     return;
+		  }
+		  if( key.equals( "hop_webdav" ) ) {
+		     Hop.webdav = sp.getBoolean( "hop_webdav", false );
 		     return;
 		  }
 		  if( key.equals( "hop_log" ) ) {

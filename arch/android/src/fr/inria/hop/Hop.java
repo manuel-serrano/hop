@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Nov  7 09:31:58 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 09:42:54 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -43,6 +43,7 @@ public class Hop extends Thread {
    static String root = "/data/data/fr.inria.hop";
    static String debug = "";
    static boolean zeroconf = false;
+   static boolean webdav = false;
 
    static String port = "8080";
 
@@ -82,8 +83,12 @@ public class Hop extends Thread {
       String sh = SHELL;
 
       String cmd = "export HOME=" + HOME.getAbsolutePath() +
-	 "; exec " + root + HOP + " " + HOPARGS + " -p " + port
-	 + " " + debug + (zeroconf ? " -z" : "") + " " + extra;
+	 "; exec " + root + HOP + " " + HOPARGS
+	 + " -p " + port
+	 + " " + debug
+	 + (zeroconf ? " -z" : "")
+	 + (webdav ? " -d" : "")
+	 + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd + "]");
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );

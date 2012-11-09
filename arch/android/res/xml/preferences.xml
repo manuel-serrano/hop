@@ -36,6 +36,14 @@
         </CheckBoxPreference>
 
         <CheckBoxPreference
+           android:key="hop_webdav"
+           android:persistent="true" 
+           android:defaultValue="true"
+           android:title="@string/prefs_webdav"
+           android:summary="@string/prefs_webdav_summary">
+        </CheckBoxPreference>
+
+        <CheckBoxPreference
            android:key="hop_autostart"
            android:persistent="true" 
            android:defaultValue="false"
