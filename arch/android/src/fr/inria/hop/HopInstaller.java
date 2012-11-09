@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Thu Jun 28 15:32:55 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 11:07:13 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -169,7 +169,7 @@ public class HopInstaller extends Thread {
 	 if( !dirtable.containsKey( dir ) ) {
 	    dirtable.put( dir, new Boolean( true ) );
 	    
-	    Log.v( "HopInstaller", dir.getAbsolutePath() );
+/* 	    Log.v( "HopInstaller", dir.getAbsolutePath() );            */
 		  
 	    if( !dir.isDirectory() ) {
 	       mkdir( dir );
@@ -211,9 +211,7 @@ public class HopInstaller extends Thread {
 
    public void run() {
       try {
-	 Log.i( "HopInstaller", ">>> unpacking" );
 	 unpack();
-	 Log.i( "HopInstaller", "<<< unpacking" );
 	 externalstorage();
       } catch( Exception e ) {
 	 String msg = e.getMessage();

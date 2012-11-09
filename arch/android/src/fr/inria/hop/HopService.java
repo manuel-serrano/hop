@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Thu Nov  8 15:30:10 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 11:30:36 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -121,6 +121,7 @@ public class HopService extends Service {
 
    @Override
    public boolean onUnbind( Intent intent ) {
+      Log.i( "HopService", "onUnbind" );
       if( hop != null ) {
 	 hop.handler = null;
       }

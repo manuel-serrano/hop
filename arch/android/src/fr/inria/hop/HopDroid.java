@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Nov  8 16:07:39 2012 (serrano)                */
+/*    Last change :  Fri Nov  9 11:06:15 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -148,11 +148,13 @@ public class HopDroid extends Thread {
    
    private static boolean execCmd( LocalSocketAddress addr, byte cmd )
       throws Exception {
-      Log.d( "HopDroid", ">>> execCmd.1 cmd=" + cmd );
+      Log.d( "HopDroid", ">>> execCmd.1 cmd=" + cmd + " addr=" + addr + " "
+	     + addr.getName() );
       LocalSocket ls = new LocalSocket();
       
       ls.connect( addr );
-      Log.d( "HopDroid", "~~~ execCmd.2 cmd=" + cmd );
+      Log.d( "HopDroid", "~~~ execCmd.2 cmd=" + cmd +
+	     " connected=" + ls.isConnected() );
       
       final OutputStream op = ls.getOutputStream();
 
@@ -164,7 +166,6 @@ public class HopDroid extends Thread {
          
       // end mark
       op.write( 127 );
-      Log.d( "HopDroid", "~~~ execCmd.3 cmd=" + cmd );
       op.flush();
 
       ls.close();
@@ -377,6 +378,9 @@ public class HopDroid extends Thread {
 
    // serverCmd
    private void serverCmd() throws Exception {
+      Log.d( "HopDroid", "staring serverCmd: " + cmdserv.getLocalSocketAddress()
+	     + cmdserv.getLocalSocketAddress().getName() );
+      
       while( true ) {
 	 final LocalSocket sock = cmdserv.accept();
 	 final InputStream ip = sock.getInputStream();

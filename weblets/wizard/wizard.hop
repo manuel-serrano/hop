@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov  9 09:34:22 2012 (serrano)                */
+;*    Last change :  Fri Nov  9 10:10:20 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -367,8 +367,8 @@ of computers that are allowed to use this Hop as proxy.])))))
 			     (<A> :href url "WebDAV")
 			     " services")))
 	 (<TR> (<TD>) (<TD> :class "comment"
-		      (<SPAN> [Enable/disable Hop WebDAV server. This option
-can be overriden when invoking Hop.]))))))
+		      (<SPAN> [Enable/disable Hop WebDAV server. This default
+setting can be overriden when starting Hop.]))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wizard/documentation ...                                         */
