@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Nov  9 11:06:15 2012 (serrano)                */
+/*    Last change :  Sun Nov 11 13:38:08 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -148,13 +148,10 @@ public class HopDroid extends Thread {
    
    private static boolean execCmd( LocalSocketAddress addr, byte cmd )
       throws Exception {
-      Log.d( "HopDroid", ">>> execCmd.1 cmd=" + cmd + " addr=" + addr + " "
-	     + addr.getName() );
+      Log.d( "HopDroid", ">>> execCmd cmd=" + cmd );
       LocalSocket ls = new LocalSocket();
       
       ls.connect( addr );
-      Log.d( "HopDroid", "~~~ execCmd.2 cmd=" + cmd +
-	     " connected=" + ls.isConnected() );
       
       final OutputStream op = ls.getOutputStream();
 
@@ -169,7 +166,7 @@ public class HopDroid extends Thread {
       op.flush();
 
       ls.close();
-      Log.d( "HopDroid", "<<< execCmd.4 cmd=" + cmd );
+      Log.d( "HopDroid", "<<< execCmd cmd=" + cmd );
 
       return true;
    }

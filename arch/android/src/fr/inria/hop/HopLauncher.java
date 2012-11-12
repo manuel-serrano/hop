@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Nov  9 09:42:26 2012 (serrano)                */
+/*    Last change :  Sun Nov 11 14:08:06 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -132,23 +132,25 @@ public class HopLauncher extends Activity {
    final ServiceConnection hopconnection = new ServiceConnection() {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
 	    hopservice = ((HopService.HopBinder)service).getService();
-	    Log.d( "HopLauncher", "hopservice=" + hopservice );
 
 	    try {
 	       hopservice.hop.handler = handler;
 	       hopservice.hop.queue = queue;
 	       hopservice.hopdroid.handler = handler;
 	       hopservice.hopdroid.activity = activity;
+	       hopconnected = true;
 	    } catch( Exception e ) {
 	       Log.e( "HopLauncher", "error while connecting to service: " +
 		      e.toString() );
 	       e.printStackTrace();
 	       Log.e( "HopLauncher", "killing background hop because of error..." );
+	       unbindService( hopconnection );
 	       kill( 0 );
 	    }
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
+	    hopconnected = false;
 	    hopservice = null;
 	 }
       };
@@ -226,8 +228,8 @@ public class HopLauncher extends Activity {
 			   write_console( "Hop connected...\n" );
 			}
 			
+			Log.d( "HopLauncher", "binding the service..." );
 			bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
-			hopconnected = true;
 			break;
 
 		     case MSG_RESTART_HOP_SERVICE:

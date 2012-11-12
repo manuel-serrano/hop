@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri Nov  9 11:30:36 2012 (serrano)                */
+/*    Last change :  Sun Nov 11 14:08:01 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -89,6 +89,8 @@ public class HopService extends Service {
 
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
+      Log.d( "HopService", "onStartCommadn: " + this );
+      
       // create hop 
       hop = new Hop( null, null );
       
@@ -111,23 +113,28 @@ public class HopService extends Service {
 
    @Override
    public IBinder onBind( Intent intent ) {
+      Log.d( "HopService", "onBind: " + this );
+      
       return hopbinder;
    }
 
    @Override
    public void onRebind( Intent intent ) {
+      Log.d( "HopService", "onBind: " + this );
+      
       super.onRebind( intent );
    }
 
    @Override
    public boolean onUnbind( Intent intent ) {
       Log.i( "HopService", "onUnbind" );
-      if( hop != null ) {
-	 hop.handler = null;
-      }
-      if( hopdroid != null ) {
-	 hopdroid.handler = null;
-      }
+      
+/*       if( hop != null ) {                                           */
+/* 	 hop.handler = null;                                           */
+/*       }                                                             */
+/*       if( hopdroid != null ) {                                      */
+/* 	 hopdroid.handler = null;                                      */
+/*       }                                                             */
 
       return false;
    }
