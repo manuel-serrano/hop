@@ -521,7 +521,7 @@ function sc_div(x) {
     }
 }
 
-/*** META ((export #t)
+/*** META ((export abs absfx absfl)
            (arity 1))
 */
 var sc_abs = Math.abs;
