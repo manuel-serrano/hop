@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Thu Feb 17 09:38:49 2011 (serrano)                */
-/*    Copyright   :  2007-11 Manuel Serrano                            */
+/*    Last change :  Tue Nov 13 08:06:15 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -273,7 +273,7 @@ function hop_iwindow_drag( event, win ) {
    var dx = hop_event_mouse_x( event ) - win.offsetLeft;
    var dy = hop_event_mouse_y( event ) - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
-   var obg = node_style_get( win.el_win, "background" );
+   var obg = node_computed_style_get( win.el_win, "background" );
    var p = win.parentNode;
    var px = hop_element_x( p );
    var py = hop_element_y( p );
@@ -355,7 +355,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var y0 = hop_event_mouse_y( event );
    var w0 = win.el_win.offsetWidth;
    var h0 = win.el_win.offsetHeight;
-   var obg = node_style_get( win.el_win, "background" );
+   var obg = node_computed_style_get( win.el_win, "background" );
    var wx0 = hop_element_x( win );
    var wy0 = hop_element_y( win );
    var pow = (win.parentNode == document.body) ? -1 : hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
@@ -441,9 +441,11 @@ function hop_iwindow_evresize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 function make_hop_iwindow( id, klass, parent ) {
    var win = document.createElement( "div" );
-   win.id = id;
-   if( klass ) win.className = klass;
    
+   if( klass ) win.className = klass;
+   id = id.replace( /[ '"<>&;]/g, "_" );
+   win.id = id;
+
    win.setAttribute( "hssclass", "hop-window" );
 
    var handle = "\
