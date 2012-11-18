@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Nov 16 14:16:10 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 19:53:26 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -58,8 +58,8 @@
 					(=fx playlistid %playlistid)
 					(<fx song (-fx playlistlength 1))))
 				(playlist-load! o (+fx song 1) #f)
-				(set! songpos 0))))))
-	 musics))
+				(set! songpos 0)))))
+	    musics)))
 
    (define (onerror e)
       (with-access::androidevent e (value)
@@ -219,8 +219,7 @@
 (define (playlist-load! o i pid)
    
    (define (playlist-next-url)
-      (with-access::androidmusic o (%mutex %open %status phone %playlist
-				      %playlistid onevent)
+      (with-access::androidmusic o (%open %status %playlist %playlistid)
 	 (with-access::musicstatus %status (song songid songpos songlength playlistlength state playlistid)
 	    (set! state 'init)
 	    (set! %playlistid playlistid)
@@ -237,9 +236,10 @@
 		   (set! songlength 0)
 		   (charset-convert (list-ref playlist i)))))))
    
-   (let ((url (synchronize %mutex (playlist-next-url))))
-      (when pid (onevent o 'playlist pid))
-      (android-send-command phone music-plugin #\u uril)))
+   (with-access::androidmusic o (onevent %mutex phone)
+      (let ((url (synchronize %mutex (playlist-next-url))))
+	 (when pid (onevent o 'playlist pid))
+	 (android-send-command phone music-plugin #\u url))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-play ::androidmusic ...                                    */
