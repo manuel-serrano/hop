@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/pool_scheduler.scm            */
+;*    serrano/prgm/project/hop/2.4.x/src/pool_scheduler.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Sat Nov 12 09:00:43 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Sun Nov 18 16:44:34 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
@@ -54,45 +54,41 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-stat scd::pool-scheduler)
    (with-access::pool-scheduler scd (size naccept mutex)
-      (mutex-lock! mutex)
-      (let ((r (format " (~a/~a)" (-fx size naccept) size)))
-	 (mutex-unlock! mutex)
-	 r)))
+      (synchronize mutex
+	 (format " (~a/~a)" (-fx size naccept) size))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-load ::pool-scheduler ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-load scd::pool-scheduler)
    (with-access::pool-scheduler scd (naccept size mutex)
-      (mutex-lock! mutex)
-      (let ((r (flonum->fixnum
-		(*fl 100.
-		     (/fl (fixnum->flonum (-fx size naccept))
-			  (fixnum->flonum size))))))
-	 (mutex-unlock! mutex)
-	 r)))
+      (synchronize mutex
+	 (flonum->fixnum
+	    (*fl 100.
+	       (/fl (fixnum->flonum (-fx size naccept))
+		  (fixnum->flonum size)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn ::pool-scheduler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn scd::pool-scheduler p . args)
    (with-access::pool-scheduler scd ((smutex mutex) condv free nfree)
-      (mutex-lock! smutex)
-      (let loop ()
-	 (unless (pair? free)
-	    ;; we have to wait for a thread to complete
-	    (condition-variable-wait! condv smutex)
-	    (loop)))
-      (let ((thread (car free)))
-	 (with-access::hopthread thread (proc mutex condv userdata)
-	    (set! userdata free)
-	    (set! free (cdr free))
-	    (set! nfree (-fx nfree 1))
-	    (mutex-unlock! smutex)
+      (let ((thread #f))
+	 (synchronize smutex
+	    (let loop ()
+	       (unless (pair? free)
+		  ;; we have to wait for a thread to complete
+		  (condition-variable-wait! condv smutex)
+		  (loop)))
+	    (set! thread (car free))
+	    (with-access::hopthread thread (userdata)
+	       (set! userdata free)
+	       (set! free (cdr free))
+	       (set! nfree (-fx nfree 1))))
+	 (with-access::hopthread thread (proc mutex condv)
 	    (set! proc (lambda (s t) (apply p s t args)))
-	    (mutex-lock! mutex)
-	    (condition-variable-signal! condv)
-	    (mutex-unlock! mutex)
+	    (synchronize mutex
+	       (condition-variable-signal! condv))
 	    thread))))
 
 ;*---------------------------------------------------------------------*/
@@ -100,22 +96,22 @@
 ;*---------------------------------------------------------------------*/
 (define-method (spawn5 scd::pool-scheduler p a0 a1 a2 a3 a4)
    (with-access::pool-scheduler scd ((smutex mutex) condv free nfree)
-      (mutex-lock! smutex)
-      (let loop ()
-	 (unless (pair? free)
-	    ;; we have to wait for a thread to complete
-	    (condition-variable-wait! condv smutex)
-	    (loop)))
-      (let ((thread (car free)))
-	 (with-access::hopthread thread (proc mutex condv userdata)
-	    (set! userdata free)
-	    (set! free (cdr free))
-	    (set! nfree (-fx nfree 1))
-	    (mutex-unlock! smutex)
+      (let ((thread #f))
+	 (synchronize smutex
+	    (let loop ()
+	       (unless (pair? free)
+		  ;; we have to wait for a thread to complete
+		  (condition-variable-wait! condv smutex)
+		  (loop)))
+	    (set! thread (car free))
+	    (with-access::hopthread thread (userdata)
+	       (set! userdata free)
+	       (set! free (cdr free))
+	       (set! nfree (-fx nfree 1))))
+	 (with-access::hopthread thread (proc mutex condv)
 	    (set! proc (lambda (s t) (p s t a0 a1 a2 a3 a4)))
-	    (mutex-lock! mutex)
-	    (condition-variable-signal! condv)
-	    (mutex-unlock! mutex)
+	    (synchronize mutex
+	       (condition-variable-signal! condv))
 	    thread))))
 
 ;*---------------------------------------------------------------------*/
@@ -123,24 +119,23 @@
 ;*---------------------------------------------------------------------*/
 (define (pool-thread-body t)
    (with-access::hopthread t (proc userdata mutex condv scheduler)
-      (mutex-lock! mutex)
-      (let loop ()
-	 (condition-variable-wait! condv mutex)
-	 ;; complete the demanded task
-	 (with-handler
-	    (make-scheduler-error-handler t)
-	    (proc scheduler t))
-	 ;; go back to the free pool
-	 (with-access::pool-scheduler scheduler ((smutex mutex)
-						 (scondv condv)
-						 free nfree)
-	    (mutex-lock! smutex)
-	    (set-cdr! userdata free)
-	    (set! free userdata)
-	    (set! nfree (+fx nfree 1))
-	    (condition-variable-signal! scondv)
-	    (mutex-unlock! smutex)
-	    (loop)))))
+      (synchronize mutex
+	 (let loop ()
+	    (condition-variable-wait! condv mutex)
+	    ;; complete the demanded task
+	    (with-handler
+	       (make-scheduler-error-handler t)
+	       (proc scheduler t))
+	    ;; go back to the free pool
+	    (with-access::pool-scheduler scheduler ((smutex mutex)
+						    (scondv condv)
+						    free nfree)
+	       (synchronize smutex
+		  (set-cdr! userdata free)
+		  (set! free userdata)
+		  (set! nfree (+fx nfree 1))
+		  (condition-variable-signal! scondv))
+	       (loop))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-pool-thread ...                                             */

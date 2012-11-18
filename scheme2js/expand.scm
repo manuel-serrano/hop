@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -59,10 +59,9 @@
 	  (cons (cons priority f) L))
 	 (else
 	  (cons (car L) (insert (cdr L) priority f)))))
-   
-   (mutex-lock! *mutex*)
-   (set! *pre-expanders* (insert *pre-expanders* priority f))
-   (mutex-unlock! *mutex*))
+
+   (synchronize *mutex*
+      (set! *pre-expanders* (insert *pre-expanders* priority f))))
 
 (define (pre-expand! x)
    (define (pre-expand!-inner x)
@@ -72,10 +71,8 @@
 	     x
 	     (loop ((cdar pre-expanders) x)
 		   (cdr pre-expanders)))))
-   (mutex-lock! *mutex*)
-   (let ((res (pre-expand!-inner x)))
-      (mutex-unlock! *mutex*)
-      res))
+   (synchronize *mutex*
+      (pre-expand!-inner x)))
 
 ;; ============================================================================
 ;;   Exported function. When used as library allows to "preadd" macros to a

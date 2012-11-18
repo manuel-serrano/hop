@@ -666,7 +666,8 @@ function sc_ErrorOutputPort() {
 }
 sc_ErrorOutputPort.prototype = new sc_OutputPort();
 sc_ErrorOutputPort.prototype.appendJSString = function(s) {
-    throw "don't write on ErrorPort!";
+   console.log( s );
+    //throw "don't write on ErrorPort!";
 }
 sc_ErrorOutputPort.prototype.close = function() {
     /* do nothing */

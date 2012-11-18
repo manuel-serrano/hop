@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/src/queue_scheduler.scm           */
+;*    serrano/prgm/project/hop/2.4.x/src/queue_scheduler.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Wed Nov 16 12:04:48 2011 (serrano)                */
-;*    Copyright   :  2008-11 Manuel Serrano                            */
+;*    Last change :  Sun Nov 18 17:03:38 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
 ;*=====================================================================*/
@@ -65,186 +65,174 @@
 ;*---------------------------------------------------------------------*/
 (define-method (spawn scd::queue-scheduler proc . args)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (let ((t (get-thread! scd)))
-	 (if (isa? t thread)
-	     (if (queue-empty? scd)
-		 (begin
-		    (mutex-unlock! mutex)
-		    ;; there is an available thread, we use it...
-		    (thread-spawn t scd (lambda (s t) (apply proc s t args))))
-		 (let* ((nproc (lambda (s t) (apply proc s t args)))
-			(oproc (queue-pop-and-push! scd nproc)))
-		    (mutex-unlock! mutex)
-		    (thread-spawn t scd oproc)))
-	     ;; everybody is busy, we have to push our task in the queue...
-	     (begin
-		(queue-push! scd (lambda (s t) (apply proc s t args)))
-		(mutex-unlock! mutex))))))
+      (let* ((t #f)
+	     (proc (synchronize mutex
+		      (set! t (get-thread! scd))
+		      (if (isa? t thread)
+			  (if (queue-empty? scd)
+			      (lambda (s t) (apply proc s t args))
+			      (let ((nproc (lambda (s t) (apply proc s t args))))
+				 (queue-pop-and-push! scd nproc)))
+			  ;; everybody is busy, we have to push our task in the queue...
+			  (begin
+			     (queue-push! scd (lambda (s t) (apply proc s t args)))
+			     #f)))))
+	 (when proc
+	    (thread-spawn t scd proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn0 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn0 scd::queue-scheduler proc)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (let ((t (get-thread! scd)))
-	 (if (isa? t thread)
-	     ;; there is an available thread, we use it...
-	     (begin
-		(mutex-unlock! mutex)
-		(thread-spawn scd t proc))
-	     ;; everybody is busy, we have to push our task in the queue...
-	     (begin
-		(queue-push! scd proc)
-		(mutex-unlock! mutex))))))
+      (let* ((t #f)
+	     (proc (synchronize mutex
+		      (set! t (get-thread! scd))
+		      (if (isa? t thread)
+			  ;; there is an available thread, we use it...
+			  proc
+			  ;; everybody is busy, we have to push our task in the queue...
+			  (begin
+			     (queue-push! scd proc)
+			     #f)))))
+	 (when proc
+	    (thread-spawn scd t proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn1 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn1 scd::queue-scheduler proc a0)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (let ((t (get-thread! scd)))
-	 (if (isa? t thread)
-	     ;; there is an available thread, we use it...
-	     (begin
-		(mutex-unlock! mutex)
-		(thread-spawn t scd (lambda (s t) (proc s t a0))))
-	     ;; everybody is busy, we have to push our task in the queue...
-	     (begin
-		(queue-push! scd (lambda (s t) (proc s t a0)))
-		(mutex-unlock! mutex))))))
+      (let* ((t #f)
+	     (proc (synchronize mutex
+		      (set! t (get-thread! scd))
+		      (if (isa? t thread)
+			  ;; there is an available thread, we use it...
+			  proc
+			  ;; everybody is busy, we have to push our task in the queue...
+			  (begin
+			     (queue-push! scd (lambda (s t) (proc s t a0)))
+			     #f)))))
+	 (when proc
+	    (thread-spawn t scd (lambda (s t) (proc s t a0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn4 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (spawn4 scd::queue-scheduler proc a0 a1 a2 a3)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (let ((t (get-thread! scd)))
-	 (if (isa? t thread)
-	     ;; there is an available thread, we use it...
-	     (begin
-		(mutex-unlock! mutex)
-		(thread-spawn t scd (lambda (s t) (proc s t a0 a1 a2 a3))))
-	     ;; everybody is busy, we have to push our task in the queue...
-	     (begin
-		(queue-push! scd (lambda (s t) (proc s t a0 a1 a2 a3)))
-		(mutex-unlock! mutex))))))
+      (let* ((t #f)
+	     (proc (synchronize mutex
+		      (set! t (get-thread! scd))
+		      (if (isa? t thread)
+			  ;; there is an available thread, we use it...
+			  proc
+			  ;; everybody is busy, we have to push our task in the queue...
+			  (begin
+			     (queue-push! scd (lambda (s t) (proc s t a0 a1 a2 a3)))
+			     #f)))))
+	 (when proc
+	    (thread-spawn t scd (lambda (s t) (proc s t a0 a1 a2 a3)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    thread-spawn ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (thread-spawn th scd p)
    (with-access::hopthread th (condv mutex onerror proc)
-      (mutex-lock! mutex)
-      (set! onerror #f)
-      (set! proc p)
-      (condition-variable-signal! condv)
-      (mutex-unlock! mutex)
-      th))
+      (synchronize mutex
+	 (set! onerror #f)
+	 (set! proc p)
+	 (condition-variable-signal! condv)
+	 th)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage ::queue-scheduler ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (stage scd::queue-scheduler thread proc . args)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (apply proc scd thread args))
-	  ;; the queue is filled, we have to push our task
-	  (let* ((proc (lambda (s t) (apply proc s t args)))
-		 (nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (unless (queue-empty? scd)
+			 (let ((proc (lambda (s t) (apply proc s t args))))
+			    (queue-pop-and-push! scd proc))))))
+	 (if nproc
+	     ;; the queue is filled, we have to push our task
+	     (nproc scd thread)
+	     ;; the queue is empty, we can keep going with the same thread
+	     (apply proc scd thread args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage0 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage0 scd::queue-scheduler thread proc)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (proc scd thread))
-	  ;; the queue is filled, we have to push our task
-	  (let ((nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (unless (queue-empty? scd)
+			 (queue-pop-and-push! scd proc)))))
+	 (if nproc
+	     ;; the queue is empty, we can keep going with the same thread
+	     (nproc scd thread)
+	     ;; the queue is filled, we have to push our task
+	     (proc scd thread)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage1 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage1 scd::queue-scheduler thread proc a0)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (proc scd thread a0))
-	  ;; the queue is filled, we have to push our task
-	  (let* ((proc (lambda (s t) (proc s t a0)))
-		 (nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (when (queue-empty? scd)
+			 (let ((proc (lambda (s t) (proc s t a0))))
+			    (queue-pop-and-push! scd proc))))))
+	 (if nproc
+	     ;; the queue is filled, we have to push our task
+	     (nproc scd thread)
+	     ;; the queue is empty, we can keep going with the same thread
+	     (proc scd thread a0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage2 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage2 scd::queue-scheduler thread proc a0 a1)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (proc scd thread a0 a1))
-	  ;; the queue is filled, we have to push our task
-	  (let* ((proc (lambda (s t) (proc s t a0 a1)))
-		 (nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (when (queue-empty? scd)
+			 (let ((proc (lambda (s t) (proc s t a0 a1))))
+			    (queue-pop-and-push! scd proc))))))
+	 (if nproc
+	     ;; the queue is filled, we have to push our task
+	     (nproc scd thread)
+	     ;; the queue is empty, we can keep going with the same thread
+	     (proc scd thread a0 a1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage3 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage3 scd::queue-scheduler thread proc a0 a1 a2)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (proc scd thread a0 a1 a2))
-	  ;; the queue is filled, we have to push our task
-	  (let* ((proc (lambda (s t) (proc s t a0 a1 a2)))
-		 (nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (unless (queue-empty? scd)
+			 (let ((proc (lambda (s t) (proc s t a0 a1 a2))))
+			    (queue-pop-and-push! scd proc))))))
+	 (if nproc 
+	     ;; the queue is filled, we have to push our task
+	     (nproc scd thread)
+	     ;; the queue is empty, we can keep going with the same thread
+	     (proc scd thread a0 a1 a2)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage4 ::queue-scheduler ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage4 scd::queue-scheduler thread proc a0 a1 a2 a3)
    (with-access::queue-scheduler scd (mutex)
-      (mutex-lock! mutex)
-      (if (queue-empty? scd)
-	  ;; the queue is empty, we can keep going with the same thread
-	  (begin
-	     (mutex-unlock! mutex)
-	     (proc scd thread a0 a1 a2 a3))
-	  ;; the queue is filled, we have to push our task
-	  (let* ((proc (lambda (s t) (proc s t a0 a1 a2 a3)))
-		 (nproc (queue-pop-and-push! scd proc)))
-	     (mutex-unlock! mutex)
-	     (nproc scd thread)))))
+      (let ((nproc (synchronize mutex
+		      (unless (queue-empty? scd)
+			 (let ((proc (lambda (s t) (proc s t a0 a1 a2 a3))))
+			    (queue-pop-and-push! scd proc))))))
+	 (if nproc 
+	     ;; the queue is filled, we have to push our task
+	     (nproc scd thread)
+	     ;; the queue is empty, we can keep going with the same thread
+	     (proc scd thread a0 a1 a2 a3)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-thread! ...                                                  */
@@ -280,9 +268,7 @@
 
       (define (purge-scheduler-task!)
 	 (let loop ()
-	    (mutex-lock! mutex)
-	    (let ((oproc (queue-pop! scd)))
-	       (mutex-unlock! mutex)
+	    (let ((oproc (synchronize mutex (queue-pop! scd))))
 	       (when oproc
 		  (oproc scd t)
 		  (loop)))))
@@ -296,18 +282,18 @@
 		  ;; purge all the pending task
 		  (purge-scheduler-task!)
 		  ;; go into the free list
-		  (mutex-lock! mutex)
-		  (put-thread! scd t)
-		  (mutex-unlock! mutex)
+		  (synchronize mutex
+		     (put-thread! scd t))
 		  ;; wait to be awaken
-		  (condition-variable-wait! tcondv tmutex)
+		  (synchronize tmutex
+		     (condition-variable-wait! tcondv tmutex))
 		  ;; execute the user task
 		  (proc scd t)
 		  (loop)))))
       
       (let loop ()
 	 (with-access::hopthread t (mutex)
-	    (with-lock mutex run))
+	    (synchronize mutex (run)))
 	 (loop))))
    
 ;*---------------------------------------------------------------------*/

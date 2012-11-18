@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Jun 26 18:09:31 2012 (serrano)                */
+;*    Last change :  Fri Nov 16 14:16:10 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -42,7 +42,7 @@
 ;*    music-init ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-init o::androidmusic)
-
+   
    (define (onstate e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
@@ -53,15 +53,13 @@
 							      song songpos)
 			    (set! state value)
 			    (onstate o %status)
-			    (mutex-lock! %mutex)
-			    (if (and (eq? state 'ended)
-				     (=fx playlistid %playlistid)
-				     (<fx song (-fx playlistlength 1)))
+			    (if (synchronize %mutex
+				   (and (eq? state 'ended)
+					(=fx playlistid %playlistid)
+					(<fx song (-fx playlistlength 1))))
 				(playlist-load! o (+fx song 1) #f)
-				(begin
-				   (set! songpos 0)
-				   (mutex-unlock! %mutex))))))
-	    musics)))
+				(set! songpos 0))))))
+	 musics))
 
    (define (onerror e)
       (with-access::androidevent e (value)
@@ -111,16 +109,15 @@
 (define-method (music-close o::androidmusic)
    (set! musics (delete! o musics))
    (with-access::androidmusic o (phone %mutex %open %playlist %playlistlength %meta %tag)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (set! %open #t)
-	       (set! %meta '())
-	       (set! %tag #unspecified)
-	       (set! %playlist '())
-	       (set! %playlistlength 0)
-	       (android-send-command phone music-plugin #\x)
-	       (call-next-method))))))
+      (synchronize %mutex
+	 (when %open
+	    (set! %open #t)
+	    (set! %meta '())
+	    (set! %tag #unspecified)
+	    (set! %playlist '())
+	    (set! %playlistlength 0)
+	    (android-send-command phone music-plugin #\x)
+	    (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-closed? ::androidmusic ...                                 */
@@ -148,42 +145,39 @@
 (define-method (music-playlist-add! androidmusic::androidmusic n)
    (call-next-method)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (set! %playlist (append %playlist (list n)))
-	    (set! %playlistlength (+fx %playlistlength 1))
-	    (with-access::musicstatus %status (playlistid playlistlength)
-	       (set! playlistid (+fx 1 playlistid))
-	       (set! playlistlength %playlistlength))))))
+      (synchronize %mutex
+	 (set! %playlist (append %playlist (list n)))
+	 (set! %playlistlength (+fx %playlistlength 1))
+	 (with-access::musicstatus %status (playlistid playlistlength)
+	    (set! playlistid (+fx 1 playlistid))
+	    (set! playlistlength %playlistlength)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-delete! ::androidmusic ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-delete! androidmusic::androidmusic n)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (set! %playlist (delete! n %playlist string=?))
-	    (set! %playlistlength (-fx %playlistlength 1))
-	    (with-access::musicstatus %status (playlistid playlistlength)
-	       (when (and (>=fx n 0) (<fx n playlistlength))
-		  (set! %playlist (remq! (list-ref %playlist n) %playlist))
-		  (set! playlistid (+fx 1 playlistid))
-		  (set! playlistlength %playlistlength)))))))
+      (synchronize %mutex
+	 (set! %playlist (delete! n %playlist string=?))
+	 (set! %playlistlength (-fx %playlistlength 1))
+	 (with-access::musicstatus %status (playlistid playlistlength)
+	    (when (and (>=fx n 0) (<fx n playlistlength))
+	       (set! %playlist (remq! (list-ref %playlist n) %playlist))
+	       (set! playlistid (+fx 1 playlistid))
+	       (set! playlistlength %playlistlength))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-clear! ::androidmusic ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-clear! androidmusic::androidmusic)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (set! %playlist '())
-	    (set! %playlistlength 0)
-	    (with-access::musicstatus %status (playlistlength song songid)
-	       (set! song 0)
-	       (set! songid 0)
-	       (set! playlistlength 0))))))
+      (synchronize %mutex
+	 (set! %playlist '())
+	 (set! %playlistlength 0)
+	 (with-access::musicstatus %status (playlistlength song songid)
+	    (set! song 0)
+	    (set! songid 0)
+	    (set! playlistlength 0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-song! ...                                                    */
@@ -223,28 +217,29 @@
 ;*    playlist-load! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (playlist-load! o i pid)
-   (with-access::androidmusic o (%mutex %open %status phone %playlist
-				   %playlistid onevent)
-      (with-access::musicstatus %status (song songid songpos songlength playlistlength state playlistid)
-	 (set! state 'init)
-	 (set! %playlistid playlistid)
-	 (if (or (<fx i 0) (>=fx i playlistlength))
-	     (raise
-		(instantiate::&io-error
-		   (proc 'playlist-load!)
-		   (msg (format "No such song: ~a" i))
-		   (obj %playlist)))
-	     (let ((playlist %playlist))
-		(let ((uri (charset-convert (list-ref playlist i))))
+   
+   (define (playlist-next-url)
+      (with-access::androidmusic o (%mutex %open %status phone %playlist
+				      %playlistid onevent)
+	 (with-access::musicstatus %status (song songid songpos songlength playlistlength state playlistid)
+	    (set! state 'init)
+	    (set! %playlistid playlistid)
+	    (if (or (<fx i 0) (>=fx i playlistlength))
+		(raise
+		   (instantiate::&io-error
+		      (proc 'playlist-load!)
+		      (msg (format "No such song: ~a" i))
+		      (obj %playlist)))
+		(let ((playlist %playlist))
 		   (set! song i)
 		   (set! songid i)
 		   (set! songpos 0)
 		   (set! songlength 0)
-		   (mutex-unlock! %mutex)
-		   (when pid (onevent o 'playlist pid))
-		   (with-handler
-		      (lambda (e) #f)
-		      (android-send-command phone music-plugin #\u uri))))))))
+		   (charset-convert (list-ref playlist i)))))))
+   
+   (let ((url (synchronize %mutex (playlist-next-url))))
+      (when pid (onevent o 'playlist pid))
+      (android-send-command phone music-plugin #\u uril)))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-play ::androidmusic ...                                    */
@@ -252,35 +247,32 @@
 (define-method (music-play o::androidmusic . s)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-access::musicstatus %status (song state playlistlength playlistid)
-	 (with-lock %mutex
-	    (lambda ()
-	       (cond
-		  ((not %open)
-		   (error "music-play ::androidmusic"
-		      "Player closed (or badly initialized)"
-		      o))
-		  ((pair? s)
-		   (unless (integer? (car s))
-		      (bigloo-type-error '|music-play ::androidmusic| 'int (car s)))
-		   (playlist-load! o (car s) playlistid))
-		  ((eq? state 'pause)
-		   (android-send-command phone music-plugin #\b))
-		  ((and (>=fx song 0) (<fx song playlistlength))
-		   (playlist-load! o song playlistid))))))))
+	 (cond
+	    ((not %open)
+	     (error "music-play ::androidmusic"
+		"Player closed (or badly initialized)"
+		o))
+	    ((pair? s)
+	     (unless (integer? (car s))
+		(bigloo-type-error '|music-play ::androidmusic| 'int (car s)))
+	     (playlist-load! o (car s) playlistid))
+	    ((eq? state 'pause)
+	     (android-send-command phone music-plugin #\b))
+	    ((and (>=fx song 0) (<fx song playlistlength))
+	     (playlist-load! o song playlistid))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-seek ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-seek o::androidmusic pos . song)
    (with-access::androidmusic o (%mutex phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (when (pair? song)
-	       (if (not (integer? (car song)))
-		   (bigloo-type-error "|music-seek ::androidmusic"
-				      'int (car song))
-		   (set-song! o (car song))))
-	    (android-send-command phone music-plugin #\k pos)))))
+      (synchronize %mutex
+	 (when (pair? song)
+	    (if (not (integer? (car song)))
+		(bigloo-type-error "|music-seek ::androidmusic"
+		   'int (car song))
+		(set-song! o (car song))))
+	 (android-send-command phone music-plugin #\k pos))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-stop ::androidmusic ...                                    */
@@ -296,26 +288,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-pause o::androidmusic)
    (with-access::androidmusic o (%mutex %status phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (state)
-	       (if (eq? state 'pause)
-		   (begin
-		      (set! state 'play)
-		      (android-send-command phone music-plugin #\b))
-		   (begin
-		      (set! state 'pause)
-		      (android-send-command phone music-plugin #\p))))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (state)
+	    (if (eq? state 'pause)
+		(begin
+		   (set! state 'play)
+		   (android-send-command phone music-plugin #\b))
+		(begin
+		   (set! state 'pause)
+		   (android-send-command phone music-plugin #\p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-song ::androidmusic ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (music-song o::androidmusic)
    (with-access::androidmusic o (%mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (song)
-	       song)))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (song)
+	    song))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-songpos ::androidmusic ...                                 */

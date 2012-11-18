@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/hopreplay/replay.scm              */
+;*    serrano/prgm/project/hop/2.4.x/hopreplay/replay.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr 26 09:44:38 2008                          */
-;*    Last change :  Wed May  7 14:10:06 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Fri Nov 16 14:39:33 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPRP Replay machinery                                           */
 ;*=====================================================================*/
@@ -48,23 +48,24 @@
       (when (>fx num 0)
 	 (thread-start! (make-thread replay-thread))
 	 (loop (-fx num 1))))
-   (mutex-lock! replay-wait-mutex)
-   (let loop ((num (hoprp-threads-num)))
-      (condition-variable-wait! replay-condv replay-wait-mutex)
-      (when (>fx num 0) (loop (-fx num 1)))))
+   (synchronize replay-wait-mutex
+      (let loop ((num (hoprp-threads-num)))
+	 (condition-variable-wait! replay-condv replay-wait-mutex)
+	 (when (>fx num 0) (loop (-fx num 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    replay-thread ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (replay-thread)
    (let loop ()
-      (mutex-lock! replay-mutex)
-      (when (pair? *reqs*)
-	 (let ((req (car *reqs*))
-	       (num *req-num*))
-	    (set! *req-num* (+fx 1 *req-num*))
-	    (set! *reqs* (cdr *reqs*))
-	    (mutex-unlock! replay-mutex)
+      (let (req num)
+	 (when (synchronize replay-mutex
+		  (when (pair? *reqs*)
+		     (set! req (car *reqs*))
+		     (set! num *req-num*)
+		     (set! *req-num* (+fx 1 *req-num*))
+		     (set! *reqs* (cdr *reqs*))
+		     #t))
 	    (with-access::request req (host port method path header)
 	       (print num " " method " " path " (" host ":" port ")")
 	       (let* ((s (make-client-socket (hoprp-host) (hoprp-port)))
@@ -83,9 +84,8 @@
 			   (http-parse-response in out read-response)))
 		     (socket-close s))))
 	    (loop))))
-   (mutex-lock! replay-wait-mutex)
-   (condition-variable-broadcast! replay-condv)
-   (mutex-unlock! replay-wait-mutex))
+   (synchronize replay-wait-mutex
+      (condition-variable-broadcast! replay-condv)))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-response ...                                                */

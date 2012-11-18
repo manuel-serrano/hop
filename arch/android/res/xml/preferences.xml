@@ -36,6 +36,14 @@
         </CheckBoxPreference>
 
         <CheckBoxPreference
+           android:key="hop_wifi"
+           android:persistent="true" 
+           android:defaultValue="false"
+           android:title="@string/prefs_wifi"
+           android:summary="@string/prefs_wifi_summary">
+        </CheckBoxPreference>
+
+        <CheckBoxPreference
            android:key="hop_webdav"
            android:persistent="true" 
            android:defaultValue="true"

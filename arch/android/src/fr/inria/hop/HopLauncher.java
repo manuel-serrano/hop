@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Nov 11 14:08:06 2012 (serrano)                */
+/*    Last change :  Sun Nov 18 17:25:48 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -25,6 +25,7 @@ import android.view.*;
 import android.view.View.*;
 import android.net.*;
 import android.text.*;
+import android.provider.*;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
@@ -427,45 +428,74 @@ public class HopLauncher extends Activity {
       super.onStop();
    }
 
-   private void loadPreferences() {
-      final Resources res = getResources();
-      final SharedPreferences sp =
-	 PreferenceManager.getDefaultSharedPreferences( this );
 
-      final String defaultport = res.getString( R.string.hopport );
+   private void setWifiPolicy( int policy ) {
+      Settings.System.putInt( getContentResolver(),
+			      Settings.System.WIFI_SLEEP_POLICY,
+			      policy );
+   }
       
-      setHopPort( sp.getString( "hop_port", defaultport ) );
-      Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
-      Hop.webdav = sp.getBoolean( "hop_webdav", false );
-      hop_log = sp.getBoolean( "hop_log", false );
+   private void loadPreferences() {
+      try {
+	 final Resources res = getResources();
+	 final SharedPreferences sp =
+	    PreferenceManager.getDefaultSharedPreferences( this );
+	 final int initial_wifi_policy =
+	    Settings.System.getInt(
+	       getContentResolver(),
+	       Settings.System.WIFI_SLEEP_POLICY );
 
-      if( prefslistener == null ) {
-	 prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-	       public void onSharedPreferenceChanged( SharedPreferences sp, String key ) {
-		  if( key.equals( "hop_port" ) ) {
-		     setHopPort( sp.getString( "hop_port", defaultport ) );
-		     return;
-		  } 
-		  if( key.equals( "hop_zeroconf" ) ) {
-		     Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
-		     return;
+	 final String defaultport = res.getString( R.string.hopport );
+      
+	 setHopPort( sp.getString( "hop_port", defaultport ) );
+	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
+	 hop_log = sp.getBoolean( "hop_log", false );
+
+	 // keep wifi alive
+	 if( sp.getBoolean( "hop_wifi", false ) ) {
+	    setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+	 }
+      
+	 if( prefslistener == null ) {
+	    prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		  public void onSharedPreferenceChanged( SharedPreferences sp, String key ) {
+		     if( key.equals( "hop_port" ) ) {
+			setHopPort( sp.getString( "hop_port", defaultport ) );
+			return;
+		     } 
+		     if( key.equals( "hop_zeroconf" ) ) {
+			Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+			return;
+		     }
+		     if( key.equals( "hop_wifi" ) ) {
+			if( sp.getBoolean( "hop_wifi", false ) ) {
+			   setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+			} else {
+			   setWifiPolicy( initial_wifi_policy );
+			}
+			return;
+		     }
+		     if( key.equals( "hop_webdav" ) ) {
+			Hop.webdav = sp.getBoolean( "hop_webdav", false );
+			return;
+		     }
+		     if( key.equals( "hop_log" ) ) {
+			hop_log = sp.getBoolean( "hop_log", false );
+			return;
+		     }
+		     if( key.equals( "hop_debug" ) ) {
+			Hop.debug = sp.getString( "hop_debug", "" );
+			return;
+		     }
 		  }
-		  if( key.equals( "hop_webdav" ) ) {
-		     Hop.webdav = sp.getBoolean( "hop_webdav", false );
-		     return;
-		  }
-		  if( key.equals( "hop_log" ) ) {
-		     hop_log = sp.getBoolean( "hop_log", false );
-		     return;
-		  }
-		  if( key.equals( "hop_debug" ) ) {
-		     Hop.debug = sp.getString( "hop_debug", "" );
-		     return;
-		  }
-	       }
-	    };
+	       };
 	 
-	 sp.registerOnSharedPreferenceChangeListener( prefslistener );
+	    sp.registerOnSharedPreferenceChangeListener( prefslistener );
+	 }
+      }
+      catch( Throwable _ ) {
+	 ;
       }
    }
    

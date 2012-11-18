@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sun Aug 19 06:31:57 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:46:18 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -44,27 +44,21 @@
 ;*    keep-alive ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (keep-alive)
-   (let ((v 0))
-      (mutex-lock! *socket-mutex*)
-      (set! v *keep-alive*)
-      (mutex-unlock! *socket-mutex*)
-      v))
+   (synchronize *socket-mutex* *keep-alive*))
 
 ;*---------------------------------------------------------------------*/
 ;*    keep-alive-- ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (keep-alive--)
-   (mutex-lock! *socket-mutex*)
-   (set! *keep-alive* (-fx *keep-alive* 1))
-   (mutex-unlock! *socket-mutex*))
+   (synchronize *socket-mutex*
+      (set! *keep-alive* (-fx *keep-alive* 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    keep-alive++ ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (keep-alive++)
-   (mutex-lock! *socket-mutex*)
-   (set! *keep-alive* (+fx 1 *keep-alive*))
-   (mutex-unlock! *socket-mutex*))
+   (synchronize *socket-mutex*
+      (set! *keep-alive* (+fx 1 *keep-alive*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-time ...                                                    */

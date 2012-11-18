@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../lab/HOP/HOP-OPTIM/hop-1.10.0-pre3/src/oto-scheduler.scm      */
+;*    serrano/prgm/project/hop/2.4.x/src/oto_scheduler.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Fri Nov 21 14:05:35 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Sun Nov 18 16:46:28 2012 (serrano)                */
+;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
 ;*    -------------------------------------------------------------    */
@@ -60,26 +60,26 @@
 ;*---------------------------------------------------------------------*/
 (define-method (spawn scd::one-to-one-scheduler proc . args)
    (with-access::one-to-one-scheduler scd (mutex condv cur size)
-      (mutex-lock! mutex)
-      (let loop ()
-	 (when (>=fx cur size)
-	    ;; we have to wait for a thread to complete
-	    (condition-variable-wait! condv mutex)
-	    (loop)))
-      (letrec ((thread (instantiate::hopthread
-			  (condv dummy-condv)
-			  (mutex dummy-mutex)
-			  (scheduler scd)
-			  (body (lambda ()
-				   (with-handler
-				      (make-scheduler-error-handler thread)
-				      (apply proc scd thread args))
-				   (mutex-lock! mutex)
-				   (set! cur (-fx cur 1))
-				   (condition-variable-signal! condv)
-				   (mutex-unlock! mutex))))))
-	 (set! cur (+fx cur 1))
-	 (mutex-unlock! mutex)
+      (let ((thread #f))
+	 (synchronize mutex
+	    (let loop ()
+	       (when (>=fx cur size)
+		  ;; we have to wait for a thread to complete
+		  (condition-variable-wait! condv mutex)
+		  (loop)))
+	    (set! thread (instantiate::hopthread
+			    (condv dummy-condv)
+			    (mutex dummy-mutex)
+			    (scheduler scd)
+			    (body (lambda ()
+				     (with-handler
+					(make-scheduler-error-handler thread)
+					(apply proc scd thread args))
+				     (mutex-lock! mutex)
+				     (set! cur (-fx cur 1))
+				     (condition-variable-signal! condv)
+				     (mutex-unlock! mutex)))))
+	    (set! cur (+fx cur 1)))
 	 (thread-start! thread))))
 
 ;*---------------------------------------------------------------------*/
@@ -87,26 +87,26 @@
 ;*---------------------------------------------------------------------*/
 (define-method (spawn4 scd::one-to-one-scheduler proc a0 a1 a2 a3)
    (with-access::one-to-one-scheduler scd (mutex condv cur size)
-      (mutex-lock! mutex)
-      (let loop ()
-	 (when (>=fx cur size)
-	    ;; we have to wait for a thread to complete
-	    (condition-variable-wait! condv mutex)
-	    (loop)))
-      (letrec ((thread (instantiate::hopthread
-			  (condv dummy-condv)
-			  (mutex dummy-mutex)
-			  (scheduler scd)
-			  (body (lambda ()
-				   (with-handler
-				      (make-scheduler-error-handler thread)
-				      (proc scd thread a0 a1 a2 a3))
-				   (mutex-lock! mutex)
-				   (set! cur (-fx cur 1))
-				   (condition-variable-signal! condv)
-				   (mutex-unlock! mutex))))))
-	 (set! cur (+fx cur 1))
-	 (mutex-unlock! mutex)
+      (let ((thread #f))
+	 (synchronize mutex
+	    (let loop ()
+	       (when (>=fx cur size)
+		  ;; we have to wait for a thread to complete
+		  (condition-variable-wait! condv mutex)
+		  (loop)))
+	    (set! thread (instantiate::hopthread
+			    (condv dummy-condv)
+			    (mutex dummy-mutex)
+			    (scheduler scd)
+			    (body (lambda ()
+				     (with-handler
+					(make-scheduler-error-handler thread)
+					(proc scd thread a0 a1 a2 a3))
+				     (mutex-lock! mutex)
+				     (set! cur (-fx cur 1))
+				     (condition-variable-signal! condv)
+				     (mutex-unlock! mutex)))))
+	    (set! cur (+fx cur 1)))
 	 (thread-start! thread))))
 
 

@@ -31,6 +31,9 @@
    <string name="prefs_zeroconf">Zeroconf</string>
    <string name="prefs_zeroconf_summary">Enable zeroconf (prior to 4.2 this slightly drains the battery)</string>
 
+   <string name="prefs_wifi">Wifi</string>
+   <string name="prefs_wifi_summary">Keep WIFI alive while Hop is running</string>
+
    <string name="prefs_webdav">WebDav</string>
    <string name="prefs_webdav_summary">Act as WebDav server</string>
 

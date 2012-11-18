@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/preferences.scm           */
+;*    serrano/prgm/project/hop/2.4.x/runtime/preferences.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:45:15 2006                          */
-;*    Last change :  Thu Jan 12 09:31:48 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:36:44 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preferences editor                                               */
@@ -97,17 +97,15 @@
 ;*    preferences-register-save! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (preferences-register-save! key procedure)
-   (mutex-lock! (preferences-mutex))
-   (hashtable-put! *pref-save-table* key procedure)
-   (mutex-unlock! (preferences-mutex)))
+   (synchronize (preferences-mutex)
+      (hashtable-put! *pref-save-table* key procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    preferences-add-pr-param! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (preferences-add-pr-param! key param)
-   (mutex-lock! (preferences-mutex))
-   (hashtable-put! *pref-set-table* key param)
-   (mutex-unlock! (preferences-mutex)))
+   (synchronize (preferences-mutex)
+      (hashtable-put! *pref-set-table* key param)))
       
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-prefs-services! ...                                     */
@@ -117,40 +115,35 @@
 (define (init-hop-prefs-services!)
    ;; prefs/edit
    (set! *prefs-edit-svc*
-	 (service :name "admin/preferences/edit" (name type value key)
-	    (if (and name type value key)
-		(multiple-value-bind (pref value)
-		   (prefs-decode-value name value type)
-		   (mutex-lock! (preferences-mutex))
-		   (let ((valid (hashtable-get *pref-validator-table* pref)))
-		      (mutex-unlock! (preferences-mutex))
-		      (when (or (not valid) (valid value))
-			 (if (string=? key "pref")
-			     (preference-store! pref value)
-			     (begin
-				(mutex-lock! (preferences-mutex))
-				(let ((s (hashtable-get *pref-set-table* key)))
-				   (mutex-unlock! (preferences-mutex))
-				   (when (procedure? s)
-				      (s value)))))
-			 #t)))
-		(http-bad-request "admin/preferences/edit"))))
+      (service :name "admin/preferences/edit" (name type value key)
+	 (if (and name type value key)
+	     (multiple-value-bind (pref value)
+		(prefs-decode-value name value type)
+		(let ((valid (synchronize (preferences-mutex)
+				(hashtable-get *pref-validator-table* pref))))
+		   (when (or (not valid) (valid value))
+		      (if (string=? key "pref")
+			  (preference-store! pref value)
+			  (let ((s (synchronize (preferences-mutex)
+				      (hashtable-get *pref-set-table* key))))
+			     (when (procedure? s)
+				(s value))))
+		      #t)))
+	     (http-bad-request "admin/preferences/edit"))))
    ;; prefs/save
    (set! *prefs-save-svc*
-	 (service :name "admin/preferences/save" (key file ov)
-	    (if (and key file)
-		(begin
-		   (mutex-lock! (preferences-mutex))
-		   (let ((save (hashtable-get *pref-save-table* key))
-			 (req (current-request)))
-		      (mutex-unlock! (preferences-mutex))
-		      (when (procedure? save)
-			 (if (and (or (authorized-service? req 'admin)
-				      (authorized-service? req 'admin/preferences/save))
-				  (authorized-path? req file))
-			     (save file ov)
-			     (user-access-denied req)))))
-		(http-bad-request "admin/preferences/save")))))
+      (service :name "admin/preferences/save" (key file ov)
+	 (if (and key file)
+	     (let ((save (synchronize (preferences-mutex)
+			    (hashtable-get *pref-save-table* key))))
+		(let ((req (current-request)))
+		   (when (procedure? save)
+		      (if (and (or (authorized-service? req 'admin)
+				   (authorized-service? req 'admin/preferences/save))
+			       (authorized-path? req file))
+			  (save file ov)
+			  (user-access-denied req)))))
+	     (http-bad-request "admin/preferences/save")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    prefs-decode-value ...                                           */
@@ -279,49 +272,45 @@
 (define (preferences-add-validator! pref validator)
    (unless (correct-arity? validator 1)
       (error "<PR>" "Illegal validate arity" validator))
-   (mutex-lock! (preferences-mutex))
-   (hashtable-update! *pref-validator-table* pref cons (list validator))
-   (mutex-unlock! (preferences-mutex)))
+   (synchronize (preferences-mutex)
+      (hashtable-update! *pref-validator-table* pref cons (list validator))))
    
 ;*---------------------------------------------------------------------*/
 ;*    user-write-preferences ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (user-write-preferences user::user)
-   (mutex-lock! (preferences-mutex))
-   (with-access::user user (preferences preferences-filename)
-      (with-output-to-file preferences-filename
-	 (lambda ()
-	    (display "(\n")
-	    (for-each (lambda (p)
-			 (display " ")
-			 (write p)
-			 (newline))
-		      preferences)
-	    (display ")\n"))))
-   (mutex-unlock! (preferences-mutex)))
+   (synchronize (preferences-mutex)
+      (with-access::user user (preferences preferences-filename)
+	 (with-output-to-file preferences-filename
+	    (lambda ()
+	       (display "(\n")
+	       (for-each (lambda (p)
+			    (display " ")
+			    (write p)
+			    (newline))
+		  preferences)
+	       (display ")\n"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-preference-get ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (user-preference-get user::user prop #!key default)
    (with-access::user user (preferences)
-      (mutex-lock! (preferences-mutex))
-      (let* ((c (assq prop preferences))
-	     (v (if (pair? c) (cadr c) default)))
-	 (mutex-unlock! (preferences-mutex))
-	 v)))
+      (synchronize (preferences-mutex)
+	 (let ((c (assq prop preferences)))
+	    (if (pair? c) (cadr c) default)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inner-preference-set! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (inner-preference-set! user::user prop val store)
    (with-access::user user (preferences)
-      (mutex-lock! (preferences-mutex))
-      (let ((c (assq prop preferences)))
-	 (if (pair? c)
-	     (set-cdr! c (cons val store))
-	     (set! preferences (cons (cons prop (cons val store)) preferences)))
-	 (mutex-unlock! (preferences-mutex)))))
+      (synchronize (preferences-mutex)
+	 (let ((c (assq prop preferences)))
+	    (if (pair? c)
+		(set-cdr! c (cons val store))
+		(set! preferences
+		   (cons (cons prop (cons val store)) preferences)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-preference-set! ...                                         */
@@ -342,13 +331,13 @@
 (define (user-preference-update! user::user prop nv
 				 #!key (kons cons) (init '()))
    (with-access::user user (preferences)
-      (mutex-lock! (preferences-mutex))
-      (let ((c (assq prop preferences)))
-	 (if (pair? c)
-	     (set-car! (cdr c) (kons nv (cadr c)))
-	     (set! preferences (cons (list prop (kons nv init)) preferences)))
-	 (mutex-unlock! (preferences-mutex))
-	 (user-write-preferences user))))
+      (synchronize (preferences-mutex)
+	 (let ((c (assq prop preferences)))
+	    (if (pair? c)
+		(set-car! (cdr c) (kons nv (cadr c)))
+		(set! preferences
+		   (cons (list prop (kons nv init)) preferences)))))
+      (user-write-preferences user)))
 
 ;*---------------------------------------------------------------------*/
 ;*    preference-get ...                                               */

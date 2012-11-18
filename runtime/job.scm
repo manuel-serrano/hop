@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Thu Nov  8 13:48:31 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:45:50 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
@@ -62,15 +62,14 @@
 (define (job-start-scheduler-inner!)
    (cond-expand
       (enable-threads
-       (with-lock *job-mutex*
-	  (lambda ()
-	     (thread-start!
-		(instantiate::pthread
-		   (name "job-scheduler")
-		   (body job-scheduler)))
-	     (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
-		(when (file-exists? f)
-		   (hop-load f))))))))
+       (synchronize *job-mutex*
+	  (thread-start!
+	     (instantiate::pthread
+		(name "job-scheduler")
+		(body job-scheduler)))
+	  (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
+	     (when (file-exists? f)
+		(hop-load f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    start-job! ...                                                   */
@@ -107,40 +106,36 @@
 ;*    jobs-queue ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (jobs-queue)
-   (with-lock *job-mutex*
-      (lambda ()
-	 *jobs-queue*)))
+   (synchronize *job-mutex* *jobs-queue*))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-run ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (jobs-run)
-   (with-lock *job-mutex*
-      (lambda ()
-	 *jobs-run*)))
+   (synchronize *job-mutex* *jobs-run*))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-scheduler ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (job-scheduler)
-   (mutex-lock! *job-mutex*)
-   (let loop ()
-      (jobs-dump)
-      (cond
-	 ((null? *jobs-queue*)
-	  (condition-variable-wait! *job-condvar* *job-mutex*)
-	  (loop))
-	 ((<=llong (with-access::job (car *jobs-queue*) (date) date)
-	     (current-milliseconds))
-	  (let ((job (car *jobs-queue*)))
-	     (set! *jobs-queue* (cdr *jobs-queue*))
-	     (start-job! job))
-	  (loop))
-	 (else
-	  (with-access::job (car *jobs-queue*) (date)
-	     (let ((tmt (-llong date (current-milliseconds))))
-		(condition-variable-wait! *job-condvar* *job-mutex* tmt)
-		(loop)))))))
+   (synchronize *job-mutex*
+      (let loop ()
+	 (jobs-dump)
+	 (cond
+	    ((null? *jobs-queue*)
+	     (condition-variable-wait! *job-condvar* *job-mutex*)
+	     (loop))
+	    ((<=llong (with-access::job (car *jobs-queue*) (date) date)
+		(current-milliseconds))
+	     (let ((job (car *jobs-queue*)))
+		(set! *jobs-queue* (cdr *jobs-queue*))
+		(start-job! job))
+	     (loop))
+	    (else
+	     (with-access::job (car *jobs-queue*) (date)
+		(let ((tmt (-llong date (current-milliseconds))))
+		   (condition-variable-wait! *job-condvar* *job-mutex* tmt)
+		   (loop))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-add! ...                                                     */
@@ -152,14 +147,12 @@
 	  (start-job! j))
 	 ((null? *jobs-queue*)
 	  (set! *jobs-queue* (list j))
-	  (mutex-lock! *job-mutex*)
-	  (condition-variable-signal! *job-condvar*)
-	  (mutex-unlock! *job-mutex*))
+	  (synchronize *job-mutex*
+	     (condition-variable-signal! *job-condvar*)))
 	 ((<llong d (with-access::job (car *jobs-queue*) (date) date))
 	  (set! *jobs-queue* (cons d *jobs-queue*))
-	  (mutex-lock! *job-mutex*)
-	  (condition-variable-signal! *job-condvar*)
-	  (mutex-unlock! *job-mutex*))
+	  (synchronize *job-mutex*
+	     (condition-variable-signal! *job-condvar*)))
 	 (else
 	  (let loop ((jobs (cdr *jobs-queue*))
 		     (prev *jobs-queue*))
@@ -192,9 +185,8 @@
 ;*    job-schedule! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (job-schedule! expr start repeat interval)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (%job-schedule! expr start repeat interval))))
+   (synchronize *job-mutex*
+      (%job-schedule! expr start repeat interval)))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-restore! ...                                                 */
@@ -206,21 +198,19 @@
 ;*    job-abort! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (job-abort! j::job)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (with-access::job j (%thread)
-	    (when (isa? %thread thread)
-	       (thread-terminate! %thread)
-	       (set! *jobs-run* (remq! j *jobs-run*)))))))
+   (synchronize *job-mutex*
+      (with-access::job j (%thread)
+	 (when (isa? %thread thread)
+	    (thread-terminate! %thread)
+	    (set! *jobs-run* (remq! j *jobs-run*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-cancel! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (job-cancel! j::job)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (set! *jobs-queue* (remq! j *jobs-queue*))
-	 (jobs-dump))))
+   (synchronize *job-mutex*
+      (set! *jobs-queue* (remq! j *jobs-queue*))
+      (jobs-dump)))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-find ...                                                     */
@@ -235,10 +225,8 @@
 	     (car jobs))
 	    (else
 	     (loop (cdr jobs))))))
-   (with-lock *job-mutex*
-      (lambda ()
-	 (or (search *jobs-queue*)
-	     (search *jobs-run*)))))
+   (synchronize *job-mutex*
+      (or (search *jobs-queue*) (search *jobs-run*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-dump ...                                                    */

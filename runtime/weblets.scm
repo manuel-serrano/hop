@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Sun Oct 21 07:01:22 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:42:57 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -321,12 +321,11 @@
    
    ;; since autoload are likely to be installed before the scheduler
    ;; starts, the lock above is unlikely to be useful.
-   (with-lock *weblet-lock*
-      (lambda ()
-	 (set! *weblet-autoload-dirs* dirs)
-	 (for-each (lambda (dir)
-		      (for-each maybe-autoload (find-weblets-in-directory dir)))
-		   dirs))))
+   (synchronize *weblet-lock*
+      (set! *weblet-autoload-dirs* dirs)
+      (for-each (lambda (dir)
+		   (for-each maybe-autoload (find-weblets-in-directory dir)))
+	 dirs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-prefix ...                                              */
@@ -366,32 +365,30 @@
 ;*    autoload ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (autoload file pred . hooks)
-   (with-lock *autoload-mutex*
-      (lambda ()
-	 (let ((qfile (find-file/path file (hop-path))))
-	    (if (not (and (string? qfile) (file-exists? qfile)))
-		(error "autoload-add!" "Can't find autoload file" file)
-		(let ((al (instantiate::%autoload-file
-			     (path qfile)
-			     (pred pred)
-			     (hooks hooks))))
-		   (set! *autoloads* (cons al *autoloads*))))))))
+   (synchronize *autoload-mutex*
+      (let ((qfile (find-file/path file (hop-path))))
+	 (if (not (and (string? qfile) (file-exists? qfile)))
+	     (error "autoload-add!" "Can't find autoload file" file)
+	     (let ((al (instantiate::%autoload-file
+			  (path qfile)
+			  (pred pred)
+			  (hooks hooks))))
+		(set! *autoloads* (cons al *autoloads*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-incompatible ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (autoload-incompatible file pred name info)
-   (with-lock *autoload-mutex*
-      (lambda ()
-	 (let ((qfile (find-file/path file (hop-path))))
-	    (if (not (and (string? qfile) (file-exists? qfile)))
-		(error "autoload-add!" "Can't find autoload file" file)
-		(let ((al (instantiate::%autoload-incompatible
-			     (path qfile)
-			     (pred pred)
-			     (name name)
-			     (info info))))
-		   (set! *autoloads* (cons al *autoloads*))))))))
+   (synchronize *autoload-mutex*
+      (let ((qfile (find-file/path file (hop-path))))
+	 (if (not (and (string? qfile) (file-exists? qfile)))
+	     (error "autoload-add!" "Can't find autoload file" file)
+	     (let ((al (instantiate::%autoload-incompatible
+			  (path qfile)
+			  (pred pred)
+			  (name name)
+			  (info info))))
+		(set! *autoloads* (cons al *autoloads*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-load! ...                                               */
@@ -403,24 +400,22 @@
 ;*---------------------------------------------------------------------*/
 (define-method (autoload-load! a::%autoload-file req)
    (with-access::%autoload-file a (path hooks loaded mutex)
-      (mutex-lock! mutex)
-      (unwind-protect
+      (synchronize mutex
 	 (unless loaded
 	    (hop-verb 1 (hop-color req req " AUTOLOADING") ": " path "\n")
 	    ;; load the autoloaded file
 	    (with-handler
 	       (lambda (e)
 		  (raise
-		   (instantiate::&hop-autoload-error
-		      (proc "autoload-load!")
-		      (msg path)
-		      (obj e))))
+		     (instantiate::&hop-autoload-error
+			(proc "autoload-load!")
+			(msg path)
+			(obj e))))
 	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)
 	    (hop-verb 2 (hop-color req req " AUTOLOAD COMPLETE") ": " path "\n")
-	    (set! loaded #t))
-	 (mutex-unlock! mutex))))
+	    (set! loaded #t)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-load! ::%autoload-incompatible ...                      */
@@ -440,47 +435,36 @@
 ;*    the service-filter, when no service matches a HOP url.           */
 ;*---------------------------------------------------------------------*/
 (define (autoload-filter req)
-   (mutex-lock! *autoload-mutex*)
    (let loop ((al *autoloads*))
-      (if (null? al)
-	  (begin
-	     (mutex-unlock! *autoload-mutex*)
-	     #f)
-	  (with-access::%autoload (car al) (pred)
-	     (if (pred req)
-		 (begin
-		    (mutex-unlock! *autoload-mutex*)
-		    ;; the autoload cannot be removed until the weblet
-		    ;; is fully loaded, otherwise parallel requests to the
-		    ;; autoloaded service will raise a service not found error
-		    (autoload-load! (car al) req)
-		    ;; add all the file associated with the autoload in
-		    ;; the service path table (see __hop_service).
-		    (with-access::%autoload (car al) (path)
-		       (service-etc-path-table-fill! path))
-		    ;; remove the autoaload (once loaded)
-		    (mutex-lock! *autoload-mutex*)
-		    (set! *autoloads* (remq! (car al) *autoloads*))
-		    (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*))
-		    (mutex-unlock! *autoload-mutex*)
-		    #t)
-		 (loop (cdr al)))))))
+      (unless (null? al)
+	 (with-access::%autoload (car al) (pred)
+	    (if (pred req)
+		(begin
+		   ;; the autoload cannot be removed until the weblet
+		   ;; is fully loaded, otherwise parallel requests to the
+		   ;; autoloaded service will raise a service not found error
+		   (autoload-load! (car al) req)
+		   ;; add all the file associated with the autoload in
+		   ;; the service path table (see __hop_service).
+		   (with-access::%autoload (car al) (path)
+		      (service-etc-path-table-fill! path))
+		   ;; remove the autoaload (once loaded)
+		   (synchronize *autoload-mutex*
+		      (set! *autoloads* (remq (car al) *autoloads*))
+		      (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*)))
+		   #t)
+		(loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-loaded? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (autoload-loaded? req)
-   (mutex-lock! *autoload-mutex*)
-   (let loop ((al *autoloads-loaded*))
-      (cond
-	 ((null? al)
-	  (mutex-unlock! *autoload-mutex*)
-	  #f)
-	 ((with-access::%autoload (car al) (pred) (pred req))
-	  (mutex-unlock! *autoload-mutex*)
-	  #t)
-	 (else
-	  (loop (cdr al))))))
+   (synchronize *autoload-mutex*
+      (let loop ((al *autoloads-loaded*))
+	 (cond
+	    ((null? al) #f)
+	    ((with-access::%autoload (car al) (pred) (pred req)) #t)
+	    (else (loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-force-load! ...                                         */

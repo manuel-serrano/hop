@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Sep 28 16:01:12 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:43:12 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -76,9 +76,8 @@
 (define (websocket-proxy-connect! host port)
    (if (and (hop-enable-proxing) (hop-enable-websocket-proxing))
        (begin
-	  (mutex-lock! connect-mutex)
-	  (hashtable-put! *connect-host-table* (format "~a:~a" host port) #t)
-	  (mutex-unlock! connect-mutex)
+	  (synchronize connect-mutex
+	     (hashtable-put! *connect-host-table* (format "~a:~a" host port) #t))
 	  (instantiate::http-response-string
 	     (body "Ok")))
        (instantiate::http-response-abort)))
@@ -87,13 +86,10 @@
 ;*    websocket-proxy-request? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (websocket-proxy-request? header)
-   
    (when (string=? (get-header header upgrade: "") "websocket")
       (let ((host (get-header header host: #f)))
-	 (mutex-lock! connect-mutex)
-	 (let ((r (hashtable-get *connect-host-table* host)))
-	    (mutex-unlock! connect-mutex)
-	    r))))
+	 (synchronize connect-mutex
+	    (hashtable-get *connect-host-table* host)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-proxy-response ...                                     */

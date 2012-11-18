@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Aug  8 10:15:48 2012 (serrano)                */
+;*    Last change :  Fri Nov 16 14:45:40 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -103,13 +103,11 @@
 ;*    zeroconf-start ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-start)
-   (mutex-lock! *zeroconf-mutex*)
-   (if *zeroconf-started*
-       (mutex-unlock! *zeroconf-mutex*)
-       (begin
-	  (set! *zeroconf-started* #t)
-	  (mutex-unlock! *zeroconf-mutex*)
-	  (zeroconf-backend-start (zeroconf-backend)))))
+   (with-lock *zeroconf-mutex*
+      (lambda ()
+	 (unless *zeroconf-started*
+	    (set! *zeroconf-started* #t)
+	    (zeroconf-backend-start (zeroconf-backend))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ...                                       */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Nov  6 08:08:05 2012 (serrano)                */
+/*    Last change :  Thu Nov 15 09:45:22 2012 (serrano)                */
 /*    Copyright   :  2006-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1148,7 +1148,11 @@ function hop_create_element( html ) {
 /*    hop_create_encoded_element ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_create_encoded_element( html ) {
-   return hop_create_element( decodeURIComponent( html ) );
+   try {
+      return hop_create_element( decodeURIComponent( html ) );
+   } catch( e ) {
+      alert( "*** hop_create_encoded_element, cannot decode: " + html );
+   }
 }
 
 /*---------------------------------------------------------------------*/

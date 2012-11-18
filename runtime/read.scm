@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Oct 25 17:01:17 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 16:35:40 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -843,22 +843,20 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
-
+   
    (define (add-dir f)
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f
 	  (make-file-name dir f)))
-
-   (mutex-lock! *afile-mutex*)
-   (if (memq dir *afile-dirs*)
-       (mutex-unlock! *afile-mutex*)
-       (begin
-	  (set! *afile-dirs* (cons dir *afile-dirs*))
-	  (mutex-unlock! *afile-mutex*)
-	  (let ((path (make-file-name dir ".afile")))
-	     (if (file-exists? path)
-		 (module-load-access-file path)
-		 (get-directory-module-access dir))))))
+   
+   (when (synchronize *afile-mutex*
+	    (unless (memq dir *afile-dirs*)
+	       (set! *afile-dirs* (cons dir *afile-dirs*))
+	       #t))
+      (let ((path (make-file-name dir ".afile")))
+	 (if (file-exists? path)
+	     (module-load-access-file path)
+	     (get-directory-module-access dir)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-directory-module-access ...                                  */
@@ -866,18 +864,17 @@
 (define (get-directory-module-access dir)
    
    (define (get-file-module-access f abase)
-      (with-lock *afile-mutex*
-	 (lambda ()
-	    (unless (hashtable-get *afile-table* f)
-	       (hashtable-put! *afile-table* f #t)
-	       (with-handler
-		  (lambda (e)
-		     #unspecified)
-		  (call-with-input-file f
-		     (lambda (p)
-			(match-case (hop-read p)
-			   ((module ?module-name . ?-)
-			    (module-add-access! module-name (list f) abase))))))))))
+      (synchronize *afile-mutex*
+	 (unless (hashtable-get *afile-table* f)
+	    (hashtable-put! *afile-table* f #t)
+	    (with-handler
+	       (lambda (e)
+		  #unspecified)
+	       (call-with-input-file f
+		  (lambda (p)
+		     (match-case (hop-read p)
+			((module ?module-name . ?-)
+			 (module-add-access! module-name (list f) abase)))))))))
    
    (for-each (lambda (f)
 		(when (member (suffix f) (hop-module-suffixes))
@@ -1020,61 +1017,71 @@
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-once file env menv charset modifiedp abase mode)
+   
+   (define (load-file f::bstring cv::condvar)
+      ;; the file has to be loaded
+      (trace-item "load")
+      (with-handler
+	 (lambda (e)
+	    (synchronize *load-once-mutex*
+	       (hashtable-put! *load-once-table* f '(error))
+	       (condition-variable-signal! cv))
+	    (raise e))
+	 (hop-load f :mode mode :env env :menv menv
+	    :charset charset :abase abase))
+      (synchronize *load-once-mutex*
+	 (hashtable-put! *load-once-table* f
+	    (cons 'loaded (file-modification-time f)))
+	 (condition-variable-signal! cv)))
+
+
+   (define (get-file-info::pair f::bstring)
+      (synchronize *load-once-mutex*
+	 (let ((info (hashtable-get *load-once-table* f))
+	       (t (file-modification-time f)))
+	    (cond
+	       ((not (pair? info))
+		;; the file has to be loaded
+		(let* ((cv (make-condition-variable "load"))
+		       (ninfo (cons 'loading cv)))
+		   (hashtable-put! *load-once-table* f ninfo)
+		   ninfo))
+	       ((eq? (car info) 'error)
+		;; the file failed to be loaded
+		(trace-item "error")
+		info)
+	       ((eq? (car info) 'loaded)
+		;; the file is already loaded
+		(trace-item "already loaded")
+		;; re-load if modified
+		(if (and modifiedp (not (=elong t (cdr info))))
+		    (begin
+		       (hashtable-remove! *load-once-table* f)
+		       (cons 'force-reload t))
+		    info))
+	       ((eq? (car info) 'loading)
+		(trace-item "loading")
+		(condition-variable-wait! (cdr info) *load-once-mutex*)
+		(cons 'loop t))
+	       (else
+		(cons 'error #f))))))
+   
    (with-trace 1 "%hop-load-once"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)
       (let ((f (file-name-unix-canonicalize file)))
-	 (mutex-lock! *load-once-mutex*)
-	 (let loop ((info (hashtable-get *load-once-table* f))
-		    (t (file-modification-time f)))
-	    (trace-item "info=" info " mtime=" t)
-	    (if (pair? info)
-		(case (car info)
-		   ((error)
-		    ;; the file failed to be loaded
-		    (trace-item "error")
-		    (mutex-unlock! *load-once-mutex*)
-		    #f)
-		   ((loaded)
-		    ;; the file is already loaded
-		    (trace-item "already loaded")
-		    ;; re-load if modified
-		    (if (and modifiedp (not (=elong t (cdr info))))
-			(begin
-			   (hashtable-remove! *load-once-table* f)
-			   (loop #f t))
-			(begin
-			   (mutex-unlock! *load-once-mutex*)
-			   #unspecified)))
-		   ((loading)
-		    ;; the file is currently being loaded
-		    (trace-item "loading")
-		    (condition-variable-wait! (cdr info) *load-once-mutex*)
-		    #unspecified))
-		(begin
-		   ;; the file has to be loaded
-		   (trace-item "load")
-		   (let ((cv (make-condition-variable "load-once")))
-		      (hashtable-put! *load-once-table* f (cons 'loading cv))
-		      (mutex-unlock! *load-once-mutex*)
-		      (with-handler
-			 (lambda (e)
-			    (mutex-lock! *load-once-mutex*)
-			    (hashtable-put! *load-once-table* f '(error))
-			    (condition-variable-signal! cv)
-			    (mutex-unlock! *load-once-mutex*)
-			    (raise e))
-			 (hop-load f
-				   :mode mode
-				   :env env
-				   :menv menv
-				   :charset charset
-				   :abase abase))
-		      (mutex-lock! *load-once-mutex*)
-		      (hashtable-put! *load-once-table* f (cons 'loaded t))
-		      (condition-variable-signal! cv)
-		      (mutex-unlock! *load-once-mutex*))))))))
+	 (let loop ()
+	    (let ((info (get-file-info f)))
+	       (case (car info)
+		  ((loading)
+		   (load-file f (cdr info)))
+		  ((force-reload loop)
+		   (loop))
+		  ((error)
+		   #f)
+		  (else
+		   (error "hop-load-once" "Illegal state" info))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once ...                                                */
@@ -1106,8 +1113,8 @@
 ;*    Remove a file name from the load-once table                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-once-unmark! file)
-   (mutex-lock! *load-once-mutex*)
-   (when (hashtable? *load-once-table*)
-      (hashtable-remove! *load-once-table* (file-name-unix-canonicalize file)))
-   (mutex-unlock! *load-once-mutex*))
+   (synchronize *load-once-mutex*
+      (when (hashtable? *load-once-table*)
+	 (hashtable-remove! *load-once-table*
+	    (file-name-unix-canonicalize file)))))
    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/audio.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/widget/audio.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Mon Feb  6 09:10:18 2012 (serrano)                */
+;*    Last change :  Fri Nov 16 14:17:53 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Audio support.                                               */
@@ -56,16 +56,15 @@
 ;*---------------------------------------------------------------------*/
 (define (%audio-server-music-set! o::audio-server v)
    (with-access::audio-server o (%hmutex %music %state)
-      (with-lock %hmutex
-	 (lambda ()
-	    (when (isa? %music music)
-	       (music-close %music))
-	    (set! %music v)
-	    (when (isa? v webmusic)
-	       ;; register the mapping audioserver/webserver
-	       (set! %state 'ready)
-	       (with-access::webmusic v (audioserver)
-		  (set! audioserver o)))))))
+      (synchronize %hmutex
+	 (when (isa? %music music)
+	    (music-close %music))
+	 (set! %music v)
+	 (when (isa? v webmusic)
+	    ;; register the mapping audioserver/webserver
+	    (set! %state 'ready)
+	    (with-access::webmusic v (audioserver)
+	       (set! audioserver o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-init ::webmusic ...                                        */
@@ -534,61 +533,60 @@
 		      (exception-notify e)
 		      #f)
 		   (with-access::audio-server as (%music %hmutex %state)
-		      (with-lock %hmutex
-			 (lambda ()
-			    (when (eq? %state 'ready)
-			       (case a0
-				  ((volume)
-				   (music-volume-set! %music a1)
-				   #t)
-				  ((load)
-				   (music-playlist-set! %music (list a1))
-				   #t)
-				  ((pause)
-				   (music-pause %music)
-				   #t)
-				  ((play)
-				   (music-play %music a1)
-				   #t)
-				  ((stop)
-				   (music-stop %music)
-				   #t)
-				  ((position)
-				   (music-seek %music a1)
-				   #t)
-				  ((playlist)
-				   (music-playlist-set! %music a1)
-				   #t)
-				  ((status)
-				   (audio-status-event-value
-				      (music-status %music)
-				      (music-playlist-get %music)))
-				  ((metadata)
-				   (audio-update-metadata as)
-				   #t)
-				  ((ackplaylistset)
-				   (when (isa? %music webmusic)
-				      (with-access::webmusic %music (playlist)
-					 (set! playlist a1))))
-				  ((ackpause)
-				   (when (isa? %music webmusic)
-				      (webmusic-ackstate! %music 'pause)))
-				  ((ackstop)
-				   (when (isa? %music webmusic)
-				      (webmusic-ackstate! %music 'stop)))
-				  ((ackplay)
-				   (when (isa? %music webmusic)
-				      (webmusic-ackplay! %music a1)))
-				  ((ackvolume)
-				   (when (isa? %music webmusic)
-				      (webmusic-ackvolume! %music a1)))
-				  ((close)
-				   (audio-server-close-sans-lock as))
-				  ((poll)
-				   (audio-event-poll a1))
-				  (else
-				   (tprint "unknown msg..." a0)
-				   #f))))))))))
+		      (synchronize %hmutex
+			 (when (eq? %state 'ready)
+			    (case a0
+			       ((volume)
+				(music-volume-set! %music a1)
+				#t)
+			       ((load)
+				(music-playlist-set! %music (list a1))
+				#t)
+			       ((pause)
+				(music-pause %music)
+				#t)
+			       ((play)
+				(music-play %music a1)
+				#t)
+			       ((stop)
+				(music-stop %music)
+				#t)
+			       ((position)
+				(music-seek %music a1)
+				#t)
+			       ((playlist)
+				(music-playlist-set! %music a1)
+				#t)
+			       ((status)
+				(audio-status-event-value
+				   (music-status %music)
+				   (music-playlist-get %music)))
+			       ((metadata)
+				(audio-update-metadata as)
+				#t)
+			       ((ackplaylistset)
+				(when (isa? %music webmusic)
+				   (with-access::webmusic %music (playlist)
+				      (set! playlist a1))))
+			       ((ackpause)
+				(when (isa? %music webmusic)
+				   (webmusic-ackstate! %music 'pause)))
+			       ((ackstop)
+				(when (isa? %music webmusic)
+				   (webmusic-ackstate! %music 'stop)))
+			       ((ackplay)
+				(when (isa? %music webmusic)
+				   (webmusic-ackplay! %music a1)))
+			       ((ackvolume)
+				(when (isa? %music webmusic)
+				   (webmusic-ackvolume! %music a1)))
+			       ((close)
+				(audio-server-close-sans-lock as))
+			       ((poll)
+				(audio-event-poll a1))
+			       (else
+				(tprint "unknown msg..." a0)
+				#f)))))))))
       (with-access::audio-server as (%service %path %event)
 	 (set! %path p)
 	 (set! %event (string-append (hop-service-base) "/" %path))
@@ -608,9 +606,8 @@
 ;*---------------------------------------------------------------------*/
 (define (audio-server-close as)
    (with-access::audio-server as (%hmutex)
-      (with-lock %hmutex
-	 (lambda ()
-	    (audio-server-close-sans-lock as)))))
+      (synchronize %hmutex
+	 (audio-server-close-sans-lock as))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-set! ...                                          */
@@ -672,15 +669,14 @@
 
    (if (null? plist)
        plist
-       (with-lock *playlist-mutex*
-	  (lambda ()
-	     (cond
-		((eq? *playlist* plist)
-		 *playlist-tag*)
-		(else
-		 (set! *playlist* plist)
-		 (set! *playlist-tag* (make-tag-playlist plist))
-		 *playlist-tag*))))))
+       (synchronize *playlist-mutex*
+	  (cond
+	     ((eq? *playlist* plist)
+	      *playlist-tag*)
+	     (else
+	      (set! *playlist* plist)
+	      (set! *playlist-tag* (make-tag-playlist plist))
+	      *playlist-tag*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-onstate ...                                                */
@@ -854,40 +850,37 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-set! o::webmusic a1)
    (with-access::webmusic o (audioserver playlist %mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (playlistid playlistlength)
-	       (set! playlistid (+fx playlistid 1))
-	       (set! playlistlength (length a1)))
-	    (with-access::audio-server audioserver (%event)
-	       (audio-event-broadcast! %event (list 'cmdplaylistset a1)))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (playlistid playlistlength)
+	    (set! playlistid (+fx playlistid 1))
+	    (set! playlistlength (length a1)))
+	 (with-access::audio-server audioserver (%event)
+	    (audio-event-broadcast! %event (list 'cmdplaylistset a1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-clear! ::webmusic ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-clear! o::webmusic)
    (with-access::webmusic o (audioserver playlist %mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (playlistlength)
-	       (set! playlistlength 0))
-	    (with-access::audio-server audioserver (%event)
-	       (set! playlist '())
-	       (audio-event-broadcast! %event (list 'cmdplaylistclear)))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (playlistlength)
+	    (set! playlistlength 0))
+	 (with-access::audio-server audioserver (%event)
+	    (set! playlist '())
+	    (audio-event-broadcast! %event (list 'cmdplaylistclear))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-add! ::webmusic ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-add! o::webmusic s::bstring)
    (with-access::webmusic o (audioserver playlist %mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (playlistid playlistlength)
-	       (set! playlistid (+fx playlistid 1))
-	       (set! playlistlength (+fx playlistlength 1)))
-	    (with-access::audio-server audioserver (%event)
-	       (set! playlist (append playlist (list s)))
-	       (audio-event-broadcast! %event (list 'cmdplaylistadd s)))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (playlistid playlistlength)
+	    (set! playlistid (+fx playlistid 1))
+	    (set! playlistlength (+fx playlistlength 1)))
+	 (with-access::audio-server audioserver (%event)
+	    (set! playlist (append playlist (list s)))
+	    (audio-event-broadcast! %event (list 'cmdplaylistadd s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-playlist-get ::webmusic ...                                */
@@ -933,29 +926,26 @@
 ;*---------------------------------------------------------------------*/
 (define-method (music-song o::webmusic)
    (with-access::webmusic o (%mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (song)
-	       song)))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (song)
+	    song))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-songpos ::webmusic ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (music-songpos o::webmusic)
    (with-access::webmusic o (%mutex playtime)
-      (with-lock %mutex
-	 (lambda ()
-	    (elong->fixnum (-elong (current-seconds) playtime))))))
+      (synchronize %mutex
+	 (elong->fixnum (-elong (current-seconds) playtime)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-volume-get ::webmusic ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (music-volume-get o::webmusic)
    (with-access::webmusic o (%mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (volume)
-	       volume)))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (volume)
+	    volume))))
    
 ;*---------------------------------------------------------------------*/
 ;*    music-volume-set! ::webmusic ...                                 */
@@ -970,32 +960,29 @@
 ;*---------------------------------------------------------------------*/
 (define (webmusic-ackstate! o::webmusic s)
    (with-access::webmusic o (%mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (state)
-	       (set! state s))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (state)
+	    (set! state s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackplay! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (webmusic-ackplay! o::webmusic s)
    (with-access::webmusic o (%mutex %status playlist playtime)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (state song)
-	       (set! playtime (current-seconds))
-	       (set! state 'play)
-	       (set! song s))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (state song)
+	    (set! playtime (current-seconds))
+	    (set! state 'play)
+	    (set! song s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webmusic-ackvolume! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (webmusic-ackvolume! o::webmusic vol)
    (with-access::webmusic o (%mutex %status)
-      (with-lock %mutex
-	 (lambda ()
-	    (with-access::musicstatus %status (volume)
-	       (set! volume vol))))))
+      (synchronize %mutex
+	 (with-access::musicstatus %status (volume)
+	    (set! volume vol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    event caching ...                                                */
@@ -1018,24 +1005,22 @@
 ;*    audio-event-broadcast! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (audio-event-broadcast! event value)
-   (mutex-lock! event-mutex)
-   (unless (and (eq? event old-event) (equal? value old-value))
-      (set! old-event event)
-      (set! old-value value)
-      (set! old-stamp (+fx 1 old-stamp))
-      (set-car! (car old-events) value)
-      (set-cdr! (car old-events) old-stamp)
-      (set! old-events (cdr old-events))
-      (hop-event-broadcast! event value))
-   (mutex-unlock! event-mutex))
+   (synchronize event-mutex
+      (unless (and (eq? event old-event) (equal? value old-value))
+	 (set! old-event event)
+	 (set! old-value value)
+	 (set! old-stamp (+fx 1 old-stamp))
+	 (set-car! (car old-events) value)
+	 (set-cdr! (car old-events) old-stamp)
+	 (set! old-events (cdr old-events))
+	 (hop-event-broadcast! event value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    audio-event-poll ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (audio-event-poll stamp)
-   (mutex-lock! event-mutex)
-   (let ((l (filter (lambda (o) (> (cdr o) stamp)) (take old-events 5))))
-      (tprint "<<< audio-poll: " (map (lambda (e) (cons (caar e) (cdr e))) l))
-      (mutex-unlock! event-mutex)
-      l))
+   (synchronize event-mutex
+      (let ((l (filter (lambda (o) (> (cdr o) stamp)) (take old-events 5))))
+	 (tprint "<<< audio-poll: " (map (lambda (e) (cons (caar e) (cdr e))) l))
+	 l)))
    

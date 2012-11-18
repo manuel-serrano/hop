@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Jun 17 08:57:54 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:43:28 2012 (serrano)                */
 ;*    Copyright   :  2008-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -95,10 +95,9 @@
 	  (socks (make-vector acclen))) 
       (let loop ((id 1))
 	 (with-access::queue-scheduler scd (mutex condv qlength max-qlength)
-	    (mutex-lock! mutex)
-	    (when (>fx qlength max-qlength)
-	       (condition-variable-wait! condv mutex))
-	    (mutex-unlock! mutex))
+	    (synchronize mutex
+	       (when (>fx qlength max-qlength)
+		  (condition-variable-wait! condv mutex))))
 	 (let* ((in-buffers (allocate-vector acclen (make-string 512)))
 		(out-buffers (allocate-vector acclen (make-string 1024)))
 		(n (socket-accept-many serv socks
@@ -133,17 +132,15 @@
       (if (=fx (hop-verbose) 0)
 	  0
 	  (begin
-	     (mutex-lock! idmutex)
-	     (let ((v (+fx idcount 1)))
-		(set! idcount v)
-		(mutex-unlock! idmutex)
-		v))))
+	     (synchronize idmutex
+		(let ((v (+fx idcount 1)))
+		   (set! idcount v)
+		   v)))))
 
    (define (scheduler-load-add! scd inc)
       (with-access::pool-scheduler scd (mutex naccept)
-	 (mutex-lock! mutex)
-	 (set! naccept (+fx naccept inc))
-	 (mutex-unlock! mutex)))
+	 (synchronize mutex
+	    (set! naccept (+fx naccept inc)))))
 
    (define (accept-error-handler e scd)
       (hop-verb 2 (hop-color -1 -1 " CONNECTION FAILED"))

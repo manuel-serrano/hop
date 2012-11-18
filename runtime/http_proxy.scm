@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Oct 27 07:56:36 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:41:26 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
@@ -70,10 +70,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-proxy socket)
    (let ((count (+ 1 *debug-count*)))
-      (mutex-lock! *debug-mutex*)
-      (set! *debug-open* (cons count *debug-open*))
-      (set! *debug-count* count)
-      (mutex-unlock! *debug-mutex*)
+      (synchronize *debug-mutex*
+	 (set! *debug-open* (cons count *debug-open*))
+	 (set! *debug-count* count))
       (unwind-protect
 	 (with-trace 3 "http-response::http-response-proxy"
 	    (let loop ()
@@ -163,9 +162,8 @@
 							  (remote-multipart-body r socket remote)
 							  (remote-body r socket remote))))
 					      rep))))))))))))
-	 (mutex-lock! *debug-mutex*)
-	 (set! *debug-open* (delete! count *debug-open*))
-	 (mutex-unlock! *debug-mutex*))))
+	 (synchronize *debug-mutex*
+	    (set! *debug-open* (delete! count *debug-open*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    log-capture ...                                                  */
@@ -460,23 +458,16 @@
 	       (intable #f)))))
 
    (define (get-connection)
-      (let ((key (string-append host ":" (integer->string port))))
-	 (mutex-lock! *remote-lock*)
-	 (with-handler
-	    (lambda (e)
-	       (exception-notify e)
-	       (mutex-unlock! *remote-lock*)
-	       (raise e))
-	    (let ((old (connection-table-get key)))
-	       (if old
-		   (begin
-		      (mutex-unlock! *remote-lock*)
-		      old)
-		   (let ((id (+fx 1 *connection-id*)))
-		      (set! *connection-id* id)
-		      (++ *open-connection-number*)
-		      (mutex-unlock! *remote-lock*)
-		      (make-new-connection key id)))))))
+      (let* ((key (string-append host ":" (integer->string port)))
+	     (con (synchronize *remote-lock*
+		     (or (connection-table-get key)
+			 (let ((id (+fx 1 *connection-id*)))
+			    (set! *connection-id* id)
+			    (++ *open-connection-number*)
+			    id)))))
+	 (if (integer? con)
+	     (make-new-connection key con)
+	     con)))
 
    (with-trace 4 "remote-get-connection"
       (trace-item "host=" host)
@@ -498,34 +489,27 @@
 ;*    connection-keep-alive! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (connection-keep-alive! conn)
-   (mutex-lock! *remote-lock*)
-   (with-handler
-      (lambda (e)
-	 (exception-notify e)
-	 (mutex-unlock! *remote-lock*)
-	 (raise e))
-      (begin
-	 (when (too-many-keep-alive-connection?)
-	    ;; we first try to cleanup the timeout connections
-	    (let ((now (current-seconds)))
-	       (filter-connection-table!
-		  (lambda (c)
-		     (with-access::connection c (locked)
-			(or locked (not (connection-timeout? c now))))))))
-	 (if (too-many-keep-alive-connection?)
-	     ;; we have failed, we still have too many keep-alive connections open
-	     (begin
-		(filter-connection-table! (lambda (c) (with-access::connection c (locked) locked)))
-		(connection-close-sans-lock! conn))
-	     ;; store the connection only if room is available on the table
-	     (with-access::connection conn (locked keep-alive intable)
-		(set! locked #f)
-		(set! keep-alive #t)
-		(unless intable
-		   ;; this is the first time we see this connection, we add it to
-		   ;; the connection table
-		   (connection-table-add! conn))))
-	 (mutex-unlock! *remote-lock*))))
+   (synchronize *remote-lock*
+      (when (too-many-keep-alive-connection?)
+	 ;; we first try to cleanup the timeout connections
+	 (let ((now (current-seconds)))
+	    (filter-connection-table!
+	       (lambda (c)
+		  (with-access::connection c (locked)
+		     (or locked (not (connection-timeout? c now))))))))
+      (if (too-many-keep-alive-connection?)
+	  ;; we have failed, we still have too many keep-alive connections open
+	  (begin
+	     (filter-connection-table! (lambda (c) (with-access::connection c (locked) locked)))
+	     (connection-close-sans-lock! conn))
+	  ;; store the connection only if room is available on the table
+	  (with-access::connection conn (locked keep-alive intable)
+	     (set! locked #f)
+	     (set! keep-alive #t)
+	     (unless intable
+		;; this is the first time we see this connection, we add it to
+		;; the connection table
+		(connection-table-add! conn))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-close-sans-lock! ...                                  */
@@ -542,15 +526,8 @@
 ;*    connection-close! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (connection-close! connection::connection)
-   (mutex-lock! *remote-lock*)
-   (with-handler
-      (lambda (e)
-	 (exception-notify e)
-	 (mutex-unlock! *remote-lock*)
-	 (raise e))
-      (begin
-	 (connection-close-sans-lock! connection)
-	 (mutex-unlock! *remote-lock*))))
+   (synchronize *remote-lock*
+      (connection-close-sans-lock! connection)))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-down? ...                                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Sat Oct 13 07:46:52 2012 (serrano)                */
+;*    Last change :  Sun Nov 18 15:40:54 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -51,34 +51,30 @@
 ;*    css-style-has-attribute? ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (css-style-has-attribute? cs::css-style a::symbol)
-   (mutex-lock! css-mutex)
-   (with-access::css-style cs (attributes)
-      (let ((v (pair? (assq a attributes))))
-	 (mutex-unlock! css-mutex)
-	 v)))
+   (synchronize css-mutex
+      (with-access::css-style cs (attributes)
+	 (pair? (assq a attributes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-style-get-attribute ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (css-style-get-attribute cs::css-style a::symbol)
-   (mutex-lock! css-mutex)
-   (with-access::css-style cs (attributes)
-      (let ((p (assq a attributes)))
-	 (mutex-unlock! css-mutex)
-	 (when (pair? p)
-	    (cdr p)))))
+   (synchronize css-mutex
+      (with-access::css-style cs (attributes)
+	 (let ((p (assq a attributes)))
+	    (when (pair? p)
+	       (cdr p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-style-set-attribute! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (css-style-set-attribute! cs::css-style a::symbol val)
-   (with-lock css-mutex
-      (lambda ()
-	 (with-access::css-style cs (attributes)
-	    (let ((p (assq a attributes)))
-	       (if (pair? p)
-		   (set-cdr! p val)
-		   (set! attributes (cons (cons a val) attributes))))))))
+   (synchronize css-mutex
+      (with-access::css-style cs (attributes)
+	 (let ((p (assq a attributes)))
+	    (if (pair? p)
+		(set-cdr! p val)
+		(set! attributes (cons (cons a val) attributes)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-computed-style ...                                          */
