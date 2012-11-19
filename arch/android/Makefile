@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Nov  8 10:31:23 2012 (serrano)                */
+#*    Last change :  Mon Nov 19 06:49:54 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -26,18 +26,6 @@ ANDROID_BUILD = Android.mk build.xml project.properties.in hop.keystore \
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
 ANDROID_RES = res/drawable/logo.png \
-  res/drawable-v10/favicon.png \
-  res/drawable-v10/hopicon.png \
-  res/drawable-v10/hopicon2.png \
-  res/drawable-v10/ic_menu_block.png \
-  res/drawable-v10/ic_menu_clear_playlist.png \
-  res/drawable-v10/ic_menu_info_details.png \
-  res/drawable-v10/ic_menu_preferences.png \
-  res/drawable-v10/ic_menu_refresh.png \
-  res/drawable-v10/ic_menu_stop.png \
-  res/drawable-v10/logo.png \
-  res/drawable-v10/logo128.png \
-  res/drawable/hopicon2.png \
   res/drawable/ic_menu_block.png \
   res/drawable/ic_menu_clear_playlist.png \
   res/drawable/ic_menu_info_details.png \
@@ -46,6 +34,26 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable/ic_menu_stop.png \
   res/drawable/logo128.png \
   res/drawable/hopicon.png \
+  res/drawable-v8/favicon.png \
+  res/drawable-v8/hopicon.png \
+  res/drawable-v8/ic_menu_block.png \
+  res/drawable-v8/ic_menu_clear_playlist.png \
+  res/drawable-v8/ic_menu_info_details.png \
+  res/drawable-v8/ic_menu_preferences.png \
+  res/drawable-v8/ic_menu_refresh.png \
+  res/drawable-v8/ic_menu_stop.png \
+  res/drawable-v8/logo.png \
+  res/drawable-v8/logo128.png \
+  res/drawable-v10/favicon.png \
+  res/drawable-v10/hopicon.png \
+  res/drawable-v10/ic_menu_block.png \
+  res/drawable-v10/ic_menu_clear_playlist.png \
+  res/drawable-v10/ic_menu_info_details.png \
+  res/drawable-v10/ic_menu_preferences.png \
+  res/drawable-v10/ic_menu_refresh.png \
+  res/drawable-v10/ic_menu_stop.png \
+  res/drawable-v10/logo.png \
+  res/drawable-v10/logo128.png \
   res/layout/main.xml res/layout/about.xml res/layout/info.xml \
   res/xml/preferences.xml \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
