@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Nov 21 10:51:31 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 19:12:50 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -92,56 +92,69 @@ public class HopService extends Service {
 
    @Override
    public void onRebind( Intent intent ) {
-      Log.d( "HopService", "onBind: " + this );
+      // Log.d( "HopService", "onBind: " + this );
       
       super.onRebind( intent );
    }
 
    @Override
    public boolean onUnbind( Intent intent ) {
-      Log.i( "HopService", "onUnbind" );
+      // Log.i( "HopService", "onUnbind" + this );
 
       return false;
    }
    
-   public void kill() {
-      Log.i( "HopService", ">>> kill..." );
+   public synchronized void kill() {
+      Log.i( "HopService", ">>> kill... inkill=" + inkill );
+
+      if( !inkill ) {
+	 inkill = true;
       
-      if( hop != null ) {
-	 hop.kill();
-	 hop = null;
-      }
+	 if( hop != null ) {
+	    hop.kill();
+	    hop = null;
+	 }
       
-      if( hopdroid != null ) {
-	 hopdroid.kill();
-	 hopdroid = null;
-      } else {
-	 if( hopdroid.isBackground() ) {
-	    hopdroid.killBackground();
+	 if( hopdroid != null ) {
+	    hopdroid.kill();
+	    hopdroid = null;
+	 } else {
+	    if( hopdroid.isBackground() ) {
+	       hopdroid.killBackground();
+	    }
 	 }
       }
-      
       Log.i( "HopService", "<<< kill" );
    }
 
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopService", "onStartCommand: " + this );
-      
-      // create hop 
-      hop = new Hop( HopService.this, hopargs );
+      Log.d( "HopService", ">>> onStartCommand " + this + "..." );
       
       // create hopdroid
       hopdroid = new HopDroid( HopService.this );
 
-      // starting hopdroid
-      startThreadLog( hopdroid );
+      if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
+	 // create hop 
+	 hop = new Hop( HopService.this, hopargs );
+      
+	 // starting hopdroid
+	 startThreadLog( hopdroid );
 
-      // starting hop
-      startThreadLog( hop );
+	 // starting hop
+	 startThreadLog( hop );
 
-      // sticky service
-      return START_STICKY;
+	 Log.d( "HopService", "<<< onStartCommandinitialized" );
+	 // sticky service
+	 return START_STICKY;
+      } else {
+	 handler.sendMessage(
+	    android.os.Message.obtain(
+	       handler, HopLauncher.MSG_HOP_FAILED, 0 ) );
+	 stopSelf();
+	 
+	 return 0;
+      }
    }
 
    public static boolean isBackground() {
@@ -162,7 +175,6 @@ public class HopService extends Service {
       notification.setLatestEventInfo(
 	 this, getText( R.string.hopversion ), text, contentIntent );
 
-//      notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_FOREGROUND_SERVICE;
       notification.flags = Notification.FLAG_NO_CLEAR;
 
       // Send the notification.

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Nov 21 10:49:39 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 18:42:02 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -105,29 +105,25 @@ public class Hop extends Thread {
 	    public void run() {
 	       // wait for the termination of the Hop process
 	       int result = HopExec.waitFor( pid[ 0 ] );
-	       Log.i( "Hop", "process exited (pid="
+	       Log.i( "Hop", "process exit (pid="
 		      + pid[ 0 ] + ") with result=" + result
-		      + " (/HOP_RESTART=" + HOP_RESTART + ")" );
+		      + " (HOP_RESTART=" + HOP_RESTART + ")" );
 
-	       if( !killed ) {
+	       synchronized( currentpid ) {
+		  currentpid[ 0 ] = 0;
+
 		  if( result == HOP_RESTART ) {
-		     if( service.handler != null ) {
-			service.handler.sendEmptyMessage( HopLauncher.MSG_START_HOP_SERVICE );
-		     }
-
+		     HopLauncher.hop_resuscitate = true;
 		  } else {
-		     boolean tosend = false;
-		  
-		     synchronized( currentpid ) {
-			if( currentpid[ 0 ] == pid[ 0 ] ) {
-			   tosend = true;
-			}
+		     // the process has stopped unexpectidly
+		     if( !inkill && service.handler != null ) {
+			service.handler.sendMessage(
+			   android.os.Message.obtain(
+			      service.handler, HopLauncher.MSG_HOP_FAILED, result ) );
 		     }
-		     if( tosend && service.handler != null ) {
-			service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_ENDED );
-		     }
-		  };
+		  }
 	       }
+	       
 	    }
 	 } );
 
@@ -148,20 +144,13 @@ public class Hop extends Thread {
 		     }
 		  }
 	       } catch( Throwable e ) {
-		  if( !killed && !inkill ) {
-		     boolean tosend = false;
-		  
-		     Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
-			    + " currentpid=" + currentpid[ 0 ] 
-			    + ") exception=" +  e.getClass().getName(), e );
+		  if( !inkill ) {
 		     synchronized( currentpid ) {
-			if( currentpid[ 0 ] == pid[ 0 ] ) {
-			   tosend = true;
+			if( currentpid[ 0 ] != 0 ) {
+			   Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
+				  + ") exception="
+				  +  e.getClass().getName(), e );
 			}
-		     }
-
-		     if( tosend && service.handler != null ) {
-			service.handler.sendMessage( android.os.Message.obtain( service.handler, HopLauncher.MSG_HOP_FAILED, e ) );
 		     }
 		  }
 	       }
@@ -189,22 +178,18 @@ public class Hop extends Thread {
    // kill
    public void kill() {
       Log.d( "Hop", ">>> kill..." );
-      inkill = true;
       
-      if( !killed ) {
-	 killed = true;
-	 
-	 synchronized( currentpid ) {
-	    if( currentpid[ 0 ] != 0 ) {
-	       Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")..." );
+      synchronized( currentpid ) {
+	 if( currentpid[ 0 ] != 0 ) {
+	    Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")..." );
+
+	    inkill = true;
+	    android.os.Process.killProcess( currentpid[ 0 ] );
 	    
-	       android.os.Process.killProcess( currentpid[ 0 ] );
-	       currentpid[ 0 ] = 0;
-	    
-	       Log.i( "Hop", "<<< kill hop" );
-	    }
+	    Log.i( "Hop", "<<< kill hop" );
 	 }
       }
+      
       Log.d( "Hop", "<<< kill" );
    }
 

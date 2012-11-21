@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Nov 21 10:06:56 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 18:47:31 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -37,7 +37,7 @@ import java.io.*;
 public class HopLauncher extends Activity {
    // Global constants
    public static final int MSG_HOP_OUTPUT_AVAILABLE = 1;
-   public static final int MSG_HOP_ENDED = 2;
+   public static final int MSG_HOPDROID_ENDED = 2;
    public static final int MSG_RUN_WIZARD = 3;
    public static final int MSG_INSTALL_FAILED = 4;
    public static final int MSG_CONFIGURE_FAIL = 5;
@@ -51,6 +51,7 @@ public class HopLauncher extends Activity {
    // hop configuration class variable
    static boolean hop_log = true;
    static String hop_wizard_url;
+   static boolean hop_resuscitate = false;
    
    // instance variables
    boolean killed = false;
@@ -97,8 +98,12 @@ public class HopLauncher extends Activity {
    private void write_console( String line ) {
       int lineh = textview.getLineHeight();
 
-      textbuffer.append( line );
-      textview.setText( textbuffer );
+      try {
+	 textbuffer.append( line );
+	 textview.setText( textbuffer );
+      } catch( Throwable e ) {
+	 Log.e( "HopLauncher", "e=" + e );
+      }
 			   
       int lc = textview.getLineCount();
 	 
@@ -145,6 +150,7 @@ public class HopLauncher extends Activity {
 		      e.toString() );
 	       e.printStackTrace();
 	       Log.e( "HopLauncher", "killing background hop because of error..." );
+	       hopconnected = false;
 	       unbindService( hopconnection );
 	       kill( 0 );
 	    }
@@ -170,24 +176,29 @@ public class HopLauncher extends Activity {
 			}
 			break;
 
-		     case MSG_HOP_ENDED:
+		     case MSG_HOPDROID_ENDED:
+			Log.i( "HopLauncher", "===== MSG_HOPDROID_ENDED" );
 			write_console( "Hop ended...\n" );
-			kill( 4000 );
+			if( hop_resuscitate ) {
+			   hop_resuscitate = false;
+			   start( "" );
+			}
 			break;
 
 		     case MSG_HOP_FAILED:
-			Log.e( "HopLauncher", "hop failed..." );
+			Log.i( "HopLauncher", "===== MSG_HOP_FAILED" );
 			HopUiUtils.fail( activity, "Hop", "failed", (Exception)msg.obj );
 			kill( 4000 );
 			break;
 
 		     case MSG_HOPDROID_FAILED:
-			Log.e( "HopLauncher", "hopdroid failed..." );
+			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED" );
 			HopUiUtils.fail( activity, "HopDroid", "failed", (Exception)msg.obj );
 			kill( 4000 );
 			break;
 
 		     case MSG_RUN_WIZARD:
+			Log.i( "HopLauncher", "===== MSG_RUN_WIZARD" );
 			cleanupProgressBar();
 
 			Uri uri = Uri.parse( hop_wizard_url );
@@ -413,6 +424,10 @@ public class HopLauncher extends Activity {
 
    @Override
    public void onStop() {
+      if( hopconnected ) {
+	 hopconnected = false;
+	 unbindService( hopconnection );
+      }
       super.onStop();
    }
 
@@ -520,6 +535,7 @@ public class HopLauncher extends Activity {
 	 if( hopconf != null && hopconf.isRunning() ) {
 	    hopconf.kill();
 	 }
+	 
 	 if( hopconnected ) {
 	    Log.d( "HopLauncher", "unbinding service..." );
 	    hopconnected = false;
@@ -530,9 +546,11 @@ public class HopLauncher extends Activity {
 	 if( hopservice != null ) {
 	    hopservice.inkill = true;
 	 }
+	 
 	 if( hopintent != null ) {
 	    stopService( hopintent );
 	 }
+	 
 	 Log.d( "HopLauncher", "finishing activity..." );
 	 finish();
       
