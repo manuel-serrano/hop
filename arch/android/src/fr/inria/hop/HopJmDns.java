@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Fri Nov  9 14:42:13 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 10:45:36 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -47,12 +47,14 @@ public class HopJmDns extends HopZeroconf {
    
    // start
    public synchronized void start() {
+      Log.d( "HopJmDms", "starting plugin..." );
       if( jmdns == null ) {
 	 try {
 	    WifiManager wifi = (WifiManager)hopdroid.service.getSystemService( Context.WIFI_SERVICE );
 	    WifiInfo wifiinfo = wifi.getConnectionInfo();
 	    int intaddr = wifiinfo.getIpAddress();
 
+	    Log.d( "HopJmDns", "enabling multicast" );
 	    enableMulticast();
 	    
 	    if( intaddr != 0 ) {
@@ -62,8 +64,10 @@ public class HopJmDns extends HopZeroconf {
 	       };
 	       InetAddress addr = InetAddress.getByAddress( byteaddr );
 
+	       Log.d( "HopJmDns", "creating instance addr=" + addr );
 	       jmdns = JmDNS.create( addr, "hop" );
 	    } else {
+	       Log.d( "HopJmDns", "creating instance" );
 	       jmdns = JmDNS.create();
 	    }
 	 } catch( Exception e ) {
@@ -74,7 +78,7 @@ public class HopJmDns extends HopZeroconf {
 
    // stop
    public synchronized void stop() {
-      Log.d( "HopJmDns", ">>> stopJmDns" );
+      Log.d( "HopJmDns", ">>> stopJmDns jmdns=" + jmdns );
 
       if( jmdns != null ) {
 	 try {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Nov 18 17:34:46 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 10:49:39 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -52,18 +52,18 @@ public class Hop extends Thread {
    public boolean inkill = false;
    String msg;
    FileDescriptor HopFd;
-   Handler handler;
-   ArrayBlockingQueue<String> queue;
    final int[] currentpid = new int[ 1 ];
    boolean log = false;
    String extra = "";
 
+   HopService service;
+   
    // constructor
-   public Hop( ArrayBlockingQueue<String>q, Handler h ) {
+   public Hop( HopService s, String args ) {
       super();
 
-      queue = q;
-      handler = h;
+      service = s;
+      extra = args;
    }
 
    // is hop already configured
@@ -111,8 +111,8 @@ public class Hop extends Thread {
 
 	       if( !killed ) {
 		  if( result == HOP_RESTART ) {
-		     if( handler != null ) {
-			handler.sendEmptyMessage( HopLauncher.MSG_START_HOP_SERVICE );
+		     if( service.handler != null ) {
+			service.handler.sendEmptyMessage( HopLauncher.MSG_START_HOP_SERVICE );
 		     }
 
 		  } else {
@@ -123,8 +123,8 @@ public class Hop extends Thread {
 			   tosend = true;
 			}
 		     }
-		     if( tosend && handler != null ) {
-			handler.sendEmptyMessage( HopLauncher.MSG_HOP_ENDED );
+		     if( tosend && service.handler != null ) {
+			service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_ENDED );
 		     }
 		  };
 	       }
@@ -140,11 +140,11 @@ public class Hop extends Thread {
 
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
-		     if( handler != null ) {
+		     if( service.handler != null ) {
 			String s = new String( buffer, 0, l );
 			if( HopLauncher.hop_log ) Log.v( "HopConsole", s );
-			queue.put( s );
-			handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
+			service.queue.put( s );
+			service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 		     }
 		  }
 	       } catch( Throwable e ) {
@@ -160,8 +160,8 @@ public class Hop extends Thread {
 			}
 		     }
 
-		     if( tosend && handler != null ) {
-			handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_HOP_FAILED, e ) );
+		     if( tosend && service.handler != null ) {
+			service.handler.sendMessage( android.os.Message.obtain( service.handler, HopLauncher.MSG_HOP_FAILED, e ) );
 		     }
 		  }
 	       }
@@ -188,6 +188,7 @@ public class Hop extends Thread {
    
    // kill
    public void kill() {
+      Log.d( "Hop", ">>> kill..." );
       inkill = true;
       
       if( !killed ) {
@@ -195,7 +196,7 @@ public class Hop extends Thread {
 	 
 	 synchronized( currentpid ) {
 	    if( currentpid[ 0 ] != 0 ) {
-	       Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")" );
+	       Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")..." );
 	    
 	       android.os.Process.killProcess( currentpid[ 0 ] );
 	       currentpid[ 0 ] = 0;
@@ -204,17 +205,13 @@ public class Hop extends Thread {
 	    }
 	 }
       }
+      Log.d( "Hop", "<<< kill" );
    }
 
    // isRunning()
    public boolean isRunning() {
       Log.e( "Hop", "isRunning killed=" + killed + " pid=" + currentpid[ 0 ] );
       return !killed && currentpid[ 0 ] != 0;
-   }
-   
-   // isBackground()
-   public static boolean isBackground() {
-      return HopService.isBackground();
    }
 }
    

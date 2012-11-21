@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Nov 18 17:25:48 2012 (serrano)                */
+/*    Last change :  Wed Nov 21 10:06:56 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -46,6 +46,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_HOPDROID_FAILED = 8;
    public static final int MSG_START_HOP_SERVICE = 9;
    public static final int MSG_RESTART_HOP_SERVICE = 10;
+   public static final int MSG_KILL_HOP_SERVICE = 11;
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -135,9 +136,8 @@ public class HopLauncher extends Activity {
 	    hopservice = ((HopService.HopBinder)service).getService();
 
 	    try {
-	       hopservice.hop.handler = handler;
-	       hopservice.hop.queue = queue;
-	       hopservice.hopdroid.handler = handler;
+	       hopservice.handler = handler;
+	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
 	       hopconnected = true;
 	    } catch( Exception e ) {
@@ -216,31 +216,21 @@ public class HopLauncher extends Activity {
 			break;
 
 		     case MSG_START_HOP_SERVICE:
-			Log.i( "HopLauncher", "Starting Hop Service" );
-			if( hopintent == null ) {
-			   hopintent = new Intent( getApplicationContext(), HopService.class );
-			}
-
-			if( !Hop.isBackground() ) {
-			   Log.d( "HopLauncher", "starting new service..." );
-			   startService( hopintent );
-			} else {
-			   Log.d( "HopLauncher", "background service already running..." );
-			   write_console( "Hop connected...\n" );
-			}
-			
-			Log.d( "HopLauncher", "binding the service..." );
-			bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
+			Log.i( "HopLauncher", "===== MSG_START_HOP_SERVICE" );
+			start( "" );
 			break;
 
 		     case MSG_RESTART_HOP_SERVICE:
-			Log.i( "HopLauncher", "Stopping Hop Service" );
-			hopconnected = false;
-			unbindService( hopconnection );
-			stopService( hopintent );
-			hopintent = null;
+			Log.i( "HopLauncher", "===== MSG_RESTART_HOP_SERVICE" );
+			
+			if( hopservice != null ) hopservice.inrestart = true;
+			stop();
 
-			handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
+			break;
+
+		     case MSG_KILL_HOP_SERVICE:
+			Log.i( "HopLauncher", "===== MSG_KILL_HOP_SERVICE" );
+			kill( 0 );
 			break;
 
 		     default:
@@ -252,11 +242,6 @@ public class HopLauncher extends Activity {
    
    @Override public void onCreate( Bundle bundle ) {
       super.onCreate( bundle );
-
-      // switch to fullscreen
-/*       this.getWindow().setFlags(                                    */
-/* 	 WindowManager.LayoutParams.FLAG_FULLSCREEN,                   */
-/* 	 WindowManager.LayoutParams.FLAG_FULLSCREEN );                 */
 
       // install our view
       if( android.os.Build.VERSION.SDK_INT < 11 ) {
@@ -356,7 +341,7 @@ public class HopLauncher extends Activity {
 	    return true;
 
 	 case R.id.menu_quit:
- 	    kill( 0 );
+	    handler.sendEmptyMessage( MSG_KILL_HOP_SERVICE );
             return true;
 
 /* 	 case R.id.menu_clear:                                         */
@@ -365,7 +350,7 @@ public class HopLauncher extends Activity {
 /*             return true;                                            */
 
 	 case R.id.menu_restart:
-	    restart();
+	    handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
             return true;
 
 	 case R.id.menu_info:
@@ -405,10 +390,13 @@ public class HopLauncher extends Activity {
    private void configure() {
       Log.v( "HopLauncher", "configure..." );
       // start a background Hop
-      if( hopconf == null || !hopconf.isRunning() ) {
-	 hopconf = new Hop( queue, handler );
-	 hopconf.startWithArg( "--accept-kill" );
+      if( !HopService.isBackground() ) {
+	 start( "--accept-kill" );
       }
+/*       if( hopconf == null || !hopconf.isRunning() ) {               */
+/* 	 hopconf = new Hop( queue, handler );                          */
+/* 	 hopconf.startWithArg( "--accept-kill" );                      */
+/*       }                                                             */
       
       // configure an installed Hop
       HopConfigurer hopconfigurer = new HopConfigurer( handler, hop_wizard_url );
@@ -533,28 +521,57 @@ public class HopLauncher extends Activity {
 	    hopconf.kill();
 	 }
 	 if( hopconnected ) {
-	    Log.d( "HopLauncher", "Unbinding service..." );
+	    Log.d( "HopLauncher", "unbinding service..." );
 	    hopconnected = false;
 	    unbindService( hopconnection );
 	 }
       
-	 Log.d( "HopLauncher", "Stopping service..." );
+	 Log.d( "HopLauncher", "stopping service..." );
+	 if( hopservice != null ) {
+	    hopservice.inkill = true;
+	 }
 	 if( hopintent != null ) {
 	    stopService( hopintent );
 	 }
-	 Log.d( "HopLauncher", "Finishing activity..." );
+	 Log.d( "HopLauncher", "finishing activity..." );
 	 finish();
       
 	 Log.i( "HopLauncher", "<<< kill launcher" );
       }
    }
 
-   private synchronized void restart() {
-      Log.i( "HopLauncher", "Restarting Hop..." );
+   private void start( String hopargs ) {
+      Log.i( "HopLauncher", "starting Hop Service" );
+      
+      write_console( "Starting Hop...\n" );
+      
+      if( hopintent == null ) {
+	 HopService.hopargs = hopargs;
+	 hopintent = new Intent( getApplicationContext(), HopService.class );
+      }
+
+      if( !HopService.isBackground() ) {
+	 Log.d( "HopLauncher", "starting new service..." );
+	 startService( hopintent );
+      } else {
+	 Log.d( "HopLauncher", "background service already running..." );
+	 write_console( "Hop connected...\n" );
+      }
+			
+      Log.d( "HopLauncher", "binding the service..." );
+      bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
+   }
+
+
+   private void stop() {
+      Log.i( "HopLauncher", "stopping Hop Service" );
       
       textbuffer.delete( 0, textbuffer.length() );
-      write_console( "Restarting Hop...\n" );
+      write_console( "Stopping Hop...\n" );
       
-      handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );
+      hopconnected = false;
+      unbindService( hopconnection );
+      stopService( hopintent );
+      hopintent = null;
    }
 }
