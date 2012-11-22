@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Tue Nov  6 18:00:33 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 16:59:14 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -16,11 +16,14 @@
    (library mail phone hopdroid multimedia)
    (import androidemo_config))
 
+(tprint "androidemo.1")
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define amusic (instantiate::androidmusic (phone (instantiate::androidphone))))
 (define atts (instantiate::androidtts (phone (instantiate::androidphone))))
+
+(tprint "androidemo.2")
 
 (define battery-state '())
 
@@ -88,6 +91,8 @@ END:VCARD"))
       (set! connectivity-state e.value)
       (hop-event-broadcast! "connectivity" e.value)))
 
+(tprint "androidemo.3")
+
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -105,6 +110,11 @@ END:VCARD"))
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
 
+	 (<H2> "Phone")
+	 (<DIV> :class "short-note"
+	    "This shows how to access the phone dynamic configuration")
+	 (<ANDROIDEMO:SYSTEM>)
+	 
 	 (<H2> "Telephony")
 	 (<ANDROIDEMO:TELEPHONY>)
 
@@ -192,6 +202,17 @@ Android phone. This demonstration does not use any HTML5 facility.")
 		     (<TR> (<TD> :class "body" body)))))))
       (<BR>)
       (<FOOT>)))
+
+;*---------------------------------------------------------------------*/
+;*    <ANDROIDEMO:SYSTEM> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<ANDROIDEMO:SYSTEM>)
+   (let ((p (instantiate::androidphone)))
+      (<TABLE>
+	 (<TR>
+	    (<TH> "Sleep policy")
+	    (<TD> (let ((policy (system-sleep-policy p)))
+		     policity))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:TELEPHONY> ...                                       */
@@ -489,49 +510,49 @@ missed.")
 		     (<TD> (seconds->date date))
 		     (<TD> duration)
 		     (<TD> name)))))
-	   (phone-call-log (instantiate::androidphone) 10))))
+	 (phone-call-log (instantiate::androidphone) 10))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:SPEECH> ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:SPEECH>)
    (list
-    ~(add-event-listener! server "tts"
-	(lambda (e::event)
-	   (alert "tts done: " e.value)))
-    (<TEXTAREA> :id "speech" "")
-    (<DIV> "language: "
-       (let ((locale (phone-current-locale (instantiate::androidphone))))
-	  (<SELECT> :id "language"
-	     :onchange ~(with-hop ($(service (s)
-				       (let ((l (call-with-input-string s read)))
-					  (tts-locale-set! atts l)))
-				    this.value))
-	     (filter-map (lambda (l)
-			    (when (memq (tts-locale-check atts l)
-					'(lang-country lang-country-var))
-			       (<OPTION> :label (list-ref l 3)
-				  :value (with-output-to-string
-					    (lambda ()
-					       (write l)))
-				  :selected (equal? l locale)
-				  (list-ref l 3))))
-			 (phone-locales (instantiate::androidphone))))))
-    (<TABLE> :id "speech-conf"
-       (<TR>
-	  (<TH> "pitch: ")
-	  (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
-		   :onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
-					  this.value)))))
-       (<TR>
-	  (<TH> "rate: ")
-	  (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
-		   :onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
-					  this.value))))))
-    (<BUTTON>
-       :onclick ~(let ((el (dom-get-element-by-id "speech")))
-		    (with-hop ($(service (text) (tts-speak atts text)) el.value)))
-       "Speak")))
+      ~(add-event-listener! server "tts"
+	  (lambda (e::event)
+	     (alert "tts done: " e.value)))
+      (<TEXTAREA> :id "speech" "")
+      (<DIV> "language: "
+	 (let ((locale (phone-current-locale (instantiate::androidphone))))
+	    (<SELECT> :id "language"
+	       :onchange ~(with-hop ($(service (s)
+					 (let ((l (call-with-input-string s read)))
+					    (tts-locale-set! atts l)))
+				       this.value))
+	       (filter-map (lambda (l)
+			      (when (memq (tts-locale-check atts l)
+				       '(lang-country lang-country-var))
+				 (<OPTION> :label (list-ref l 3)
+				    :value (with-output-to-string
+					      (lambda ()
+						 (write l)))
+				    :selected (equal? l locale)
+				    (list-ref l 3))))
+		  (phone-locales (instantiate::androidphone))))))
+      (<TABLE> :id "speech-conf"
+	 (<TR>
+	    (<TH> "pitch: ")
+	    (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-pitch atts)
+		     :onchange ~(with-hop ($(service (v) (tts-pitch-set! atts v))
+					     this.value)))))
+	 (<TR>
+	    (<TH> "rate: ")
+	    (<TD> (<SLIDER> :min 0.2 :max 2.0 :step 0.1 :value (tts-rate atts)
+		     :onchange ~(with-hop ($(service (v) (tts-rate-set! atts v))
+					     this.value))))))
+      (<BUTTON>
+	 :onclick ~(let ((el (dom-get-element-by-id "speech")))
+		      (with-hop ($(service (text) (tts-speak atts text)) el.value)))
+	 "Speak")))
 
 ;*---------------------------------------------------------------------*/
 ;*    locale-set! ...                                                  */
@@ -597,3 +618,5 @@ missed.")
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
 	 (header (list (cons 'location: url))))))
+
+(tprint "androidemo.4")

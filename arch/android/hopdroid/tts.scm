@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Sat Oct 13 07:49:00 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 16:28:14 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
@@ -82,30 +82,27 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-close t::androidtts)
    (with-access::androidtts t (%open %mutex phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (set! %open #f)
-	       (android-send-command phone tts-plugin #\c))))))
+      (synchronize %mutex
+	 (when %open
+	    (set! %open #f)
+	    (android-send-command phone tts-plugin #\c)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-closed? ::androidtts ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (tts-closed? t::androidtts)
    (with-access::androidtts t (%open %mutex)
-      (with-lock %mutex
-	 (lambda ()
-	    %open))))
+      (synchronize %mutex
+	 %open)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-locale ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (tts-locale t::androidtts)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command/result phone tts-plugin #\l))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command/result phone tts-plugin #\l)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-locale-set! ...                                              */
@@ -113,10 +110,9 @@
 (define (tts-locale-set! t::androidtts locale)
    (with-access::androidtts t (phone %mutex %open)
       (if (and (list? locale) (every string? locale))
-	  (with-lock %mutex
-	     (lambda ()
-		(when %open
-		   (android-send-command phone tts-plugin #\L locale))))
+	  (synchronize %mutex
+	     (when %open
+		(android-send-command phone tts-plugin #\L locale)))
 	  (error "tts-locale-set!" "Illegal locale" locale))))
 
 ;*---------------------------------------------------------------------*/
@@ -125,10 +121,9 @@
 (define (tts-locale-check t::androidtts locale)
    (with-access::androidtts t (phone %mutex %open)
       (if (and (list? locale) (every string? locale))
-	  (with-lock %mutex
-	     (lambda ()
-		(when %open
-		   (android-send-command/result phone tts-plugin #\a locale))))
+	  (synchronize %mutex
+	     (when %open
+		(android-send-command/result phone tts-plugin #\a locale)))
 	  (error "tts-locale-check" "Illegal locale" locale))))
 
 ;*---------------------------------------------------------------------*/
@@ -143,15 +138,14 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-rate-set! t::androidtts value)
    (with-access::androidtts t (phone %mutex %open %rate)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (let ((d::double (cond
-				   ((fixnum? value) (fixnum->flonum value))
-				   ((flonum? value) value)
-				   (else 1.0))))
-		  (set! %rate d)
-		  (android-send-command phone tts-plugin #\r d)))))))
+      (synchronize %mutex
+	 (when %open
+	    (let ((d::double (cond
+				((fixnum? value) (fixnum->flonum value))
+				((flonum? value) value)
+				(else 1.0))))
+	       (set! %rate d)
+	       (android-send-command phone tts-plugin #\r d))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-pitch ...                                                    */
@@ -165,15 +159,14 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-pitch-set! t::androidtts value)
    (with-access::androidtts t (phone %mutex %open %pitch)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (let ((d::double (cond
-				   ((fixnum? value) (fixnum->flonum value))
-				   ((flonum? value) value)
-				   (else 1.0))))
-		  (set! %pitch d)
-		  (android-send-command phone tts-plugin #\p d)))))))
+      (synchronize %mutex
+	 (when %open
+	    (let ((d::double (cond
+				((fixnum? value) (fixnum->flonum value))
+				((flonum? value) value)
+				(else 1.0))))
+	       (set! %pitch d)
+	       (android-send-command phone tts-plugin #\p d))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mode->char ...                                                   */
@@ -198,55 +191,50 @@
 ;*---------------------------------------------------------------------*/
 (define (tts-synthesize t::androidtts text path)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command phone tts-plugin #\z text path))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command phone tts-plugin #\z text path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-speak ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (tts-speak t::androidtts text #!key stream mode)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command phone tts-plugin #\s
-				     text
-				     (mode->char mode)
-				     (stream->char stream)))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command phone tts-plugin #\s
+	       text
+	       (mode->char mode)
+	       (stream->char stream))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-silence ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (tts-silence t::androidtts ms #!key stream mode)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command phone tts-plugin #\space
-				     ms
-				     (mode->char mode)
-				     (stream->char stream)))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command phone tts-plugin #\space
+	       ms
+	       (mode->char mode)
+	       (stream->char stream))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-is-speaking? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (tts-is-speaking? t::androidtts)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command/result phone tts-plugin #\?))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command/result phone tts-plugin #\?)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tts-stop ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (tts-stop t::androidtts)
    (with-access::androidtts t (phone %mutex %open)
-      (with-lock %mutex
-	 (lambda ()
-	    (when %open
-	       (android-send-command phone tts-plugin #\h))))))
+      (synchronize %mutex
+	 (when %open
+	    (android-send-command phone tts-plugin #\h)))))
 
    

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Wed Nov  7 11:55:50 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 16:28:01 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -138,6 +138,7 @@ public class HopPluginTts extends HopPlugin
 	 case (byte)'i':
 	    // init
 /* 	    initTts();                                                 */
+	    initstatus = "success";
 	    op.write( "\"".getBytes() );
 	    op.write( initstatus.getBytes() );
 	    op.write( "\"".getBytes() );
@@ -203,6 +204,7 @@ public class HopPluginTts extends HopPlugin
 		     return;
 	       }
 	    } else {
+	       HopPluginLocale.read_locale( ip );
 	       op.write( "error".getBytes() );
 	       return;
 	    }

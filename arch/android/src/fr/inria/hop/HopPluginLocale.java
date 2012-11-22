@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Tue Jun 26 17:17:37 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 16:43:29 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the phone locales                                            */
@@ -40,8 +40,7 @@ public class HopPluginLocale extends HopPlugin {
 
    // server
    void server( InputStream ip, OutputStream op ) throws IOException {
-      
-      switch( HopDroid.read_int( ip ) ) {
+       switch( HopDroid.read_int( ip ) ) {
 	 // list locales
 	 case (byte)'l':
 	    writeLocales( op, Locale.getAvailableLocales() );

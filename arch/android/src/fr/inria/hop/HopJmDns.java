@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Wed Nov 21 10:45:36 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 13:45:30 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -78,7 +78,7 @@ public class HopJmDns extends HopZeroconf {
 
    // stop
    public synchronized void stop() {
-      Log.d( "HopJmDns", ">>> stopJmDns jmdns=" + jmdns );
+      Log.d( "HopJmDns", ">>> stopJmDns" );
 
       if( jmdns != null ) {
 	 try {

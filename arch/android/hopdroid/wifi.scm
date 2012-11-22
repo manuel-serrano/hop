@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 17 07:08:41 2011                          */
-;*    Last change :  Fri Jul  6 12:16:11 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 14:16:58 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Wifi control                                                     */
@@ -47,24 +47,21 @@
 ;*---------------------------------------------------------------------*/
 (define (androidwifi-multicast-lock-acquire w::androidwifi)
    (with-access::androidwifi w (%mutex phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (android-send-command phone wifi-plugin #\m)))))
+      (synchronize %mutex
+	 (android-send-command phone wifi-plugin #\m))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidwifi-multicast-lock-release ...                           */
 ;*---------------------------------------------------------------------*/
 (define (androidwifi-multicast-lock-release w::androidwifi)
    (with-access::androidwifi w (%mutex phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (android-send-command phone wifi-plugin #\r)))))
+      (synchronize %mutex
+	 (android-send-command phone wifi-plugin #\r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidwifi-multicast-lock-held? ...                             */
 ;*---------------------------------------------------------------------*/
 (define (androidwifi-multicast-lock-held? w::androidwifi)
    (with-access::androidwifi w (%mutex phone)
-      (with-lock %mutex
-	 (lambda ()
-	    (android-send-command/result phone wifi-plugin #\s)))))
+      (synchronize %mutex
+	 (android-send-command/result phone wifi-plugin #\s))))

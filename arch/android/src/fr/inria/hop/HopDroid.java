@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Nov 21 19:54:54 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 14:28:03 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -108,29 +108,29 @@ public class HopDroid extends Thread {
       }
    }
 
-   // waitCmdServSocket
-   private void waitCmdServSocket( int timeout ) {
+   // waitCmd
+   private void waitCmd( int timeout ) {
       // Here again Android is buggous (at least <= 4.1). There is a
       // latency after a close socket during which the socket, while closed,
       // still accept new connections! This function waits the socket to
       // be effectively closed.
       
-      for( ; timeout >= 0; timeout-- ) {
-	 Log.d( "HopDroid", "checking ping...bg="
-		+ isBackground()
-		+ " ping=" + serverPing( cmdserv.getLocalSocketAddress() )
-		+ " cmd.isClosed=" + cmdserv.isClosed()
-		+ " timeout=" + timeout );
-	 
+      for( ;timeout >= 0; timeout-- ) {
 	 if( isBackground() ) {
+	    Log.d( "HopDroid", "waitCmd, bacground="
+		   + isBackground()
+		   + " ping=" + serverPing( cmdserv.getLocalSocketAddress() )
+		   + " cmd.isClosed=" + cmdserv.isClosed()
+		   + " timeout=" + timeout );
+	 
 	    try {
 	       if( service.handler != null ) {
-		  service.queue.put( "waiting Hop: " + timeout );
+		  service.queue.put( "waiting Hop: " + timeout + "\n" );
 		  service.handler.sendEmptyMessage(
 		     HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 	       }
 	       Thread.sleep( 1000 );
-	    } catch( Throwable _) {
+	    } catch( Throwable _ ) {
 	       ;
 	    }
 	 } else {
@@ -152,8 +152,9 @@ public class HopDroid extends Thread {
 	 hopdroid = null;
 	 plugins = null;
 	 
+	 waitCmd( 10 );
+	 
 	 if( service.handler != null ) {
-	    waitCmdServSocket( 10 );
 	    Log.d( "HopDroid", "sending MSG_HOPDROID_ENDED" );
 	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_ENDED );
 	 }
@@ -223,10 +224,8 @@ public class HopDroid extends Thread {
    // serverPing
    private static boolean serverPing( LocalSocketAddress addr ) {
       try {
-	 Log.d( "HopDroid", "serverPing " + addr.getName() );
 	 return execCmd( addr, SERVER_PING_CMD );
       } catch( Exception _ ) {
-	 Log.d( "HopDroid", "serverPing failed " + addr.getName() );
          return false;
       }
    }
@@ -337,7 +336,7 @@ public class HopDroid extends Thread {
 		  
 	       if( m != 127 ) {
 		  Log.e( "HopDroid", "protocol error: illegal " 
-			 + p.name + " mark: " );
+			 + p.name + " mark: " + m );
 	       }
 	       op.flush();
 	    } catch( ArrayIndexOutOfBoundsException _ ) {
@@ -347,6 +346,8 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
+	 Log.e( "HopDroid", "serverPlugin error " + e );
+	 e.printStackTrace();
 	 if( !pluginserv.isClosed() ) {
 	    try {
 	       pluginclient.close();
@@ -413,6 +414,8 @@ public class HopDroid extends Thread {
 	    }
 	 }
       } catch( Throwable e ) {
+	 Log.e( "HopDroid", "serverEvent error " + e );
+	 
 	 if( !eventserv.isClosed() ) {
 	    eventclient.close();
 	    eventclient = null;

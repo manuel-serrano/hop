@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Nov 21 18:47:31 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 16:43:04 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -520,7 +520,7 @@ public class HopLauncher extends Activity {
 
    private synchronized void kill( int waitms ) {
       if( !killed ) {
-	 Log.i( "HopLauncher", ">>> kill launcher" );
+	 Log.i( "HopLauncher", ">>> kill launcher " + waitms );
 	 killed = true;
 	 
 	 // give time to read the console messages
@@ -542,11 +542,6 @@ public class HopLauncher extends Activity {
 	    unbindService( hopconnection );
 	 }
       
-	 Log.d( "HopLauncher", "stopping service..." );
-	 if( hopservice != null ) {
-	    hopservice.inkill = true;
-	 }
-	 
 	 if( hopintent != null ) {
 	    stopService( hopintent );
 	 }
@@ -582,14 +577,24 @@ public class HopLauncher extends Activity {
 
 
    private void stop() {
-      Log.i( "HopLauncher", "stopping Hop Service" );
+      Log.i( "HopLauncher", ">>> stop..." );
       
       textbuffer.delete( 0, textbuffer.length() );
       write_console( "Stopping Hop...\n" );
       
-      hopconnected = false;
-      unbindService( hopconnection );
-      stopService( hopintent );
-      hopintent = null;
+      if( hopconnected ) {
+	 Log.i( "HopLauncher", ">>> stop, unbindService..." );
+	 hopconnected = false;
+	 unbindService( hopconnection );
+	 Log.i( "HopLauncher", "<<< stop, unbindService..." );
+      }
+
+      if( hopintent != null ) {
+	 Log.i( "HopLauncher", ">>> stop, stopService..." );
+	 stopService( hopintent );
+	 hopintent = null;
+	 Log.i( "HopLauncher", "<<< stop, stopService..." );
+      }
+      Log.i( "HopLauncher", "<<< stop" );
    }
 }

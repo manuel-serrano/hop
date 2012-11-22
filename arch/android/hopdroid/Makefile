@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    .../prgm/project/hop/2.3.x/arch/android/hopdroid/Makefile        */
+#*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue Jan 17 10:45:51 2012 (serrano)                */
+#*    Last change :  Thu Nov 22 17:04:51 2012 (serrano)                */
 #*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
@@ -36,7 +36,7 @@ HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = phone music mpd multimedia tts wifi zeroconf
+_BGL_OBJECTS = phone music mpd multimedia tts wifi zeroconf system
 
 _OBJECTS = $(_BGL_OBJECTS)
 
