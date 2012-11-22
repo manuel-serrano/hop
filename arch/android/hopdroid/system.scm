@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 22 16:55:45 2012                          */
-;*    Last change :  Thu Nov 22 17:05:27 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 17:16:55 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    System configuration                                             */
@@ -35,9 +35,9 @@
    (android-send-command/result p system-plugin #\w))
 
 ;*---------------------------------------------------------------------*/
-;*    system-wifi-sleep-policy ...                                     */
+;*    system-wifi-sleep-policy-set! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (system-wifi-sleep-policy p::androidphone policy)
+(define (system-wifi-sleep-policy-set! p::androidphone policy)
    (unless system-plugin
       (set! system-plugin (android-load-plugin p "system")))
    (unless (android-send-command/result p system-plugin #\W policy)

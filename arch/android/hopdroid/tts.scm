@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 29 16:36:58 2010                          */
-;*    Last change :  Thu Nov 22 16:28:14 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 17:16:22 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Text-to-speech                                                   */
@@ -122,8 +122,9 @@
    (with-access::androidtts t (phone %mutex %open)
       (if (and (list? locale) (every string? locale))
 	  (synchronize %mutex
-	     (when %open
-		(android-send-command/result phone tts-plugin #\a locale)))
+	     (if %open
+		 (android-send-command/result phone tts-plugin #\a locale)
+		 (error "tts-locale-check" "tts closed" t)))
 	  (error "tts-locale-check" "Illegal locale" locale))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Thu Nov 22 17:03:19 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 17:08:45 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
@@ -56,6 +56,10 @@ public class HopPluginSystem extends HopPlugin {
       switch( Settings.System.getInt( getContentResolver(), Settings.System.WIFI_SLEEP_POLICY ) ) {
 	 case Settings.System.WIFI_SLEEP_POLICY_NEVER:
 	    op.write( "'never".getBytes() );
+	 case Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED:
+	    op.write( "'never-while-plugged".getBytes() );
+	 case Settings.System.WIFI_SLEEP_POLICY_DEFAULT:
+	    op.write( "'default".getBytes() );
 	 default:
 	    op.write( "'unknown".getBytes() );
       }
@@ -65,6 +69,24 @@ public class HopPluginSystem extends HopPlugin {
       if( policy.equal( "never" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
 	 op.write( "#t" );
+	 return;
+      }
+
+      if( policy.equal( "never-while-plugged" ) ) {
+	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED );
+	 op.write( "#t" );
+	 return;
+      }
+
+      if( policy.equal( "never-while-default" ) ) {
+	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_DEFAULT );
+	 op.write( "#t" );
+	 return;
+      }
+
+      if( policy.equal( "unknown" ) ) {
+	 op.write( "#t" );
+	 return;
       }
 
       op.write( "#f" );
