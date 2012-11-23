@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sat Nov  3 09:49:58 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 08:50:13 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -41,6 +41,11 @@ public abstract class HopPlugin {
       name = n;
    }
 
+   // onConnect
+   public void onConnect() {
+      ;
+   }
+   
    // cleanup
    public void kill() {
       Log.v( "HopPlugin", "killing plugin: " + name );

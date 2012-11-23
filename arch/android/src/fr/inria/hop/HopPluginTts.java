@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Thu Nov 22 16:28:01 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 09:10:50 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -62,52 +62,43 @@ public class HopPluginTts extends HopPlugin
       if( tts != null ) tts.shutdown();
    }
    
-/*    // ondemand initialization                                       */
-/*    private void initTts() {                                         */
-/*       Log.v( "HopPluginTts", "initTts.1" );                         */
-/*       synchronized( condv ) {                                       */
-/* 	 Intent checkIntent = new Intent();                            */
-/* 	                                                               */
-/* 	 checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA ); */
-/* 	 Log.v( "HopPluginTts", "initTts.3: starting activity..." );   */
-/* 	 startHopActivityForResult( checkIntent );                     */
-/* 	 try {                                                         */
-/* 	    Log.v( "HopPluginTts", "initTts.4: waiting for activity..." ); */
-/* 	    condv.wait();                                              */
-/* 	    Log.v( "HopPluginTts", "initTts.5: " + initstatus );       */
-/* 	 } catch( InterruptedException _ ) {                           */
-/* 	    initstatus = "initialization interrupted";                 */
-/* 	 }                                                             */
-/*       }                                                             */
-/*    }                                                                */
-/*                                                                     */
-/*    // onActivityResult                                              */
-/*    public void onHopActivityResult( int result, Intent intent ) {   */
-/*       Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" ); */
-/*       synchronized( condv ) {                                       */
-/* 	 if( true || result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) { */
-/* 	    Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" ); */
-/* 	    tts = new TextToSpeech( hopdroid.service, this );          */
-/* 	    return;                                                    */
-/* 	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) { */
-/* 	    // missing data, install it                                */
-/* 	    Intent installIntent = new Intent();                       */
-/* 	    installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA ); */
-/* 	    installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );   */
-/* 	    hopdroid.service.startActivity( installIntent );           */
-/* 	    initstatus = "missing data";                               */
-/* 	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) { */
-/* 	    initstatus = "bad data";                                   */
-/* 	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) { */
-/* 	    initstatus = "missing volume";                             */
-/* 	 } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_FAIL ) { */
-/* 	    initstatus = "data fail";                                  */
-/* 	 } else {                                                      */
-/* 	    initstatus = "tts error";                                  */
-/* 	 }                                                             */
-/* 	 condv.notify();                                               */
-/*       }                                                             */
-/*    }                                                                */
+   // TTS initialization, delayed to onConnect because it needs that actitivy
+   // to be fully initialized
+   public void onConnect() {
+      Intent checkIntent = new Intent();
+
+      checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
+      checkIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+      checkIntent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+
+      initstatus = "initializing";
+      startHopActivityForResult( checkIntent );
+   }
+
+   // onActivityResult
+   public void onHopActivityResult( int result, Intent intent ) {
+      Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
+      if( true || result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
+	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
+	 tts = new TextToSpeech( hopdroid.service, this );
+	 return;
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) {
+	 // missing data, install it
+	 Intent installIntent = new Intent();
+	 installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
+	 installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+	 hopdroid.service.startActivity( installIntent );
+	 initstatus = "missing data";
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) {
+	 initstatus = "bad data";
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) {
+	 initstatus = "missing volume";
+      } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_FAIL ) {
+	 initstatus = "data fail";
+      } else {
+	 initstatus = "tts error";
+      }
+   }
 
    // onInit
    public void onInit( int status ) {
@@ -137,8 +128,7 @@ public class HopPluginTts extends HopPlugin
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'i':
 	    // init
-/* 	    initTts();                                                 */
-	    initstatus = "success";
+//	    initTts();
 	    op.write( "\"".getBytes() );
 	    op.write( initstatus.getBytes() );
 	    op.write( "\"".getBytes() );

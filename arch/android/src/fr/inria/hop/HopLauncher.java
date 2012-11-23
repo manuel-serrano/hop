@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov 22 19:43:59 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 08:46:21 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -145,6 +145,7 @@ public class HopLauncher extends Activity {
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
 	       hopconnected = true;
+	       hopservice.onConnect();
 	    } catch( Exception e ) {
 	       Log.e( "HopLauncher", "error while connecting to service: " +
 		      e.toString() );
@@ -152,6 +153,7 @@ public class HopLauncher extends Activity {
 	       Log.e( "HopLauncher", "killing background hop because of error..." );
 	       hopconnected = false;
 	       unbindService( hopconnection );
+	       HopService.emergencyExit();
 	       kill( 4000 );
 	    }
 	 }

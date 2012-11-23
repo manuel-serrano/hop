@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Nov 21 18:42:02 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 08:38:40 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -197,6 +197,28 @@ public class Hop extends Thread {
    public boolean isRunning() {
       Log.e( "Hop", "isRunning killed=" + killed + " pid=" + currentpid[ 0 ] );
       return !killed && currentpid[ 0 ] != 0;
+   }
+
+   // emergencyExit
+   protected static void emergencyExit() {
+      // Try to kill a running background Hop process. This function is called
+      // after the HopDroid interface has been shutdown to all local sockets
+      // are already closed. We then, just emit a request to the server
+      // that will make it fails... and exit.
+      Log.i( "Hop", ">>> emergencyExit..." );
+      try {
+	 Socket sock = new Socket( "localhost", Integer.parseInt( Hop.port ) );
+	 OutputStream op = sock.getOutputStream();
+
+	 op.write( "GET /hop/androidemo HTTP/1.1\r\n".getBytes() );
+	 op.write( "Host: localhost\r\n".getBytes() );
+	 op.write( "\r\n\r\n".getBytes() );
+
+	 sock.close();
+      } catch( Throwable _ ) {
+	 ;
+      }
+      Log.i( "Hop", "<<< emergencyExit" );
    }
 }
    

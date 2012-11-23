@@ -13,13 +13,13 @@
           android:icon="@drawable/ic_menu_preferences"
           android:title="@string/menu_settings"/>
 
+    <item android:id="@+id/menu_detach"
+          android:icon="@drawable/ic_menu_goto"
+          android:title="@string/menu_detach"/>
+
     <item android:id="@+id/menu_restart"
           android:icon="@drawable/ic_menu_refresh"
           android:title="@string/menu_restart"/>
-
-    <item android:id="@+id/menu_detach"
-          android:icon="@drawable/ic_menu_clear_playlist"
-          android:title="@string/menu_detach"/>
 
     <item android:id="@+id/menu_quit"
           android:icon="@drawable/ic_menu_stop"

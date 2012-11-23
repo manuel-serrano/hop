@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Thu Nov 22 14:28:03 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 09:12:47 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -89,9 +89,9 @@ public class HopDroid extends Thread {
 	    registerPlugin( new HopPluginContact( this, "contact" ) );
 	    registerPlugin( new HopPluginZeroconf( this, "zeroconf" ) );
 	    registerPlugin( new HopPluginSystem( this, "system" ) );
+	    registerPlugin( new HopPluginTts( this, "tts" ) );
 	 
 	    registerPlugin( new HopPluginCall( this, "call" ) );
-	    registerPlugin( new HopPluginTts( this, "tts" ) );
 	 }
 
 	 // create the two servers
@@ -108,6 +108,22 @@ public class HopDroid extends Thread {
       }
    }
 
+   // onConnect
+   public void onConnect() {
+      // called by HopService.onConnect()
+      synchronized( plugins ) {
+	 int s = plugins.size();
+
+	 // plugin 0 is null
+	 for( int i = 1; i < s; i++ ) {
+	    HopPlugin p = (HopPlugin)plugins.get( i );
+	    if( p != null ) {
+	       p.onConnect();
+	    }
+	 }
+      }
+   }
+	 
    // waitCmd
    private void waitCmd( int timeout ) {
       // Here again Android is buggous (at least <= 4.1). There is a
@@ -116,7 +132,7 @@ public class HopDroid extends Thread {
       // be effectively closed.
       
       for( ;timeout >= 0; timeout-- ) {
-	 if( isBackground() ) {
+	 if( isBackground() && (cmdserv != null) ) {
 	    Log.d( "HopDroid", "waitCmd, bacground="
 		   + isBackground()
 		   + " ping=" + serverPing( cmdserv.getLocalSocketAddress() )
@@ -230,7 +246,7 @@ public class HopDroid extends Thread {
       }
    }
 
-   // killBackground()
+   // killBackground
    protected static void killBackground() {
       LocalSocketAddress addr =
          new LocalSocketAddress( "hopdroid-cmd:" + Hop.port );
@@ -238,6 +254,14 @@ public class HopDroid extends Thread {
       serverStop( addr );
    }
 
+   // emergencyExit
+   protected static void emergencyExit() {
+      Log.i( "HopDroid", ">>> emergencyExit..." );
+      if( isBackground() ) {
+	 killBackground();
+      }
+      Log.i( "HopDroid", "<<< emergencyExit" );
+   }
    
    // isBackground()
    protected static boolean isBackground() {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Thu Nov 22 20:20:13 2012 (serrano)                */
+/*    Last change :  Fri Nov 23 08:47:37 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -106,6 +106,21 @@ public class HopService extends Service {
       // true is returned to get onRebind invoked
       return true;
    }
+
+   public void onConnect() {
+      // invoked by HopLauncher when the connection is established.
+      // this is used to complete the plugin initialization
+      hopdroid.onConnect();
+   }
+   
+   static public void emergencyExit() {
+      Log.i( "HopService", ">>> emergencyExit..." );
+      // called by HopLauncher when the communication between the
+      // launcher and the service cannot be established
+      HopDroid.emergencyExit();
+      Hop.emergencyExit();
+      Log.i( "HopService", "<<< emergencyExit" );
+   }
    
    public synchronized void kill() {
       Log.i( "HopService", ">>> kill... inkill=" + inkill );
@@ -122,8 +137,8 @@ public class HopService extends Service {
 	    hopdroid.kill();
 	    hopdroid = null;
 	 } else {
-	    if( hopdroid.isBackground() ) {
-	       hopdroid.killBackground();
+	    if( HopDroid.isBackground() ) {
+	       HopDroid.killBackground();
 	    }
 	 }
       }
