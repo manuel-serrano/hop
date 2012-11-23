@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Nov 21 08:39:44 2012 (serrano)                */
+#*    Last change :  Fri Nov 23 09:31:19 2012 (serrano)                */
 #*    Copyright   :  2010-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -32,6 +32,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable/ic_menu_preferences.png \
   res/drawable/ic_menu_refresh.png \
   res/drawable/ic_menu_stop.png \
+  res/drawable/ic_menu_goto.png \
   res/drawable/logo128.png \
   res/drawable/hopicon.png \
   res/drawable-v8/favicon.png \
@@ -42,6 +43,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable-v8/ic_menu_preferences.png \
   res/drawable-v8/ic_menu_refresh.png \
   res/drawable-v8/ic_menu_stop.png \
+  res/drawable-v8/ic_menu_goto.png \
   res/drawable-v8/logo.png \
   res/drawable-v8/logo128.png \
   res/drawable-v10/favicon.png \
@@ -52,6 +54,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable-v10/ic_menu_preferences.png \
   res/drawable-v10/ic_menu_refresh.png \
   res/drawable-v10/ic_menu_stop.png \
+  res/drawable-v10/ic_menu_goto.png \
   res/drawable-v10/logo.png \
   res/drawable-v10/logo128.png \
   res/layout/main.xml res/layout/about.xml res/layout/info.xml \
