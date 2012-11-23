@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Wed Nov 21 19:12:50 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 20:20:13 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -92,16 +92,19 @@ public class HopService extends Service {
 
    @Override
    public void onRebind( Intent intent ) {
-      // Log.d( "HopService", "onBind: " + this );
+      Log.d( "HopService", "onRebind: " + this );
       
       super.onRebind( intent );
    }
 
    @Override
    public boolean onUnbind( Intent intent ) {
-      // Log.i( "HopService", "onUnbind" + this );
+      Log.i( "HopService", "onUnbind: " + this );
+      handler = null;
+      queue = null;
 
-      return false;
+      // true is returned to get onRebind invoked
+      return true;
    }
    
    public synchronized void kill() {

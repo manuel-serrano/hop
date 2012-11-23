@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Nov 22 16:59:14 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 18:41:53 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -16,14 +16,11 @@
    (library mail phone hopdroid multimedia)
    (import androidemo_config))
 
-(tprint "androidemo.1")
 ;*---------------------------------------------------------------------*/
 ;*    Phone descriptor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define amusic (instantiate::androidmusic (phone (instantiate::androidphone))))
 (define atts (instantiate::androidtts (phone (instantiate::androidphone))))
-
-(tprint "androidemo.2")
 
 (define battery-state '())
 
@@ -90,8 +87,6 @@ END:VCARD"))
    (lambda (e::event)
       (set! connectivity-state e.value)
       (hop-event-broadcast! "connectivity" e.value)))
-
-(tprint "androidemo.3")
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -207,12 +202,21 @@ Android phone. This demonstration does not use any HTML5 facility.")
 ;*    <ANDROIDEMO:SYSTEM> ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (<ANDROIDEMO:SYSTEM>)
-   (let ((p (instantiate::androidphone)))
+   (let ((phone (instantiate::androidphone)))
       (<TABLE>
 	 (<TR>
 	    (<TH> "Sleep policy")
-	    (<TD> (let ((policy (system-sleep-policy p)))
-		     policity))))))
+	    (<TD> (let ((policy (system-wifi-sleep-policy phone)))
+		     (<SELECT> :id "language"
+			:onchange ~(with-hop ($(service (p)
+						  (system-wifi-sleep-policy-set! phone p))
+						(string->symbol this.value)))
+			(map (lambda (p)
+				(<OPTION> :label p
+				   :value (symbol->string p)
+				   :selected (eq? p policy)
+				   p))
+			   '(never never-while-plugged default)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:TELEPHONY> ...                                       */
@@ -619,4 +623,3 @@ missed.")
 	 (start-line "HTTP/1.0 301 Moved Permanently")
 	 (header (list (cons 'location: url))))))
 
-(tprint "androidemo.4")

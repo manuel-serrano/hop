@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov 22 16:43:04 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 19:43:59 2012 (serrano)                */
 /*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -152,7 +152,7 @@ public class HopLauncher extends Activity {
 	       Log.e( "HopLauncher", "killing background hop because of error..." );
 	       hopconnected = false;
 	       unbindService( hopconnection );
-	       kill( 0 );
+	       kill( 4000 );
 	    }
 	 }
 
@@ -355,10 +355,14 @@ public class HopLauncher extends Activity {
 	    handler.sendEmptyMessage( MSG_KILL_HOP_SERVICE );
             return true;
 
-/* 	 case R.id.menu_clear:                                         */
-/*             textbuffer.delete( 0, textbuffer.length() - 1 );        */
-/* 	    write_console( "" );                                       */
-/*             return true;                                            */
+	 case R.id.menu_clear:
+            textbuffer.delete( 0, textbuffer.length() - 1 );
+	    write_console( "" );
+            return true;
+
+	 case R.id.menu_detach:
+	    finish();
+            return true;
 
 	 case R.id.menu_restart:
 	    handler.sendEmptyMessage( MSG_RESTART_HOP_SERVICE );

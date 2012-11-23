@@ -20,6 +20,7 @@
    <string name="menu_restart">Restart</string>
    <string name="menu_info">Info</string>
    <string name="menu_clear">Clear console</string>
+   <string name="menu_detach">Background</string>
  
    <!-- Preference dialog -->
    <string name="prefs_hop_options">Options</string>

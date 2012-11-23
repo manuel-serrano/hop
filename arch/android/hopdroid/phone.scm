@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Nov 22 14:32:02 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 17:24:10 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -175,16 +175,16 @@
 		      (remove-connectivity-listener! p)))
 		  (delete! (cons proc p) l))
 	       '()))
-	    (let ((op (socket-output sock-event)))
-	       ;; protocol version
-	       (write-byte protocol op)
-	       ;; event name
-	       (send-string event op)
-	       ;; remove command
-	       (send-byte 0 op)
-	       ;; end mark
-	       (send-char #a127 op)
-	       (flush-output-port op))))))
+	 (let ((op (socket-output sock-event)))
+	    ;; protocol version
+	    (write-byte protocol op)
+	    ;; event name
+	    (send-string event op)
+	    ;; remove command
+	    (send-byte 0 op)
+	    ;; end mark
+	    (send-char #a127 op)
+	    (flush-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-battery-listener! ...                                   */

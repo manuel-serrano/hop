@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 22 16:55:45 2012                          */
-;*    Last change :  Thu Nov 22 17:16:55 2012 (serrano)                */
+;*    Last change :  Thu Nov 22 17:23:46 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    System configuration                                             */
@@ -41,4 +41,4 @@
    (unless system-plugin
       (set! system-plugin (android-load-plugin p "system")))
    (unless (android-send-command/result p system-plugin #\W policy)
-      (error "system-wifi-sleep-policy" "Cannot set policy" policiy)))
+      (error "system-wifi-sleep-policy" "Cannot set policy" policy)))

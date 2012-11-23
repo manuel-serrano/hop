@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Thu Nov 22 17:08:45 2012 (serrano)                */
+/*    Last change :  Thu Nov 22 18:42:15 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
@@ -19,6 +19,7 @@ import android.preference.*;
 import android.os.*;
 import android.util.Log;
 import android.content.*;
+import android.provider.*;
 
 import java.io.*;
 
@@ -46,54 +47,66 @@ public class HopPluginSystem extends HopPlugin {
 	    return;
 	 case (byte)'W':
 	    // wifi policy
-	    setWifiPolicy( op, read_string( ip ) );
+	    setWifiPolicy( op, HopDroid.read_string( ip ) );
 	    return;
       }
    }
 
    // wifi policy
-   void writeWifiPolicy( OutputStream op ) {
-      switch( Settings.System.getInt( getContentResolver(), Settings.System.WIFI_SLEEP_POLICY ) ) {
-	 case Settings.System.WIFI_SLEEP_POLICY_NEVER:
-	    op.write( "'never".getBytes() );
-	 case Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED:
-	    op.write( "'never-while-plugged".getBytes() );
-	 case Settings.System.WIFI_SLEEP_POLICY_DEFAULT:
-	    op.write( "'default".getBytes() );
-	 default:
-	    op.write( "'unknown".getBytes() );
+   void writeWifiPolicy( OutputStream op ) throws IOException {
+      ContentResolver cr = hopdroid.service.getContentResolver();
+
+      try {
+	 switch( Settings.System.getInt( cr, Settings.System.WIFI_SLEEP_POLICY ) ) {
+	    case Settings.System.WIFI_SLEEP_POLICY_NEVER:
+	       op.write( "never".getBytes() );
+	       return;
+	    case Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED:
+	       op.write( "never-while-plugged".getBytes() );
+	       return;
+	    case Settings.System.WIFI_SLEEP_POLICY_DEFAULT:
+	       op.write( "default".getBytes() );
+	       return;
+	    default:
+	       op.write( "unknown".getBytes() );
+	       return;
+	 }
+      } catch( android.provider.Settings.SettingNotFoundException _ ) {
+	 op.write( "unknown".getBytes() );
+	 return;
       }
    }
 
-   void setWifiPolicy( OutputStream op, String policy ) {
-      if( policy.equal( "never" ) ) {
+   void setWifiPolicy( OutputStream op, String policy ) throws IOException {
+      if( policy.equals( "never" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
-	 op.write( "#t" );
+	 op.write( "#t".getBytes() );
 	 return;
       }
 
-      if( policy.equal( "never-while-plugged" ) ) {
+      if( policy.equals( "never-while-plugged" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED );
-	 op.write( "#t" );
+	 op.write( "#t".getBytes() );
 	 return;
       }
 
-      if( policy.equal( "never-while-default" ) ) {
+      if( policy.equals( "default" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_DEFAULT );
-	 op.write( "#t" );
+	 op.write( "#t".getBytes() );
 	 return;
       }
 
-      if( policy.equal( "unknown" ) ) {
-	 op.write( "#t" );
+      if( policy.equals( "unknown" ) ) {
+	 op.write( "#t".getBytes() );
 	 return;
       }
 
-      op.write( "#f" );
+      op.write( "#f".getBytes() );
    }
    
-   private void setWifiPolicy( int policy ) {
-      Settings.System.putInt(
-	 getContentResolver(), Settings.System.WIFI_SLEEP_POLICY, policy );
+   private void setWifiPolicy( int policy ) throws IOException {
+      ContentResolver cr = hopdroid.service.getContentResolver();
+      
+      Settings.System.putInt( cr, Settings.System.WIFI_SLEEP_POLICY, policy );
    }
 }
