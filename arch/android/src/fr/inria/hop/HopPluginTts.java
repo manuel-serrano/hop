@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Fri Nov 23 09:10:50 2012 (serrano)                */
+/*    Last change :  Sun Nov 25 06:50:33 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -102,14 +102,11 @@ public class HopPluginTts extends HopPlugin
 
    // onInit
    public void onInit( int status ) {
-      Log.v( "HopPluginTts", "onInit.1" );
       synchronized( condv ) {
 	 if( status == TextToSpeech.SUCCESS ) {
-	    Log.v( "HopPluginTts", "onInit.3: success" );
 	    initstatus = "success";
 	 } else {
 	    tts = null;
-	    Log.v( "HopPluginTts", "onInit.4: fail" );
 	    initstatus = "could not initialize tts";
 	 }
 	 condv.notify();

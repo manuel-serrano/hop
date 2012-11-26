@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Tue Jun 26 18:31:42 2012 (serrano)                */
+/*    Last change :  Sun Nov 25 18:56:31 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -44,12 +44,13 @@ public class HopPluginMusicPlayer extends HopPlugin {
    int mplayerstate = MPLAYER_STATE_UNSPECIFIED;
    boolean ended = false;
    int mplayervol = 100;
+   String datasrc;
    
    // constructor
    public HopPluginMusicPlayer( HopDroid h, String n ) {
       super( h, n );
    }
-   
+
    // create a media player
    private MediaPlayer make_mediaplayer() {
       MediaPlayer mplayer = new MediaPlayer();
@@ -76,17 +77,18 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
       mplayer.setOnErrorListener( new MediaPlayer.OnErrorListener() {
 	    public boolean onError( MediaPlayer mp, int what, int extra ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer error: " +
-		      what + " " + extra );
+	       Log.v( "HopPluginMusicPlayer", "mediaplayer error: " +
+		      what + " " + extra
+		      + ", error playing \"" + datasrc + "\"" );
 	       hopdroid.pushEvent( "androidmusic-error",
-				   "(" + what + " " + extra + ")" );
+				   "\"error playing \\\"" + datasrc + "\\\"\"" );
 	       return false;
 	    }
 	 } );
 
       mplayer.setOnInfoListener( new MediaPlayer.OnInfoListener() {
 	    public boolean onInfo( MediaPlayer mp, int what, int extra ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer info: " +
+	       Log.v( "HopPluginMusicPlayer", "mediaplayer info: " +
 		      what + " " + extra );
 	       if( what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE )
 		  return true;
@@ -104,7 +106,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 
       mplayer.setOnSeekCompleteListener( new MediaPlayer.OnSeekCompleteListener() {
 	    public void onSeekComplete( MediaPlayer mp ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek complete" );
+	       Log.v( "HopPluginMusicPlayer", "mediaplayer seek complete" );
 	       ended = true;
 	    }
 	 } );
@@ -127,7 +129,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    
 	 case (byte)'b':
 	    // start
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer start" );
+	    Log.v( "HopPluginMusicPlayer", "mediaplayer start" );
 	    if( mplayer != null ) {
 	       mplayerstate = MPLAYER_STATE_PLAY;	       
 	       hopdroid.pushEvent( "androidmusic-state", "play" );
@@ -139,7 +141,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    // seek
 	    if( mplayer != null ) {
 	       int sec = HopDroid.read_int32( ip );
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer seek: " + sec );
+	       Log.v( "HopPluginMusicPlayer", "mediaplayer seek: " + sec );
 	       mplayer.seekTo( sec * 1000 );
 	    }
 	    return;
@@ -147,7 +149,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	 case (byte)'e':
 	    // stop
 	    if( mplayer != null ) {
-	       Log.v( "HopDroidMusicPlayer", "mediaplayer set stop" );
+	       Log.v( "HopPluginMusicPlayer", "mediaplayer set stop" );
 	       mplayer.stop();
 	       mplayerstate = MPLAYER_STATE_STOP;	       
 	       hopdroid.pushEvent( "androidmusic-state", "stop" );
@@ -156,7 +158,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	       
 	 case (byte)'p':
 	    // pause
-	    Log.v( "HopDroidMusicPlayer", "mediaplayer set pause" );
+	    Log.v( "HopPluginMusicPlayer", "mediaplayer set pause" );
 	    if( mplayer != null ) {
 	       mplayer.pause();
 	       mplayerstate = MPLAYER_STATE_PAUSE;
@@ -165,23 +167,23 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    return;
 
 	 case (byte)'u':
-	    Log.v( "HopDroidMusicPlayer", "loading..." );
+	    Log.v( "HopPluginMusicPlayer", "loading..." );
 	    // url
 	    if( mplayer == null ) {
 	       mplayer = make_mediaplayer();
 	    } else {
 	       mplayer.reset();
 	    }
-	    String uri = HopDroid.read_string( ip );
+	    datasrc = HopDroid.read_string( ip );
 
-	    File file = new File( uri );
+	    File file = new File( datasrc );
 
 	    if( file.exists() ) {
 	       mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
 	       mplayer.prepare();
 	       mplayer.start();
 	    } else {
-	       mplayer.setDataSource( uri );
+	       mplayer.setDataSource( datasrc );
 	       mplayer.prepareAsync();
 	    }
 	    mplayerstate = MPLAYER_STATE_PLAY;	       
@@ -210,7 +212,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		  ended = false;
 		  op.write( "(unspecified 0 0)".getBytes() );
 	       } else if( mplayerstate == MPLAYER_STATE_CLOSE ) {
-		  Log.v( "HopDroidMusicPlayer", "state close" );
+		  Log.v( "HopPluginMusicPlayer", "state close" );
 		  op.write( "(close 0 0)".getBytes() );
 		  break;
 	       } else {
@@ -218,17 +220,17 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		     ended = false;
 		     switch( mplayerstate ) {
 			case MPLAYER_STATE_PLAY:
-			   Log.v( "HopDroidMusicPlayer", "state play " +
+			   Log.v( "HopPluginMusicPlayer", "state play " +
 				  Integer.toString( mplayer.getCurrentPosition() / 1000 ) +
 				  "/" + Integer.toString( mplayer.getDuration() / 1000 ) );
 			   op.write( "(play ".getBytes() );
 			   break;
 			case MPLAYER_STATE_PAUSE:
-			   Log.v( "HopDroidMusicPlayer", "state pause" );
+			   Log.v( "HopPluginMusicPlayer", "state pause" );
 			   op.write( "(pause ".getBytes() );
 			   break;
 			default:
-			   Log.v( "HopDroidMusicPlayer", "state unspecified" );
+			   Log.v( "HopPluginMusicPlayer", "state unspecified" );
 			   op.write( "(unspecified ".getBytes() );
 			   break;
 		     }
@@ -237,10 +239,10 @@ public class HopPluginMusicPlayer extends HopPlugin {
 		     op.write( Integer.toString( mplayer.getCurrentPosition() / 1000 ).getBytes() );
 		     op.write( ")".getBytes() );
 		  } else if( ended ) {
-		     Log.v( "HopDroidMusicPlayer", "state ended" );
+		     Log.v( "HopPluginMusicPlayer", "state ended" );
 		     op.write( "(ended 0 0)".getBytes() );
 		  } else {
-		     Log.v( "HopDroidMusicPlayer", "state stop" );
+		     Log.v( "HopPluginMusicPlayer", "state stop" );
 		     op.write( "(stop 0 0)".getBytes() );
 		  }
 	       }

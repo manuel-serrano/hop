@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Sun Nov 18 19:53:26 2012 (serrano)                */
+;*    Last change :  Sun Nov 25 18:01:47 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -67,6 +67,7 @@
 		      (with-access::androidmusic o (onerror %status)
 			 (with-access::musicstatus %status (state)
 			    (set! state 'error)
+			    (tprint "ERROR value=" value)
 			    (onerror o value))))
 	    musics)))
 
@@ -75,7 +76,6 @@
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status)
 			 (with-access::musicstatus %status (songlength songpos)
-			    (tprint "VALUE=" (format "~s" value))
 			    (case (car value)
 			       ((position)
 				(set! songpos (/fx (cadr value) 1000))
