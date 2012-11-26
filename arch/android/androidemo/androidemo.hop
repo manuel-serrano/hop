@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Thu Nov 22 18:41:53 2012 (serrano)                */
+;*    Last change :  Mon Nov 26 15:08:36 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -212,11 +212,26 @@ Android phone. This demonstration does not use any HTML5 facility.")
 						  (system-wifi-sleep-policy-set! phone p))
 						(string->symbol this.value)))
 			(map (lambda (p)
-				(<OPTION> :label p
+				(<OPTION> :label (symbol->string p)
 				   :value (symbol->string p)
 				   :selected (eq? p policy)
-				   p))
-			   '(never never-while-plugged default)))))))))
+				   (symbol->string p)))
+			   '(never never-while-plugged default))))))
+	 (let ((rot (system-accelerometer-rotation phone)))
+	    (tprint "ROTATION=" rot)
+	    (<TR>
+	       (<TH> "Accelerometer Rotation")
+	       (<TD> 
+		  (<SPAN>
+		     (<INPUT> :type "radio" :name "rotation" :value "enabled"
+			:checked rot
+			:onchange ~(with-hop ($(service () (system-accelerometer-rotation-set! phone #t)))))
+		     "Enabled")
+		  (<SPAN>
+		     (<INPUT> :type "radio" :name "rotation" :value "disabled"
+			:checked (not rot)
+			:onchange ~(with-hop ($(service () (system-accelerometer-rotation-set! phone #f)))))
+		     "Disabled")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <ANDROIDEMO:TELEPHONY> ...                                       */

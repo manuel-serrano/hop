@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Thu Nov 22 18:42:15 2012 (serrano)                */
+/*    Last change :  Mon Nov 26 14:51:35 2012 (serrano)                */
 /*    Copyright   :  2012 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
@@ -48,6 +48,14 @@ public class HopPluginSystem extends HopPlugin {
 	 case (byte)'W':
 	    // wifi policy
 	    setWifiPolicy( op, HopDroid.read_string( ip ) );
+	    return;
+	 case (byte)'r':
+	    // accelerometer rotation
+	    writeAccelerometerRotation( op );
+	    return;
+	 case (byte)'R':
+	    // accelerometer rotation
+	    setAccelerometerRotation( op, HopDroid.read_int( ip ) );
 	    return;
       }
    }
@@ -108,5 +116,31 @@ public class HopPluginSystem extends HopPlugin {
       ContentResolver cr = hopdroid.service.getContentResolver();
       
       Settings.System.putInt( cr, Settings.System.WIFI_SLEEP_POLICY, policy );
+   }
+   
+   // Accelerometer Rotation
+   void writeAccelerometerRotation( OutputStream op ) throws IOException {
+      ContentResolver cr = hopdroid.service.getContentResolver();
+
+      try {
+	 if( Settings.System.getInt( cr, Settings.System.ACCELEROMETER_ROTATION ) == 1 ) {
+	    op.write( "#t".getBytes() );
+	 } else {
+	    op.write( "#f".getBytes() );
+	 }
+      } catch( android.provider.Settings.SettingNotFoundException _ ) {
+	 op.write( "#t".getBytes() );
+	 return;
+      }
+   }
+
+   void setAccelerometerRotation( OutputStream op, int enabled ) throws IOException {
+      ContentResolver cr = hopdroid.service.getContentResolver();
+
+      try {
+	 Settings.System.putInt( cr, Settings.System.ACCELEROMETER_ROTATION, enabled );
+      } catch( Throwable _ ) {
+	 ;
+      }
    }
 }

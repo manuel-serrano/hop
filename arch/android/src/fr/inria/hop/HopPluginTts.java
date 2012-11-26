@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Sun Nov 25 06:50:33 2012 (serrano)                */
+/*    Last change :  Mon Nov 26 15:06:27 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -71,7 +71,7 @@ public class HopPluginTts extends HopPlugin
       checkIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
       checkIntent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
 
-      initstatus = "initializing";
+      initstatus = "initialization failed";
       startHopActivityForResult( checkIntent );
    }
 
