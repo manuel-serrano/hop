@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Nov 18 16:35:40 2012 (serrano)                */
+;*    Last change :  Tue Nov 27 17:42:12 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1080,6 +1080,8 @@
 		   (loop))
 		  ((error)
 		   #f)
+		  ((loaded)
+		   #unspecified)
 		  (else
 		   (error "hop-load-once" "Illegal state" info))))))))
 
