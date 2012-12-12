@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -101,20 +101,19 @@
 	    (condition-variable-broadcast! data-avail)))
 
       (define (sink str)
-	 (with-lock l
-	    (lambda ()
-	       (unless closed?
-		  (cond
-		     ((not str)
-		      (set! closed? #t)
-		      (flush))
-		     (else
-		      (add-new-text str 0)
-		      (let* ((buf-len (string-length buf))
-			     (new-size (buffer-unread-size)))
-			 ;; wait before sending the broadcast.
-			 (when (>=fx new-size (/fx buf-len 2))
-			    (flush)))))))))
+	 (synchronize l
+	    (unless closed?
+	       (cond
+		  ((not str)
+		   (set! closed? #t)
+		   (flush))
+		  (else
+		   (add-new-text str 0)
+		   (let* ((buf-len (string-length buf))
+			  (new-size (buffer-unread-size)))
+		      ;; wait before sending the broadcast.
+		      (when (>=fx new-size (/fx buf-len 2))
+			 (flush))))))))
 
       (define (read-buffer)
 	 (let ((buf-size (string-length buf)))
@@ -147,8 +146,8 @@
 		(read-buffer)))))
 
       (define (source)
-	 (with-lock l
-	    read-or-wait))
+	 (synchronize l
+	    (read-or-wait)))
 
       (values (open-output-procedure sink flush)
 	      (open-input-procedure source)

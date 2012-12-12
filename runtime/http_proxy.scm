@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Nov 18 15:41:26 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:03:03 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
@@ -218,7 +218,6 @@
 	       (output-timeout-set! op timeout))
 	    (multiple-value-bind (http-version status-code phrase)
 	       (http-parse-status-line ip)
-	       ;; CAR MS: TO BE REMOVED
 	       (unless (integer? status-code)
 		  (error 'remote-body "status-code not a integer" status-code))
 	       (multiple-value-bind (header _1 _2 cl te _3 _4 connection)

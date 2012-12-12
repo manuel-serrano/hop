@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -55,14 +55,13 @@
 
 ;; kind of adapted gen-sym
 (define (gen-JS-sym sym)
-   (with-lock *js-counter-mutex*
-      (lambda ()
-	 (set! counter (+ counter 1))
-	 (mangle-JS-sym
-	  (symbol-append 'sc_ ;; start with "sc_"
-			 sym
-			 '_
-			 (string->symbol (integer->string counter)))))))
+   (synchronize *js-counter-mutex*
+      (set! counter (+ counter 1))
+      (mangle-JS-sym
+	 (symbol-append 'sc_ ;; start with "sc_"
+	    sym
+	    '_
+	    (string->symbol (integer->string counter))))))
 
 (define *reserved-js*
    '("as" "break" "case" "catch" "class" "const" "continue" "default"

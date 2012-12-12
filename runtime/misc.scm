@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Oct 13 07:45:47 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:56:53 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -60,10 +60,9 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-verb level . args)
    (when (>=fx (hop-verbose) level)
-      (with-lock *verb-mutex*
-	 (lambda ()
-	    (for-each (lambda (a) (display a (current-error-port))) args)
-	    (flush-output-port (current-error-port))))))
+      (synchronize *verb-mutex*
+	 (for-each (lambda (a) (display a (current-error-port))) args)
+	 (flush-output-port (current-error-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */

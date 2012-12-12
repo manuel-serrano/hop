@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Aug 16 08:33:25 2012 (serrano)                */
+;*    Last change :  Sat Dec  8 23:29:57 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
@@ -392,8 +392,8 @@ Google, each containing a forward pointer to the actual URL.])))
       (with-access::http-request req (host path)
 	 (when (and (string=? host "www.google.com")
 		    (substring-at? path "/url" 0))
-	    (let ((q (cgi-fetch-arg "q" path)))
-	       (when q
+	    (let ((q (cgi-fetch-arg "url" path)))
+	       (when (and (string? q) (not (string-null? q)))
 		  (instantiate::http-response-string
 		     (start-line "HTTP/1.0 301 Moved Permanently")
 		     (header (list (cons 'location: q))))))))))

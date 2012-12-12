@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Oct 13 07:47:09 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:58:20 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -102,44 +102,43 @@
       (let loop ((a args))
 	 (cond
 	    ((null? a)
-	     (with-lock *user-mutex*
-		(lambda ()
-		   (when (string? cname)
-		      (unless (directory? (dirname cname))
-			 (make-directories (dirname cname))))
-		   (let* ((prefs (if (and (hop-load-preferences)
-					  (string? cname)
-					  (file-exists? cname))
-				     (with-input-from-file cname read)
-				     '()))
-			  (auth 'basic)
-			  (pass (cond
-				   ((or (not (string? p))
-					(=fx (string-length p) 0))
-				    (set! auth 'digest)
-				    (symbol->string (gensym)))
-				   ((char=? (string-ref p 0) #\+)
-				    (set! auth 'digest)
-				    (substring p 1))
-				   (else
-				    p)))
-			  (svcs s)
-			  (u (instantiate::user
-				(name name)
-				(groups g)
-				(password pass)
-				(authentication auth)
-				(services svcs)
-				(preferences (append c prefs))
-				(preferences-filename cname)
-				(directories d)
-				(uuid u))))
-		      (if (hashtable-get *users* name)
-			  (begin
-			     (hashtable-remove! *users* name)
-			     (hashtable-put! *users* name u))
+	     (synchronize *user-mutex*
+		(when (string? cname)
+		   (unless (directory? (dirname cname))
+		      (make-directories (dirname cname))))
+		(let* ((prefs (if (and (hop-load-preferences)
+				       (string? cname)
+				       (file-exists? cname))
+				  (with-input-from-file cname read)
+				  '()))
+		       (auth 'basic)
+		       (pass (cond
+				((or (not (string? p))
+				     (=fx (string-length p) 0))
+				 (set! auth 'digest)
+				 (symbol->string (gensym)))
+				((char=? (string-ref p 0) #\+)
+				 (set! auth 'digest)
+				 (substring p 1))
+				(else
+				 p)))
+		       (svcs s)
+		       (u (instantiate::user
+			     (name name)
+			     (groups g)
+			     (password pass)
+			     (authentication auth)
+			     (services svcs)
+			     (preferences (append c prefs))
+			     (preferences-filename cname)
+			     (directories d)
+			     (uuid u))))
+		   (if (hashtable-get *users* name)
+		       (begin
+			  (hashtable-remove! *users* name)
 			  (hashtable-put! *users* name u))
-		      u))))
+		       (hashtable-put! *users* name u))
+		   u)))
 	    ((or (not (keyword? (car a))) (null? (cdr a)))
 	     (error "add-user!" "Illegal arguments" args))
 	    (else
@@ -181,9 +180,8 @@
 ;*    user-exists? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (user-exists? name)
-   (with-lock *user-mutex*
-      (lambda ()
-	 (isa? (hashtable-get *users* name) user))))
+   (synchronize *user-mutex*
+      (isa? (hashtable-get *users* name) user)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authentication-encrypt ...                                  */
@@ -363,28 +361,26 @@
 ;*    find-cached-user ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (find-cached-user auth)
-   (with-lock *user-mutex*
-      (lambda ()
-	 (if (and (string? *last-authentication*)
-		  (string=? *last-authentication* auth))
-	     *last-user*
-	     (let ((u (hashtable-get *authenticated-users* auth)))
-		(when (isa? u user)
-		   (set! *last-authentication* auth)
-		   (set! *last-user* u))
-		u)))))
+   (synchronize *user-mutex*
+      (if (and (string? *last-authentication*)
+	       (string=? *last-authentication* auth))
+	  *last-user*
+	  (let ((u (hashtable-get *authenticated-users* auth)))
+	     (when (isa? u user)
+		(set! *last-authentication* auth)
+		(set! *last-user* u))
+	     u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-cached-user! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (add-cached-user! auth u)
-   (with-lock *user-mutex*
-      (lambda ()
-	 (when (string? *last-authentication*)
-	    (hashtable-put! *authenticated-users* *last-authentication* *last-user*))
-	 (set! *last-authentication* auth)
-	 (set! *last-user* u)
-	 u)))
+   (synchronize *user-mutex*
+      (when (string? *last-authentication*)
+	 (hashtable-put! *authenticated-users* *last-authentication* *last-user*))
+      (set! *last-authentication* auth)
+      (set! *last-user* u)
+      u))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-user ...                                                    */

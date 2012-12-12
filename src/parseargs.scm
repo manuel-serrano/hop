@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Nov  9 09:40:01 2012 (serrano)                */
+;*    Last change :  Tue Dec 11 11:29:58 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -138,8 +138,11 @@
           (if (string=? level "")
 	      (hop-security-set! (+fx 1 (hop-security)))
 	      (hop-security-set! (string->integer level)))
-	  (when (> (hop-security) 1)
-	     (hop-security-manager-set! 'tree)))
+	  (cond
+	     ((=fx (hop-security) 0)
+	      (hop-allow-redefine-service-set! #t))
+	     ((>=fx (hop-security) 2)
+	      (hop-security-manager-set! 'tree))))
 	 (("--no-color" (help "Disable colored traces"))
 	  (bigloo-trace-color-set! #f))
 	 (("--log-file" ?file (help "Use <FILE> as log file"))
@@ -208,6 +211,8 @@
 	 (("--configure" ?config (help "Report HOP configuration"))
 	  (hop-configure config)
 	  (exit 0))
+	 (("--cond-expand" ?feature (help "Declare cond-expand feature"))
+	  (register-srfi! (string->symbol feature)))
 	 (("--no-thread" (help "Disable multithreading (equiv. to \"--scheduler nothread\")"))
 	  (hop-max-threads-set! 1)
 	  (hop-enable-keep-alive-set! #f)
@@ -236,9 +241,6 @@
       ;; http port
       (hop-port-set! p)
       (when (eq? ep #unspecified) (set! ep p))
-;*       (if (eq? dp #unspecified)                                     */
-;* 	  (hop-discovery-port-set! (-fx p 1))                          */
-;* 	  (hop-discovery-port-set! dp))                                */
       
       ;; log
       (when log-file

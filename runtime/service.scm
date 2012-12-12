@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Nov 18 16:37:03 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:57:59 2012 (serrano)                */
 ;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -94,14 +94,13 @@
 ;*    get-all-services ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (get-all-services req)
-   (with-lock *service-table-mutex*
-      (lambda ()
-	 (delete-duplicates!
-	  (filter (lambda (svc)
-		     (with-access::hop-service svc (id wid)
-			(or (authorized-service? req wid)
-			    (authorized-service? req id))))
-		  (hashtable->list *service-table*))))))
+   (synchronize *service-table-mutex*
+      (delete-duplicates!
+	 (filter (lambda (svc)
+		    (with-access::hop-service svc (id wid)
+		       (or (authorized-service? req wid)
+			   (authorized-service? req id))))
+	    (hashtable->list *service-table*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-services! ...                                           */
@@ -116,13 +115,12 @@
 ;*    gen-service-url ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (gen-service-url #!key (prefix "") (public #f))
-   (with-lock *service-table-mutex*
-      (lambda ()
-	 (set! *service-table-count* (+fx 1 *service-table-count*))
-	 (format (if public "public/~a/~a~a" "~a/~a~a")
-	    (hop-service-weblet-name)
-	    prefix
-	    *service-table-count*))))
+   (synchronize *service-table-mutex*
+      (set! *service-table-count* (+fx 1 *service-table-count*))
+      (format (if public "public/~a/~a~a" "~a/~a~a")
+	 (hop-service-weblet-name)
+	 prefix
+	 *service-table-count*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-path? ...                                            */
@@ -579,17 +577,16 @@
 ;*    service-etc-path-table-fill! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (service-etc-path-table-fill! file)
-   (with-lock *service-etc-table-mutex*
-      (lambda ()
-	 (let ((etc (make-file-name (dirname file) "etc"))
-	       (svc (string->symbol (prefix (basename file)))))
-	    (when (directory? etc)
-	       (let loop ((dir (file-name-unix-canonicalize etc)))
-		  (for-each (lambda (f)
-			       (let ((path (make-file-name dir f)))
-				  (hashtable-put! *etc-table* path svc)
-				  (when (directory? path) (loop path))))
-			    (directory->list dir))))))))
+   (synchronize *service-etc-table-mutex*
+      (let ((etc (make-file-name (dirname file) "etc"))
+	    (svc (string->symbol (prefix (basename file)))))
+	 (when (directory? etc)
+	    (let loop ((dir (file-name-unix-canonicalize etc)))
+	       (for-each (lambda (f)
+			    (let ((path (make-file-name dir f)))
+			       (hashtable-put! *etc-table* path svc)
+			       (when (directory? path) (loop path))))
+		  (directory->list dir)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    etc-path->service ...                                            */

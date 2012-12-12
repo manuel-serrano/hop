@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 27 07:53:16 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:57:25 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -547,17 +547,15 @@
 ;*    hop-filters-close! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-filters-close!)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (set! *hop-filters-open* #f))))
+   (synchronize (hop-filter-mutex)
+      (set! *hop-filters-open* #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filters-open? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-filters-open?)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 *hop-filters-open*)))
+   (synchronize (hop-filter-mutex)
+      *hop-filters-open*))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter ...                                                   */
@@ -577,42 +575,40 @@
       (if p
 	  (set-cdr! p n)
 	  (hop-filters-set! n)))
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (if (eq? kind 'last)
-	     (let loop ((fs (hop-filters))
-			(p #f))
-		(cond
-		   ((null? fs)
-		    (add! p (list (cons kind proc))))
-		   ((eq? (caar fs) 'last)
-		    (add! p (cons (cons kind proc) fs)))
-		   (else
-		    (loop (cdr fs) fs))))
-	     (let loop ((fs (hop-filters))
-			(p #f))
-		(cond
-		   ((null? fs)
-		    (add! p (list (cons kind proc))))
-		   ((eq? (caar fs) 'first)
-		    (loop (cdr fs) fs))
-		   (else
-		    (add! p (cons (cons kind proc) fs)))))))))
+   (synchronize (hop-filter-mutex)
+      (if (eq? kind 'last)
+	  (let loop ((fs (hop-filters))
+		     (p #f))
+	     (cond
+		((null? fs)
+		 (add! p (list (cons kind proc))))
+		((eq? (caar fs) 'last)
+		 (add! p (cons (cons kind proc) fs)))
+		(else
+		 (loop (cdr fs) fs))))
+	  (let loop ((fs (hop-filters))
+		     (p #f))
+	     (cond
+		((null? fs)
+		 (add! p (list (cons kind proc))))
+		((eq? (caar fs) 'first)
+		 (loop (cdr fs) fs))
+		(else
+		 (add! p (cons (cons kind proc) fs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter-remove! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-filter-remove! proc)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (let loop ((fs (hop-filters))
-		    (p #f))
-	    (when (pair? fs)
-	       (if (eq? (cdar fs) proc)
-		   (if p
-		       (set-cdr! p (cdr fs))
-		       (hop-filters-set! (cdr fs)))
-		   (loop (cdr fs) fs)))))))
+   (synchronize (hop-filter-mutex)
+      (let loop ((fs (hop-filters))
+		 (p #f))
+	 (when (pair? fs)
+	    (if (eq? (cdar fs) proc)
+		(if p
+		    (set-cdr! p (cdr fs))
+		    (hop-filters-set! (cdr fs)))
+		(loop (cdr fs) fs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-filter-add! ...                                              */
@@ -646,19 +642,17 @@
 ;*    hop-http-response-server-hook-add! ...                           */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-server-hook-add! proc)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (hop-http-response-server-hooks-set!
-	  (cons proc (hop-http-response-server-hooks))))))
+   (synchronize (hop-filter-mutex)
+      (hop-http-response-server-hooks-set!
+	 (cons proc (hop-http-response-server-hooks)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-server-hook-remove! ...                        */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-server-hook-remove! proc)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (hop-http-response-server-hooks-set!
-	  (remq! proc (hop-http-response-server-hooks))))))
+   (synchronize (hop-filter-mutex)
+      (hop-http-response-server-hooks-set!
+	 (remq! proc (hop-http-response-server-hooks)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-proxy-hooks ...                                */
@@ -674,19 +668,17 @@
 ;*    hop-http-response-proxy-hook-add! ...                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-proxy-hook-add! proc)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (hop-http-response-proxy-hooks-set!
-	  (cons proc (hop-http-response-proxy-hooks))))))
+   (synchronize (hop-filter-mutex)
+      (hop-http-response-proxy-hooks-set!
+	 (cons proc (hop-http-response-proxy-hooks)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-response-proxy-hook-remove! ...                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-http-response-proxy-hook-remove! proc)
-   (with-lock (hop-filter-mutex)
-      (lambda ()
-	 (hop-http-response-proxy-hooks-set!
-	  (remq! proc (hop-http-response-proxy-hooks))))))
+   (synchronize (hop-filter-mutex)
+      (hop-http-response-proxy-hooks-set!
+	 (remq! proc (hop-http-response-proxy-hooks)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-password ...                                                 */

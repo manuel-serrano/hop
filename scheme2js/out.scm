@@ -1219,23 +1219,21 @@
 
 (define (add-pragma! pragmas::Pragmas p)
    (with-access::Pragmas pragmas (lock last-pragma)
-      (with-lock lock
-	 (lambda ()
-	    (let ((tmp (list p)))
-	       (set-cdr! last-pragma tmp)
-	       (set! last-pragma tmp))))))
+      (synchronize lock
+	 (let ((tmp (list p)))
+	    (set-cdr! last-pragma tmp)
+	    (set! last-pragma tmp)))))
 
 (define (consume-next-pragma! pragmas::Pragmas)
    (with-access::Pragmas pragmas (lock pragmas)
-      (with-lock lock
-	 (lambda ()
-	    (when (null? (cdr pragmas))
-	       ;; should never happen
-	       (error "out"
-		      "Internal Error: consume-pragma call without pragma"
-		      #f))
-	    (let ((res (cadr pragmas)))
-	       (set! pragmas (cdr pragmas))
-	       res)))))
+      (synchronize lock
+	 (when (null? (cdr pragmas))
+	    ;; should never happen
+	    (error "out"
+	       "Internal Error: consume-pragma call without pragma"
+	       #f))
+	 (let ((res (cadr pragmas)))
+	    (set! pragmas (cdr pragmas))
+	    res))))
 
 

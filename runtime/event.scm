@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Nov 18 16:00:34 2012 (serrano)                */
+;*    Last change :  Tue Dec  4 13:49:26 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -711,7 +711,6 @@
    (with-trace 2 "server-register-event!"
       (synchronize *event-mutex*
 	 (when (or debug-ajax (debug-websocket) debug-multipart debug-flash)
-	    (tprint "DBG=" (debug-websocket))
 	    (tprint ">>> server-event-register: event=[" event "] key="
 	       key " mode=" mode " padding=" padding))
 	 (if (<fx *clients-number* (hop-event-max-clients))

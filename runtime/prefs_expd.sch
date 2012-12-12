@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/prefs_expd.sch            */
+;*    serrano/prgm/project/hop/2.4.x/runtime/prefs_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar 28 07:04:20 2006                          */
-;*    Last change :  Tue Jan 11 09:26:45 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Sun Dec  9 01:01:35 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the DEFINE-PREFERENCES macro.                  */
 ;*=====================================================================*/
@@ -20,12 +20,11 @@
    (define (make-load id)
       (let ((mod (eval-module)))
 	 `(define (,id file)
-	     (with-lock (preferences-mutex)
-		(lambda ()
-		   ,(if (evmodule? mod)
-			`(hop-load file
-		            :env (eval-find-module ',(evmodule-name mod)))
-			`(hop-load file)))))))
+	     (synchronize (preferences-mutex)
+		,(if (evmodule? mod)
+		     `(hop-load file
+			 :env (eval-find-module ',(evmodule-name mod)))
+		     `(hop-load file))))))
 
    ;; make-save
    (define (make-save id key clauses)
@@ -69,13 +68,12 @@
 				  ,@(map make-save-clause clauses)
 				  ,(onload clauses))))
 		       (sum (md5sum str)))
-		   (with-lock (preferences-mutex)
-		      (lambda ()
-			 (with-output-to-file file
-			    (lambda ()
-			       (display ,sig)
-			       (print sum)
-			       (display str))))))
+		   (synchronize (preferences-mutex)
+		      (with-output-to-file file
+			 (lambda ()
+			    (display ,sig)
+			    (print sum)
+			    (display str)))))
 		file)
 	     
 	     (define (signed? file)

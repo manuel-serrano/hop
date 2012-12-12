@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sat Oct 13 07:46:35 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:56:41 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -103,18 +103,17 @@
 ;*    hss-bind-type-compiler! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hss-bind-type-compiler! type element body properties)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (let* ((ast (hss->ast (format "~a {}" element)))
-		(compiler (with-access::css-stylesheet ast (rule*)
-			     (with-access::css-ruleset (caar rule*) (selector+)
-				(instantiate::hss-compiler
-				   (selector (car selector+))
-				   (body body)
-				   (properties properties))))))
-	    (hashtable-put! *hss-type-env*
-			    (string-downcase (symbol->string type))
-			    compiler)))))
+   (synchronize *hss-compiler-mutex*
+      (let* ((ast (hss->ast (format "~a {}" element)))
+	     (compiler (with-access::css-stylesheet ast (rule*)
+			  (with-access::css-ruleset (caar rule*) (selector+)
+			     (instantiate::hss-compiler
+				(selector (car selector+))
+				(body body)
+				(properties properties))))))
+	 (hashtable-put! *hss-type-env*
+	    (string-downcase (symbol->string type))
+	    compiler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-selector-compiler ...                                       */
@@ -130,18 +129,16 @@
 ;*    hss-bind-property-compiler! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (hss-bind-property-compiler! id compiler)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (set! *hss-property-env*
-	       (cons (cons id compiler) *hss-property-env*)))))
+   (synchronize *hss-compiler-mutex*
+      (set! *hss-property-env*
+	 (cons (cons id compiler) *hss-property-env*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-function-compiler! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (hss-bind-function-compiler! id compiler)
-   (with-lock *hss-compiler-mutex*
-      (lambda ()
-	 (hashtable-put! *hss-function-env* id compiler))))
+   (synchronize *hss-compiler-mutex*
+      (hashtable-put! *hss-function-env* id compiler)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-property-compiler ...                                       */
@@ -337,17 +334,16 @@
 ;*    hss->css ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hss->css path)
-   (with-lock hss-mutex
-      (lambda ()
-	 (let ((ce (cache-get hss-cache path)))
-	    (if (isa? ce cache-entry)
-		(with-access::cache-entry ce (value)
-		   (with-input-from-file value read-string))
-		(let ((hss (hop-load-hss path)))
-		   (cache-put! hss-cache path hss)
-		   (let ((p (open-output-string)))
-		      (css-write hss p)
-		      (close-output-port p))))))))
+   (synchronize hss-mutex
+      (let ((ce (cache-get hss-cache path)))
+	 (if (isa? ce cache-entry)
+	     (with-access::cache-entry ce (value)
+		(with-input-from-file value read-string))
+	     (let ((hss (hop-load-hss path)))
+		(cache-put! hss-cache path hss)
+		(let ((p (open-output-string)))
+		   (css-write hss p)
+		   (close-output-port p)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss->css-url ...                                                 */
@@ -414,16 +410,15 @@
 ;*    hop-get-hss ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (hop-get-hss path)
-   (with-lock hss-mutex
-      (lambda ()
-	 (let ((ce (cache-get hss-cache path)))
-	    (if (isa? ce cache-entry)
-		ce
-		(let* ((hss (hop-load-hss path))
-		       (ce (cache-put! hss-cache path hss)))
-		   (if (isa? ce cache-entry)
-		       ce
-		       hss)))))))
+   (synchronize hss-mutex
+      (let ((ce (cache-get hss-cache path)))
+	 (if (isa? ce cache-entry)
+	     ce
+	     (let* ((hss (hop-load-hss path))
+		    (ce (cache-put! hss-cache path hss)))
+		(if (isa? ce cache-entry)
+		    ce
+		    hss))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-hss ...                                                 */
@@ -711,9 +706,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (compile o::css-function penv)
    (with-access::css-function o (fun expr)
-      (let ((comp (with-lock *hss-compiler-mutex*
-		     (lambda ()
-			(hashtable-get *hss-function-env* fun))))
+      (let ((comp (synchronize *hss-compiler-mutex*
+		     (hashtable-get *hss-function-env* fun)))
 	    (nexpr (compile expr penv)))
 	 (if comp
 	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))

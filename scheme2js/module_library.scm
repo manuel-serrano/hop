@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Thu Oct 25 17:13:11 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:59:26 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
@@ -75,14 +75,13 @@
 ;*    scheme2js-get-library ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (scheme2js-get-library m lib)
-   (with-lock *library-mutex*
-      (lambda ()
-	 (let ((old (hashtable-get *libraries* lib)))
-	    (if old
-		old
-		(let ((lu (scheme2js-load-library m lib)))
-		   (hashtable-put! *libraries* lib lu)
-		   lu))))))
+   (synchronize *library-mutex*
+      (let ((old (hashtable-get *libraries* lib)))
+	 (if old
+	     old
+	     (let ((lu (scheme2js-load-library m lib)))
+		(hashtable-put! *libraries* lib lu)
+		lu)))))
 		   
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-load-library ...                                       */

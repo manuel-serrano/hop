@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Sep 12 09:06:10 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 02:09:54 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -53,47 +53,44 @@
 ;*---------------------------------------------------------------------*/
 (define (avahi-apply proc o)
    (with-access::avahi o (lock poll)
-      (mutex-lock! lock)
-      (avahi-simple-poll-timeout poll 1
-	 (lambda ()
-	    (with-handler
-	       (lambda (e)
-		  (exception-notify e)
-		  #f))
-	    (proc o)))
-      (mutex-unlock! lock)))
+      (synchronize lock
+	 (avahi-simple-poll-timeout poll 1
+	    (lambda ()
+	       (with-handler
+		  (lambda (e)
+		     (exception-notify e)
+		     #f))
+	       (proc o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    avahi-add-onready-listener! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (avahi-add-onready-listener! o proc)
    (with-access::avahi o (lock onready)
-      (mutex-lock! lock)
-      (let ((old onready))
-	 (set! onready
-	    (lambda (o)
-	       (old o)
-	       (avahi-apply proc o))))
-      (mutex-unlock! lock)))
+      (synchronize lock
+	 (let ((old onready))
+	    (set! onready
+	       (lambda (o)
+		  (old o)
+		  (avahi-apply proc o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    avahi-failure ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (avahi-failure o #!optional err)
    (with-access::avahi o (poll client lock state)
-      (with-lock lock
-	 (lambda ()
-	    (set! state 'failure)
-	    (hop-verb 1 "  zeroconf: "
-	       (hop-color 4 "error" "")
-	       (cond
-		  ((string? err)
-		   (format " (~a)\n" err))
-		  ((isa? err &error)
-		   (with-access::&error err (proc obj msg)
-		      (format " (~a: ~a -- ~a)\n" proc msg obj)))
-		  (else
-		   "\n")))))))
+      (synchronize lock
+	 (set! state 'failure)
+	 (hop-verb 1 "  zeroconf: "
+	    (hop-color 4 "error" "")
+	    (cond
+	       ((string? err)
+		(format " (~a)\n" err))
+	       ((isa? err &error)
+		(with-access::&error err (proc obj msg)
+		   (format " (~a: ~a -- ~a)\n" proc msg obj)))
+	       (else
+		"\n"))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ::avahi ...                               */

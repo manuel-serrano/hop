@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Tue Nov  6 07:39:55 2012 (serrano)                */
+;*    Last change :  Sun Dec  9 00:56:06 2012 (serrano)                */
 ;*    Copyright   :  2012 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -89,7 +89,7 @@
 		  ;; runtime resolver
 		  (module-resolver . ,hopscheme-runtime-resolver)
 		  ;; pp in debug mode
-		  (pp . ,(>fx (bigloo-debug) 1)))))
+		  (pp . ,(>=fx (bigloo-debug) 3)))))
 	  *cached-config*)))
 
 ;*---------------------------------------------------------------------*/
@@ -103,14 +103,13 @@
       ;; make sure static variables (not exported, but global) do not clash
       (if compile-file?
 	  conf
-	  (with-lock *module-counter-lock*
-	     (lambda ()
-		(set! *module-counter* (+ *module-counter* 1))
-		(extend-config
-		 conf
-		 'statics-suffix
-		 (string-append "_hopM"
-				(number->string *module-counter*)))))))
+	  (synchronize *module-counter-lock*
+	     (set! *module-counter* (+ *module-counter* 1))
+	     (extend-config
+		conf
+		'statics-suffix
+		(string-append "_hopM"
+		   (number->string *module-counter*))))))
 
    (let* ((config (get-cached-config))
 	  (conf-compress (if (>fx (bigloo-debug) 0)
