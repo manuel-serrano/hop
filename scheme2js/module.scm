@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Thu Oct 25 17:52:24 2012 (serrano)                */
+;*    Last change :  Mon Dec 17 18:38:55 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -62,7 +62,8 @@
 	      #!key
 	      (bigloo-modules? #t)
 	      (store-exports-in-ht? #f)
-	      (store-exported-macros-in-ht? #f))
+	      (store-exported-macros-in-ht? #f)
+	      (stack '()))
 	   (parse-imported-module module-name module-clause reader ip
 	      #!key
 	      (src #f)
@@ -70,7 +71,8 @@
 	      (store-exports-in-ht? #f)
 	      (store-exported-macros-in-ht? #f)
 	      (module-cache '())
-	      (ignore-missing-modules #f))
+	      (ignore-missing-modules #f)
+	      (stack '()))
 	   (module-exported-macro-add! m::Compilation-Unit macro::pair)))
 
 ;*---------------------------------------------------------------------*/
@@ -386,7 +388,7 @@
 	    (cond-expand-headers! m)
 	    (normalize-module-header! m)
 	    (read-includes! m include-paths reader)
-	    (read-imports! m reader bigloo-modules? '() #f)
+	    (read-imports! m reader bigloo-modules? '() #f '())
 	    (module-read-libraries! m reader (module-entries header 'library))
 	    (normalize-JS-imports! m)
 	    (normalize-statics! m bigloo-modules? #t)
@@ -602,18 +604,24 @@
 	   #!key
 	   (bigloo-modules? #t)
 	   (store-exports-in-ht? #f)
-	   (store-exported-macros-in-ht? #f))
-   (when (file-exists? file)
-      (let ((ip (open-input-file file)))
-	 (unwind-protect
-	    (let ((module-clause (reader ip #t)))
-	       (parse-imported-module module-name module-clause
-		  reader ip
-		  :src file
-		  :bigloo-modules? bigloo-modules?
-		  :store-exports-in-ht? store-exports-in-ht?
-		  :store-exported-macros-in-ht? store-exported-macros-in-ht?))
-	    (close-input-port ip)))))
+	   (store-exported-macros-in-ht? #f)
+	   (stack '()))
+   (cond
+      ((assq module-name stack) => cdr)
+      ((file-exists? file)
+       (let ((ip (open-input-file file)))
+	  (if (input-port? ip)
+	      (unwind-protect
+		 (let ((module-clause (reader ip #t)))
+		    (parse-imported-module module-name module-clause
+		       reader ip
+		       :src file
+		       :stack stack
+		       :bigloo-modules? bigloo-modules?
+		       :store-exports-in-ht? store-exports-in-ht?
+		       :store-exported-macros-in-ht? store-exported-macros-in-ht?))
+		 (close-input-port ip))
+	      (error "scheme2js" "Cannot open file" file))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-imported-module ...                                        */
@@ -625,7 +633,8 @@
 	   (store-exports-in-ht? #f)
 	   (store-exported-macros-in-ht? #f)
 	   (module-cache '())
-	   (ignore-missing-modules #f))
+	   (ignore-missing-modules #f)
+	   (stack '()))
    (cond
       ((or (not (pair? module-clause)) (not (eq? (car module-clause) 'module)))
        #f)
@@ -650,7 +659,7 @@
 	     (module-preprocessor im #t))
 	  (cond-expand-headers! im)
 	  (normalize-module-header! im)
-	  (read-imports! im reader bigloo-modules? module-cache ignore-missing-modules)
+	  (read-imports! im reader bigloo-modules? module-cache ignore-missing-modules (cons (cons module-name im) stack))
 	  (with-access::WIP-Unit im (header)
 	     (module-read-libraries! im reader (module-entries header 'library)))
 	  ;; normalize-exports might need the 'ip' in
@@ -680,7 +689,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    read-imports! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (read-imports! m::WIP-Unit reader bigloo-modules? module-cache ignore-missing-modules)
+(define (read-imports! m::WIP-Unit reader bigloo-modules? module-cache ignore-missing-modules stack)
    
    (define (get-import-list header)
       (let ((import-list (module-entries header 'import)))
@@ -732,6 +741,7 @@
 			      (car mod)
 			      file
 			      reader
+			      :stack stack
 			      :bigloo-modules? bigloo-modules?)))
 		      (if (not im)
 			  (scheme2js-error "scheme2js module"
@@ -768,6 +778,7 @@
 				 mod
 				 (car module-files)
 				 reader
+				 :stack stack
 				 :bigloo-modules? bigloo-modules?)
 			      =>
 			      (lambda (im)
