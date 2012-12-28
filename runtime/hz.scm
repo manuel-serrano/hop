@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon Oct 22 20:02:24 2012 (serrano)                */
+;*    Last change :  Wed Dec 26 09:37:16 2012 (serrano)                */
 ;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -63,7 +63,7 @@
 	  (values (substring n 0 index) "*"))
          (else
           ;; a hz-package with release
-          (let ((vindex (string-index-right n #\- (-fx index 1))))
+          (let ((vindex (string-index-right n #\- index)))
              (if (not vindex)
                  (error "hz-package-name-parse" "Illegal hz-package name" name)
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))

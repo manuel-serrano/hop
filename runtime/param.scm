@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Dec  9 00:57:25 2012 (serrano)                */
+;*    Last change :  Fri Dec 21 08:36:45 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -571,10 +571,12 @@
 ;*    %hop-filter-add! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (%hop-filter-add! proc kind)
+   
    (define (add! p n)
       (if p
 	  (set-cdr! p n)
 	  (hop-filters-set! n)))
+   
    (synchronize (hop-filter-mutex)
       (if (eq? kind 'last)
 	  (let loop ((fs (hop-filters))

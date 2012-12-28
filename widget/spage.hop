@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue Jul 10 12:51:48 2012 (serrano)                */
+;*    Last change :  Fri Dec 21 15:39:27 2012 (serrano)                */
 ;*    Copyright   :  2009-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -126,6 +126,7 @@
 			   body))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(spage-push-service this $svc)
+		:data-hop-svc svc
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect)))
 	  ;; a static tab

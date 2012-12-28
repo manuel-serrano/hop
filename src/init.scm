@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Dec  8 23:23:42 2012 (serrano)                */
+;*    Last change :  Fri Dec 28 11:54:22 2012 (serrano)                */
 ;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -219,7 +219,7 @@
 	    (lm (date->rfc2822-date
 		   (seconds->date (file-modification-time abspath)))))
 	 (cond
-	    ((and (string? im) (string=? im lm))
+	    ((and (string? im) (string<=? lm im))
 	     ;; not modified
 	     (instantiate::http-response-string
 		(request req)

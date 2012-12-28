@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Oct 26 18:19:08 2012 (serrano)                */
+;*    Last change :  Fri Dec 21 15:51:18 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -26,6 +26,7 @@
 	   (spage-pop-all spage)
 	   (spage-tab-update tab)
 	   (spage-tab-pop tab)
+	   (spage-tab-push tab)
 	   (spage-pop-update el)
 	   (spage-push-service tab svc)
 	   (spage-push-node tab node)
@@ -497,10 +498,11 @@
 		(tabhead (dom-first-child (dom-first-child tab))))
 	    (set! tab.svc svc)
 	    (set! tab.static-node #unspecified)
-	    (set! spage.heads (cons (cons spheadbutton.innerHTML
-					  spheadcontent.innerHTML)
-				    spage.heads))
-	    (innerHTML-set! (dom-first-child spheadbutton) spheadcontent.innerHTML)
+	    (set! spage.heads
+	       (cons (cons spheadbutton.innerHTML spheadcontent.innerHTML)
+		  spage.heads))
+	    (innerHTML-set! (dom-first-child spheadbutton)
+	       spheadcontent.innerHTML)
 	    (innerHTML-set! spheadcontent tabhead.innerHTML)
 	    (set! spheadbutton.className "visible")
 	    (spage-push spage tab body)))))
@@ -556,6 +558,16 @@
       (spage-pop (find-spage tab))))
 
 ;*---------------------------------------------------------------------*/
+;*    spage-tab-push ...                                               */
+;*---------------------------------------------------------------------*/
+(define (spage-tab-push tab)
+   (let ((el (if (string? tab) (dom-get-element-by-id tab) tab)))
+      (let ((svc (el.getAttribute "data-hop-svc")))
+	 (if svc
+	     (spage-push-service el (lambda () svc))
+	     (spage-push-node el (dom-first-child (dom-last-child el)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    spage-head ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (spage-head spage)
@@ -572,3 +584,4 @@
 ;*---------------------------------------------------------------------*/
 (define (spage-depth spage)
    spage.num)
+

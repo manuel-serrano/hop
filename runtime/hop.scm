@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Dec  9 00:01:58 2012 (serrano)                */
+;*    Last change :  Sat Dec 22 17:18:34 2012 (serrano)                */
 ;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -384,23 +384,7 @@
 		 (suc (or success (lambda (x) x)))
 		 (hdl (make-http-callback 'with-hop req suc fail)))
 	     (trace-item "remote path=" path)
-	     (if (procedure? fail)
-		 (with-handler
-		    (lambda (e)
-		       (let* ((strerr (if (isa? e &error)
-					  (let ((op (open-output-string)))
-					     (with-error-to-port op
-						(lambda ()
-						   (exception-notify e)))
-					     (close-output-port op))
-					  "connection refused"))
-			      (ip (open-input-string strerr)))
-			  (fail (instantiate::xml-http-request
-				   (status 501)
-				   (header '())
-				   (input-port ip)))))
-		    (http-send-request req hdl))
-		 (http-send-request req hdl)))))))
+	     (http-send-request req hdl))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */
