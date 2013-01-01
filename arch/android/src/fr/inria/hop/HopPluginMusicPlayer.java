@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Sun Nov 25 18:56:31 2012 (serrano)                */
+/*    Last change :  Sun Dec 30 15:18:09 2012 (serrano)                */
 /*    Copyright   :  2010-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -49,11 +49,14 @@ public class HopPluginMusicPlayer extends HopPlugin {
    // constructor
    public HopPluginMusicPlayer( HopDroid h, String n ) {
       super( h, n );
+      Log.v( "HopPluginMusicPlayer", "init mplayer=" + mplayer );
    }
 
    // create a media player
    private MediaPlayer make_mediaplayer() {
       MediaPlayer mplayer = new MediaPlayer();
+
+      Log.v( "HopPluginMusicPlayer", "********** make mediaplayer..." );
       
       mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
 	    public void onPrepared( MediaPlayer mp ) {
@@ -167,20 +170,23 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    return;
 
 	 case (byte)'u':
-	    Log.v( "HopPluginMusicPlayer", "loading..." );
+	    Log.v( "HopPluginMusicPlayer", "url loading... mplayer" + mplayer );
 	    // url
 	    if( mplayer == null ) {
 	       mplayer = make_mediaplayer();
 	    } else {
 	       mplayer.reset();
 	    }
+
 	    datasrc = HopDroid.read_string( ip );
+	    Log.v( "HopPluginMusicPlayer", "datasrc=[" + datasrc + "]" );
 
 	    File file = new File( datasrc );
 
 	    if( file.exists() ) {
 	       mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
 	       mplayer.prepare();
+	       Log.v( "HopPluginMusicPlayer", "start..." );
 	       mplayer.start();
 	    } else {
 	       mplayer.setDataSource( datasrc );
@@ -192,11 +198,13 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	 case (byte)'v':
 	    // set volume
 	    if( mplayer == null ) {
-	       mplayer = new MediaPlayer();
+	       mplayer = make_mediaplayer();
 	    }
 
 	    int voll = HopDroid.read_int32( ip );
 	    int volr = HopDroid.read_int32( ip );
+
+	    Log.v( "HopPluginMusicPlayer", "set volume..." + voll + "/" + volr );
 
 	    mplayervol = (voll + volr) / 2;
 

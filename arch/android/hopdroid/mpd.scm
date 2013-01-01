@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/arch/android/hopdroid/mpd.scm     */
+;*    serrano/prgm/project/hop/2.4.x/arch/android/hopdroid/mpd.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 11 08:16:32 2011                          */
-;*    Last change :  Mon Mar 26 17:43:18 2012 (serrano)                */
+;*    Last change :  Sun Dec 30 10:49:23 2012 (serrano)                */
 ;*    Copyright   :  2011-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android MPD implementation                                       */

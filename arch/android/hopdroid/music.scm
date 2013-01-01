@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Sun Nov 25 18:01:47 2012 (serrano)                */
+;*    Last change :  Sun Dec 30 19:02:50 2012 (serrano)                */
 ;*    Copyright   :  2010-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -67,7 +67,6 @@
 		      (with-access::androidmusic o (onerror %status)
 			 (with-access::musicstatus %status (state)
 			    (set! state 'error)
-			    (tprint "ERROR value=" value)
 			    (onerror o value))))
 	    musics)))
 
@@ -92,7 +91,7 @@
 			    (onvolume o value))))
 	    musics)))
    
-   (with-access::androidmusic o (phone %status)
+   (with-access::androidmusic o (phone)
       (unless music-plugin
 	 (set! music-plugin (android-load-plugin phone "musicplayer"))
 	 (add-event-listener! phone "androidmusic-state" onstate)
@@ -101,7 +100,10 @@
 	 (add-event-listener! phone "androidmusic-volume" onvolume)))
 
    (set! musics (cons o musics))
-   (call-next-method))
+   (call-next-method)
+   (with-access::androidmusic o (%status)
+      (with-access::musicstatus %status (volume)
+	 (set! volume 100))))
 
 ;*---------------------------------------------------------------------*/
 ;*    music-close ::androidmusic ...                                   */
@@ -143,6 +145,7 @@
 ;*    music-playlist-add! ::androidmusic ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-add! androidmusic::androidmusic n)
+   (tprint "ANDROID music-playlist-add n=" n)
    (call-next-method)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (synchronize %mutex
@@ -247,6 +250,7 @@
 (define-method (music-play o::androidmusic . s)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-access::musicstatus %status (song state playlistlength playlistid)
+	 (tprint "ANDROID-MUSIC-PLAY state=" state)
 	 (cond
 	    ((not %open)
 	     (error "music-play ::androidmusic"
