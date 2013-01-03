@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Dec  9 00:57:59 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Wed Jan  2 15:19:14 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -225,7 +225,8 @@
 	     (apply proc vals))
 	    (else
 	     (error id
-		"Wrong number of arguments"
+		(format "Wrong number of arguments (~a/~a)" (length vals)
+		   (procedure-arity proc))
 		`(,id ,@vals))))))
    
    (let ((ca (http-request-cgi-args req)))

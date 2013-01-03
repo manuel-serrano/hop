@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Dec  9 00:58:20 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Thu Jan  3 09:00:39 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -589,6 +589,11 @@
 ;*    user-access-denied ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (user-access-denied req #!optional message)
+   (with-access::http-request req (host port path)
+      (hop-verb 2 (hop-color req req " ACCESS DENIED")
+	 ": "
+	 host ":" port ":" path " " 
+	 (if (string? message) message "")))
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
