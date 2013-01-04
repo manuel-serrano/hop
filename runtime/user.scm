@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jan  4 06:47:36 2013 (serrano)                */
+;*    Last change :  Fri Jan  4 06:57:45 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -473,15 +473,16 @@
 ;*    user-authorized-path? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (user-authorized-path? user path)
+
+   (define (authorized? d path)
+      (and (substring-at? path d 0)
+	   (or (=fx (string-length d) (string-length path))
+	       (and (>fx (string-length path) (string-length d))
+		    (char=? (string-ref path (string-length d))
+		       (file-separator))))))
    
    (define (path-member path dirs)
-      (any (lambda (d)
-	      (and (substring-at? path d 0)
-		   (or (=fx (string-length d) (string-length path))
-		       (and (>fx (string-length path) (string-length d))
-			    (char=? (string-ref path (string-length d))
-			       (file-separator))))))
-	 dirs))
+      (any (lambda (d) (authorized? path d)) dirs))
 
    (let ((v 
    (and (with-access::user user (directories name)
@@ -510,7 +511,7 @@
 	    (tprint "path=" path)
 	    (tprint "user=" name)
 	    (tprint "dirs=" directories)
-	    (tprint "grants=" (map (lambda (d) (path-member path d)) directories))))
+	    (tprint "grants=" (map (lambda (d) (authorized? path d)) directories))))
       v))
 
 ;*---------------------------------------------------------------------*/
