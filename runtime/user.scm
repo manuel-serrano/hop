@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Thu Jan  3 09:00:39 2013 (serrano)                */
+;*    Last change :  Fri Jan  4 06:47:36 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -482,7 +482,8 @@
 			    (char=? (string-ref path (string-length d))
 			       (file-separator))))))
 	 dirs))
-   
+
+   (let ((v 
    (and (with-access::user user (directories name)
 	   (or (eq? directories '*)
 	       (or (path-member path directories)
@@ -502,6 +503,15 @@
 			 (member name access))
 			(else
 			 #f))))))))
+	 )
+      (unless v
+	 (with-access::user user (directories name)
+	    (tprint "USER-AUTHORIZED-PATH? REFUSED")
+	    (tprint "path=" path)
+	    (tprint "user=" name)
+	    (tprint "dirs=" directories)
+	    (tprint "grants=" (map (lambda (d) (path-member path d)) directories))))
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-path? ...                                             */
@@ -590,7 +600,7 @@
 ;*---------------------------------------------------------------------*/
 (define (user-access-denied req #!optional message)
    (with-access::http-request req (host port path)
-      (hop-verb 2 (hop-color req req " ACCESS DENIED")
+      (hop-verb 1 (hop-color req req " ACCESS DENIED")
 	 ": "
 	 host ":" port ":" path " " 
 	 (if (string? message) message "")))
