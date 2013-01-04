@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jan  4 06:57:45 2013 (serrano)                */
+;*    Last change :  Fri Jan  4 07:05:19 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -482,7 +482,7 @@
 		       (file-separator))))))
    
    (define (path-member path dirs)
-      (any (lambda (d) (authorized? path d)) dirs))
+      (any (lambda (d) (authorized? d path)) dirs))
 
    (let ((v 
    (and (with-access::user user (directories name)
@@ -511,7 +511,7 @@
 	    (tprint "path=" path)
 	    (tprint "user=" name)
 	    (tprint "dirs=" directories)
-	    (tprint "grants=" (map (lambda (d) (authorized? path d)) directories))))
+	    (tprint "grants=" (map (lambda (d) (authorized? d path)) directories))))
       v))
 
 ;*---------------------------------------------------------------------*/
