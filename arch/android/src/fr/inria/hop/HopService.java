@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Nov 25 06:46:06 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Sat Jan  5 17:31:50 2013 (serrano)                */
+/*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
 /*=====================================================================*/
@@ -27,6 +27,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class HopService extends Service {
    private NotificationManager mNM;
    private int NOTIFICATION = R.string.hopservicestarted;
+   private final int HOP_ID = 17051966;
 
    // class variables
    static String hopargs = "";
@@ -60,7 +61,10 @@ public class HopService extends Service {
       
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
-      statusNotification();
+
+      Notification notification = statusNotification( false );
+      
+      startForeground( HOP_ID, notification );
    }
 
    @Override
@@ -70,7 +74,9 @@ public class HopService extends Service {
       kill();
       
       // status bar update
-      mNM.cancel( NOTIFICATION );
+      if( mNM != null ) {
+	 mNM.cancel( NOTIFICATION );
+      }
       
       super.onDestroy();
 
@@ -85,7 +91,7 @@ public class HopService extends Service {
 
    @Override
    public IBinder onBind( Intent intent ) {
-      Log.d( "HopService", "onBind: " + this );
+      Log.d( "HopService", "onBind: this=" + this + " hopbinder=" + hopbinder );
       
       return hopbinder;
    }
@@ -95,13 +101,12 @@ public class HopService extends Service {
       Log.d( "HopService", "onRebind: " + this );
       
       super.onRebind( intent );
+      handler.sendEmptyMessage( HopLauncher.MSG_REBIND_HOP_SERVICE );
    }
 
    @Override
    public boolean onUnbind( Intent intent ) {
       Log.i( "HopService", "onUnbind: " + this );
-/*       handler = null;                                               */
-/*       queue = null;                                                 */
 
       // true is returned to get onRebind invoked
       return true;
@@ -179,13 +184,13 @@ public class HopService extends Service {
       return HopDroid.isBackground();
    }
 
-   private void statusNotification() {
-      CharSequence text = getText( R.string.hopservicestarted );
-
+   private Notification statusNotification( boolean notify ) {
       // Set the icon, scrolling text and timestamp
+      CharSequence text = getText( R.string.hopservicestarted );
       Notification notification =
 	 new Notification( R.drawable.hopicon, text, System.currentTimeMillis());
-
+      notification.flags = Notification.FLAG_NO_CLEAR;
+      
       PendingIntent contentIntent =
 	 PendingIntent.getActivity(
 	    this, 0, new Intent( this, HopService.class ), 0 );
@@ -193,10 +198,12 @@ public class HopService extends Service {
       notification.setLatestEventInfo(
 	 this, getText( R.string.hopversion ), text, contentIntent );
 
-      notification.flags = Notification.FLAG_NO_CLEAR;
-
       // Send the notification.
-      mNM.notify( NOTIFICATION, notification );
+      if( notify ) {
+	 mNM.notify( NOTIFICATION, notification );
+      }
+
+      return notification;
    }   
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jan  4 07:05:19 2013 (serrano)                */
+;*    Last change :  Fri Jan  4 07:25:47 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -484,7 +484,6 @@
    (define (path-member path dirs)
       (any (lambda (d) (authorized? d path)) dirs))
 
-   (let ((v 
    (and (with-access::user user (directories name)
 	   (or (eq? directories '*)
 	       (or (path-member path directories)
@@ -504,15 +503,6 @@
 			 (member name access))
 			(else
 			 #f))))))))
-	 )
-      (unless v
-	 (with-access::user user (directories name)
-	    (tprint "USER-AUTHORIZED-PATH? REFUSED")
-	    (tprint "path=" path)
-	    (tprint "user=" name)
-	    (tprint "dirs=" directories)
-	    (tprint "grants=" (map (lambda (d) (authorized? d path)) directories))))
-      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    authorized-path? ...                                             */

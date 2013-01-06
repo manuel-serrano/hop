@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov  8 16:29:15 2012 (serrano)                */
-/*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Sun Jan  6 07:00:44 2013 (serrano)                */
+/*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Boot Receiver                                                */
 /*=====================================================================*/
@@ -27,7 +27,11 @@ import android.content.res.*;
 public class HopBootReceiver extends BroadcastReceiver {
    @Override
    public void onReceive( Context context, Intent intent ) {
-      if( "android.intent.action.BOOT_COMPLETED".equals( intent.getAction() ) ) {
+      String act = intent.getAction();
+
+      Log.i( "HopBootReceiver", "ACTION=" + act );
+      
+      if( act.equals( "android.intent.action.BOOT_COMPLETED" ) ) {
 	 final Resources res = context.getResources();
 	 final SharedPreferences sp =
 	    PreferenceManager.getDefaultSharedPreferences( context );
@@ -43,6 +47,8 @@ public class HopBootReceiver extends BroadcastReceiver {
 	 
 	    context.startService( hopintent );
 	 }
+
+	 return;
       }
    }
 }

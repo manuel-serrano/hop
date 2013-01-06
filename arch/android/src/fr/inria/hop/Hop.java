@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Nov 23 08:38:40 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sat Jan  5 15:59:45 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -215,8 +215,8 @@ public class Hop extends Thread {
 	 op.write( "\r\n\r\n".getBytes() );
 
 	 sock.close();
-      } catch( Throwable _ ) {
-	 ;
+      } catch( Throwable e ) {
+	 Log.e( "Hop", "emergencyExit error=" + e );
       }
       Log.i( "Hop", "<<< emergencyExit" );
    }

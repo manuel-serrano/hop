@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Nov 23 09:12:47 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sat Jan  5 17:39:06 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
 /*=====================================================================*/
@@ -209,6 +209,8 @@ public class HopDroid extends Thread {
       throws Exception {
       LocalSocket ls = new LocalSocket();
       
+      Log.d( "HopDroid", ">>> execCmd addr=" + addr.getName() + " cmd=" + cmd );
+      
       ls.connect( addr );
       final OutputStream op = ls.getOutputStream();
 
@@ -224,6 +226,7 @@ public class HopDroid extends Thread {
       
       ls.close();
 
+      Log.d( "HopDroid", "<<< execCmd addr=" + addr.getName() + " cmd=" + cmd );
       return true;
    }
       
@@ -250,7 +253,9 @@ public class HopDroid extends Thread {
    protected static void killBackground() {
       LocalSocketAddress addr =
          new LocalSocketAddress( "hopdroid-cmd:" + Hop.port );
-      
+
+      Log.i( "HopDroid", "KillBackground, serverStop: " + addr.getName() );
+
       serverStop( addr );
    }
 
@@ -258,7 +263,9 @@ public class HopDroid extends Thread {
    protected static void emergencyExit() {
       Log.i( "HopDroid", ">>> emergencyExit..." );
       if( isBackground() ) {
+	 Log.i( "HopDroid", ">>> emergencyExit, killBackground..." );
 	 killBackground();
+	 Log.i( "HopDroid", "<<< emergencyExit, isBackground..." + isBackground() );
       }
       Log.i( "HopDroid", "<<< emergencyExit" );
    }
@@ -510,6 +517,7 @@ public class HopDroid extends Thread {
 	 e.printStackTrace();
       } finally {
 	 cmdserv.close();
+	 Log.d( "HopDroid", "serverCmd ended." );
       }
    }
 

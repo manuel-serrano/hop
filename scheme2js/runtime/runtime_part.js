@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -2773,6 +2773,16 @@ function sc_add_method( clazz, generic, proc ) {
    } else {
       clazz.prototype[ name ] = proc;
    }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_field_accessor( field ) {
+   return field.sc_getter;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_class_field_mutator( field ) {
+   return field.sc_setter;
 }
 
 /* OO bootstrap in mutable.js and immutable.js */

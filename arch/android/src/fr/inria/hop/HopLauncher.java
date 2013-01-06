@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Nov 23 08:46:21 2012 (serrano)                */
-/*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Sat Jan  5 16:01:36 2013 (serrano)                */
+/*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
 /*=====================================================================*/
@@ -47,6 +47,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_START_HOP_SERVICE = 9;
    public static final int MSG_RESTART_HOP_SERVICE = 10;
    public static final int MSG_KILL_HOP_SERVICE = 11;
+   public static final int MSG_REBIND_HOP_SERVICE = 12;
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -62,6 +63,7 @@ public class HopLauncher extends Activity {
    HopService hopservice = null;
    Hop hopconf = null;
    boolean hopconnected = false;
+   int onresume_wifi_policy;
 
    ProgressDialog progress = null;
 
@@ -176,6 +178,10 @@ public class HopLauncher extends Activity {
 			} catch( InterruptedException _ ) {
 			   ;
 			}
+			break;
+
+		     case MSG_REBIND_HOP_SERVICE:
+			write_console( "Hop reconnected...\n" );
 			break;
 
 		     case MSG_HOPDROID_ENDED:
@@ -410,11 +416,7 @@ public class HopLauncher extends Activity {
       if( !HopService.isBackground() ) {
 	 start( "--accept-kill" );
       }
-/*       if( hopconf == null || !hopconf.isRunning() ) {               */
-/* 	 hopconf = new Hop( queue, handler );                          */
-/* 	 hopconf.startWithArg( "--accept-kill" );                      */
-/*       }                                                             */
-      
+
       // configure an installed Hop
       HopConfigurer hopconfigurer = new HopConfigurer( handler, hop_wizard_url );
       hopconfigurer.start();
@@ -426,6 +428,35 @@ public class HopLauncher extends Activity {
       super.onStart();
 
       if( progress != null ) progress.show();
+   }
+
+   @Override
+   public void onResume() {
+      Log.d( "HopLauncher", "onResume" );
+      super.onResume();
+
+      // get the current wifi policy
+      try {
+	 onresume_wifi_policy =
+	    Settings.System.getInt(
+	       getContentResolver(),
+	       Settings.System.WIFI_SLEEP_POLICY );
+	 // never switch off wifi when the hop console is on top
+	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+      } catch( Throwable _ ) {
+	 onresume_wifi_policy = 0;
+      }
+   }
+
+   @Override
+   public void onPause() {
+      Log.d( "HopLauncher", "onPause" );
+      super.onPause();
+      
+      // restore the wifi policy
+      if( onresume_wifi_policy != 0 ) {
+	 setWifiPolicy( onresume_wifi_policy );
+      }
    }
 
    @Override
@@ -509,11 +540,6 @@ public class HopLauncher extends Activity {
    }
    
    @Override
-   public void onResume() {
-      super.onResume();
-   }
-
-   @Override
    public void startActivityForResult( Intent intent, int requestCode ) {
       super.startActivityForResult( intent, requestCode );
    }
@@ -562,8 +588,6 @@ public class HopLauncher extends Activity {
    private void start( String hopargs ) {
       Log.i( "HopLauncher", "starting Hop Service" );
       
-      write_console( "Starting Hop...\n" );
-      
       if( hopintent == null ) {
 	 HopService.hopargs = hopargs;
 	 hopintent = new Intent( getApplicationContext(), HopService.class );
@@ -572,9 +596,10 @@ public class HopLauncher extends Activity {
       if( !HopService.isBackground() ) {
 	 Log.d( "HopLauncher", "starting new service..." );
 	 startService( hopintent );
+	 
+	 write_console( "Starting Hop...\n" );
       } else {
 	 Log.d( "HopLauncher", "background service already running..." );
-	 write_console( "Hop connected...\n" );
       }
 			
       Log.d( "HopLauncher", "binding the service..." );

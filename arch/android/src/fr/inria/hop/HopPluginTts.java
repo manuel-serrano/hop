@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Mon Nov 26 15:06:27 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sat Jan  5 16:16:20 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
 /*=====================================================================*/
@@ -78,25 +78,24 @@ public class HopPluginTts extends HopPlugin
    // onActivityResult
    public void onHopActivityResult( int result, Intent intent ) {
       Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
-      if( true || result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
-	 Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
-	 tts = new TextToSpeech( hopdroid.service, this );
-	 return;
+      if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
+         Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
+         return;
       } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA  ) {
-	 // missing data, install it
-	 Intent installIntent = new Intent();
-	 installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
-	 installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
-	 hopdroid.service.startActivity( installIntent );
-	 initstatus = "missing data";
+         // missing data, install it
+         Intent installIntent = new Intent();
+         installIntent.setAction( TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA );
+         installIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+         hopdroid.service.startActivity( installIntent );
+         initstatus = "missing data";
       } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_BAD_DATA ) {
-	 initstatus = "bad data";
+         initstatus = "bad data";
       } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_VOLUME ) {
-	 initstatus = "missing volume";
+         initstatus = "missing volume";
       } else if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_FAIL ) {
-	 initstatus = "data fail";
+         initstatus = "data fail";
       } else {
-	 initstatus = "tts error";
+         initstatus = "tts error";
       }
    }
 
@@ -125,7 +124,13 @@ public class HopPluginTts extends HopPlugin
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'i':
 	    // init
-//	    initTts();
+	    if( tts == null ) {
+	       tts = new TextToSpeech( hopdroid.service, this );
+	    }
+	    if( initstatus == null ) {
+	       initstatus = "success";
+	    }
+
 	    op.write( "\"".getBytes() );
 	    op.write( initstatus.getBytes() );
 	    op.write( "\"".getBytes() );
@@ -219,7 +224,7 @@ public class HopPluginTts extends HopPlugin
 		  TextToSpeech.QUEUE_ADD : TextToSpeech.QUEUE_FLUSH;
 	       int stream = HopDroid.read_int( ip );
 
-	       Log.v( "HopPlugTts", "speak [" + s + "] qm=" + qm + " stream="
+	       Log.v( "HopPluginTts", "speak [" + s + "] qm=" + qm + " stream="
 		      + stream );
 
 	       if( pushevent ) {

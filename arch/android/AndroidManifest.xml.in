@@ -37,9 +37,11 @@
         <receiver android:name="fr.inria.hop.HopBootReceiver"
                   android:enabled="true"
                   android:exported="true"
-                  android:label="HopBoootReceiver">
+                  android:label="HopBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_RESTARTED" />
             </intent-filter>
         </receiver>
 

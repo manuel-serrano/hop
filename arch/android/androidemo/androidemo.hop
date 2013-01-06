@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Nov 26 15:08:36 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Fri Jan  4 07:24:26 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
 ;*=====================================================================*/
@@ -80,13 +80,18 @@ END:VCARD"))
 (add-event-listener! (instantiate::androidphone) "call"
    (lambda (e::event)
       (hop-event-broadcast! "call" e.value)))
-(add-event-listener! (instantiate::androidphone) "orientation"
-   (lambda (e::event)
-      (hop-event-broadcast! "orientation" e.value)))
+
 (add-event-listener! (instantiate::androidphone) "connectivity"
    (lambda (e::event)
       (set! connectivity-state e.value)
       (hop-event-broadcast! "connectivity" e.value)))
+
+(define orientation-activated #f)
+
+(add-event-listener! (instantiate::androidphone) "orientation"
+   (lambda (e::event)
+      (when orientation-activated
+	 (hop-event-broadcast! "orientation" e.value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    androidemo ...                                                   */
@@ -347,6 +352,10 @@ missed.")
 	 "Activate sensors")
       
       (<DIV> :id "sensors")
+      (<BUTTON> "Activate"
+	 :onclick ~(with-hop ($(service ()
+				  (set! orientation-activated
+				     (not orientation-activated))))))
       (<IMG> :id "img-ori"
 	 :src (make-file-path (hop-share-directory)
 		 "icons" "hop" "hop-128x128.png"))))
