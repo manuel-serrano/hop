@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sat Jan  5 17:31:50 2013 (serrano)                */
+/*    Last change :  Sun Jan  6 07:13:18 2013 (serrano)                */
 /*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */

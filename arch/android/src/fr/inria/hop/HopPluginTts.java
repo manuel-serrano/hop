@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Sat Jan  5 16:16:20 2013 (serrano)                */
+/*    Last change :  Mon Jan  7 08:00:14 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -65,13 +65,13 @@ public class HopPluginTts extends HopPlugin
    // TTS initialization, delayed to onConnect because it needs that actitivy
    // to be fully initialized
    public void onConnect() {
+      Log.v( "HopPluginTts", "onConnect" );
       Intent checkIntent = new Intent();
 
       checkIntent.setAction( TextToSpeech.Engine.ACTION_CHECK_TTS_DATA );
       checkIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
       checkIntent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
 
-      initstatus = "initialization failed";
       startHopActivityForResult( checkIntent );
    }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Jan  5 16:01:36 2013 (serrano)                */
+/*    Last change :  Mon Jan  7 07:44:15 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -26,6 +26,7 @@ import android.view.View.*;
 import android.net.*;
 import android.text.*;
 import android.provider.*;
+import android.media.AudioManager;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
@@ -277,6 +278,9 @@ public class HopLauncher extends Activity {
 	    R.drawable.logo );
       }
 
+      // Control the volume key when the console has the focus
+      setVolumeControlStream( AudioManager.STREAM_MUSIC );
+      
       // setup the scroll button
       checkbox = (CheckBox)findViewById( R.id.scrollconsole );
       checkbox.setChecked( true );
@@ -450,7 +454,7 @@ public class HopLauncher extends Activity {
 
    @Override
    public void onPause() {
-      Log.d( "HopLauncher", "onPause" );
+      Log.d( "HopLauncher", "onPause isFinishing=" + isFinishing() );
       super.onPause();
       
       // restore the wifi policy
