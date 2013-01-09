@@ -1,4 +1,4 @@
-
+#!/bin/sh
 #*=====================================================================*/
 #*    serrano/prgm/project/hop/2.4.x/arch/debian/makedeb.sh.in         */
 #*    -------------------------------------------------------------    */
@@ -15,9 +15,9 @@
 #*---------------------------------------------------------------------*/
 #*    Global configuration                                             */
 #*---------------------------------------------------------------------*/
-VERSION=2.4.0    # Hop major version e.g. VERSION=2.4.0
-MINOR=-rc6        # Hop minor release e.g. MINOR=-pre1
-BIGLOOVERSION=3.9b
+VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
+MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
+BIGLOOVERSION=@BIGLOOREQUIRED@
 
 REPOSITORY=/users/serrano/prgm/distrib
 ICONS="hop-16x16.png hop-26x26.png hop-40x40.png hop-64x64.png"

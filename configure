@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Nov 16 14:04:40 2012 (serrano)                */
-#*    Copyright   :  2004-12 Manuel Serrano                            */
+#*    Last change :  Wed Jan  9 07:23:48 2013 (serrano)                */
+#*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -350,6 +350,33 @@ while : ; do
   esac
   shift
 done
+
+#*---------------------------------------------------------------------*/
+#*    Versionning                                                      */
+#*---------------------------------------------------------------------*/
+if [ ! -x .hoprelease ]; then
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=$devel
+minor=
+EOF
+  chmod a+rx .hoprelease
+fi
+
+. ./.hoprelease
+
+if [ "$state " != "$devel " ]; then
+  state=$devel
+  minor=1
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=$devel
+minor=1
+EOF
+  chmod a+rx .hoprelease
+fi
 
 #*---------------------------------------------------------------------*/
 #*    First check if bigloo exists and if it is recent enough          */
@@ -905,31 +932,47 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
 done
 
 #*---------------------------------------------------------------------*/
+#*    Debian script                                                    */
+#*---------------------------------------------------------------------*/
+if [ "$state " != " " ]; then
+  minorversion=-$state$minor
+else
+  minorversion=
+fi
+
+# debian
+deb=arch/debian/makedeb.sh
+rm -f $deb 2> /dev/null
+echo "#!/bin/sh" > $deb
+echo "#* Automatically generated file (don't edit) */" > $deb
+
+
+cat $deb.in \
+   | sed -e "s|#!/bin/sh||" \
+         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+         -e "s|@VERSION@|$version|" \
+         -e "s|@MINOR@|$minorversion|" \
+   > $deb  
+chmod a+rx $deb
+ 
+# android
+and=arch/android/makeapk.sh
+rm -f $and 2> /dev/null
+echo "#!/bin/sh" > $and
+echo "#* Automatically generated file (don't edit) */" > $and
+
+
+cat $and.in \
+   | sed -e "s|#!/bin/sh||" \
+         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+         -e "s|@VERSION@|$version|" \
+         -e "s|@MINOR@|$minorversion|" \
+   > $and  
+chmod a+rx $and
+ 
+#*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
-if [ ! -x .hoprelease ]; then
-  cat > .hoprelease <<EOF
-#!/bin/sh
-major=$version
-state=$devel
-minor=
-EOF
-  chmod a+rx .hoprelease
-fi
-
-. ./.hoprelease
-
-if [ "$state " != "$devel " ]; then
-  state=$devel
-  minor=1
-  cat > .hoprelease <<EOF
-#!/bin/sh
-major=$version
-state=$devel
-minor=1
-EOF
-  chmod a+rx .hoprelease
-fi
 
 # Generate the config.status file to please debian packages
 echo "configuration completed" > config.status

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/debian/Makefile              */
+#*    serrano/prgm/project/hop/2.4.x/arch/debian/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Wed May 23 17:11:39 2012 (serrano)                */
-#*    Copyright   :  2011-12 Manuel Serrano                            */
+#*    Last change :  Wed Jan  9 07:26:37 2013 (serrano)                */
+#*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */
 #*=====================================================================*/
@@ -32,7 +32,7 @@ DEBIAN = changelog.in control.in postinst.in postrm.in rules.in
 
 POPULATION = Makefile README \
   init.d/hop.in \
-  makedeb.sh \
+  makedeb.sh.in \
   $(MAEMO:%=maemo/%) \
   $(LAUNCHER:%=maemo/hop-launcher/%) \
   $(DEBIAN:%=debian/%)
