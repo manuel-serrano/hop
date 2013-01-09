@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Jan  9 07:17:51 2013 (serrano)                */
+#*    Last change :  Wed Jan  9 07:41:25 2013 (serrano)                */
 #*    Copyright   :  2007-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Maemo              */
@@ -44,9 +44,11 @@ while : ; do
       shift;
       fakeroot=$1;;
     --version=*)
-      VERSION="`echo $1 | sed 's/^[^=]*=//'`";;
+      VERSION="`echo $1 | sed 's/^[^=]*=//'`";
+      shift;;
     --minor=*)
-      MINOR="`echo $1 | sed 's/^[^=]*=//'`";;
+      MINOR="`echo $1 | sed 's/^[^=]*=//'`";
+      shift;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
