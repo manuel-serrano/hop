@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Jan  9 08:21:21 2013 (serrano)                */
+#*    Last change :  Thu Jan 17 13:41:33 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -965,7 +965,7 @@ echo "#* Automatically generated file (don't edit) */" >> $and
 cat $and.in \
    | sed -e "s|#!/bin/sh||" \
          -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
-         -e "s|@HOPVERSION@|$hopversion|" \
+         -e "s|@VERSION@|$hopversion|" \
          -e "s|@MINOR@|$minorversion|" \
    > $and  
 chmod a+rx $and
