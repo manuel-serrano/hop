@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Wed Jan  9 07:26:06 2013 (serrano)                */
+#*    Last change :  Thu Jan 17 13:59:59 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -22,6 +22,9 @@ HOPPORT=8080
 
 REPOSITORY=/users/serrano/prgm/distrib
 
+ANDROIDBIGLOOLIB=
+CC=
+
 ANDROIDROOT=/misc/virtual/android/r07
 ANDROIDGIT=$ANDROIDROOT/eclair-git
 ANDROIDSDK=$ANDROIDROOT/android-sdk-linux_x86
@@ -32,9 +35,6 @@ ANDROIDSDKVERSION=16
 
 BIGLOO=bigloo
 AFILE=bglafile
-
-ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
-CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
 
 PREFIX=/data/data/fr.inria.hop
 
@@ -82,10 +82,11 @@ while : ; do
     --hopversion=*)
       hopversion="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --biglooversion=*)
+      BIGLOOVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --android-root=*)
-      ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";
-      ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION;
-      CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc;;
+      ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --android-sdk=*)
       ANDROIDSDK="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -157,6 +158,14 @@ done
 
 android=$tmp/hop-$hopversion/android
 branch=`echo $hopversion | sed -e "s/[-].*$//g"`
+
+if [ "$ANDROIDBIGLOOLIB " = " " ]; then
+  ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
+fi
+
+if [ "$CC " = " " ]; then
+  CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Install the Hop source code                                      */
