@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Jan  9 07:39:34 2013 (serrano)                */
+#*    Last change :  Wed Jan  9 08:21:21 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -944,7 +944,7 @@ fi
 deb=arch/debian/makedeb.sh
 rm -f $deb 2> /dev/null
 echo "#!/bin/sh" > $deb
-echo "#* Automatically generated file (don't edit) */" > $deb
+echo "#* Automatically generated file (don't edit) */" >> $deb
 
 
 cat $deb.in \
@@ -959,7 +959,7 @@ chmod a+rx $deb
 and=arch/android/makeapk.sh
 rm -f $and 2> /dev/null
 echo "#!/bin/sh" > $and
-echo "#* Automatically generated file (don't edit) */" > $and
+echo "#* Automatically generated file (don't edit) */" >> $and
 
 
 cat $and.in \

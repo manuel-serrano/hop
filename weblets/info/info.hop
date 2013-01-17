@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Oct 25 17:00:48 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Wed Jan 16 08:28:28 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -306,10 +306,10 @@
 	       (<TD> :align 'left (hop-rc-file)))
 	    (<TR>
 	       (<TH> :align 'right "Default charset")
-	       (<TD> :align 'left (hop-charset)))
+	       (<TD> :align 'left (symbol->string (hop-charset))))
 	    (<TR>
 	       (<TH> :align 'right "Default locale")
-	       (<TD> :align 'left (hop-locale)))
+	       (<TD> :align 'left (symbol->string (hop-locale))))
 	    (<TR>
 	       (<TH> :align 'right "Connection ttl")
 	       (<TD> :align 'left (hop-connection-ttl)))
@@ -322,6 +322,14 @@
 	    (<TR>
 	       (<TH> :align 'right "Remote keep alive timeout")
 	       (<TD> :align 'left (hop-proxy-keep-alive-timeout))))
+	 (<H1> "Server Features")
+	 (<TABLE> :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Webdav")
+	       (<TD> :align 'left (if (hop-enable-webdav) "on" "off")))
+	    (<TR>
+	       (<TH> :align 'right "Zeroconf")
+	       (<TD> :align 'left (if (hop-enable-zeroconf) "on" "off"))))
 	 (<H1> "Weblets")
 	 (<DIV> :class "autoload"
 	    (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))

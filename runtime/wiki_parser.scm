@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed Dec 26 09:11:36 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Tue Jan 15 18:33:34 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -405,8 +405,7 @@
 				   (cl (if (string? class)
 					   (string-append cl " " class)
 					   cl)))
-			       (apply (wiki-syntax-tr syn) :class cl :id id
-				  exp)))
+			       (apply (wiki-syntax-tr syn) :class cl exp)))
 			 #f)
 	    (enter-expr! 'tc tc rightp)
 	    (set! trcount (+fx 1 trcount))
