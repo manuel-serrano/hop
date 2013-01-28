@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Oct 13 07:45:56 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Sat Jan 19 11:28:21 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -363,7 +363,7 @@
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)
-	 (display ">\n" p))))
+	 (display ">" p))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-style ...                                        */
@@ -395,7 +395,7 @@
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)
-	 (display ">\n" p))))
+	 (display ">" p))))
    
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-tilde ...                                        */
@@ -411,7 +411,7 @@
 	     (when cdata-start (display cdata-start p))
 	     (display (xml-tilde->statement obj) p)
 	     (when cdata-stop (display cdata-stop p))
-	     (display "</script>\n" p)))))
+	     (display "</script>" p)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-delay ...                                        */
@@ -438,19 +438,19 @@
 			     (display "<script type='" p)
 			     (display (hop-configure-javascript-mime-type) p)
 			     (fprintf p "' src='~a'>" r)
-			     (display "</script>\n" p))
+			     (display "</script>" p))
 		   (with-access::security-manager security (runtime) runtime)))
 	     (display "</" p)
 	     (display tag p)
-	     (display ">\n" p))
+	     (display ">" p))
 	    ((or (pair? body) (eq? tag 'script))
 	     (display ">" p)
 	     (for-each (lambda (b) (xml-write b p backend)) body)
 	     (display "</" p)
 	     (display tag p)
-	     (display ">\n" p))
+	     (display ">" p))
 	    ((memq tag no-end-tags-elements)
-	     (display ">\n" p))
+	     (display ">" p))
 	    (else
 	     (display "/>" p))))))
 
@@ -601,11 +601,11 @@
 				    (loop (cddr hattr))))))))
 	    (xml-write-attributes hattr p backend))
 	 (xml-write-attributes attributes p backend)
-	 (display ">\n" p)
+	 (display ">" p)
 	 (for-each (lambda (b) (xml-write b p backend)) body)
 	 (display "</" p)
 	 (display tag p)
-	 (display ">\n" p))))
+	 (display ">" p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attributes ...                                         */
@@ -693,7 +693,7 @@
 	       ((null? attrs)
 		(when var
 		   (when cdata-stop (display cdata-stop p))
-		   (display "}, false );</script>\n" p)))
+		   (display "}, false );</script>" p)))
 	       ((and (isa? (cadr attrs) xml-tilde)
 		     (not (xml-event-handler-attribute? (car attrs))))
 		(if var

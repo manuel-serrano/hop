@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Nov  1 09:12:25 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Mon Jan 28 11:09:39 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -106,15 +106,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    <HOP-SERVER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
-   
-   (define (hostip)
-      (let ((addr (assq 'addresses (hostinfo (hostname)))))
-	 (if (pair? addr)
-	     (cadr addr)
-	     "127.0.0.1")))
-	      
    (<SCRIPT> :type (hop-configure-javascript-mime-type)
-      (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""(hostip) "\")")))
+      (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""
+	 (hop-server-hostip) "\")")))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */

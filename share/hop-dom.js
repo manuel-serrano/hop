@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Nov 15 09:45:22 2012 (serrano)                */
-/*    Copyright   :  2006-12 Manuel Serrano                            */
+/*    Last change :  Sat Jan 19 10:16:10 2013 (serrano)                */
+/*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -22,31 +22,46 @@
 /*    dom_add_child ...                                                */
 /*---------------------------------------------------------------------*/
 /*** META ((export dom-append-child!) (arity #t)) */
-function dom_add_child( node, e ) {
-   if( hop_is_html_element( e ) ) {
-      /* we no longer need to clone a node, even if it is already  */
-      /* in the document because the server side implementation    */
-      /* of dom-add-child checks if the node is already in the     */
-      /* same tree and if it is, it removes it first               */
-      node.appendChild( e );
+function dom_add_child( id, e ) {
+   var node;
+   
+   if( (id instanceof String) || (typeof id == "string") ) {
+      node = document.getElementById( id );
    } else {
-      if( (e instanceof String) ||
-	  (typeof e === "string") ||
-	  (typeof e === "number") ) {
-	 node.appendChild( document.createTextNode( e ) );
+      node = id;
+   }
+
+   if( node == null || node == undefined ) {
+      sc_error( "dom-append-child!", "illegal node", id );
+   }
+
+   function add( e ) {
+      if( hop_is_html_element( e ) ) {
+	 /* we no longer need to clone a node, even if it is already  */
+	 /* in the document because the server side implementation    */
+	 /* of dom-add-child checks if the node is already in the     */
+	 /* same tree and if it is, it removes it first               */
+	 node.appendChild( e );
       } else {
-	 if( sc_isPair( e ) ) {
-	    dom_add_child( node, e.car );
-	    dom_add_child( node, e.cdr );
-	 } else if( typeof e === "boolean" || e == null || e == undefined ) {
-	    return;
+	 if( (e instanceof String) ||
+	     (typeof e === "string") ||
+	     (typeof e === "number") ) {
+	    node.appendChild( document.createTextNode( e ) );
 	 } else {
-	    sc_error( "dom_add_child",
-		      "illegal child node (" + (typeof e) + ")",
-		      e );
+	    if( sc_isPair( e ) ) {
+	       sc_forEach( add, e )
+	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
+	       return;
+	    } else {
+	       sc_error( "dom-append-child!",
+			 "illegal child node (" + (typeof e) + ")",
+			 e );
+	    }
 	 }
       }
    }
+
+   return add( e );
 }
 
 /*---------------------------------------------------------------------*/

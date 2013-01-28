@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Dec 26 09:37:16 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Fri Jan 25 16:20:50 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 17 13:41:33 2013 (serrano)                */
+#*    Last change :  Thu Jan 24 08:38:09 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -545,7 +545,7 @@ if [ "$avahi" = "yes" ]; then
 
   hopsrfis="$hopsrfis enable-avahi"
   zeroconf="#t"
-  zeroconfbe="avahi $zeroconf"
+  zeroconfbe="avahi"
   libraries="$libraries avahi"
   bglcloselibs="$bglcloselibs avahi"
 fi

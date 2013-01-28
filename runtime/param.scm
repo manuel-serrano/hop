@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Dec 21 08:36:45 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Mon Jan 28 11:09:16 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -701,7 +701,10 @@
    (with-handler
       (lambda (e)
 	 "127.0.0.1")
-      (host (hop-server-hostname))))
+      (let ((addr (assq 'addresses (hostinfo (hostname)))))
+	 (if (pair? addr)
+	     (cadr addr)
+	     "127.0.0.1"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scm-compile-suffix ...                                       */
