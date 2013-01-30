@@ -1,0 +1,6 @@
+PORT=8080
+LOGDIR=/var/log/hop
+LOGFILE=$LOGDIR/$NAME.log
+DAEMON=/usr/bin/hop
+DAEMONUSER=hop
+DAEMON_ARGS="--log-file $LOGFILE"

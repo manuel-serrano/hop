@@ -7,8 +7,8 @@ pkgdesc="a Software Development Kit for the Web"
 url='http://hop.inria.fr'
 license=('GPL' 'LGPL')
 arch=('i686' 'x86_64' 'arm')
-depends=('bigloo>=3.8d')
-makedepends=('bigloo>=3.8d')
+depends=('bigloo>=4.0a')
+makedepends=('bigloo>=4.0a')
 install=hop.install
 source=(ftp://ftp-sop.inria.fr/indes/fp/Hop/$pkgname-$pkgver.tar.gz)
 md5sums=('@MD5SUM@')
@@ -22,7 +22,15 @@ build() {
 package() {
   cd $startdir/src/$pkgname-$pkgver
   make DESTDIR=$startdir/pkg install
+  mkdir -p $startdir/pkg/etc/conf.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d
+  chmod a+rx $startdir/pkg/etc/conf.d/hop
   mkdir -p $startdir/pkg/etc/rc.d
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop
   chmod a+rx $startdir/pkg/etc/rc.d/hop
+  mkdir -p $startdir/pkg/usr/lib/sytemd/system
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $startdir/pkg/usr/lib/systemd/system/hop.service
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $startdir/pkg/usr/lib/systemd/system/hop.socket
+  chmod a+rx $startdir/pkg/usr/lib/systemd/system/hop.service
+  chmod a+rx $startdir/pkg/usr/lib/systemd/system/hop.socket
 }

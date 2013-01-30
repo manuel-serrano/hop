@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/arch/archlinux/Makefile           */
+#*    serrano/prgm/project/hop/2.4.x/arch/archlinux/Makefile           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sun Feb  7 07:41:50 2010                          */
-#*    Last change :  Thu May 24 16:18:28 2012 (serrano)                */
-#*    Copyright   :  2010-12 Manuel Serrano                            */
+#*    Last change :  Wed Jan 30 09:20:34 2013 (serrano)                */
+#*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that handles ARCHLINUX specific files               */
 #*=====================================================================*/
@@ -18,5 +18,6 @@
 #*---------------------------------------------------------------------*/
 #*    Variables                                                        */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile PKGBUILD.in hop.install rc.d/hop.in
+POPULATION = Makefile PKGBUILD.in hop.install rc.d/hop.in \
+  conf.d/hop.in systemd/hop.service.in systemd/hop.socket.in
 
