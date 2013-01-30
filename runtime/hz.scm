@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Jan 25 16:20:50 2013 (serrano)                */
+;*    Last change :  Mon Jan 28 11:55:38 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
@@ -143,6 +143,7 @@
 ;*    download-url ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (download-url url dir)
+   (hop-verb 2 (hop-color 1 "" "DOWNLOADING") " " url " -> " dir "\n")
    (with-handler
       (lambda (e)
 	 (delete-directory dir)

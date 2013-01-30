@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Sun Oct 21 09:16:39 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Mon Jan 28 14:03:42 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -73,12 +73,12 @@
 ;*    hop-module-afile-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-module-afile-resolver module files)
-   (apply append (filter-map (lambda (f) (url-resolver f module)) files)))
+   (apply append (filter-map (lambda (f) (url-resolver module f)) files)))
    
 ;*---------------------------------------------------------------------*/
 ;*    url-resolver ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (url-resolver url module)
+(define (url-resolver module url)
    (if (hz-package-filename? url)
        (hz-module-resolver module url)
        (list url)))
