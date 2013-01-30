@@ -13,3 +13,6 @@ int resourceDirFill(char *buffer, int size) {
     if (succeeded) return strlen(buffer);
     return -1;
 }
+
+/* MS 30Jan2013. someone binding nil with a macro ! */
+#undef nil
