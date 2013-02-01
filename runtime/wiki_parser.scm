@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Tue Jan 15 18:33:34 2013 (serrano)                */
+;*    Last change :  Fri Feb  1 10:14:31 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -229,6 +229,32 @@
 	  (values (substring str 0 i)
 		  (substring str (+fx i 1) (string-length str)))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    *comment-grammar* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *comment-grammar*
+   (regular-grammar ()
+      ((: (* (out "-\n")))
+       (ignore))
+      ((: (* (out "-\n")) #\Newline)
+       #f)
+      ("-"
+       (ignore))
+      ((: "-*-" (* all) #\Newline)
+       (let ((s (the-string)))
+	  (let ((i (string-contains s "-*-" 3)))
+	     (when (fixnum? i)
+		(let ((j (string-contains-ci s "coding:" 3)))
+		   (when (and (fixnum? j) (<fx j i))
+		      (let ((n (string-skip s " \t"
+				  (+fx j (string-length "coding:")))))
+			 (when (fixnum? n)
+			    (let ((m (string-index s " " n)))
+			       (when (fixnum? m)
+				  (string->symbol
+				     (substring s n m))))))))))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    *wiki-grammar* ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -746,7 +772,10 @@
 		 (ignore)))))
 
       ;; comments
-      ((bol (: (or ";*" ";;") (+ all) (? #\Newline)))
+      ((bol (or ";*" ";;"))
+       (let ((cset (read/rp *comment-grammar* (the-port))))
+	  (when cset
+	     (set! charset (charset-converter! cset (hop-charset)))))
        (ignore))
 
       ;; tables
