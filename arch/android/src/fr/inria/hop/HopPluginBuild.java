@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Wed Feb  6 09:19:17 2013 (serrano)                */
+/*    Last change :  Wed Feb  6 09:57:00 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -42,12 +42,18 @@ public class HopPluginBuild extends HopPlugin {
 	    
 	 // model
 	 case (byte)'m':
+	    Log.d( "HopPluginBuild", "model=" + android.os.Build.MODEL );
+	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.MODEL.getBytes() );
+	    op.write( "\"".getBytes() );
 	    return;
 	    
 	 // product
 	 case (byte)'p':
+	    Log.d( "HopPluginBuild", "product=" + android.os.Build.PRODUCT );
+	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.PRODUCT.getBytes() );
+	    op.write( "\"".getBytes() );
 	    return;
       }
    }

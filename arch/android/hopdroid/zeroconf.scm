@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Feb  6 09:31:46 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 09:56:19 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -27,7 +27,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-init! o::androidzeroconf)
    (with-access::androidzeroconf o (hostname android)
-      (set! hostname (get-android-sdk android)))
+      (with-access::androidphone android (model)
+;* 	 (tprint "model=" model)                                       */
+	 (set! hostname "model")))
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Feb  6 09:22:43 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 09:55:29 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -20,7 +20,8 @@
    
    (export (class androidphone::phone
 	      (sdk::int read-only (get get-android-sdk))
-	      (model::int read-only (get get-android-model))
+	      (model::bstring read-only (get get-android-model))
+	      (product::bstring read-only (get get-android-product))
 	      (protocol::byte read-only (default 2))
 	      (initid::int read-only (default 1))
 	      (%mutex::mutex read-only (default (make-mutex))))
@@ -85,20 +86,30 @@
    p)
 
 ;*---------------------------------------------------------------------*/
+;*    get-android-build ...                                            */
+;*---------------------------------------------------------------------*/
+(define (get-android-build p::androidphone cmd)
+   (unless build-plugin
+      (set! build-plugin (android-load-plugin p "build")))
+   (android-send-command/result p build-plugin cmd))
+
+;*---------------------------------------------------------------------*/
 ;*    get-android-sdk ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (get-android-sdk p::androidphone)
-   (unless build-plugin
-      (set! build-plugin (android-load-plugin p "build")))
-   (android-send-command/result p build-plugin #\v))
+   (get-android-build p #\v))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-android-model ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (get-android-model p::androidphone)
-   (unless build-plugin
-      (set! build-plugin (android-load-plugin p "build")))
-   (android-send-command/result p build-plugin #\m))
+   (get-android-build p #\m))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-product ...                                          */
+;*---------------------------------------------------------------------*/
+(define (get-android-product p::androidphone)
+   (get-android-build p #\p))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */
