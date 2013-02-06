@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Feb  6 10:12:41 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 10:17:57 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -26,10 +26,10 @@
 ;*    zeroconf-init! ::androidzeroconf ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-init! o::androidzeroconf)
-   (with-access::androidzeroconf o (hostname android)
-      (with-access::androidphone android (sdk)
+;*    (with-access::androidzeroconf o (hostname android)               */
+;*       (with-access::androidphone android (sdk)                      */
 ;* 	 (tprint "model=" sdk)                                         */
-	 (set! hostname "model")))
+;* 	 (set! hostname "model")))                                     */
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
@@ -42,9 +42,12 @@
 ;*    zeroconf-backend-start ::androidzeroconf ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
-   (with-access::androidzeroconf o ((aphone android) plugin onready)
+   (with-access::androidzeroconf o ((aphone android) plugin onready hostname)
       (unless plugin
 	 (set! plugin (android-load-plugin aphone "zeroconf")))
+      (with-access::androidphone android (model)
+;* 	 (tprint "model=" sdk)                                         */
+	 (set! hostname model))
       (when (android-send-command/result aphone plugin #\s)
 	 (onready o)
 	 (hop-verb 1 (format "  zeroconf: ~a\n"
