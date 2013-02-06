@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/param_expd.sch            */
+;*    serrano/prgm/project/hop/2.4.x/runtime/param_expd.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:17:19 2006                          */
-;*    Last change :  Sun Nov  7 09:01:24 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Wed Feb  6 07:08:33 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parameters expander                                              */
 ;*=====================================================================*/
@@ -24,7 +24,9 @@
 			       `(set! ,vid v))
 			  v)
 		      x)
-	  ,(evepairify `(,set (,id)) x))))
+	  ,@(if (pair? setter)
+		(evepairify `(,set (,id)) x)
+		'()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-lazy-parameter ...                                 */

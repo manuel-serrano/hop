@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/hopsh/parseargs.scm               */
+;*    serrano/prgm/project/hop/2.4.x/hopsh/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Apr  3 20:29:58 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Sat Feb  2 10:54:40 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -39,7 +39,7 @@
       (args-parse (cdr args)
          ((("-h" "--help") (help "This message"))
 	  (print "HopSh v" (hop-version))
-	  (print "usage: hopsh [options]")
+	  (print "usage: hopsh [options] command")
 	  (newline)
           (args-parse-usage #f)
           (exit 0))
@@ -51,7 +51,7 @@
           (exit 0))
 	 (("-q" (help "Do not load an init file"))
 	  (set! loadp #f))
-	 (("-c" ?string (help "Execute command STRING"))
+	 ((("-c" "--command") ?string (help "Execute command STRING"))
 	  (set! command-string string))
 	 (("--rc-file" ?file (help "Load alternate rc file"))
 	  (set! rc-file file))
@@ -91,12 +91,15 @@
 	 ((("-t" "--timeout") ?timeout (help "Connection timeout (0=no timeout)"))
 	  (hopsh-timeout-set! (string->integer timeout)))
 	 (("-?dummy")
-	  (args-parse-usage #f)
-	  (exit 1))
+	  (if (not (string? command-string))
+	      (begin
+		 (args-parse-usage #f)
+		 (exit 1))
+	      (set! command-string (string-append command-string " -" dummy))))
 	 (else
-	  (print "Unknown argument: " else)
-	  (args-parse-usage #f)
-	  (exit 1)))
+	  (if (not (string? command-string))
+	      (set! command-string else)
+	      (set! command-string (string-append command-string " " else)))))
       (when login (login! login))
       (when loadp
 	 (if (string? rc-file)

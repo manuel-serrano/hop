@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Thu Nov 22 13:45:30 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Tue Feb  5 16:10:42 2013 (serrano)                */
+/*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
 /*=====================================================================*/
@@ -64,8 +64,10 @@ public class HopJmDns extends HopZeroconf {
 	       };
 	       InetAddress addr = InetAddress.getByAddress( byteaddr );
 
-	       Log.d( "HopJmDns", "creating instance addr=" + addr );
 	       jmdns = JmDNS.create( addr, "hop" );
+	       Log.d( "HopJmDns", "creating instance addr="
+		      + addr + " hostname=" + jmdns.getHostName() );
+	       
 	    } else {
 	       Log.d( "HopJmDns", "creating instance" );
 	       jmdns = JmDNS.create();
@@ -206,6 +208,7 @@ public class HopJmDns extends HopZeroconf {
 	 final HashMap<String, String> values = new HashMap<String, String>();
 
 	 for( int i = 0; i < props.length; i += 2 ) {
+	    Log.d( "HopJmDns", "prop=" + props[ i ] + " " + props[ i + 1 ] );
 	    values.put( props[ i ], props[ i + 1 ] );
 	 }
 

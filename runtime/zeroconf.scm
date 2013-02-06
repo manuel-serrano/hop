@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Sun Dec  9 00:58:41 2012 (serrano)                */
-;*    Copyright   :  2011-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb  6 07:16:57 2013 (serrano)                */
+;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
 ;*=====================================================================*/
@@ -136,8 +136,9 @@
 ;*    zeroconf-publish! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-publish! #!key name port type #!rest opts)
-   (let* ((h (hostname))
-	  (i (string-index h #\.)))
+   (let* ((h (hop-server-hostname))
+	  (i (and (not (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}" h))
+		  (string-index h #\.))))
       (zeroconf-backend-publish-service! (zeroconf-backend)
 	 (string-append name "@" (if i (substring h 0 i) h))
 	 port type opts)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Dec 11 11:29:58 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb  6 07:20:58 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -385,6 +385,10 @@
       (if (hop-enable-https)
 	  (format "  https (~a): " (hop-https-protocol)) "  http: ")
       (hop-color 2 "" (hop-port)) "\n")
+   (hop-verb 1
+      "  hostname: " (hop-color 2 "" (hop-server-hostname)) "\n")
+   (hop-verb 1
+      "  hostip: " (hop-color 2 "" (hop-server-hostip)) "\n")
    (hop-verb 2
       (if (and (hop-enable-fast-server-event)
 	       (not (=fx (hop-port) (hop-fast-server-event-port))))

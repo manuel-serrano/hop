@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jan 28 11:09:16 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 07:11:17 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -689,12 +689,6 @@
    (list (base64-encode "Hop:hop")))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-server-hostname ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-server-hostname
-   (hostname))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-server-hostip ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-hostip
@@ -705,6 +699,29 @@
 	 (if (pair? addr)
 	     (cadr addr)
 	     "127.0.0.1"))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-hostname ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-hostname
+   (let ((h (hostname)))
+      (if (string=? h "localhost")
+	  ;; try to find something better
+	  (if (string=? (hop-server-hostip) "127.0.0.1")
+	      (let ((intf (find (lambda (e)
+				   (and (not (string=? (caar e) "lo"))
+					(string=? (caddr e) "ipv4")))
+			     (get-interfaces))))
+		 (if (pair? intf)
+		     ;; we got an ipv4 configured interface
+		     (let* ((ip (cadr intf))
+			    (h (hostname ip)))
+			(hop-server-hostip-set! ip)
+			(if (string? h) h ip))
+		     "localhost"))
+	      (let ((h (hostname (hop-server-hostip))))
+		 (if (string? h) h (hop-server-hostip))))
+	  h)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-scm-compile-suffix ...                                       */
