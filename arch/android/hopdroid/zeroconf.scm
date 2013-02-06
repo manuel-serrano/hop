@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Feb  6 10:23:52 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 10:30:05 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -36,8 +36,19 @@
       (unless plugin
 	 (set! plugin (android-load-plugin aphone "zeroconf")))
       (when (string=? hostname "")
-	 (with-access::androidphone aphone (model)
-	    (set! hostname model)))
+	 (if (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}"
+		(hop-server-hostname))
+	     ;; we have no correct host name, forge one out of the model
+	     ;; and mac address
+	     (with-access::androidphone aphone (model)
+		(let ((e (find (lambda (e)
+				  (equal? (hop-server-hostip) (cadr e)))
+			    (get-interfaces))))
+		   (if (pair? e)
+		       (set! hostname (format "~a (~a)" model (cadddr e)))
+		       (set! hostname model))))
+	     ;; just use the network host name
+	     (set! hostname (hop-server-hostname))))
       (when (android-send-command/result aphone plugin #\s)
 	 (onready o)
 	 (hop-verb 1 (format "  zeroconf: ~a\n"
