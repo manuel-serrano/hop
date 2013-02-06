@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Feb  6 10:24:06 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 12:56:33 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -147,3 +147,4 @@
       (zeroconf-backend-publish-service! (zeroconf-backend)
 	 (string-append name "@" hostname)
 	 port type opts)))
+

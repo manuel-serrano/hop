@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:01:04 2012                          */
-/*    Last change :  Wed Nov  7 18:34:51 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Wed Feb  6 11:05:51 2013 (serrano)                */
+/*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Java abstract class for Zeroconf implementations                 */
 /*=====================================================================*/
@@ -25,7 +25,7 @@ public abstract class HopZeroconf {
       hopdroid = h;
    }
   
-   public abstract void start();
+   public abstract void start( String hostname );
    public abstract void stop();
    public abstract String version();
    public abstract void addServiceTypeListener( final String type, final String event );

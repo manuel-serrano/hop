@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Thu Nov  8 08:51:21 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Wed Feb  6 11:03:12 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
 /*=====================================================================*/
@@ -77,7 +77,7 @@ public class HopPluginZeroconf extends HopPlugin {
 	       
 	 // begin
 	 case (byte)'s':
-	    zeroconf.start();
+	    zeroconf.start( HopDroid.read_string( ip ) );
 	    
 	    op.write( "#t".getBytes() );
 	    return;

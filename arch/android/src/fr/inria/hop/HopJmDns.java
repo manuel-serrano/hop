@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 12:03:59 2012                          */
-/*    Last change :  Tue Feb  5 16:10:42 2013 (serrano)                */
+/*    Last change :  Wed Feb  6 11:05:57 2013 (serrano)                */
 /*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The JmDns (zeroconf) Hop binding                                 */
@@ -46,7 +46,7 @@ public class HopJmDns extends HopZeroconf {
    }
    
    // start
-   public synchronized void start() {
+   public synchronized void start( String hostname ) {
       Log.d( "HopJmDms", "starting plugin..." );
       if( jmdns == null ) {
 	 try {
@@ -64,7 +64,7 @@ public class HopJmDns extends HopZeroconf {
 	       };
 	       InetAddress addr = InetAddress.getByAddress( byteaddr );
 
-	       jmdns = JmDNS.create( addr, "hop" );
+	       jmdns = JmDNS.create( addr, hostname );
 	       Log.d( "HopJmDns", "creating instance addr="
 		      + addr + " hostname=" + jmdns.getHostName() );
 	       

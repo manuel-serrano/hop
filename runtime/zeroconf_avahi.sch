@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Feb  6 09:04:27 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 10:48:11 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -96,6 +96,7 @@
 ;*    zeroconf-backend-start ::avahi ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::avahi)
+   (call-next-method)
    (thread-start!
       (instantiate::pthread
 	 (body (lambda ()

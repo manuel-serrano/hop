@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Fri Nov  9 15:12:17 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Wed Feb  6 11:03:33 2013 (serrano)                */
+/*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
 /*=====================================================================*/
@@ -51,7 +51,7 @@ public class HopNsdManager extends HopZeroconf {
 	 };
    }
    
-   public void start() {
+   public void start( String name ) {
       if( nsd == null ) {
 	 nsd = (NsdManager)hopdroid.service.getSystemService( Context.NSD_SERVICE );
 	 Log.d( "HopNsdManager", "nsd=" + nsd );

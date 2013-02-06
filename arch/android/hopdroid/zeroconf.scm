@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Feb  6 10:30:05 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 11:19:16 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -41,15 +41,10 @@
 	     ;; we have no correct host name, forge one out of the model
 	     ;; and mac address
 	     (with-access::androidphone aphone (model)
-		(let ((e (find (lambda (e)
-				  (equal? (hop-server-hostip) (cadr e)))
-			    (get-interfaces))))
-		   (if (pair? e)
-		       (set! hostname (format "~a (~a)" model (cadddr e)))
-		       (set! hostname model))))
+		(set! hostname (string-replace model #\space #\_)))
 	     ;; just use the network host name
 	     (set! hostname (hop-server-hostname))))
-      (when (android-send-command/result aphone plugin #\s)
+      (when (android-send-command/result aphone plugin #\s hostname)
 	 (onready o)
 	 (hop-verb 1 (format "  zeroconf: ~a\n"
 			(hop-color 2 ""
