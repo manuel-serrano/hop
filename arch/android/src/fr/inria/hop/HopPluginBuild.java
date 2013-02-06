@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Wed Nov  7 16:06:10 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Wed Feb  6 09:19:17 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
 /*=====================================================================*/
@@ -38,6 +38,16 @@ public class HopPluginBuild extends HopPlugin {
 	 // sdk version
 	 case (byte)'v':
 	    op.write( android.os.Build.VERSION.RELEASE.getBytes() );
+	    return;
+	    
+	 // model
+	 case (byte)'m':
+	    op.write( android.os.Build.MODEL.getBytes() );
+	    return;
+	    
+	 // product
+	 case (byte)'p':
+	    op.write( android.os.Build.PRODUCT.getBytes() );
 	    return;
       }
    }

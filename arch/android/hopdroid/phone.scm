@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Thu Nov 22 17:24:10 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb  6 09:22:43 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -20,6 +20,7 @@
    
    (export (class androidphone::phone
 	      (sdk::int read-only (get get-android-sdk))
+	      (model::int read-only (get get-android-model))
 	      (protocol::byte read-only (default 2))
 	      (initid::int read-only (default 1))
 	      (%mutex::mutex read-only (default (make-mutex))))
@@ -49,8 +50,6 @@
 (define event-table #f)
 (define event-thread #f)
 (define event-mutex (make-mutex))
-
-(define android-sdk #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    *android* ...                                                    */
@@ -92,6 +91,14 @@
    (unless build-plugin
       (set! build-plugin (android-load-plugin p "build")))
    (android-send-command/result p build-plugin #\v))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-model ...                                            */
+;*---------------------------------------------------------------------*/
+(define (get-android-model p::androidphone)
+   (unless build-plugin
+      (set! build-plugin (android-load-plugin p "build")))
+   (android-send-command/result p build-plugin #\m))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */

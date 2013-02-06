@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Feb  6 07:16:57 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 09:32:05 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -34,6 +34,7 @@
    
    (export (abstract-class zeroconf
 	      (zeroconf-init!)
+	      (hostname::bstring (default ""))
 	      (onready::procedure (default list)))
 
 	   (class zeroconf-service-event::server-event
@@ -85,6 +86,12 @@
 ;*    zeroconf-init! ::zeroconf ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (zeroconf-init! o::zeroconf)
+   (with-access::zeroconf o (hostname)
+      (when (string=? hostname "")
+	 (let* ((h (hop-server-hostname))
+		(i (and (not (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}" h))
+			(string-index h #\.))))
+	    (set! hostname (if i (substring h 0 i) h)))))
    o)
 
 ;*---------------------------------------------------------------------*/
@@ -136,9 +143,7 @@
 ;*    zeroconf-publish! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-publish! #!key name port type #!rest opts)
-   (let* ((h (hop-server-hostname))
-	  (i (and (not (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}" h))
-		  (string-index h #\.))))
+   (with-access::zeroconf (zeroconf-backend) (hostname)
       (zeroconf-backend-publish-service! (zeroconf-backend)
-	 (string-append name "@" (if i (substring h 0 i) h))
+	 (string-append name "@" hostname)
 	 port type opts)))

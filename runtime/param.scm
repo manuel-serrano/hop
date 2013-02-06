@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Feb  6 07:11:17 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 09:14:22 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -404,36 +404,6 @@
    "hop")
 
 ;*---------------------------------------------------------------------*/
-;*    hop-login-cookie-id ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-login-cookie-id
-   (format "hop@~a:~a" (hostname) 8080))
-
-;*---------------------------------------------------------------------*/
-;*    hop-login-cookie-crypt-key ...                                   */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-login-cookie-crypt-key
-   (elong->fixnum (date->seconds (current-date))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-login-cookie-time ...                                        */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-login-cookie-time
-   (* 60 60 24))
-
-;*---------------------------------------------------------------------*/
-;*    hop-port ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-port
-   8080
-   (lambda (v)
-      (if (integer? v)
-	  (begin
-	     (hop-login-cookie-id-set! (format "hop@~a:~a" (hostname) v))
-	     v)
-	  (error "hop-port" "Illegal hop port" v))))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-use-proxy
@@ -708,17 +678,19 @@
       (if (string=? h "localhost")
 	  ;; try to find something better
 	  (if (string=? (hop-server-hostip) "127.0.0.1")
-	      (let ((intf (find (lambda (e)
-				   (and (not (string=? (caar e) "lo"))
-					(string=? (caddr e) "ipv4")))
-			     (get-interfaces))))
-		 (if (pair? intf)
-		     ;; we got an ipv4 configured interface
-		     (let* ((ip (cadr intf))
-			    (h (hostname ip)))
-			(hop-server-hostip-set! ip)
-			(if (string? h) h ip))
-		     "localhost"))
+	      (begin
+		 (flush-output-port (current-error-port))
+		 (let ((intf (find (lambda (e)
+				      (flush-output-port (current-error-port))
+				      (and (not (string=? (car e) "lo"))
+					   (string=? (caddr e) "ipv4")))
+				(get-interfaces))))
+		    (if (pair? intf)
+			;; we got an ipv4 configured interface
+			(let ((ip (cadr intf)))
+			   (hop-server-hostip-set! ip)
+			   (hostname ip))
+			"localhost")))
 	      (let ((h (hostname (hop-server-hostip))))
 		 (if (string? h) h (hop-server-hostip))))
 	  h)))
@@ -1309,3 +1281,35 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-rc-loaded?)
    *hop-rc-loaded*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-login-cookie-id ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-login-cookie-id
+   (format "hop@~a:~a" (hop-server-hostname) 8080))
+
+;*---------------------------------------------------------------------*/
+;*    hop-login-cookie-crypt-key ...                                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-login-cookie-crypt-key
+   (elong->fixnum (date->seconds (current-date))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-login-cookie-time ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-login-cookie-time
+   (* 60 60 24))
+
+;*---------------------------------------------------------------------*/
+;*    hop-port ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-port
+   8080
+   (lambda (v)
+      (if (integer? v)
+	  (begin
+	     (hop-login-cookie-id-set!
+		(format "hop@~a:~a" (hop-server-hostname) v))
+	     v)
+	  (error "hop-port" "Illegal hop port" v))))
+

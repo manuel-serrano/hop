@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Fri Nov  9 14:37:05 2012 (serrano)                */
-;*    Copyright   :  2011-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb  6 09:31:46 2013 (serrano)                */
+;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
 ;*=====================================================================*/
@@ -21,6 +21,14 @@
    (export (class androidzeroconf::zeroconf
 	      (android::androidphone read-only (default (instantiate::androidphone)))
 	      (plugin (default #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    zeroconf-init! ::androidzeroconf ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (zeroconf-init! o::androidzeroconf)
+   (with-access::androidzeroconf o (hostname android)
+      (set! hostname (get-android-sdk android)))
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-debug ...                                               */
