@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Feb  6 09:55:29 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 10:14:13 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -19,7 +19,7 @@
    (import __hopdroid-tts)
    
    (export (class androidphone::phone
-	      (sdk::int read-only (get get-android-sdk))
+	      (sdk::bstring read-only (get get-android-sdk))
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
 	      (protocol::byte read-only (default 2))
@@ -89,8 +89,10 @@
 ;*    get-android-build ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (get-android-build p::androidphone cmd)
+   (tprint ">> LOAD BUILD PLUGIN...")
    (unless build-plugin
       (set! build-plugin (android-load-plugin p "build")))
+   (tprint "<<< LOAD BUILD PLUGIN...")
    (android-send-command/result p build-plugin cmd))
 
 ;*---------------------------------------------------------------------*/
@@ -103,6 +105,7 @@
 ;*    get-android-model ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (get-android-model p::androidphone)
+   (tprint "GET MODEL...")
    (get-android-build p #\m))
 
 ;*---------------------------------------------------------------------*/
