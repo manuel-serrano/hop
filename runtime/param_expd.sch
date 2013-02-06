@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:17:19 2006                          */
-;*    Last change :  Wed Feb  6 13:16:13 2013 (serrano)                */
+;*    Last change :  Wed Feb  6 13:33:25 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parameters expander                                              */
@@ -25,7 +25,7 @@
 			  v)
 		      x)
 	  ,@(if (pair? setter)
-		(evepairify `((,set (,id))) x)
+		(list (evepairify `(,set (,id)) x))
 		'()))))
 
 ;*---------------------------------------------------------------------*/
