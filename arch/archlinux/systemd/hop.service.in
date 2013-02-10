@@ -5,9 +5,8 @@ Description=Hop Web Broker
 Type=oneshot
 RemainAfterExit=yes
 EnvironmentFile=/etc/conf.d/hop
-ExecStart=${DAEMON} -p ${PORT} --eval "(hop-user-set! \"${DAEMONUSER}\")" --acept-kill ${DAEMON_ARGS}
-Execstop=${DAEMON} -p ${PORT} --eval "(hop-user-set! \"${DAEMONUSER}\")" --kill ${DAEMON_ARGS}
+ExecStart=${DAEMON} -p ${PORT} --eval "(hop-user-set! \"${DAEMONUSER}\")" --acept-kill ${DAEMONARGS}
+Execstop=${DAEMON} -p ${PORT} --eval "(hop-user-set! \"${DAEMONUSER}\")" --kill ${DAEMONARGS}
 
 [Install]
 WantedBy=multi-user.target
-
