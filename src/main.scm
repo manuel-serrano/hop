@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Feb  5 15:55:51 2013 (serrano)                */
+;*    Last change :  Sun Feb 10 17:26:48 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -87,8 +87,6 @@
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
    (let ((files (parse-args args)))
-      ;; set the hop process owner
-      (set-hop-owner! (hop-user))
       ;; install the builtin filters
       (hop-filter-add! service-filter)
       ;; prepare the regular http handling
@@ -225,34 +223,6 @@
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
-
-;*---------------------------------------------------------------------*/
-;*    set-hop-owner! ...                                               */
-;*---------------------------------------------------------------------*/
-(define (set-hop-owner! user)
-
-   (define (err)
-      (error "hop"
-	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
-	     "If you know what you are doing and want to run Hop with the
-`root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
-
-   (cond
-      ((not (=fx (getuid) 0))
-       #unspecified)
-      ((not (pair? (getpwnam "root")))
-       #unspecified)
-      ((eq? user 'root)
-       #unspecified)
-      ((string? user)
-       (let ((pw (getpwnam user)))
-	  (if (pair? pw)
-	      (setuid (caddr pw))
-	      (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user))))
-      (user
-       (err))
-      (else
-       #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */

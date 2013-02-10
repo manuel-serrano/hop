@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/2.4.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Apr  9 10:50:43 2012 (serrano)                */
-#*    Copyright   :  2004-12 Manuel Serrano                            */
+#*    Last change :  Sun Feb 10 17:33:05 2013 (serrano)                */
+#*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -41,6 +41,7 @@ JAVAC		= @JAVAC@
 MODFILE		= 644
 MODDIR		= 755
 MODEXE		= 755
+MODEXEUID	= 4755
 
 INSTALL		= @INSTALL@
 

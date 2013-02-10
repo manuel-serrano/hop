@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 15:17:26 2013 (serrano)                */
+;*    Last change :  Sun Feb 10 18:04:20 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -244,6 +244,12 @@
       (hop-port-set! p)
       (when (eq? ep #unspecified) (set! ep p))
       
+      ;; Hop version
+      (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
+
+      ;; set the hop process owner
+      (set-hop-owner! (hop-user))
+
       ;; log
       (when log-file
 	 (let ((p (append-output-file log-file)))
@@ -309,9 +315,6 @@
       (init-hop-services!)
       (init-hop-widgets!)
 
-      ;; Hop version
-      (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
-
       ;; hoprc
       (if loadp
 	  (begin
@@ -321,7 +324,10 @@
 	     :services '(home doc epassword wizard hz/list shutdown)
 	     :directories (hop-path)
 	     :preferences-filename #f))
-      
+
+      ;; set the hop process owner
+      (set-hop-owner! (hop-user))
+
       ;; kill
       (when killp
 	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
@@ -377,6 +383,38 @@
 				  (hop-process-key-delete (hop-port))
 				  ret))
       (reverse files)))
+
+;*---------------------------------------------------------------------*/
+;*    set-hop-owner! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (set-hop-owner! user)
+
+   (define (err)
+      (error "hop"
+	     "Hop is not allowed to be executed as `root'. Create a dedicated Hop user to run Hop on behalf of.\n"
+	     "If you know what you are doing and want to run Hop with the
+`root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
+
+   (cond
+      ((not (pair? (getpwnam "root")))
+       #unspecified)
+      ((not user)
+       #unspecified)
+      ((string? user)
+       (if (string=? user "root")
+	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
+	   (let ((pw (getpwnam user)))
+	      (if (pair? pw)
+		  (let ((uid (caddr pw)))
+		     (unless (=fx (getuid) uid)
+			(hop-verb 2 "  switch to user: "
+			   (hop-color 2 "" user) " (" uid ")\n")
+			(setuid uid)))
+		  (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)))))
+      (user
+       (err))
+      (else
+       #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hello-world ...                                                  */
@@ -468,6 +506,7 @@
    (let ((dir (hop-rc-directory)))
       (when (directory? dir)
 	 (let ((path (make-file-name dir (key-filename port))))
+	    (hop-verb 3 "  key process file: " (hop-color 4 "" path) "\n")
 	    (when (file-exists? path) (delete-file path))
 	    (with-output-to-file path (lambda () (display key)))
 	    (chmod path #o600)))))
