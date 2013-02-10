@@ -2,5 +2,9 @@
 
 . /etc/conf.d/hop 
 
-/usr/bin/hop "$@ ${DAEMONARGS}"
+if [ $3 == "--kill" ]; then
+  /bin/sh -c "/usr/bin/hop $* ${DAEMONARGS}"
+else
+  /bin/sh -c "/usr/bin/hop $* ${DAEMONARGS} &"
+fi
 

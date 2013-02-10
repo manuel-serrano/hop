@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 18:51:14 2013 (serrano)                */
+;*    Last change :  Sun Feb 10 20:26:43 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -406,7 +406,6 @@
       ((not user)
        #unspecified)
       ((string? user)
-       (tprint "USER=" user)
        (if (string=? user "root")
 	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
 	   (let ((pw (getpwnam user)))
