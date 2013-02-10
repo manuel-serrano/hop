@@ -35,6 +35,7 @@ package() {
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $startdir/pkg/usr/lib/systemd/system/hop.socket
   chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.service
   chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.socket
+  mkdir -p $startdir/pkg/usr/sbin
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $startdir/pkg/usr/sbin/hop
   chmod a+rx $startdir/pkg/usr/sbin/hop
 }
