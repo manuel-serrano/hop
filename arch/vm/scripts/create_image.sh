@@ -28,6 +28,14 @@ if [ $# -lt 2 ]; then
    exit 1
 fi
 
+# check /dev/loop first
+if [ ! -b /dev/loop0 ]; then
+  echo "*** ERROR: /dev/loop0 does not exist"
+  echo "check if the kernel \"loop\" module is correctly loaded."
+  echo "Try \"sudo modprobe loop\" to load it."
+  exit 1
+fi
+
 # params
 raw_img=$1
 img_size=$2

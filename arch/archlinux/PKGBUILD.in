@@ -7,8 +7,8 @@ pkgdesc="a Software Development Kit for the Web"
 url='http://hop.inria.fr'
 license=('GPL' 'LGPL')
 arch=('i686' 'x86_64' 'arm')
-depends=('bigloo>=4.0a')
-makedepends=('bigloo>=4.0a')
+depends=('bigloo>=@BGLVERSION@')
+makedepends=('bigloo>=@BGLVERSION@')
 install=hop.install
 source=(ftp://ftp-sop.inria.fr/indes/fp/Hop/$pkgname-$pkgver.tar.gz)
 md5sums=('@MD5SUM@')
@@ -23,7 +23,7 @@ package() {
   cd $startdir/src/$pkgname-$pkgver
   make DESTDIR=$startdir/pkg install
   mkdir -p $startdir/pkg/etc/conf.d
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d/hop
   chmod a+rx $startdir/pkg/etc/conf.d/hop
   mkdir -p $startdir/pkg/etc/rc.d
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop

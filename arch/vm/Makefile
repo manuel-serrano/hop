@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Wed Jun  6 11:16:56 2012 (serrano)                */
-#*    Copyright   :  2011-12 Manuel Serrano                            */
+#*    Last change :  Fri Feb  8 09:44:52 2013 (serrano)                */
+#*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
 #*=====================================================================*/
@@ -21,7 +21,7 @@ do: qemu
 #*    Default settings                                                 */
 #*---------------------------------------------------------------------*/
 IMGSIZE = 4G
-WEBLETS = hoptex-1.2.0.hz popart-api-1.0.0.hz hopslide-2.5.4.hz
+WEBLETS = hoptex-1.4.3.hz popart-api-1.0.0.hz hopslide-2.5.6.hz
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -39,27 +39,28 @@ POPDIRS =
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: qemu qemu+ virtualbox virtualbox+ vmware vmware+
+.PHONY: qemu qemu+ virtualbox virtualbox+ vmware vmware+ do
+
+do: virtualbox+
 
 $(HOPTMPDIR)/hop.hdd:
 	sudo scripts/create_image.sh $(HOPTMPDIR)/hop.hdd $(IMGSIZE)
 	sudo chown $(USER) $(HOPTMPDIR)/hop.hdd
-
-hop-install: $(HOPTMPDIR)/hop.hdd
 	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop.hdd $(RELEASE) $(HOPRELEASE)
 
-hop-install+: $(HOPTMPDIR)/hop.hdd
-	mv $(HOPTMPDIR)/hop.hdd $(HOPTMPDIR)/hop+.hdd
+$(HOPTMPDIR)/hop+.hdd:
+	sudo scripts/create_image.sh $(HOPTMPDIR)/hop+.hdd $(IMGSIZE)
+	sudo chown $(USER) $(HOPTMPDIR)/hop+.hdd
 	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop+.hdd $(RELEASE) $(HOPRELEASE) $(WEBLETS:%=$(REPOSITORY/%))
 
 $(HOPTMPDIR)/hop.vmdk: $(HOPTMPDIR)/hop.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop
 
-$(HOPTMPDIR)/hop+.vmdk: $(HOPTMPDIR)/hop.hdd
+$(HOPTMPDIR)/hop+.vmdk: $(HOPTMPDIR)/hop+.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop+
 
-qemu: hop-install
-qemu+: hop-install+
+qemu: $(HOPTMPDIR)/hop.hdd
+qemu+: $(HOPTMPDIR)/hop+.hdd
 
 virtualbox: $(HOPTMPDIR)/hop.vmdk
 virtualbox+: $(HOPTMPDIR)/hop+.vmdk
