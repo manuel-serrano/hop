@@ -28,7 +28,7 @@ package() {
   mkdir -p $startdir/pkg/etc/rc.d
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop
   chmod a+rx $startdir/pkg/etc/rc.d/hop
-  mkdir -p $startdir/pkg/usr/lib/sytemd/system
+  mkdir -p $startdir/pkg/usr/lib/systemd/system
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $startdir/pkg/usr/lib/systemd/system/hop.service
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $startdir/pkg/usr/lib/systemd/system/hop.socket
   chmod a+rx $startdir/pkg/usr/lib/systemd/system/hop.service
