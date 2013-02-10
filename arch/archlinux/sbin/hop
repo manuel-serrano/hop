@@ -1,0 +1,6 @@
+#! /bin/sh
+
+. /etc/conf.d/hop 
+
+/usr/bin/hop "$@ ${DAEMONARGS}"
+

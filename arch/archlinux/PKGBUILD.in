@@ -23,14 +23,18 @@ package() {
   cd $startdir/src/$pkgname-$pkgver
   make DESTDIR=$startdir/pkg install
   mkdir -p $startdir/pkg/etc/conf.d
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d/hop
-  chmod a+rx $startdir/pkg/etc/conf.d/hop
+  if [ ! -f $startdir/pkg/etc/conf.d/hop ]; then
+    cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d/hop
+    chmod a+rx $startdir/pkg/etc/conf.d/hop
+  fi
   mkdir -p $startdir/pkg/etc/rc.d
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop
   chmod a+rx $startdir/pkg/etc/rc.d/hop
   mkdir -p $startdir/pkg/usr/lib/systemd/system
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $startdir/pkg/usr/lib/systemd/system/hop.service
   cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $startdir/pkg/usr/lib/systemd/system/hop.socket
-  chmod a+rx $startdir/pkg/usr/lib/systemd/system/hop.service
-  chmod a+rx $startdir/pkg/usr/lib/systemd/system/hop.socket
+  chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.service
+  chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.socket
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $startdir/pkg/usr/sbin/hop
+  chmod a+rx $startdir/pkg/usr/sbin/hop
 }
