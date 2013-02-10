@@ -5,7 +5,7 @@ Description=Hop Web Broker
 Type=forking
 EnvironmentFile=/etc/conf.d/hop
 ExecStart=/usr/sbin/hop -p ${PORT} --accept-kill --user ${DAEMONUSER}
-ExecStop=/usr/bin/hop -p ${PORT} --kill --user ${DAEMONUSER}
+ExecStop=/usr/sbin/hop -p ${PORT} --kill --user ${DAEMONUSER}
 
 [Install]
 WantedBy=multi-user.target
