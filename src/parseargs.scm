@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 18:04:20 2013 (serrano)                */
+;*    Last change :  Sun Feb 10 18:30:00 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -396,11 +396,14 @@
 `root' permissions, edit the Hop configuration file and set the appropriate `hop-user' value."))
 
    (cond
+      ((not (=fx (getuid) 0))
+       #unspecified)
       ((not (pair? (getpwnam "root")))
        #unspecified)
       ((not user)
        #unspecified)
       ((string? user)
+       (tprint "USER=" user)
        (if (string=? user "root")
 	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
 	   (let ((pw (getpwnam user)))
