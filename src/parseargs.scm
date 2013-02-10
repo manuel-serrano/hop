@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 18:30:00 2013 (serrano)                */
+;*    Last change :  Sun Feb 10 18:51:14 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -45,7 +45,8 @@
 	 (killp #f)
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
-	 (clear-cache #f))
+	 (clear-cache #f)
+	 (setuser #f))
       
       (bigloo-debug-set! 0)
 
@@ -195,7 +196,7 @@
 	 ((("-k" "--kill") (help "Kill the running local HOP and exit"))
 	  (set! killp #t))
 	 (("--user" ?user (help "Set Hop process owner"))
-	  (hop-user-set! user))
+	  (set! setuser user))
 	 (("--no-user" (help "Don't attempt to set the Hop process owner"))
 	  (hop-user-set! #f))
 	 
@@ -248,7 +249,9 @@
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
       ;; set the hop process owner
-      (set-hop-owner! (hop-user))
+      (when setuser
+	 (hop-user-set! setuser)
+	 (set-hop-owner! setuser))
 
       ;; log
       (when log-file
