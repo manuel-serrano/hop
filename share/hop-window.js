@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Tue Nov 13 08:06:15 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Sun Feb 17 08:30:52 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -273,7 +273,6 @@ function hop_iwindow_drag( event, win ) {
    var dx = hop_event_mouse_x( event ) - win.offsetLeft;
    var dy = hop_event_mouse_y( event ) - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
-   var obg = node_computed_style_get( win.el_win, "background" );
    var p = win.parentNode;
    var px = hop_element_x( p );
    var py = hop_element_y( p );
@@ -282,7 +281,6 @@ function hop_iwindow_drag( event, win ) {
 
    node_style_set( win.el_content, "visibility", "hidden" );
    node_style_set( win.el_handle, "cursor", "move" );
-   node_style_set( win.el_win, "background", "white" );
 
    var mousemove = function( event ) {
       var nx = (hop_event_mouse_x( event ) - dx);
@@ -319,7 +317,6 @@ function hop_iwindow_drag( event, win ) {
       hop_remove_event_listener( document, "mouseup", mouseup );
       node_style_set( win.el_handle, "cursor", ocursor );
       node_style_set( win.el_content, "visibility", "visible" );
-      node_style_set( win.el_win, "background", obg );
 
       /* clip the window */
       if( win.clip ) hop_iwindow_clip( win );

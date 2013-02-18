@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Mon Nov 26 14:51:35 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Mon Feb 18 09:01:25 2013 (serrano)                */
+/*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
 /*=====================================================================*/

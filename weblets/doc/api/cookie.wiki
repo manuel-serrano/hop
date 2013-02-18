@@ -73,7 +73,7 @@ one the client:
 
   (instantiate::http-response-string
      (body "Cookie \"Foo\" installed")
-     (header '(("Set-Cookie:" . "Foo=\"foo\"; Max-Age=60"))))
+     (header '((Set-Cookie: . "Foo=\"foo\"; Max-Age=60"))))
 
 
 </procedure>

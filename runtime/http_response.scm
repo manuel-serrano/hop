@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Dec 28 10:41:31 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Sat Feb 16 07:28:36 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -109,60 +109,63 @@
 	       (http-write-content-type p content-type charset)
 	       (http-write-line-string p "Server: " server)
 	       ;; the body
-	       (with-trace 4 "http-response-js"
-		  (when bodyp
-		     ;; the content-type tells Hop how to serialize the value
-		     (cond
-			((string=? content-type "application/x-hop")
-			 (with-access::http-request request (header)
-			    ;; check what the client can do
-			    (let ((c (assq hop-serialize: header)))
-			       (cond
-				  ((not (pair? c))
-				   ;; hop backward compatibility
-				   (set! conn 'close)
+	       (when bodyp
+		  ;; the content-type tells Hop how to serialize the value
+		  (cond
+		     ((not (string? content-type))
+		      (error "http-response"
+			 "No serialization method specified"
+			 content-type))
+		     ((string=? content-type "application/x-hop")
+		      (with-access::http-request request (header)
+			 ;; check what the client can do
+			 (let ((c (assq hop-serialize: header)))
+			    (cond
+			       ((not (pair? c))
+				;; hop backward compatibility
+				(set! conn 'close)
+				(http-write-line p "Connection: " conn)
+				(http-write-line p)
+				(obj->javascript-expr value p))
+			       ((string=? (cdr c) "arraybuffer")
+				;; fast path
+				(let ((s (obj->string value)))
+				   (http-write-line p "Content-Length: " (string-length s))
 				   (http-write-line p "Connection: " conn)
 				   (http-write-line p)
-				   (obj->javascript-expr value p))
-				  ((string=? (cdr c) "arraybuffer")
-				   ;; fast path
-				   (let ((s (obj->string value)))
-				      (http-write-line p "Content-Length: " (string-length s))
-				      (http-write-line p "Connection: " conn)
-				      (http-write-line p)
-				      (display s p)))
-				  (else
-				   ;; slow explicity javascript serialization 
-				   (set! conn 'close)
-				   (http-write-line p "Connection: " conn)
-				   (http-write-line p)
-				   (byte-array->json (obj->string value) p))))))
-			((string=? content-type "application/x-javascript")
-			 (set! conn 'close)
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-			 (if padding
-			     (begin
-				(display padding p)
-				(display "(" p)
-				(obj->javascript-expr value p)
-				(display ")" p))
-			     (obj->javascript-expr value p)))
-			((string=? content-type "application/json")
-			 (set! conn 'close)
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-                         (if padding
-			     (begin
-				(display padding p)
-				(display "(" p)
-				(obj->json value p)
-				(display ")" p))
-			     (obj->json value p)))
-			(else
-			 (error "http-response"
-			    "Unspported serialization method"
-			    content-type)))))
+				   (display s p)))
+			       (else
+				;; slow explicity javascript serialization 
+				(set! conn 'close)
+				(http-write-line p "Connection: " conn)
+				(http-write-line p)
+				(byte-array->json (obj->string value) p))))))
+		     ((string=? content-type "application/x-javascript")
+		      (set! conn 'close)
+		      (http-write-line p "Connection: " conn)
+		      (http-write-line p)
+		      (if padding
+			  (begin
+			     (display padding p)
+			     (display "(" p)
+			     (obj->javascript-expr value p)
+			     (display ")" p))
+			  (obj->javascript-expr value p)))
+		     ((string=? content-type "application/json")
+		      (set! conn 'close)
+		      (http-write-line p "Connection: " conn)
+		      (http-write-line p)
+		      (if padding
+			  (begin
+			     (display padding p)
+			     (display "(" p)
+			     (obj->json value p)
+			     (display ")" p))
+			  (obj->json value p)))
+		     (else
+		      (error "http-response"
+			 "Unspported serialization method"
+			 content-type))))
 	       (flush-output-port p)
 	       conn)))))
 

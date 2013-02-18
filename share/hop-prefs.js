@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop-prefs.js                */
+/*    serrano/prgm/project/hop/2.4.x/share/hop-prefs.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Thu Jan  6 10:11:51 2011 (serrano)                */
-/*    Copyright   :  2008-11 Manuel Serrano                            */
+/*    Last change :  Mon Feb 11 08:21:58 2013 (serrano)                */
+/*    Copyright   :  2008-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
 /*=====================================================================*/
@@ -68,9 +68,9 @@ function hop_prefs_editor_number( event, value, name, parse, type, key ) {
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_editor_bool ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_prefs_editor_bool( event, inp, name, parse, type, key ) {
-   if( !parse || parse( inp.value ) ) {
-      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, inp.value, key ] );
+function hop_prefs_editor_bool( event, value, name, parse, type, key ) {
+   if( !parse || parse( value ) ) {
+      var svc = hop_apply_url( hop_prefs_edit_svc, [ name, type, value, key ] );
       
       with_hop( svc, hop_prefs_callback );
    }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Jan  7 07:44:15 2013 (serrano)                */
+/*    Last change :  Mon Feb 18 09:04:58 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -450,6 +450,11 @@ public class HopLauncher extends Activity {
       } catch( Throwable _ ) {
 	 onresume_wifi_policy = 0;
       }
+
+      // Notify the client
+      if( hopservice != null ) {
+	 hopservice.hopdroid.pushEvent( "resume" , "" );
+      }
    }
 
    @Override
@@ -460,6 +465,11 @@ public class HopLauncher extends Activity {
       // restore the wifi policy
       if( onresume_wifi_policy != 0 ) {
 	 setWifiPolicy( onresume_wifi_policy );
+      }
+      
+      // Notify the client
+      if( hopservice != null ) {
+	 hopservice.hopdroid.pushEvent( "pause" , "" );
       }
    }
 
