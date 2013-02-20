@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Mon Feb 18 08:58:35 2013 (serrano)                */
+/*    Last change :  Wed Feb 20 20:20:40 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -55,8 +55,7 @@ public class HopPluginMusicPlayer extends HopPlugin {
    // create a media player
    private MediaPlayer make_mediaplayer() {
       MediaPlayer mplayer = new MediaPlayer();
-      mMediaPlayer.setWakeMode( hopdroid, //getApplicationContext(),
-				PowerManager.PARTIAL_WAKE_LOCK );
+      mplayer.setWakeMode( hopdroid.service, PowerManager.PARTIAL_WAKE_LOCK );
       Log.v( "HopPluginMusicPlayer", "********** make mediaplayer..." );
       
       mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {

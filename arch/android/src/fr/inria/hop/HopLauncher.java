@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Feb 18 09:04:58 2013 (serrano)                */
+/*    Last change :  Wed Feb 20 20:23:30 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -452,7 +452,7 @@ public class HopLauncher extends Activity {
       }
 
       // Notify the client
-      if( hopservice != null ) {
+      if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "resume" , "" );
       }
    }
@@ -468,7 +468,7 @@ public class HopLauncher extends Activity {
       }
       
       // Notify the client
-      if( hopservice != null ) {
+      if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "pause" , "" );
       }
    }
