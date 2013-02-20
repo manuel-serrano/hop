@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Wed Feb  6 10:48:11 2013 (serrano)                */
+;*    Last change :  Mon Feb 18 09:40:50 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -115,15 +115,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-stop ::avahi ...                                */
 ;*---------------------------------------------------------------------*/
-;* (define-method (zeroconf-backend-stop o::avahi)                     */
-;*    (with-access::avahi o (poll state lock)                          */
-;*       (avahi-simple-poll-timeout poll                               */
-;* 	 0                                                             */
-;* 	 (lambda ()                                                    */
-;* 	    (avahi-simple-poll-quit poll)))                            */
-;*       (mutex-lock! lock)                                            */
-;*       (set! state 'close)                                           */
-;*       (mutex-unlock! lock)))                                        */
+(define-method (zeroconf-backend-stop o::avahi)
+   (with-access::avahi o (poll state lock)
+      (avahi-simple-poll-timeout poll
+	 0
+	 (lambda ()
+	    (avahi-simple-poll-quit poll)))
+      (mutex-lock! lock)
+      (set! state 'close)
+      (mutex-unlock! lock)))
 
 ;*---------------------------------------------------------------------*/
 ;*    client-callback ...                                              */

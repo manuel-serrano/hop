@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Wed Feb  6 12:56:33 2013 (serrano)                */
+;*    Last change :  Mon Feb 18 09:40:39 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -51,6 +51,7 @@
 	   (zeroconf-register-backend! ::zeroconf)
 	   
 	   (generic zeroconf-backend-start ::zeroconf)
+	   (generic zeroconf-backend-stop ::zeroconf)
 	   
 	   (generic zeroconf-backend-publish-service! ::zeroconf
 	      ::bstring ::int ::bstring ::pair-nil)
@@ -107,7 +108,13 @@
    (synchronize *zeroconf-mutex*
       (unless *zeroconf-started*
 	 (set! *zeroconf-started* #t)
-	 (zeroconf-backend-start (zeroconf-backend)))))
+	 (zeroconf-backend-start (zeroconf-backend))
+	 (register-exit-function!
+	    (lambda (ret)
+	       (synchronize *zeroconf-mutex*
+		  (when *zeroconf-started*
+		     (set! *zeroconf-started* #f)
+		     (zeroconf-backend-stop (zeroconf-backend)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ...                                       */
@@ -121,6 +128,12 @@
 	    (set! hostname (if i (substring h 0 i) h)))))
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    zeroconf-backend-stop ::zeroconf ...                             */
+;*---------------------------------------------------------------------*/
+(define-generic (zeroconf-backend-stop o::zeroconf)
+   #f)
+   
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-add-service-event-listener! ::zeroconf ...      */
 ;*---------------------------------------------------------------------*/

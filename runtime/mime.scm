@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/runtime/mime.scm                  */
+;*    serrano/prgm/project/hop/2.4.x/runtime/mime.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
-;*    Last change :  Tue Sep  6 16:58:24 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed Feb 20 07:43:05 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
 ;*=====================================================================*/
@@ -15,6 +15,7 @@
 (module __hop_mime
 
    (export (mime-type ::bstring ::obj)
+	   (mime-types ::bstring)
 	   (mime-type-add! ::bstring ::bstring)
 	   (mime-type-add-list! ::pair-nil)
 	   (mime-type-parse ::input-port)
@@ -37,13 +38,22 @@
 ;*    mime-type ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mime-type path default)
-   (or (hashtable-get *mime-types-table* path) default))
+   (let ((l (hashtable-get *mime-types-table* path)))
+      (if (pair? l)
+	  (car l)
+	  default)))
+
+;*---------------------------------------------------------------------*/
+;*    mime-types ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (mime-types path)
+   (or (hashtable-get *mime-types-table* path) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-type-add! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (mime-type-add! mimetype suffix)
-   (hashtable-put! *mime-types-table* suffix mimetype))
+   (hashtable-add! *mime-types-table* suffix cons mimetype '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-type-add-list! ...                                          */
