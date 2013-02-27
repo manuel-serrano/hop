@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Dec 21 15:51:18 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb 27 09:26:54 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
 ;*=====================================================================*/
@@ -477,58 +477,56 @@
 	  (head (car spage.heads))
 	  (sphead spage.sphead)
 	  (spheadcontent (dom-first-child sphead))
-	  (spheadbutton (dom-last-child sphead)))
+	  (spheadbutton (dom-last-child sphead))
+	  (tabs spage.tabs)
+	  (tbody (car tabs)))
       (set! spage.heads (cdr spage.heads))
-      (innerHTML-set! (dom-first-child spheadbutton) (car head))
-      (innerHTML-set! spheadcontent (cdr head))
+      (innerHTML-set! (dom-first-child spheadbutton) (caddr head))
+      (innerHTML-set! (dom-first-child (dom-first-child tbody.tab)) (car head))
+      (innerHTML-set! spheadcontent (cadr head))
       (spage-pop spage)
       (when (= spage.num 0)
 	 (set! spheadbutton.className ""))))
 
+;*---------------------------------------------------------------------*/
+;*    spage-push-body ...                                              */
+;*---------------------------------------------------------------------*/
+(define (spage-push-body tab body)
+   (let* ((spage (find-spage tab))
+	  (sphead spage.sphead)
+	  (spheadcontent (dom-first-child sphead))
+	  (spheadbutton (dom-last-child sphead))
+	  (tabhead (dom-first-child (dom-first-child tab))))
+      ;; reparent the tab nodes
+      (let ((button (dom-child-nodes (dom-first-child spheadbutton)))
+	    (content (dom-child-nodes spheadcontent))
+	    (tab (dom-child-nodes tabhead)))
+	 (set! spage.heads (cons (list tab content button) spage.heads))
+	 (innerHTML-set! (dom-first-child spheadbutton) content)
+	 (innerHTML-set! spheadcontent tab))
+      (set! spheadbutton.className "visible")
+      (spage-push spage tab body)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    spage-push-service ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-service tab svc)
    (with-hop (svc)
       (lambda (body)
-	 (let* ((spage (find-spage tab))
-		(sphead spage.sphead)
-		(spheadcontent (dom-first-child sphead))
-		(spheadbutton (dom-last-child sphead))
-		(tabhead (dom-first-child (dom-first-child tab))))
-	    (set! tab.svc svc)
-	    (set! tab.static-node #unspecified)
-	    (set! spage.heads
-	       (cons (cons spheadbutton.innerHTML spheadcontent.innerHTML)
-		  spage.heads))
-	    (innerHTML-set! (dom-first-child spheadbutton)
-	       spheadcontent.innerHTML)
-	    (innerHTML-set! spheadcontent tabhead.innerHTML)
-	    (set! spheadbutton.className "visible")
-	    (spage-push spage tab body)))))
+	 (set! tab.svc svc)
+	 (set! tab.static-node #unspecified)
+	 (spage-push-body tab body))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    spage-push-node ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-node tab node)
-   (let* ((spage (find-spage tab))
-	  (sphead spage.sphead)
-	  (spheadcontent (dom-first-child sphead))
-	  (spheadbutton (dom-last-child sphead))
-	  (tabhead (dom-first-child (dom-first-child tab))))
-      (set! spage.heads (cons (cons spheadbutton.innerHTML
-				    spheadcontent.innerHTML)
-			      spage.heads))
-      (innerHTML-set! (dom-first-child spheadbutton) spheadcontent.innerHTML)
-      (innerHTML-set! spheadcontent tabhead.innerHTML)
-      (set! spheadbutton.className "visible")
-      ;; save the static-body that will be restore when poped
-      (let ((p (dom-parent-node node)))
-	 (set! tab.static-node node)
-	 (set! tab.static-body p)
-	 (dom-remove-child! p node))
-      ;; push the new tab
-      (spage-push spage tab node)))
+   ;; save the static-body that will be restore when poped
+   (let ((p (dom-parent-node node)))
+      (set! tab.static-node node)
+      (set! tab.static-body p)
+      (dom-remove-child! p node))
+   (spage-push-body tab node))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-update ...                                             */

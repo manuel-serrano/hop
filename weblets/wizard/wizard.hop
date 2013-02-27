@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Nov  9 10:10:20 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Wed Feb 27 15:17:06 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -196,8 +196,9 @@
 						:id "apasswd"
 						:size 30))))))
 		     (<TR> (<TD> :class "comment"
-			      [This user is granted administration permissions.
-He may install/uninstall softwares. He may add/delete users. Etc.])))))))
+			      [This Hop user is granted administration
+permissions. He may install/uninstall Hop softwares (aka Hop weblets). He
+may add/delete Hop users. Etc.])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PLAIN-USER> ...                                                 */

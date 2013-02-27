@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat Jan 19 10:16:10 2013 (serrano)                */
+/*    Last change :  Wed Feb 27 09:23:05 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -36,7 +36,7 @@ function dom_add_child( id, e ) {
    }
 
    function add( e ) {
-      if( hop_is_html_element( e ) ) {
+      if( (e instanceof Node) || hop_is_html_element( e ) ) {
 	 /* we no longer need to clone a node, even if it is already  */
 	 /* in the document because the server side implementation    */
 	 /* of dom-add-child checks if the node is already in the     */

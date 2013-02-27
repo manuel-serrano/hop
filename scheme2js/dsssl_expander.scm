@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-09 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -30,7 +30,7 @@
        (let* ((dsssl-error (lambda (p m o) (scheme2js-error p m o exp)))
 	      (formals (dsssl-formals->scheme-formals proto dsssl-error))
 	      (nbody (make-dsssl-function-prelude
-		      exp proto (walk! `(begin ,@body)) dsssl-error)))
+		      exp proto (walk! `(let () ,@body)) dsssl-error)))
 	  (set-car! (cdr exp) formals)
 	  (set-car! (cddr exp) nbody)
 	  (set-cdr! (cddr exp) '())
