@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Jan  5 17:39:06 2013 (serrano)                */
+/*    Last change :  Thu Feb 28 14:44:55 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -94,7 +94,7 @@ public class HopDroid extends Thread {
 	    registerPlugin( new HopPluginCall( this, "call" ) );
 	 }
 
-	 // create the two servers
+	 // create the three servers
 	 pluginserv = new HopLocalServerSocket( "hopdroid-plugin:" + Hop.port );
 	 eventserv = new HopLocalServerSocket( "hopdroid-event:" + Hop.port );
 	 cmdserv = new HopLocalServerSocket( "hopdroid-cmd:" + Hop.port );
