@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Feb 27 09:26:54 2013 (serrano)                */
+;*    Last change :  Fri Mar  1 10:26:33 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -34,7 +34,8 @@
 	   (spage-tab spage)
 	   (spage-depth spage)
 	   (spage-current-tab spage)
-	   (find-spage id)))
+	   (find-spage id)
+	   (find-sptab id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-init ...                                                   */
@@ -446,20 +447,32 @@
 	 (loop))))
 
 ;*---------------------------------------------------------------------*/
-;*    find-spage ...                                                   */
+;*    find-spage-tag ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (find-spage el)
+(define (find-spage-tag el tag)
    (let ((el (if (string? el)
 		 (dom-get-element-by-id el)
 		 el)))
       (let loop ((parent (dom-parent-node el)))
 	 (cond
-	    ((string=? (parent.getAttribute "data-hss-tag") "hop-spage")
+	    ((string=? (parent.getAttribute "data-hss-tag") tag)
 	     parent)
 	    ((or (not parent) (eq? parent #unspecified))
-	     (error "find-spage" "cannot find parent spage" el))
+	     (error "find-spage-tag" "cannot find parent spage" el))
 	    (else
 	     (loop (dom-parent-node parent)))))))
+
+;*---------------------------------------------------------------------*/
+;*    find-spage ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (find-spage el)
+   (find-spage-tag el "hop-spage"))
+
+;*---------------------------------------------------------------------*/
+;*    find-sptab ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (find-sptab el)
+   (find-spage-tag el "hop-sptab"))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-current-tab ...                                            */
