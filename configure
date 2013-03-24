@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 12 11:35:03 2013 (serrano)                */
+#*    Last change :  Sun Mar 24 17:47:27 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -31,6 +31,7 @@ install="install -m a+r,u+r"
 jar="jar cfm"
 javac=javac
 
+devmode=product
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
@@ -218,17 +219,20 @@ while : ; do
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --devel)
+      devmode="devel";
       bcflagsrts=;
       bcflagsdev=-cg;
       bscm2jsflags=;;
 
     --debug)
+      devmode="debug";
       debug=yes;
       bcflagsrts=;
       bscm2jsflags=;
       bcflags="$bcflags $bcflagsdbg";;
 
     --debug2)
+      devmode="debug2";
       debug=yes;
       bcflagsrts=;
       bscm2jsflags=;
@@ -985,6 +989,7 @@ echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  link.................................. $link"
+echo"   devel mode............................ $devmode"
 echo 
 echo "Optional features:"
 echo "  multi-threading....................... $threads"

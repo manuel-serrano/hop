@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sun Mar 24 17:20:46 2013 (serrano)                */
+#*    Last change :  Sun Mar 24 17:45:37 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -106,7 +106,7 @@ while : ; do
     --android-debug=*)
       HOPDEBUG="`echo $1 | sed 's/^[^=]*=//'`";
       if [ "$HOPDEBUG " = "true " ]; then
-        CONFIGUREOPTS=--devel;
+        CONFIGUREOPTS=--debug2;
       fi
       ;;
 
