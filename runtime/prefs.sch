@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/runtime/prefs.sch                 */
+;*    serrano/prgm/project/hop/2.4.x/runtime/prefs.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  1 05:02:42 2005                          */
-;*    Last change :  Thu Apr  3 08:48:50 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Tue Mar 19 08:17:02 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the preferences macros                         */
 ;*=====================================================================*/
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
-(directives (option (loadq "prefs-expd.sch")))
+(directives (option (loadq "prefs_expd.sch")))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    define-preferences ...                                           */

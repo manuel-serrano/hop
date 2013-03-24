@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/html_img.scm              */
+;*    serrano/prgm/project/hop/2.4.x/runtime/html_img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sat Dec 10 09:25:10 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Sun Mar 17 19:27:34 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -111,7 +111,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-tag <IMG> ((id #unspecified string)
+(define-tag <IMG> ((id #f string)
 		   (inline #f boolean)
 		   (alt #f)
 		   (src #unspecified)

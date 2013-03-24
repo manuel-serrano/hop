@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Jun 16 18:51:08 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Sat Mar 23 06:24:57 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -71,8 +71,15 @@
    (let ((fields (class-all-fields (object-class o))))
       (for i 0 (vector-length fields)
 	 (let* ((f (vector-ref fields i))
-		(gv (class-field-accessor f)))
-	    (register (gv o))))))
+		(iv (class-field-info f)))
+	    (cond
+	       ((and (pair? iv) (memq :client iv))
+		=>
+		(lambda (x)
+		   (register (when (pair? (cdr x)) (cadr x)))))
+	       (else
+		(let ((gv (class-field-accessor f)))
+		   (register (gv o)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ...                                           */

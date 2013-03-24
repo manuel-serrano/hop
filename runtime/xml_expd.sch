@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri Sep 14 09:10:09 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Sun Mar 17 19:22:28 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -266,9 +266,11 @@
 		     ((null? ,args)
 		      ,@(map (lambda (b)
 				(match-case b
-				   ((?id ?- (and (? symbol?) ?type))
+				   ((?id ?init (and (? symbol?) ?type))
 				    (let ((id (untyped-ident id)))
-				       `(unless (or (eq? ,id #unspecified)
+				       `(unless (or ,(if (eq? init #f)
+							 `(not ,id)
+							 `(eq? ,id #unspecified))
 						    ,(predicate type id))
 					   (bigloo-type-error
 					      ,(symbol->string m)

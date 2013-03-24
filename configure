@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 31 16:47:45 2013 (serrano)                */
+#*    Last change :  Tue Mar 12 11:35:03 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -325,6 +325,7 @@ while : ; do
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
+      echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;

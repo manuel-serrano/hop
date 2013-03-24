@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Feb 18 09:40:50 2013 (serrano)                */
+;*    Last change :  Fri Mar 22 14:13:12 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -121,9 +121,8 @@
 	 0
 	 (lambda ()
 	    (avahi-simple-poll-quit poll)))
-      (mutex-lock! lock)
-      (set! state 'close)
-      (mutex-unlock! lock)))
+      (synchronize lock
+	 (set! state 'close))))
 
 ;*---------------------------------------------------------------------*/
 ;*    client-callback ...                                              */

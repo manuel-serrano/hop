@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -212,6 +212,13 @@ function sc_char2symbol(c) { return c.val; }
            (peephole (postfix " instanceof sc_String")))
 */
 function sc_isString(s) { return (s instanceof sc_String); }
+
+/*** META ((export #t)
+           (arity #t)
+           (type bool)
+           (peephole (postfix " === \"\"")))
+*/
+function sc_isStringNull(s) { return (s === ""); }
 
 /*** META ((export #t) (arity -2)) */
 function sc_makeString(k, c) {

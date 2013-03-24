@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Sat Oct 13 07:42:55 2012 (serrano)                */
-;*    Copyright   :  2007011-12 Florian Loitsch, Manuel Serrano        */
+;*    Last change :  Mon Mar 18 12:18:49 2013 (serrano)                */
+;*    Copyright   :  2007011-13 Florian Loitsch, Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -98,14 +98,10 @@
    (match-case x
       ((?- (?name . ?args) ?e0 . ?body)
        (let ((ht (module-macro-ht)))
-	  (hashtable-put! ht
-			  name
-			  (lazy-macro x ht))
+	  (hashtable-put! ht name (lazy-macro x ht))
 	  #unspecified))
       (else
-       (scheme2js-error "define-macro"
-			"Illegal 'define-macro' syntax"
-			x x))))
+       (scheme2js-error "define-macro" "Illegal 'define-macro' syntax" x x))))
 
 (define (define-expander x e)
    (match-case x

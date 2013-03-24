@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  6 07:37:32 2006                          */
-;*    Last change :  Sat Oct 13 07:47:18 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Sun Mar 10 08:49:57 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The wiki markup                                                  */
 ;*=====================================================================*/
@@ -67,11 +67,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <WIKI> ((src #unspecified string)
-			     (syntax #unspecified wiki-syntax)
-			     (cache #unspecified cache)
-			     (charset (hop-charset))
-			     body)
+(define-tag <WIKI> ((src #unspecified string)
+		    (syntax #unspecified wiki-syntax)
+		    (cache #unspecified cache)
+		    (charset (hop-charset))
+		    body)
    (let ((syn (if (eq? syntax #unspecified)
 		  #f
 		  syntax))
