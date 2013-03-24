@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Nov 27 17:42:12 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Sun Mar 24 15:17:19 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -933,71 +933,66 @@
 		    (else ".")))
 	  (menv (or menv (with-access::clientc (hop-clientc) (macroe)
 			    (macroe)))))
-      (if (not (string? path))
-	  (raise (instantiate::&io-file-not-found-error
-		    (proc "hop-load")
-		    (msg "Can't find file")
-		    (obj fname)))
-	  (let ((port (open-input-file path)))
-	     (if (input-port? port)
-		 (let ((f (the-loading-file))
-		       (denv (current-dynamic-env))
-		       (m (eval-module)))
-		    (unwind-protect
-		       (let ()
-			  ($env-push-trace denv traceid #f)
-			  (hop-load-afile apath)
-			  (when abase (module-abase-set! apath))
-			  (loading-file-set! path)
-			  (when (evmodule? env) (eval-module-set! env))
-			  (case mode
-			     ((load)
-			      (let loop ((last #unspecified)
-					 (loc #t))
-				 ;; always read the first expression
-				 ;; in debug mod to enforce location inside
-				 ;; the module clause
-				 (let ((e (hop-read port charset menv loc)))
-				    (when (epair? e)
-				       ($env-set-trace-location denv (cer e)))
-				    (if (eof-object? e)
-					(let ((nm (eval-module)))
-					   (when (and (not (eq? m nm))
-						      (evmodule? nm))
-					      (evmodule-check-unbound nm #f))
-					   ($env-pop-trace denv)
-					   last)
-					(let ((val (eval! e (eval-module))))
-					   (when (isa? val xml-tilde)
-					      (evwarning
-						 (when (pair? e) (cer e))
-						 "hop-load"
-						 "Useless ~ expression"))
-					   (loop val #f))))))
-			     ((include)
-			      (let loop ((res '())
-					 (loc #t))
-				 (let ((e (hop-read port charset menv loc)))
-				    (when (epair? e)
-				       ($env-set-trace-location denv (cer e)))
-				    (if (eof-object? e)
-					(let ((nm (eval-module)))
-					   (unless (eq? m nm)
-					      (evmodule-check-unbound nm #f))
-					   ($env-pop-trace denv)
-					   (reverse! res))
-					(let ((val (eval! e (eval-module))))
-					   (loop (cons val res) #f))))))
-			     (else
-			      (error "hop-load" "Illegal mode" mode))))
-		       (begin
-			  (close-input-port port)
-			  (eval-module-set! m)
-			  (loading-file-set! f))))
-		 (raise (instantiate::&io-port-error
-			   (proc "hop-load")
-			   (msg "Can't open file")
-			   (obj fname))))))))
+      (let ((port (open-input-file path)))
+	 (if (input-port? port)
+	     (let ((f (the-loading-file))
+		   (denv (current-dynamic-env))
+		   (m (eval-module)))
+		(unwind-protect
+		   (let ()
+		      ($env-push-trace denv traceid #f)
+		      (hop-load-afile apath)
+		      (when abase (module-abase-set! apath))
+		      (loading-file-set! path)
+		      (when (evmodule? env) (eval-module-set! env))
+		      (case mode
+			 ((load)
+			  (let loop ((last #unspecified)
+				     (loc #t))
+			     ;; always read the first expression
+			     ;; in debug mod to enforce location inside
+			     ;; the module clause
+			     (let ((e (hop-read port charset menv loc)))
+				(when (epair? e)
+				   ($env-set-trace-location denv (cer e)))
+				(if (eof-object? e)
+				    (let ((nm (eval-module)))
+				       (when (and (not (eq? m nm))
+						  (evmodule? nm))
+					  (evmodule-check-unbound nm #f))
+				       ($env-pop-trace denv)
+				       last)
+				    (let ((val (eval! e (eval-module))))
+				       (when (isa? val xml-tilde)
+					  (evwarning
+					     (when (pair? e) (cer e))
+					     "hop-load"
+					     "Useless ~ expression"))
+				       (loop val #f))))))
+			 ((include)
+			  (let loop ((res '())
+				     (loc #t))
+			     (let ((e (hop-read port charset menv loc)))
+				(when (epair? e)
+				   ($env-set-trace-location denv (cer e)))
+				(if (eof-object? e)
+				    (let ((nm (eval-module)))
+				       (unless (eq? m nm)
+					  (evmodule-check-unbound nm #f))
+				       ($env-pop-trace denv)
+				       (reverse! res))
+				    (let ((val (eval! e (eval-module))))
+				       (loop (cons val res) #f))))))
+			 (else
+			  (error "hop-load" "Illegal mode" mode))))
+		   (begin
+		      (close-input-port port)
+		      (eval-module-set! m)
+		      (loading-file-set! f))))
+	     (raise (instantiate::&io-port-error
+		       (proc "hop-load")
+		       (msg "Can't open file")
+		       (obj fname)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *load-once-table* ...                                            */
