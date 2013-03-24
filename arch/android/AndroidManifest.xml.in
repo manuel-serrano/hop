@@ -8,6 +8,7 @@
     <application android:label="@string/hop"
                  android:persistent="true"
                  android:theme="@style/hopstyle"
+                 android:debuggable="@HOPDEBUG@"
                  android:icon="@drawable/logo">
 
         <activity android:name="fr.inria.hop.HopLauncher"
