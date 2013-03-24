@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Jan 17 13:59:59 2013 (serrano)                */
+#*    Last change :  Sun Mar 24 17:20:46 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -16,6 +16,7 @@
 VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
 MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=@BIGLOOREQUIRED@
+HOPDEBUG=false
 
 HOPURL=http://hop.inria.fr
 HOPPORT=8080
@@ -24,6 +25,8 @@ REPOSITORY=/users/serrano/prgm/distrib
 
 ANDROIDBIGLOOLIB=
 CC=
+
+CONFIGUREOPTS=
 
 ANDROIDROOT=/misc/virtual/android/r07
 ANDROIDGIT=$ANDROIDROOT/eclair-git
@@ -100,6 +103,13 @@ while : ; do
     --android-sdkversion=*)
       ANDROIDSDKVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --android-debug=*)
+      HOPDEBUG="`echo $1 | sed 's/^[^=]*=//'`";
+      if [ "$HOPDEBUG " = "true " ]; then
+        CONFIGUREOPTS=--devel;
+      fi
+      ;;
+
     --droid-gcc=*)
       CC="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -127,14 +137,21 @@ while : ; do
     --mode=*)
       action_mode="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --)
+      shift;
+      CONFIGUREOPTS=$*;;
+
+
     -*)
       echo "*** makeapk, unknown option $1" >&2;
       echo >&2;
-      echo "Usage: makeapk [options]" >&2;
+      echo "Usage: makeapk [options] -- configureopts" >&2;
       echo "   --hopversion=version.... hop version to install" >&2;
       echo "   --androidroot=dir....... android root directory" >&2;
       echo "   --androidsdk=dir........ sdk path (defaults androidroot/android-sdk-linux_x86)" >&2;
-      echo "   --androidndk=dir........ ndk path (defaults androidroot/android-ndk-r4b)" >&2;
+      echo "   --android-ndk=dir....... ndk path (defaults androidroot/android-ndk-r4b)" >&2;
+      echo "   --android-git=dir....... git path" >&2;
+      echo "   --android-debug=false... debug enabling" >&2;
       echo "   --droid-gcc=path........ gcc (defaults androidroot/biglooXXX/arch/android/droid-gcc)" >&2;
       echo "   --untar=yes|no.......... untar Hop" >&2;
       echo "   --configure=yes|no...... configure Hop" >&2;
@@ -197,7 +214,8 @@ if [ $action_configure = "yes" ]; then
       --library=calendar \
       --library=text \
       --library=phone \
-      --library=hopdroid) || exit 1
+      --library=hopdroid \
+      $CONFIGUREOPTS ) || exit 1
 fi
 
 #*---------------------------------------------------------------------*/
@@ -262,6 +280,7 @@ for p in AndroidManifest.xml project.properties; do \
   rm -f $android/$p.in
   cat $basedir/$p.in \
     | sed -e "s|@HOPVERSION@|$hopversion|" \
+          -e "s|@HOPDEBUG@|$HOPDEBUG|" \
           -e "s|@ANDROIDSDKVERSION@|$ANDROIDSDKVERSION|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
