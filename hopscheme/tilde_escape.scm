@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Mon Mar 25 13:52:49 2013 (serrano)                */
+;*    Last change :  Mon Mar 25 13:58:22 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -193,7 +193,6 @@
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->hopscheme e env menv)
-
    (synchronize *hopscheme-mutex*
       (let ((s-port (open-output-string))
 	    (menv (instantiate::Compilation-Unit
