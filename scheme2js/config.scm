@@ -46,14 +46,13 @@
 (define (config-init! #!optional config)
    (tprint ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
    (tprint "CONFIG-INIT: " (typeof config) " thread=" (current-thread))
-   (tprint "CONFIG=" config)
    (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
    (tprint "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
    (tprint "CONF: " (typeof config) " thread=" (current-thread))
    (tprint "CONF=" conf)
-   (tprint "CONFIG=" (thread-parameter '*scheme2js-config*))
+   (tprint "CONFIG=" (typeof (thread-parameter '*scheme2js-config*)))
    (read-config (thread-parameter '*scheme2js-config*) conf))
 
 (define scheme2js-config config)
