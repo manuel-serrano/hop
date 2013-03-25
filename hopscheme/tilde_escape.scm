@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Mon Mar 25 12:18:45 2013 (serrano)                */
+;*    Last change :  Mon Mar 25 13:52:49 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -65,9 +65,9 @@
 ;*    with the rest.                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-expression e env menv postproc)
-   (synchronize *hopscheme-compile-mutex*
-      (unless (isa? menv Compilation-Unit)
-	 (error "hopscheme-compile-expression" "Illegal macro environment" menv))
+   (unless (isa? menv Compilation-Unit)
+      (error "hopscheme-compile-expression" "Illegal macro environment" menv))
+   (synchronize *hopscheme-mutex*
       (if (only-macros? e)
 	  (begin
 	     (add-macros! e menv)
@@ -78,7 +78,8 @@
 ;*    hopscheme-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-value v p host-compiler host-register loc)
-   (scheme2js-compile-value v p host-compiler host-register loc))
+   (synchronize *hopscheme-mutex*
+      (scheme2js-compile-value v p host-compiler host-register loc)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-expression ...                                     */
@@ -192,46 +193,47 @@
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->hopscheme e env menv)
-   
-   (let ((s-port (open-output-string))
-	 (menv (instantiate::Compilation-Unit
-		  (name (gensym 'macro))
-		  (top-level '())
-		  (exported-macros (create-hashtable :size 1))
-		  (exports '())))
-	 (assig-var (gensym 'result)))
-      (receive (expr dollar-map)
-	 (dollar-extraction! e)
-	 (unwind-protect
-	    (let* ((exported '())
-		   (unresolved '())
-		   (exported-declare! (lambda (scm-id js-id)
-					 (set! exported
+
+   (synchronize *hopscheme-mutex*
+      (let ((s-port (open-output-string))
+	    (menv (instantiate::Compilation-Unit
+		     (name (gensym 'macro))
+		     (top-level '())
+		     (exported-macros (create-hashtable :size 1))
+		     (exports '())))
+	    (assig-var (gensym 'result)))
+	 (receive (expr dollar-map)
+	    (dollar-extraction! e)
+	    (unwind-protect
+	       (let* ((exported '())
+		      (unresolved '())
+		      (exported-declare! (lambda (scm-id js-id)
+					    (set! exported
 					       (cons (cons scm-id js-id)
-						     exported))))
-		   (unresolved-declare! (lambda (scm-id js-id)
-					   (set! unresolved
+						  exported))))
+		      (unresolved-declare! (lambda (scm-id js-id)
+					      (set! unresolved
 						 (cons (cons scm-id js-id)
-						       unresolved)))))
-	       (scheme2js-compile-expr
-		expr           ;; top-level
-		s-port         ;; out-port
-		`(             ;; override-headers
-		  (merge-first (import ,@(hop-runtime-modules)))
-		  (merge-last (import ,menv))
-		  ,@env)
-		(extend-config* (hopscheme-config #f)	;; config
-				`((module-result-var . ,assig-var)
-				  (unresolved-declare . ,unresolved-declare!)
-				  (exported-declare . ,exported-declare!))))
-	       (let ((js-code (close-output-port s-port)))
-		  (vector expr
-			  assig-var
-			  exported
-			  unresolved
-			  js-code
-			  '())))
-	    (close-output-port s-port)))))
+						    unresolved)))))
+		  (scheme2js-compile-expr
+		     expr           ;; top-level
+		     s-port         ;; out-port
+		     `(             ;; override-headers
+		       (merge-first (import ,@(hop-runtime-modules)))
+		       (merge-last (import ,menv))
+		       ,@env)
+		     (extend-config* (hopscheme-config #f)	;; config
+			`((module-result-var . ,assig-var)
+			  (unresolved-declare . ,unresolved-declare!)
+			  (exported-declare . ,exported-declare!))))
+		  (let ((js-code (close-output-port s-port)))
+		     (vector expr
+			assig-var
+			exported
+			unresolved
+			js-code
+			'())))
+	       (close-output-port s-port))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->sexp ...                                              */
@@ -256,13 +258,14 @@
       (with-handler
 	 (lambda (e)
 	    (error "compile-hop-client" "Compilation failed" e))
-	 (scheme2js-compile-expr
-	  e              ;; top-level
-	  s-port         ;; out-port
-	  `(             ;; override-headers
-	    (merge-first (import ,@(hop-runtime-modules)))
-	    (merge-last (import ,unit))
-	    ,@env)
-	  (hopscheme-config #f))
-	 (close-output-port s-port))))
+	 (synchronize *hopscheme-mutex*
+	    (scheme2js-compile-expr
+	       e              ;; top-level
+	       s-port         ;; out-port
+	       `(             ;; override-headers
+		 (merge-first (import ,@(hop-runtime-modules)))
+		 (merge-last (import ,unit))
+		 ,@env)
+	       (hopscheme-config #f))
+	    (close-output-port s-port)))))
 

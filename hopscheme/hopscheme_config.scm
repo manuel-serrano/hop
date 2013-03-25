@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Mon Mar 25 12:18:17 2013 (serrano)                */
+;*    Last change :  Mon Mar 25 13:44:54 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -21,7 +21,7 @@
    
    (export (hopscheme-config compile-file?)
 	   (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
-	   *hopscheme-compile-mutex*
+	   *hopscheme-mutex*
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*))
@@ -53,7 +53,7 @@
 (define *hop-library-path*
    '())
 
-(define *hopscheme-compile-mutex*
+(define *hopscheme-mutex*
    (make-mutex))
 
 ;*---------------------------------------------------------------------*/
