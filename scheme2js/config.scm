@@ -44,19 +44,9 @@
 	   (cdr tmp))))
 
 (define (config-init! #!optional config)
-   (when (isa? (current-thread) thread)
-      (tprint ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-      (tprint "CONFIG-INIT: " (typeof config) " thread=" (current-thread)))
    (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
-   (when (isa? (current-thread) thread)
-      (let ((cfg (thread-parameter '*scheme2js-config*)))
-	 (unless (pair? cfg)
-	    (tprint "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-	    (tprint "CONF: " (typeof config) " thread=" (current-thread))
-	    (tprint "CONF=" conf)
-	    (tprint "CONFIG=" (typeof (thread-parameter '*scheme2js-config*))))))
    (read-config (thread-parameter '*scheme2js-config*) conf))
 
 (define scheme2js-config config)

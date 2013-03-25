@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Mar 24 19:41:56 2013 (serrano)                */
+#*    Last change :  Mon Mar 25 09:58:34 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -60,6 +60,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable-hdpi/logo.png \
   res/drawable-xhdpi/logo.png \
   res/layout/main.xml res/layout/about.xml res/layout/info.xml \
+  res/layout-xhdpi/main.xml res/layout-xhdpi/about.xml res/layout-xhdpi/info.xml \
   res/xml/preferences.xml \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
   res/menu/hop_menu.xml
