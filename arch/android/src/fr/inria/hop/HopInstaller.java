@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Fri Nov  9 11:07:13 2012 (serrano)                */
-/*    Copyright   :  2010-12 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Mon Mar 25 07:56:26 2013 (serrano)                */
+/*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -193,17 +193,18 @@ public class HopInstaller extends Thread {
       chmodflush();
    }
 
-   // create the externalstorage.hop file which is read by Hop at start time
+   // create the androidhome.hop file which is read by Hop at start time
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
-   void externalstorage() throws IOException {
-      File file = new File( root, "etc/" + "externalstorage.hop" );
+   void androidhome() throws IOException {
+      File file = new File( root, "etc/" + "androidhome.hop" );
       OutputStream op = new FileOutputStream( file );
-      Log.i( "HopInstaller", "generating externalstorage \"" + file + "\"" );
+      Log.i( "HopInstaller", "generating androidhome \"" + file + "\"" );
       
       op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
       op.write( "\"".getBytes() );
-      op.write( Environment.getExternalStorageDirectory().getAbsolutePath().getBytes() );
+      // MS CARE
+      op.write( Hop.HOME().getAbsolutePath().getBytes() );
       op.write( "\"\n".getBytes() );
       op.flush();
       op.close();
@@ -212,7 +213,7 @@ public class HopInstaller extends Thread {
    public void run() {
       try {
 	 unpack();
-	 externalstorage();
+	 androidhome();
       } catch( Exception e ) {
 	 String msg = e.getMessage();
 	 if( msg == null ) msg = e.getClass().getName();

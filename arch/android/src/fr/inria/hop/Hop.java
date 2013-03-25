@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Jan  5 15:59:45 2013 (serrano)                */
+/*    Last change :  Mon Mar 25 08:02:18 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -33,7 +33,6 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
-   final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
    final static String HOP = "/bin/hop";
    final static String HOPARGS = "-v --no-color";
    final static String SHELL = "/system/bin/sh";
@@ -66,9 +65,21 @@ public class Hop extends Thread {
       extra = args;
    }
 
+   // HOME
+   public static HOME() {
+      Log.d( "Hop", "getExternalStorageDirectory=" +
+	     Environment.getExternalStorageDirectory() );
+      Log.d( "Hop", "getRootDirectory=" +
+	     Environment.getRootDirectory() );
+      Log.d( "Hop", "getRootDirectory=" +
+	     Environment.getRootDirectory() );
+      
+      return new File( Environment.getExternalStorageDirectory(), "home" );
+   }
+      
    // is hop already configured
    public boolean configured() {
-      return HOME.exists();
+      return HOME().exists();
    }
 
    // startWithArg
@@ -82,7 +93,7 @@ public class Hop extends Thread {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
 
-      String cmd = "export HOME=" + HOME.getAbsolutePath() +
+      String cmd = "export HOME=" + HOME().getAbsolutePath() +
 	 "; exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
 	 + " " + debug

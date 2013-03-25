@@ -33,10 +33,7 @@
 ;*    hop-android-home ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-android-home)
-   (let ((es (make-file-name (hop-etc-directory) "externalstorage.hop")))
-      (if (file-exists? es)
-	  (make-file-name (with-input-from-file es read) "home")
-	  "/sdcard/home")))
+   (make-file-name (hop-etc-directory) "androidhome.hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
