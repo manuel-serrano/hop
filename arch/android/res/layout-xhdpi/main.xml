@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/hopstyle"
     android:padding="4px"
-    android:background="#ddff0000"
+    android:background="#dd000000"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/layout">
@@ -31,7 +31,7 @@
                android:layout_height="fill_parent"
                android:background="#222222"
                android:padding="4px"
-               android:textSize="22px"
+               android:textSize="20px"
                android:layout_marginBottom="0sp"
                android:scrollbarAlwaysDrawVerticalTrack="true">
     <TextView android:id="@+id/textview"
@@ -40,7 +40,7 @@
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
               android:typeface="monospace"
-              android:textSize="24px"
+              android:textSize="20px"
               android:text=""/>
    </ScrollView>
   </LinearLayout>
