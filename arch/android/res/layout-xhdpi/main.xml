@@ -15,14 +15,14 @@
                  android:gravity="right">
     <TextView android:maxLines="1"
               android:editable="false"
-              android:textSize="18px"
+              android:textSize="20px"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:text="@string/ui_scroll"/>
     <CheckBox android:id="@+id/scrollconsole"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:textSize="14px"
+              android:textSize="16px"
               android:text=""/>
    </LinearLayout>
    <ScrollView android:id="@+id/scrollview"
@@ -31,7 +31,7 @@
                android:layout_height="fill_parent"
                android:background="#222222"
                android:padding="4px"
-               android:textSize="18px"
+               android:textSize="22px"
                android:layout_marginBottom="0sp"
                android:scrollbarAlwaysDrawVerticalTrack="true">
     <TextView android:id="@+id/textview"
@@ -40,7 +40,7 @@
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
               android:typeface="monospace"
-              android:textSize="20px"
+              android:textSize="22px"
               android:text=""/>
    </ScrollView>
   </LinearLayout>

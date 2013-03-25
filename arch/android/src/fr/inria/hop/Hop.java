@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Mar 25 08:44:55 2013 (serrano)                */
+/*    Last change :  Mon Mar 25 10:23:41 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -69,22 +69,16 @@ public class Hop extends Thread {
    // HOME
    public static File HOME() {
       if( _HOME == null ) {
-	 Log.d( "Hop", "HOME, getExternalStorageDirectory=" +
-		" externalStorage=" + Environment.getExternalStorageDirectory() +
-		" emulated=" + Environment.isExternalStorageEmulated() );
-	 
-	 if( Environment.isExternalStorageEmulated() ) {
-	    // try to find an actual directory
-	    File sdcard = new File( "/mnt/sdcard" );
-	    if( sdcard.exists() ) {
-	       Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
-	       _HOME = sdcard;
-	    }
+	 // try to find an actual directory
+	 File sdcard = new File( "/mnt/sdcard" );
+	 if( sdcard.exists() ) {
+	    Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
+	    _HOME = new File( sdcard, "home" );
 	 }
 
 	 if( _HOME == null ) {
 	    // fallback
-	    _HOME = Environment.getExternalStorageDirectory();
+	    _HOME = new File( Environment.getExternalStorageDirectory(), "home" );
 	 }
       }
       
