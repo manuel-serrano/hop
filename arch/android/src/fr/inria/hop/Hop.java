@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Mar 25 08:02:18 2013 (serrano)                */
+/*    Last change :  Mon Mar 25 08:44:55 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -33,6 +33,7 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
+   private static File _HOME = null;
    final static String HOP = "/bin/hop";
    final static String HOPARGS = "-v --no-color";
    final static String SHELL = "/system/bin/sh";
@@ -66,15 +67,28 @@ public class Hop extends Thread {
    }
 
    // HOME
-   public static HOME() {
-      Log.d( "Hop", "getExternalStorageDirectory=" +
-	     Environment.getExternalStorageDirectory() );
-      Log.d( "Hop", "getRootDirectory=" +
-	     Environment.getRootDirectory() );
-      Log.d( "Hop", "getRootDirectory=" +
-	     Environment.getRootDirectory() );
+   public static File HOME() {
+      if( _HOME == null ) {
+	 Log.d( "Hop", "HOME, getExternalStorageDirectory=" +
+		" externalStorage=" + Environment.getExternalStorageDirectory() +
+		" emulated=" + Environment.isExternalStorageEmulated() );
+	 
+	 if( Environment.isExternalStorageEmulated() ) {
+	    // try to find an actual directory
+	    File sdcard = new File( "/mnt/sdcard" );
+	    if( sdcard.exists() ) {
+	       Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
+	       _HOME = sdcard;
+	    }
+	 }
+
+	 if( _HOME == null ) {
+	    // fallback
+	    _HOME = Environment.getExternalStorageDirectory();
+	 }
+      }
       
-      return new File( Environment.getExternalStorageDirectory(), "home" );
+      return _HOME;
    }
       
    // is hop already configured

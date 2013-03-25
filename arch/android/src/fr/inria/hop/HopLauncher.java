@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Feb 20 20:23:30 2013 (serrano)                */
+/*    Last change :  Mon Mar 25 08:27:20 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -317,7 +317,7 @@ public class HopLauncher extends Activity {
 
 		     Log.v( "HopLauncher", "installation complete" );
 
-		     if( !HopConfigurer.configured( Hop.HOME ) ) {
+		     if( !HopConfigurer.configured( Hop.HOME() ) ) {
 			Log.v( "HopLauncher", "progress=" + progress );
 			handler.sendEmptyMessage( MSG_CONFIGURE );
 			configure();
@@ -336,7 +336,7 @@ public class HopLauncher extends Activity {
 	    hopinstaller.start();
 	    installscheduler.start();
 	 } else {
-	    if( !HopConfigurer.configured( Hop.HOME ) ) {
+	    if( !HopConfigurer.configured( Hop.HOME() ) ) {
 	       configure();
 	    } else {
 	       handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
