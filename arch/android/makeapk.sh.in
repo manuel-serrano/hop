@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Mon Mar 25 08:51:50 2013 (serrano)                */
+#*    Last change :  Mon Mar 25 08:54:14 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -155,21 +155,21 @@ while : ; do
       echo "*** makeapk, unknown option $1" >&2;
       echo >&2;
       echo "Usage: makeapk [options] -- configureopts" >&2;
-      echo "   --hopversion=version.... hop version to install" >&2;
-      echo "   --androidroot=dir....... android root directory" >&2;
-      echo "   --androidsdk=dir........ sdk path (defaults androidroot/android-sdk-linux_x86)" >&2;
-      echo "   --android-ndk=dir....... ndk path (defaults androidroot/android-ndk-r4b)" >&2;
-      echo "   --android-git=dir....... git path" >&2;
-      echo "   --android-debug=false... debug enabling" >&2;
-      echo "   --droid-gcc=path........ gcc (defaults androidroot/biglooXXX/arch/android/droid-gcc)" >&2;
-      echo "   --untar=yes|no.......... untar Hop" >&2;
-      echo "   --configure=yes|no...... configure Hop" >&2;
-      echo "   --make=yes|no........... make Hop" >&2;
-      echo "   --install=yes|no........ install Hop" >&2;
-      echo "   --install-repo=yes|no... install in the Hop repo" >&2;
-      echo "   --weblets-devel=yes|no.. full weblets installations" >&2;
-      echo "   --repository=dir........ output target directory" >&2;
-      echo "   --mode=debug|release.... output target directory" >&2;
+      echo "   --hopversion=version........... hop version to install" >&2;
+      echo "   --androidroot=dir.............. android root directory" >&2;
+      echo "   --androidsdk=dir............... sdk path (defaults androidroot/android-sdk-linux_x86)" >&2;
+      echo "   --android-ndk=dir.............. ndk path (defaults androidroot/android-ndk-r4b)" >&2;
+      echo "   --android-git=dir.............. git path" >&2;
+      echo "   --android-debug=[-g|-g2|-g3]... debug enabling" >&2;
+      echo "   --droid-gcc=path............... gcc (defaults androidroot/biglooXXX/arch/android/droid-gcc)" >&2;
+      echo "   --untar=yes|no................. untar Hop" >&2;
+      echo "   --configure=yes|no............. configure Hop" >&2;
+      echo "   --make=yes|no.................. make Hop" >&2;
+      echo "   --install=yes|no............... install Hop" >&2;
+      echo "   --install-repo=yes|no.......... install in the Hop repo" >&2;
+      echo "   --weblets-devel=yes|no......... full weblets installations" >&2;
+      echo "   --repository=dir............... output target directory" >&2;
+      echo "   --mode=debug|release........... output target directory" >&2;
       echo "" >&2;
       echo "Example:" >&2;
       echo "   $0 --untar=no --make=no --install=no --weblets-devel=no" >&2;
