@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Sun Dec  9 00:56:06 2012 (serrano)                */
-;*    Copyright   :  2012 Manuel Serrano                               */
+;*    Last change :  Mon Mar 25 12:18:17 2013 (serrano)                */
+;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
    
    (export (hopscheme-config compile-file?)
 	   (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
+	   *hopscheme-compile-mutex*
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*))
@@ -51,6 +52,9 @@
    (lambda (v) (error "hop-register" "not initialized yet" v)))
 (define *hop-library-path*
    '())
+
+(define *hopscheme-compile-mutex*
+   (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-cached-config ...                                            */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Mar 25 08:27:20 2013 (serrano)                */
+/*    Last change :  Mon Mar 25 11:51:29 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -490,14 +490,16 @@ public class HopLauncher extends Activity {
    }
       
    private void loadPreferences() {
+      Log.d( "HopLauncher", "loadPreferences" );
       try {
 	 final Resources res = getResources();
 	 final SharedPreferences sp =
 	    PreferenceManager.getDefaultSharedPreferences( this );
-	 final int initial_wifi_policy =
-	    Settings.System.getInt(
-	       getContentResolver(),
-	       Settings.System.WIFI_SLEEP_POLICY );
+
+/* 	 final int initial_wifi_policy =                               */
+/* 	    Settings.System.getInt(                                    */
+/* 	       getContentResolver(),                                   */
+/* 	       Settings.System.WIFI_SLEEP_POLICY );                    */
 
 	 final String defaultport = res.getString( R.string.hopport );
       
@@ -507,9 +509,9 @@ public class HopLauncher extends Activity {
 	 hop_log = sp.getBoolean( "hop_log", false );
 
 	 // keep wifi alive
-	 if( sp.getBoolean( "hop_wifi", false ) ) {
-	    setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
-	 }
+/* 	 if( sp.getBoolean( "hop_wifi", false ) ) {                    */
+/* 	    setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );  */
+/* 	 }                                                             */
       
 	 if( prefslistener == null ) {
 	    prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -523,11 +525,11 @@ public class HopLauncher extends Activity {
 			return;
 		     }
 		     if( key.equals( "hop_wifi" ) ) {
-			if( sp.getBoolean( "hop_wifi", false ) ) {
-			   setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
-			} else {
-			   setWifiPolicy( initial_wifi_policy );
-			}
+/* 			if( sp.getBoolean( "hop_wifi", false ) ) {     */
+/* 			   setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER ); */
+/* 			} else {                                       */
+/* 			   setWifiPolicy( initial_wifi_policy );       */
+/* 			}                                              */
 			return;
 		     }
 		     if( key.equals( "hop_webdav" ) ) {
@@ -548,8 +550,9 @@ public class HopLauncher extends Activity {
 	    sp.registerOnSharedPreferenceChangeListener( prefslistener );
 	 }
       }
-      catch( Throwable _ ) {
-	 ;
+      catch( Throwable e ) {
+	 Log.d( "HopLauncher", "loadPreferences exception: " + e );
+	 e.printStackTrace();
       }
    }
    

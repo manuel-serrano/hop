@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Wed Jun 27 09:02:42 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Mon Mar 25 11:36:46 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
 /*=====================================================================*/
@@ -39,7 +39,8 @@ public class HopConfigurer extends Thread {
    // constructor
    public HopConfigurer( Handler d, String u ) {
       super();
-      
+
+      Log.v( "HopConfigurer", "wizard_url=" + u );
       handler = d;
       wizard_url = u;
    }

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Mon Nov  5 21:03:59 2012 (serrano)                */
-;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Mon Mar 25 12:18:45 2013 (serrano)                */
+;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
 ;*=====================================================================*/
@@ -65,13 +65,14 @@
 ;*    with the rest.                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-expression e env menv postproc)
-   (unless (isa? menv Compilation-Unit)
-      (error "hopscheme-compile-expression" "Illegal macro environment" menv))
-   (if (only-macros? e)
-       (begin
-	  (add-macros! e menv)
-	  #unspecified)
-       (compile-expression e env menv postproc)))
+   (synchronize *hopscheme-compile-mutex*
+      (unless (isa? menv Compilation-Unit)
+	 (error "hopscheme-compile-expression" "Illegal macro environment" menv))
+      (if (only-macros? e)
+	  (begin
+	     (add-macros! e menv)
+	     #unspecified)
+	  (compile-expression e env menv postproc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-value ...                                      */

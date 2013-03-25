@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/hopstyle"
     android:padding="4px"
-    android:background="#dd00ff00"
+    android:background="#dd000000"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/layout">
@@ -15,7 +15,7 @@
                  android:gravity="right">
     <TextView android:maxLines="1"
               android:editable="false"
-              android:textSize="16px"
+              android:textSize="14px"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:text="@string/ui_scroll"/>

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Tue Nov  6 07:56:26 2012 (serrano)                */
-;*    Copyright   :  2010-12 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Mon Mar 25 12:18:33 2013 (serrano)                */
+;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
 ;*=====================================================================*/
@@ -41,15 +41,16 @@
 ;*    hopscheme-compile-file ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-file file env)
-   (with-output-to-string
-      (lambda ()
-	 (scheme2js-compile-file file   ;; input-files
-	    "-"               ;; output-file
-	    `(                ;; headers-overrides
-	      (merge-first (import ,@(hop-runtime-modules)))
-	      ,@env)
-	    (get-cached-config)
-	    :reader *hop-reader*))))
+   (synchronize *hopscheme-compile-mutex*
+      (with-output-to-string
+	 (lambda ()
+	    (scheme2js-compile-file file   ;; input-files
+	       "-"               ;; output-file
+	       `(                ;; headers-overrides
+		 (merge-first (import ,@(hop-runtime-modules)))
+		 ,@env)
+	       (get-cached-config)
+	       :reader *hop-reader*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *cached-config* ...                                              */
