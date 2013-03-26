@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:09:56 2010                          */
-;*    Last change :  Mon Mar 25 13:58:22 2013 (serrano)                */
+;*    Last change :  Mon Mar 25 17:40:05 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Interface between Scheme2JS and Hop.                             */
@@ -67,7 +67,7 @@
 (define (hopscheme-compile-expression e env menv postproc)
    (unless (isa? menv Compilation-Unit)
       (error "hopscheme-compile-expression" "Illegal macro environment" menv))
-   (synchronize *hopscheme-mutex*
+   (begin ;;synchronize *hopscheme-mutex*
       (if (only-macros? e)
 	  (begin
 	     (add-macros! e menv)
@@ -78,7 +78,7 @@
 ;*    hopscheme-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-value v p host-compiler host-register loc)
-   (synchronize *hopscheme-mutex*
+   (begin ;;synchronize *hopscheme-mutex*
       (scheme2js-compile-value v p host-compiler host-register loc)))
    
 ;*---------------------------------------------------------------------*/
@@ -193,7 +193,7 @@
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->hopscheme e env menv)
-   (synchronize *hopscheme-mutex*
+   (begin ;;synchronize *hopscheme-mutex*
       (let ((s-port (open-output-string))
 	    (menv (instantiate::Compilation-Unit
 		     (name (gensym 'macro))
@@ -257,7 +257,7 @@
       (with-handler
 	 (lambda (e)
 	    (error "compile-hop-client" "Compilation failed" e))
-	 (synchronize *hopscheme-mutex*
+	 (begin ;;synchronize *hopscheme-mutex*
 	    (scheme2js-compile-expr
 	       e              ;; top-level
 	       s-port         ;; out-port

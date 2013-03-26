@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Mon Mar 25 13:58:09 2013 (serrano)                */
+;*    Last change :  Mon Mar 25 17:41:48 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -35,14 +35,14 @@
 ;*    '(import m1), etc.                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-module clauses)
-   (synchronize *hopscheme-mutex*
+   (begin ;;synchronize *hopscheme-mutex*
       (list (precompile-headers clauses))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-file ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-file file env)
-   (synchronize *hopscheme-mutex*
+   (begin ;;synchronize *hopscheme-mutex*
       (with-output-to-string
 	 (lambda ()
 	    (scheme2js-compile-file file   ;; input-files
