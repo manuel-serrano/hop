@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Mon Mar 25 08:54:14 2013 (serrano)                */
+#*    Last change :  Wed Mar 27 09:16:55 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -20,6 +20,9 @@ HOPDEBUG=false
 
 HOPURL=http://hop.inria.fr
 HOPPORT=8080
+
+HOPCONSOLELOG=false
+HOPDEBUGLEVEL=
 
 REPOSITORY=/users/serrano/prgm/distrib
 
@@ -108,12 +111,17 @@ while : ; do
         "")
           HOPDEBUG=false;;
         -g) 
+          HOPCONSOLELOG=true;
           HOPDEBUG=true;
           CONFIGUREOPTS=--devel;;
         -g2) 
+          HOPCONSOLELOG=true;
+          HOPDEBUGLEVEL=-g;
           HOPDEBUG=true;
           CONFIGUREOPTS=--debug;;
         -g3) 
+          HOPCONSOLELOG=true;
+          HOPDEBUGLEVEL=-g2;
           HOPDEBUG=true;
           CONFIGUREOPTS=--debug2;;
       esac
@@ -305,6 +313,13 @@ for p in res/values/strings.xml; do \
     | sed -e "s|@HOPVERSION@|$hopversion|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
+done
+
+for p in res/xml/preferences.xml; do \
+  rm -f $android/$p.in
+  cat $basedir/$p.in \
+    | sed -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
+          -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" > $android/$p
 done
 
 # the apkbuilder ignores the .afiles, so we change their names

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 13 08:02:05 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 09:33:56 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -70,6 +70,9 @@
 
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
+
+	    (hop-enable-jobs::bool)
+	    (hop-enable-jobs-set! ::bool)
 
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
@@ -272,6 +275,12 @@
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-jobs ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-jobs
    #f)
 
 ;*---------------------------------------------------------------------*/

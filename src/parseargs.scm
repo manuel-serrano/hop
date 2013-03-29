@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 25 12:19:09 2013 (serrano)                */
+;*    Last change :  Fri Mar 29 10:16:28 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -175,6 +175,10 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
+	 (("--jobs" (help "Enable jobs management"))
+	  (hop-enable-jobs-set! #t))
+	 (("--no-jobs" (help "Disable jobs management"))
+	  (hop-enable-jobs-set! #f))
 	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
 	  (set! zeroconf #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
@@ -220,6 +224,8 @@
 	  (hop-max-threads-set! 1)
 	  (hop-enable-keep-alive-set! #f)
 	  (hop-scheduling-set! 'nothread))
+	 (("--max-threads" ?m (help "Maximum number of handling HTTP requests"))
+	  (hop-max-threads-set! (string->integer m)))
 	 (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
 	  (hop-scheduling-set! (string->symbol ident)))
 	 (("--help-scheduler" (help "Print available schedulers list"))

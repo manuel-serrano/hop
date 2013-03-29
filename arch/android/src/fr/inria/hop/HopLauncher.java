@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Mar 25 11:51:29 2013 (serrano)                */
+/*    Last change :  Fri Mar 29 10:17:45 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -31,6 +31,7 @@ import android.media.AudioManager;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
 import java.io.*;
+import java.lang.reflect.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -49,6 +50,55 @@ public class HopLauncher extends Activity {
    public static final int MSG_RESTART_HOP_SERVICE = 10;
    public static final int MSG_KILL_HOP_SERVICE = 11;
    public static final int MSG_REBIND_HOP_SERVICE = 12;
+
+   private static String WIFI_SLEEP_POLICY = null;
+   private static int WIFI_SLEEP_POLICY_NEVER = -1;
+
+   static {
+      // bind the WIFI_SLEEP constants
+      Class clazz = findSystemClass( "android.provider.Settings.Global" );
+
+      if( clazz == null ) {
+	 clazz = findSystemClass( "android.provider.Settings" );
+      }
+
+      try {
+	 Field fs = clazz.getField( "WIFI_SLEEP_POLICY" );
+	 WIFI_SLEEP_POLICY = (String)fs.get( clazz );
+	 
+	 Field fi = clazz.getField( "WIFI_SLEEP_POLICY_NEVER" );
+	 WIFI_SLEEP_POLICY_NEVER = fi.getInt( clazz );
+      } catch( Throwable e3 ) {
+	 // Fall back API < 17
+	 WIFI_SLEEP_POLICY =
+	    android.provider.Settings.System.WIFI_SLEEP_POLICY;
+	 WIFI_SLEEP_POLICY_NEVER =
+	    android.provider.Settings.System.WIFI_SLEEP_POLICY_NEVER;
+      }
+   }
+
+   // findSystem
+   static Class findSystemClass( String name ) {
+      try {
+	 Class clazz = Class.forName( name );
+	 Class[] clazzes = clazz.getClasses();
+	 String global_name = clazz.getName() + "$Global";
+	 String system_name = clazz.getName() + "$System";
+
+	 for( int i = 0; i < clazzes.length; i++ ) {
+	    if( clazzes[ i ].getName().equals( global_name ) ) {
+	       return clazzes[ i ];
+	    }
+	    if( clazzes[ i ].getName().equals( system_name ) ) {
+	       return clazzes[ i ];
+	    }
+	 }
+      } catch( ClassNotFoundException _ ) {
+	 ;
+      }
+
+      return null;
+   }
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -70,7 +120,7 @@ public class HopLauncher extends Activity {
 
    // Preferences listeners are stored in a weakhash tables! To prevent
    // the Hop preference listener to be collected we store it into an
-   // instance variable
+   // instance variable (thank you Android)
    SharedPreferences.OnSharedPreferenceChangeListener prefslistener = null;
    
    int maxlines = 0;
@@ -442,11 +492,10 @@ public class HopLauncher extends Activity {
       // get the current wifi policy
       try {
 	 onresume_wifi_policy =
-	    Settings.System.getInt(
-	       getContentResolver(),
-	       Settings.System.WIFI_SLEEP_POLICY );
+	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
+
 	 // never switch off wifi when the hop console is on top
-	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+	 setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
       } catch( Throwable _ ) {
 	 onresume_wifi_policy = 0;
       }
@@ -484,9 +533,7 @@ public class HopLauncher extends Activity {
 
 
    private void setWifiPolicy( int policy ) {
-      Settings.System.putInt( getContentResolver(),
-			      Settings.System.WIFI_SLEEP_POLICY,
-			      policy );
+      Settings.System.putInt( getContentResolver(), WIFI_SLEEP_POLICY, policy );
    }
       
    private void loadPreferences() {
@@ -496,22 +543,23 @@ public class HopLauncher extends Activity {
 	 final SharedPreferences sp =
 	    PreferenceManager.getDefaultSharedPreferences( this );
 
-/* 	 final int initial_wifi_policy =                               */
-/* 	    Settings.System.getInt(                                    */
-/* 	       getContentResolver(),                                   */
-/* 	       Settings.System.WIFI_SLEEP_POLICY );                    */
+	 final int initial_wifi_policy =
+	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
 
 	 final String defaultport = res.getString( R.string.hopport );
+	 final String defaultthreads = res.getString( R.string.hopthreads );
       
 	 setHopPort( sp.getString( "hop_port", defaultport ) );
+	 Hop.threads = sp.getString( "hop_threads", defaultport );
 	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
+	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
 	 hop_log = sp.getBoolean( "hop_log", false );
 
 	 // keep wifi alive
-/* 	 if( sp.getBoolean( "hop_wifi", false ) ) {                    */
-/* 	    setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );  */
-/* 	 }                                                             */
+	 if( sp.getBoolean( "hop_wifi", false ) ) {
+	    setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
+	 }
       
 	 if( prefslistener == null ) {
 	    prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -520,20 +568,28 @@ public class HopLauncher extends Activity {
 			setHopPort( sp.getString( "hop_port", defaultport ) );
 			return;
 		     } 
+		     if( key.equals( "hop_threads" ) ) {
+			setHopThreads( sp.getString( "hop_threads", defaultthreads ) );
+			return;
+		     } 
 		     if( key.equals( "hop_zeroconf" ) ) {
 			Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
 			return;
 		     }
 		     if( key.equals( "hop_wifi" ) ) {
-/* 			if( sp.getBoolean( "hop_wifi", false ) ) {     */
-/* 			   setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER ); */
-/* 			} else {                                       */
-/* 			   setWifiPolicy( initial_wifi_policy );       */
-/* 			}                                              */
+			if( sp.getBoolean( "hop_wifi", false ) ) {
+			   setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
+			} else {
+			   setWifiPolicy( initial_wifi_policy );
+			}
 			return;
 		     }
 		     if( key.equals( "hop_webdav" ) ) {
 			Hop.webdav = sp.getBoolean( "hop_webdav", false );
+			return;
+		     }
+		     if( key.equals( "hop_jobs" ) ) {
+			Hop.jobs = sp.getBoolean( "hop_jobs", false );
 			return;
 		     }
 		     if( key.equals( "hop_log" ) ) {

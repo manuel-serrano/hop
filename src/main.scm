@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Feb 10 17:26:48 2013 (serrano)                */
+;*    Last change :  Fri Mar 29 09:38:42 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -118,19 +118,11 @@
 	    ;; tune the server socket
 	    (socket-option-set! serv :TCP_NODELAY #t)
 	    ;; start the job (background taks, a la cron) scheduler
-	    (when (>fx (hop-max-threads) 1)
+	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
 	    ;; when needed, start the HOP repl
 	    (when (hop-enable-repl)
-	       (if (>fx (hop-max-threads) 1)
-		   (hop-repl (hop-scheduler))
-		   (error "hop" "No thread available for the REPL" "aborting.")))
-	    ;; when needed, start the HOP discovery thread
-;* 	    (hop-discovery-init!)                                      */
-;* 	    (when (hop-enable-discovery)                               */
-;* 	       (if (>fx (hop-max-threads) 1)                           */
-;* 		   (hop-discovery-server (hop-discovery-port))         */
-;* 		   (error "hop" "No thread available for discovery" "aborting."))) */
+	       (hop-repl (hop-scheduler)))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -228,12 +220,14 @@
 ;*    hop-repl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
-   (with-access::scheduler scd (size)
-      (if (<=fx size 1)
-	  (error "hop-repl"
-	     "HOP REPL cannot be spawned without multi-threading"
-	     scd)
-	  (spawn0 scd stage-repl))))
+   (if (>fx (hop-max-threads) 1)
+       (with-access::scheduler scd (size)
+	  (if (<=fx size 1)
+	      (error "hop-repl"
+		 "HOP REPL cannot be spawned without multi-threading"
+		 scd)
+	      (spawn0 scd stage-repl)))
+       (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */

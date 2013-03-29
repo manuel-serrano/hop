@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Mar 25 10:23:41 2013 (serrano)                */
+/*    Last change :  Fri Mar 29 10:17:24 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -44,8 +44,10 @@ public class Hop extends Thread {
    static String debug = "";
    static boolean zeroconf = false;
    static boolean webdav = false;
+   static boolean jobs = false;
 
    static String port = "8080";
+   static String maxthreads = "6";
 
    // instance variables
    private boolean killed = false;
@@ -105,8 +107,10 @@ public class Hop extends Thread {
 	 "; exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
 	 + " " + debug
+	 + " --max-threads " + maxthreads
 	 + (zeroconf ? " -z" : "")
 	 + (webdav ? " -d" : "")
+	 + (jobs ? " -jobs" : " --no-jobs")
 	 + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd + "]");
