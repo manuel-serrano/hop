@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Aug 18 20:17:53 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:40:29 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -14,7 +14,12 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
+   (cond-expand
+      ((and enable-threads (library pthread))
+       (library pthread)))
+
    (import __hop_configure
+	   __hop_thread
 	   __hop_param
 	   __hop_expanders
 	   __hop_misc
@@ -68,6 +73,8 @@
 	   
    (eval   (export-all)
 
+           (class hopthread)
+	   
 	   (class user)
 
 	   (class %http-message)

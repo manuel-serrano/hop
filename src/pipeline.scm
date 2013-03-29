@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Sat Dec  8 15:56:32 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:51:33 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -17,9 +17,6 @@
    (library hop)
 
    (include "stage.sch")
-
-   (cond-expand
-      (enable-threads (library pthread)))
 
    (cond-expand
       (enable-ssl (library ssl)))

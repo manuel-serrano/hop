@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Sun Nov 18 17:03:38 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:38:51 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
 ;*=====================================================================*/
@@ -138,7 +138,7 @@
 ;*    thread-spawn ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (thread-spawn th scd p)
-   (with-access::hopthread th (condv mutex onerror proc)
+   (with-access::scdthread th (condv mutex onerror proc)
       (synchronize mutex
 	 (set! onerror #f)
 	 (set! proc p)
@@ -277,7 +277,7 @@
 	 (with-handler
 	    (lambda (e)
 	       (scheduler-error-handler e t))
-	    (with-access::hopthread t ((tmutex mutex) (tcondv condv) proc)
+	    (with-access::scdthread t ((tmutex mutex) (tcondv condv) proc)
 	       (let loop ()
 		  ;; purge all the pending task
 		  (purge-scheduler-task!)
@@ -292,7 +292,7 @@
 		  (loop)))))
       
       (let loop ()
-	 (with-access::hopthread t (mutex)
+	 (with-access::scdthread t (mutex)
 	    (synchronize mutex (run)))
 	 (loop))))
    
@@ -300,7 +300,7 @@
 ;*    make-queue-thread ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (make-queue-thread scd)
-   (letrec ((t (instantiate::hopthread
+   (letrec ((t (instantiate::scdthread
 		  (name (gensym 'queue-scheduler))
 		  (scheduler scd)
 		  (body (lambda () (queue-thread-body scd t))))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sun Nov 18 15:43:28 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:50:53 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -18,9 +18,6 @@
 
    (include "stage.sch")
  
-   (cond-expand
-      (enable-threads (library pthread)))
-
    (cond-expand
       (enable-ssl (library ssl)))
 
@@ -159,7 +156,7 @@
 	    (scheduler-load-add! scd 1)
 	    (with-stage-handler
 	       accept-error-handler (scd)
-	       (with-access::hopthread thread (inbuf outbuf flushbuf)
+	       (with-access::scdthread thread (inbuf outbuf flushbuf)
 		  (let ((sock (socket-accept serv
 				 :inbuf inbuf
 				 :outbuf outbuf)))
@@ -217,7 +214,7 @@
       ;; tune the socket
       (tune-socket! sock)
       ;; prepare the socket buffers
-      (with-access::hopthread thread (flushbuf inbuf outbuf)
+      (with-access::scdthread thread (flushbuf inbuf outbuf)
 	 (let ((fbuf flushbuf))
 	    (output-port-flush-buffer-set! (socket-output sock) fbuf)
 	    (input-port-buffer-set! (socket-input sock) inbuf)
@@ -247,7 +244,7 @@
 			  (let loop ()
 			     (with-handler
 				(make-scheduler-error-handler thread)
-				(with-access::hopthread thread (inbuf outbuf)
+				(with-access::scdthread thread (inbuf outbuf)
 				   (let loop ((id 1))
 				      (let ((s (socket-accept
 						  serv

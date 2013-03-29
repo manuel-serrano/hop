@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Dec  4 13:49:26 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:54:48 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -27,6 +27,7 @@
 
    (import  __hop_configure
 	    __hop_param
+	    __hop_thread
 	    __hop_types
 	    __hop_user
 	    __hop_xml-types
@@ -1361,7 +1362,7 @@
 		      key)))
 	 (letrec* ((th (cond-expand
 			  (enable-threads
-			     (instantiate::pthread
+			     (instantiate::hopthread
 				(body (lambda () (hopsocket-loop hs)))))
 			  (else
 			   (error "add-server-listener!"

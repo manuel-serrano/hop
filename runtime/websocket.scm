@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Jan 17 11:50:43 2013 (serrano)                */
+;*    Last change :  Fri Mar 29 10:55:09 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -23,7 +23,8 @@
       (enable-threads
        (library pthread)))
 
-   (import __hop_configure
+   (import  __hop_configure
+	    __hop_thread
 	    __hop_param
 	    __hop_types
 	    __hop_user
@@ -277,7 +278,7 @@
       (cond-expand
 	 (enable-threads
 	    (thread-start!
-	       (instantiate::pthread
+	       (instantiate::hopthread
 		  (body
 		     (lambda () (websocket-tunel r socket)))))
 	    'persistent)

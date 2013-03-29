@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Aug 16 08:51:52 2012 (serrano)                */
+#*    Last change :  Fri Mar 29 10:49:06 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = param misc priv types read module \
+_OBJECTS = param thread misc priv types read module \
            xml xml_types charset dom \
            html_base html_head html_img \
            svg mathml \
@@ -69,9 +69,10 @@ INCLUDES = http_lib.sch \
            prefs.sch prefs_expd.sch  \
            service.sch service_expd.sch \
            verbose.sch verbose_expd.sch \
-           enable_thread.sch disable_thread.sch \
            wiki_syntax.sch wiki_parser.sch \
            zeroconf_avahi.sch zeroconf_dummy.sch
+
+#*            enable_thread.sch disable_thread.sch \                   */
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -115,7 +116,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-o/thread.o thread.class: enable-thread.sch disable-thread.sch
+#* o/thread.o thread.class: enable-thread.sch disable-thread.sch       */
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
