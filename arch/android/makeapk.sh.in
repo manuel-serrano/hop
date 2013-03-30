@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Fri Mar 29 12:23:03 2013 (serrano)                */
+#*    Last change :  Sat Mar 30 11:54:39 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -21,6 +21,7 @@ HOPDEBUG=false
 HOPURL=http://hop.inria.fr
 HOPPORT=8080
 HOPTHREADS=6
+HOPZEROCONF=true
 
 HOPCONSOLELOG=false
 HOPDEBUGLEVEL=
@@ -114,16 +115,19 @@ while : ; do
         -g) 
           HOPCONSOLELOG=true;
           HOPDEBUG=true;
+          HOPZEROCONF=false;
           CONFIGUREOPTS=--devel;;
         -g2) 
           HOPCONSOLELOG=true;
           HOPDEBUGLEVEL=-g;
           HOPDEBUG=true;
+          HOPZEROCONF=false;
           CONFIGUREOPTS=--debug;;
         -g3) 
           HOPCONSOLELOG=true;
           HOPDEBUGLEVEL=-g2;
           HOPDEBUG=true;
+          HOPZEROCONF=false;
           CONFIGUREOPTS=--debug2;;
       esac
       ;;
@@ -302,6 +306,7 @@ for p in AndroidManifest.xml project.properties; do \
           -e "s|@ANDROIDSDKVERSION@|$ANDROIDSDKVERSION|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPTHREADS@|$HOPTHREADS|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
 
@@ -315,6 +320,9 @@ for p in res/values/strings.xml; do \
     | sed -e "s|@HOPVERSION@|$hopversion|" \
           -e "s|@HOPPORT@|$HOPPORT|" \
           -e "s|@HOPTHREADS@|$HOPTHREADS|" \
+          -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
+          -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
 
@@ -322,6 +330,7 @@ for p in res/xml/preferences.xml; do \
   rm -f $android/$p.in
   cat $basedir/$p.in \
     | sed -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
           -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" > $android/$p
 done
 

@@ -7,6 +7,8 @@
    <string name="hopport">@HOPPORT@</string>
    <string name="hopthreads">@HOPTHREADS@</string>
    <string name="hopservicestarted">Hop</string>
+   <string name="hoplog">@HOPCONSOLELOG@</string>
+   <string name="hopdebug">@HOPDEBUGLEVEL@</string>
 
    <!-- Activities -->
    <string name="activity_hop">Hop</string>

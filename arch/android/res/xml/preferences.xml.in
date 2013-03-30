@@ -30,7 +30,7 @@
         <CheckBoxPreference
            android:key="hop_zeroconf"
            android:persistent="true" 
-           android:defaultValue="true"
+           android:defaultValue="@HOPZEROCONF@"
            android:title="@string/prefs_zeroconf"
            android:summary="@string/prefs_zeroconf_summary">
         </CheckBoxPreference>

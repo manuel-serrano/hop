@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Mar 29 12:19:33 2013 (serrano)                */
+/*    Last change :  Sat Mar 30 12:44:37 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -245,15 +245,13 @@ public class HopLauncher extends Activity {
 			break;
 
 		     case MSG_HOP_FAILED:
-			Log.i( "HopLauncher", "===== MSG_HOP_FAILED" );
-			HopUiUtils.fail( activity, "Hop", "failed", (Exception)msg.obj );
-			kill( 4000 );
+   		        Log.i( "HopLauncher", "===== MSG_HOP_FAILED: " + msg.obj );
+			HopUiUtils.failExit( activity, "Hop", "failed", msg.obj );
 			break;
 
 		     case MSG_HOPDROID_FAILED:
-			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED" );
-			HopUiUtils.fail( activity, "HopDroid", "failed", (Exception)msg.obj );
-			kill( 4000 );
+			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED: " + msg.obj );
+			HopUiUtils.failExit( activity, "HopDroid", "failed", msg.obj );
 			break;
 
 		     case MSG_RUN_WIZARD:
@@ -273,12 +271,12 @@ public class HopLauncher extends Activity {
 
 		     case MSG_INSTALL_FAILED:
 			Log.e( "HopLauncher", "installation failed..." );
-			HopUiUtils.fail( activity, "HopInstaller", "failed", (Exception)msg.obj );
+			HopUiUtils.failExit( activity, "HopInstaller", "failed", msg.obj );
 			break;
 
 		     case MSG_CONFIGURE_FAIL:
 			Log.e( "HopLauncher", "configuration failed..." );
-			HopUiUtils.fail( activity, "HopConfigurer", "failed", (Exception)msg.obj );
+			HopUiUtils.failExit( activity, "HopConfigurer", "failed", msg.obj );
 			break;
 
 		     case MSG_CONFIGURE:
@@ -362,7 +360,7 @@ public class HopLauncher extends Activity {
 		     try {
 			hopinstaller.join();
 		     } catch( Exception e ) {
-			HopUiUtils.fail( activity, "HopLauncher", " failed:", e );
+			HopUiUtils.failExit( activity, "HopLauncher", " failed:", e );
 		     }
 
 		     Log.v( "HopLauncher", "installation complete" );
@@ -393,7 +391,7 @@ public class HopLauncher extends Activity {
 	    }
 	 }
       } catch( Exception e ) {
-	 HopUiUtils.fail( activity, "HopLauncher", " failed", e );
+	 HopUiUtils.failExit( activity, "HopLauncher", " failed", e );
       }
    }
 
@@ -509,7 +507,6 @@ public class HopLauncher extends Activity {
    @Override
    public void onPause() {
       Log.d( "HopLauncher", "onPause isFinishing=" + isFinishing() );
-      super.onPause();
       
       // restore the wifi policy
       if( onresume_wifi_policy != 0 ) {
@@ -520,6 +517,15 @@ public class HopLauncher extends Activity {
       if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "pause" , "" );
       }
+      
+      super.onPause();
+   }
+
+   @Override
+   public void onDestroy() {
+      Log.d( "HopLauncher", "onDestroy" );
+      
+      super.onDestroy();
    }
 
    @Override
@@ -548,13 +554,16 @@ public class HopLauncher extends Activity {
 
 	 final String defaultport = res.getString( R.string.hopport );
 	 final String defaultthreads = res.getString( R.string.hopthreads );
+	 final String defaultdebug = res.getString( R.string.hopdebug );
+	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" );
       
 	 setHopPort( sp.getString( "hop_port", defaultport ) );
 	 Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
 	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
 	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
-	 hop_log = sp.getBoolean( "hop_log", false );
+	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
+	 hop_log = sp.getBoolean( "hop_log", defaultlog );
 
 	 // keep wifi alive
 	 if( sp.getBoolean( "hop_wifi", false ) ) {
@@ -597,7 +606,7 @@ public class HopLauncher extends Activity {
 			return;
 		     }
 		     if( key.equals( "hop_debug" ) ) {
-			Hop.debug = sp.getString( "hop_debug", "" );
+			Hop.debug = sp.getString( "hop_debug", defaultdebug );
 			return;
 		     }
 		  }

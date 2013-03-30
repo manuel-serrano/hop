@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Feb  6 10:22:14 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 08:48:44 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopdroid-phone
 
-   (library phone mail pthread hop)
+   (library phone mail hop)
 
    (import __hopdroid-tts)
    
@@ -74,10 +74,12 @@
       ;; hopdroid event table
       (set! event-table (make-hashtable 8))
       ;; start the event listener thread
-      (set! event-thread
-	 (thread-start!
-	    (instantiate::pthread
-	       (body android-event-listener))))))
+      (cond-expand
+	 (enable-threads
+	  (set! event-thread
+	     (thread-start!
+		(instantiate::hopthread
+		   (body android-event-listener))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
@@ -242,6 +244,7 @@
    (let ((ip (socket-input sock-event)))
       (let loop ()
 	 (let ((name (read ip)))
+	    (tprint "hopdroid, phone event: " name)
 	    (unless (eof-object? name)
 	       (let ((args (read ip)))
 		  (set! phone-events '())

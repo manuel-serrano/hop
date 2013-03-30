@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jan 16 08:28:28 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 12:47:50 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -284,8 +284,8 @@
 	       (<TD> :align 'left (os-arch)))
 	    (<TR>
 	       (<TH> :align 'right "Server IP")
-	       (<TD> :align 'left (<TT> (host (hostname)))
-		  " (" (hostname) ")"))
+	       (<TD> :align 'left (<TT> (hop-server-hostip))
+		  " (" (hop-server-name) ")"))
 	    (<TR>
 	       (<TH> :align 'right "Client IP")
 	       (<TD> :align 'left (<TT> (socket-host-address socket))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sat Oct 13 08:03:02 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Sat Mar 30 10:59:22 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -24,7 +24,7 @@
 	      (stamp::int (default -1) (info "INTEGER"))
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
-	      (version::bstring read-only)
+	      (version::bstring read-only (info "VERSION"))
 	      (install::bstring (default ""))
 	      (url read-only)
 	      (home read-only)
@@ -41,6 +41,9 @@
 	      (authorization read-only (default #f))
 	      (directory::bstring read-only (default "")))
 
+	   (version-padding ::bstring)
+	   (version-unpadding ::bstring)
+	   
 	   (weblet->list::pair-nil ::weblet)
 	   (info->weblet::weblet ::pair #!key name version url authorization (dir "") publisher (stamp -1))))
 
@@ -54,9 +57,36 @@
 		  (if (equal? (class-field-info f) "INTEGER")
 		      v
 		      (obj->string v))
-		  v)))
+		  (if (equal? (class-field-info f) "VERSION")
+		      (version-padding v)
+		      v))))
       (vector->list (class-all-fields (object-class w)))))
 
+;*---------------------------------------------------------------------*/
+;*    version-padding ...                                              */
+;*---------------------------------------------------------------------*/
+(define (version-padding v)
+   
+   (define (pad4 s)
+      (let ((l (string-length s)))
+	 (if (<fx l 4)
+	     (let ((ns (make-string 4 #\0)))
+		(blit-string! s 0 ns (-fx 4 l) l)
+		ns)
+	     s)))
+		
+   (let ((m (pregexp-match "([0-9]+).([0-9]+).([0-9]+)(-(?:pre|rc)?[0-9]+)" v)))
+      (if m
+	  (string-append (pad4 (cadr m)) "." (pad4 (caddr m)) "." (pad4 (cadddr m))
+	     (if (string? (car (cddddr m))) (car (cddddr m)) ""))
+	  m)))
+
+;*---------------------------------------------------------------------*/
+;*    version-unpadding ...                                            */
+;*---------------------------------------------------------------------*/
+(define (version-unpadding v)
+   (pregexp-replace* "[.]0+" (pregexp-replace "^0+" v "") "."))
+      
 ;*---------------------------------------------------------------------*/
 ;*    info->weblet ...                                                 */
 ;*    -------------------------------------------------------------    */
