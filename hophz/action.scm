@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Wed Feb 20 19:43:52 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 13:34:31 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -290,12 +290,11 @@
    (with-access::list-action a (args verbose)
       (if (null? args)
 	  ;; a plain list
-	  (with-access::list-action a (args)
-	     (hz-with-hop (hz/list/weblets)
-		(lambda (w)
-		   (for-each (lambda (w)
-				(show-weblet w (+fx (hophz-verbose) verbose)))
-		      (filter-publishers w)))))
+	  (hz-with-hop (hz/list/weblets)
+	     (lambda (w)
+		(for-each (lambda (w)
+			     (show-weblet w (+fx (hophz-verbose) verbose)))
+		   (filter-publishers w))))
 	  ;; a search
 	  (hz-with-hop (hz/search/weblets
 			  :regexp (car args)

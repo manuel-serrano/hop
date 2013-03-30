@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sat Mar 30 10:59:22 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 18:18:02 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -25,7 +25,7 @@
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
 	      (version::bstring read-only (info "VERSION"))
-	      (install::bstring (default ""))
+	      (install::bstring (default "") (info "VERSION"))
 	      (url read-only)
 	      (home read-only)
 	      (publisher read-only)
@@ -79,13 +79,23 @@
       (if m
 	  (string-append (pad4 (cadr m)) "." (pad4 (caddr m)) "." (pad4 (cadddr m))
 	     (if (string? (car (cddddr m))) (car (cddddr m)) ""))
-	  m)))
+	  v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    version-unpadding ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (version-unpadding v)
-   (pregexp-replace* "[.]0+" (pregexp-replace "^0+" v "") "."))
+   
+   (define (unpad i)
+      (let ((j (string-skip v "0" i)))
+	 (if j
+	     (if (=fx j (+fx i 4))
+		 "0"
+		 (substring v j (+fx i 4)))
+	     (substring v i (+fx i 4)))))
+   
+   (string-append (unpad 0) "." (unpad 5) "." (unpad 10)
+      (substring v 14 (string-length v))))
       
 ;*---------------------------------------------------------------------*/
 ;*    info->weblet ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Mar 23 06:24:57 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 16:30:51 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -76,7 +76,8 @@
 	       ((and (pair? iv) (memq :client iv))
 		=>
 		(lambda (x)
-		   (register (when (pair? (cdr x)) (cadr x)))))
+		   (when (pair? (cdr x))
+		      (register (cadr x)))))
 	       (else
 		(let ((gv (class-field-accessor f)))
 		   (register (gv o)))))))))
