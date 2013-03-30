@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sat Mar 30 18:18:02 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 19:28:13 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -75,7 +75,7 @@
 		ns)
 	     s)))
 		
-   (let ((m (pregexp-match "([0-9]+).([0-9]+).([0-9]+)(-(?:pre|rc)?[0-9]+)" v)))
+   (let ((m (pregexp-match "([0-9]+).([0-9]+).([0-9]+)([-]?(?:pre|rc)?[0-9]*)" v)))
       (if m
 	  (string-append (pad4 (cadr m)) "." (pad4 (caddr m)) "." (pad4 (cadddr m))
 	     (if (string? (car (cddddr m))) (car (cddddr m)) ""))
@@ -92,7 +92,7 @@
 	     (if (=fx j (+fx i 4))
 		 "0"
 		 (substring v j (+fx i 4)))
-	     (substring v i (+fx i 4)))))
+	     "0")))
    
    (string-append (unpad 0) "." (unpad 5) "." (unpad 10)
       (substring v 14 (string-length v))))
