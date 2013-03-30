@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sat Mar 30 19:28:13 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 19:50:19 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
@@ -94,8 +94,10 @@
 		 (substring v j (+fx i 4)))
 	     "0")))
    
-   (string-append (unpad 0) "." (unpad 5) "." (unpad 10)
-      (substring v 14 (string-length v))))
+   (if (>=fx (string-length v) 14)
+       (string-append (unpad 0) "." (unpad 5) "." (unpad 10)
+	  (substring v 14 (string-length v)))
+       v))
       
 ;*---------------------------------------------------------------------*/
 ;*    info->weblet ...                                                 */

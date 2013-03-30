@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Sat Mar 30 19:24:40 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 19:49:34 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -217,7 +217,6 @@
 	    (if (isa? w weblet)
 		(hz-with-hop (hz/weblet/depends :weblet w)
 		   (lambda (l)
-		      (tprint "l=" l)
 		      (when l
 			 (install-weblets (list l)))))
 		(error "hophz" "Cannot find weblet" name))))))

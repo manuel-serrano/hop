@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sat Mar 30 08:48:44 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 19:34:07 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -244,7 +244,6 @@
    (let ((ip (socket-input sock-event)))
       (let loop ()
 	 (let ((name (read ip)))
-	    (tprint "hopdroid, phone event: " name)
 	    (unless (eof-object? name)
 	       (let ((args (read ip)))
 		  (set! phone-events '())
