@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Mar 25 09:16:58 2013 (serrano)                */
+#*    Last change :  Sat Mar 30 07:45:15 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -106,7 +106,7 @@ locevent="true"
 threads=""
 
 zeroconf="#f"
-zeroconfbe=""
+zeroconfbe="no"
 avahi=""
 
 hopsrfis=""
@@ -357,7 +357,7 @@ while : ; do
 done
 
 #*---------------------------------------------------------------------*/
-#*    Versionning                                                      */
+#*    Versioning                                                       */
 #*---------------------------------------------------------------------*/
 if [ ! -x .hoprelease ]; then
   cat > .hoprelease <<EOF
@@ -524,6 +524,16 @@ if [ "$threads" = "yes" ]; then
   hopsrfis="$hopsrfis enable-threads"
   libraries="$libraries pthread"
   bglcloselibs="$bglcloselibs pthread"
+else
+  if [ "$avahi " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Avahi requires threads, either disable avahi (--disable-avahi)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    avahi=no;
+  fi
 fi
 
 #*---------------------------------------------------------------------*/
@@ -537,7 +547,7 @@ if [ "$avahi " = " " ]; then
   fi
 fi
 
-if [ "$avahi" = "yes" ]; then
+if [ "$avahi " = "yes " ]; then
   if [ ! -f $bigloolibdir/avahi.heap ]; then
     echo "*** ERROR:configure:bigloo avahi. Aborting"
     echo ""

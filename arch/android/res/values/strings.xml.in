@@ -42,7 +42,7 @@
    <string name="prefs_webdav_summary">Act as WebDav server</string>
 
    <string name="prefs_jobs">Jobs</string>
-   <string name="prefs_jobs_summary">Jobs management</string>
+   <string name="prefs_jobs_summary">Enable background jobs</string>
 
    <string name="prefs_autostart">Start on boot</string>
    <string name="prefs_autostart_summary">Start automatically Hop in background on boot</string>

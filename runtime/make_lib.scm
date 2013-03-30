@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Mar 29 10:40:29 2013 (serrano)                */
+;*    Last change :  Fri Mar 29 12:34:23 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -135,10 +135,10 @@
 	   (class zeroconf-service-event))
 
    (cond-expand
-      ((and enable-avahi (library pthread) (library avahi))
+      ((and enable-avahi (library avahi))
        (library avahi)))
       
    (cond-expand
-      ((and enable-avahi (library pthread) (library avahi))
+      ((and enable-avahi (library avahi))
        (eval (class avahi)))))
 

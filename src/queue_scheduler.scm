@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Fri Mar 29 10:38:51 2013 (serrano)                */
+;*    Last change :  Fri Mar 29 12:35:59 2013 (serrano)                */
 ;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -13,10 +13,6 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hop_scheduler-queue
-
-   (cond-expand
-      (enable-threads
-       (library pthread)))
 
    (library hop)
    
