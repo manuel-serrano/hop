@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Mar 29 10:56:18 2013 (serrano)                */
+/*    Last change :  Sun Mar 31 08:32:42 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -108,7 +108,7 @@ public class Hop extends Thread {
 	 + " -p " + port
 	 + " " + debug
 	 + " --max-threads " + maxthreads
-	 + (zeroconf ? " -z" : "")
+	 + (zeroconf ? " -z" : " --no-zeroconf")
 	 + (webdav ? " -d" : "")
 	 + (jobs ? " --jobs" : " --no-jobs")
 	 + " " + extra;

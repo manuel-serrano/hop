@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sat Mar 30 19:34:07 2013 (serrano)                */
+;*    Last change :  Sun Mar 31 08:22:51 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -244,8 +244,10 @@
    (let ((ip (socket-input sock-event)))
       (let loop ()
 	 (let ((name (read ip)))
+	    (tprint ">>> ANDROID-EVENT-LISTENER: " name)
 	    (unless (eof-object? name)
 	       (let ((args (read ip)))
+		  (tprint "--- ANDROID-EVENT-LISTENER: " name)
 		  (set! phone-events '())
 		  (unless (eof-object? args)
 		     (let ((procs (synchronize event-mutex
@@ -264,7 +266,8 @@
 				       (proc evt)
 				       (with-access::androidevent evt (stopped)
 					  (unless stopped
-					     (liip (cdr procs)))))))))))))
+					     (liip (cdr procs)))))))))))
+		  (tprint "<<< ANDROID-EVENT-LISTENER: " name)))
 	    (loop)))))
 
 ;*---------------------------------------------------------------------*/

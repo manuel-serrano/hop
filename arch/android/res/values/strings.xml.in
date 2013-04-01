@@ -9,6 +9,7 @@
    <string name="hopservicestarted">Hop</string>
    <string name="hoplog">@HOPCONSOLELOG@</string>
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
+   <string name="hopzeroconf">@HOPZEROCONF@</string>
 
    <!-- Activities -->
    <string name="activity_hop">Hop</string>
@@ -32,7 +33,7 @@
 
    <string name="prefs_port">Port</string>
    <string name="prefs_port_summary">Hop port number (requires restarting Hop)</string>
-   <string name="prefs_threads">Threads number</string>
+   <string name="prefs_threads">Multithreading</string>
    <string name="prefs_threads_summary">Maximum number of HTTP threads (requires restarting Hop)</string>
    <string name="prefs_zeroconf">Zeroconf</string>
    <string name="prefs_zeroconf_summary">Enable zeroconf (prior to 4.2 this slightly drains the battery)</string>

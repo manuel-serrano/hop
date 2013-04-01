@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Mar 30 12:44:37 2013 (serrano)                */
+/*    Last change :  Sun Mar 31 08:33:27 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -556,10 +556,11 @@ public class HopLauncher extends Activity {
 	 final String defaultthreads = res.getString( R.string.hopthreads );
 	 final String defaultdebug = res.getString( R.string.hopdebug );
 	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" );
+	 final boolean defaultzeroconf = res.getString( R.string.hopzeroconf ).equals( "true" );
       
 	 setHopPort( sp.getString( "hop_port", defaultport ) );
 	 Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
-	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", defaultzeroconf );
 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
 	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
 	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
