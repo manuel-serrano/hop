@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Sun Mar 31 09:31:31 2013 (serrano)                */
+;*    Last change :  Mon Apr  1 17:20:22 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
@@ -87,22 +87,6 @@
 (define-method (thread-set-cleanup! th::hopthread v)
    (with-access::hopthread th (%cleanup)
       (set! %cleanup v)))
-
-) (else
- 
-;*---------------------------------------------------------------------*/
-;*    thread-start! ::hopthread ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (thread-start! th::hopthread . sc)
-   (tprint "THREAD-START! " th)
-   (call-next-method))
- 
-;*---------------------------------------------------------------------*/
-;*    thread-start-joinable! ::hopthread ...                           */
-;*---------------------------------------------------------------------*/
-(define-method (thread-start-joinable! th::hopthread)
-   (tprint "THREAD-START-JOINABLE! " th)
-   (call-next-method))
  
 ;*---------------------------------------------------------------------*/
 ;*    End conditional compilation                                      */

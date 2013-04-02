@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Wed Feb  6 11:03:33 2013 (serrano)                */
+/*    Last change :  Mon Apr  1 18:24:59 2013 (serrano)                */
 /*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
@@ -146,14 +146,17 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
    final String type;
    final Vector events = new Vector( 1 );
    HopDroid hopdroid;
-
+   final Hashtable resolvers = new Hashtable();
+   
    NsdManager.ResolveListener makeResolveListener( final String event ) {
+      Log.i( "HopNsdManager", "add resolver " + event );
       return new NsdManager.ResolveListener() {
 	 @Override
 	 public void onResolveFailed( NsdServiceInfo svc, int errorCode ) {
 	    Log.e( "HopNsdManager", "Resolve failed r=" + errorCode
 		   + " " + NsdErrorMessage( errorCode )
-		   + " event=" + event + " si.event=" + svc.getServiceName() );
+		   + " si.type=" + svc.getServiceType()
+		   + " si.event=" + svc.getServiceName() );
 	 }
 
 	 @Override
@@ -164,7 +167,7 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 	       String event = (String)e.nextElement();
 	       InetAddress addr = svc.getHost();
 	       String proto = (addr instanceof Inet4Address) ? "ipv4"
-			: (addr instanceof Inet6Address) ? "ipv6" : "tcp";
+		  : (addr instanceof Inet6Address) ? "ipv6" : "tcp";
 
 	       Log.d( "HopNsdManager", "service resolved name="
 		      + svc.getServiceName()
@@ -221,10 +224,22 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
 
    @Override public void onServiceFound( NsdServiceInfo svc ) {
       String event = svc.getServiceName();
+      String type = svc.getServiceType();
       Log.d( "HopNsdManager", "service found name=" + event
 	     + " type=" + svc.getServiceType() );
-	 
-      nsd.resolveService( svc, makeResolveListener( event ) );
+
+      synchronized( resolvers ) {
+	 Object oldr = resolvers.get( type );
+	 if( oldr == null ) {
+	    NsdManager.ResolveListener resolver =
+	       makeResolveListener( type );
+	    resolvers.put( type, resolver );
+	    
+	    nsd.resolveService( svc, resolver );
+	 } else {
+	    nsd.resolveService( svc, (NsdManager.ResolveListener)oldr );
+	 }
+      }
    }
 
    @Override public void onServiceLost( NsdServiceInfo service ) {
