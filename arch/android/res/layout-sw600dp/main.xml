@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/hopstyle"
     android:padding="4px"
-    android:background="#ddff0000"
+    android:background="#dd00ff00"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/layout">

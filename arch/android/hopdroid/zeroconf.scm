@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Mon Apr  1 17:34:44 2013 (serrano)                */
+;*    Last change :  Tue Apr  2 09:44:27 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -32,7 +32,6 @@
 ;*    zeroconf-backend-start ::androidzeroconf ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
-   (tprint "ZEROCONF-BACKEND-START...")
    (with-access::androidzeroconf o ((aphone android) plugin onready hostname)
       (unless plugin
 	 (set! plugin (android-load-plugin aphone "zeroconf")))
