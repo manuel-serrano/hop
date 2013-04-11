@@ -56,9 +56,6 @@ BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
               $(CLASS_DIR)/configure.class
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
 SOURCES = $(_OBJECTS:%=%.scm)
 
 INCLUDES = thread.sch http_lib.sch expanders.sch \
@@ -81,13 +78,12 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native jvm
 
 build: $(BACKEND)
 
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

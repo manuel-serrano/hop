@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Thu Apr 11 08:52:58 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 10:54:40 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
@@ -22,8 +22,6 @@
    
    (include "thread.sch")
 
-   (library pthread)
-   
    (cond-expand
       ((and enable-threads (library pthread))
        (export (class hopthread::pthread)))

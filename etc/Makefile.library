@@ -24,7 +24,7 @@ CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .cs .obj .hop
+.SUFFIXES: .scm .class .java .o .hop
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
@@ -49,6 +49,9 @@ $(CLASS_DIR)/%.class: %.hop
 
 $(CLASS_EDIR)/%.class: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
+
+o/%.o: %.c
+	@ $(call compile,$(CCOMP),$(CFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
@@ -223,10 +226,6 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
@@ -300,9 +299,6 @@ uninstall:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
