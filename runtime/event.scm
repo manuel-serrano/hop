@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Mar 29 10:54:48 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 08:54:09 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -15,10 +15,8 @@
 (module __hop_event
 
    (library web)
-   
-   (cond-expand
-      (enable-threads
-       (library pthread)))
+
+   (include "thread.sch")
 
    (include "xml.sch"
 	    "service.sch"
@@ -97,7 +95,7 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define (debug-websocket) (>= (bigloo-debug) 2))
+(define (debug-websocket) (>= (bigloo-debug) 1))
 (define debug-multipart #f)
 (define debug-flash #f)
 
@@ -419,7 +417,7 @@
 		  (tprint "websocket-register-new-connection, key=" key
 		     " socket=" socket 
 		     " connected clients: "
-		     (length *websocket-response-list*))))
+		     *websocket-response-list*)))
 	    resp))))
 
 ;*---------------------------------------------------------------------*/

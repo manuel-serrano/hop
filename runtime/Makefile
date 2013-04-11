@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Mar 29 10:49:06 2013 (serrano)                */
+#*    Last change :  Thu Apr 11 10:50:15 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ _OBJECTS = param thread misc priv types read module \
            http_error http_filter \
            hop_inline \
            event websocket color weblets preferences expanders \
-           security xdomain zeroconf
+           security xdomain zeroconf upnp
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -61,8 +61,7 @@ BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES = http_lib.sch \
-           expanders.sch \
+INCLUDES = thread.sch http_lib.sch expanders.sch \
            xml.sch xml_expd.sch \
            param.sch param_expd.sch \
            hss.sch hss_expd.sch \
@@ -71,8 +70,6 @@ INCLUDES = http_lib.sch \
            verbose.sch verbose_expd.sch \
            wiki_syntax.sch wiki_parser.sch \
            zeroconf_avahi.sch zeroconf_dummy.sch
-
-#*            enable_thread.sch disable_thread.sch \                   */
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

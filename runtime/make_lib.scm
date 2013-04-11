@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Mar 29 12:34:23 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 09:00:40 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -14,9 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
-   (cond-expand
-      ((and enable-threads (library pthread))
-       (library pthread)))
+   (include "thread.sch")
 
    (import __hop_configure
 	   __hop_thread

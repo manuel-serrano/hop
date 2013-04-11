@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Fri Mar 29 10:54:22 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 08:21:16 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
@@ -14,9 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_job
 
-   (cond-expand
-      (enable-threads
-       (library pthread)))
+   (include "thread.sch")
    
    (import  __hop_param
 	    __hop_thread

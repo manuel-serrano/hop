@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Mon Apr  1 17:20:22 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 08:52:58 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
@@ -20,10 +20,10 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_thread
    
-   (cond-expand
-      ((and enable-threads (library pthread))
-       (library pthread)))
+   (include "thread.sch")
 
+   (library pthread)
+   
    (cond-expand
       ((and enable-threads (library pthread))
        (export (class hopthread::pthread)))
@@ -87,7 +87,6 @@
 (define-method (thread-set-cleanup! th::hopthread v)
    (with-access::hopthread th (%cleanup)
       (set! %cleanup v)))
- 
 ;*---------------------------------------------------------------------*/
 ;*    End conditional compilation                                      */
 ;*---------------------------------------------------------------------*/

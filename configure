@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Mar 30 07:45:15 2013 (serrano)                */
+#*    Last change :  Thu Apr 11 10:43:22 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -35,6 +35,7 @@ devmode=product
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bhflags=
 btflags="-gtrace"
 
 bcflagsdev=""
@@ -624,6 +625,7 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 #*---------------------------------------------------------------------*/
 for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
+    bhflags="$bhflags -srfi $srfi";
 done
 
 #*---------------------------------------------------------------------*/
@@ -699,6 +701,7 @@ cat $mkmf.in \
           -e "s|@JAR@|$jar|" \
           -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BHFLAGS@|$bhflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
@@ -976,13 +979,12 @@ rm -f $and 2> /dev/null
 echo "#!/bin/sh" > $and
 echo "#* Automatically generated file (don't edit) */" >> $and
 
-
 cat $and.in \
    | sed -e "s|#!/bin/sh||" \
          -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
          -e "s|@VERSION@|$hopversion|" \
          -e "s|@MINOR@|$minorversion|" \
-   > $and  
+   >> $and  
 chmod a+rx $and
  
 #*---------------------------------------------------------------------*/

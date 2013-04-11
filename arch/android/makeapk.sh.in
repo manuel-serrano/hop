@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Sun Mar 31 08:36:05 2013 (serrano)                */
+#*    Last change :  Thu Apr 11 10:46:39 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -159,6 +159,9 @@ while : ; do
     --mode=*)
       action_mode="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --patch=*)
+      patch="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --)
       shift;
       CONFIGUREOPTS=$*;;
@@ -183,6 +186,7 @@ while : ; do
       echo "   --weblets-devel=yes|no......... full weblets installations" >&2;
       echo "   --repository=dir............... output target directory" >&2;
       echo "   --mode=debug|release........... output target directory" >&2;
+      echo "   --patch=file................... patch file after tar" >&2;
       echo "" >&2;
       echo "Example:" >&2;
       echo "   $0 --untar=no --make=no --install=no --weblets-devel=no" >&2;
@@ -214,6 +218,10 @@ if [ $action_untar = "yes" ]; then
   mkdir -p $tmp
 
   tar xfz $REPOSITORY/hop-$hopversion.tar.gz -C $tmp
+
+  if [ "$patch " != " " ]; then
+    cat $path | (cd $tmp/hop-$hopversion && patch -p1 -)
+  fi
 fi
 
 #*---------------------------------------------------------------------*/
