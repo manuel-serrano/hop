@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 11 10:43:22 2013 (serrano)                */
+#*    Last change :  Thu Apr 11 17:47:06 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -450,7 +450,7 @@ if [ "$ccflags " = " " ]; then
   if [ "$debug " = "yes " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
-  ccflags="$ccflags -I$bigloolibdir"
+  ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
 fi
 
 #*---------------------------------------------------------------------*/
