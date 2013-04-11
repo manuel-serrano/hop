@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Apr 11 14:58:33 2013 (serrano)                */
+#*    Last change :  Thu Apr 11 15:59:27 2013 (serrano)                */
 #*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -82,7 +82,8 @@ o:
 	mkdir -p $@
 
 lib-c-static: .afile $(OBJECTS)
-	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
+	$(MAKE) LIBVERSION=$(LIBVERSION) \
+                $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
@@ -91,7 +92,7 @@ lib-c-static: .afile $(OBJECTS)
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) lib-c.$(SHAREDSUFFIX); \
+           $(MAKE) LIBVERSION=$(LIBVERSION) lib-c.$(SHAREDSUFFIX); \
         fi
 
 # we have 4 versions of each library:
