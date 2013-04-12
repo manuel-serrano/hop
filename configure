@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 11 17:47:06 2013 (serrano)                */
+#*    Last change :  Fri Apr 12 16:59:14 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,8 +55,8 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
-bglcloselibs="web multimedia"
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite upnp"
+bglcloselibs="web multimedia upnp"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */

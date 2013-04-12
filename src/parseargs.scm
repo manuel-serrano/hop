@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Mar 29 10:16:28 2013 (serrano)                */
+;*    Last change :  Fri Apr 12 14:04:42 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -21,7 +21,8 @@
    (eval    (export hop-load-rc))
 
    (export  (parse-args::pair-nil ::pair)
-	    (hop-load-rc ::bstring)))
+	    (hop-load-rc ::bstring)
+	    (hello-world)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
@@ -355,15 +356,12 @@
       (when (boolean? zeroconf)
 	 (hop-enable-zeroconf-set! zeroconf))
 	 
-      ;; hello world
-      (hello-world)
-      
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       
       ;; server event port
       (when (hop-enable-fast-server-event)
-	 (if (<fx ep 1024)
+	 (if (and (>fx ep 0) (<fx ep 1024))
 	     (error "fast-server-event-port"
 		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
 		ep)

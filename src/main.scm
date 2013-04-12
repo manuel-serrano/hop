@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Mar 29 09:38:42 2013 (serrano)                */
+;*    Last change :  Fri Apr 12 20:19:00 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -115,6 +115,11 @@
 			      "Cannot start Hop server, exiting...")
 			   (exit 2))
 			(hop-server-socket))))
+	    ;; adjust the actual hop-port
+	    (hop-port-set! (socket-port-number serv))
+	    (hop-fast-server-event-port-set! (socket-port-number serv))
+	    ;; ready to now say hello
+	    (hello-world)
 	    ;; tune the server socket
 	    (socket-option-set! serv :TCP_NODELAY #t)
 	    ;; start the job (background taks, a la cron) scheduler

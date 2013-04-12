@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Dec 28 11:54:22 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Apr 12 21:08:41 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -211,31 +211,37 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file/cache ...                                          */
+;*    -------------------------------------------------------------    */
+;*    The performance of this function is critical. In must not        */
+;*    compute date unless needed.                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file/cache req)
    (with-access::http-request req (abspath header)
       (let ((ce (cache-get get-memory-cache abspath))
-	    (im (http-header-field header if-modified-since:))
-	    (lm (date->rfc2822-date
-		   (seconds->date (file-modification-time abspath)))))
-	 (cond
-	    ((and (string? im) (string<=? lm im))
-	     ;; not modified
-	     (instantiate::http-response-string
-		(request req)
-		(start-line "HTTP/1.1 304 Not Modified")
-		(content-type (mime-type (prefix abspath) "text/plain"))
-		(header `((Last-Modified: . ,lm)))
-		(charset (hop-locale))))
-	    ((isa? ce cache-entry)
-	     ;; in memory cache
+	    (im (http-header-field header if-modified-since:)))
+	 (if (and (not im) (isa? ce cache-entry))
+	     ;; fast path, in memory cache
 	     (with-access::cache-entry ce (value)
-		value))
-	    (else
-	     ;; a new entry
-	     (let ((resp (http-get-file req lm #t)))
-		(cache-put! get-memory-cache abspath resp)
-		resp))))))
+		value)
+	     (let ((lm (date->rfc2822-date
+			  (seconds->date (file-modification-time abspath)))))
+		(cond
+		   ((and im (string<=? lm im))
+		    ;; not modified
+		    (instantiate::http-response-string
+		       (request req)
+		       (start-line "HTTP/1.1 304 Not Modified")
+		       (content-type (mime-type (prefix abspath) "text/plain"))
+		       (header `((Last-Modified: . ,lm)))
+		       (charset (hop-locale))))
+		   ((isa? ce cache-entry)
+		    (with-access::cache-entry ce (value)
+		       value))
+		   (else
+		    ;; a new entry
+		    (let ((resp (http-get-file req lm #t)))
+		       (cache-put! get-memory-cache abspath resp)
+		       resp))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file ...                                                */

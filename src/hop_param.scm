@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Mar 29 09:33:56 2013 (serrano)                */
+;*    Last change :  Fri Apr 12 14:01:38 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -262,7 +262,7 @@
 (define-parameter hop-fast-server-event-port
    (hop-port)
    (lambda (v)
-      (if (<fx v 1024)
+      (if (and (>fx v 0) (<fx v 1024))
 	  (error "hop-fast-server-event-port-set!"
 		 "Server event ports must be greater than 1023"
 		 v)
