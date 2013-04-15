@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Thu Apr 11 10:46:39 2013 (serrano)                */
+#*    Last change :  Mon Apr 15 14:56:20 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -56,8 +56,9 @@ fi
 #*---------------------------------------------------------------------*/
 hopversion=$VERSION$MINOR
 
+builddir=build.hop
+
 basedir=`dirname $0`
-tmp=`pwd`/build.hop
 
 ant=/usr/share/apache-ant/bin/ant
 
@@ -162,6 +163,9 @@ while : ; do
     --patch=*)
       patch="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --builddir=*)
+      builddir="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --)
       shift;
       CONFIGUREOPTS=$*;;
@@ -199,6 +203,8 @@ while : ; do
   shift
 done
 
+tmp=`pwd`/$builddir
+
 android=$tmp/hop-$hopversion/android
 branch=`echo $hopversion | sed -e "s/[-].*$//g"`
 
@@ -220,7 +226,8 @@ if [ $action_untar = "yes" ]; then
   tar xfz $REPOSITORY/hop-$hopversion.tar.gz -C $tmp
 
   if [ "$patch " != " " ]; then
-    cat $path | (cd $tmp/hop-$hopversion && patch -p1 -)
+    echo "patching with $patch..."
+    patch -d $tmp/hop-$hopversion -p1 -i $patch
   fi
 fi
 
