@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Apr 19 09:03:34 2013 (serrano)                */
+;*    Last change :  Fri Apr 19 10:36:34 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -149,7 +149,6 @@
 ;*    music-playlist-add! ::androidmusic ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-add! androidmusic::androidmusic n)
-   (tprint "ANDROID music-playlist-add n=" n)
    (call-next-method)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (synchronize %mutex
@@ -244,7 +243,6 @@
 		   (charset-convert (list-ref playlist i)))))))
    
    (with-access::androidmusic o (onevent %mutex phone)
-      (tprint "ANDROID-MUSIC, PLAYLIST-LOAD i=" i " pid=" pid)
       (let ((url (synchronize %mutex (playlist-next-url))))
 	 (when pid (onevent o 'playlist pid))
 	 (android-send-command phone music-plugin #\u url))))
@@ -255,7 +253,6 @@
 (define-method (music-play o::androidmusic . s)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-access::musicstatus %status (song state playlistlength playlistid)
-	 (tprint "ANDROID-MUSIC-PLAY state=" state)
 	 (cond
 	    ((not %open)
 	     (error "music-play ::androidmusic"
