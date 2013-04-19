@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Apr 19 10:36:34 2013 (serrano)                */
+;*    Last change :  Fri Apr 19 10:56:04 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -44,7 +44,6 @@
 (define-method (music-init o::androidmusic)
    
    (define (onstate e)
-      (tprint "ANDROID_MUSIC onstate=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status %mutex
@@ -63,7 +62,6 @@
 	    musics)))
 
    (define (onerror e)
-      (tprint "ANDROID_MUSIC onerror=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onerror %status)
@@ -73,7 +71,6 @@
 	    musics)))
 
    (define (onevent e)
-      (tprint "ANDROID_MUSIC onevent=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status)
@@ -86,7 +83,6 @@
 	    musics)))
 
    (define (onvolume e)
-      (tprint "ANDROID_MUSIC onvolume=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onvolume %status)
