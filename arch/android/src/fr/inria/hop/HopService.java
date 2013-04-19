@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Jan  6 07:13:18 2013 (serrano)                */
+/*    Last change :  Fri Apr 19 08:48:44 2013 (serrano)                */
 /*    Copyright   :  2012-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -173,7 +173,7 @@ public class HopService extends Service {
       } else {
 	 handler.sendMessage(
 	    android.os.Message.obtain(
-	       handler, HopLauncher.MSG_HOP_FAILED, 0 ) );
+	       handler, HopLauncher.MSG_HOP_FAILED, -1 ) );
 	 stopSelf();
 	 
 	 return 0;

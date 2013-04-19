@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Sun Dec 30 19:02:50 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Fri Apr 19 09:03:34 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -44,6 +44,7 @@
 (define-method (music-init o::androidmusic)
    
    (define (onstate e)
+      (tprint "ANDROID_MUSIC onstate=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status %mutex
@@ -62,6 +63,7 @@
 	    musics)))
 
    (define (onerror e)
+      (tprint "ANDROID_MUSIC onerror=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onerror %status)
@@ -71,6 +73,7 @@
 	    musics)))
 
    (define (onevent e)
+      (tprint "ANDROID_MUSIC onevent=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onstate %status)
@@ -83,6 +86,7 @@
 	    musics)))
 
    (define (onvolume e)
+      (tprint "ANDROID_MUSIC onvolume=" e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
 		      (with-access::androidmusic o (onvolume %status)
@@ -240,6 +244,7 @@
 		   (charset-convert (list-ref playlist i)))))))
    
    (with-access::androidmusic o (onevent %mutex phone)
+      (tprint "ANDROID-MUSIC, PLAYLIST-LOAD i=" i " pid=" pid)
       (let ((url (synchronize %mutex (playlist-next-url))))
 	 (when pid (onevent o 'playlist pid))
 	 (android-send-command phone music-plugin #\u url))))

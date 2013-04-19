@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/etc/Makefile.library              */
+#*    /misc/lab/HOP/hop-2.4.1/etc/Makefile.library                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Apr 11 15:59:27 2013 (serrano)                */
+#*    Last change :  Tue Apr 16 07:40:44 2013 (serrano)                */
 #*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -257,10 +257,14 @@ distclean: cleanall
 
 install: install-$(BACKEND)
 
-install-native:
-	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        $(MAKE) install-lib \
+install-native: install-native-heap install-native-libs
+
+install-native-heap:
+	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+install-native-libs:
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
@@ -289,16 +293,20 @@ install-native:
 
 install-jvm:
 
-uninstall:
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
+uninstall: uninstall-native-heap uninstall-native-libs
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
+
+uninstall-native-heap:
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+uninstall-native-libs:
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
