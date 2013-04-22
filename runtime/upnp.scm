@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Mon Apr 15 08:44:26 2013 (serrano)                */
+;*    Last change :  Mon Apr 22 08:11:58 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
@@ -30,11 +30,11 @@
 	   __hop_thread)
 
    (static (class upnp
-	      (thread::hopthread read-only)
 	      (mutex::mutex read-only (default (make-mutex "upnp")))
 	      (cache::pair-nil (default '()))
 	      (socket::datagram-socket (default (make-datagram-unbound-socket 'inet)))
-	      (listeners::obj (default (make-hashtable)))))
+	      (listeners::obj (default (make-hashtable)))
+	      (ssdp::obj (default #f))))
 
    (export (class upnp-event::event))
    
@@ -57,13 +57,8 @@
 (define (update-cache! cache)
    (let ((sec (current-seconds)))
       (filter (lambda (e)
-		 (cond
-		    ((isa? e ssdp-notify)
-		     (with-access::ssdp-notify e (edate)
-			(<elong edate sec)))
-		    ((isa? e ssdp-response)
-		     (with-access::ssdp-response e (edate)
-			(<elong edate sec)))))
+		 (with-access::ssdp-discovery e (edate)
+		    (>elong edate sec)))
 	 cache)))
 
 ;*---------------------------------------------------------------------*/
@@ -86,13 +81,15 @@
 ;*    upnp-onmessage ::ssdp-notify ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (upnp-onmessage e::ssdp-notify upnp)
-   (tprint "UPNP-NOTIFY: " e)
+;*    (tprint "UPNP-NOTIFY: " e)                                       */
    (with-access::ssdp-notify e (usn nt)
       (with-access::upnp upnp (mutex listeners cache)
 	 (synchronize mutex
 	    (set! cache (update-cache! cache))
-	    (unless (find (lambda (e::ssdp-notify)
-			     (with-access::ssdp-notify e ((usne usn))
+;* 	    (tprint "USN=" usn)                                        */
+;* 	    (tprint "CACHE=" cache)                                    */
+	    (unless (find (lambda (e::ssdp-discovery)
+			     (with-access::ssdp-discovery e ((usne usn))
 				(string=? usn usne)))
 		       cache)
 	       (set! cache (cons e cache))
@@ -101,20 +98,22 @@
 		     (let ((he (instantiate::upnp-event
 				  (name "ssdp-notify")
 				  (target upnp)
-				  (value event))))
+				  (value e))))
 			(apply-listeners listeners he upnp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    upnp-onmessage ::ssdp-response ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (upnp-onmessage e::ssdp-response upnp)
-   (tprint "UPNP-RESPONSE: " e)
+;*    (tprint "UPNP-RESPONSE: " e)                                     */
    (with-access::ssdp-response e (usn st)
       (with-access::upnp upnp (mutex listeners cache)
 	 (synchronize mutex
 	    (set! cache (update-cache! cache))
-	    (unless (find (lambda (e::ssdp-response)
-			     (with-access::ssdp-response e ((usne usn))
+;* 	    (tprint "USN=" usn)                                        */
+;* 	    (tprint "CACHE=" cache)                                    */
+	    (unless (find (lambda (e::ssdp-discovery)
+			     (with-access::ssdp-discovery e ((usne usn))
 				(string=? usn usne)))
 		       cache)
 	       (set! cache (cons e cache))
@@ -123,34 +122,37 @@
 		     (let ((he (instantiate::upnp-event
 				  (name "ssdp-response")
 				  (target upnp)
-				  (value event))))
+				  (value e))))
 			(apply-listeners listeners he upnp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    upnp-onmessage ::ssdp-m-search ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (upnp-onmessage e::ssdp-m-search upnp)
-   (tprint "M-SEARCH...todo"))
+;*    (tprint "M-SEARCH...todo")                                       */
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    upnp-backend ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (upnp-backend)
+   
+   (define (ssdp-loop upnp)
+      (with-access::upnp upnp (ssdp socket)
+	 (set! ssdp 
+	    (ssdp-discover-loop
+	       :ondiscovery (lambda (e) (upnp-onmessage e upnp))
+	       :socket socket))))
+   
    (synchronize upnp-mutex
       (unless *upnp-backend*
 	 (let ((socket (make-datagram-server-socket 1900)))
 	    (set! *upnp-backend*
 	       (co-instantiate ((upnp (instantiate::upnp
-					 (thread th)
 					 (socket socket)))
 				(th (instantiate::hopthread
 				       (name "upnp")
-				       (body (lambda ()
-						(ssdp-discover-loop
-						   :onmessage
-						   (lambda (e)
-						      (upnp-onmessage e upnp))
-						   :socket socket))))))
+				       (body (lambda () (ssdp-loop upnp))))))
 		  (thread-start! th)
 		  upnp)))))
    *upnp-backend*)
@@ -169,7 +171,7 @@
    (with-access::upnp u (mutex cache listeners)
       ;; add the listener for future events
       (synchronize mutex
-	 (hashtable-add! listeners proc cons proc '()))
+	 (hashtable-add! listeners evt cons proc '()))
       ;; notify on past events
       (synchronize mutex
 	 (set! cache (update-cache! cache))

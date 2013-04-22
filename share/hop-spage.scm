@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Mar  1 10:26:33 2013 (serrano)                */
+;*    Last change :  Sat Apr 20 08:05:41 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -574,7 +574,7 @@
 (define (spage-tab-push tab)
    (let ((el (if (string? tab) (dom-get-element-by-id tab) tab)))
       (let ((svc (el.getAttribute "data-hop-svc")))
-	 (if svc
+	 (if (string? svc)
 	     (spage-push-service el (lambda () svc))
 	     (spage-push-node el (dom-first-child (dom-last-child el)))))))
 
