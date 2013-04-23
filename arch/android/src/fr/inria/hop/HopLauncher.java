@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Mar 31 08:33:27 2013 (serrano)                */
+/*    Last change :  Tue Apr 23 09:35:30 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -552,6 +552,7 @@ public class HopLauncher extends Activity {
 	 final int initial_wifi_policy =
 	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
 
+	 final String defaultverbose = res.getString( R.string.hopverbose );
 	 final String defaultport = res.getString( R.string.hopport );
 	 final String defaultthreads = res.getString( R.string.hopthreads );
 	 final String defaultdebug = res.getString( R.string.hopdebug );
@@ -564,6 +565,7 @@ public class HopLauncher extends Activity {
 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
 	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
 	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
+	 Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
 	 hop_log = sp.getBoolean( "hop_log", defaultlog );
 
 	 // keep wifi alive
@@ -608,6 +610,10 @@ public class HopLauncher extends Activity {
 		     }
 		     if( key.equals( "hop_debug" ) ) {
 			Hop.debug = sp.getString( "hop_debug", defaultdebug );
+			return;
+		     }
+		     if( key.equals( "hop_verbose" ) ) {
+			Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
 			return;
 		     }
 		  }

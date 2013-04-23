@@ -8,6 +8,7 @@
    <string name="hopthreads">@HOPTHREADS@</string>
    <string name="hopservicestarted">Hop</string>
    <string name="hoplog">@HOPCONSOLELOG@</string>
+   <string name="hopverbose">@HOPVERBOSELEVEL@</string>
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
    <string name="hopzeroconf">@HOPZEROCONF@</string>
 
@@ -54,6 +55,9 @@
 
    <string name="prefs_log">Log</string>
    <string name="prefs_log_summary">Enable ADB logging</string>
+
+   <string name="prefs_verbose">Verbose</string>
+   <string name="prefs_verbose_summary">Verbosity (requires restarting Hop)</string>
 
    <string name="prefs_debug">Debug</string>
    <string name="prefs_debug_summary">Debugging mode (requires restarting Hop)</string>

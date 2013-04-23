@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Fri Apr 19 09:17:45 2013 (serrano)                */
+#*    Last change :  Tue Apr 23 09:05:25 2013 (serrano)                */
 #*    Copyright   :  2010-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
@@ -25,6 +25,7 @@ HOPZEROCONF=true
 
 HOPCONSOLELOG=false
 HOPDEBUGLEVEL=
+HOPVERBOSELEVEL=-v
 
 REPOSITORY=/users/serrano/prgm/distrib
 
@@ -337,6 +338,7 @@ for p in res/values/strings.xml; do \
           -e "s|@HOPTHREADS@|$HOPTHREADS|" \
           -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
           -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" \
+          -e "s|@HOPVERBOSELEVEL@|$HOPVERBOSELEVEL|" \
           -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
           -e "s|@HOPURL@|$HOPURL|" > $android/$p
 done
@@ -346,6 +348,7 @@ for p in res/xml/preferences.xml; do \
   cat $basedir/$p.in \
     | sed -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
           -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
+          -e "s|@HOPVERBOSELEVEL@|$HOPVERBOSELEVEL|" \
           -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" > $android/$p
 done
 

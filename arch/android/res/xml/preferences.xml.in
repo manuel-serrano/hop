@@ -80,6 +80,15 @@
 
     <PreferenceCategory android:title="@string/prefs_devel">
 
+        <ListPreference
+                android:key="hop_verbose"
+                android:defaultValue="@HOPVERBOSELEVEL@"
+                android:title="@string/prefs_verbose"
+                android:summary="@string/prefs_verbose_summary"
+                android:entries="@array/entries_verbose_preference"
+                android:entryValues="@array/entriesvalues_verbose_preference"
+                android:dialogTitle="@string/prefs_verbose" />
+
         <CheckBoxPreference
            android:key="hop_log"
            android:persistent="true" 

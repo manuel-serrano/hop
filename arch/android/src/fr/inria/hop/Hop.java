@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Mar 31 08:32:42 2013 (serrano)                */
+/*    Last change :  Tue Apr 23 09:01:15 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -35,12 +35,13 @@ public class Hop extends Thread {
    // global constants
    private static File _HOME = null;
    final static String HOP = "/bin/hop";
-   final static String HOPARGS = "-v --no-color";
+   final static String HOPARGS = "--no-color";
    final static String SHELL = "/system/bin/sh";
    final static int HOP_RESTART = 5;
 
    // global variables
    static String root = "/data/data/fr.inria.hop";
+   static String verbose = "";
    static String debug = "";
    static boolean zeroconf = false;
    static boolean webdav = false;
@@ -106,6 +107,7 @@ public class Hop extends Thread {
       String cmd = "export HOME=" + HOME().getAbsolutePath() +
 	 "; exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
+	 + " " + verbose
 	 + " " + debug
 	 + " --max-threads " + maxthreads
 	 + (zeroconf ? " -z" : " --no-zeroconf")
