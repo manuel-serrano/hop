@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/2.4.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Apr  5 11:57:25 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Mon Apr 29 09:44:39 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -174,7 +174,9 @@
    (cond
       ((procedure? o)
        (let ((name (cond
-		      ((and (string? o.sc_name) (> (string-length o.sc_name) 0))
+		      ((and (js-in? "sc_name" o)
+			    (string? o.sc_name)
+			    (> (string-length o.sc_name) 0))
 		       (bigloo-demangle o.sc_name))
 		      ((and (string? o.name) (> (string-length o.name) 0))
 		       (bigloo-demangle o.name))
@@ -293,7 +295,8 @@
 		   message))
 	  (name (exception-name exc))
 	  (url (if (string? exc.fileName) exc.fileName document.location.href))
-	  (errtitle (if (string? exc.hopLocation)
+	  (errtitle (if (and (js-in? "hopLocation" exc)
+			     (string? exc.hopLocation))
 			(string-append "Client Error: " exc.hopLocation)
 			"Client Error"))
 	  (src (cond

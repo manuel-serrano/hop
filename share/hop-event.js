@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Mar 15 15:27:21 2013 (serrano)                */
+/*    Last change :  Mon Apr 29 09:43:20 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -88,6 +88,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
    }
 
    if( ("hop_add_event_listener" in obj) &&
+       (obj != window) &&
        (obj.hop_add_event_listener != hop_add_event_listener) ) {
       return obj.hop_add_event_listener( event, proc, capture );
    }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Apr 19 08:05:07 2013 (serrano)                */
+;*    Last change :  Mon Apr 29 15:01:45 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -433,7 +433,9 @@
 	 (set! *client-key* (elong->fixnum (current-seconds)))
 	 
 	 (set! *websocket-service*
-	    (service :name "public/server-event/websocket" :id server-event
+	    (service :name "public/server-event/websocket"
+	       :id server-event
+	       :timeout 0
 	       (#!key key)
 	       (when (websocket-debug)
 		  (tprint "!!! start websocket service key=" key))
@@ -444,7 +446,10 @@
 			 (websocket-register-new-connection! req key))))))
 	 
 	 (set! *port-service*
-	    (service :name "public/server-event/info" :id server-event ()
+	    (service :name "public/server-event/info"
+	       :id server-event
+	       :timeout 0
+	       ()
 	       (let* ((req (current-request))
 		      (hd (with-access::http-request req (header) header))
 		      (host (assq host: hd))
@@ -457,7 +462,9 @@
 			 (vector host port key))))))
 	 
 	 (set! *init-service*
-	    (service :name "public/server-event/init" :id server-event
+	    (service :name "public/server-event/init"
+	       :id server-event
+	       :timeout 0
 	       (#!key key)
 	       (synchronize *event-mutex*
 		  (lambda ()
@@ -477,7 +484,9 @@
 			   (name key)))))))
 	 
 	 (set! *policy-file-service
-	    (service :name "public/server-event/policy-file" :id server-event
+	    (service :name "public/server-event/policy-file"
+	       :id server-event
+	       :timeout 0
 	       (#!key port key)
 	       (instantiate::http-response-string
 		  (request (current-request))
@@ -485,7 +494,7 @@
 		  (body (hop-event-policy port)))))
 	 
 	 (set! *close-service*
-	    (service :name "public/server-event/close" (#!key key)
+	    (service :name "public/server-event/close" :timeout 0 (#!key key)
 	       :id server-event
 	       (synchronize *event-mutex*
 		  (lambda ()
@@ -497,12 +506,16 @@
 			      *flash-request-list*)))))))
 	 
 	 (set! *unregister-service*
-	    (service :name "public/server-event/unregister" :id server-event
+	    (service :name "public/server-event/unregister"
+	       :id server-event
+	       :timeout 0
 	       (#!key event key)
 	       (server-event-unregister event key)))
 	 
 	 (set! *register-service*
-	    (service :name "public/server-event/register" :id server-event
+	    (service :name "public/server-event/register"
+	       :id server-event
+	       :timeout 0
 	       (#!key event key mode padding)
 	       (server-event-register event key mode padding))))))
 
