@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Apr 29 09:44:39 2013 (serrano)                */
+;*    Last change :  Wed May  1 09:16:27 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -14,7 +14,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop-exception
-   (export (hop-get-stack offset . depth)
+   (export
+      (hop-get-stack offset . depth)
 	   (hop-report-exception exc)
 	   (hop-report-exception/location exc)
 	   (bigloo-mangled? str)
@@ -26,13 +27,14 @@
        "Error"
        "window"
        (hop-config hop_config))
-   (scheme2js-pragma (hop-get-stack (JS "hop_get_stack"))
-		     (hop-report-exception (JS "hop_report_exception"))
-		     (hop-report-exception/location (JS "hop_report_exception_location"))
-		     (bigloo-mangled? (JS "hop_mangledp"))
-		     (bigloo-demangle (JS "hop_demangle"))
-		     (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
-		     (<EXCEPTION-FRAME> (JS "hop_make_exception_frame"))))
+   (scheme2js-pragma
+      (hop-get-stack (JS "hop_get_stack"))
+      (hop-report-exception (JS "hop_report_exception"))
+      (hop-report-exception/location (JS "hop_report_exception_location"))
+      (bigloo-mangled? (JS "hop_mangledp"))
+      (bigloo-demangle (JS "hop_demangle"))
+      (<EXCEPTION-STACK> (JS "hop_make_exception_stack"))
+      (<EXCEPTION-FRAME> (JS "hop_make_exception_frame"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-name-aliases ...                                             */
@@ -130,23 +132,26 @@
 ;*    hop-get-stack ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-get-stack offset . depth)
-   ;; skip offset frames of the stack
-   (let loop ((proc js-arguments.callee)
-	      (offset offset))
-      (cond
-	 ((= offset -1)
-	  ;; grab depth frame of the stack
-	  (let loop ((caller proc)
-		     (n (if (pair? depth) (car depth) 10))
-		     (stack '()))
-	     (if (and caller (> n 0))
-		 (let ((frame (cons caller (vector->list caller.arguments))))
-		    (loop caller.caller (- n 1) (cons frame stack)))
-		 (reverse! stack))))
-	 ((and proc (not (eq? proc #unspecified)))
-	  (loop proc.caller (- offset 1)))
-	 (else
-	  '()))))
+   (if (not this)
+       ;; nothing we can do in strict mode
+       '()
+       ;; skip offset frames of the stack
+       (let loop ((proc js-arguments.callee)
+		  (offset offset))
+	  (cond
+	     ((= offset -1)
+	      ;; grab depth frame of the stack
+	      (let loop ((caller proc)
+			 (n (if (pair? depth) (car depth) 10))
+			 (stack '()))
+		 (if (and caller (> n 0))
+		     (let ((frame (cons caller (vector->list caller.arguments))))
+			(loop caller.caller (- n 1) (cons frame stack)))
+		     (reverse! stack))))
+	     ((and proc (not (eq? proc #unspecified)))
+	      (loop proc.caller (- offset 1)))
+	     (else
+	      '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    in-exception-report ...                                          */

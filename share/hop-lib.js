@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Mar 22 10:24:10 2013 (serrano)                */
+/*    Last change :  Wed May  1 09:17:07 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -31,7 +31,8 @@
 /*    hop_callback ...                                                 */
 /*---------------------------------------------------------------------*/
 function hop_callback( proc ) {
-   if( hop_debug() > 0 ) {
+   if( hop_debug() && this ) {
+      // debug and not strict mode
       if( !(typeof proc === "function" ) ) {
 	 var hstack = hop_get_stack( 1 );
 	 e = new Error( "handler not a procedure: " + proc );

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Fri Dec 21 15:39:27 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Tue May  7 08:01:01 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Fri Mar 15 08:38:07 2013 (serrano)                */
+/*    Last change :  Fri May 10 07:54:55 2013 (serrano)                */
 /*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -186,9 +186,12 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.max = max;
    slider.step = step;
 
+   var mousemoved = false;
+   
    // cursor event handling
    var mousemove = function( e ) {
       hop_slider_mousemove( e, slider );
+      mousemoved = true;
    };
 
    var delmousemove = function( e ) {
@@ -196,13 +199,27 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    };
    
    var onmousedown = function( e ) {
+      mousemoved = false;
       hop_add_event_listener( document, "mousemove", mousemove, true );
       hop_add_event_listener( document, "mouseup", delmousemove, true );
       hop_add_event_listener( document, "onblur", delmousemove, true );
    }
 
    hop_add_event_listener( cursor, "mousedown", onmousedown );
-   
+
+   // cursor click
+   var oncursorclick = function( e ) {
+      if( !mousemoved ) {
+	 var mx = hop_event_mouse_x( e );
+	 var bbox = hop_bounding_box( this );
+	 var val = step * (( mx > (bbox.left + bbox.width/2) ) ? 4 : -4);
+
+	 hop_slider_value_set( slider, slider.value + val );
+      }
+   }
+      
+   hop_add_event_listener( cursor, "click", oncursorclick );
+
    // line event handling
    var onlineclick = function( e ) {
       hop_slider_mousemove( e, slider );

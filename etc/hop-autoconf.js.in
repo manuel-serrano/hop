@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/2.4.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Mar  6 09:35:38 2012 (serrano)                */
-/*    Copyright   :  2006-12 Manuel Serrano                            */
+/*    Last change :  Tue Apr 30 09:27:27 2013 (serrano)                */
+/*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
