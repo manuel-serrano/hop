@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/cgi.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Wed Mar 21 19:33:11 2012 (serrano)                */
-;*    Copyright   :  2003-12 Manuel Serrano                            */
+;*    Last change :  Wed May 15 14:17:47 2013 (serrano)                */
+;*    Copyright   :  2003-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -81,9 +81,10 @@
 		    (loop (cdr l) (cons (car l) res)))))))
 
    (with-trace 2 'http-request-cgi-args
-      (with-access::http-request req (path abspath query)
+      (with-access::http-request req (path abspath query method)
 	 (trace-item "path=" path)
 	 (trace-item "abspath=" (string-for-read abspath))
+	 (trace-item "method=" method)
 	 (trace-item "query=" (if (string? query)
 				  (string-for-read query)
 				  "#f")))

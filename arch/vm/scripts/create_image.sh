@@ -110,7 +110,7 @@ if [ $create_install -eq 1 ]; then
 
    # only one partition
    # /usr/sbin/grub-setup: warn: This msdos-style partition label has no post-MBR gap; embedding won't be possible!
-   # parted -s $raw_img mkpart primary ext2 0 $img_size
+   #parted -s $raw_img mkpart primary ext2 0 $img_size
    sfdisk -D $raw_img <<EOF
 ,,L,*
 ;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue May  7 08:01:01 2013 (serrano)                */
+;*    Last change :  Thu May 16 09:06:43 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -117,8 +117,21 @@
    
    (let* ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
 	  (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
-      (if (and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
-	  ;; a dynamic tab
+      (cond
+	 ((and (pair? body) (null? (cdr body)) (service? (car body)))
+	  ;; a dynamic tab (new service syntax)
+	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
+			(<DIV> :data-hss-tag "hop-spbody"
+			   :class class
+			   attr
+			   (<DELAY> (service-proc (car body)))))))
+	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
+		:onclick ~(spage-push-service this $svc)
+		:data-hop-svc svc
+		(if (null? head) "?" (car head))
+		(init-sptab id onselect))))
+	 ((and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
+	  ;; a dynamic tab (old delay syntax)
 	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :data-hss-tag "hop-spbody"
 			   :class class
@@ -128,14 +141,15 @@
 		:onclick ~(spage-push-service this $svc)
 		:data-hop-svc svc
 		(if (null? head) "?" (car head))
-		(init-sptab id onselect)))
+		(init-sptab id onselect))))
+	 (else
 	  ;; a static tab
 	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
 	     :onclick ~(spage-push-node this (dom-first-child (dom-last-child this)))
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)
 	     (<DIV> :data-hss-tag "hop-sptab-static"
-		(<DIV> :data-hss-tag "hop-spbody":class class attr body))))))
+		(<DIV> :data-hss-tag "hop-spbody":class class attr body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */

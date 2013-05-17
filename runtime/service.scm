@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Apr 12 20:16:13 2013 (serrano)                */
+;*    Last change :  Thu May 16 09:06:26 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -54,6 +54,7 @@
 	    (expired-service-path?::bool ::bstring)
 	    (service-resource::bstring ::procedure #!optional file)
 	    (service-path::bstring ::procedure)
+	    (service-proc::procedure ::procedure)
 	    (service-base-url::bstring ::procedure ::http-request)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
@@ -554,6 +555,13 @@
 (define (service-path svc)
    (with-access::hop-service (procedure-attr svc) (path)
       path))
+   
+;*---------------------------------------------------------------------*/
+;*    service-proc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (service-proc svc)
+   (with-access::hop-service (procedure-attr svc) (proc)
+      proc))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-base-url ...                                             */

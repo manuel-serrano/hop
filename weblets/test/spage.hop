@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/test/spage.hop            */
+;*    serrano/prgm/project/hop/2.4.x/weblets/test/spage.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 11:12:06 2010                          */
-;*    Last change :  Sat Jan  1 08:53:56 2011 (serrano)                */
-;*    Copyright   :  2010-11 Manuel Serrano                            */
+;*    Last change :  Thu May 16 09:03:06 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spages                                                           */
 ;*=====================================================================*/
@@ -65,20 +65,18 @@
 	       (<LI> "Windows")
 	       (<LI> (<SPTAB>
 			(<SPTABHEAD> "Random")
-			(<DELAY>
-			   (lambda ()
+			(service ()
+			   (<DIV>
 			      (<DIV>
-				 (<DIV>
-				    "This tab contains a random number, generated
+				 "This tab contains a random number, generated
 by the server, each time the tab is selected.")
-				 (random 100))))))))
+			      (random 100)))))))
 	 (<SPTAB>
 	    (<SPTABHEAD> "Random")
-	    (<DELAY>
-	       (lambda ()
+	    (service ()
+	       (<DIV>
 		  (<DIV>
-		     (<DIV>
-			"This tab contains a random number, generated
+		     "This tab contains a random number, generated
 by the server, each time the tab is selected.")
-		     (random 100))))))))
+		  (random 100)))))))
 
