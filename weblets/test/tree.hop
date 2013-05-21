@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/test/tree.hop             */
+;*    serrano/prgm/project/hop/2.4.x/weblets/test/tree.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Fri Mar 11 16:02:56 2011 (serrano)                */
-;*    Copyright   :  2007-11 Manuel Serrano                            */
+;*    Last change :  Tue May 21 16:11:59 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Trees                                                            */
 ;*=====================================================================*/
@@ -60,16 +60,15 @@ be able to fold/unfold all the trees below")
 	 (<TREE> :id id :multiselect #t
 	    (<TRHEAD> :value dir shape)
 	    (<TRBODY>
-	       (<DELAY>
-		  (lambda ()
-		     (map (lambda (f)
-			     (let ((qf (make-file-name dir f)))
-				(if (directory? qf)
-				    (directory->tree (xml-make-id)
-						     qf
-						     (make-file-name shape f))
-				    (<TRLEAF> :value qf f))))
-			  (directory->list dir)))))))
+	       (service ()
+		  (map (lambda (f)
+			  (let ((qf (make-file-name dir f)))
+			     (if (directory? qf)
+				 (directory->tree (xml-make-id)
+				    qf
+				    (make-file-name shape f))
+				 (<TRLEAF> :value qf f))))
+		     (directory->list dir))))))
       (let ((tree (directory->tree "t" d (basename d))))
 	 (list
 	  (<BUTTON> :onclick ~(tree-open $tree)
