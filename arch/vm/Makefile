@@ -3,11 +3,13 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Tue May 21 11:39:17 2013 (serrano)                */
+#*    Last change :  Wed May 22 17:14:23 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
 #*=====================================================================*/
+
+do: usage
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -26,7 +28,7 @@ EXTRAWEBLETS =
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile \
+POPULATION = README Makefile \
   scripts/compile_bigloo_hop.sh scripts/create_image.sh \
   scripts/convert_image.sh scripts/install_bigloo_hop.sh scripts/mount_hdd.sh \
   config/boot/syslinux/extlinux.conf config/etc/apt/sources.list \
@@ -41,10 +43,8 @@ POPDIRS =
 #*---------------------------------------------------------------------*/
 .PHONY: qemu qemu+ virtualbox virtualbox+ vmware vmware+ do
 
-do: usage
-
 usage:
-	echo "usage: make virtualbox+ HOPTMPDIR=/misc/virtual/tmp RELEASE=4.0b-alpha21May13 HOPRELEASE=2.4.1"
+	@ echo "usage: make virtualbox+ HOPTMPDIR=/misc/virtual/tmp RELEASE=4.0b-alpha21May13 HOPRELEASE=2.4.1"
 
 $(HOPTMPDIR)/hop.hdd:
 	sudo scripts/create_image.sh $(HOPTMPDIR)/hop.hdd $(IMGSIZE)
@@ -54,7 +54,7 @@ $(HOPTMPDIR)/hop.hdd:
 $(HOPTMPDIR)/hop+.hdd:
 	sudo scripts/create_image.sh $(HOPTMPDIR)/hop+.hdd $(IMGSIZE)
 	sudo chown $(USER) $(HOPTMPDIR)/hop+.hdd
-	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop+.hdd $(RELEASE) $(HOPRELEASE) $(WEBLETS:%=$(REPOSITORY/%)) $(EXTRAWEBLETS)
+	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop+.hdd $(RELEASE) $(HOPRELEASE) $(WEBLETS:%=$(REPOSITORY)/%) $(EXTRAWEBLETS)
 
 $(HOPTMPDIR)/hop.vmdk: $(HOPTMPDIR)/hop.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop
