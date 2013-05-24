@@ -110,6 +110,10 @@ EOF
 
 ;; WebDAV
 (hop-enable-webdav-set! #t)
+
+;; repository
+(hop-hz-repositories-add!
+  (make-file-path (getenv "HOME") ".config" "hop" "repository"))
 EOF
    chown -vR hop.users /home/hop/.config/hop/hoprc.hop
 

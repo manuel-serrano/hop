@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Apr 11 08:09:42 2013 (serrano)                */
+;*    Last change :  Fri May 24 11:46:05 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -273,7 +273,7 @@
       
       ;; ucs2 strings
       ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 2 (-fx (the-length) 1))))
+       (let ((str (the-escape-substring 2 (-fx (the-length) 1) #f)))
   	  (utf8-string->ucs2-string str)))
       
       ;; fixnums

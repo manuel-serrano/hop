@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Jan 19 11:28:21 2013 (serrano)                */
+;*    Last change :  Fri May 24 11:55:38 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -29,7 +29,8 @@
 	    __hop_priv
 	    __hop_read-js
 	    __hop_http-error
-	    __hop_css)
+	    __hop_css
+	    __hop_charset)
 
    (use     __hop_js-comp)
 
@@ -328,6 +329,10 @@
        #unspecified)
       ((char? obj)
        (display obj p))
+      ((ucs2-string? obj)
+       (let ((s (charset-convert (ucs2-string->utf8-string obj)
+		   'UTF-8 (hop-charset))))
+	  (xml-write s p backend)))
       (else
        (error "xml-write" "Illegal xml object" obj))))
 

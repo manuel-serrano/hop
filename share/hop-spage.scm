@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu May 16 08:59:52 2013 (serrano)                */
+;*    Last change :  Thu May 23 08:14:38 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -524,11 +524,16 @@
 ;*    spage-push-service ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-service tab svc)
-   (with-hop (svc)
-      (lambda (body)
-	 (set! tab.svc svc)
-	 (set! tab.static-node #unspecified)
-	 (spage-push-body tab body))))
+   (unless (eq? tab.inpush #t)
+      (set! tab.inpush #t)
+      (with-hop (svc)
+	 (lambda (body)
+	    (set! tab.svc svc)
+	    (set! tab.static-node #unspecified)
+	    (set! tab.inpush #f)
+	    (spage-push-body tab body))
+	 (lambda (xhr)
+	    (set! tab.inpush #f)))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    spage-push-node ...                                              */

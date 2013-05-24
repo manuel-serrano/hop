@@ -93,8 +93,10 @@ mv $mnt_dir/etc/resolv.conf.orig $mnt_dir/etc/resolv.conf
 
 echo "Extra weblets"
 mkdir -pv $mnt_dir/home/hop/.config/hop/weblets
+mkdir -pv $mnt_dir/home/hop/.config/hop/repository
+
 for p in $weblets; do
-  cp $p $mnt_dir/home/hop/.config/hop/weblets
+  cp $p $mnt_dir/home/hop/.config/hop/repository
 done
 
 chroot $mnt_dir chown -R hop.users /home/hop

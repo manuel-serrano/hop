@@ -13,7 +13,7 @@ create_install=1
 debian_pkgs_common=locales,cdbs,debhelper,libsqlite3-dev,\
 libssl-dev,libgstreamer-plugins-base0.10-dev,libgmp3-dev,build-essential,\
 mercurial,samba,psmisc,libasound2,libasound2-dev,libflac8,libflac-dev,sudo,\
-libmpg123-0,libmpg123-dev,\
+libmpg123-0,libmpg123-dev,ssh,\
 libavahi-core7,libavahi-core-dev,libavahi-common-dev,libavahi-common3,\
 libavahi-client3,libavahi-client-dev
 

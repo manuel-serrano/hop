@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Apr 28 09:09:15 2013 (serrano)                */
+;*    Last change :  Fri May 24 11:42:26 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -223,7 +223,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (string-append dir "/" p))))
    
    (define (script p inl)
-      (<SCRIPT> :type (hop-configure-javascript-mime-type) :inline inl :src p))
+      (<SCRIPT> :type (hop-configure-javascript-mime-type)
+	 :inline inl :src p))
    
    (define (find-head p)
       (call-with-input-file p

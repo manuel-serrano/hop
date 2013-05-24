@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Wed May 22 17:14:23 2013 (serrano)                */
+#*    Last change :  Wed May 22 20:10:23 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    VirtualMachine image generation                                  */
@@ -54,7 +54,7 @@ $(HOPTMPDIR)/hop.hdd:
 $(HOPTMPDIR)/hop+.hdd:
 	sudo scripts/create_image.sh $(HOPTMPDIR)/hop+.hdd $(IMGSIZE)
 	sudo chown $(USER) $(HOPTMPDIR)/hop+.hdd
-	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop+.hdd $(RELEASE) $(HOPRELEASE) $(WEBLETS:%=$(REPOSITORY)/%) $(EXTRAWEBLETS)
+	sudo scripts/install_bigloo_hop.sh $(HOPTMPDIR)/hop+.hdd $(RELEASE) $(HOPRELEASE) $(WEBLETS:%=$(REPODIR)/%) $(EXTRAWEBLETS)
 
 $(HOPTMPDIR)/hop.vmdk: $(HOPTMPDIR)/hop.hdd
 	scripts/convert_image.sh $(HOPTMPDIR)/hop
