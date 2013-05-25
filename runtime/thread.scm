@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Thu Apr 11 10:54:40 2013 (serrano)                */
+;*    Last change :  Fri May 24 18:12:27 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
@@ -59,6 +59,11 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
+;*    Bigloo implementation of threads                                 */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo4.0a
+;*---------------------------------------------------------------------*/
 ;*    thread-get-specific ::hopthread ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (thread-get-specific th::hopthread)
@@ -85,6 +90,35 @@
 (define-method (thread-set-cleanup! th::hopthread v)
    (with-access::hopthread th (%cleanup)
       (set! %cleanup v)))
+(else
+;*---------------------------------------------------------------------*/
+;*    thread-specific ::hopthread ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (thread-specific th::hopthread)
+   (with-access::hopthread th (%specific)
+      %specific))
+
+;*---------------------------------------------------------------------*/
+;*    thread-specific-set! ::hopthread ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (thread-specific-set! th::hopthread v)
+   (with-access::hopthread th (%specific)
+      (set! %specific v)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-cleanup ::hopthread ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (thread-cleanup th::hopthread)
+   (with-access::hopthread th (%cleanup)
+      %cleanup))
+
+;*---------------------------------------------------------------------*/
+;*    thread-cleanup-set! ::hopthread ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (thread-cleanup-set! th::hopthread v)
+   (with-access::hopthread th (%cleanup)
+      (set! %cleanup v))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    End conditional compilation                                      */
 ;*---------------------------------------------------------------------*/
