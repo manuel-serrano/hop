@@ -701,7 +701,7 @@ function hop_window_open() {
 
 	 prop = "width="
 	    + (width ? unpx( width ) : hop_current_window_width())
-	    + "height="
+	    + ",height="
 	    + (height ? unpx( height ) : hop_current_window_height())
 	    + (( prop.charAt( 0 ) == ',' ) ? prop : "," + prop );
 
