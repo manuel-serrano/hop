@@ -22,22 +22,22 @@ build() {
 
 package() {
   cd $startdir/src/$pkgname-$pkgver
-  make DESTDIR=$startdir/pkg install
+  make DESTDIR=$pkgdir install
 
-  mkdir -p $startdir/pkg/etc/conf.d
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $startdir/pkg/etc/conf.d/hop
+  mkdir -p $pkgdir/etc/conf.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $pkgdir/etc/conf.d/hop
 
-  mkdir -p $startdir/pkg/etc/rc.d
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $startdir/pkg/etc/rc.d/hop
-  chmod a+rx $startdir/pkg/etc/rc.d/hop
+  mkdir -p $pkgdir/etc/rc.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $pkgdir/etc/rc.d/hop
+  chmod a+rx $pkgdir/etc/rc.d/hop
 
-  mkdir -p $startdir/pkg/usr/lib/systemd/system
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $startdir/pkg/usr/lib/systemd/system/hop.service
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $startdir/pkg/usr/lib/systemd/system/hop.socket
-  chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.service
-  chmod a+r $startdir/pkg/usr/lib/systemd/system/hop.socket
+  mkdir -p $pkgdir/usr/lib/systemd/system
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $pkgdir/usr/lib/systemd/system/hop.service
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $pkgdir/usr/lib/systemd/system/hop.socket
+  chmod a+r $pkgdir/usr/lib/systemd/system/hop.service
+  chmod a+r $pkgdir/usr/lib/systemd/system/hop.socket
 
-  mkdir -p $startdir/pkg/usr/sbin
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $startdir/pkg/usr/sbin/hop
-  chmod a+rx $startdir/pkg/usr/sbin/hop
+  mkdir -p $pkgdir/usr/sbin
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $pkgdir/usr/sbin/hop
+  chmod a+rx $pkgdir/usr/sbin/hop
 }
