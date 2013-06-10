@@ -38,6 +38,6 @@ package() {
   chmod a+r $pkgdir/usr/lib/systemd/system/hop.socket
 
   mkdir -p $pkgdir/usr/sbin
-  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $pkgdir/usr/sbin/hop
-  chmod a+rx $pkgdir/usr/sbin/hop
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/sbin/hop $pkgdir/usr/bin/hop.sh
+  chmod a+rx $pkgdir/usr/bin/hop.sh
 }
