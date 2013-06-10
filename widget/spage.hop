@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Fri Jun  7 14:57:00 2013 (serrano)                */
+;*    Last change :  Mon Jun 10 08:20:23 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -93,6 +93,7 @@
 ;*---------------------------------------------------------------------*/
 (define-tag <SPTAB> ((id (xml-make-id 'SPTAB) string)
 		     (onselect #f)
+		     (direction "push")
 		     (class #f)
 		     (attr)
 		     body)
@@ -129,6 +130,7 @@
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(spage-push-service this $svc)
 		:data-hop-svc svc
+		:data-hop-svc-direction direction
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect))))
 	 ((and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
