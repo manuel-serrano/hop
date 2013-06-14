@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Jun 14 10:58:10 2013 (serrano)                */
+;*    Last change :  Fri Jun 14 11:05:32 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -135,7 +135,7 @@
 
    (cond-expand
       ((and enable-upnp (library upnp))
-       (class upnp-event)))
+       (export (class upnp-event))))
 
    (cond-expand
       ((and enable-avahi (library avahi))
