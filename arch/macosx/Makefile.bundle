@@ -19,13 +19,18 @@ TITLE := $(BIN_NAME)
 MACOSX_DIR := $(BOOTDIR)/arch/macosx
 DMG_DIR := $(MACOSX_DIR)/dmg
 APP_DIR := $(DMG_DIR)/$(BIN_NAME).app
+SRC_DIR := $(MACOSX_DIR)/src
+PROJ_DIR := $(SRC_DIR)/$(BIN_NAME)/$(BIN_NAME).xcodeproj
+BUILD_DIR := $(SRC_DIR)/$(BIN_NAME)/build
 CONTENTS_DIR := $(APP_DIR)/Contents
-
+HOP_ICON := hop.icns
 CONTRIBS_DIR := /Library/Hop/Weblets
+XCODEBUILD = xcodebuild
 
 HDIUTIL := hdiutil
 
 DMG := $(MACOSX_DIR)/$(TITLE)-$(HOPRELEASE).dmg
+DMG_TMP := $(MACOSX_DIR)/$(TITLE)-$(HOPRELEASE)-tmp.dmg
 
 all: 
 	$(MAKE) -f arch/macosx/Makefile.bundle configure && \
@@ -38,11 +43,15 @@ build:
 
 # note that we need declare webletsdir and libdir as relative paths.
 # during 'install' we need to override these values...
+
+# For getting a new icon of a file hopIcon
+# DeRez -only icns hopIcon/$'Icon\r' > HopIcon.rsrc 
+
 configure:
 	./configure --macosx-bundle \
         --prefix=/ \
 	--srfi=macosx \
-	--bindir=MacOS --mandir=Resources/man \
+	--bindir=Resources --mandir=Resources/man \
 	--contribsdir=$(CONTRIBS_DIR) \
 	--webletsdir=Resources/Weblets \
 	--etcdir=Resources/etc \
@@ -51,21 +60,33 @@ configure:
 
 bundle:
 	mkdir -p $(CONTENTS_DIR) && \
+	$(XCODEBUILD) -project $(PROJ_DIR) -alltargets && \
 	$(MAKE) DESTDIR=$(CONTENTS_DIR)/ install && \
 	BIGLOO_VERSION=`$(BIGLOO) -q -eval "(begin (print *bigloo-version*) (exit 0))"` && \
 	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
 	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
-	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ && \
-	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources
+	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources && \
+	cp -r $(BUILD_DIR)/Release/$(BIN_NAME).app/Contents/* $(CONTENTS_DIR)
 
 dmg: $(DMG)
 
-$(DMG):
+$(DMG): 
+	cp $(MACOSX_DIR)/$(HOP_ICON) $(DMG_DIR)/.VolumeIcon.icns && \
+	SetFile -c icnC $(DMG_DIR)/.VolumeIcon.icns && \
+	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(TITLE) -format UDRW -ov $(DMG_TMP) && \
+	rm -rf $(DMG_DIR) && \
 	mkdir -p $(DMG_DIR) && \
-	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(TITLE) -format UDZO -ov "$@"
+	$(HDIUTIL) attach $(DMG_TMP)  -mountpoint $(DMG_DIR) && \
+	SetFile -a C $(DMG_DIR) && \
+	$(HDIUTIL) detach $(DMG_DIR) && \
+	$(HDIUTIL) convert $(DMG_TMP)  -format UDZO -o "$@" && \
+	rm -f $(DMG_TMP) && \
+	Rez -append $(MACOSX_DIR)/HopIcon.rsrc -o "$@" && \
+	SetFile -a C "$@"
 
 clean:
-	-rm -rf $(APP_DIR)
+	-rm -rf $(BUILD_DIR)
 	-rm -f $(DMG)
+	rm -f $(DMG_TMP) 
 
 .PHONY: configure build bundle lib dmg clean
