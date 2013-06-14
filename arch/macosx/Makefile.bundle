@@ -15,13 +15,14 @@ default: build
 PWD := $(shell pwd)
 BOOTDIR := $(PWD)
 BIN_NAME := hop
+PROJ_NAME := Hop
 TITLE := $(BIN_NAME)
 MACOSX_DIR := $(BOOTDIR)/arch/macosx
 DMG_DIR := $(MACOSX_DIR)/dmg
-APP_DIR := $(DMG_DIR)/$(BIN_NAME).app
+APP_DIR := $(DMG_DIR)/$(PROJ_NAME).app
 SRC_DIR := $(MACOSX_DIR)/src
-PROJ_DIR := $(SRC_DIR)/$(BIN_NAME)/$(BIN_NAME).xcodeproj
-BUILD_DIR := $(SRC_DIR)/$(BIN_NAME)/build
+PROJ_DIR := $(SRC_DIR)/$(PROJ_NAME)/$(PROJ_NAME).xcodeproj
+BUILD_DIR := $(SRC_DIR)/$(PROJ_NAME)/build
 CONTENTS_DIR := $(APP_DIR)/Contents
 HOP_ICON := hop.icns
 CONTRIBS_DIR := /Library/Hop/Weblets
@@ -66,7 +67,7 @@ bundle:
 	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
 	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
 	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources && \
-	cp -r $(BUILD_DIR)/Release/$(BIN_NAME).app/Contents/* $(CONTENTS_DIR)
+	cp -r $(BUILD_DIR)/Release/$(PROJ_NAME).app/Contents/* $(CONTENTS_DIR)
 
 dmg: $(DMG)
 
