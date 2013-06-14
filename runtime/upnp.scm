@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Mon Apr 22 08:11:58 2013 (serrano)                */
+;*    Last change :  Fri Jun 14 11:00:32 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
@@ -15,8 +15,10 @@
 (module __hop_upnp
 
    (include "thread.sch")
-   
-   (library upnp)
+
+   (cond-expand
+      ((and enable-upnp (library upnp))
+       (library upnp)))
 
    (import __hop_configure
 	   __hop_service
@@ -41,6 +43,8 @@
    (export (upnp-backend)
 	   (upnp-discover ::obj ::bstring)))
 
+(cond-expand
+   ((and enable-upnp (library upnp))
 ;*---------------------------------------------------------------------*/
 ;*    upnp-mutex ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -190,3 +194,7 @@
       proc))
 
 
+;*---------------------------------------------------------------------*/
+;*    conditional compilation                                          */
+;*---------------------------------------------------------------------*/
+))

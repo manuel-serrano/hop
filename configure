@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jun 11 18:34:06 2013 (serrano)                */
+#*    Last change :  Fri Jun 14 11:04:00 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,8 +55,8 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite upnp"
-bglcloselibs="web multimedia upnp"
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
+bglcloselibs="web multimedia"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -109,6 +109,8 @@ threads=""
 zeroconf="#f"
 zeroconfbe="no"
 avahi=""
+
+upnp=""
 
 hopsrfis=""
 
@@ -264,6 +266,12 @@ while : ; do
     --disable-avahi)
       avahi=no;;
 
+    --enable-upnp)
+      upnp=yes;;
+
+    --disable-upnp)
+      upnp=no;;
+
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -346,6 +354,10 @@ while : ; do
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
+      echo "   --enable-avahi........ Enables AVAHI support (default)" >&2;
+      echo "   --disable-avahi....... Disables AVAHI support" >&2;
+      echo "   --enable-upnp......... Enables UPNP support (default)" >&2;
+      echo "   --disable-upnp........ Disables UPNP support" >&2;
       echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
       echo "   --library=lib......... Add extra lib to Hop" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
@@ -535,6 +547,15 @@ else
   else
     avahi=no;
   fi
+  if [ "$upnp " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Upnp requires threads, either disable upnp (--disable-upnp)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    upnp=no;
+  fi
 fi
 
 #*---------------------------------------------------------------------*/
@@ -564,6 +585,33 @@ if [ "$avahi " = "yes " ]; then
   zeroconfbe="avahi"
   libraries="$libraries avahi"
   bglcloselibs="$bglcloselibs avahi"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Upnp                                                             */
+#*---------------------------------------------------------------------*/
+if [ "$upnp " = " " ]; then
+  if [ -f $bigloolibdir/upnp.heap ]; then
+    upnp=yes
+  else
+    upnp=no
+  fi
+fi
+
+if [ "$upnp " = "yes " ]; then
+  if [ ! -f $bigloolibdir/upnp.heap ]; then
+    echo "*** ERROR:configure:bigloo upnp. Aborting"
+    echo ""
+    echo "You have request a upnp support but it appears that"
+    echo "the installed Bigloo compiler does not support upnp."
+    echo "You must either, configure Hop without upnp support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-upnp"
+  libraries="$libraries upnp"
+  bglcloselibs="$bglcloselibs upnp"
 fi
 
 #*---------------------------------------------------------------------*/

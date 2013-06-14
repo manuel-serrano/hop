@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Apr 12 16:59:43 2013 (serrano)                */
+;*    Last change :  Fri Jun 14 10:58:10 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -131,9 +131,11 @@
 	   (class event)
 
 	   (class zeroconf)
-	   (class zeroconf-service-event)
+	   (class zeroconf-service-event))
 
-	   (class upnp-event))
+   (cond-expand
+      ((and enable-upnp (library upnp))
+       (class upnp-event)))
 
    (cond-expand
       ((and enable-avahi (library avahi))
