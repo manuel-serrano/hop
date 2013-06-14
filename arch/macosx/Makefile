@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Fri Jun 14 10:08:25 2013 (serrano)                */
+#*    Last change :  Fri Jun 14 11:08:59 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    MacOS X port                                                     */
@@ -19,7 +19,7 @@
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
-  README Makefile.bundle Info.plist hop.icns macosx_bundle.h \
+  README Makefile.bundle hop.icns macosx_bundle.h \
   HopIcon.rsrc \
   $(POPULATION_SRC:%=src/%) 
 
