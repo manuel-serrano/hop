@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Mon Jun 10 08:20:23 2013 (serrano)                */
+;*    Last change :  Sat Jun 15 17:14:04 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -128,7 +128,10 @@
 			   attr
 			   (<DELAY> (service-proc (car body)))))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-		:onclick ~(spage-push-service this $svc)
+		:onclick ~(begin
+			     (tprint "CLICK on PUSH: " id " " event.timeStamp)
+			     (stop-event-propagation event #f)
+			     (spage-push-service this $svc))
 		:data-hop-svc svc
 		:data-hop-svc-direction direction
 		(if (null? head) "?" (car head))
@@ -141,7 +144,10 @@
 			   attr
 			   body))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-		:onclick ~(spage-push-service this $svc)
+		:onclick ~(begin
+			     (tprint "CLICK on PUSH: " id " " event.timeStamp)
+			     (stop-event-propagation event #f)
+			     (spage-push-service this $svc))
 		:data-hop-svc svc
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect))))
