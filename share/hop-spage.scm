@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Sat Jun 15 17:27:56 2013 (serrano)                */
+;*    Last change :  Sat Jun 15 17:45:08 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -523,7 +523,8 @@
 		(tparent (if (pair? (cdr tabs)) (cadr tabs)))
 		(tab (if tparent tparent.tab)))
 	    (when tbody.tab.pushed
-	       (if (and (procedure? tab.svc)
+	       (if (and (not (eq? tab #unspecified))
+			(procedure? tab.svc)
 			(equal? (tab.getAttribute "data-hop-svc-direction") "both"))
 		   (pop-body-node spage (car head)
 		      (lambda (spage)
@@ -580,11 +581,11 @@
 ;*    spage-tab-push ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (spage-tab-push tab)
-   (let ((el (if (string? tab) (dom-get-element-by-id tab) tab)))
-      (let ((svc (el.getAttribute "data-hop-svc")))
-	 (if (string? svc)
-	     (spage-push-service el (lambda () svc))
-	     (spage-push-node el (dom-first-child (dom-last-child el)))))))
+   (let* ((el (if (string? tab) (dom-get-element-by-id tab) tab))
+	  (svc (el.getAttribute "data-hop-svc")))
+      (if (string? svc)
+	  (spage-push-service el (lambda () svc))
+	  (spage-push-node el (dom-first-child (dom-last-child el))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-update ...                                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sat Jun 15 17:14:04 2013 (serrano)                */
+;*    Last change :  Sat Jun 15 17:39:19 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -129,7 +129,6 @@
 			   (<DELAY> (service-proc (car body)))))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(begin
-			     (tprint "CLICK on PUSH: " id " " event.timeStamp)
 			     (stop-event-propagation event #f)
 			     (spage-push-service this $svc))
 		:data-hop-svc svc
@@ -145,7 +144,6 @@
 			   body))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(begin
-			     (tprint "CLICK on PUSH: " id " " event.timeStamp)
 			     (stop-event-propagation event #f)
 			     (spage-push-service this $svc))
 		:data-hop-svc svc
