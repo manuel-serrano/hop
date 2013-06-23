@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Fri May 24 18:12:27 2013 (serrano)                */
+;*    Last change :  Thu Jun 20 17:07:28 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
@@ -24,10 +24,12 @@
 
    (cond-expand
       ((and enable-threads (library pthread))
-       (export (class hopthread::pthread)))
+       (export (class hopthread::pthread
+		  (%loading-file (default #f)))))
       (else
        (export (class hopthread::thread
 		  (body::procedure read-only)
+		  (%loading-file (default #f))
 		  (%specific::obj read-only (default #f))
 		  (%cleanup::obj read-only (default #f)))))))
 

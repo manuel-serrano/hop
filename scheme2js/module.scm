@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Mon Dec 17 18:38:55 2012 (serrano)                */
-;*    Copyright   :  2007-12 Florian Loitsch, Manuel Serrano           */
+;*    Last change :  Fri Jun 21 08:32:14 2013 (serrano)                */
+;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -762,7 +762,7 @@
 			  new-macros
 			  new-imports)))
 		   (else
-		    (let ((module-files (scheme2js-module-resolver mod src)))
+		    (let ((module-files (scheme2js-module-resolver mod '() src)))
 		       (let liip ((files module-files))
 			  (cond
 			     ((null? files)

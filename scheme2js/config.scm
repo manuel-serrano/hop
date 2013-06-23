@@ -179,7 +179,7 @@
 	(compress . #f)
 	(call-check . #t)
 	(debug . #f)
-	(module-resolver . ,(lambda (mod dir) #f)))
+	(module-resolver . ,(lambda (mod files dir) #f)))
       `((library-path . ,(bigloo-library-path)))
       *O1*))
 
