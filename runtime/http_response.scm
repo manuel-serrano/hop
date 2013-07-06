@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu May  2 07:17:26 2013 (serrano)                */
+;*    Last change :  Fri Jun 28 08:19:36 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -359,8 +359,7 @@
 			 ;; fill the default arguments
 			 (unless end (set! end (-elong size #e1)))
 			 (unless beg (set! beg (-elong size end)))
-			 (when (>=elong end size)
-			    (set! end (-elong size 1)))
+			 (when (>elong end size) (set! end (-elong size 1)))
 			 ;; check the correctness
 			 (unless (and (>=elong beg 0) (<=elong beg end))
 			    (response-error

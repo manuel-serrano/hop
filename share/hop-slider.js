@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Mon May 13 15:44:17 2013 (serrano)                */
+/*    Last change :  Thu Jun 27 15:40:01 2013 (serrano)                */
 /*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -25,6 +25,14 @@ function hop_slider_value_set( slider, value ) {
 
    value = Math.round( value / slider.step ) * slider.step;
 
+/*    if( (slider.id == "hopdac-controls-volume") ) {                  */
+/*       hop_tprint( "hop-slider.js", 1,                               */
+/* 		  sc_cons( "value_set: ",                              */
+/* 			   sc_cons( value + "",                        */
+/* 				    sc_cons( " cur_value=" ,           */
+/* 					     sc_cons( slider.value + "", null ))))); */
+/*    }                                                                */
+   
    if( slider.value != value ) {
       if( value < slider.min ) {
 	 value = slider.min;
@@ -39,6 +47,17 @@ function hop_slider_value_set( slider, value ) {
 
       slider.value = value;
 
+/*       if( (slider.id == "hopdac-controls-volume") ) {               */
+/* 	 hop_tprint( "hop-slider.js", 2,                               */
+/* 		  sc_cons( "cwidth: ",                                 */
+/* 			   sc_cons( slider.clientWidth + "",           */
+/* 				    sc_cons( "v=",                     */
+/* 					     sc_cons( v + "",          */
+/* 						      sc_cons( " w=" , */
+/* 							       sc_cons( w + "", */
+/* 									null ))))))); */
+/*       }                                                             */
+   
       if( slider.clientWidth > 0 ) {
 	 node_style_set( slider.line1, "width", Math.round(v * w) + "px" );
 	 node_style_set( slider.line2, "width", Math.round((1-v) * w) + "px");
@@ -90,6 +109,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var div;
    var caption;
 
+/*    hop_tprint( "hop-slider.js", 0,                                  */
+/* 	       sc_cons( ">>> hop_make_slider",                         */
+/* 			sc_cons( id, null ) ) );                       */
    if( !parent ) { sc_error( '<SLIDER>', "Illegal parent node", parent ); }
    
    var parent = parent.parentNode;
@@ -237,9 +259,17 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 			      if( value != undefined ) {
 				 if( value < min ) value = min;
 				 if( value > max ) value = max;
-				 after( 10, function() { hop_slider_value_set( slider, value ); });
+				 after( 10, function() {
+				    if( slider.value == min - 1 ) {
+				       hop_slider_value_set( slider, value );
+				    }
+				 } );
 			      } else {
-				 after( 10, function() { hop_slider_value_set( slider, min ); });
+				 after( 10, function() {
+				    if( slider.value == min - 1 ) {
+				       hop_slider_value_set( slider, min );
+				    }
+				 } );
 			      }
 			   });
 
@@ -300,6 +330,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
       },
       false );
 
+/*    hop_tprint( "hop-slider.js", 0,                                  */
+/* 	       sc_cons( "<<< hop_make_slider",                         */
+/* 			sc_cons( id, null ) ) );                       */
    return slider;
 }
 

@@ -1,5 +1,5 @@
 PORT=8080
-LOGDIR=/var/log
+LOGDIR=/home/hop
 LOGFILE=$LOGDIR/hop.log
 DAEMONUSER=hop
 DAEMONARGS="--log-file $LOGFILE"

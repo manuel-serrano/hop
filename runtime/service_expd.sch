@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Oct 13 07:47:28 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Wed Jun 26 15:11:26 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -14,7 +14,7 @@
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (jscript-funcall path args)
-   `(format "function() { return hop_apply_url( ~s, arguments ) }" ,path))
+   `(format "(function () { return hop_apply_url( ~s, arguments ); })" ,path))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */

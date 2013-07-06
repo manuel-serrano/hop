@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue May 28 07:01:05 2013 (serrano)                */
+;*    Last change :  Tue Jul  2 10:48:00 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -225,7 +225,7 @@
 	 (((and (? symbol?) ?sym) (and (? string?) ?path))
 	  (load-module sym path))
 	 ((? symbol?)
-	  (load-module module (car ((bigloo-module-resolver) module (module-abase)))))
+	  (load-module module (car ((bigloo-module-resolver) module '() (module-abase)))))
 	 (else
 	  (error "hopc" "Illegal module clause" module))))
 	     
