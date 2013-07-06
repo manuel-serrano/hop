@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Jun 21 07:43:04 2013 (serrano)                */
+;*    Last change :  Sat Jul  6 14:09:29 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -998,7 +998,9 @@
 				       (let ((val (eval! e (eval-module))))
 					  (loop (cons val res) #f))))))
 			    (else
-			     (error "hop-load" "Illegal mode" mode))))
+			     (error "hop-load"
+				(format "Illegal mode \"~a\"" mode)
+				fname))))
 		      (begin
 			 (close-input-port port)
 			 (eval-module-set! m)
