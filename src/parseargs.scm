@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Apr 12 14:04:42 2013 (serrano)                */
+;*    Last change :  Sun Jul  7 18:48:21 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -415,11 +415,13 @@
 	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
 	   (let ((pw (getpwnam user)))
 	      (if (pair? pw)
-		  (let ((uid (caddr pw)))
+		  (let ((uid (caddr pw))
+			(gid (caddr pw)))
 		     (unless (=fx (getuid) uid)
 			(hop-verb 2 "  switch to user: "
-			   (hop-color 2 "" user) " (" uid ")\n")
-			(setuid uid)))
+			   (hop-color 2 "" user) " (" uid ":" gid ")\n")
+			(setuid uid)
+			(setgid gid)))
 		  (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)))))
       (user
        (err))
