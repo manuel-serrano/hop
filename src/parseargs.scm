@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jul  7 18:48:21 2013 (serrano)                */
+;*    Last change :  Wed Jul 10 14:21:29 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -416,7 +416,7 @@
 	   (let ((pw (getpwnam user)))
 	      (if (pair? pw)
 		  (let ((uid (caddr pw))
-			(gid (caddr pw)))
+			(gid (cadddr pw)))
 		     (unless (=fx (getuid) uid)
 			(hop-verb 2 "  switch to user: "
 			   (hop-color 2 "" user) " (" uid ":" gid ")\n")
