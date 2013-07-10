@@ -40,7 +40,8 @@ POPULATION_SRC_HOP_ICONS=ic_green_light.png ic_menu_goto.png \
   ic_menu_stop.png ic_menu_clear_playlist.png ic_menu_preferences.png \
   ic_red_light.png
 
-POPULATION_SRC_HOP_HOP=Hop-Info.plist Hop-Prefix.pch Hop.h HopAppDelegate.h \
+POPULATION_SRC_HOP_HOP=Hop-Info.plist Hop10.6-Info.plist Hop-Prefix.pch \
+Hop10.7-Info.plist Hop10.8-Info.plist Hop.h HopAppDelegate.h \
  Hop-Info.plist.orig Hop.entitlements Hop.m HopAppDelegate.m main.m \
  $(POPULATION_SRC_HOP_HOP_EN:%=en.lproj/%)
 

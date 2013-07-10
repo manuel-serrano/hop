@@ -1,11 +1,14 @@
 == Building ==
 
-To build a macosx dmg, in the root directory:
+To build a macosx dmg with the graphical user interface, in the root directory:
 
     % make -f arch/macosx/Makefile.bundle all
 
 (don't use -j option).
 
+In another case:
+
+    % make -f arch/macosx/Makefile.bundle single
 
 == Testing ==
 
