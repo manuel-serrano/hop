@@ -22,7 +22,64 @@
 		E62600C116767142009D4DF9 /* HopAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600C016767142009D4DF9 /* HopAppDelegate.m */; };
 		E62600C416767142009D4DF9 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E62600C216767142009D4DF9 /* MainMenu.xib */; };
 		E65288451712D7000041D186 /* Hop.m in Sources */ = {isa = PBXBuildFile; fileRef = E65288441712D7000041D186 /* Hop.m */; };
+		E655E748178C44FF000F4965 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600B916767142009D4DF9 /* main.m */; };
+		E655E749178C44FF000F4965 /* HopAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600C016767142009D4DF9 /* HopAppDelegate.m */; };
+		E655E74A178C44FF000F4965 /* Hop.m in Sources */ = {isa = PBXBuildFile; fileRef = E65288441712D7000041D186 /* Hop.m */; };
+		E655E74C178C44FF000F4965 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E62600AD16767142009D4DF9 /* Cocoa.framework */; };
+		E655E74E178C44FF000F4965 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E62600B616767142009D4DF9 /* InfoPlist.strings */; };
+		E655E74F178C44FF000F4965 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = E62600BC16767142009D4DF9 /* Credits.rtf */; };
+		E655E750178C44FF000F4965 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E62600C216767142009D4DF9 /* MainMenu.xib */; };
+		E655E751178C44FF000F4965 /* ic_menu_block.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAB16A5A1B2007AE1D9 /* ic_menu_block.png */; };
+		E655E752178C44FF000F4965 /* ic_menu_clear_playlist.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAC16A5A1B2007AE1D9 /* ic_menu_clear_playlist.png */; };
+		E655E753178C44FF000F4965 /* ic_menu_goto.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAD16A5A1B2007AE1D9 /* ic_menu_goto.png */; };
+		E655E754178C44FF000F4965 /* ic_menu_info_details.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAE16A5A1B2007AE1D9 /* ic_menu_info_details.png */; };
+		E655E755178C44FF000F4965 /* ic_menu_preferences.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAF16A5A1B2007AE1D9 /* ic_menu_preferences.png */; };
+		E655E756178C44FF000F4965 /* ic_menu_stop.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CB116A5A1B2007AE1D9 /* ic_menu_stop.png */; };
+		E655E757178C44FF000F4965 /* ic_hop114.png in Resources */ = {isa = PBXBuildFile; fileRef = E6D205E716AE9A4C0028E565 /* ic_hop114.png */; };
+		E655E758178C44FF000F4965 /* ic_hop.icns in Resources */ = {isa = PBXBuildFile; fileRef = E6FEAED616F74EF40096F9E4 /* ic_hop.icns */; };
+		E655E759178C44FF000F4965 /* ic_green_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB59170476C5007A9625 /* ic_green_light.png */; };
+		E655E75A178C44FF000F4965 /* ic_red_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB5A170476C5007A9625 /* ic_red_light.png */; };
+		E655E75B178C44FF000F4965 /* ic_menu_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = E66B77521746283600D8E5D1 /* ic_menu_refresh.png */; };
+		E661B791178CAC6E00D6F647 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600B916767142009D4DF9 /* main.m */; };
+		E661B792178CAC6E00D6F647 /* HopAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600C016767142009D4DF9 /* HopAppDelegate.m */; };
+		E661B793178CAC6E00D6F647 /* Hop.m in Sources */ = {isa = PBXBuildFile; fileRef = E65288441712D7000041D186 /* Hop.m */; };
+		E661B795178CAC6E00D6F647 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E62600AD16767142009D4DF9 /* Cocoa.framework */; };
+		E661B797178CAC6E00D6F647 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E62600B616767142009D4DF9 /* InfoPlist.strings */; };
+		E661B798178CAC6E00D6F647 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = E62600BC16767142009D4DF9 /* Credits.rtf */; };
+		E661B799178CAC6E00D6F647 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E62600C216767142009D4DF9 /* MainMenu.xib */; };
+		E661B79A178CAC6E00D6F647 /* ic_menu_block.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAB16A5A1B2007AE1D9 /* ic_menu_block.png */; };
+		E661B79B178CAC6E00D6F647 /* ic_menu_clear_playlist.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAC16A5A1B2007AE1D9 /* ic_menu_clear_playlist.png */; };
+		E661B79C178CAC6E00D6F647 /* ic_menu_goto.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAD16A5A1B2007AE1D9 /* ic_menu_goto.png */; };
+		E661B79D178CAC6E00D6F647 /* ic_menu_info_details.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAE16A5A1B2007AE1D9 /* ic_menu_info_details.png */; };
+		E661B79E178CAC6E00D6F647 /* ic_menu_preferences.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAF16A5A1B2007AE1D9 /* ic_menu_preferences.png */; };
+		E661B79F178CAC6E00D6F647 /* ic_menu_stop.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CB116A5A1B2007AE1D9 /* ic_menu_stop.png */; };
+		E661B7A0178CAC6E00D6F647 /* ic_hop114.png in Resources */ = {isa = PBXBuildFile; fileRef = E6D205E716AE9A4C0028E565 /* ic_hop114.png */; };
+		E661B7A1178CAC6E00D6F647 /* ic_hop.icns in Resources */ = {isa = PBXBuildFile; fileRef = E6FEAED616F74EF40096F9E4 /* ic_hop.icns */; };
+		E661B7A2178CAC6E00D6F647 /* ic_green_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB59170476C5007A9625 /* ic_green_light.png */; };
+		E661B7A3178CAC6E00D6F647 /* ic_red_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB5A170476C5007A9625 /* ic_red_light.png */; };
+		E661B7A4178CAC6E00D6F647 /* ic_menu_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = E66B77521746283600D8E5D1 /* ic_menu_refresh.png */; };
 		E66B77531746283600D8E5D1 /* ic_menu_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = E66B77521746283600D8E5D1 /* ic_menu_refresh.png */; };
+		E6727081178CAF20009F48D6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600B916767142009D4DF9 /* main.m */; };
+		E6727082178CAF20009F48D6 /* HopAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E62600C016767142009D4DF9 /* HopAppDelegate.m */; };
+		E6727083178CAF20009F48D6 /* Hop.m in Sources */ = {isa = PBXBuildFile; fileRef = E65288441712D7000041D186 /* Hop.m */; };
+		E6727085178CAF20009F48D6 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E62600AD16767142009D4DF9 /* Cocoa.framework */; };
+		E6727087178CAF20009F48D6 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E62600B616767142009D4DF9 /* InfoPlist.strings */; };
+		E6727088178CAF20009F48D6 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = E62600BC16767142009D4DF9 /* Credits.rtf */; };
+		E6727089178CAF20009F48D6 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E62600C216767142009D4DF9 /* MainMenu.xib */; };
+		E672708A178CAF20009F48D6 /* ic_menu_block.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAB16A5A1B2007AE1D9 /* ic_menu_block.png */; };
+		E672708B178CAF20009F48D6 /* ic_menu_clear_playlist.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAC16A5A1B2007AE1D9 /* ic_menu_clear_playlist.png */; };
+		E672708C178CAF20009F48D6 /* ic_menu_goto.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAD16A5A1B2007AE1D9 /* ic_menu_goto.png */; };
+		E672708D178CAF20009F48D6 /* ic_menu_info_details.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAE16A5A1B2007AE1D9 /* ic_menu_info_details.png */; };
+		E672708E178CAF20009F48D6 /* ic_menu_preferences.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CAF16A5A1B2007AE1D9 /* ic_menu_preferences.png */; };
+		E672708F178CAF20009F48D6 /* ic_menu_stop.png in Resources */ = {isa = PBXBuildFile; fileRef = E61E2CB116A5A1B2007AE1D9 /* ic_menu_stop.png */; };
+		E6727090178CAF20009F48D6 /* ic_hop114.png in Resources */ = {isa = PBXBuildFile; fileRef = E6D205E716AE9A4C0028E565 /* ic_hop114.png */; };
+		E6727091178CAF20009F48D6 /* ic_hop.icns in Resources */ = {isa = PBXBuildFile; fileRef = E6FEAED616F74EF40096F9E4 /* ic_hop.icns */; };
+		E6727092178CAF20009F48D6 /* ic_green_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB59170476C5007A9625 /* ic_green_light.png */; };
+		E6727093178CAF20009F48D6 /* ic_red_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB5A170476C5007A9625 /* ic_red_light.png */; };
+		E6727094178CAF20009F48D6 /* ic_menu_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = E66B77521746283600D8E5D1 /* ic_menu_refresh.png */; };
+		E672709B178CAF33009F48D6 /* Hop10.8-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E672709A178CAF33009F48D6 /* Hop10.8-info.plist */; };
+		E68EDC22178C469E004677A5 /* Hop10.6-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E68EDC21178C469E004677A5 /* Hop10.6-info.plist */; };
+		E6A5652C178CADE600A06C7D /* Hop10.7-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */; };
 		E6D205E816AE9A4C0028E565 /* ic_hop114.png in Resources */ = {isa = PBXBuildFile; fileRef = E6D205E716AE9A4C0028E565 /* ic_hop114.png */; };
 		E6FEAED716F74EF40096F9E4 /* ic_hop.icns in Resources */ = {isa = PBXBuildFile; fileRef = E6FEAED616F74EF40096F9E4 /* ic_hop.icns */; };
 /* End PBXBuildFile section */
@@ -52,7 +109,13 @@
 		E62600CB16767143009D4DF9 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		E65288431712D7000041D186 /* Hop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hop.h; sourceTree = "<group>"; };
 		E65288441712D7000041D186 /* Hop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Hop.m; sourceTree = "<group>"; };
+		E655E75F178C44FF000F4965 /* Hop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E661B7A8178CAC6E00D6F647 /* Hop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E66B77521746283600D8E5D1 /* ic_menu_refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_refresh.png; sourceTree = "<group>"; };
+		E6727098178CAF20009F48D6 /* Hop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E672709A178CAF33009F48D6 /* Hop10.8-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.8-info.plist"; sourceTree = "<group>"; };
+		E68EDC21178C469E004677A5 /* Hop10.6-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.6-info.plist"; sourceTree = "<group>"; };
+		E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.7-info.plist"; sourceTree = "<group>"; };
 		E6D205E716AE9A4C0028E565 /* ic_hop114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ic_hop114.png; path = ../ic_hop114.png; sourceTree = "<group>"; };
 		E6F559C6172A670900E2C86B /* Hop.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = Hop.entitlements; path = Hop/Hop.entitlements; sourceTree = "<group>"; };
 		E6FEAED616F74EF40096F9E4 /* ic_hop.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = ic_hop.icns; path = ../ic_hop.icns; sourceTree = "<group>"; };
@@ -64,6 +127,30 @@
 			buildActionMask = 2147483647;
 			files = (
 				E62600AE16767142009D4DF9 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E655E74B178C44FF000F4965 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E655E74C178C44FF000F4965 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E661B794178CAC6E00D6F647 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E661B795178CAC6E00D6F647 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E6727084178CAF20009F48D6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6727085178CAF20009F48D6 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +190,9 @@
 			isa = PBXGroup;
 			children = (
 				E62600A916767142009D4DF9 /* Hop.app */,
+				E655E75F178C44FF000F4965 /* Hop.app */,
+				E661B7A8178CAC6E00D6F647 /* Hop.app */,
+				E6727098178CAF20009F48D6 /* Hop.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -144,6 +234,9 @@
 		E62600B416767142009D4DF9 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				E68EDC21178C469E004677A5 /* Hop10.6-info.plist */,
+				E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */,
+				E672709A178CAF33009F48D6 /* Hop10.8-info.plist */,
 				E62600B516767142009D4DF9 /* Hop-Info.plist */,
 				E62600B616767142009D4DF9 /* InfoPlist.strings */,
 				E62600B916767142009D4DF9 /* main.m */,
@@ -173,6 +266,57 @@
 			productReference = E62600A916767142009D4DF9 /* Hop.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E655E746178C44FF000F4965 /* Hop10.6 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E655E75C178C44FF000F4965 /* Build configuration list for PBXNativeTarget "Hop10.6" */;
+			buildPhases = (
+				E655E747178C44FF000F4965 /* Sources */,
+				E655E74B178C44FF000F4965 /* Frameworks */,
+				E655E74D178C44FF000F4965 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hop10.6;
+			productName = Hop;
+			productReference = E655E75F178C44FF000F4965 /* Hop.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E661B78F178CAC6E00D6F647 /* Hop10.7 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E661B7A5178CAC6E00D6F647 /* Build configuration list for PBXNativeTarget "Hop10.7" */;
+			buildPhases = (
+				E661B790178CAC6E00D6F647 /* Sources */,
+				E661B794178CAC6E00D6F647 /* Frameworks */,
+				E661B796178CAC6E00D6F647 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hop10.7;
+			productName = Hop;
+			productReference = E661B7A8178CAC6E00D6F647 /* Hop.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E672707F178CAF20009F48D6 /* Hop10.8 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6727095178CAF20009F48D6 /* Build configuration list for PBXNativeTarget "Hop10.8" */;
+			buildPhases = (
+				E6727080178CAF20009F48D6 /* Sources */,
+				E6727084178CAF20009F48D6 /* Frameworks */,
+				E6727086178CAF20009F48D6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Hop10.8;
+			productName = Hop;
+			productReference = E6727098178CAF20009F48D6 /* Hop.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -194,6 +338,9 @@
 			projectRoot = "";
 			targets = (
 				E62600A816767142009D4DF9 /* Hop */,
+				E655E746178C44FF000F4965 /* Hop10.6 */,
+				E661B78F178CAC6E00D6F647 /* Hop10.7 */,
+				E672707F178CAF20009F48D6 /* Hop10.8 */,
 			);
 		};
 /* End PBXProject section */
@@ -217,6 +364,72 @@
 				E61AAB5B170476C5007A9625 /* ic_green_light.png in Resources */,
 				E61AAB5C170476C5007A9625 /* ic_red_light.png in Resources */,
 				E66B77531746283600D8E5D1 /* ic_menu_refresh.png in Resources */,
+				E68EDC22178C469E004677A5 /* Hop10.6-info.plist in Resources */,
+				E6A5652C178CADE600A06C7D /* Hop10.7-info.plist in Resources */,
+				E672709B178CAF33009F48D6 /* Hop10.8-info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E655E74D178C44FF000F4965 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E655E74E178C44FF000F4965 /* InfoPlist.strings in Resources */,
+				E655E74F178C44FF000F4965 /* Credits.rtf in Resources */,
+				E655E750178C44FF000F4965 /* MainMenu.xib in Resources */,
+				E655E751178C44FF000F4965 /* ic_menu_block.png in Resources */,
+				E655E752178C44FF000F4965 /* ic_menu_clear_playlist.png in Resources */,
+				E655E753178C44FF000F4965 /* ic_menu_goto.png in Resources */,
+				E655E754178C44FF000F4965 /* ic_menu_info_details.png in Resources */,
+				E655E755178C44FF000F4965 /* ic_menu_preferences.png in Resources */,
+				E655E756178C44FF000F4965 /* ic_menu_stop.png in Resources */,
+				E655E757178C44FF000F4965 /* ic_hop114.png in Resources */,
+				E655E758178C44FF000F4965 /* ic_hop.icns in Resources */,
+				E655E759178C44FF000F4965 /* ic_green_light.png in Resources */,
+				E655E75A178C44FF000F4965 /* ic_red_light.png in Resources */,
+				E655E75B178C44FF000F4965 /* ic_menu_refresh.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E661B796178CAC6E00D6F647 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E661B797178CAC6E00D6F647 /* InfoPlist.strings in Resources */,
+				E661B798178CAC6E00D6F647 /* Credits.rtf in Resources */,
+				E661B799178CAC6E00D6F647 /* MainMenu.xib in Resources */,
+				E661B79A178CAC6E00D6F647 /* ic_menu_block.png in Resources */,
+				E661B79B178CAC6E00D6F647 /* ic_menu_clear_playlist.png in Resources */,
+				E661B79C178CAC6E00D6F647 /* ic_menu_goto.png in Resources */,
+				E661B79D178CAC6E00D6F647 /* ic_menu_info_details.png in Resources */,
+				E661B79E178CAC6E00D6F647 /* ic_menu_preferences.png in Resources */,
+				E661B79F178CAC6E00D6F647 /* ic_menu_stop.png in Resources */,
+				E661B7A0178CAC6E00D6F647 /* ic_hop114.png in Resources */,
+				E661B7A1178CAC6E00D6F647 /* ic_hop.icns in Resources */,
+				E661B7A2178CAC6E00D6F647 /* ic_green_light.png in Resources */,
+				E661B7A3178CAC6E00D6F647 /* ic_red_light.png in Resources */,
+				E661B7A4178CAC6E00D6F647 /* ic_menu_refresh.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E6727086178CAF20009F48D6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6727087178CAF20009F48D6 /* InfoPlist.strings in Resources */,
+				E6727088178CAF20009F48D6 /* Credits.rtf in Resources */,
+				E6727089178CAF20009F48D6 /* MainMenu.xib in Resources */,
+				E672708A178CAF20009F48D6 /* ic_menu_block.png in Resources */,
+				E672708B178CAF20009F48D6 /* ic_menu_clear_playlist.png in Resources */,
+				E672708C178CAF20009F48D6 /* ic_menu_goto.png in Resources */,
+				E672708D178CAF20009F48D6 /* ic_menu_info_details.png in Resources */,
+				E672708E178CAF20009F48D6 /* ic_menu_preferences.png in Resources */,
+				E672708F178CAF20009F48D6 /* ic_menu_stop.png in Resources */,
+				E6727090178CAF20009F48D6 /* ic_hop114.png in Resources */,
+				E6727091178CAF20009F48D6 /* ic_hop.icns in Resources */,
+				E6727092178CAF20009F48D6 /* ic_green_light.png in Resources */,
+				E6727093178CAF20009F48D6 /* ic_red_light.png in Resources */,
+				E6727094178CAF20009F48D6 /* ic_menu_refresh.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +443,36 @@
 				E62600BA16767142009D4DF9 /* main.m in Sources */,
 				E62600C116767142009D4DF9 /* HopAppDelegate.m in Sources */,
 				E65288451712D7000041D186 /* Hop.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E655E747178C44FF000F4965 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E655E748178C44FF000F4965 /* main.m in Sources */,
+				E655E749178C44FF000F4965 /* HopAppDelegate.m in Sources */,
+				E655E74A178C44FF000F4965 /* Hop.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E661B790178CAC6E00D6F647 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E661B791178CAC6E00D6F647 /* main.m in Sources */,
+				E661B792178CAC6E00D6F647 /* HopAppDelegate.m in Sources */,
+				E661B793178CAC6E00D6F647 /* Hop.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E6727080178CAF20009F48D6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6727081178CAF20009F48D6 /* main.m in Sources */,
+				E6727082178CAF20009F48D6 /* HopAppDelegate.m in Sources */,
+				E6727083178CAF20009F48D6 /* Hop.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,6 +595,100 @@
 			};
 			name = Release;
 		};
+		E655E75D178C44FF000F4965 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		E655E75E178C44FF000F4965 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		E661B7A6178CAC6E00D6F647 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				SDKROOT = macosx10.7;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		E661B7A7178CAC6E00D6F647 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				SDKROOT = macosx10.7;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		E6727096178CAF20009F48D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				SDKROOT = macosx10.8;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		E6727097178CAF20009F48D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				PRODUCT_DEFINITION_PLIST = Hop;
+				PRODUCT_NAME = Hop;
+				SDKROOT = macosx10.8;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -369,6 +706,33 @@
 			buildConfigurations = (
 				E62600DC16767143009D4DF9 /* Debug */,
 				E62600DD16767143009D4DF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E655E75C178C44FF000F4965 /* Build configuration list for PBXNativeTarget "Hop10.6" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E655E75D178C44FF000F4965 /* Debug */,
+				E655E75E178C44FF000F4965 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E661B7A5178CAC6E00D6F647 /* Build configuration list for PBXNativeTarget "Hop10.7" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E661B7A6178CAC6E00D6F647 /* Debug */,
+				E661B7A7178CAC6E00D6F647 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E6727095178CAF20009F48D6 /* Build configuration list for PBXNativeTarget "Hop10.8" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E6727096178CAF20009F48D6 /* Debug */,
+				E6727097178CAF20009F48D6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

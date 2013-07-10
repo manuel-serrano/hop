@@ -6,7 +6,12 @@
 #   make -f arch/macosx/Makefile.bundle configure
 #   make -f arch/macosx/Makefile.bundle -j3
 #   make -f arch/macosx/Makefile.bundle bundle
+#   make -f arch/macosx/Makefile.bundle app
 #   make -f arch/macosx/Makefile.bundle dmg
+# If you need a specific older version, set OSX. For example OSX=10.6
+
+# To create a dmg without graphical user interface use
+#   make -f arch/macosx/Makefile.bundle single
 
 default: build
 
@@ -24,17 +29,28 @@ PROJ_DIR := $(SRC_DIR)/$(PROJ_NAME)/$(PROJ_NAME).xcodeproj
 BUILD_DIR := $(SRC_DIR)/$(PROJ_NAME)/build
 CONTENTS_DIR := $(APP_DIR)/Contents
 HOP_ICON := hop.icns
-CONTRIBS_DIR := /Library/Hop/Weblets
+
 XCODEBUILD = xcodebuild
+
+CONTRIBS_DIR := /Library/Hop/Weblets
 
 HDIUTIL := hdiutil
 
 DMG := $(MACOSX_DIR)/$(BIN_NAME)-$(HOPRELEASE).dmg
 DMG_TMP := $(MACOSX_DIR)/$(BIN_NAME)-$(HOPRELEASE)-tmp.dmg
 
+BIN_DIR := Resources
+
 all: 
 	$(MAKE) -f arch/macosx/Makefile.bundle configure && \
         $(MAKE) -f arch/macosx/Makefile.bundle && \
+        $(MAKE) -f arch/macosx/Makefile.bundle bundle && \
+	$(MAKE) -f arch/macosx/Makefile.bundle app && \
+        $(MAKE) -f arch/macosx/Makefile.bundle dmg
+
+single: 
+	$(MAKE) -f arch/macosx/Makefile.bundle configure-single && \
+	$(MAKE) -f arch/macosx/Makefile.bundle && \
         $(MAKE) -f arch/macosx/Makefile.bundle bundle && \
         $(MAKE) -f arch/macosx/Makefile.bundle dmg
 
@@ -51,7 +67,18 @@ configure:
 	./configure --macosx-bundle \
         --prefix=/ \
 	--srfi=macosx \
-	--bindir=Resources --mandir=Resources/man \
+	--bindir=$(BIN_DIR) --mandir=Resources/man \
+	--contribsdir=$(CONTRIBS_DIR) \
+	--webletsdir=Resources/Weblets \
+	--etcdir=Resources/etc \
+	--sharedir=Resources \
+	--libdir=Frameworks
+
+configure-single:
+	./configure --macosx-bundle \
+        --prefix=/ \
+	--srfi=macosx \
+	--bindir=MacOS --mandir=Resources/man \
 	--contribsdir=$(CONTRIBS_DIR) \
 	--webletsdir=Resources/Weblets \
 	--etcdir=Resources/etc \
@@ -60,13 +87,16 @@ configure:
 
 bundle:
 	mkdir -p $(CONTENTS_DIR) && \
-	$(XCODEBUILD) -project $(PROJ_DIR) -alltargets && \
 	$(MAKE) DESTDIR=$(CONTENTS_DIR)/ install && \
 	BIGLOO_VERSION=`$(BIGLOO) -q -eval "(begin (print *bigloo-version*) (exit 0))"` && \
 	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
 	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
 	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources && \
-	cp -r $(BUILD_DIR)/Release/$(PROJ_NAME).app/Contents/* $(CONTENTS_DIR)
+	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ 
+
+app:
+	$(XCODEBUILD) -project $(PROJ_DIR) -target Hop$(OSX) && \
+	cp -r $(BUILD_DIR)/Release/$(PROJ_NAME).app/Contents/* $(CONTENTS_DIR)/ 
 
 dmg: $(DMG)
 
@@ -87,6 +117,7 @@ $(DMG):
 clean:
 	-rm -rf $(BUILD_DIR)
 	-rm -f $(DMG)
-	rm -f $(DMG_TMP) 
+	-rm -f $(DMG_TMP) 
+	-rm -rf $(DMG_DIR)/*
 
-.PHONY: configure build bundle lib dmg clean
+.PHONY: configure configure-single single build bundle lib app dmg clean
