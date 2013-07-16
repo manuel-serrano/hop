@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Fri Jun 14 11:27:57 2013 (serrano)                */
+#*    Last change :  Fri Jul 12 19:53:23 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    MacOS X port                                                     */
@@ -41,7 +41,7 @@ POPULATION_SRC_HOP_ICONS=ic_green_light.png ic_menu_goto.png \
   ic_red_light.png
 
 POPULATION_SRC_HOP_HOP=Hop-Info.plist Hop10.6-Info.plist Hop-Prefix.pch \
-Hop10.7-Info.plist Hop10.8-Info.plist Hop.h HopAppDelegate.h \
+ Hop10.7-Info.plist Hop10.8-Info.plist Hop.h HopAppDelegate.h \
  Hop-Info.plist.orig Hop.entitlements Hop.m HopAppDelegate.m main.m \
  $(POPULATION_SRC_HOP_HOP_EN:%=en.lproj/%)
 

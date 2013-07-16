@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 10 14:21:29 2013 (serrano)                */
+;*    Last change :  Fri Jul 12 07:22:10 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -420,8 +420,8 @@
 		     (unless (=fx (getuid) uid)
 			(hop-verb 2 "  switch to user: "
 			   (hop-color 2 "" user) " (" uid ":" gid ")\n")
-			(setuid uid)
-			(setgid gid)))
+			(setgid gid)
+			(setuid uid)))
 		  (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)))))
       (user
        (err))
