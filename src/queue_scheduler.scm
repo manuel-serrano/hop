@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Fri Mar 29 12:35:59 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:32:02 2013 (serrano)                */
 ;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
@@ -92,7 +92,7 @@
 			     (queue-push! scd proc)
 			     #f)))))
 	 (when proc
-	    (thread-spawn scd t proc)))))
+	    (thread-spawn t scd proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spawn1 ::queue-scheduler ...                                     */

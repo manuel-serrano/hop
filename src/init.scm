@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Jun 28 08:19:50 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:02:00 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -14,14 +14,45 @@
 ;*---------------------------------------------------------------------*/
 (module hop_init
 
+   (include "libraries.sch")
+
    (library hop)
 
    (import  hop_param)
    
-   (export  (init-http!)
+   (export  (init-server-socket!)
+	    (init-http!)
 	    (init-webdav!)
 	    (init-flash!)
 	    (init-zeroconf!)))
+
+;*---------------------------------------------------------------------*/
+;*    init-server-socket! ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Create the Hop server socket according to user options.          */
+;*---------------------------------------------------------------------*/
+(define (init-server-socket!)
+   (when (socket-server? (hop-server-socket))
+      (socket-shutdown (hop-server-socket)))
+   (with-handler
+      (lambda (e)
+	 (exception-notify e)
+	 (fprint (current-error-port)
+	    "Cannot start Hop server, exiting...")
+	 (exit 2))
+      (if (hop-enable-https)
+	  (cond-expand
+	     (enable-ssl
+	      (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
+		    (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+		 (hop-server-socket-set!
+		    (make-ssl-server-socket (hop-port)
+		       :protocol (hop-https-protocol)
+		       :cert cert :pkey pkey))))
+	     (else
+	      (error "hop" "SSL not supported by this version of Hop" #f)))
+	  (hop-server-socket-set!
+	     (make-server-socket (hop-port) :backlog (hop-somaxconn))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */

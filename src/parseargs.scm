@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jul 12 07:22:10 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:25:01 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -16,7 +16,8 @@
 
    (library scheme2js hopscheme hop hopwidget web)
 
-   (import  hop_param)
+   (import  hop_param
+	    hop_init)
 
    (eval    (export hop-load-rc))
 
@@ -250,11 +251,13 @@
 
       ;; http port
       (hop-port-set! p)
-      (when (eq? ep #unspecified) (set! ep p))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
+      ;; open the server socket before switching to a different process owner
+      (init-server-socket!)
+      
       ;; set the hop process owner
       (when setuser
 	 (hop-user-set! setuser)
@@ -336,9 +339,6 @@
 	     :directories (hop-path)
 	     :preferences-filename #f))
 
-      ;; set the hop process owner
-      (set-hop-owner! (hop-user))
-
       ;; kill
       (when killp
 	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
@@ -361,11 +361,15 @@
       
       ;; server event port
       (when (hop-enable-fast-server-event)
-	 (if (and (>fx ep 0) (<fx ep 1024))
+	 (cond
+	    ((eq? ep #unspecified)
+	     (set! ep p))
+	    ((and (>fx ep 0) (<fx ep 1024))
 	     (error "fast-server-event-port"
 		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		ep)
-	     (hop-fast-server-event-port-set! ep)))
+		ep))
+	    (else
+	     (hop-fast-server-event-port-set! ep))))
       
       (for-each (lambda (expr)
 		   (call-with-input-string expr
@@ -390,6 +394,10 @@
       (register-exit-function! (lambda (ret)
 				  (hop-process-key-delete (hop-port))
 				  ret))
+
+      ;; check if a new server socket must be opened
+      (unless (=fx (socket-port-number (hop-server-socket)) (hop-port))
+	 (init-server-socket!))
       (reverse files)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Apr 12 14:01:38 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:25:36 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -102,7 +102,10 @@
 	    (hop-preload-services-set! ::pair-nil)
 
 	    (hop-enable-zeroconf::bool)
-	    (hop-enable-zeroconf-set! ::bool))
+	    (hop-enable-zeroconf-set! ::bool)
+
+	    (hop-server-socket::obj)
+	    (hop-server-socket-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -260,13 +263,7 @@
 ;*    hop-fast-server-event-port ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-fast-server-event-port
-   (hop-port)
-   (lambda (v)
-      (if (and (>fx v 0) (<fx v 1024))
-	  (error "hop-fast-server-event-port-set!"
-		 "Server event ports must be greater than 1023"
-		 v)
-	  v)))
+   (hop-port))
 
 (define-parameter hop-enable-fast-server-event
    #t)
@@ -340,3 +337,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-zeroconf
    (hop-zeroconf-default))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-socket ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-socket
+   #f)
