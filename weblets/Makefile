@@ -54,7 +54,7 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(DESTDIR)$(SHAREDIR)/popdirs
+	$(RM) -f $(DESTDIR)$(SHAREDIR)/popdirs
 
 #*---------------------------------------------------------------------*/
 #*    install-weblet                                                   */

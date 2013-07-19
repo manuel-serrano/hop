@@ -222,17 +222,17 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/.afile && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
         for p in $(EXTRA); do \
-	  /bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
+	  $(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
         done
 	for p in $(RTS) hop-autoconf runtime hop; do \
-	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
 
 #*---------------------------------------------------------------------*/

@@ -110,10 +110,10 @@ runtime-install:
         chmod $(MODFILE) $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface_callcc.js
 
 runtime-uninstall:
-	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime.js && \
-	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_callcc.js && \
-	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface.js && \
-	/bin/rm -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface_callcc.js
+	$(RM) -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime.js && \
+	$(RM) -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_callcc.js && \
+	$(RM) -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface.js && \
+	$(RM) -f $(DESTDIR)$(SCHEME2JSSHAREDIR)/runtime_interface_callcc.js
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

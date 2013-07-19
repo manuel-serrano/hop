@@ -194,7 +194,7 @@ uninstall:
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
 	if [ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then \
-	  /bin/rm -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+	  $(RM) -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
 
 #*---------------------------------------------------------------------*/
@@ -236,18 +236,18 @@ devclean:
 	$(MAKE) -C share devclean
 
 distclean: clean devclean
-	/bin/rm -f etc/Makefile.hopconfig
-	/bin/rm -f etc/hop.man
-	/bin/rm -f etc/hopsh.man
-	/bin/rm -f etc/hophz.man
-	/bin/rm -f etc/hopreplay.man
-	/bin/rm -f lib/hop.init
-	/bin/rm -f lib/scheme2js.init
-	/bin/rm -f lib/hopscheme.init
-	/bin/rm -f runtime/configure_android.sch
-	/bin/rm -f runtime/configure_macosx.sch
-	/bin/rm -f runtime/configure_noarch.sch
-	/bin/rm -f config.status
+	$(RM) -f etc/Makefile.hopconfig
+	$(RM) -f etc/hop.man
+	$(RM) -f etc/hopsh.man
+	$(RM) -f etc/hophz.man
+	$(RM) -f etc/hopreplay.man
+	$(RM) -f lib/hop.init
+	$(RM) -f lib/scheme2js.init
+	$(RM) -f lib/hopscheme.init
+	$(RM) -f runtime/configure_android.sch
+	$(RM) -f runtime/configure_macosx.sch
+	$(RM) -f runtime/configure_noarch.sch
+	$(RM) -f config.status
 
 cleanall: distclean
 
@@ -343,7 +343,7 @@ distrib-native: distrib-tmp
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
-              /bin/rm -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
+              $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
               mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
             fi \
           fi) || exit 1
@@ -369,7 +369,7 @@ distrib-jvm: distrib-tmp
 	   $(MAKE) changelog > ChangeLog && \
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/talks && \
 	   $(RM) -rf $(HOPTMPDIR)/hop-$$distrib/weblets/home/videos && \
-           /bin/rm -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
+           $(RM) -f $(HOPDISTRIBDIR)/java/hop-$(HOPRELEASE)*.jar && \
            mv bin/hop.jar $(HOPDISTRIBDIR)/java/hop-$$distrib.jar) && \
           $(RM) -rf $(HOPTMPDIR)/hop-$$distrib) || exit 1
 

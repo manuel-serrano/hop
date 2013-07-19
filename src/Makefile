@@ -222,22 +222,22 @@ install-jvm:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)-$(HOPRELEASE)
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)-$(HOPRELEASE)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	/bin/rm -f .afile
-	/bin/rm -f .jfile
-	/bin/rm -f $(OBJECTS)
-	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -rf o
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
-	/bin/rm -f META-INF/MANIFEST.MF
+	$(RM) -f .afile
+	$(RM) -f .jfile
+	$(RM) -f $(OBJECTS)
+	$(RM) -f $(MODULES:%=%.c)
+	$(RM) -rf o
+	$(RM) -f $(BUILDBINDIR)/$(EXEC)
+	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
+	$(RM) -f META-INF/MANIFEST.MF
 
 devclean: clean
 
