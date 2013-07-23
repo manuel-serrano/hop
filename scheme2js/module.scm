@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/scheme2js/module.scm              */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/module.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Fri Jun 21 08:32:14 2013 (serrano)                */
+;*    Last change :  Sun Jul 21 10:25:02 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -855,7 +855,7 @@
 (define (normalize-bigloo-exports! m::WIP-Unit get-macros? reader input-p)
    
    (define (normalize-var v pragmas loc)
-      (receive (v type)
+      (multiple-value-bind (v type)
 	 (parse-ident v)
 	 (when (string=? "" (symbol->string v))
 	    (scheme2js-error "scheme2js-module"
@@ -874,14 +874,14 @@
 	    (else (negfx (+fx res 1))))))
    
    (define (analyze-fun f)
-      (receive (name type)
+      (multiple-value-bind (name type)
 	 (parse-ident (car f))
 	 (values name type (analyze-arity (cdr f)))))
 
    (define (check-pragma pragma)
       (unless (and (list? pragma) (pair? pragma) (symbol? (car pragma))
 		   (every (lambda (p)
-			     (or (list? p) (pair? p) (symbol? (car p))))
+			     (and (or (list? p) (pair? p)) (symbol? (car p))))
 		      (cdr pragma)))
 	 (scheme2js-error "scheme2js-module"
 	    "invalid pragma clause"
@@ -889,7 +889,7 @@
 	    pragma)))
    
    (define (normalize-fun f pragmas)
-      (receive (fun-name type arity)
+      (multiple-value-bind (fun-name type arity)
 	 (analyze-fun f)
 	 (let ((pragma-info (assq fun-name pragmas)))
 	    (when pragma-info (check-pragma pragma-info))

@@ -1,15 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/scheme2js.scm           */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Tue Jul 23 09:55:38 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js/HOP.                              */
+;*    -------------------------------------------------------------    */
+;*    Scheme2JS entry points                                           */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module scheme2js
    (option (set! *dlopen-init* "scheme2js_s"))
    (include "version.sch")
@@ -44,36 +48,43 @@
 	   scm-out
 	   verbose
 	   callcc
-	   trampoline)
+	   trampoline
+	   dump-node)
    ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
-				   out-p
-				   module-headers::pair-nil
-				   configuration)
+	      out-p
+	      module-headers::pair-nil
+	      configuration)
 	   (scheme2js-compile-value expr::obj
-				    out-p::output-port
-				    extension-compiler::procedure
-				    value-register::procedure
-				    loc)
+	      out-p::output-port
+	      extension-compiler::procedure
+	      value-register::procedure
+	      loc)
 	   (scheme2js-compile-file in-file::bstring
-				   out-file::bstring
-				   module-headers::pair-nil
-				   configuration
-				   #!key (reader read))
+	      out-file::bstring
+	      module-headers::pair-nil
+	      configuration
+	      #!key (reader read))
 	   (precompile-imported-module-file name::symbol file::bstring
-					    reader::procedure
-					    configuration
-					    #!key
-					    (bigloo-modules? #t)
-					    (store-exports-in-ht? #f)
-					    (store-exported-macros-in-ht? #f))))
+	      reader::procedure
+	      configuration
+	      #!key
+	      (bigloo-modules? #t)
+	      (store-exports-in-ht? #f)
+	      (store-exported-macros-in-ht? #f))))
 
+;*---------------------------------------------------------------------*/
+;*    pass ... ...                                                     */
+;*---------------------------------------------------------------------*/
 (define-macro (pass name . Lrest)
    `(begin
        ,@Lrest
        (when (eq? debug-stage ,name)
 	  (scm-out tree p))))
 
+;*---------------------------------------------------------------------*/
+;*    scheme2js ...                                                    */
+;*---------------------------------------------------------------------*/
 (define (scheme2js module p)
    (with-access::Compilation-Unit module (imports exports top-level macros name)
       (let* ((debug-stage (config 'debug-stage))
@@ -86,7 +97,7 @@
 	     (dsssl-e (dsssl-expand! top-level-runtime-e))
 	     (dummy3 (when (eq? debug-stage 'dsssl-expand)
 			(pp dsssl-e p)))
-	     (tree (pobject-conv dsssl-e)))
+	     (tree::Module (pobject-conv dsssl-e)))
 
 	 ;;we could do the letrec-expansion in list-form too.
 	 (pass 'letrec         (letrec-expansion! tree))
@@ -119,17 +130,25 @@
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
 	 (pass 'call/cc-late   (call/cc-late! tree))
-	 ;(locations tree)
+	 ;;(locations tree)
 	 (if debug-stage
 	     (let ((tmp (open-output-string)))
 		(out tree tmp)
 		(close-output-port tmp))
 	     (out tree p))
+	 (when (> (bigloo-debug) 2)
+	    (tprint "TREE=" (node->list (-> tree body))))
+	 ;; source map
+	 (when (config 'source-map)
+	    (fprint p "\n\n//@ sourceMappingURL=/tmp/mapping.js.map"))
 	 (verbose "--- compiled"))))
 
+;*---------------------------------------------------------------------*/
+;*    scheme2js-compile-expr ...                                       */
+;*---------------------------------------------------------------------*/
 (define (scheme2js-compile-expr expr out-p
-				module-headers
-				configuration)
+	   module-headers
+	   configuration)
    (let ((old-configs (configs-backup)))
       (unwind-protect
 	 (begin
@@ -138,14 +157,20 @@
 	       (scheme2js module out-p)))
 	 (configs-restore! old-configs))))
 
-(define (scheme2js-compile-value value out-p extension-compiler value-register loc)
-   (compile-value value out-p extension-compiler value-register loc))
+;*---------------------------------------------------------------------*/
+;*    scheme2js-compile-value ...                                      */
+;*---------------------------------------------------------------------*/
+(define (scheme2js-compile-value val outp extension-compiler value-register loc)
+   (compile-value val outp extension-compiler value-register loc))
 
+;*---------------------------------------------------------------------*/
+;*    scheme2js-compile-file ...                                       */
+;*---------------------------------------------------------------------*/
 (define (scheme2js-compile-file in-file out-file
-				module-headers ;; list (module-clause . kind)
-				;; kind: provide/replace/merge-first/merge-last
-				configuration
-				#!key (reader read))
+	   module-headers ;; list (module-clause . kind)
+	   ;; kind: provide/replace/merge-first/merge-last
+	   configuration
+	   #!key (reader read))
    (let ((old-configs (configs-backup)))
       (unwind-protect
 	 (let ((actual-file? (not (string=? "-" out-file))))
@@ -163,24 +188,24 @@
 		     (delete-file out-file))
 		  (raise e))
 	       (let ((module (create-module-from-file in-file
-						      module-headers
-						      reader)))
+				module-headers
+				reader)))
 		  ;; set the global-seed to the input-file's name (which is the
 		  ;; same as the module's name, if any was given).
 		  (unless (or (config 'statics-suffix)
 			      (string=? "-" in-file))
 		     (config-set! 'statics-suffix
-				  (string-append "_"
-						 (prefix (basename in-file)))))
+			(string-append "_"
+			   (prefix (basename in-file)))))
 		  
 		  (with-access::Compilation-Unit module (declared-module?)
 		     (when (eq? (config 'export-globals) 'module)
 			(config-set! 'export-globals
-				     (not declared-module?)))
+			   (not declared-module?)))
 		     
 		     (when (eq? (config 'allow-unresolved) 'module)
 			(config-set! 'allow-unresolved
-				     (not declared-module?))))
+			   (not declared-module?))))
 		  
 		  (let ((out-p (if actual-file?
 				   (open-output-file out-file)
@@ -190,21 +215,24 @@
 			(when actual-file? (close-output-port out-p)))))))
 	 (configs-restore! old-configs))))
 
+;*---------------------------------------------------------------------*/
+;*    precompile-imported-module-file ...                              */
+;*---------------------------------------------------------------------*/
 (define (precompile-imported-module-file name::symbol file::bstring
-					 reader::procedure
-					 configuration
-					 #!key
-					 (bigloo-modules? #t)
-					 (store-exports-in-ht? #f)
-					 (store-exported-macros-in-ht? #f))
+	   reader::procedure
+	   configuration
+	   #!key
+	   (bigloo-modules? #t)
+	   (store-exports-in-ht? #f)
+	   (store-exported-macros-in-ht? #f))
    (let ((old-configs (configs-backup)))
       (unwind-protect
 	 (begin
 	    (config-init! configuration)
 	    (read-imported-module-file name file reader
-				       :bigloo-modules? bigloo-modules?
-				       :store-exports-in-ht?
-				       store-exports-in-ht?
-				       :store-exported-macros-in-ht?
-				       store-exported-macros-in-ht?))
+	       :bigloo-modules? bigloo-modules?
+	       :store-exports-in-ht?
+	       store-exports-in-ht?
+	       :store-exported-macros-in-ht?
+	       store-exported-macros-in-ht?))
 	 (configs-restore! old-configs))))

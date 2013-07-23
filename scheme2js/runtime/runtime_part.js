@@ -39,7 +39,7 @@ function initRuntime() {
 }
 */
 
-var sc_tmp;
+var sc_tmp, sc_let;
 
 function sc_print_debug() {
     sc_print.apply(null, arguments);
@@ -81,16 +81,22 @@ function sc_errorHook() {
    return __sc_errorHook;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_error ...                                                     */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -1)) */
 function sc_error() {
-   var e = new Error("sc_error");
+   var e = new Error( "sc_error" );
 
-   if (arguments.length >= 1) {
-      e.name = arguments[0];
-      if (arguments.length >= 2) {
-	 e.message = arguments[1];
-	 if (arguments.length >= 3) {
-	    e.scObject = arguments[2];
+   if( arguments.length >= 1 ) {
+      e.name = arguments[ 0 ];
+      if( arguments.length >= 2 ) {
+	 e.message = arguments[ 1 ];
+	 if( arguments.length >= 3 ) {
+	    e.scObject = arguments[ 2 ];
+	    if( arguments.length >= 4 ) {
+	       e.scOffset = arguments[ 3 ];
+	    }
 	 }
       }
    }
@@ -98,31 +104,75 @@ function sc_error() {
    throw __sc_errorHook ? __sc_errorHook( e, arguments ) : e;
 }
 
-function sc_arity_check(fun, nbArgs) {
-   function err( args, msg, obj ) {
-      var where = ("callee" in args && "caller" in args.callee ?
-		   ("sc_name" in args.callee.caller ?
-		    args.callee.caller.sc_name : args.callee.caller)
-		   : "arity-check");
-      sc_error(where, msg, obj);
-      return undefined;
-   }
+/*---------------------------------------------------------------------*/
+/*    sc_typeError ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity 3)) */
+function sc_typeError( proc, type, obj ) {
+   var msg = "Type \"" + type + "\" expected, "
+      + "\"" + (typeof obj) + "\" provided";
 
-   if (typeof fun !== "function") {
-      return err(arguments, "not a function", fun);
-   }
-       
-   var fun_arity = fun.sc_arity;
-
-   if (fun_arity === undefined || fun_arity === false) return fun;
-   if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
-   if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
-   var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
-      nbArgs + " provided";
-   return err(arguments, errorMsg, fun);
+   return sc_error( proc, msg, obj, 3 );
 }
 
-/*** META ((export #t) (arity #t)) */
+/*---------------------------------------------------------------------*/
+/*    sc_function_name ...                                             */
+/*---------------------------------------------------------------------*/
+function sc_function_name( fun ) {
+   return ("displayName" in fun) ? fun.displayName : fun;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_callstack_ref ...                                             */
+/*    -------------------------------------------------------------    */
+/*    Return then Nth element of the call stack.                       */
+/*---------------------------------------------------------------------*/
+function sc_callstack_ref( offset ) {
+   if( !("callee" in arguments) ) {
+      return false;
+   } else {
+      var proc = arguments.callee;
+
+      while( offset >= 0 ) {
+	 if( !("caller" in proc) ) {
+	    return false;
+	 } else {
+	    proc = proc.caller;
+	    offset--;
+	 }
+      }
+
+      return proc;
+   }
+}
+       
+/*---------------------------------------------------------------------*/
+/*    sc_arity_check ...                                               */
+/*---------------------------------------------------------------------*/
+function sc_arity_check( fun, nbargs ) {
+   if( !("sc_arity" in fun) ) {
+      return fun;
+   } else {
+      var arity = fun.sc_arity;
+      var glop = fun;
+
+      if( (arity == nbargs) || ((arity < 0) && (nbargs >= -1-arity)) ) {
+	 // arity correct
+	 return fun;
+      } else {
+	 // arity error
+	 var msg = "Wrong number of arguments: " + arity + " expected, "
+	    + nbargs + " provided";
+	 var obj = sc_function_name( fun );
+	 var top = sc_callstack_ref( 1, "arity-check" );
+	 var where = top ? sc_function_name( top ) : "arity_check";
+
+	 sc_error( where, msg, obj );
+      }
+   }
+}
+   
+/*** META ((export #t) (arity 1)) */
 function sc_raise(obj) {
     throw obj;
 }
@@ -727,9 +777,38 @@ function sc_isBoolean(b) {
     return (b === true) || (b === false);
 }
 
+var dynamic_type_check = ((hop_debug() >= 1) && ("defineProperty" in Object));
+    
 function sc_Pair(car, cdr) {
-    this.car = car;
-    this.cdr = cdr;
+   if( dynamic_type_check ) {
+      this._car = car;
+      this._cdr = cdr;
+   } else {
+      this.car = car;
+      this.cdr = cdr;
+   }
+}
+
+if( dynamic_type_check ) {
+   Object.defineProperty( Object.prototype, "car", {
+      get: function() { sc_typeError( "car", "pair", this ); },
+      set: function( v ) { sc_typeError( "set-car!", "pair", this ); }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "car", {
+      get: function() { return this._car; },
+      set: function( v ) { this._car = v; },
+   } );
+   
+   Object.defineProperty( Object.prototype, "cdr", {
+      get: function() { sc_typeError( "cdr", "pair", this ); },
+      set: function( v ) { sc_typeError( "set-cdr!", "pair", this ); }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "cdr", {
+      get: function() { return this._cdr; },
+      set: function( v ) { this._cdr = v; },
+   } );
 }
 
 sc_Pair.prototype.toString = function() {
@@ -775,7 +854,7 @@ function sc_isPair(p) {
 /*** META ((export #t) (arity #t)
            (type bool)) */
 function sc_isEpair(p) {
-    return (p instanceof sc_Pair) && "cer" in p;
+    return (p instanceof sc_Pair) && ("cer" in p);
 }
 
 function sc_isPairEqual(p1, p2, comp) {
@@ -783,7 +862,7 @@ function sc_isPairEqual(p1, p2, comp) {
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (hole 2 "new sc_Pair(" car ", " cdr ")")))
+           (peephole (hole 2 "new sc_Pair(" _car ", " cdr ")")))
 */
 function sc_cons(car, cdr) {
     return new sc_Pair(car, cdr);
@@ -810,35 +889,35 @@ function sc_consStar() {
            (peephole (postfix ".car")))
 */
 function sc_car(p) {
-    return p.car;
+   return p.car;
 }
 
 /*** META ((export #t) (arity #t)
            (peephole (postfix ".cdr")))
 */
 function sc_cdr(p) {
-    return p.cdr;
+   return p.cdr;
 }
 
 /*** META ((export #t) (arity #t)
            (peephole (postfix ".cer")))
 */
 function sc_cer(p) {
-    return p.cer;
+   return p.cer;
 }
 
 /*** META ((export #t) (arity #t)
            (peephole (hole 2 p ".car = " val)))
 */
 function sc_setCarBang(p, val) {
-    p.car = val;
+   p.car = val;
 }
 
 /*** META ((export #t) (arity #t)
            (peephole (hole 2 p ".cdr = " val)))
 */
 function sc_setCdrBang(p, val) {
-    p.cdr = val;
+   p.cdr = val;
 }
 
 /*** META ((export #t) (arity #t)
@@ -1173,6 +1252,16 @@ function sc_reverseBang(l) {
     return sc_reverseAppendBang(l, null);
 }
 
+/*** META ((export #t) (arity #t)) */
+function sc_take(l, k) {
+   var res = null;
+   while (k-- > 0) {
+      res = sc_cons(l.car, res);
+   } 
+
+   return sc_reverse(res);
+}
+   
 /*** META ((export #t) (arity #t)) */
 function sc_listTail(l, k) {
     var res = l;

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.2.x/share/hop.hss                     */
+/*    serrano/prgm/project/hop/2.5.x/share/hop.hss                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Mon Jun  6 14:31:23 2011 (serrano)                */
-/*    Copyright   :  2004-11 Manuel Serrano                            */
+/*    Last change :  Tue Jul 23 11:09:53 2013 (serrano)                */
+/*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
 /*=====================================================================*/
@@ -64,6 +64,7 @@ body[hssclass=hop-error] {
   top: 0; bottom: 0;
   left: 0; right: 0;
   z-index: 100000;
+  opacity: 0.90;
 }
 
 div[hssclass=hop-error-frame] {
@@ -72,7 +73,7 @@ div[hssclass=hop-error-frame] {
   left: 0; right: 0;
   position: fixed;
   z-index: 100001;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 div[hssclass=hop-error] {
@@ -80,13 +81,17 @@ div[hssclass=hop-error] {
   background: white;
   border: 4px dashed;
   border-color: red;
-  opacity: 1;
   color: black;
   top: 30px; bottom: 30px;
   left: 30px; right: 30px;
   position: fixed;
   z-index: 100002;
   margin: 100px;
+  opacity: 1;
+}
+
+span.hop-error-frame-js {
+  color: #111;
 }
 
 span[hssclass=hop-error-img] {
@@ -144,7 +149,6 @@ pre[hssclass=hop-error-notification] {
 div[hssclass=hop-error-msg] tt {
   font-family: monospace;
   font-weight: 200;
-  font-size: 105%;
   color: inherit;
 }
 

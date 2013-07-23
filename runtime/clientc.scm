@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Jan 13 17:43:03 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Fri Jul 19 16:02:37 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -134,7 +134,7 @@
 (define (clientc-response req path)
    (with-access::http-request req (method header)
       (let ((ce (cache-get clientc-cache path))
-	    (mime (hop-configure-javascript-mime-type)))
+	    (mime (hop-mime-type)))
 	 (if (isa? ce cache-entry)
 	     ;; since we are serving a cached answer, we also have
 	     ;; to check that the client is allowed to the requested

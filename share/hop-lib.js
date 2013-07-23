@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed May  1 09:17:07 2013 (serrano)                */
+/*    Last change :  Mon Jul 22 15:57:54 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -29,47 +29,23 @@
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */
+/*    -------------------------------------------------------------    */
+/*    See HOP-CALLBACK-HANDLER, hop-exception.scm.                     */
 /*---------------------------------------------------------------------*/
 function hop_callback( proc ) {
-   if( hop_debug() && this ) {
-      // debug and not strict mode
-      if( !(typeof proc === "function" ) ) {
-	 var hstack = hop_get_stack( 1 );
-	 e = new Error( "handler not a procedure: " + proc );
-	 
-	 e.hopStack = hstack;
-	 hop_report_exception( e );
-
-	 return function( e ) {
-	    throw( e );
-	 }
-      } else {
-	 var hstack =
-	    ((typeof hop_get_stack) === "function") ?
-	    hop_get_stack( 1 ) : null;
-	 
-	 return function( e ) {
-	    try {
-	       return proc.apply( this, arguments );
-	    } catch( exc ) {
-	       if( sc_isPair( exc.hopStack ) ) {
-		  exc.hopStack = sc_append( exc.hopStack, hstack );
-	       }
-	       else {
-		  try {
-		     exc.hopStack = hstack;
-		  } catch( _ ) {
-		  }
-	       }
-
-	       hop_report_exception( exc );
-	    }
+   if( hop_debug() ) {
+      // debug mode
+      return function() {
+	 try {
+	    return proc.apply( this, arguments );
+	 } catch( e ) {
+	    hop_callback_handler( e );
 	 }
       }
    } else {
       return proc;
    }
-}   
+}
    
 /*---------------------------------------------------------------------*/
 /*    hop_trace ...                                                    */
@@ -86,21 +62,32 @@ function hop_trace() {
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
 function hop_tprint( file, pos, args ) {
-   // see scheme2js/runtime/runtime_part.js
-   if( __sc_traceHasConsole ) {
-      if( file || pos ) {
-	 console.log( file + ", " + pos + ": " );
+   // client console tprint
+   if( hop_config.tprint_mode === "both"
+       || hop_config.tprint_mode === "client" ) {
+      if( __sc_traceHasConsole ) {
+	 if( file || pos ) {
+	    console.log( file + ", " + pos + ": " );
+	 }
+	 console.log.apply( console, sc_list2vector( args ) );
+      } else {
+	 var str = file + ", " + pos + ": ";
+	 
+	 while( sc_isPair( args ) ) {
+	    str += args.car;
+	    args = args.cdr;
+	 }
+	 
+	 alert( str );
       }
-      console.log.apply( console, sc_list2vector( args ) );
-   } else {
-      var str = file + ", " + pos + ": ";
+   }
 
-      while( sc_isPair( args ) ) {
-	 str += args.car;
-	 args = args.cdr;
-      }
-      
-      alert( str );
+   // tprint on a server console
+   if( hop_config.tprint_mode === "both" 
+       || hop_config.tprint_mode === "server" ) {
+      var svc = hop_apply_url( hop_service_base() + "/public/server-debug/tprint",
+			       arguments );
+      hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
 }
 

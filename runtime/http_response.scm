@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.5.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jun 28 08:19:36 2013 (serrano)                */
+;*    Last change :  Fri Jul 19 16:36:50 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -116,7 +116,7 @@
 		      (error "http-response"
 			 "No serialization method specified"
 			 content-type))
-		     ((string=? content-type "application/x-hop")
+		     ((string-prefix? "application/x-hop" content-type)
 		      (with-access::http-request request (header)
 			 ;; check what the client can do
 			 (let ((c (assq hop-serialize: header)))
@@ -140,7 +140,7 @@
 				(http-write-line p "Connection: " conn)
 				(http-write-line p)
 				(byte-array->json (obj->string value) p))))))
-		     ((string=? content-type "application/x-javascript")
+		     ((string-prefix? "application/x-javascript" content-type)
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
@@ -151,7 +151,7 @@
 			     (obj->javascript-expr value p)
 			     (display ")" p))
 			  (obj->javascript-expr value p)))
-		     ((string=? content-type "application/json")
+		     ((string-prefix? "application/json" content-type)
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
@@ -164,7 +164,7 @@
 			  (obj->json value p)))
 		     (else
 		      (error "http-response"
-			 "Unspported serialization method"
+			 "Unsupported serialization method"
 			 content-type))))
 	       (flush-output-port p)
 	       conn)))))

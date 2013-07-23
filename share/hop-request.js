@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jun 27 06:41:08 2013 (serrano)                */
+/*    Last change :  Tue Jul 23 10:56:01 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -378,17 +378,22 @@ function hop_request_onready( xhr, svc, succ, fail, err ) {
   	      return false;
   	   }
       }
-   } catch( exc ) {
-      // Exception are read-only in Firefox, duplicate then
-      var frame = sc_cons( succ, sc_cons( xhr, null ) );
-      var nexc = err( exc );
-
-      nexc.hopLocation = exc.hopLocation;
-      nexc.scObject = exc.scObject;
-      nexc.hopStack = sc_cons( frame, xhr.hopStack );
-      nexc.hopService = svc;
+   } catch( e ) {
+      var i = svc.indexOf( "?" );
+      var n = i ? svc.substring( 0, i ) : svc;
+      if( n.indexOf( "/hop/" ) == 0 ) {
+	 n = n.substring( 5 );
+      }
       
-      throw nexc;
+      if( "displayName" in succ) {
+	 var c = sc_assoc( "hop_request_onready", hop_name_aliases );
+
+	 if( sc_isPair( c ) ) {
+	    sc_setCdrBang( c, succ.displayName );
+	 }
+      }
+
+      hop_callback_handler( e, "(with-hop (" + n + "...) ...)" );
    } finally {
       if( typeof hop_stop_anim === "function" ) { 
 	 hop_stop_anim( xhr );
@@ -414,8 +419,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
    
-   xhr.hopStack = hop_debug() > 0 ? hop_get_stack( 1 ) : null;
-
    function onreadystatechange() {
       if( this.readyState == 4 ) {
 	 hop_request_onready( this, svc, succ, fail, duperror );
@@ -503,13 +506,10 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 		      "readyState: " + xhr.readyState );
 	 }
       }
-   } catch( e ) {
+   } finally {
       if( typeof hop_stop_anim === "function" ) { 
 	 hop_stop_anim( xhr );
       }
-
-      e.hopObject = svc;
-      throw e;
    }
 
    return xhr;

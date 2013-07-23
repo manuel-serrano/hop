@@ -708,7 +708,7 @@ function sc_write(o, p) {
 
 function sc_toWriteStringProcedure(o) {
    if ("sc_name" in o) {
-      return "#<procedure " + o.sc_name + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
+      return "#<procedure " + o.displayName + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
    } else {
       var n = o.toString().match( /function[ \t\n]+([_a-zA-Z0-9$]+)/ );
       

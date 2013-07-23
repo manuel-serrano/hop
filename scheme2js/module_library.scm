@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/scheme2js/module_library.scm      */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/module_library.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 23 11:24:26 2011                          */
-;*    Last change :  Sun Dec  9 00:59:26 2012 (serrano)                */
-;*    Copyright   :  2011-12 Manuel Serrano                            */
+;*    Last change :  Thu Jul 18 12:13:01 2013 (serrano)                */
+;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2JS module library                                         */
 ;*=====================================================================*/
@@ -106,10 +106,11 @@
 				 (name lib)
 				 (macros macros)
 				 (imports (scheme2js-load-library-jsheap jsheap lib)))
-			      (scheme2js-error "schemejs-module"
-				 "Cannot find library heap"
-				 lib
-				 lib))))))
+			      (begin
+				 (scheme2js-error "schemejs-module"
+				    "Cannot find library heap"
+				    lib
+				    lib)))))))
 	     (scheme2js-error "schemejs-module"
 		"Cannot find library init"
 		(library-init-file lib)
@@ -123,9 +124,9 @@
 	 (macros '()))
       (unwind-protect
 	 (begin
-	    (eval `(module ,(gensym) (static (declare-library! . l))))
-	    (eval '(define (declare-library! . l) #f))
-	    (eval `(install-eval-expander 'define-expander
+	    (eval! `(module ,(gensym) (static (declare-library! . l))))
+	    (eval! '(define (declare-library! . l) #f))
+	    (eval! `(install-eval-expander 'define-expander
 		      ,(lambda (x e)
 			  (set! macros (cons (list x) macros)))))
 	    (loadq init))

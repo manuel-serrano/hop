@@ -1,26 +1,32 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    .../project/hop/2.5.x/scheme2js/compile_optimized_set.scm        */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Mon Jul 22 09:13:37 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Compile set! expression                                          */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module compile-optimized-set
-   (export
-    (compile-unoptimized-set! p compile::procedure n::Node)
-    (compile-set! p compile::procedure node::Node))
+   
    (import config
 	   tools
 	   template-display
 	   nodes
 	   allocate-names
-	   export-desc))
+	   export-desc)
+   
+   (export (compile-unoptimized-set! p compile::procedure n::Node tmp)
+	   (compile-set! p compile::procedure node::Node tmp)))
 
+;*---------------------------------------------------------------------*/
+;*    *set!-operators*                                                 */
+;*---------------------------------------------------------------------*/
 (define *set!-operators*
    '(("sc_plus" "+")
      ("sc_multi" "*")
@@ -32,7 +38,10 @@
      ("sc_bitOr" "|")
      ("sc_bitXor" "^")))
 
-(define (compile-optimized-set! p compile n)
+;*---------------------------------------------------------------------*/
+;*    compile-optimized-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (compile-optimized-set! p compile n tmp)
    (with-access::Set! n (lvalue val)
       (with-access::Ref lvalue (var)
 	 (if (isa? val Call)
@@ -66,20 +75,26 @@
 				  (template-display p
 				     "($js-id ~a= ~e)"
 				     (cadr entry)
-				     (compile (cadr operands) p #f))))
-			   (compile-unoptimized-set! p compile n)))
-		    (compile-unoptimized-set! p compile n)))
-	     (compile-unoptimized-set! p compile n)))))
+				     (compile (cadr operands) p #f tmp))))
+			   (compile-unoptimized-set! p compile n tmp)))
+		    (compile-unoptimized-set! p compile n tmp)))
+	     (compile-unoptimized-set! p compile n tmp)))))
 
-(define (compile-unoptimized-set! p compile n)
+;*---------------------------------------------------------------------*/
+;*    compile-unoptimized-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (compile-unoptimized-set! p compile n tmp)
    (with-access::Set! n (lvalue val)
       (template-display p
 	 "~e = ~e"
-	 (compile lvalue p #f)
-	 (compile val p #f))))
+	 (compile lvalue p #f tmp)
+	 (compile val p #f tmp))))
 
-(define (compile-set! p compile n)
+;*---------------------------------------------------------------------*/
+;*    compile-set! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (compile-set! p compile n tmp)
    ;; TODO: get rid of '(config ...)
    (if (config 'optimize-set!)
-       (compile-optimized-set! p compile n)
-       (compile-unoptimized-set! p compile n)))
+       (compile-optimized-set! p compile n tmp)
+       (compile-unoptimized-set! p compile n tmp)))

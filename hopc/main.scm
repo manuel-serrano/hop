@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.5.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul  2 10:48:00 2013 (serrano)                */
+;*    Last change :  Sun Jul 21 10:18:50 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -18,6 +18,8 @@
 
    (import  hopc_parseargs
 	    hopc_param)
+
+   (eval    (library hop))
 
    (main    main))
 
@@ -38,8 +40,6 @@
 	  (module-load-access-file (hopc-access-file)))
 	 ((file-exists? ".afile")
 	  (module-load-access-file ".afile")))
-      ;; preload the hop library
-      (eval `(library-load 'hop))
       ;; setup the client-side compiler
       (setup-client-compiler!)
       ;; setup the hop module resolvers
@@ -87,6 +87,7 @@
       :hop-compile (lambda (obj op compile)
 		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value
+      :javascript-version (hop-javascript-version)
       :hop-library-path (hop-library-path)
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))

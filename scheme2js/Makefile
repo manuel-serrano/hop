@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Apr 11 11:30:04 2013 (serrano)                */
+#*    Last change :  Thu Jul 18 15:16:26 2013 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -44,14 +44,13 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         constant_propagation constants scope while \
         propagation statements push_set \
         rm_tail_breaks \
-	out compile_optimized_call compile_optimized_set compile_optimized_boolify \
-          allocate_names template_display push_declarations \
-        scm_out \
-        callcc callcc_anormalform callcc_resume_push callcc_locations callcc_checkpoint \
-	trampoline \
-	pipe_port \
-	js_pp js_lexer js_parser js_nodes js_out \
-	pragma
+	out compile_optimized_call compile_optimized_set \
+        compile_optimized_boolify allocate_names template_display \
+        push_declarations scm_out \
+        callcc callcc_anormalform callcc_resume_push callcc_locations \
+        callcc_checkpoint trampoline \
+	pipe_port js_pp js_lexer js_parser js_nodes js_out \
+	pragma dump_node
 
 _OBJECTS = $(_BGL_OBJECTS)
 

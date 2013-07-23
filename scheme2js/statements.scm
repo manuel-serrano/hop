@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -91,8 +91,7 @@
 (define-nmethod (If.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-If this (test then else stmt-test? stmt-then? stmt-else?)
       (cond
-	 ((and (not stmt-begin)
-	       stmt-test?)
+	 ((and (not stmt-begin) stmt-test?)
 	  (shrink! this)
 	  ;; test-statement needs to be moved out of test.
 	  (let ((bnode (instantiate::Begin (exprs (list this)))))
@@ -100,11 +99,9 @@
 	     (set! then (walk! then surrounding-fun #f))
 	     (set! else (walk! else surrounding-fun #f))
 	     bnode))
-	 ((and stmt-begin
-	       (or stmt-then? stmt-else?))
+	 ((and stmt-begin (or stmt-then? stmt-else?))
 	  (move-to-begin this walk! surrounding-fun stmt-begin))
-	 ((and stmt-begin
-	       stmt-test?)
+	 ((and stmt-begin stmt-test?)
 	  (shrink! this)
 	  ;; we can leave the if at the current location, but we have to move
 	  ;; the test to the surrounding stmt-begin.
@@ -120,8 +117,7 @@
 (define-nmethod (Case.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Case this (key clauses stmt-key?)
       (cond
-	 ((and (not stmt-begin)
-	       stmt-key?)
+	 ((and (not stmt-begin) stmt-key?)
 	  (shrink! this)
 	  ;; key-statement needs to be moved out of key.
 	  (let ((bnode (instantiate::Begin (exprs (list this)))))

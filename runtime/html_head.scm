@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/2.5.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri May 24 11:42:26 2013 (serrano)                */
+;*    Last change :  Fri Jul 19 16:03:04 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -89,7 +89,7 @@
 ;*    <HOP-SETUP> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SETUP>)
-   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+   (<SCRIPT> :type (hop-mime-type)
       (string-append "
 function hop_etc_directory() {return \"" (hop-etc-directory) "\";}
 function hop_bin_directory() {return \"" (hop-bin-directory) "\";}
@@ -106,7 +106,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    <HOP-SERVER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
-   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+   (<SCRIPT> :type (hop-mime-type)
       (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""
 	 (hop-server-hostip) "\")")))
 
@@ -154,7 +154,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			 (map (lambda (f)
 				 (let ((p (make-file-name (hop-share-directory) f)))
 				    (<SCRIPT> :inline #f
-				       :type (hop-configure-javascript-mime-type)
+				       :type (hop-mime-type)
 				       :src p)))
 			    (append (hop-runtime-system) (hop-runtime-extra)))
 			 (list (<HOP-SERVER>)))))
@@ -170,7 +170,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			 (map (lambda (f)
 				 (let ((p (make-file-name (hop-share-directory) f)))
 				    (<SCRIPT> :inline #f
-				       :type (hop-configure-javascript-mime-type)
+				       :type (hop-mime-type)
 				       :src p)))
 			    (append (hop-runtime-system-files) (hop-runtime-extra)))
 			 (list (<HOP-SERVER>)))))
@@ -185,7 +185,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			 (map (lambda (f)
 				 (let ((p (make-file-name (hop-share-directory) f)))
 				    (<SCRIPT> :inline #t
-				       :type (hop-configure-javascript-mime-type)
+				       :type (hop-mime-type)
 				       :src p)))
 			    (append (hop-runtime-system)
 			       (hop-runtime-extra)
@@ -223,7 +223,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (string-append dir "/" p))))
    
    (define (script p inl)
-      (<SCRIPT> :type (hop-configure-javascript-mime-type)
+      (<SCRIPT> :type (hop-mime-type)
 	 :inline inl :src p))
    
    (define (find-head p)
@@ -575,7 +575,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 (define-tag <SCRIPT> ((inline #f boolean)
 		      (src #unspecified string)
-		      (type (hop-configure-javascript-mime-type) string)
+		      (type (hop-mime-type) string)
 		      (attributes)
 		      body)
    

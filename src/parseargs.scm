@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 17 10:25:01 2013 (serrano)                */
+;*    Last change :  Mon Jul 22 14:30:21 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -126,6 +126,13 @@
 		 (bigloo-debug-module-set! (-fx l 1))
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
+	 (("--client-output" ?file (help "Client output port [stderr]"))
+	  (if (string=? file "-")
+	      (hop-client-output-port-set! (current-output-port))
+	      (let ((p (open-output-file file)))
+		 (if (output-port? p)
+		     (hop-client-output-port-set! p)
+		     (error "hop" "Cannot open client port" file)))))
 	 (("--devel" (help "Enable devel mode"))
 	  (set! clear-cache #t)
 	  (hop-cache-enable-set! #f)
@@ -240,7 +247,12 @@
 		(print "  - pool (one thread per request from a pool)")
 		(print "  - accept-many (as pool but an accept-many call)")))
 	  (exit 0))
-	 (("-psn_?dummy") ;; Macosx sends process serial numbers this way.
+	 (("--javascript-version" ?version
+	     (help (format "JavaScript version to generate (default ~s)"
+		      (hop-javascript-version))))
+	  (hop-javascript-version-set! version))
+	 (("-psn_?dummy")
+	  ;; Macosx sends process serial numbers this way.
 	  ;; just ignore it.
 	  'do-nothing)
 	 (("-?dummy")
@@ -309,6 +321,7 @@
 		       hop-client
 		       ,(string->symbol (format "hop-~a" (hop-branch)))
 		       ,(string->symbol (format "hop-~a" (hop-version))))
+	 :javascript-version (hop-javascript-version)
 	 :expanders `(labels match-case
 			   (define-tag . ,hop-client-define-tag)
 			(define-xml-compound . ,hop-client-define-xml-compound)))

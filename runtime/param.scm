@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Feb  6 09:14:22 2013 (serrano)                */
+;*    Last change :  Fri Jul 19 16:52:26 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -165,7 +165,10 @@
 
 	    (hop-mime-type::bstring)
 	    (hop-mime-type-set! ::bstring)
-	    
+
+	    (hop-javascript-version::bstring)
+	    (hop-javascript-version-set! ::bstring)
+
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
 	    
@@ -830,6 +833,17 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-mime-type
    "application/x-javascript")
+
+;*---------------------------------------------------------------------*/
+;*    hop-javascript-version ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript-version
+   "1.5"
+   (lambda (v)
+      (if (>= (string-natural-compare3 v "1.7") 0)
+	  (hop-mime-type-set! (format "application/x-javascript;version=~a" v))
+	  (hop-mime-type-set! "application/x-javascript"))
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */

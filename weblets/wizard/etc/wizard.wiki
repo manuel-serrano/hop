@@ -9,9 +9,9 @@
   (<TR> (<TD> :rowspan 5 :class "logo"
             (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
         (<TH> (string-capitalize "") " version") (<TD> "1.0.0"))
-  (<TR> (<TH> "Hop min version") (<TD> "2.3.0 "))
+  (<TR> (<TH> "Hop min version") (<TD> "2.5.0 "))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "22 December 2011"))
+  (<TR> (<TH> "Date") (<TD> "18 July 2013"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 

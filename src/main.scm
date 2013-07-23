@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/2.5.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul 17 10:23:00 2013 (serrano)                */
+;*    Last change :  Mon Jul 22 14:30:48 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -28,13 +28,13 @@
 	    hop_scheduler-accept-many)
 
    (cond-expand
-      (hop-library (extern (export main "hop_main"))
-		   (export (main x)))
+      (hop-library
+       (extern (export main "hop_main"))
+       (export (main x)))
       (boot-from-java
-         ; java name is bigloo.hop.main.main (args)
-         (export (main::int args::pair-nil)))
+       ;; java name is bigloo.hop.main.main (args)
+       (export (main::int args::pair-nil)))
       (else (main main))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    signal-init! ...                                                 */
@@ -44,10 +44,10 @@
       (enable-threads #unspecified)
       (else (signal sigpipe (lambda (n) #unspecified))))
    (signal sigsegv
-	   (lambda (n)
-	      (fprint (current-error-port) "Segmentation violation")
-	      (display-trace-stack (get-trace-stack) (current-error-port))
-	      (exit 2))))
+      (lambda (n)
+	 (fprint (current-error-port) "Segmentation violation")
+	 (display-trace-stack (get-trace-stack) (current-error-port))
+	 (exit 2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
@@ -59,18 +59,21 @@
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
-   ;; define the Hop macros
-   (hop-install-expanders!)
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set!
       (lambda (f)
 	 (hop-load-modified f :abase #t :afile #f)))
    ;; setup the hop module resolvers
-   (bigloo-module-extension-handler-set! hop-module-extension-handler)
-   (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
+   (bigloo-module-extension-handler-set!
+      hop-module-extension-handler)
+   (bigloo-module-resolver-set!
+      (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
    (let ((files (parse-args args)))
+      ;; when debugging, init the debugger runtime
+      (when (>=fx (bigloo-debug) 1)
+	 (hop-debug-init! (hop-client-output-port)))
       ;; install the builtin filters
       (hop-filter-add! service-filter)
       ;; prepare the regular http handling

@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -105,6 +105,7 @@
 				     replacement-decls))
 		(inits (map (lambda (formal repl-var)
 			       (instantiate::Set!
+				  (location -50)
 				  (lvalue formal)
 				  (val (var-reference repl-var
 						      :location formal))))

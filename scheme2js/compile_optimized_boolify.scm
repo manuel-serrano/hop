@@ -1,69 +1,83 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    .../hop/2.5.x/scheme2js/compile_optimized_boolify.scm            */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Mon Jul 22 09:23:46 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Conditional expression compilation                               */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module compile-optimized-boolify
-   (export (compile-boolified p
-			      compile::procedure
-			      node::Node))
+   
    (import config
 	   tools
 	   nodes
 	   export-desc
 	   template-display
-	   verbose))
+	   verbose)
+   
+   (export (compile-boolified p compile::procedure node::Node tmp)))
 
-(define (compile-optimized-if-boolify p compile n)
+;*---------------------------------------------------------------------*/
+;*    compile-optimized-if-boolify ...                                 */
+;*---------------------------------------------------------------------*/
+(define (compile-optimized-if-boolify p compile n tmp)
    (with-access::If n (test then else)
       (if (and (isa? else Const)
 	       (with-access::Const else (value)
 		  (not value)))
 	  (template-display p
 	     "(~e&&~e)"
-	     (compile test p #f)
-	     (compile-optimized-boolify p compile then))
-	  (compile-unoptimized-boolify p compile n))))
+	     (compile test p #f tmp)
+	     (compile-optimized-boolify p compile then tmp))
+	  (compile-unoptimized-boolify p compile n tmp))))
 
-(define (compile-optimized-boolify p compile n)
+;*---------------------------------------------------------------------*/
+;*    compile-optimized-boolify ...                                    */
+;*---------------------------------------------------------------------*/
+(define (compile-optimized-boolify p compile n tmp)
    (cond
       ((isa? n Call)
        (with-access::Call n (operator operands)
 	  (if (isa? operator Ref)
 	      (with-access::Ref operator (var)
 		 (with-access::Var var (kind constant? export-desc)
-		    (if (and (or (eq? kind 'exported)
-				 (eq? kind 'imported))
+		    (if (and (or (eq? kind 'exported) (eq? kind 'imported))
 			     constant?
-			     (eq? (with-access::Export-Desc export-desc (return-type) return-type)
-				  'bool))
-			(compile n p #f)
-			(compile-unoptimized-boolify p compile n))))
-	      (compile-unoptimized-boolify p compile n))))
+			     (eq? (with-access::Export-Desc export-desc
+					(return-type) return-type)
+				'bool))
+			(compile n p #f tmp)
+			(compile-unoptimized-boolify p compile n tmp))))
+	      (compile-unoptimized-boolify p compile n tmp))))
       ((isa? n If)
-       (compile-optimized-if-boolify p compile n))
+       (compile-optimized-if-boolify p compile n tmp))
       ((isa? n Const)
        (with-access::Const n (value)
 	  (template-display p
 	     "~a" (if value "true" "false"))))
       (else
-       (compile-unoptimized-boolify p compile n))))
+       (compile-unoptimized-boolify p compile n tmp))))
 
-(define (compile-unoptimized-boolify p compile node)
+;*---------------------------------------------------------------------*/
+;*    compile-unoptimzed-boolify ...                                   */
+;*---------------------------------------------------------------------*/
+(define (compile-unoptimized-boolify p compile node tmp)
    (template-display p
       "(~e !== false)"
-      (compile node p #f)))
-   
-(define (compile-boolified p compile node)
+      (compile node p #f tmp)))
+
+;*---------------------------------------------------------------------*/
+;*    compile-boolified ...                                            */
+;*---------------------------------------------------------------------*/
+(define (compile-boolified p compile node tmp)
    ;; TODO: get rid of '(config ... )
    (if (config 'optimize-boolify)
-       (compile-optimized-boolify p compile node)
-       (compile-unoptimized-boolify p compile node)))
+       (compile-optimized-boolify p compile node tmp)
+       (compile-unoptimized-boolify p compile node tmp)))
 

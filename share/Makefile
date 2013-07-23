@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.5.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Apr  9 10:05:13 2012 (serrano)                */
-#*    Copyright   :  2004-12 Manuel Serrano                            */
+#*    Last change :  Mon Jul 22 08:27:41 2013 (serrano)                */
+#*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -321,7 +321,7 @@ predistrib-clean:
 .PHONY: clean predistrib-clean devclean
 
 clean:
-	$(RM) hop.js
+	$(RM) hop.js hop-exception.js
 
 devclean:
 

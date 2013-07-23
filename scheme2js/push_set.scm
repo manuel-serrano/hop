@@ -1,22 +1,27 @@
 ;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/push_set.scm            */
+;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Jul 19 15:31:26 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module push-set
+   
    (import nodes
 	   export-desc
 	   walk
 	   verbose)
+   
    (static (wide-class Push-Label::Label
 	      var/return))
+   
    (export (push-set!s/return! tree::Module)))
 
 ;; and break.

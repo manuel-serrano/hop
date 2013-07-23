@@ -47,7 +47,8 @@
    (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
-   (read-config (thread-parameter '*scheme2js-config*) conf))
+   (read-config (or (thread-parameter '*scheme2js-config*) *default-config*)
+      conf))
 
 (define scheme2js-config config)
 
@@ -176,10 +177,14 @@
 	(statics-suffix . #f)
 	(bigloo-modules . #t)
 	(pp . #f)
+	(source-map . #f)
 	(compress . #f)
 	(call-check . #t)
 	(debug . #f)
-	(module-resolver . ,(lambda (mod files dir) #f)))
+	(module-resolver . ,(lambda (mod files dir) #f))
+	(frame-push-mode . #f)
+	(javascript-let . #t)
+	(use-strict . #t))
       `((library-path . ,(bigloo-library-path)))
       *O1*))
 

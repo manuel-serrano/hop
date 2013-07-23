@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -104,7 +104,7 @@
 		(new-bindings (map (lambda (tmp-var binding)
 				      (with-access::Set! binding (val)
 					 (instantiate::Set!
-					    (location location)
+					    (location (or location -70))
 					    (lvalue (instantiate::Ref
 						       (location location)
 						       (id tmp-var)))
@@ -114,7 +114,7 @@
 		(assigs (map (lambda (tmp-var binding)
 				(with-access::Set! binding (lvalue)
 				   (instantiate::Set!
-				      (location location)
+				      (location (or location -80))
 				      (lvalue lvalue)
 				      (val (instantiate::Ref
 					      (location location)

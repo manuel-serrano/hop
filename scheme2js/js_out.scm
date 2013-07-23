@@ -1,21 +1,26 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/js_out.scm              */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Thu Jul 18 13:41:32 2013 (serrano)                */
+;*    Copyright   :  2013 Florian Loitsch/Manuel Serrano               */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2JS/HOP.                              */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module js-out
    (import js-nodes
 	   js-lexer)
    (export (js-out tree::JsNode port::output-port
-		   #!key (compress?::bool #f) (indent-width::bint 3))))
+	      #!key (compress?::bool #f) (indent-width::bint 3))))
 
+;*---------------------------------------------------------------------*/
+;*    valide-js-id? ...                                                */
+;*---------------------------------------------------------------------*/
 (define (valid-js-id? str #!key (strip-delimiters? #f))
    ;; skip first and last '"'
    (let ((start (if strip-delimiters? 1 0))
@@ -37,6 +42,9 @@
 		  (loop (+fx i 1)))
 		 (else #f))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-out ...                                                       */
+;*---------------------------------------------------------------------*/
 (define (js-out tree port #!key (compress?::bool #f) (indent-width::bint 3))
    ;; TODO: indentation-width is global variable and hence not thread-safe.
    ;;       should not matter in the case of Hop.

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Feb 27 09:23:05 2013 (serrano)                */
+/*    Last change :  Tue Jul 23 08:58:52 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1163,11 +1163,12 @@ function hop_create_element( html ) {
 /*    hop_create_encoded_element ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_create_encoded_element( html ) {
-   try {
-      return hop_create_element( decodeURIComponent( html ) );
-   } catch( e ) {
-      alert( "*** hop_create_encoded_element, cannot decode: " + html );
-   }
+   return hop_create_element( decodeURIComponent( html ) );
+/*    try {                                                            */
+/*       return hop_create_element( decodeURIComponent( html ) );      */
+/*    } catch( e ) {                                                   */
+/*       alert( "*** hop_create_encoded_element, cannot decode: " + html ); */
+/*    }                                                                */
 }
 
 /*---------------------------------------------------------------------*/
@@ -1181,11 +1182,11 @@ function hop_innerHTML_set( nid, html ) {
       el = document.getElementById( nid );
 
       if( el == undefined ) {
-	 sc_error( "innerHTML-set!", "Cannot find element", nid );
+	 sc_error( "innerHTML-set!", "Cannot find element", nid, 1 );
       }
    } else {
       if( !nid ) {
-	 sc_error( "innerHTML-set!", "illegal element", nid );
+	 sc_error( "innerHTML-set!", "illegal element", nid, 1 );
 	 return;
       }
       el = nid;

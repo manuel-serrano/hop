@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -810,21 +810,23 @@
 (define-nmethod (Node.alloc!)
    (default-walk! this))
 
-;; TODO: optimize: currently needs-boxing? and needs-frame? are treated the
-;; same way.
+;*---------------------------------------------------------------------*/
+;*    alloc! ::Let ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Let.alloc!)
    (with-access::Let this (scope-vars body)
-      (let ((frame-vars (cp-filter
-			 (lambda (var)
-			    (with-access::Var var (needs-frame?
-						     needs-boxing?
-						     needs-uniquization?)
-			       (or needs-frame?
-				   needs-boxing?
-				   needs-uniquization?)))
-			 scope-vars)))
-	 (if (null? frame-vars)
-	     (default-walk! this)
+      (let ((frame-vars (cp-filter (lambda (var)
+				      (with-access::Var var (needs-frame?
+							       needs-boxing?
+							       needs-uniquization?)
+					 (or needs-frame?
+					     needs-boxing?
+					     needs-uniquization?)))
+			   scope-vars)))
+	 (cond
+	    ((null? frame-vars)
+	     (default-walk! this))
+	    ((config 'frame-push-mode)
 	     ;; create storage-var
 	     (let* ((storage-decl (Ref-of-new-Var 'storage))
 		    (storage-var (with-access::Ref storage-decl (var) var))
@@ -834,11 +836,11 @@
 		(for-each (lambda (var)
 			     (with-access::Var var (indirect?)
 				(set! indirect? #t)))
-			  frame-vars)
+		   frame-vars)
 		(widen!::Scope-Var storage-var)
-
+		
 		(default-walk! this)
-
+		
 		(instantiate::Let
 		   (scope-vars (list storage-var))
 		   (bindings (list (instantiate::Set!
@@ -847,8 +849,29 @@
 		   (body (instantiate::Frame-push
 			    (frame-allocs (list frame-alloc))
 			    (body this)))
-		   (kind 'let)))))))
-
+		   (kind 'let))))
+	    (else
+	     (with-access::Let this (scope-vars body bindings call/cc?
+				       location)
+		(instantiate::Call
+		   (location location)
+		   (operator (instantiate::Lambda
+				(location location)
+				(scope-vars scope-vars)
+				(formals (map (lambda (v)
+						 (with-access::Var v (id)
+						    (instantiate::Ref
+						       (location location)
+						       (id id)
+						       (var v))))
+					    scope-vars))
+				(vaarg? #f)
+				(body body)))
+		   (operands (map (lambda (binding::Set!)
+				     (with-access::Set! binding (val)
+					val))
+				bindings))
+		   (call/cc? call/cc?))))))))
 
 (define (scope-flattening! tree)
    (verbose "scope-flattening")
@@ -874,6 +897,9 @@
       (set! declared-vars '()) ;; don't add formals. they don't need 'var'
       (default-walk! this this)))
 
+;*---------------------------------------------------------------------*/
+;*    remove! ::Let ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Let.remove! surrounding-fun)
    (with-access::Let this (scope-vars bindings body kind)
       (let ((fun-vars (filter (lambda (var)
@@ -890,12 +916,15 @@
       (instantiate::Begin
 	 (exprs (append! bindings (list body))))))
 
+;*---------------------------------------------------------------------*/
+;*    remove! ::While ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (While.remove! surrounding-fun)
    (with-access::While this (scope-vars)
       (let ((fun-vars (filter (lambda (var)
 				 (with-access::Var var (indirect?)
 				    (not indirect?))) ;; should be all of them.
-			      scope-vars)))
+			 scope-vars)))
 	 (if (isa? surrounding-fun Module)
 	     (with-access::Module surrounding-fun (declared-vars)
 		(set! declared-vars (append fun-vars declared-vars)))
@@ -903,3 +932,4 @@
 		(set! declared-vars (append fun-vars declared-vars))))
 	 (default-walk! this surrounding-fun)
 	 this)))
+

@@ -1,18 +1,22 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/out.scm                 */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Tue Jul 23 10:56:42 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module out
+   
    (cond-expand
       (enable-threads (library pthread)))
+   
    (import config
 	   tools
 	   nodes
@@ -31,32 +35,38 @@
 	   js-pp
 	   push-declarations
 	   error)
-   (static
-    (class Pragmas
-       lock
-       pragmas::pair ;; will start with "dummy"-pair
-       last-pragma::pair) ;; last in list
-    (class Out-Env
-       trampoline?::bool
-       max-tail-depth::bint
-       suspend-resume?::bool
-       call/cc?::bool
-       optimize-calls?::bool
-       debug?::bool
-
-       host-compiler::procedure
-       host-register::procedure
-
-       pp?::bool
-       pragmas       ;; ::Pragmas or #f
-
-       last-line
-       last-file)
-    (wide-class Out-Lambda::Lambda
-       lvalue))
+   
+   (static (class Pragmas
+	      lock
+	      ;; will start with "dummy"-pair
+	      pragmas::pair
+	      ;; last in list
+	      last-pragma::pair)
+	   
+	   (class Out-Env
+	      trampoline?::bool
+	      max-tail-depth::bint
+	      suspend-resume?::bool
+	      call/cc?::bool
+	      optimize-calls?::bool
+	      debug?::bool
+	      host-compiler::procedure
+	      host-register::procedure
+	      pp?::bool
+	      ;; ::Pragmas or #f
+	      pragmas       
+	      last-line
+	      last-file)
+	   
+	   (wide-class Out-Lambda::Lambda
+	      lvalue))
+   
    (export (compile-value ::obj ::output-port ::procedure ::procedure ::obj)
 	   (out tree::Module p)))
 
+;*---------------------------------------------------------------------*/
+;*    out ...                                                          */
+;*---------------------------------------------------------------------*/
 (define (out tree p)
    (verbose "Compiling")
    (gen-var-names tree)
@@ -70,12 +80,15 @@
        (pp-gen-code tree p)
        (gen-code tree p #f)))
 
+;*---------------------------------------------------------------------*/
+;*    pp-gen-code ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (pp-gen-code tree p)
    (let* ((dummy-pair (list 'dummy))
 	  (pragmas (instantiate::Pragmas
-		     (lock (make-mutex))
-		     (pragmas dummy-pair)
-		     (last-pragma dummy-pair))))
+		      (lock (make-mutex))
+		      (pragmas dummy-pair)
+		      (last-pragma dummy-pair))))
       (receive (out-p in-p out-p-closer)
 	 (open-pipe-port)
 	 (let* ((compress? (config 'compress))
@@ -86,16 +99,19 @@
 				     0)))
 		(t (make-thread (lambda ()
 				   (js-pp in-p
-					  p
-					  (lambda ()
-					     (consume-next-pragma! pragmas))
-					  compress?
-					  indent-width)))))
+				      p
+				      (lambda ()
+					 (consume-next-pragma! pragmas))
+				      compress?
+				      indent-width)))))
 	    (thread-start-joinable! t)
 	    (gen-code tree out-p pragmas)
 	    (out-p-closer)
 	    (thread-join! t)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    gen-code ...                                                     */
+;*---------------------------------------------------------------------*/
 (define (gen-code tree p pragmas)
    (verbose "  generating code")
    (let ((env (instantiate::Out-Env
@@ -105,18 +121,16 @@
 		 (call/cc? (and (config 'call/cc) #t))
 		 (optimize-calls? (and (config 'optimize-calls) #t))
 		 (debug? (and (config 'debug) #t))
-
 		 (host-compiler (config 'host-compiler))
 		 (host-register (config 'host-register))
-
 		 (pp? (and (config 'pp) #t))
 		 (pragmas pragmas)
-
 		 (last-line 0)
 		 (last-file ""))))
-      (compile tree env p #t)))
+      (compile tree env p #t *tmp-var*)))
 
 (define *tmp-var* "sc_tmp") ;; can't conflict with generated names.
+(define *tmp-let* "sc_let")
 
 ;; when using immutable values.
 (define *symbol-prefix* "\\uEBAC")
@@ -141,7 +155,7 @@
 (define (call/cc-counter-name nb)
    (string-append "sc_counter_" (number->string nb)))
 
-(define-nmethod (Node.compile ignored ignored2)
+(define-nmethod (Node.compile p stmt? tmp)
    (error #f "Internal Error: forgot node-type" this))
 
 ;; return true, if we should use nested new sc_Pairs instead of sc_list(...).
@@ -272,7 +286,9 @@
 	 (let ((len (length cache)))
 	    (display "sc_circle(" p)
 	    (display len p)
-	    (display ", function( cache ) { return " p)))
+	    (display (format ", function( cache ) { ~areturn "
+			(if (config 'use-strict) "\"use strict\";" ""))
+	       p)))
       (compile-value-circle obj p host-compiler loc cache)
       (when (pair? cache)
 	 (display ";})" p))))
@@ -319,7 +335,8 @@
 ;*---------------------------------------------------------------------*/
 (define (compile-value-circle val p host-compiler loc cache)
    
-   (define (display-ucs2-char p c) ;; without the quotes
+   (define (display-ucs2-char p c)
+      ;; without the quotes
       (let ((i (ucs2->integer c)))
 	 (cond
 	    ((and (<=fx i #x7F)
@@ -334,13 +351,13 @@
 	     (template-display p "\\u0~x" i))
 	    (else
 	     (template-display p "\\u~x" i)))))
-
+   
    (define index -1)
    
    (define (next-index)
       (set! index (+fx 1 index))
       index)
-
+   
    (define (compile-cyclic val p)
       (cond
 	 ((vector? val)
@@ -389,7 +406,7 @@
 	  (fprintf p "new Float64Array([ ~(,) ])" (f64vector->list val)))
 	 (else
 	  (host-compiler val p compile))))
-
+   
    (define (compile val p)
       (cond
 	 ((null? val)
@@ -456,24 +473,24 @@
 		       (display ")" p))))))
 	 (else
 	  (compile-cyclic val p))))
-
+   
    (compile val p))
    
-(define-nmethod (Const.compile p stmt?)
+(define-nmethod (Const.compile p stmt? tmp)
    (with-access::Const this (value)
       (with-access::Out-Env env (host-compiler host-register)
 	 (template-display p
 	    (?@ stmt? "~@;\n")
 	    "~e" (compile-value value p host-compiler host-register this)))))
 
-(define-nmethod (Ref.compile p stmt?)
+(define-nmethod (Ref.compile p stmt? tmp)
    (with-access::Ref this (var)
       (with-access::Named-Var var (js-id)
 	 (template-display p
 	    (?@ stmt? "~@;\n")
 	    "$js-id"))))
 
-(define-nmethod (Module.compile p stmt?)
+(define-nmethod (Module.compile p stmt? tmp)
    ;; trampoline-code
    (with-access::Out-Env env (trampoline? max-tail-depth)
       (when trampoline?
@@ -497,28 +514,35 @@
 		declared-vars)
 
       ;; finally the body.
-      (walk body p #t)))
+      (walk body p #t tmp)))
 
-(define-nmethod (Lambda.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Lambda ...                                             */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Lambda.compile p stmt? tmp)
    (widen!::Out-Lambda this
       (lvalue #f))
-   (walk this p stmt?))
+   (walk this p stmt? tmp))
 
-;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
-;; the given lvalue. stmt? is true, if we should treat this node, as if it was
-;; a statement-node.
-;; If there's a lvalue and it's not a stmt?, the return value of the compiled
-;; code is unspecified. (ie, it doesn't anymore necessarily return the
-;; lambda).
-(define-nmethod (Out-Lambda.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Out-Lambda ...                                         */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Out-Lambda.compile p stmt? tmp)
+   ;; Llvalue/stmt?, if given, indicate, that this lambda should be assigned to
+   ;; the given lvalue. stmt? is true, if we should treat this node, as if it was
+   ;; a statement-node.
+   ;; If there's a lvalue and it's not a stmt?, the return value of the compiled
+   ;; code is unspecified. (ie, it doesn't anymore necessarily return the
+   ;; lambda).
+   
    (define (vaarg-code vaarg nb-args)
       (with-access::Named-Var vaarg (js-id)
 	 (template-display p
 	    "var $js-id = null;\n"
-	    "for (var $*tmp-var* = arguments.length - 1;"
-	    "     $*tmp-var* >= $(number->string nb-args);"
-	    "     --$*tmp-var*) {\n"
-	    "  $js-id = sc_cons(arguments[$*tmp-var*], $js-id);\n"
+	    "for (var $tmp = arguments.length - 1;"
+	    "     $tmp >= $(number->string nb-args);"
+	    "     --$tmp) {\n"
+	    "  $js-id = sc_cons(arguments[$tmp], $js-id);\n"
 	    "}\n")))
 
    (define (trampoline-start-code)
@@ -769,6 +793,23 @@
 	     (let ((rev (reverse formals)))
 		(values (reverse! (cdr rev))
 			(car rev))))))
+
+   (define (debug-name lvalue location)
+      (cond
+	 ((isa? lvalue Ref)
+	  (with-access::Ref lvalue (var)
+	     (with-access::Var var (id kind)
+		(if (and (eq? kind 'local) location)
+		    (format "~a,~a:~a" id (cadr location) (caddr location))
+		    id))))
+	 (lvalue
+	  (let ((op (open-output-string)))
+	     (walk lvalue op #f tmp)
+	     (close-output-port op)))
+	 (location
+	  (format "&#955;.~a:~a" (cadr location) (caddr location)))
+	 (else
+	  "lambda")))
    
    (with-access::Out-Lambda this (lvalue declared-vars body vaarg? formals
 					 call/cc? contains-trampoline-call?
@@ -776,25 +817,7 @@
       (receive (formals-w/o-vaarg vaarg)
 	 (split-formals/vaarg)
 
-	 (let* ((declaration? (and #f ;; TODO: currently disabled as function
-				   ;; declarations are only allowed at
-				   ;; source-element positions. Not inside
-				   ;; try/catch (for instance).
-				   
-				   ;source-element?
-				   lvalue
-				   stmt?
-			     
-				   (with-access::Ref lvalue (var)
-				      (with-access::Var var (constant?)
-					 constant?)) ;; not muted or anything
-			     
-				   ;; a declaration puts the assignment at the
-				   ;; beginning of the scope. This is not good,
-				   ;; if we want to access 'with' variables,
-				   ;; that represent closures...
-				   #f ;; TODO: correct this
-			     ))
+	 (let* ((debug? (with-access::Out-Env env (debug?) debug?))
 		;; a function can't be alone as statement. ie.
 		;; function () {}; is not a valid statement.
 		;; but
@@ -808,39 +831,43 @@
 		;; if we are an expression, and we need to do some assignments,
 		;; we prefer parenthesis too. This happens, when we have a
 		;; lvalue, or we are needing trampolines.
-		(needs-parenthesis? (or (and stmt?
-					     (not lvalue))
-					(and (not stmt?)
-					     lvalue)
-					(with-access::Out-Env env (debug?)
-					   debug?))))
+		(needs-parenthesis? (or (and stmt? (not lvalue))
+					(and (not stmt?) lvalue)
+					debug?))
+		(lvar (when (isa? lvalue Ref)
+			 (with-access::Ref lvalue (var)
+			    (with-access::Named-Var var (js-id)
+			       js-id)))))
+				 
 	    (template-display p
 	       (?@ stmt? "~@;\n")
 	       (?@ needs-parenthesis? "(~@)")
-	       (?@ (with-access::Out-Env env (debug?) debug?)
-		   "~a=~@,~a.sc_name=\"~a\",~a.sc_location=\"~a\",~a.sc_arity=~a,~a"
-		   *tmp-var*
-		   *tmp-var* (cond
-				((isa? lvalue Ref)
-				 (with-access::Ref lvalue (var)
-				    (with-access::Var var (id)
-				       id)))
-				(lvalue
-				   (let ((op (open-output-string)))
-				      (walk lvalue op #f)
-				      (close-output-port op)))
-				(else
-				 ""))
-		   *tmp-var* location
-		   *tmp-var* (if vaarg?
-				 (negfx (length formals))
-				 (length formals))
-		   *tmp-var*)
-	       (?@ lvalue "~e = ~@" (walk lvalue p #f))
-	       (?@ #t "function(~e) {\n ~e ~@ }" ;; always.
+	       (?@ (and debug? lvar)
+		   "~a=~@,~a.displayName=\"~a\",~a.sc_location=\"~a\",~a.sc_arity=~a,~a"
+		   lvar
+		   lvar
+		   (debug-name lvalue location)
+		   lvar location
+		   lvar (if vaarg?
+			   (negfx (length formals))
+			   (length formals))
+		   lvar)
+	       (?@ (and debug? (not lvar))
+		   "~a=~@,~a.displayName=\"~a\",~a.sc_location=\"~a\",~a.sc_arity=~a,~a"
+		   tmp
+		   tmp
+		   (debug-name lvalue location)
+		   tmp location
+		   tmp (if vaarg?
+			   (negfx (length formals))
+			   (length formals))
+		   tmp)
+	       (?@ (and (not debug?) lvar) "~e = ~@" lvar)
+	       (?@ #t "function(~e) {~a ~e ~@ }" ;; always.
 		   (separated ","
-			      (lambda (e) "~e" (walk e p #f))
+			      (lambda (e) "~e" (walk e p #f tmp))
 			      formals-w/o-vaarg)
+		   (if (config 'use-strict) "\"use strict\";" "")
 		   (when vaarg?
 		      (with-access::Ref vaarg (var)
 			 (vaarg-code var (- (length formals) 1)))))
@@ -858,9 +885,12 @@
 			"var ~a;\n"
 			(with-access::Named-Var var (js-id) js-id))
 		     declared-vars)
-	       (walk body p #t))))))
+	       (walk body p #t tmp))))))
 
-(define-nmethod (Frame-alloc.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Frame-alloc ...                                        */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Frame-alloc.compile p stmt? tmp)
    (template-display p
       (?@ stmt? "~@;\n") ;; should never happen.
       "{~e}" ;; literal-object creation
@@ -874,26 +904,32 @@
 			 (template-display p "$js-id : undefined, ")
 			 (loop (cdr vars))))))))))
 
-(define-nmethod (Frame-push.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Frame-push ...                                         */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Frame-push.compile p stmt? tmp)
    (with-access::Frame-push this (body frame-allocs)
       (with-access::Frame-alloc (car frame-allocs) (storage-var)
 	 (with-access::Named-Var storage-var (js-id)
 	    (template-display p
 	       "with ($js-id) {\n"
-	       "  ~e" (walk body p #t)
+	       "  ~e" (walk body p #t tmp)
 	       "}\n")))))
 
-(define-nmethod (If.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::If ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-nmethod (If.compile p stmt? tmp)
    (with-access::If this (test then else)
       (cond
 	 (stmt?
 	  (template-display p
-	     "if (~e) {\n" (compile-boolified p walk test)
-	     "  ~e"        (walk then p #t)
+	     "if (~e) {\n" (compile-boolified p walk test tmp)
+	     "  ~e"        (walk then p #t tmp)
 	     "}\n"
 	     (?? (not (isa? else Const)) ;; avoid common case 'undefined
 		 "else {\n"
-		 "  ~e"    (walk else p #t)
+		 "  ~e"    (walk else p #t tmp)
 		 "}\n")))
 	 ((and (isa? then Const)
 	       (eq? (with-access::Const then (value) value) #t))
@@ -902,65 +938,80 @@
 	  ;;     (tmp = X, X!==false? tmp: Y)
 	  (template-display p
 	     "(~e || ~e)"
-	     (compile-boolified p walk test)
-	     (walk else p #f)))
+	     (compile-boolified p walk test tmp)
+	     (walk else p #f tmp)))
 	 ((and (isa? else Const)
 	       (eq? (with-access::Const else (value) value) #f))
 	  ;; happens more often.
 	  (template-display p
 	     "(~e && ~e)"
-	     (compile-boolified p walk test)
-	     (walk then p #f)))
+	     (compile-boolified p walk test tmp)
+	     (walk then p #f tmp)))
 	 (else
 	  (template-display p
 	     "(~e? ~e: ~e)"
-	     (compile-boolified p walk test)
-	     (walk then p #f)
-	     (walk else p #f))))))
+	     (compile-boolified p walk test tmp)
+	     (walk then p #f tmp)
+	     (walk else p #f tmp))))))
 
-(define-nmethod (Case.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Case ...                                               */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Case.compile p stmt? tmp)
    (with-access::Case this (key clauses)
       (template-display p
-	 "switch (~e) {\n" (walk key p #f)
-	 "  ~e"    (for-each (lambda (clause) (walk clause p #t)) clauses)
+	 "switch (~e) {\n" (walk key p #f tmp)
+	 "  ~e"    (for-each (lambda (clause) (walk clause p #t tmp)) clauses)
 	 "}\n")))
 
-(define-nmethod (Clause.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Clause ...                                             */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Clause.compile p stmt? tmp)
    (with-access::Clause this (default-clause? consts expr)
       (if default-clause?
 	  (template-display p
 	     "default:\n"
-	     "~e" (walk expr p #t)
+	     "~e" (walk expr p #t tmp)
 	     "break;\n")
 	  (template-display p
 	     ;; consts
 	     "~e" (for-each (lambda (const)
 			       (template-display p
-				  "case ~e:\n" (walk const p #f)))
+				  "case ~e:\n" (walk const p #f tmp)))
 			    consts)
 	     ;; body
-	     "~e" (walk expr p #t)
+	     "~e" (walk expr p #t tmp)
 	     "break;\n"))))
 
-(define-nmethod (Decl-Set!.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Decl-Set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Decl-Set!.compile p stmt? tmp)
    [assert (stmt?) stmt?]
    (with-access::Set! this (lvalue val)
       (template-display p
-	 "var ~e;\n" (compile-unoptimized-set! p walk this))))
+	 "var ~e;\n" (compile-unoptimized-set! p walk this tmp))))
 
-(define-nmethod (Set!.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Set!.compile p stmt? tmp)
    (with-access::Set! this (lvalue val)
       (if (isa? val Lambda)
 	  (begin
 	     (widen!::Out-Lambda val
 		(lvalue lvalue))
-	     (walk val p stmt?))
+	     (walk val p stmt? tmp))
 	  (template-display p
 	     (?@ stmt? "~@;\n")
 	     (?@ (not stmt?) "(~@)") ;; for now...
-	     "~e" (compile-set! p walk this)))))
+	     "~e" (compile-set! p walk this tmp)))))
 
-(define-nmethod (Begin.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Begin ...                                              */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Begin.compile p stmt? tmp)
    (define (call/cc-begin-out)
       (with-access::Begin this (exprs call/cc-ranges)
 	 (template-display p
@@ -971,13 +1022,13 @@
 	    (for-each (lambda (expr range)
 			 (template-display p
 			    (?? (and range (not (null? range)))
-				"~e\n" ;; the cases
-				(each (lambda (index)
-					 "case ~a: " index)
-				      range))
-			    "~e" (walk expr p #t)))
-		      exprs
-		      call/cc-ranges))))
+			       "~e\n" ;; the cases
+			       (each (lambda (index)
+					"case ~a: " index)
+				  range))
+			    "~e" (walk expr p #t tmp)))
+	       exprs
+	       call/cc-ranges))))
    
    (with-access::Begin this (exprs call/cc? call/cc-ranges)
       (cond
@@ -986,22 +1037,28 @@
 	 (stmt?
 	  ;; we do not need { }, as all statements that could contain blocks
 	  ;; already have them (or do not need them).
-	  (for-each (lambda (n) (walk n p #t))
-		    exprs))
+	  (for-each (lambda (n) (walk n p #t tmp)) exprs))
 	 (else
 	  (template-display p
 	     "(~e)"
 	     (separated ", "
-			(lambda (e) "~e" (walk e p #f))
-			exprs))))))
+		(lambda (e) "~e" (walk e p #f tmp))
+		exprs))))))
 
-(define-nmethod (Call/cc-Resume.compile p stmt?)
+;*---------------------------------------------------------------------*/
+;*    compile ::Call/cc-Resume ...                                     */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Call/cc-Resume.compile p stmt? tmp)
    (template-display p
       (?@ stmt? "~@;\n")
       "sc_callCcIndex = 0"))
 
-(define-nmethod (Call.compile p stmt?)
-   (define (compile-operator)
+;*---------------------------------------------------------------------*/
+;*    compile ::Call ...                                               */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Call.compile p stmt? tmp)
+   
+   (define (compile-operator tmp)
       ;; if the operator is a var-ref and contains a "." we have to do
       ;; some tricks: frame.f() would give 'frame' to f as this-object.
       ;; by using the sequence-construct we can avoid that:
@@ -1015,23 +1072,30 @@
 		(with-access::Named-Var var (js-id)
 		   (template-display p
 		      "(0, $js-id)")))
-	     (walk operator p #f))))
-
+	     (walk operator p #f tmp))))
+   
    (define (compile-operands)
       (with-access::Call this (operands)
 	 (template-display p
 	    "~e"
 	    (separated ", "
-		       (lambda (operand) "~e" (walk operand p #f))
-		       operands))))
-      
+	       (lambda (operand) "~e" (walk operand p #f tmp))
+	       operands))))
+   
+   (define (lambda-call? call::Call)
+      (with-access::Call call (operator operands)
+	 (when (isa? operator Lambda)
+	    (with-access::Lambda operator (scope-vars)
+	       (when (=fx (length operands) (length scope-vars)))))))
+   
    (define (compile-trampoline-call)
+      
       (define (do-trampoline-call tail-obj)
 	 (with-access::Call this (operator)
 	    (template-display p
-	       "(~a.f = ~e," tail-obj (walk operator p #f)
+	       "(~a.f = ~e," tail-obj (walk operator p #f tmp)
 	       " ~a.f(~e))"  tail-obj (compile-operands))))
-
+      
       (let ((operator (with-access::Call this (operator) operator))
 	    (max-tail-depth (with-access::Out-Env env (max-tail-depth) max-tail-depth)))
 	 (with-access::Call this (operator)
@@ -1039,7 +1103,7 @@
 	       "(this === sc_tailObj?\n"
 	       "     (!sc_funTailCalls?\n"  ;; == 0
 	       "          (this.args = [~e],"   (compile-operands)
-	       "           this.f = ~e,"        (walk operator p #f)
+	       "           this.f = ~e,"        (walk operator p #f tmp)
 	       "           this)\n"
 	       "       :\n"
 	       "          (this.calls = sc_funTailCalls - 1,\n"
@@ -1050,32 +1114,59 @@
 	       "      (sc_tailObj === sc_tailTmp?"
 	       "                 sc_tailObj.restart()"
 	       "               : sc_tailTmp)))"))))
-
+   
    (with-access::Call this (operator operands call/cc? call/cc-index
 			      trampoline? location)
       (with-access::Out-Env env (debug? call/cc? optimize-calls?)
-	 (template-display p
-	    (?@ stmt? "~@;\n")
-	    (?@ #t "(~@)") ;;  was (not stmt?). now always. even for stmt.
-	    (?@ (and call/cc? call/cc-index)
-	       "sc_callCcIndex = ~a, ~@" call/cc-index)
-	    "~e"
-	    (cond
-	       ((and optimize-calls?
-		     (compile-optimized-call p walk operator operands))
-		'do-nothing) ;; already printed
-	       (trampoline?
-		  (compile-trampoline-call))
-	       ((and debug? (not call/cc?))
-		(let ((len (length operands)))
+	 (cond
+	    ((not (lambda-call? this))
+	     (template-display p
+		(?@ stmt? "~@;\n")
+		;;  was (not stmt?). now always. even for stmt.
+		(?@ #t "(~@)")
+		(?@ (and call/cc? call/cc-index)
+		   "sc_callCcIndex = ~a, ~@" call/cc-index)
+		"~e"
+		(cond
+		   ((and optimize-calls?
+			 (compile-optimized-call p walk operator operands tmp))
+		    ;; already printed
+		    'do-nothing) 
+		   (trampoline?
+		    (compile-trampoline-call))
+		   ((and debug? (not call/cc?))
+		    (let ((len (length operands)))
+		       (template-display p
+			  "sc_arity_check(~e, ~a)(~e)"
+			  (compile-operator tmp) len (compile-operands))))
+		   (else
+		    (template-display p
+		       "~e(~e)" (compile-operator tmp) (compile-operands))))))
+	    ((config 'javascript-let)
+	     ;; the call is actually a disguised let
+	     (with-access::Call this (operator operand)
+		(with-access::Lambda operator (body scope-vars)
 		   (template-display p
-		      "sc_arity_check(~e, ~a)(~e)"
-		      (compile-operator) len (compile-operands))))
-	       (else
-		(template-display p
-		   "~e(~e)" (compile-operator) (compile-operands))))))))
+		      "let (~e) {\n"
+		      (each (lambda (var val)
+			       "~a = ~e"
+			       (with-access::Named-Var var (js-id)
+				  js-id)
+			       (walk val p #f tmp))
+			 scope-vars
+			 operands)
+		      "~e}\n"
+		      (walk body p stmt? tmp)))))
+	    (else
+	     (template-display p
+		(?@ stmt? "~@;\n")
+		;;  was (not stmt?). now always. even for stmt.
+		(?@ #t "(~@)")
+		(?@ (and call/cc? call/cc-index)
+		   "sc_callCcIndex = ~a, ~@" call/cc-index)
+		"~e(~e)" (compile-operator *tmp-let*) (compile-operands)))))))
 
-(define-nmethod (While.compile p stmt?)
+(define-nmethod (While.compile p stmt? tmp)
    (define (finally-outs scope)
       (with-access::Call/cc-Scope-Info scope (finally-vars)
 	 (let ((frame-name (call/cc-frame-name scope))
@@ -1109,12 +1200,12 @@
 		"  }"
 		"}\n"
 		(for-each finally-outs call/cc-finally-scopes))
-	    "~e" (walk body p #t))))
+	    "~e" (walk body p #t tmp))))
 
    (with-access::While this (init test body label call/cc?)
       (template-display p
 	 ;; init
-	 (?? (not (isa? init Const)) "~e" (walk init p #t))
+	 (?? (not (isa? init Const)) "~e" (walk init p #t tmp))
 	 ;; label
 	 (?? (not (eq? label (default-label)))
 	     "~a:\n" (mangle-JS-sym (with-access::Label label (id) id))))
@@ -1128,16 +1219,16 @@
 	     "} while (true);\n"))
 	 ((not call/cc?)
 	  (template-display p
-	     "while (~e) {\n" (compile-boolified p walk test)
-	     "  ~e"           (walk body p #t)
+	     "while (~e) {\n" (compile-boolified p walk test tmp)
+	     "  ~e"           (walk body p #t tmp)
 	     "}\n"))
 	 (else
 	  (template-display p
-	     "while (sc_callCcIndex || (~e)) {\n" (walk test p #f)
+	     "while (sc_callCcIndex || (~e)) {\n" (walk test p #f tmp)
 	     "  ~e"                               (body-out)
 	     "}\n")))))
 			  
-(define-nmethod (Continue.compile p stmt?)
+(define-nmethod (Continue.compile p stmt? tmp)
    (with-access::Continue this (label)
       (if (eq? label (default-label))
 	  (template-display p
@@ -1145,38 +1236,38 @@
 	  (template-display p
 	     "continue ~a;\n" (mangle-JS-sym (with-access::Label label (id) id))))))
 
-(define-nmethod (Return.compile p stmt?)
+(define-nmethod (Return.compile p stmt? tmp)
    (with-access::Return this (val)
       (template-display p
-	 "return ~e;\n" (walk val p #f))))
+	 "return ~e;\n" (walk val p #f tmp))))
 
-(define-nmethod (Labeled.compile p stmt?)
+(define-nmethod (Labeled.compile p stmt? tmp)
    (with-access::Labeled this (label body)
       (with-access::Label label (id)
 	 (template-display p
 	    "~a: {\n" (mangle-JS-sym id)
-	    "  ~e"    (walk body p #t)
+	    "  ~e"    (walk body p #t tmp)
 	    "}\n"))))
 
-(define-nmethod (Break.compile p stmt?)
+(define-nmethod (Break.compile p stmt? tmp)
    (with-access::Break this (label val)
       (with-access::Label label (id)
 	 (template-display p
 	    "{\n"
-	    "  ~e" (walk val p #t)
+	    "  ~e" (walk val p #t tmp)
 	    "  break ~a;\n" (if (eq? label (default-label))
 				""
 				(mangle-JS-sym id))
 	    "}\n"))))
 
-; (define-nmethod (Pragma.compile p stmt?)
+; (define-nmethod (Pragma.compile p stmt? tmp)
 ;    (with-access::Pragma this (str)
 ;       (template-display p
 ; 	 (?@ stmt? "~@;\n")
 ; 	 "(~a)" str)))
 
 
-(define-nmethod (Pragma.compile p stmt?)
+(define-nmethod (Pragma.compile p stmt? tmp)
    
    (define (pragma->str p)
       (with-access::Pragma p (str args)
@@ -1192,7 +1283,7 @@
 				       (index (string->number
 						 (substring str 1 len))))
 				   (walk (vector-ref args (-fx index 1))
-				      oport #f)
+				      oport #f tmp)
 				   (ignore)))
 			       ("$$"
 				  (display "$" oport)

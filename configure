@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/configure                         */
+#*    serrano/prgm/project/hop/2.5.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Jul  6 08:09:27 2013 (serrano)                */
+#*    Last change :  Tue Jul 23 11:18:43 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -61,8 +61,8 @@ bglcloselibs="web multimedia"
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.4.1"
-devel=
+version="2.5.0"
+devel=pre
 
 hopc=$PWD/bin/hopc
 
@@ -88,7 +88,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.0a
+bigloorequired=4.0b
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop

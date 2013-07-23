@@ -1,16 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/symbol.scm              */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Tue Jul 23 10:20:39 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme2js symbol resolution                                      */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module symbol
+   
    (import mapping1 mapping2
 	   tools
 	   symbol-table
@@ -21,16 +24,16 @@
 	   verbose
 	   gen-js
 	   pobject-conv
+	   dump-node
 	   error)
-   (export (symbol-resolution tree::Module
-			      imports::pair-nil
-			      exports::pair-nil)
+   
+   (export (symbol-resolution tree::Module imports::pair-nil exports::pair-nil)
 	   (runtime-reference id::symbol))
+   
    (static (final-class Symbol-Env
 	      runtime
 	      imports
 	      exports
-
 	      export-globals
 	      ;; following entries will be set in Module-resolve
 	      (runtime-scope (default #f))
@@ -257,6 +260,7 @@
 		     (exported-as-const? #f))
 		  #f)
 	       (set! body (instantiate::Set!
+			     (location -40)
 			     (lvalue (instantiate::Ref (id global-assig)))
 			     (val body)))))
 	 ;; walk!
