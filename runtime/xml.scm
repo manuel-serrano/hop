@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri May 24 11:55:38 2013 (serrano)                */
+;*    Last change :  Tue Jul 23 14:06:01 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -55,6 +55,7 @@
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
+	    (xml-attribute-encode obj)
 
 	    (xml->string ::obj ::xml-backend)
 	    
@@ -611,6 +612,52 @@
 	 (display "</" p)
 	 (display tag p)
 	 (display ">" p))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-encode ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-encode obj)
+   (if (not (string? obj))
+       obj
+       (let ((ol (string-length obj)))
+	  (define (count str ol)
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx i ol)
+		    j
+		    (let ((c (string-ref str i)))
+		       ;; attribute values should escape &#...
+		       (if (or (char=? c #\') (char=? c #\&))
+			   (loop (+fx i 1) (+fx j 5))
+			   (loop (+fx i 1) (+fx j 1)))))))
+	  (define (encode str ol nl)
+	     (if (=fx nl ol)
+		 obj
+		 (let ((nstr (make-string nl)))
+		    (let loop ((i 0)
+			       (j 0))
+		       (if (=fx j nl)
+			   nstr
+			   (let ((c (string-ref str i)))
+			      (case c
+				 ((#\')
+				  (string-set! nstr j #\&)
+				  (string-set! nstr (+fx j 1) #\#)
+				  (string-set! nstr (+fx j 2) #\3)
+				  (string-set! nstr (+fx j 3) #\9)
+				  (string-set! nstr (+fx j 4) #\;)
+				  (loop (+fx i 1) (+fx j 5)))
+				 ((#\&)
+				  (string-set! nstr j #\&)
+				  (string-set! nstr (+fx j 1) #\#)
+				  (string-set! nstr (+fx j 2) #\3)
+				  (string-set! nstr (+fx j 3) #\8)
+				  (string-set! nstr (+fx j 4) #\;)
+				  (loop (+fx i 1) (+fx j 5)))
+				 (else
+				  (string-set! nstr j c)
+				  (loop (+fx i 1) (+fx j 1))))))))))
+	  (encode obj ol (count obj ol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attributes ...                                         */

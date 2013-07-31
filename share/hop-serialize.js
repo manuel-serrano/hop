@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Jul  2 11:34:21 2013 (serrano)                */
+/*    Last change :  Fri Jul 26 07:08:29 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -942,7 +942,7 @@ function hop_string_to_obj( s ) {
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
          case 0x22 /* " */: return read_string( s );
-         case 0x25 /* " */: return decodeURIComponent( read_string( s ) );
+         case 0x25 /* % */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );
 	 case 0x5b /* [ */: return read_vector( read_size( s ) );
 	 case 0x28 /* ( */: return read_list( read_size( s ) );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Mar 30 16:30:51 2013 (serrano)                */
+;*    Last change :  Wed Jul 31 07:24:04 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -143,10 +143,17 @@
       (display "{ " op)
       (display-seq fields op
 	 (lambda (f op)
-	    (display "'" op)
-	    (display (class-field-name f) op)
-	    (display "': " op)
-	    (compile ((class-field-accessor f) obj) op)))
+	    (let ((iv (class-field-info f)))
+	       (display "'" op)
+	       (display (class-field-name f) op)
+	       (display "': " op)
+	       (cond
+		  ((and (pair? iv) (memq :client iv))
+		   =>
+		   (lambda (x)
+		      (compile (when (pair? (cdr x)) (cadr x)) op)))
+		  (else 
+		   (compile ((class-field-accessor f) obj) op))))))
       (display "}" op))
    
    (let ((klass (object-class obj)))
