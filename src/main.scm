@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul 31 12:36:09 2013 (serrano)                */
+;*    Last change :  Thu Aug  1 06:44:22 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -46,7 +46,7 @@
    (signal sigsegv
 	   (lambda (n)
 	      (fprint (current-error-port) "Segmentation violation")
-	      (display-trace-stack (get-trace-stack) 1 (current-error-port))
+	      (display-trace-stack (get-trace-stack) (current-error-port))
 	      (exit 2))))
 
 ;*---------------------------------------------------------------------*/
