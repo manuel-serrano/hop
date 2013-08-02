@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jul 18 08:38:55 2013 (serrano)                */
+#*    Last change :  Fri Aug  2 09:25:16 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -34,7 +34,7 @@ javac=javac
 devmode=product
 debug=no
 
-bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
 
@@ -49,7 +49,7 @@ bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
 
-blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
+blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
 mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
@@ -867,7 +867,7 @@ cat etc/hop.init.in \
 echo "" >> $init
 
 echo "(cond-expand" >> $init
-echo "   ((not hop-server)" >> $init
+echo "   (bigloo-compile" >> $init
 cat runtime/xml_expd.sch >> $init
 echo "" >> $init
 cat runtime/param_expd.sch >> $init
