@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Aug  1 06:44:22 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 09:10:48 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -59,6 +59,8 @@
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
+    ;; define the Hop macros
+   (hop-install-expanders!)
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set!
