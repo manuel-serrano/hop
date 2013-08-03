@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jul 21 10:18:50 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 09:23:07 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -32,6 +32,8 @@
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
+    ;; define the Hop macros
+   (hop-install-expanders!)
    ;; parse the command line
    (let ((exprs (parse-args args)))
       ;; access file
@@ -111,11 +113,9 @@
 (define (compile-sources::int)
 
    (define (compile-javascript p)
-      (let ((s (hopscheme-compile-file p '())))
-	 (if (string? (hopc-destination))
-	     (call-with-output-file (hopc-destination)
-		(lambda (p) (display s p)))
-	     (display s))))
+      (hopscheme-compile-file p
+	 (if (string? (hopc-destination)) (hopc-destination) "-")
+	 '()))
 
    (define (compile-module exp)
       (match-case exp

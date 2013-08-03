@@ -12,6 +12,7 @@
 
 (module statements
    (import nodes
+	   dump-node
 	   error
 	   tools
 	   export-desc
@@ -153,31 +154,33 @@
    ;; stmt-begin must be #f
    [assert (stmt-begin) (not stmt-begin)]
    (default-walk! this surrounding-fun #f))
-   
+
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Stmt-Begin ...                                          */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Stmt-Begin.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Begin this (exprs stmt-exprs)
       (cond
 	 ((null? exprs)
 	  (shrink! this)
 	  this)
-	 ((or (not stmt-exprs)
-	      (not stmt-begin))
+	 ((or (not stmt-exprs) (not stmt-begin))
 	  (shrink! this)
 	  (default-walk! this surrounding-fun #f))
-	 ((and (car stmt-exprs)
-	       (not (any (lambda (x) x) (cdr stmt-exprs))))
+	 ((and (car stmt-exprs) (not (any (lambda (x) x) (cdr stmt-exprs))))
 	  (shrink! this)
 	  ;; only the first expression is in stmt-form.
 	  ;; simply pass the stmt-begin to it.
 	  (default-walk! this surrounding-fun stmt-begin))
-	 (else ;; we have a stmt-begin, and at least one el in stmt-form.
+	 (else
+	  ;; we have a stmt-begin, and at least one el in stmt-form.
 	  ;; find the last one.
 	  (let* ((last-p (let loop ((exprs exprs)
 				    (stmt-exprs stmt-exprs)
 				    (last-p #f))
 			    (cond
 			       ((null? exprs)
-				last-p) ;; there must be one.
+				last-p) 
 			       ((car stmt-exprs)
 				(loop (cdr exprs) (cdr stmt-exprs) exprs))
 			       (else
@@ -200,8 +203,12 @@
 		    (set! exprs remaining)
 		    (default-walk! this surrounding-fun #f))))))))
 
-(define-nmethod (Call.stmts! surrounding-fun stmt-begin)
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Stmt-Call ...                                           */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Stmt-Call.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Call this (operator operands stmt-operator? stmt-operands)
+      
       (define (stmt-ops-count)
 	 (let loop ((ops (cons stmt-operator? (or stmt-operands '())))
 		    (count 0))
@@ -252,7 +259,7 @@
 			    (with-access::Ref n (var)
 			       (with-access::Var var (constant?)
 				  constant?)))))
-		
+
 		(set! operator (move-stmt-walk operator stmt-operator? #t))
 
 		(if (not stmt-operands)
@@ -275,14 +282,23 @@
 		(shrink! this)
 		this))))))
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Frame-alloc ...                                         */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Frame-alloc.stmts! surrounding-fun stmt-begin)
    this)
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Frame-push ...                                          */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Frame-push.stmts! surrounding-fun stmt-begin)
    (if (not stmt-begin)
        (default-walk! this surrounding-fun #f)
        (move-to-begin this walk! surrounding-fun stmt-begin)))
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Return ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Return.stmts! surrounding-fun stmt-begin)
    (if stmt-begin
        (move-to-begin this walk! surrounding-fun stmt-begin

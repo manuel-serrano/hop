@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-paned.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-paned.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:08:33 2005                          */
-/*    Last change :  Thu Jan 19 12:23:09 2012 (serrano)                */
-/*    Copyright   :  2005-12 Manuel Serrano                            */
+/*    Last change :  Wed Jul 24 11:05:43 2013 (serrano)                */
+/*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP paned client-side implementation                             */
 /*=====================================================================*/
@@ -242,7 +242,7 @@ function hop_init_paned_vertical( id, fraction, onresize ) {
    hop_paned_onresize_set( paned, onresize );
 
    // postponed initialization
-   hop_add_event_listener( id, "ready", function () { after( 0, resize ) }, true );
+   hop_add_event_listener( id, "ready", function () { sc_after( 0, resize ) }, true );
    hop_add_event_listener( window, "resize", resize, true );
 
    return paned;
@@ -266,7 +266,7 @@ function hop_init_paned_horizontal( id, fraction, onresize ) {
    hop_paned_onresize_set( paned, onresize );
 
    // postponed initialization
-   hop_add_event_listener( id, "ready", function () { after( 0, resize ) }, true );
+   hop_add_event_listener( id, "ready", function () { sc_after( 0, resize ) }, true );
    hop_add_event_listener( window, "resize", resize, true );
 
    return paned;

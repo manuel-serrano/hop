@@ -39,7 +39,7 @@ function initRuntime() {
 }
 */
 
-var sc_tmp, sc_let;
+var sc_lambda, sc_let;
 
 function sc_print_debug() {
     sc_print.apply(null, arguments);
@@ -66,7 +66,11 @@ function sc_alert() {
 
 /*** META ((export #t) (arity #t)) */
 function sc_typeof( x ) {
-   return typeof x;
+   if( sc_isSymbol( x ) ) {
+      return "symbol";
+   } else {
+      return typeof x;
+   }
 }
 
 var __sc_errorHook = false;
@@ -96,6 +100,8 @@ function sc_error() {
 	    e.scObject = arguments[ 2 ];
 	    if( arguments.length >= 4 ) {
 	       e.scOffset = arguments[ 3 ];
+	    } else {
+	       e.scOffset = 1;
 	    }
 	 }
       }
@@ -110,9 +116,9 @@ function sc_error() {
 /*** META ((export #t) (arity 3)) */
 function sc_typeError( proc, type, obj ) {
    var msg = "Type \"" + type + "\" expected, "
-      + "\"" + (typeof obj) + "\" provided";
+      + "\"" + sc_typeof( obj ) + "\" provided";
 
-   return sc_error( proc, msg, obj, 3 );
+   return sc_error( proc, msg, obj, arguments.length >= 4 ? arguments[ 3 ] : 3 );
 }
 
 /*---------------------------------------------------------------------*/
@@ -122,30 +128,6 @@ function sc_function_name( fun ) {
    return ("displayName" in fun) ? fun.displayName : fun;
 }
 
-/*---------------------------------------------------------------------*/
-/*    sc_callstack_ref ...                                             */
-/*    -------------------------------------------------------------    */
-/*    Return then Nth element of the call stack.                       */
-/*---------------------------------------------------------------------*/
-function sc_callstack_ref( offset ) {
-   if( !("callee" in arguments) ) {
-      return false;
-   } else {
-      var proc = arguments.callee;
-
-      while( offset >= 0 ) {
-	 if( !("caller" in proc) ) {
-	    return false;
-	 } else {
-	    proc = proc.caller;
-	    offset--;
-	 }
-      }
-
-      return proc;
-   }
-}
-       
 /*---------------------------------------------------------------------*/
 /*    sc_arity_check ...                                               */
 /*---------------------------------------------------------------------*/
@@ -164,10 +146,8 @@ function sc_arity_check( fun, nbargs ) {
 	 var msg = "Wrong number of arguments: " + arity + " expected, "
 	    + nbargs + " provided";
 	 var obj = sc_function_name( fun );
-	 var top = sc_callstack_ref( 1, "arity-check" );
-	 var where = top ? sc_function_name( top ) : "arity_check";
 
-	 sc_error( where, msg, obj );
+	 sc_error( "funcall", msg, obj, 2 );
       }
    }
 }
@@ -614,7 +594,6 @@ function sc_euclid_gcd(a, b) {
 	b %= a;
 	if(b === 0) {return a;};
     };
-    return b;
 }
 
 /*** META ((export #t)
@@ -777,8 +756,9 @@ function sc_isBoolean(b) {
     return (b === true) || (b === false);
 }
 
+#if HOP_RTS_DEBUG
 var dynamic_type_check = ((hop_debug() >= 1) && ("defineProperty" in Object));
-    
+
 function sc_Pair(car, cdr) {
    if( dynamic_type_check ) {
       this._car = car;
@@ -791,25 +771,31 @@ function sc_Pair(car, cdr) {
 
 if( dynamic_type_check ) {
    Object.defineProperty( Object.prototype, "car", {
-      get: function() { sc_typeError( "car", "pair", this ); },
-      set: function( v ) { sc_typeError( "set-car!", "pair", this ); }
+      get: function() { sc_typeError( "car", "pair", this, 4 ); },
+      set: function( v ) { sc_typeError( "set-car!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "car", {
       get: function() { return this._car; },
-      set: function( v ) { this._car = v; },
+      set: function( v ) { this._car = v; }
    } );
    
    Object.defineProperty( Object.prototype, "cdr", {
-      get: function() { sc_typeError( "cdr", "pair", this ); },
-      set: function( v ) { sc_typeError( "set-cdr!", "pair", this ); }
+      get: function() { sc_typeError( "cdr", "pair", this, 4 ); },
+      set: function( v ) { sc_typeError( "set-cdr!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "cdr", {
       get: function() { return this._cdr; },
-      set: function( v ) { this._cdr = v; },
+      set: function( v ) { this._cdr = v; }
    } );
 }
+#else
+function sc_Pair(car, cdr) {
+   this.car = car;
+   this.cdr = cdr;
+}
+#endif
 
 sc_Pair.prototype.toString = function() {
     return sc_toDisplayString(this);
@@ -2817,6 +2803,11 @@ function sc_class_creator( clazz ) {
 
       return o;
    }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_isA( o, c ) {
+   return o instanceof c.allocator;
 }
 
 /*** META ((export #t) (arity #t)) */

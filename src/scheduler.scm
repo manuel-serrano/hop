@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Fri Mar 29 10:50:36 2013 (serrano)                */
+;*    Last change :  Wed Jul 24 14:56:18 2013 (serrano)                */
 ;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */

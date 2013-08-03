@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Jul 19 15:30:15 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 10:33:23 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js AST definition                                         */
@@ -52,7 +52,7 @@
       ;; Nodes
       (class Node
 	 (location (default #f))
-	 (dstlocation (default #f)))
+	 (dstposition (default #f)))
       
       (final-class Const::Node
 	 value)
@@ -61,7 +61,7 @@
 	 ;; either symbol or qualified id of form (symbol module)
 	 id 
 	 (var::Var (default (class-nil Var))))
-      
+
       (class Scope::Node
 	 ;; list of Vars
 	 (scope-vars::pair-nil (default '())) 
@@ -150,7 +150,7 @@
 	 vars::pair-nil)
       
       (final-class Frame-push::Node
-	 frame-allocs::pair-nil
+	 frame-alloc::Frame-alloc
 	 body::Node)
 
       (final-class Return::Node

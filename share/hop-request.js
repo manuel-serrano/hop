@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jul 23 10:56:01 2013 (serrano)                */
+/*    Last change :  Sat Aug  3 06:23:43 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -87,46 +87,12 @@ function hop_default_failure( exc, xhr ) {
       return;
    }
 
-   if( exc instanceof Error ) {
-      hop_report_exception( exc );
-      return;
-   }
-   
-   if( "exception" in xhr ) {
-      hop_report_exception( xhr.exception );
-      return;
-   }
+   var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
+   nexc.name = "with-hop";
+   nexc.scObject = "status: " + xhr.status;
+   nexc.scOffset = 3;
 
-   var nexc = new Error( "with-hop" );
-   var t = xhr.responseText;
-   nexc.hopStack = xhr.hopStack;
-
-   if( t ) {
-      if( t.match( /<!DOCTYPE[^>]*>/) ) {
-	 var m = t.match( /<body id='[^']+' hssclass='hop-error'>((?:.|[\n])*)/ );
-	 if( m ) {
-	    nexc.element = document.createElement( "div" );
-	    nexc.element.innerHTML = m[ 1 ].replace( /<\/body>(?:.|[\n])*/g, "" );
-	 } else {
-	    /* we have received the complete document */
-	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	    t = t.replace( /<\/head>/g, "</div>" );
-	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/html>/g, "</div>" );
-	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/body>/g, "</div>" );
-	    t = t.replace( /&quot;/g, "\"" );
-	    
-	    nexc.message = t;
-	 }
-      } else {
-	 nexc.message = t;
-      }
-   }
-
-   hop_report_exception( nexc );
+   throw nexc;
 }
 
 /*---------------------------------------------------------------------*/
@@ -279,14 +245,18 @@ function hop_request_unserialize( svc ) {
    var ctype = ("content_type" in xhr) ?
       xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   if( ctype === "application/x-hop" ) {
-      return hop_string_to_obj( hop_json_parse( xhr.responseText ) );
-   } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
-      return hop_create_element( xhr.responseText );
-   } else if( ctype === "application/x-javascript" ) {
+   if( ctype === "application/x-javascript" ) {
       return eval( xhr.responseText );
+   } else if( ctype === "application/x-url-hop" ) {
+      return hop_url_encoded_to_obj( hop_json_parse( xhr.responseText ) );
+   } else if( ctype === "application/x-json-hop" ) {
+      return hop_url_encoded_to_obj( hop_json_parse( xhr.responseText ) );
+   } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+      return hop_create_element( xhr.responseText );
    } else if( ctype === "application/json" ) {
       return hop_json_parse( xhr.responseText );
+   } else if( ctype === "application/x-hop" ) {
+      throw Error( "\"x-hop\", serialization format not supported on client" );
    } else {
       return xhr.responseText;
    }
@@ -295,7 +265,7 @@ function hop_request_unserialize( svc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_request_unserialize_arraybuffer ...                          */
 /*    -------------------------------------------------------------    */
-/*    This is an alternate protocol for exanching values between the   */
+/*    This is an alternate protocol for exchanging values between the  */
 /*    server and the client. This is currently not in used because     */
 /*    as of Jan 2012 I (MS) have not found an efficient way to         */
 /*    unserialize strings. This protocol could replace hop_request_    */
@@ -313,7 +283,7 @@ function hop_request_unserialize_arraybuffer( svc ) {
       new Uint8Array( xhr.response ) : new Uint8Array();
 
    if( ctype === "application/x-hop" ) {
-      return hop_string_to_obj( a );
+      return hop_url_encoded_to_obj( a );
    } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
       return hop_create_element( hop_uint8array_to_string( a ) );
    } else if( ctype === "application/x-javascript" ) {
@@ -371,29 +341,27 @@ function hop_request_onready( xhr, svc, succ, fail, err ) {
   	       (xhr.status > 200) && (xhr.status < 300) ) {
   	      return succ( xhr.responseText, xhr );
   	   } else {
-  	      var frame = sc_cons( fail, sc_cons( xhr, null ) );
-  	    
-  	      xhr.hopStack = sc_cons( frame, xhr.hopStack );
   	      fail( xhr.status, xhr );
   	      return false;
   	   }
       }
    } catch( e ) {
-      var i = svc.indexOf( "?" );
-      var n = i ? svc.substring( 0, i ) : svc;
-      if( n.indexOf( "/hop/" ) == 0 ) {
-	 n = n.substring( 5 );
-      }
-      
-      if( "displayName" in succ) {
-	 var c = sc_assoc( "hop_request_onready", hop_name_aliases );
+      var cstack
+      var ctx = xhr.precontext;
 
-	 if( sc_isPair( c ) ) {
-	    sc_setCdrBang( c, succ.displayName );
+      /* prepend the server context to the pre xhr context */
+      try {
+	 var hd = xhr.getResponseHeader( "Hop-Debug-Stack" );
+	 if( typeof hd === "string" ) {
+	    cstack = hop_url_encoded_to_obj( hd );
+	    ctx = sc_cons( sc_string2jsstring( "Server Trace:" ),
+			   hop_append_stack_context( cstack, ctx ) );
 	 }
+      } catch( _ ) {
+	 ;
       }
 
-      hop_callback_handler( e, "(with-hop (" + n + "...) ...)" );
+      hop_callback_handler( e, ctx );
    } finally {
       if( typeof hop_stop_anim === "function" ) { 
 	 hop_stop_anim( xhr );
@@ -421,31 +389,31 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
    
    function onreadystatechange() {
       if( this.readyState == 4 ) {
-	 hop_request_onready( this, svc, succ, fail, duperror );
+	 return hop_request_onready( this, svc, succ, fail, duperror );
+      } else {
+	 return false;
       }
-
-      return false;
    }
 
    if( !sync ) {
       xhr.open( "PUT", svc, true );
       
       if( hop_config.uint8array ) {
-	 xhr.responseType = "arraybuffer";
+	 /* NOT USED FOR NOW */ 
 	 xhr.unserialize = hop_request_unserialize_arraybuffer;
 	 xhr.onload = onreadystatechange;
 	 xhr.setRequestHeader( "Hop-Serialize", "arraybuffer" );
       } else {
 	 xhr.unserialize = hop_request_unserialize;
 	 xhr.onreadystatechange = onreadystatechange;
-	 xhr.setRequestHeader( "Hop-Serialize", "text" );
+	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );
       }
    } else {
       xhr.open( "PUT", svc, false );
       
       xhr.unserialize = hop_request_unserialize;
       xhr.onreadystatechange = onreadystatechange;
-      xhr.setRequestHeader( "Hop-Serialize", "text" );
+      xhr.setRequestHeader( "Hop-Serialize", "javascript" );
    }
 
    if( t ) {
@@ -453,7 +421,38 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 	 xhr.setTimeouts = t;
       } else {
 	 xhr.timeout = t;
-	 xhr.ontimeout = failure;
+	 xhr.ontimeout = fail;
+      }
+   }
+
+   if( (hop_debug() > 0) &&
+       (svc.indexOf( "/hop/public/server-debug/source-map" ) != 0) ) {
+      /* debug mode, get the context and send the */
+      /* client-stack to the server.              */
+      try {
+	 throw new Error( "with-hop" );
+      } catch( e ) {
+	 var i = svc.indexOf( "?" );
+	 var svcname = i ? svc.substring( 0, i ) : svc;
+
+	 if( svcname.indexOf( "/hop/" ) == 0 ) {
+	    svcname = svcname.substring( 5 );
+	 }
+
+	 var typ = sc_cons( sc_jsstring2symbol( "type" ),
+			    sc_jsstring2symbol( "client" ) );
+	 var fmt = sc_cons( sc_jsstring2symbol( "format" ),
+			    sc_jsstring2string( "~~~a" ) );
+	 var name = "(with-hop (" + svcname + "...) ...)";
+	 var frame = sc_cons( name,
+			      sc_cons( false,
+				       sc_cons( fmt, sc_cons( typ, null ) ) ) );
+	 var stk = hop_append_stack_context( sc_cons( frame, null ), e );
+	    
+	 stk = hop_append_stack_context( stk, hop_current_stack_context );
+
+	 xhr.precontext = stk;
+	 xhr.setRequestHeader( 'Hop-Debug-Stack', hop_bigloo_serialize( stk ) );
       }
    }
 
@@ -499,17 +498,20 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
 
       if( sync ) {
 	 if( xhr.readyState == 4 ) {
-	    onreadystatechange();
+	    return xhr.onreadystatechange();
 	 } else {
-	    sc_error( svc,
-		      "with-hop synchronous call failed",
-		      "readyState: " + xhr.readyState );
+	    var exc = new Error( "\"" + svc
+				 + " \", with-hop synchronous call failed -- "
+				 + "readyState: " + xhr.readyState );
+	    hop_callback_handler( exc, xhr.precontext );
 	 }
       }
-   } finally {
+   } catch( e ) {
       if( typeof hop_stop_anim === "function" ) { 
 	 hop_stop_anim( xhr );
       }
+
+      throw e;
    }
 
    return xhr;
@@ -583,7 +585,7 @@ function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, 
    if( sync ) {
       sc_error( svc,
 		"cross domain with-hop must be asynchronous",
-		host + ":" + port );
+		host + ":" + port, 2 );
    } else {
       var id = "__xdomain:" + host + ":" + port;
       var el = document.getElementById( id );
@@ -622,7 +624,8 @@ function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, 
 function with_hop( svc, success, failure, sync, anim, timeout ) {
    return hop_send_request( svc, sync,
 			    success, failure,
-			    anim, hop_serialize_request_env(), false, timeout );
+			    anim, hop_serialize_request_env(), false,
+			    timeout );
 }
 
 /*---------------------------------------------------------------------*/

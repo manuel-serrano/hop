@@ -11,7 +11,7 @@ This simple weblet displays ,(<WIKIREF> "Wiki documents").
         (<TH> (string-capitalize "") " version") (<TD> "1.2.0"))
   (<TR> (<TH> "Hop min version") (<TD> "2.5.0 "))
   (<TR> (<TH> "Hop max version") (<TD> ""))
-  (<TR> (<TH> "Date") (<TD> "18 July 2013"))
+  (<TR> (<TH> "Date") (<TD> "25 July 2013"))
   (<TR> (<TH> "Category") (<TD> "hop")))
 
 

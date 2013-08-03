@@ -11,16 +11,20 @@
 ;*=====================================================================*/
 
 (module letrec-expansion
+   
    (import config
 	   error
 	   nodes
+	   dump-node
 	   pobject-conv
 	   export-desc
 	   walk
 	   verbose
 	   gen-js)
+   
    (static (final-class Letrec-Env
 	      (call/cc?::bool read-only)))
+   
    (export (letrec-expansion! tree::Module)))
 
 ;; This pass servers two purposes:
@@ -137,7 +141,8 @@
 		     (body (instantiate::Begin
 			      ;; and finally assign them back to the originals.
 			      (exprs (append! assigs (list body)))))
-		     (kind 'let)))))))
+		     (kind 'let)))
+	    body))))
 
 (define (defines->letrec! n)
    (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Sun Jul 21 07:46:15 2013 (serrano)                */
+;*    Last change :  Tue Jul 30 09:58:45 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -23,7 +23,7 @@
 	   (get-file-cached-config)
 	   (init-hopscheme! #!key reader share path verbose
 	      eval hop-compile hop-register features expanders hop-library-path
-	      (javascript-version "1.5"))
+	      (javascript-version "1.5") (tmp-dir (os-tmp)))
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*))
@@ -56,6 +56,8 @@
    '())
 (define *hop-javascript-let*
    #f)
+(define *hop-tmp-dir*
+   (os-tmp))
 
 (define *hopscheme-config-mutex*
    (make-mutex))
@@ -82,7 +84,7 @@
 	      ;; we are no longer using scheme2js-modules
 	      (bigloo-modules . #t)
 	      ;; compress the output
-	      (compress . #t)
+	      (compress . ,(=fx (bigloo-debug) 0))
 	      ;; allow $(import xyz) ...
 	      (module-preprocessor . ,(dollar-modules-adder))
 	      ;; hop-compile compiles HOP values.
@@ -94,13 +96,16 @@
 	      ;; runtime resolver
 	      (module-resolver . ,hopscheme-runtime-resolver)
 	      ;; pp in debug mode
-	      (pp . ,(>=fx (bigloo-debug) 3))
+	      (pp . ,(>=fx (bigloo-debug) 4))
 	      ;; strict mode
 	      (use-strict . ,(<fx (bigloo-debug) 2))
 	      ;; source map generation
-	      (source-map . #t)
+	      (source-map . ,(>=fx (bigloo-debug) 1))
 	      ;; javascript1.7 let construct
-	      (javascript-let . ,*hop-javascript-let*)))))
+	      (javascript-let . ,*hop-javascript-let*)
+	      ;; tmp-dir
+	      (tmp-dir . ,*hop-tmp-dir*)
+	      ))))
    *cached-config*)
 
 ;*---------------------------------------------------------------------*/
@@ -176,7 +181,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-hopscheme! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path (javascript-version "1.5"))
+(define (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path (javascript-version "1.5") (tmp-dir (os-tmp)))
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
@@ -186,6 +191,7 @@
    (set! *hop-library-path* hop-library-path)
    (set! *hop-javascript-let*
       (>= (string-natural-compare3 javascript-version "1.7") 0))
+   (set! *hop-tmp-dir* tmp-dir)
    (for-each srfi0-declare! features)
    (for-each (lambda (expd)
 		(if (pair? expd)

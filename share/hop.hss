@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Tue Jul 23 11:09:53 2013 (serrano)                */
+/*    Last change :  Thu Aug  1 09:25:21 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -57,17 +57,22 @@ div.hop-busy-anim {
 }      
   
 /*---------------------------------------------------------------------*/
-/*    Errors                                                           */
+/*    Exceptions                                                       */
 /*---------------------------------------------------------------------*/
-body[hssclass=hop-error] {
+body[data-hss-class=hop-exception] {
   background-color: #555558;
   top: 0; bottom: 0;
   left: 0; right: 0;
-  z-index: 100000;
-  opacity: 0.90;
 }
 
-div[hssclass=hop-error-frame] {
+div[data-hss-class=hop-exception-frame] {
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+  position: fixed;
+  z-index: 100000;
+}
+
+div[data-hss-class=hop-exception-background] {
   background-color: #222225;
   top: 0; bottom: 0;
   left: 0; right: 0;
@@ -76,7 +81,7 @@ div[hssclass=hop-error-frame] {
   opacity: 0.8;
 }
 
-div[hssclass=hop-error] {
+div[data-hss-class=hop-exception] {
   overflow: auto;
   background: white;
   border: 4px dashed;
@@ -90,16 +95,19 @@ div[hssclass=hop-error] {
   opacity: 1;
 }
 
-span.hop-error-frame-js {
-  color: #111;
+div[data-hss-class=hop-exception].notfound {
+  border-color: #f1d630;
+}
+div[data-hss-class=hop-exception].warning {
+  border-color: darkorange;
 }
 
-span[hssclass=hop-error-img] {
+span[data-hss-class=hop-exception-img] {
   display: inline-block;
   position: absolute;
   z-index: 100003;
-  left: 20px;
-  top: 20px;
+  left: 10px;
+  top: 10px;
   width: 64px;
   height: 64px;
   background-image: url( "icons/errors/error.png" );
@@ -107,17 +115,37 @@ span[hssclass=hop-error-img] {
   background-position: 50% 50%;
 }
 
-div[hssclass=hop-error] > div {
+div[data-hss-class=hop-exception].warning > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/warning.png" );
+}
+div[data-hss-class=hop-exception].notfound > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/notfound.png" );
+}
+div[data-hss-class=hop-exception].remote > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/error2.png" );
+}
+div[data-hss-class=hop-exception].client > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/client-error.png" );
+}
+div[data-hss-class=hop-exception].security > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/privacy.png" );
+}
+
+div[data-hss-class=hop-exception-body] {
   z-index: 100003;
   position: absolute;
-  left: 96px; 
-  top: 20px;
+  left: 74px; 
+  top: 30px;
   right: 1em;
   bottom: 1ex;
   font-size: 14pt;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  font-family: sans-serif;
+  font-weight: normal;
 }
-  
-div[hssclass=hop-error-title] {
+
+div[data-hss-class=hop-exception-title] {
   font-family: sans-serif;
   font-size: x-large;
   font-weight: bold;
@@ -125,34 +153,90 @@ div[hssclass=hop-error-title] {
   color: red;
 }
 
-div[hssclass=hop-error-msg] {
+div[data-hss-class=hop-exception].notfound div[data-hss-class=hop-exception-title] {
+  color: #f1d630;
+}
+
+div[data-hss-class=hop-exception-stack] button {
+  margin-bottom: 1ex;
+}
+
+table[data-hss-class=hop-exception-stack] {
+  font-weight: normal;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+table[data-hss-class=hop-exception-stack] th {
+  text-align: left;
+  font-size: 11pt;
+}
+
+table[data-hss-class=hop-exception-stack] td {
+  font-family: monospace;
+  font-size: 9pt;
+  padding-left: 1em;
+  white-space: nowrap;
+}
+
+td.hop-exception-frame-line {
+  color: #00a;
+}
+
+.hop-exception-frame-js {
+  display: none;
+}
+div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-frame-js {
+  display: table-row;
+}
+
+.hop-exception-frame-js td.hop-exception-frame-line {
+  color: #666;
+}
+
+.hop-exception-frame-client,
+.hop-exception-frame-html {
+  color: #a00;
+}
+
+.hop-exception-frame-server {
+  color: #00a;
+}
+
+.hop-exception-frame-server td.hop-exception-frame-id {
+  text-align: left;
+}
+
+.hop-exception-frame-server td.hop-exception-frame-id:before {
+  content: "$";
+}
+
+table[data-hss-class=hop-exception-msg] {
   margin-bottom: 20px;
   margin-top: 20px;
   padding-bottom: 20px;
   padding-top: 20px;
   font-family: sans-serif;
-  font-weight: bold;
+  font-size: 14pt;
+  margin-right: 20px;
+  padding-right: 20px;
 }
 
-div[hssclass=hop-error-body] {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  font-family: sans-serif;
-  font-weight: normal;
-}
-
-pre[hssclass=hop-error-notification] {
-  font-size: 80%;
-  color: #00a;
-}
-
-div[hssclass=hop-error-msg] tt {
+table[data-hss-class=hop-exception-msg] tt {
   font-family: monospace;
   font-weight: 200;
   color: inherit;
+  font-size: 95%;
 }
 
-div[hssclass=hop-error-trace] {
+table[data-hss-class=hop-exception-msg] th {
+  color: #777;
+  font-weight: bold;
+  text-align: left;
+  font-size: 105%;
+}
+
+div[data-hss-class=hop-exception-stack] {
   border-top: 1px dashed #bbb;
   background-color: inherit;
   padding-top: 2ex;
@@ -162,62 +246,20 @@ div[hssclass=hop-error-trace] {
   color: black;
 }
 
-div[hssclass=hop-error-trace] pre {
-  color: #00a;
-  font-weight: normal;
-  padding-left: 1em;
-  font-size: 9pt;
-}
 
-div[hssclass=hop-error].warning {
-  border-color: darkorange;
-}
-
-div[hssclass=hop-error].warning div[hssclass=hop-error-title] {
-  border-color: darkorange;
-}
-
-div[hssclass=hop-error].warning > span[hssclass=hop-error-img] {
-  background-image: url( "icons/errors/warning.png" );
-}
-
-div[hssclass=hop-error].notfound {
-  border-color: #f1d630;
-}
-
-div[hssclass=hop-error].notfound div[hssclass=hop-error-title] {
-  color: #f1d630;
-}
-
-div[hssclass=hop-error].notfound > span[hssclass=hop-error-img] {
-  background-image: url( "icons/errors/notfound.png" );
-}
-
-div[hssclass=hop-error].remote > span[hssclass=hop-error-img] {
-  background-image: url( "icons/errors/error2.png" );
-}
-
-div[hssclass=hop-error].client > span[hssclass=hop-error-img] {
-  background-image: url( "icons/errors/client-error.png" );
-}
-
-div[hssclass=hop-error].security > span[hssclass=hop-error-img] {
-  background-image: url( "icons/errors/privacy.png" );
-}
-
-span[hssclass=hop-eval-error] {
+span[data-hss-class=hop-eval-error] {
   border: 3px dashed red;
   color: black;
   font-weight: bold;
 }
 
-span[hssclass=hop-parse-error] {
+span[data-hss-class=hop-parse-error] {
   border: 3px dashed darkorange;
   color: black;
   font-weight: bold;
 }
 
-div[hssclass=hop-error] tt {
+div[data-hss-class=hop-exception] tt {
   color: #00a;
 }
 
@@ -225,7 +267,7 @@ div[hssclass=hop-error] tt {
 /*    small screens                                                    */
 /*---------------------------------------------------------------------*/
 @media all and (max-width: 1024px) {
-  div[hssclass=hop-error] {
+  div[data-hss-class=hop-exception] {
      margin: 0;
   }
 }

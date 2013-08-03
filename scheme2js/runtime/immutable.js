@@ -324,7 +324,6 @@ function sc_isSubstring_at(str1, str2, i, len) {
     else if (str2.length < len) return false;
     if (str1.length < len + i) return false;
     return str2.substring(0, len) == str1.substring(i, i+len);
-    return s2 == s1.substring(i, i+ s2.length);
 }
 
 /*** META ((export substring=?) (arity #t))
@@ -340,6 +339,12 @@ function sc_isSubstring(s1, s2, len) {
            (peephole (infix 0 #f "+" "''")))
 */
 function sc_stringAppend() {
+#if HOP_RTS_DEBUG
+    for (var i = 0; i < arguments.length; i++) {
+       if (typeof arguments[i] != "string")
+	  return sc_typeError("string-append", "string", arguments[i]);
+    }
+#endif
     return "".concat.apply("", arguments);
 }
 

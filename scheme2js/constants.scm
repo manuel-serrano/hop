@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Fri Jul 19 12:24:53 2013 (serrano)                */
+;*    Last change :  Tue Jul 30 10:44:39 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -17,6 +17,7 @@
    (import config
 	   tools
 	   nodes
+	   dump-node
 	   export-desc
 	   walk
 	   verbose)

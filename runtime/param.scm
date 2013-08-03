@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Jul 19 16:52:26 2013 (serrano)                */
+;*    Last change :  Mon Jul 29 14:42:06 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1282,7 +1282,8 @@
 	  v)))
 
 (define (hop-runtime-extra-add! v)
-   (hop-runtime-extra-set! (cons v (hop-runtime-extra))))
+   (unless (member v (hop-runtime-extra))
+      (hop-runtime-extra-set! (cons v (hop-runtime-extra)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

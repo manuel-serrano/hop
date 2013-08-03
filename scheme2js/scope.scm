@@ -1,39 +1,47 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/scope.scm               */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Tue Jul 30 14:33:10 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    JavaScript scopes                                                */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module scope
+   
    (import config
 	   tools
 	   nodes
+	   dump-node
 	   export-desc
 	   walk
 	   verbose
 	   free-vars
 	   captured-vars)
+   
    (static (wide-class Call/cc-Let::Let)
+	   
 	   (wide-class Scope-Call/cc-Lambda::Lambda)
+	   
 	   (wide-class Call/cc-Tail-rec::Tail-rec
 	      contains-call/cc?::bool
 	      modified-vars::pair-nil)
+	   
 	   (wide-class Scope-Var::Var
 	      (inside-loop?::bool (default #f))
 	      (call/cc-when-alive?::bool (default #f))
 	      (modified-after-call/cc?::bool (default #f))
 	      (modified-outside-local?::bool (default #f))
-
 	      (repl-var (default #f)))
 	      
 	   (class Main-Env
 	      suspend/resume?::bool))
+   
    (export (scope-resolution! tree::Module)
 	   (scope-flattening! tree::Module)))
 
@@ -56,11 +64,12 @@
 ;; inside the Scope, then a Storage-object is needed. Otherwise the
 ;; exception-based iteration already creates a new frame.
 
-
-(define (scope-resolution! tree)
+;*---------------------------------------------------------------------*/
+;*    scope-resolution! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (scope-resolution! tree::Module)
    (verbose "Scope resolution")
    (let-split! tree)
-   (free-vars tree)
    (captured-vars tree)
    ;; no other analysis is allowed from now on, as other analyses might widen
    ;; variables, too.
@@ -71,11 +80,15 @@
    (let-merge! tree)
    (scope-frame-alloc! tree))
 
-;; split lets so they became nested lets (thereby forcing an order of
-;; evaluation).
-;; Most let's are going to be merged later again.
-;; Difficulty: we haven't paid attention to the order of scope-vars and
-;; bindings (they might not even be of same number)
+;*---------------------------------------------------------------------*/
+;*    let-split! ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    split lets so they became nested lets (thereby forcing an        */
+;*    order of evaluation).                                            */
+;*    Most let's are going to be merged later again.                   */
+;*    Difficulty: we haven't paid attention to the order of            */
+;*    scope-vars and bindings (they might not even be of same number)  */
+;*---------------------------------------------------------------------*/
 (define (let-split! tree)
    (verbose " let-split")
    (split! tree #f))
@@ -185,19 +198,30 @@
    (scope-inside-loop? tree)
    (scope-call/cc tree))
 
-  
+;*---------------------------------------------------------------------*/
+;*    scope-widen-vars! ...                                            */
+;*---------------------------------------------------------------------*/
 (define (scope-widen-vars! tree)
    (verbose " Widening vars")
    (widen!_ tree #f))
 
+;*---------------------------------------------------------------------*/
+;*    widen!-vars ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (widen!-vars vs)
    (for-each (lambda (v)
 		(widen!::Scope-Var v))
-	     vs))
+      vs))
 
+;*---------------------------------------------------------------------*/
+;*    widen!_ ::Node ...                                               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.widen!_)
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    widen!_ ::Module ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.widen!_)
    (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
       (widen!-vars scope-vars)
@@ -206,23 +230,30 @@
       (widen!::Scope-Var this-var))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    widen!_ ::Lambda ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.widen!_)
    (with-access::Lambda this (scope-vars this-var)
       (widen!-vars scope-vars)
       (widen!::Scope-Var this-var))
    (default-walk this))
-   
+
+;*---------------------------------------------------------------------*/
+;*    widen!_ ::Scope ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Scope.widen!_)
    (with-access::Scope this (scope-vars)
       (widen!-vars scope-vars))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    widen!_ ::Ref ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Ref.widen!_)
    (with-access::Ref this (var)
       (unless (isa? var Scope-Var)
-	 (error "scope"
-		"Internal Error: not scope-var: "
-		var))))
+	 (error "scope" "Internal Error: not scope-var: " (node->list this)))))
 
 
 ;; adds inside-loop?-flag.
@@ -639,50 +670,79 @@
    (default-walk this))
 
 
-;; merge Scopes, if there is no "offending" instruction between both scopes:
-;;
-;; (define (f)
-;;   (let (x)
-;;     (tail-rec (y)
-;;       (print y)
-;;       (let (z)
-;;           .....
-;;
-;; We can merge 'x' with (a new let of) lambda 'f', and 'z' with the
-;; tail-rec. But we can't move 'z' to lambda 'f'. (at least not yet).
-;;
-;; ->
-;; (define (f)
-;;   [local var x]  ;; new Let
-;;   (tail-rec (y z)
-;;     (print y)
-;;     .....
+;*---------------------------------------------------------------------*/
+;*    let-merge! ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    merge Scopes, if there is no "offending" instruction between     */
+;*    both scopes:                                                     */
+;*                                                                     */
+;*    (define (f)                                                      */
+;*      (let (x)                                                       */
+;*        (tail-rec (y)                                                */
+;*          (print y)                                                  */
+;*          (let (z)                                                   */
+;*              .....                                                  */
+;*                                                                     */
+;*    We can merge 'x' with (a new let of) lambda 'f', and 'z' with    */
+;*    the tail-rec. But we can't move 'z' to lambda 'f'. (at least     */
+;*    not yet).                                                        */
+;*                                                                     */
+;*    ->                                                               */
+;*    (define (f)                                                      */
+;*      [local var x]  ;; new Let                                      */
+;*      (tail-rec (y z)                                                */
+;*        (print y)                                                    */
+;*        .....                                                        */
+;*---------------------------------------------------------------------*/
 (define (let-merge! tree)
    (merge! tree #f #f #f #f))
 
+;*---------------------------------------------------------------------*/
+;*    make-box ...                                                     */
+;*---------------------------------------------------------------------*/
 (define (make-box v)
    (cons '*box* v))
 
+;*---------------------------------------------------------------------*/
+;*    box-set! ...                                                     */
+;*---------------------------------------------------------------------*/
 (define (box-set! b v)
    (set-cdr! b v))
 
+;*---------------------------------------------------------------------*/
+;*    unbox ...                                                        */
+;*---------------------------------------------------------------------*/
 (define (unbox b)
    (cdr b))
 
-;; last-scope-valid?::box the last scope is still valid and should be merged.
-;; <-call/cc-call?::box return-value. #t when a call/cc-was encountered.
-;; <-call/cc-call? implies (not last-scope-valid?). But the inverse is not
-;; true.
+;*---------------------------------------------------------------------*/
+;*    merge! ::Node ...                                                */
+;*    -------------------------------------------------------------    */
+;*    last-scope-valid?::box the last scope is still valid and should  */
+;*    be merged.                                                       */
+;*    <-call/cc-call?::box return-value. #t when a call/cc-was         */
+;*    encountered.                                                     */
+;*    <-call/cc-call? implies (not last-scope-valid?). But the inverse */
+;*    is not true.                                                     */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.merge! last-scope last-scope-valid? <-call/cc-call?)
    (default-walk! this last-scope last-scope-valid? <-call/cc-call?))
 
-;; Modules are only for parameters and exported vars.
+;*---------------------------------------------------------------------*/
+;*    merge! ::Module ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Modules are only for parameters and exported vars.               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.merge! last-scope last-scope-valid? <-call/cc-call?)
    (default-walk! this #f (make-box #f) (make-box #f)))
 
-;; Lambdas are only for parameters.
-;; but we want a Let directly within the Return. In the worst case it will have
-;; no variables.
+;*---------------------------------------------------------------------*/
+;*    merge! ::Lambda ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Lambdas are only for parameters.                                 */
+;*    but we want a Let directly within the Return. In the worst       */
+;*    case it will have no variables.                                  */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.merge! last-scope last-scope-valid? <-call/cc-call?)
    ;; body must be a Return.
    (with-access::Lambda this (body)
@@ -696,7 +756,11 @@
 	 ;; lambda shields
 	 (default-walk! this #f (make-box #f) (make-box #f)))))
 
-;; if possible move variables to outer scope.
+;*---------------------------------------------------------------------*/
+;*    merge! ::Let ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    if possible move variables to outer scope.                       */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Let.merge! last-scope last-scope-valid? <-call/cc-call?)
    (with-access::Let this (bindings body scope-vars)
       (set! bindings (map! (lambda (n)
@@ -723,8 +787,7 @@
 		  (set! scope-vars (append! this-scope-vars scope-vars))))
 	    (set! scope-vars '())))
       (cond
-	 ((and (null? scope-vars)
-	       (null? bindings))
+	 ((and (null? scope-vars) (null? bindings))
 	  body)
 	 ((null? scope-vars)
 	  (instantiate::Begin
@@ -732,7 +795,11 @@
 	 (else
 	  this))))
 
-;; call/cc-calls invalidate the last scope.
+;*---------------------------------------------------------------------*/
+;*    merge! ::Call ...                                                */
+;*    -------------------------------------------------------------    */
+;*    call/cc-calls invalidate the last scope.                         */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Call.merge! last-scope last-scope-valid? <-call/cc-call?)
    (default-walk! this last-scope last-scope-valid? <-call/cc-call?)
    (with-access::Call this (call/cc?)
@@ -741,7 +808,11 @@
 	 (box-set! <-call/cc-call? #t)))
    this)
 
-;; loops invalidate the last scope
+;*---------------------------------------------------------------------*/
+;*    merge! ::Tail-rec ...                                            */
+;*    -------------------------------------------------------------    */
+;*    loops invalidate the last scope                                  */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Tail-rec.merge! last-scope last-scope-valid? <-call/cc-call?)
    (with-access::Tail-rec this (inits body)
       (set! inits (map! (lambda (n)
@@ -772,7 +843,11 @@
 
       this))
 
-;; just an optimization. would work without, too.
+;*---------------------------------------------------------------------*/
+;*    merge! ::If ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    just an optimization. would work without, too.                   */
+;*---------------------------------------------------------------------*/
 (define-nmethod (If.merge! last-scope last-scope-valid? <-call/cc-call?)
    (with-access::If this (test then else)
       (set! test (walk! test last-scope last-scope-valid? <-call/cc-call?))
@@ -797,40 +872,91 @@
 					  (unbox <-call/cc-call?))))))
    this)
 
-;; Creates a Scope-Allocate for every Scope that needs it, and creates the
-;; necessary frame-pushes.
-;;
-;; when the storage-variable itself is reused (as is the case in loops) then
-;; the storage object needs to be pushed on the activation frame. (Either using
-;; 'with', or with an anonymous function.)
+;*---------------------------------------------------------------------*/
+;*    scope-frame-alloc! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Creates a Scope-Allocate for every Scope that needs it, and      */
+;*    creates the necessary frame-pushes.                              */
+;*                                                                     */
+;*    when the storage-variable itself is reused (as is the case in    */
+;*    loops) then the storage object needs to be pushed on the         */
+;*    activation frame. (Either using 'with', or with an anonymous     */
+;*    function.)                                                       */
+;*---------------------------------------------------------------------*/
 (define (scope-frame-alloc! tree)
    (verbose " create storage allocations for Lets and adding frame pushes")
-   (alloc! tree #f))
+   (frame-alloc! tree tree))
 
-(define-nmethod (Node.alloc!)
+;*---------------------------------------------------------------------*/
+;*    frame-alloc! ::Node ...                                          */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Node.frame-alloc!)
    (default-walk! this))
 
 ;*---------------------------------------------------------------------*/
-;*    alloc! ::Let ...                                                 */
+;*    frame-alloc! ::Let ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-nmethod (Let.alloc!)
-   (with-access::Let this (scope-vars body)
-      (let ((frame-vars (cp-filter (lambda (var)
+(define-nmethod (Let.frame-alloc!)
+   (with-access::Let this (scope-vars body location bindings)
+      (let ((frame-vars (reverse
+			   (filter (lambda (var)
 				      (with-access::Var var (needs-frame?
 							       needs-boxing?
 							       needs-uniquization?)
 					 (or needs-frame?
 					     needs-boxing?
 					     needs-uniquization?)))
-			   scope-vars)))
+			      scope-vars))))
 	 (cond
 	    ((null? frame-vars)
 	     (default-walk! this))
-	    ((config 'frame-push-mode)
+	    ((and (not (config 'frame-push)) (not (config 'javascript-let)))
+	     ;; apply an anonymous function
+	     (let* ((formals (map (lambda (b)
+				     (with-access::Set! b (lvalue)
+					lvalue))
+				bindings))
+		    (actuals (map (lambda (b)
+				     (with-access::Set! b (val)
+					val))
+				bindings))
+		    (storage-decl (Ref-of-new-Var 'storage))
+		    (storage-var (with-access::Ref storage-decl (var) var))
+		    (frame-alloc (instantiate::Frame-alloc
+				    (location location)
+				    (storage-var (with-access::Ref storage-decl (var) var))
+				    (vars frame-vars)))
+		    (body (instantiate::Frame-push
+			     (location location)
+			     (frame-alloc frame-alloc)
+			     (body body)))
+		    (fun (instantiate::Lambda
+			    (location location)
+			    (scope-vars scope-vars)
+			    (formals formals)
+			    (body (instantiate::Return
+				     (location location)
+				     (val body)))
+			    (vaarg? #f)
+			    (closure? #f)))
+		    (call (instantiate::Call
+			     (location location)
+			     (operator fun)
+			     (operands actuals)))
+		    (mod (duplicate::Module env
+			    (body call))))
+		(captured-vars mod)
+;* 		(scope-widen-vars! mod)                                */
+;* 		(scope-predicates mod)                                 */
+;* 		(scope-temporaries! mod)                               */
+;* 		(scope-shrink-vars! mod)                               */
+		call))
+	    (else
 	     ;; create storage-var
 	     (let* ((storage-decl (Ref-of-new-Var 'storage))
 		    (storage-var (with-access::Ref storage-decl (var) var))
 		    (frame-alloc (instantiate::Frame-alloc
+				    (location location)
 				    (storage-var (with-access::Ref storage-decl (var) var))
 				    (vars frame-vars))))
 		(for-each (lambda (var)
@@ -842,56 +968,54 @@
 		(default-walk! this)
 		
 		(instantiate::Let
+		   (location location)
 		   (scope-vars (list storage-var))
 		   (bindings (list (instantiate::Set!
+				      (location location)
 				      (lvalue storage-decl)
 				      (val frame-alloc))))
 		   (body (instantiate::Frame-push
-			    (frame-allocs (list frame-alloc))
+			    (location location)
+			    (frame-alloc frame-alloc)
 			    (body this)))
-		   (kind 'let))))
-	    (else
-	     (with-access::Let this (scope-vars body bindings call/cc?
-				       location)
-		(instantiate::Call
-		   (location location)
-		   (operator (instantiate::Lambda
-				(location location)
-				(scope-vars scope-vars)
-				(formals (map (lambda (v)
-						 (with-access::Var v (id)
-						    (instantiate::Ref
-						       (location location)
-						       (id id)
-						       (var v))))
-					    scope-vars))
-				(vaarg? #f)
-				(body body)))
-		   (operands (map (lambda (binding::Set!)
-				     (with-access::Set! binding (val)
-					val))
-				bindings))
-		   (call/cc? call/cc?))))))))
+		   (kind 'let))))))))
 
+;*---------------------------------------------------------------------*/
+;*    scope-flattening! ...                                            */
+;*---------------------------------------------------------------------*/
 (define (scope-flattening! tree)
    (verbose "scope-flattening")
    (let-removal! tree))
-	    
-;; Remove Let-nodes.
-;; Create a declared-vars list for each module/lambda. These nodes need to
-;; be declared by "var".
+
+;*---------------------------------------------------------------------*/
+;*    let-removal! ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Remove Let-nodes.                                                */
+;*    Create a declared-vars list for each module/lambda. These nodes  */
+;*    need to be declared by "var".                                    */
+;*---------------------------------------------------------------------*/
 (define (let-removal! tree)
    (remove! tree #f #f))
 
-;; surrounding-fun could be a Module too!
+;*---------------------------------------------------------------------*/
+;*    remove! ::Node ...                                               */
+;*    -------------------------------------------------------------    */
+;*    surrounding-fun could be a Module too!                           */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.remove! surrounding-fun)
    (default-walk! this surrounding-fun))
 
+;*---------------------------------------------------------------------*/
+;*    remove! ::Module ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.remove! surrounding-fun)
    (with-access::Module this (scope-vars declared-vars)
 	 (set! declared-vars scope-vars)
 	 (default-walk! this this)))
 
+;*---------------------------------------------------------------------*/
+;*    remove! ::Lambda ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.remove! surrounding-fun)
    (with-access::Lambda this (declared-vars)
       (set! declared-vars '()) ;; don't add formals. they don't need 'var'

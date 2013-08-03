@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Sat Jun  2 07:02:54 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Tue Jul 23 14:31:02 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -54,7 +54,7 @@ function hop_dashboard_start_applet( name, svc ) {
 	 window.open( sc_dirname( svc ), name );
       } else {
 	 if( xhr.exception ) {
-	    hop_report_exception( xhr.exception );
+	    hop_callback_handler( xhr.exception, "dashboard" );
 	 } else {
 	    sc_error( svc, "Cannot open dashboard", xhr.responseText );
 	 }

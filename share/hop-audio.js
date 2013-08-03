@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sat Jan 28 18:51:35 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Tue Jul 23 14:30:44 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
 /*=====================================================================*/
@@ -440,7 +440,7 @@ function hop_report_audio_exception( e ) {
    exc.message = e.value;
    exc.scObject = e.audio.backend.src;
 
-   hop_report_exception( exc );
+   hop_callback_handler( exc, "audio" );
 }
 
 /*---------------------------------------------------------------------*/

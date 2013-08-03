@@ -40,8 +40,7 @@
 
 (define (read-config c conf)
    (let ((tmp (assq conf c)))
-      (and tmp
-	   (cdr tmp))))
+      (and tmp (cdr tmp))))
 
 (define (config-init! #!optional config)
    (thread-parameter-set! '*scheme2js-config* (or config '())))
@@ -182,8 +181,9 @@
 	(call-check . #t)
 	(debug . #f)
 	(module-resolver . ,(lambda (mod files dir) #f))
-	(frame-push-mode . #f)
-	(javascript-let . #t)
+	(javascript-let . #f)
+	(frame-push . #f)
+	(tmp-dir . ,(os-tmp))
 	(use-strict . #t))
       `((library-path . ,(bigloo-library-path)))
       *O1*))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jul 22 14:30:21 2013 (serrano)                */
+;*    Last change :  Wed Jul 31 07:13:32 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -306,6 +306,7 @@
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
+	 :tmp-dir (os-tmp)
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
 	 :eval (lambda (e)

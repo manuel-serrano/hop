@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Tue Jul 23 09:52:57 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 17:40:32 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -53,33 +53,28 @@
        (and (pair? s-expr) (location (car s-expr)))))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->pobject-map ...                                          */
+;*    find-location ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (scheme->pobject-map l)
+(define (find-location exp loc)
+   (or (location exp) loc))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->pobject-map/loc ...                                      */
+;*---------------------------------------------------------------------*/
+(define (scheme->pobject-map/loc l loc procname)
    (let loop ((l l)
-	      (rev-res '()))
+	      (rev-res '())
+	      (loc loc))
       (cond
 	 ((null? l)
 	  (reverse! rev-res))
 	 ((not (pair? l))
 	  (scheme2js-error "Object-conv" "invalid expression-list" l l))
 	 (else
-	  (let ((loc (location l)))
+	  (let ((loc (find-location l loc)))
 	     (loop (cdr l)
-		(cons (scheme->pobject (car l) loc)
-		   rev-res)))))))
-
-;*---------------------------------------------------------------------*/
-;*    location-map ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (location-map f l)
-   (let loop ((l l)
-	      (rev-res '()))
-      (if (null? l)
-	  (reverse! rev-res)
-	  (let ((loc (location l)))
-	     (loop (cdr l)
-		(cons (f (car l) loc) rev-res))))))
+		(cons (scheme->pobject/loc (car l) loc procname) rev-res)
+		loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attach-location! ...                                             */
@@ -95,14 +90,67 @@
    (instantiate::Module
       (body (scheme->pobject prog (location prog)))))
 
-(define (expr-list->Begin expr-list)
+(define (expr-list->Begin expr-list loc procname)
    (instantiate::Begin
-      (exprs (scheme->pobject-map expr-list))))
+      (exprs (scheme->pobject-map/loc expr-list
+		(find-location expr-list loc) procname))))
+
+;*---------------------------------------------------------------------*/
+;*    type-check ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (type-check var tname loc procname)
+   (let ((pred (case tname
+		  ((pair) 'pair?)
+		  ((vector) 'vector?)
+		  ((symbol) 'symbol?)
+		  ((char) 'char?)
+		  ((int bint) 'integer?)
+		  ((real breal) 'real?)
+		  ((bool) 'boolean?)
+		  ((struct) 'struct?)
+		  ((class) 'class?)
+		  ((string bstring) 'string?)
+		  (else `(lambda (o)
+			    (let ((c (class-exists ',tname)))
+			       (if c (isa? o c) #t)))))))
+      (when pred
+	 (epairify
+	    `(if (not (,pred ,var))
+		 (type-error
+		    ,(when (symbol? procname) (symbol->string procname))
+		    ,(symbol->string tname) ,var))
+	    loc))))
+
+;*---------------------------------------------------------------------*/
+;*    type-checks ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (type-checks vars body loc procname)
+   (if (=fx (bigloo-debug) 0)
+       body
+       (let loop ((vars vars))
+	  (if (null? vars)
+	      body
+	      (multiple-value-bind (id tname)
+		 (parse-ident (car vars))
+		 (if tname
+		     (let ((tcheck (type-check id tname (find-location vars loc) procname)))
+			(if tcheck 
+			    (cons tcheck (loop (cdr vars)))
+			    (loop (cdr vars))))
+		     (loop (cdr vars))))))))
+
+;*---------------------------------------------------------------------*/
+;*    epairify ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (epairify obj loc)
+   (if (and (pair? obj) loc)
+       (econs (car obj) (cdr obj) loc)
+       obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    lambda->object ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (lambda->pobject arguments body)
+(define (lambda->pobject type arguments body loc procname)
    
    ;; if there's a vaarg, make it a the last element of the list and return
    ;; (the list . #t)
@@ -122,7 +170,25 @@
 		 (set-cdr! p (list vaarg)) ;; physically attach the vaarg
 		 (values arguments #t)))))))
    
-   (receive (formals vaarg?)
+   (define (location-map f l loc)
+      (let loop ((l l)
+		 (rev-res '()))
+	 (if (null? l)
+	     (reverse! rev-res)
+	     (let ((loc (find-location l loc)))
+		(loop (cdr l)
+		   (cons (f (car l) loc) rev-res))))))
+
+   (define (type-result type body)
+      (if type
+	  (let ((tmp (gensym 'tmp)))
+	     (list
+		`(let ((,(string->symbol (format "~a::~a" tmp type))
+			(begin ,@body)))
+		    ,tmp)))
+	  body))
+
+   (multiple-value-bind (formals vaarg?)
       (vaarg-list! arguments)
       
       (unless (and (list? formals) (every symbol? formals))
@@ -130,24 +196,30 @@
 	    "Invalid arguments-clause"
 	    arguments
 	    arguments))
-      
-      (let ((formal-decls
-	       (location-map (lambda (formal loc)
-				(attach-location!
-				   (instantiate::Ref
-				      (id (id-of-id formal)))
-				   loc))
-		  formals)))
+
+      (let ((formal-decls (location-map (lambda (formal loc)
+					   (instantiate::Ref
+					      (location loc)
+					      (id (id-of-id formal))))
+			     formals
+			     (find-location arguments loc)))
+	    (loc (find-location body loc)))
 	 (instantiate::Lambda
+	    (location loc)
 	    (formals formal-decls)
 	    (vaarg? vaarg?)
 	    (body (instantiate::Return
-		     (val (expr-list->Begin body))))))))
+		     (location loc)
+		     (val (expr-list->Begin
+			     (type-checks formals
+				(type-result type body)
+				loc procname)
+			     loc procname))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    let-form->pobject ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (let-form->pobject bindings body kind)
+(define (let-form->pobject bindings body kind loc procname)
    
    (define (binding->pobject binding)
       (when (or (null? binding)
@@ -159,34 +231,42 @@
 	    binding
 	    binding))
       (let ((var (id-of-id (car binding)))
-	    (val (cadr binding)))
+	    (val (cadr binding))
+	    (loc (find-location (car binding) loc)))
 	 (instantiate::Set!
-	    (location -1)
-	    (lvalue (attach-location!
-		       (instantiate::Ref (id var))
-		       (location binding)))
-	    (val (scheme->pobject val (location (cdr binding)))))))
+	    (location loc)
+	    (lvalue (instantiate::Ref
+		       (id var)
+		       (location loc)))
+	    (val (scheme->pobject/loc val
+		    (find-location (cdr binding) loc) var)))))
    
    (let ((pobject-bindings (map binding->pobject bindings)))
       (instantiate::Let
+	 (location loc)
 	 (bindings pobject-bindings)
-	 (body (expr-list->Begin body))
+	 (body (expr-list->Begin
+		  (type-checks (map car bindings) body loc procname)
+		  loc procname))
 	 (kind kind))))
 
 ;*---------------------------------------------------------------------*/
 ;*    case->object ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (case->pobject key clauses)
+(define (case->pobject key clauses loc procname)
    
    (define (clause->pobject clause last?)
       (match-case clause
 	 ((?consts . ?raw-exprs)
-	  (let* ((exprs (scheme->pobject-map raw-exprs))
-		 (begin-expr (instantiate::Begin (exprs exprs))))
-	     (if (and last?
-		      (eq? consts 'else))
+	  (let* ((loc (find-location raw-exprs (find-location clause loc)))
+		 (exprs (scheme->pobject-map/loc raw-exprs loc procname))
+		 (begin-expr (instantiate::Begin
+				(exprs exprs)
+				(location loc))))
+	     (if (and last? (eq? consts 'else))
 		 (instantiate::Clause
 		    (consts '())
+		    (location loc)
 		    (expr begin-expr)
 		    (default-clause? #t))
 		 (begin
@@ -196,6 +276,7 @@
 			  consts
 			  consts))
 		    (instantiate::Clause
+		       (location loc)
 		       (consts (map (lambda (const)
 				       (instantiate::Const (value const)))
 				  consts))
@@ -231,7 +312,7 @@
 		rev-result)))))
    
    (instantiate::Case
-      (key (scheme->pobject-no-loc key))
+      (key (scheme->pobject/loc key loc procname))
       (clauses (clauses->pobjects clauses '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -274,101 +355,145 @@
        dest))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->pobject-no-loc ...                                       */
+;*    typed-lambda? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (scheme->pobject-no-loc exp)
+(define (typed-lambda? id)
+   (when (symbol? id)
+      (multiple-value-bind (id type-name)
+	 (parse-ident id)
+	 (and type-name (eq? id 'lambda)))))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->pobject/loc ...                                          */
+;*---------------------------------------------------------------------*/
+(define (scheme->pobject/loc exp loc procname)
    (cond
       ((pair? exp)
-       (match-case exp
-	  ((quote ?datum) (instantiate::Const (value datum)))
-	  ((lambda ?formals . ?body) (lambda->pobject formals body))
-	  ((if ?test ?then)
-	   ;(scheme->pobject `(if ,test ,then #f))
-	   (set-cdr! (cddr exp) '(#f))
-	   (scheme->pobject-no-loc exp))
-	  ((if ?test ?then ?else)
-	   (instantiate::If
-	      (test (scheme->pobject test (location (cdr exp))))
-	      (then (scheme->pobject then (location (cddr exp))))
-	      (else (scheme->pobject else (location (cdddr exp))))))
-	  ((if . ?L) (scheme2js-error #f "bad if-form" exp exp))
-	  ((case ?key . ?clauses)
-	   (case->pobject key clauses))
-	  ((set! (and ?var (? symbol?)) ?expr)
-	   (instantiate::Set!
-	      (location -2)
-	      (lvalue (attach-location!
-			 (instantiate::Ref (id var))
-			 (location (cdr exp))))
-	      (val (scheme->pobject expr (location (cddr exp))))))
-	  ((set! (-> . ?l) ?val)
-	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
-	       ;; field set
-	       (scheme->pobject-no-loc (epairfy (js-field-set l val) exp))
-	       (error "scheme2js" "bad set!-form" exp)))
-	  ((set! (@ ?sym ?qualifier) ?expr)
-	   (let ((id (cadr exp)))
+       (let ((loc (find-location exp loc)))
+	  (match-case exp
+	     ((quote ?datum)
+	      (instantiate::Const
+		 (location loc)
+		 (value datum)))
+	     ((lambda ?formals . ?body)
+	      (lambda->pobject #f formals body loc procname))
+	     ((if ?test ?then)
+	      (set-cdr! (cddr exp) '(#f))
+	      (scheme->pobject/loc exp loc procname))
+	     ((if ?test ?then ?else)
+	      (instantiate::If
+		 (location loc)
+		 (test (scheme->pobject test (find-location (cdr exp) loc)))
+		 (then (scheme->pobject then (find-location (cddr exp) loc)))
+		 (else (scheme->pobject else (find-location (cdddr exp) loc)))))
+	     ((if . ?L)
+	      (scheme2js-error #f "bad if-form" exp exp))
+	     ((case ?key . ?clauses)
+	      (case->pobject key clauses loc procname))
+	     ((set! (and ?var (? symbol?)) ?expr)
 	      (instantiate::Set!
-		 (location -3)
-		 (lvalue (attach-location!
-			    (instantiate::Ref (id id))
-			    (location (cdr exp))))
-		 (val (scheme->pobject expr (location (cddr exp)))))))
-	  ((set! . ?L) (scheme2js-error #f "bad set!-form" exp exp))
-	  ((let ?bindings . ?body) (let-form->pobject bindings body 'let))
-	  ((letrec ?bindings . ?body) (let-form->pobject bindings body 'letrec))
-	  ((begin . ?body) (instantiate::Begin (exprs (scheme->pobject-map body))))
-	  ((define ?var ?expr)
-	   (instantiate::Define
-	      (lvalue (attach-location! (instantiate::Ref
-					   (id (id-of-id var)))
-			 (location (cdr exp))))
-	      (val (scheme->pobject expr (location (cddr exp))))))
-	  ((pragma ?str . ?args)
-	   (if (string? str)
-	       (instantiate::Pragma
-		  (str str)
-		  (args (map (lambda (a)
-				(scheme->pobject a (location args)))
-			   args)))
-	       (scheme2js-error #f "bad pragma-form" exp exp)))
-	  ((runtime-ref ?id (? procedure?))
-	   (instantiate::Runtime-Ref
-	      (id id)))
-	  ((-> . ?l)
-	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cddr l)))
-	       (scheme->pobject-no-loc (epairfy (js-field-ref l) exp))
-	       (error "scheme2js" "bad field access" exp)))
-	  ((@ ?sym ?qualifier)
-	   (instantiate::Ref (id (cdr exp))))
-	  (((-> . ?l) . ?args)
-	   (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
-	       (scheme->pobject-no-loc (epairfy (js-method-call l args) exp))
-	       (error "scheme2js" "illegal method invocation" exp)))
-	  ((?operator . ?operands)
-	   (if (and (config 'return)
-		    (eq? operator 'return!))
-	       (if (or (null? operands) (not (null? (cdr operands))))
-		   (scheme2js-error #f "bad return! form: " exp exp)
-		   (instantiate::Return
-		      (val (scheme->pobject (car operands)
-			      (location operands)))))
-	       (instantiate::Call
-		  (operator (scheme->pobject operator (location exp)))
-		  (operands (scheme->pobject-map operands)))))))
+		 (location loc)
+		 (lvalue (instantiate::Ref
+			    (id var)
+			    (location (find-location (cdr exp) loc))))
+		 (val (scheme->pobject expr (find-location (cddr exp) loc)))))
+	     ((set! (-> . ?l) ?val)
+	      (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
+		  ;; field set
+		  (scheme->pobject/loc (epairfy (js-field-set l val) exp)
+		     loc procname)
+		  (error "scheme2js" "bad set!-form" exp)))
+	     ((set! (@ ?sym ?qualifier) ?expr)
+	      (let ((id (cadr exp)))
+		 (instantiate::Set!
+		    (location loc)
+		    (lvalue (attach-location!
+			       (instantiate::Ref (id id))
+			       (location (find-location (cdr exp) loc))))
+		    (val (scheme->pobject expr (find-location (cddr exp) loc))))))
+	     ((set! . ?L)
+	      (scheme2js-error #f "bad set!-form" exp exp))
+	     ((let ?bindings . ?body)
+	      (let-form->pobject bindings body 'let loc procname))
+	     ((letrec ?bindings . ?body)
+	      (let-form->pobject bindings body 'letrec loc procname))
+	     ((begin . ?body)
+	      (instantiate::Begin
+		 (location loc)
+		 (exprs (scheme->pobject-map/loc body loc procname))))
+	     ((define ?var ?expr)
+	      (let ((id (id-of-id var)))
+		 (instantiate::Define
+		    (location loc)
+		    (lvalue (instantiate::Ref
+			       (location (find-location (cdr exp) loc))
+			       (id id)))
+		    (val (scheme->pobject/loc expr
+			    (find-location (cddr exp) loc) id)))))
+	     ((pragma ?str . ?args)
+	      (if (string? str)
+		  (instantiate::Pragma
+		     (str str)
+		     (location loc)
+		     (args (map (lambda (a)
+				   (scheme->pobject/loc a
+				      (find-location args loc) procname))
+			      args)))
+		  (scheme2js-error #f "bad pragma-form" exp exp)))
+	     ((runtime-ref ?id (? procedure?))
+	      (instantiate::Runtime-Ref
+		 (location loc)
+		 (id id)))
+	     ((-> . ?l)
+	      (if (and (pair? l) (pair? (cdr l)) (every symbol? (cddr l)))
+		  (scheme->pobject/loc (epairfy (js-field-ref l) exp)
+		     loc procname)
+		  (error "scheme2js" "bad field access" exp)))
+	     ((@ ?sym ?qualifier)
+	      (instantiate::Ref
+		 (location loc)
+		 (id (cdr exp))))
+	     (((-> . ?l) . ?args)
+	      (if (and (pair? l) (pair? (cdr l)) (every symbol? (cdr l)))
+		  (scheme->pobject/loc (epairfy (js-method-call l args) exp)
+		     loc procname)
+		  (error "scheme2js" "illegal method invocation" exp)))
+	     (((and ?tlambda (? typed-lambda?)) ?formals . ?body)
+	      (multiple-value-bind (id type-name)
+		 (parse-ident tlambda)
+		 (lambda->pobject type-name formals body loc procname)))
+	     ((?operator . ?operands)
+	      (if (and (config 'return) (eq? operator 'return!))
+		  (if (or (null? operands) (not (null? (cdr operands))))
+		      (scheme2js-error #f "bad return! form: " exp exp)
+		      (instantiate::Return
+			 (location loc)
+			 (val (scheme->pobject (car operands)
+				 (find-location operands loc)))))
+		  (instantiate::Call
+		     (location loc)
+		     (operator (scheme->pobject operator
+				  (find-location operator loc)))
+		     (operands (scheme->pobject-map/loc operands
+				  loc procname))))))))
       ((eq? exp #unspecified)
-       (instantiate::Const (value #unspecified)))
+       (instantiate::Const
+	  (location loc)
+	  (value #unspecified)))
       ;; unquoted symbols must be var-refs
       ((symbol? exp)
        (instantiate::Ref
+	  (location loc)
 	  (id exp)))
       ((vector? exp)
        (scheme2js-error #f "vectors must be quoted" exp exp))
       (else
-       (instantiate::Const (value exp)))))
-
+       (instantiate::Const
+	  (location loc)
+	  (value exp)))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    scheme->pobject ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (scheme->pobject exp loc)
-   (attach-location! (scheme->pobject-no-loc exp) loc))
+   (attach-location! (scheme->pobject/loc exp (find-location exp loc) #f) loc))

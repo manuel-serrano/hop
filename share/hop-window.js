@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Apr 26 08:58:17 2013 (serrano)                */
+/*    Last change :  Fri Aug  2 15:30:03 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -510,6 +510,9 @@ function make_hop_iwindow( id, klass, parent ) {
    win.oniconify = false;
    win.onresize = false;
    win.onmaximize = false;
+   win.onclose = false;
+   win.onmove = false;
+   win.onraise = false;
 
    hop_add_event_listener(
       win.el_handle,

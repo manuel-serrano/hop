@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Wed Mar 21 13:52:02 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Fri Jul 26 09:13:38 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/

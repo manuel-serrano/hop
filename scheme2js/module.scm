@@ -562,24 +562,25 @@
 ;*    read-includes! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (read-includes! m::WIP-Unit include-paths reader)
+
    (define (read-file f loc)
       (unless (string? f)
 	 (scheme2js-error "scheme2js-module"
-			  "include-parameter must be a string"
-			  f
-			  loc))
+	    "include-parameter must be a string"
+	    f
+	    loc))
       (let ((file (find-file/path f include-paths)))
 	 (unless file
 	    (scheme2js-error "scheme2js module"
-			     "cannot find include-file"
-			     f
-			     loc))
+	       "cannot find include-file"
+	       f
+	       loc))
 	 (let ((p (open-input-file file)))
 	    (unless p
 	       (scheme2js-error "scheme2js module"
-				"cannot open include-file"
-				f
-				loc))
+		  "cannot open include-file"
+		  f
+		  loc))
 	    (unwind-protect
 	       (let loop ((rev-source '()))
 		  (let ((sexp (reader p #t)))
@@ -587,7 +588,7 @@
 			 (reverse! rev-source)
 			 (loop (cons sexp rev-source)))))
 	       (close-input-port p)))))
-      
+
    (with-access::WIP-Unit m (header top-level)
       (let* ((include-files (module-entries header 'include))
 	     (read-includes (emap read-file include-files)))

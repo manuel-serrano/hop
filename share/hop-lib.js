@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Mon Jul 22 15:57:54 2013 (serrano)                */
+/*    Last change :  Fri Jul 26 10:39:21 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -31,17 +31,25 @@
 /*    hop_callback ...                                                 */
 /*    -------------------------------------------------------------    */
 /*    See HOP-CALLBACK-HANDLER, hop-exception.scm.                     */
+/*    See also XML-TILDE->STATEMENT, runtime/xml.scm                   */
 /*---------------------------------------------------------------------*/
-function hop_callback( proc ) {
-   if( hop_debug() ) {
+function hop_callback( proc, ctx ) {
+   if( hop_debug() > 0 ) {
       // debug mode
-      return function() {
+      var applyCallback = function() {
 	 try {
+	    hop_current_stack_context = ctx;
 	    return proc.apply( this, arguments );
 	 } catch( e ) {
-	    hop_callback_handler( e );
+	    hop_callback_handler( e, ctx );
 	 }
       }
+
+      if( "displayName" in proc ) {
+	 applyCallback.displayName = proc.displayName;
+      }
+
+      return applyCallback;
    } else {
       return proc;
    }
@@ -376,24 +384,57 @@ function hop_typeof( obj ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    after ...                                                        */
+/*    sc_after ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t) (arity #t)) */
-function after( timeout, proc ) {
+/*** META ((export after) (arity #t)) */
+function sc_after( timeout, proc ) {
    var tm = sc_isNumber( timeout ) ? timeout : 1;
-   var wproc = hop_callback( proc );
+   var wproc;
+   
+   if( hop_debug() == 0 ) {
+      wproc = proc;
+   } else {
+      if( sc_arity_check( proc, 0 ) ) {
+	 /* raise an error to get the execution stack */
+	 try {
+	    var e = new Error( "after" );
+	    e.precontext = hop_current_stack_context;
+
+	    throw e;
+	 } catch( e ) {
+	    wproc = hop_callback( proc, e );
+	 }
+      }
+   }
    
    var i = setInterval( function() { clearInterval( i ); wproc() }, tm );
+   
    return true;
 }
 
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t) (arity #t)) */
-function timeout( tm, proc ) {
-   var wproc = hop_callback( proc );
+/*** META ((export timeout) (arity #t)) */
+function sc_timeout( tm, proc ) {
+   var wproc;
+   
+   if( hop_debug() == 0 ) {
+      wproc = proc;
+   } else {
+      if( sc_arity_check( proc, 0 ) ) {
+	 /* raise an error to get the execution stack */
+	 try {
+	    var e = new Error( "timeout" );
+	    e.precontext = hop_current_stack_context;
 
+	    throw e;
+	 } catch( e ) {
+	    wproc = hop_callback( proc, e );
+	 }
+      }
+   }
+      
    if( wproc() ) {
       var i = setInterval(
 	 function() { if( !wproc() ) clearInterval( i )}, tm );

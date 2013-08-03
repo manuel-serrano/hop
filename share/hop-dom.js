@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jul 23 08:58:52 2013 (serrano)                */
+/*    Last change :  Thu Aug  1 09:28:06 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1161,14 +1161,39 @@ function hop_create_element( html ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_encoded_element ...                                   */
+/*    -------------------------------------------------------------    */
+/*    Don't remove this function, see HOP_FIND_CLASS_UNSERIALIZER      */
+/*    (hop-serialize.js).                                              */
 /*---------------------------------------------------------------------*/
 function hop_create_encoded_element( html ) {
-   return hop_create_element( decodeURIComponent( html ) );
-/*    try {                                                            */
-/*       return hop_create_element( decodeURIComponent( html ) );      */
-/*    } catch( e ) {                                                   */
-/*       alert( "*** hop_create_encoded_element, cannot decode: " + html ); */
-/*    }                                                                */
+   try {
+      return hop_create_element( decodeURIComponent( html ) );
+   } catch( e ) {
+      /* decoding has hitted an illegal UTF-8 surrogate, decode by hand */
+      var i = 0;
+      var l = html.length;
+      var r = "";
+
+      while( i < l ) {
+	 var j = html.indexOf( '%', i );
+
+	 if( j == -1 ) {
+	    return r + html.substring( i );
+	 } else {
+	    if( j > l - 3 )
+	       return r + html.substring( i );
+
+	    if( j > i )
+	       r += html.substring( i, j );
+
+	    r += string_hex_intern( html.substring( j + 1, j + 3 ) );
+
+	    i = j + 3;
+	 }
+      }
+
+      return hop_create_element( r );
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1182,11 +1207,11 @@ function hop_innerHTML_set( nid, html ) {
       el = document.getElementById( nid );
 
       if( el == undefined ) {
-	 sc_error( "innerHTML-set!", "Cannot find element", nid, 1 );
+	 sc_error( "innerHTML-set!", "Cannot find element", nid, 2 );
       }
    } else {
       if( !nid ) {
-	 sc_error( "innerHTML-set!", "illegal element", nid, 1 );
+	 sc_error( "innerHTML-set!", "illegal element", nid, 2 );
 	 return;
       }
       el = nid;

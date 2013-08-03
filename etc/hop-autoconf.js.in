@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Jul 22 14:14:18 2013 (serrano)                */
+/*    Last change :  Fri Jul 26 10:26:02 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -62,6 +62,17 @@ function HopServer( host, ip ) {
    }
 }
 
+HopServer.prototype.sc_toDisplayString = function() {
+   return "[HopServer]";
+}
+HopServer.prototype.sc_toWriteString = function() {
+   return "[HopServer]";
+}
+   
+HopServer.prototype.toString = function() {
+   return "[HopServer]";
+}
+   
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
@@ -94,10 +105,12 @@ function hop_get_flash_version() {
       }
    } else {
       try {
-	 axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
-	 var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
-	 if( m != null ) {
-	    return m[ 1 ];
+	 if( "ActiveXObject" in window ) {
+	    axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
+	    var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
+	    if( m != null ) {
+	       return m[ 1 ];
+	    }
 	 }
       } catch (e) {
       }
@@ -852,7 +865,7 @@ try {
 if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
-         var f = hop_callback( proc );
+         var f = hop_callback( proc, obj + "<-" + event );
          var i = "on" + event + "hdl";
 
          if( !(i in obj ) ) obj[ i ] = [];
@@ -895,7 +908,7 @@ if( hop_has_event20 ) {
    var hop_event_counter = 0;
    
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var f = hop_callback( proc );
+      var f = hop_callback( proc, obj + "<-" + event );
       var procid = "on" + event + hop_event_counter++;
       obj[ procid ] = f;
       var p = function( e ) { return obj[ procid ]( window.event ); };

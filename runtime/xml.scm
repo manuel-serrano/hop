@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jul 23 10:34:48 2013 (serrano)                */
+;*    Last change :  Fri Jul 26 21:01:11 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -883,6 +883,16 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->statement::bstring obj)
 
+   (define (element-attribute el)
+      (with-access::xml-element el (attributes)
+	 (let loop ((attributes attributes))
+	    (if (or (null? attributes) (null? (cdr attributes)))
+		#f
+		(if (and (keyword? (car attributes))
+			 (eq? (cadr attributes) obj))
+		    (car attributes)
+		    (loop (cddr attributes)))))))
+   
    (define (parent-context parent)
       (cond
 	 ((string? parent)
@@ -891,13 +901,21 @@
 	 ((isa? parent xml-element)
 	  ;; find the attribute (if any)
 	  (with-access::xml-element parent (tag id)
-	     (format "~a#~a" tag id)))
+	     (let ((attr (element-attribute parent)))
+		(if attr
+		    (format "~a#~a.~a" tag id (keyword->string attr))
+		    (format "~a#~a" tag id)))))
 	 (else
 	  "")))
 	  
    (define (js-catch-callback/location stmt parent file point)
-      (format "try { ~a } catch( e ) { hop_callback_handler_location( e, \"~a\", \"~a\", ~a ); }"
-	 stmt (parent-context parent) file point))
+      ;; this is an inlined version of hop_callback (hop-lib.js)
+      (format "var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a );
+hop_current_stack_context=ctx;
+try { ~a } catch( e ) { hop_callback_handler(e, ctx); }"
+	 (string-replace (xml-attribute-encode (parent-context parent))
+	    #\Newline #\Space)
+	 file point stmt))
    
    (define (js-catch-callback stmt)
       (format "try { ~a } catch( e ) { hop_callback_handler( e ); }" stmt))

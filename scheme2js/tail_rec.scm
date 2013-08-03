@@ -46,8 +46,8 @@
 ;; The meaning of tail-rec-call: (loop x_up y_up z_up)
 (define (tail-rec! tree)
    (verbose "tail-rec")
+   (tail-calls tree)
    (when (config 'optimize-tail-rec)
-      (tail-calls tree)
       (side-effect tree)
       (rec! tree #f #f)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Mon Jul 22 14:40:21 2013 (serrano)                */
+;*    Last change :  Wed Jul 31 14:24:21 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Call compilation                                                 */
@@ -367,7 +367,8 @@
 ;*    compile-optimized-call ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (compile-optimized-call p compile operator operands tmp)
-   (when (and (isa? operator Ref)
+   (when (and (=fx (bigloo-debug) 0)
+	      (isa? operator Ref)
 	      (with-access::Ref operator (var)
 		 (with-access::Var var (constant?) constant?))
 	      (with-access::Ref operator (var)
@@ -375,7 +376,7 @@
       (let* ((var (with-access::Ref operator (var)  var))
 	     (desc (with-access::Var var (export-desc) export-desc))
 	     (peephole (with-access::Export-Desc desc (peephole) peephole)))
-	 (when (and peephole (not (config 'debug)))
+	 (when peephole
 	    (let* ((optimize-fun
 		      (case (car peephole)
 			 ((infix) (apply infix-op (cdr peephole)))

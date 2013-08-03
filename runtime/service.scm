@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu May 16 09:06:26 2013 (serrano)                */
+;*    Last change :  Thu Jul 25 15:32:43 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */

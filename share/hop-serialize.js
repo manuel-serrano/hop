@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Jul  2 11:34:21 2013 (serrano)                */
+/*    Last change :  Sat Aug  3 06:20:15 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -33,6 +33,8 @@ Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
+/*    -------------------------------------------------------------    */
+/*    Returns a URL encode Bigloo serialization.                       */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize( item ) {
    if( hop_serialize_context.active ) {
@@ -330,37 +332,17 @@ function utf_length( s ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_string ...                                         */
-/*    -------------------------------------------------------------    */
-/*    MS 25may2011: I'm not sure this is the correct way of encoding   */
-/*    strings. In the current implementation, the UCS2 is transformed  */
-/*    into a uri-encoded string. This works fine for sending the       */
-/*    value to the server. The problem is when that encoding is used   */
-/*    by hop_obj_to_string. That function will apply decodeURI to the  */
-/*    result of the encoding which will change the length of the       */
-/*    encoded character. Imaging a string which contains the two       */
-/*    latin character e' such as te'. In UCS2, this string has a       */
-/*    length of 2, encoded in UTF8 it has a length of 3, thus          */
-/*    the function hop_serialize_string will strink the encoded        */
-/*    string. So the serialization has marked a string of length 3     */
-/*    but the actual string produced by obj_to_string only contains    */
-/*    a string of length 2! For the decoding to work, the decoder has  */
-/*    to be aware that the substring it extracts might be larger than  */
-/*    the expected value. This is implemented by a loop inside         */
-/*    the decoding of the string (see read_string).                    */
 /*---------------------------------------------------------------------*/
 function hop_serialize_string( item ) {
    var url = encodeURIComponent( item );
-   var len = item.length;
 
-   for( var i = 0; i < len; i++ ) {
-      if( item.charCodeAt( i ) > 127 ) {
-	 /* utf8 encoding */
-	 var enc = encodeURIComponent( url );
-	 return '%25' + hop_serialize_word( url.length ) + enc;
-      }
-   } 
-	 
-   return '%22' + hop_serialize_word( item.length ) + url;
+   if( url.length > item.length ) {
+      var enc = encodeURIComponent( url );
+      
+      return '%25' + hop_serialize_word( url.length ) + enc;
+   } else {
+      return '%22' + hop_serialize_word( item.length ) + url;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -578,18 +560,15 @@ function hop_bigloo_serialize_alist( item ) {
 
    return hop_bigloo_serialize_context( alist );
 }
-   
-/*---------------------------------------------------------------------*/
-/*    hop_obj_to_string ...                                            */
-/*---------------------------------------------------------------------*/
-/*** META ((export obj->string) (arity #t)) */
-function hop_obj_to_string( item ) {
-   var s = hop_bigloo_serialize_context( item );
 
+/*---------------------------------------------------------------------*/
+/*    safe_decode_uri ...                                              */
+/*---------------------------------------------------------------------*/
+function safe_decode_uri( s ) {
    try {
       return decodeURIComponent( s );
    } catch( e ) {
-      /* decoding has hitted an illegal UTF-8 surrogate, deocde by hand */
+      /* decoding has hitted an illegal UTF-8 surrogate, decode by hand */
       var i = 0;
       var l = s.length;
       var r = "";
@@ -617,10 +596,79 @@ function hop_obj_to_string( item ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_bigloo_unserialize ...                                       */
+/*    hop_obj_to_string ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export obj->string) (arity #t)) */
+function hop_obj_to_string( item ) {
+   var s = hop_bigloo_serialize_context( item );
+   
+   return safe_decode_uri( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_string_to_obj ...                                            */
 /*---------------------------------------------------------------------*/
 /*** META ((export string->obj) (arity #t)) */
 function hop_string_to_obj( s ) {
+   var a = hop_config.uint8array ?
+      new Uint8Array( s.length ) : new Array( s.length );
+
+   for( var i = 0, len = s.length; i < len; ++i ) {
+      a[ i ] = (s.charCodeAt( i )) & 0xff;
+   }
+
+   return hop_bytearray_to_obj( a );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_url_encoded_to_obj ...                                       */
+/*---------------------------------------------------------------------*/
+function hop_url_encoded_to_obj( s ) {
+   
+   function hex_to_dec( x ) {
+      if( x <= 0x39 ) {
+	 return x - 0x30;
+      } else {
+	 if( x <= 0x46 ) {
+	    return x - 0x41 + 10;
+	 } else {
+	    return x - 0x61 + 10;
+	 }
+      }
+   }
+      
+   var len = s.length;
+   
+   /* compute the destination length */
+   for( var i = 0; i < len; ++i ) {
+      if( s.charCodeAt( i ) == 0x25 ) {
+	 i += 2;
+	 len -= 2;
+      }
+   }
+
+   /* create the temporary byte array */
+   var a = hop_config.uint8array ? new Uint8Array( len ) : new Array( len );
+
+   for( var i = 0, j = 0, len = s.length; i < len; ++i ) {
+      if( s.charCodeAt( i ) == 0x25 ) {
+	 var n1 = hex_to_dec( s.charCodeAt( i++ ) );
+	 var n2 = hex_to_dec( s.charCodeAt( i++ ) );
+
+	 a[ j ] = (n1 << 4) + n2;
+      } else {
+	 a[ j ] = (s.charCodeAt(i)) & 0xff;
+      }
+   }
+
+   /* decode the object */
+   return hop_bytearray_to_obj( a );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bytearray_to_obj ...                                         */
+/*---------------------------------------------------------------------*/
+function hop_bytearray_to_obj( s ) {
    var pointer = 0;
    var definitions = [];
    var defining = -1;
@@ -633,28 +681,28 @@ function hop_string_to_obj( s ) {
       }
    }
 
-   function utf8substring( s, beg, end ) {
+   function utf8substring( s, end ) {
       var codes = new Array();
       var j = 0;
 
-      while( beg < end ) {
-	 var code = s[ beg++ ];
-	 
+      while( pointer < end ) {
+	 var code = s[ pointer++ ];
+
 	 if( code < 128 ) {
 	    codes[ j++ ] = code;
 	 } else {
-	    var code2 = s[ beg++ ];
+	    var code2 = s[ pointer++ ];
 	    
 	    if( code < 224 ) {
 	       codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
 	    } else {
-	       var code3 = s[ beg++ ];
+	       var code3 = s[ pointer++ ];
 
 	       if( code < 240 ) {
 		  codes[ j++ ] = ((code - 224) << 12)
 		     + ((code2 - 128) << 6) + (code3 - 128);
 	       } else {
-		  code4 = s[ beg++ ];
+		  code4 = s[ pointer++ ];
 
 		  codes[ j++ ] = ((code - 240) << 18)
 		     + ((code2 - 128) << 12)
@@ -708,13 +756,12 @@ function hop_string_to_obj( s ) {
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = utf8substring( s, pointer, pointer + sz );
-      
+      var res = utf8substring( s, pointer + sz );
+
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
 	 defining = -1;
       }
-      pointer += sz;
 
       return res;
    }
@@ -913,12 +960,6 @@ function hop_string_to_obj( s ) {
    }
 
    function string_to_array( s ) {
-/*       for( var i = 0, len = s.length; i < len; ++i ) {              */
-/* 	 if( s.charCodeAt(i) > 0x7f ) {                                */
-/* 	    s = ucs2_to_utf8( s );                                     */
-/* 	    break;                                                     */
-/* 	 }                                                             */
-/*       }                                                             */
       var a = hop_config.uint8array ?
 	 new Uint8Array( s.length ) : new Array( s.length );
 
@@ -942,7 +983,7 @@ function hop_string_to_obj( s ) {
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
          case 0x22 /* " */: return read_string( s );
-         case 0x25 /* " */: return decodeURIComponent( read_string( s ) );
+         case 0x25 /* % */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );
 	 case 0x5b /* [ */: return read_vector( read_size( s ) );
 	 case 0x28 /* ( */: return read_list( read_size( s ) );
@@ -972,10 +1013,6 @@ function hop_string_to_obj( s ) {
       }
    }
 
-   if( (typeof s) === "string" ) {
-      s = string_to_array( s );
-   }
-   
    if( s[ pointer ] === 0x63 /* c */ ) {
       pointer++;
       definitions = new Array( read_size( s ) );
@@ -986,6 +1023,8 @@ function hop_string_to_obj( s ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
+/*    -------------------------------------------------------------    */
+/*    See HOP_CREATE_ENCODED_ELEMENT (hop-dom.js).                     */
 /*---------------------------------------------------------------------*/
 var hop_custom_object_regexp =
    new RegExp( "hop_create_encoded_element[(][ ]*\"([^\"]*)\"[ ]*[)]" );
@@ -999,7 +1038,8 @@ function hop_find_class_unserializer( hash ) {
 	 var m = o.match( hop_custom_object_regexp );
 
 	 if( m ) {
-	    return hop_create_element( decodeURIComponent( m [ 1 ] ) );
+	    /* kind of specialized eval */
+	    return hop_create_encoded_element( m [ 1 ] );
 	 } else {
 	    return sc_error( "string->obj", "Cannot find custom class unserializer", o );
 	 }

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/2.5.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jun 28 08:18:40 2013 (serrano)                */
+;*    Last change :  Sat Aug  3 06:14:52 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -218,7 +218,19 @@
 	    (if i
 		(string->symbol (substring str 0 i))
 		(string->symbol str))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    byte-array->string ...                                           */
+;*---------------------------------------------------------------------*/
+(define (byte-array->string v)
+   (let* ((len (vector-length v))
+	  (s (make-string len)))
+      (let loop ((i 0))
+	 (when (<fx i len)
+	    (string-set! s i (integer->char (vector-ref v i)))
+	    (loop (+fx i 1))))
+      s))
+
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -229,16 +241,22 @@
       (case status
 	 ((200)
 	  ;; see hop-json-mime-type and hop-bigloo-mime-type
-	  (let ((ctype (header-content-type header)))
-	     (cond
-		((eq? ctype 'application/x-hop)
-		 (success (string->obj (read-chars clength p))))
-		((eq? ctype 'application/json)
-		 (success (json->obj p)))
-		((eq? ctype 'application/x-javascript)
-		 (success (javascript->obj p)))
-		(else
-		 (success (read-string p))))))
+	  (let ((obj (case (header-content-type header)
+			((application/x-hop)
+			 (string->obj (read-chars clength p)))
+			((application/x-url-hop)
+			 (string->obj (url-decode (read-chars clength p))))
+			((application/x-json-hop)
+			 (string->obj
+			    (byte-array->string 
+			       (javascript->obj (read-chars clength p)))))
+			((application/json)
+			 (json->obj p))
+			((application/x-javascript)
+			 (javascript->obj p))
+			(else
+			 (read-string p)))))
+	     (success obj)))
 	 ((201 204 304)
 	  ;; no message body
 	  (success (instantiate::xml-http-request
@@ -350,17 +368,17 @@
 ;*    with-hop-remote ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (with-hop-remote path success fail
-			 #!key
-			 (host "localhost")
-			 (port (hop-port))
-			 (abspath #f)
-			 (user #f)
-			 (password #f)
-			 (authorization #f)
-			 (anim #f))
+	   #!key
+	   (host "localhost")
+	   (port (hop-port))
+	   (abspath #f)
+	   (user #f)
+	   (password #f)
+	   (authorization #f)
+	   (anim #f))
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
-	     ": " path "\n")
+      ": " path "\n")
    (with-trace 2 "with-hop"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)

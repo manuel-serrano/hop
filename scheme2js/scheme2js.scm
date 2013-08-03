@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Tue Jul 23 09:55:38 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 10:59:31 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -15,8 +15,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module scheme2js
+   
    (option (set! *dlopen-init* "scheme2js_s"))
+   
    (include "version.sch")
+   
    (import config
 	   nodes
 	   srfi0
@@ -49,7 +52,9 @@
 	   verbose
 	   callcc
 	   trampoline
-	   dump-node)
+	   dump-node
+	   source-map)
+   
    ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
 	      out-p
@@ -98,17 +103,18 @@
 	     (dummy3 (when (eq? debug-stage 'dsssl-expand)
 			(pp dsssl-e p)))
 	     (tree::Module (pobject-conv dsssl-e)))
-
 	 ;;we could do the letrec-expansion in list-form too.
 	 (pass 'letrec         (letrec-expansion! tree))
 	 (pass 'symbol         (symbol-resolution tree imports exports))
 	 (pass 'encapsulation  (encapsulation! tree))
 	 (pass 'node-elim1     (node-elimination! tree))
-	 (pass 'tail-rec       (tail-rec! tree))
+	 (when (config 'frame-push)
+	    (pass 'tail-rec    (tail-rec! tree)))
 	 (pass 'node-elim2     (node-elimination! tree))
 	 (pass 'inline         (inline! tree #t))
 	 (pass 'call-check     (call-check tree))
-	 (pass 'tail-rec2      (tail-rec! tree))
+	 (when (config 'frame-push)
+	    (pass 'tail-rec2   (tail-rec! tree)))
 	 (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
 	 (pass 'constant       (constant-propagation! tree))
 	 (pass 'pragmas        (pragmas! tree))
@@ -116,8 +122,10 @@
 	 (pass 'node-elim3     (node-elimination! tree))
 	 (pass 'call/cc-early  (call/cc-early! tree))
 	 (pass 'trampoline     (trampoline tree))
+;* 	 (scheme2js-dump-temporary tree "trampoline")                  */
 	 (pass 'scope          (scope-resolution! tree))
 	 (pass 'constants      (constants! tree))
+	 (pass 'tail-rec       (tail-rec! tree))
 	 (pass 'while          (tail-rec->while! tree))
 	 (pass 'propagation    (propagation! tree))
 	 ;(var-elimination! tree)
@@ -125,23 +133,31 @@
 	 (pass 'call/cc-middle (call/cc-middle tree))
 	 (pass 'flatten        (scope-flattening! tree))
 	 (pass 'stmts          (statements! tree))
+;* 	 (scheme2js-dump-temporary tree "stmts")                       */
 	 (pass 'while-optim    (optimize-while! tree))
 	 (pass 'node-elim4     (node-elimination! tree))
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
 	 (pass 'call/cc-late   (call/cc-late! tree))
+;* 	 (scheme2js-dump-temporary tree "preout")                      */
 	 ;;(locations tree)
-	 (if debug-stage
-	     (let ((tmp (open-output-string)))
-		(out tree tmp)
-		(close-output-port tmp))
-	     (out tree p))
-	 (when (> (bigloo-debug) 2)
-	    (tprint "TREE=" (node->list (-> tree body))))
-	 ;; source map
-	 (when (config 'source-map)
-	    (fprint p "\n\n//@ sourceMappingURL=/tmp/mapping.js.map"))
-	 (verbose "--- compiled"))))
+	 (out tree p)
+	 (verbose "--- compiled")
+;* 	 (scheme2js-dump-temporary tree "final")                       */
+	 tree)))
+
+;*---------------------------------------------------------------------*/
+;*    scheme2js-dump-temporary ...                                     */
+;*---------------------------------------------------------------------*/
+(define (scheme2js-dump-temporary tree suffix)
+   (call-with-output-file (string-append "/tmp/FOO." suffix ".scm")
+      (lambda (p)
+	 (with-access::Module tree (body)
+	    (display "body=" p)
+	    (display (typeof body) p)
+	    (newline p)
+	    (write (node->list body) p)
+	    (newline p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-compile-expr ...                                       */
@@ -183,8 +199,7 @@
 	       (lambda (e)
 		  ;; when debugging we usually want the
 		  ;; output even (or especially) if there was an error.
-		  (unless (or (config 'debug-stage)
-			      (not actual-file?))
+		  (unless (or (config 'debug-stage) (not actual-file?))
 		     (delete-file out-file))
 		  (raise e))
 	       (let ((module (create-module-from-file in-file
@@ -207,13 +222,68 @@
 			(config-set! 'allow-unresolved
 			   (not declared-module?))))
 		  
-		  (let ((out-p (if actual-file?
-				   (open-output-file out-file)
-				   (current-output-port))))
-		     (unwind-protect
-			(scheme2js module out-p)
-			(when actual-file? (close-output-port out-p)))))))
+		  (let ((tree (cond
+				 (actual-file?
+				  (call-with-output-file out-file
+				     (lambda (out-p)
+					(scheme2js module out-p))))
+				 ((config 'source-map)
+				  (set! actual-file? #t)
+				  (set! out-file
+				     (make-file-name
+					(config 'tmp-dir)
+					(format "~a.js" (tmpfile))))
+				  (let ((tree (call-with-output-file out-file
+						 (lambda (out-p)
+						    (scheme2js module out-p)))))
+				     (call-with-input-file out-file
+					(lambda (p)
+					   (send-chars p (current-output-port))))
+				     tree))
+				 (else
+				  (scheme2js module (current-output-port))))))
+		     (when (config 'source-map)
+			(let* ((srcmap (string-append out-file ".map"))
+			       (files (call-with-output-file srcmap
+					 (lambda (p)
+					    (generate-source-map tree in-file out-file p)))))
+			   (when (pair? files)
+			      (call-with-append-file out-file
+				 (lambda (p)
+				    (generate-source-mapping-url
+				       files srcmap p))))
+			   (unless actual-file?
+			      (delete-file out-file))))))))
 	 (configs-restore! old-configs))))
+
+;*---------------------------------------------------------------------*/
+;*    generate-source-mapping-url ...                                  */
+;*---------------------------------------------------------------------*/
+(define (generate-source-mapping-url files srcmap p::output-port)
+   (display "\n\n" p)
+   (for-each (lambda (f)
+		(fprintf p "hop_source_mapping_url( ~s, \"~a\" );\n" f srcmap))
+      files)
+   (fprintf p "\n//@ sourceMappingURL=~a\n" srcmap))
+
+;*---------------------------------------------------------------------*/
+;*    *tmp-mutex* ...                                                  */
+;*---------------------------------------------------------------------*/
+(define *tmp-mutex* (make-mutex))
+
+;*---------------------------------------------------------------------*/
+;*    *tmp-cnt* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define *tmp-cnt* (elong->fixnum (current-seconds)))
+
+;*---------------------------------------------------------------------*/
+;*    tmpfile ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (tmpfile)
+   (synchronize *tmp-mutex*
+      (let ((n *tmp-cnt*))
+	 (set! *tmp-cnt* (+fx 1 *tmp-cnt*))
+	 (string-append "tmp" (integer->string *tmp-cnt*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    precompile-imported-module-file ...                              */
