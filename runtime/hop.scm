@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jun 28 08:18:40 2013 (serrano)                */
+;*    Last change :  Fri Aug  2 18:59:13 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -233,6 +233,8 @@
 	     (cond
 		((eq? ctype 'application/x-hop)
 		 (success (string->obj (read-chars clength p))))
+		((eq? ctype 'application/json)
+		 (success (json->obj p)))
 		((eq? ctype 'application/json)
 		 (success (json->obj p)))
 		((eq? ctype 'application/x-javascript)

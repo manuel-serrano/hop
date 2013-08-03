@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jun 27 06:41:08 2013 (serrano)                */
+/*    Last change :  Sat Aug  3 06:23:44 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -279,14 +279,18 @@ function hop_request_unserialize( svc ) {
    var ctype = ("content_type" in xhr) ?
       xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   if( ctype === "application/x-hop" ) {
-      return hop_string_to_obj( hop_json_parse( xhr.responseText ) );
-   } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
-      return hop_create_element( xhr.responseText );
-   } else if( ctype === "application/x-javascript" ) {
+   if( ctype === "application/x-javascript" ) {
       return eval( xhr.responseText );
+   } else if( ctype === "application/x-url-hop" ) {
+      return hop_url_encoded_to_obj( hop_json_parse( xhr.responseText ) );
+   } else if( ctype === "application/x-json-hop" ) {
+      return hop_url_encoded_to_obj( hop_json_parse( xhr.responseText ) );
+   } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+      return hop_create_element( xhr.responseText );
    } else if( ctype === "application/json" ) {
       return hop_json_parse( xhr.responseText );
+   } else if( ctype === "application/x-hop" ) {
+      throw Error( "\"x-hop\", serialization format not supported on client" );
    } else {
       return xhr.responseText;
    }
@@ -295,7 +299,7 @@ function hop_request_unserialize( svc ) {
 /*---------------------------------------------------------------------*/
 /*    hop_request_unserialize_arraybuffer ...                          */
 /*    -------------------------------------------------------------    */
-/*    This is an alternate protocol for exanching values between the   */
+/*    This is an alternate protocol for exchanging values between the  */
 /*    server and the client. This is currently not in used because     */
 /*    as of Jan 2012 I (MS) have not found an efficient way to         */
 /*    unserialize strings. This protocol could replace hop_request_    */
@@ -313,7 +317,7 @@ function hop_request_unserialize_arraybuffer( svc ) {
       new Uint8Array( xhr.response ) : new Uint8Array();
 
    if( ctype === "application/x-hop" ) {
-      return hop_string_to_obj( a );
+      return hop_url_encoded_to_obj( a );
    } if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
       return hop_create_element( hop_uint8array_to_string( a ) );
    } else if( ctype === "application/x-javascript" ) {
@@ -428,21 +432,21 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x )
       xhr.open( "PUT", svc, true );
       
       if( hop_config.uint8array ) {
-	 xhr.responseType = "arraybuffer";
+	 /* NOT USED FOR NOW */ 
 	 xhr.unserialize = hop_request_unserialize_arraybuffer;
 	 xhr.onload = onreadystatechange;
 	 xhr.setRequestHeader( "Hop-Serialize", "arraybuffer" );
       } else {
 	 xhr.unserialize = hop_request_unserialize;
 	 xhr.onreadystatechange = onreadystatechange;
-	 xhr.setRequestHeader( "Hop-Serialize", "text" );
+	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );
       }
    } else {
       xhr.open( "PUT", svc, false );
       
       xhr.unserialize = hop_request_unserialize;
       xhr.onreadystatechange = onreadystatechange;
-      xhr.setRequestHeader( "Hop-Serialize", "text" );
+      xhr.setRequestHeader( "Hop-Serialize", "javascript" );
    }
 
    if( t ) {
