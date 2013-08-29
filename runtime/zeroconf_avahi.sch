@@ -191,13 +191,13 @@
 ;*    service-browser ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi type proc)
-   
+
    (define (apply-safe proc arg)
       (with-handler
 	 (lambda (e)
 	    (exception-notify e)
-	    #f))
-      (proc arg))
+	    #f)
+         (proc arg)))
 
    (define (avahi-protocol proto)
       (case proto
