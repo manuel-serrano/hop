@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 20:26:43 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:25:01 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -16,12 +16,14 @@
 
    (library scheme2js hopscheme hop hopwidget web)
 
-   (import  hop_param)
+   (import  hop_param
+	    hop_init)
 
    (eval    (export hop-load-rc))
 
    (export  (parse-args::pair-nil ::pair)
-	    (hop-load-rc ::bstring)))
+	    (hop-load-rc ::bstring)
+	    (hello-world)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
@@ -175,6 +177,10 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
+	 (("--jobs" (help "Enable jobs management"))
+	  (hop-enable-jobs-set! #t))
+	 (("--no-jobs" (help "Disable jobs management"))
+	  (hop-enable-jobs-set! #f))
 	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
 	  (set! zeroconf #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
@@ -220,6 +226,8 @@
 	  (hop-max-threads-set! 1)
 	  (hop-enable-keep-alive-set! #f)
 	  (hop-scheduling-set! 'nothread))
+	 (("--max-threads" ?m (help "Maximum number of handling HTTP requests"))
+	  (hop-max-threads-set! (string->integer m)))
 	 (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
 	  (hop-scheduling-set! (string->symbol ident)))
 	 (("--help-scheduler" (help "Print available schedulers list"))
@@ -243,11 +251,13 @@
 
       ;; http port
       (hop-port-set! p)
-      (when (eq? ep #unspecified) (set! ep p))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
+      ;; open the server socket before switching to a different process owner
+      (init-server-socket!)
+      
       ;; set the hop process owner
       (when setuser
 	 (hop-user-set! setuser)
@@ -302,6 +312,7 @@
 	 :expanders `(labels match-case
 			   (define-tag . ,hop-client-define-tag)
 			(define-xml-compound . ,hop-client-define-xml-compound)))
+
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
 	 :valuec hopscheme-compile-value
@@ -328,9 +339,6 @@
 	     :directories (hop-path)
 	     :preferences-filename #f))
 
-      ;; set the hop process owner
-      (set-hop-owner! (hop-user))
-
       ;; kill
       (when killp
 	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
@@ -348,19 +356,20 @@
       (when (boolean? zeroconf)
 	 (hop-enable-zeroconf-set! zeroconf))
 	 
-      ;; hello world
-      (hello-world)
-      
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       
       ;; server event port
       (when (hop-enable-fast-server-event)
-	 (if (<fx ep 1024)
+	 (cond
+	    ((eq? ep #unspecified)
+	     (set! ep p))
+	    ((and (>fx ep 0) (<fx ep 1024))
 	     (error "fast-server-event-port"
 		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		ep)
-	     (hop-fast-server-event-port-set! ep)))
+		ep))
+	    (else
+	     (hop-fast-server-event-port-set! ep))))
       
       (for-each (lambda (expr)
 		   (call-with-input-string expr
@@ -385,6 +394,10 @@
       (register-exit-function! (lambda (ret)
 				  (hop-process-key-delete (hop-port))
 				  ret))
+
+      ;; check if a new server socket must be opened
+      (unless (=fx (socket-port-number (hop-server-socket)) (hop-port))
+	 (init-server-socket!))
       (reverse files)))
 
 ;*---------------------------------------------------------------------*/
@@ -410,10 +423,12 @@
 	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
 	   (let ((pw (getpwnam user)))
 	      (if (pair? pw)
-		  (let ((uid (caddr pw)))
+		  (let ((uid (caddr pw))
+			(gid (cadddr pw)))
 		     (unless (=fx (getuid) uid)
 			(hop-verb 2 "  switch to user: "
-			   (hop-color 2 "" user) " (" uid ")\n")
+			   (hop-color 2 "" user) " (" uid ":" gid ")\n")
+			(setgid gid)
 			(setuid uid)))
 		  (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)))))
       (user

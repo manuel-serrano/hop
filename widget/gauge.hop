@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/gauge.hop                  */
+;*    serrano/prgm/project/hop/2.4.x/widget/gauge.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
-;*    Last change :  Thu May  3 08:54:53 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Tue Apr 23 18:08:23 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
 ;*=====================================================================*/
@@ -39,12 +39,13 @@
 		  format
 		  (string-append "~a/~a"))))
       (<DIV> :data-hss-tag "hop-gauge" :id id attrs
-	 "0"
 	 (<DIV> :data-hss-tag "hop-gauge-fill" :id fid)
 	 (<DIV> :data-hss-tag "hop-gauge-text" :id tid "0")
 	 ~(add-event-listener! $id "ready"
 	     (lambda (e)
 		(gauge-init! $id $fid $tid $value $min $max $fmt $listener)))
-	 body)))
+	 (if (pair? body)
+	     body
+	     "."))))
       
       

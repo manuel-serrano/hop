@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sun Dec  9 00:03:03 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Thu May  2 07:17:25 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
 ;*=====================================================================*/
@@ -415,8 +415,6 @@
 				(lambda (l) (cons conn l))
 				(list conn)))
 	  (close-connection! conn)))
-   
-   [assert () (not (symbol? (mutex-state *remote-lock*)))]
    
    (with-trace 5 "filter-connection-table!"
       ;; create a new hashtable

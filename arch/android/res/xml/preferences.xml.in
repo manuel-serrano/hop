@@ -30,7 +30,7 @@
         <CheckBoxPreference
            android:key="hop_zeroconf"
            android:persistent="true" 
-           android:defaultValue="true"
+           android:defaultValue="@HOPZEROCONF@"
            android:title="@string/prefs_zeroconf"
            android:summary="@string/prefs_zeroconf_summary">
         </CheckBoxPreference>
@@ -52,6 +52,14 @@
         </CheckBoxPreference>
 
         <CheckBoxPreference
+           android:key="hop_jobs"
+           android:persistent="true" 
+           android:defaultValue="false"
+           android:title="@string/prefs_jobs"
+           android:summary="@string/prefs_jobs_summary">
+        </CheckBoxPreference>
+
+        <CheckBoxPreference
            android:key="hop_autostart"
            android:persistent="true" 
            android:defaultValue="false"
@@ -59,21 +67,39 @@
            android:summary="@string/prefs_autostart_summary">
         </CheckBoxPreference>
 
+        <EditTextPreference android:title="@string/prefs_threads" 
+           android:defaultValue="@string/hopthreads"
+           android:key="hop_threads"
+           android:persistent="true" 
+           android:numeric="integer"
+           android:maxLength="4"
+           android:summary="@string/prefs_threads_summary">
+        </EditTextPreference>
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/prefs_devel">
 
+        <ListPreference
+                android:key="hop_verbose"
+                android:defaultValue="@HOPVERBOSELEVEL@"
+                android:title="@string/prefs_verbose"
+                android:summary="@string/prefs_verbose_summary"
+                android:entries="@array/entries_verbose_preference"
+                android:entryValues="@array/entriesvalues_verbose_preference"
+                android:dialogTitle="@string/prefs_verbose" />
+
         <CheckBoxPreference
            android:key="hop_log"
            android:persistent="true" 
-           android:defaultValue="false"
+           android:defaultValue="@HOPCONSOLELOG@"
            android:title="@string/prefs_log"
            android:summary="@string/prefs_log_summary">
         </CheckBoxPreference>
 
         <ListPreference
                 android:key="hop_debug"
-                android:defaultValue=""
+                android:defaultValue="@HOPDEBUGLEVEL@"
                 android:title="@string/prefs_debug"
                 android:summary="@string/prefs_debug_summary"
                 android:entries="@array/entries_debug_preference"

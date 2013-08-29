@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/etc/Makefile.library              */
+#*    /misc/lab/HOP/hop-2.4.1/etc/Makefile.library                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Apr  9 10:50:13 2012 (serrano)                */
-#*    Copyright   :  2006-12 Manuel Serrano                            */
+#*    Last change :  Tue Apr 16 07:40:44 2013 (serrano)                */
+#*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -19,12 +19,14 @@ HEAPJVM_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).jheap
 PBASE		= bigloo.$(TARGETNAME)
 CLASS_DIR	= o/class_s/bigloo/$(TARGETNAME)
 CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
+# the library version
+LIBVERSION	= $(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .cs .obj .hop
+.SUFFIXES: .scm .class .java .o .hop
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
@@ -80,41 +82,42 @@ o:
 	mkdir -p $@
 
 lib-c-static: .afile $(OBJECTS)
-	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a
+	$(MAKE) LIBVERSION=$(LIBVERSION) \
+                $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
 
 # lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) lib-c.$(SHAREDSUFFIX); \
+           $(MAKE) LIBVERSION=$(LIBVERSION) lib-c.$(SHAREDSUFFIX); \
         fi
 
 # we have 4 versions of each library:
 # safe and unsafe, runtime and evaluation time
 # evaltime libs have to link to runtime libs, but with matching safeness
 lib-c.$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
 
 # safe runtime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
 	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
              LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
+             SONAME=lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
 	@ $(call done,$@)
 
 # safe evaltime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
@@ -122,26 +125,26 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX): \
              OBJECTS=$(EOBJECTS) \
              FORCELD=true \
              LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX) \
+             SONAME=lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
 	@ $(call done,$@)
 
 # unsafe runtime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
 	@ $(MAKE) shared-link-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
              LIBDEST=$@ \
              LIBSRC=$< \
-             SONAME=lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
+             SONAME=lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
 	@ $(call done,$@)
 
 # unsafe evaltime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX)
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX): \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
 	@ $(MAKE) shared-link-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
@@ -149,34 +152,34 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              LIBSRC=$< \
-             SONAME=lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX) \
+             SONAME=lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX) \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
 	@ $(call done,$@)
 
 # and the static versions
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
-	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a $(OBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a: .afile $(OBJECTS)
+	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a $(OBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
 	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
-        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
+        $(RM) -f lib$(TARGETNAME)_u-$(LIBVERSION).a && \
+        $(LN_S) lib$(TARGETNAME)_s-$(LIBVERSION).a lib$(TARGETNAME)_u-$(LIBVERSION).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a: $(EOBJECTS)
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a $(EOBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a: $(EOBJECTS)
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a $(EOBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a: \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
 	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_eu-$(HOPRELEASE).a && \
-        $(LN_S) lib$(TARGETNAME)_es-$(HOPRELEASE).a lib$(TARGETNAME)_eu-$(HOPRELEASE).a
+        $(RM) -f lib$(TARGETNAME)_eu-$(LIBVERSION).a && \
+        $(LN_S) lib$(TARGETNAME)_es-$(LIBVERSION).a lib$(TARGETNAME)_eu-$(LIBVERSION).a
 	@ $(call done,$@)
 
 #*--- lib-jvm ---------------------------------------------------------*/
@@ -188,17 +191,17 @@ $(CLASS_DIR):
 $(CLASS_EDIR):
 	mkdir -p $(CLASS_EDIR)
 
-lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip \
-         $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
+lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip \
+         $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
 
-$(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip: .afile .jfile $(BGL_CLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip: .afile .jfile $(BGL_CLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_s && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_DIR:o/class_s/%=%)/*.class)
 	@ $(call done,$@)
 	@ echo "-------------------------------"
 
-$(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip: .afile .jfile $(BGL_ECLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_es && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_es/%=%)/*.class)
@@ -211,22 +214,18 @@ $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
 stdclean:
 	$(RM) -f $(OBJECTS) $(_BGL_OBJECTS:%=%.c)
 	$(RM) -f $(EOBJECTS)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(LIBVERSION).zip
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
@@ -258,51 +257,56 @@ distclean: cleanall
 
 install: install-$(BACKEND)
 
-install-native:
-	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        $(MAKE) install-lib \
+install-native: install-native-heap install-native-libs
+
+install-native-heap:
+	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+install-native-libs:
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
-                LIB=lib$(TARGETNAME)_s-$(HOPRELEASE) && \
+                LIB=lib$(TARGETNAME)_s-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_es-$(HOPRELEASE) && \
+                LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
         $(MAKE) install-link-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LN=lib$(TARGETNAME)_s-$(HOPRELEASE) \
-                LIB=lib$(TARGETNAME)_u-$(HOPRELEASE) && \
+                LN=lib$(TARGETNAME)_s-$(LIBVERSION) \
+                LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
         $(MAKE) install-link-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LN=lib$(TARGETNAME)_es-$(HOPRELEASE) \
-                LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
+                LN=lib$(TARGETNAME)_es-$(LIBVERSION) \
+                LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 install-jvm:
 
-uninstall:
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
+uninstall: uninstall-native-heap uninstall-native-libs
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_eu-$(HOPRELEASE).dll
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
+
+uninstall-native-heap:
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+uninstall-native-libs:
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

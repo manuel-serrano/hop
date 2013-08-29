@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 13 08:02:05 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Wed Jul 17 10:25:36 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -71,6 +71,9 @@
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
 
+	    (hop-enable-jobs::bool)
+	    (hop-enable-jobs-set! ::bool)
+
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
 
@@ -99,7 +102,10 @@
 	    (hop-preload-services-set! ::pair-nil)
 
 	    (hop-enable-zeroconf::bool)
-	    (hop-enable-zeroconf-set! ::bool))
+	    (hop-enable-zeroconf-set! ::bool)
+
+	    (hop-server-socket::obj)
+	    (hop-server-socket-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -257,13 +263,7 @@
 ;*    hop-fast-server-event-port ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-fast-server-event-port
-   (hop-port)
-   (lambda (v)
-      (if (<fx v 1024)
-	  (error "hop-fast-server-event-port-set!"
-		 "Server event ports must be greater than 1023"
-		 v)
-	  v)))
+   (hop-port))
 
 (define-parameter hop-enable-fast-server-event
    #t)
@@ -272,6 +272,12 @@
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-jobs ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-jobs
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -331,3 +337,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-zeroconf
    (hop-zeroconf-default))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-socket ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-socket
+   #f)

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.1.x/hopscheme/Makefile                */
+#*    serrano/prgm/project/hop/2.4.x/hopscheme/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sun Jun 20 12:13:56 2010 (serrano)                */
-#*    Copyright   :  2006-10 Manuel Serrano                            */
+#*    Last change :  Thu Apr 11 11:29:54 2013 (serrano)                */
+#*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS = hopscheme dollar_escape \
-	       tilde_escape hopscheme_config hop_runtime \
+	       hopscheme_config hop_runtime \
 	       dollar_scheme2js_module precompilation
 
 _OBJECTS = $(_BGL_OBJECTS)
@@ -45,9 +45,6 @@ EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
-
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
@@ -63,13 +60,12 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native jvm
 
 build: $(BACKEND)
 
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Dec  4 13:49:26 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Mon Apr 29 15:01:45 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -15,10 +15,8 @@
 (module __hop_event
 
    (library web)
-   
-   (cond-expand
-      (enable-threads
-       (library pthread)))
+
+   (include "thread.sch")
 
    (include "xml.sch"
 	    "service.sch"
@@ -27,6 +25,7 @@
 
    (import  __hop_configure
 	    __hop_param
+	    __hop_thread
 	    __hop_types
 	    __hop_user
 	    __hop_xml-types
@@ -96,7 +95,6 @@
 ;*---------------------------------------------------------------------*/
 (define debug-ajax #f)
 (define debug-ajax-buffer #f)
-(define (debug-websocket) (>= (bigloo-debug) 2))
 (define debug-multipart #f)
 (define debug-flash #f)
 
@@ -406,7 +404,7 @@
 	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (when (debug-websocket)
+	 (when (websocket-debug)
 	    (tprint "websocket-register-new-connection, protocol-version: " version))
 	 (let ((resp (websocket-server-response req key)))
 	    ;; register the websocket
@@ -414,11 +412,11 @@
 	       (set! *websocket-response-list*
 		  (cons (cons (string->symbol key) resp)
 		     *websocket-response-list*))
-	       (when (debug-websocket)
+	       (when (websocket-debug)
 		  (tprint "websocket-register-new-connection, key=" key
 		     " socket=" socket 
 		     " connected clients: "
-		     (length *websocket-response-list*))))
+		     *websocket-response-list*)))
 	    resp))))
 
 ;*---------------------------------------------------------------------*/
@@ -435,9 +433,11 @@
 	 (set! *client-key* (elong->fixnum (current-seconds)))
 	 
 	 (set! *websocket-service*
-	    (service :name "public/server-event/websocket" :id server-event
+	    (service :name "public/server-event/websocket"
+	       :id server-event
+	       :timeout 0
 	       (#!key key)
-	       (when (debug-websocket)
+	       (when (websocket-debug)
 		  (tprint "!!! start websocket service key=" key))
 	       (let ((req (current-request)))
 		  (with-access::http-request req (header)
@@ -446,7 +446,10 @@
 			 (websocket-register-new-connection! req key))))))
 	 
 	 (set! *port-service*
-	    (service :name "public/server-event/info" :id server-event ()
+	    (service :name "public/server-event/info"
+	       :id server-event
+	       :timeout 0
+	       ()
 	       (let* ((req (current-request))
 		      (hd (with-access::http-request req (header) header))
 		      (host (assq host: hd))
@@ -459,7 +462,9 @@
 			 (vector host port key))))))
 	 
 	 (set! *init-service*
-	    (service :name "public/server-event/init" :id server-event
+	    (service :name "public/server-event/init"
+	       :id server-event
+	       :timeout 0
 	       (#!key key)
 	       (synchronize *event-mutex*
 		  (lambda ()
@@ -479,7 +484,9 @@
 			   (name key)))))))
 	 
 	 (set! *policy-file-service
-	    (service :name "public/server-event/policy-file" :id server-event
+	    (service :name "public/server-event/policy-file"
+	       :id server-event
+	       :timeout 0
 	       (#!key port key)
 	       (instantiate::http-response-string
 		  (request (current-request))
@@ -487,7 +494,7 @@
 		  (body (hop-event-policy port)))))
 	 
 	 (set! *close-service*
-	    (service :name "public/server-event/close" (#!key key)
+	    (service :name "public/server-event/close" :timeout 0 (#!key key)
 	       :id server-event
 	       (synchronize *event-mutex*
 		  (lambda ()
@@ -499,12 +506,16 @@
 			      *flash-request-list*)))))))
 	 
 	 (set! *unregister-service*
-	    (service :name "public/server-event/unregister" :id server-event
+	    (service :name "public/server-event/unregister"
+	       :id server-event
+	       :timeout 0
 	       (#!key event key)
 	       (server-event-unregister event key)))
 	 
 	 (set! *register-service*
-	    (service :name "public/server-event/register" :id server-event
+	    (service :name "public/server-event/register"
+	       :id server-event
+	       :timeout 0
 	       (#!key event key mode padding)
 	       (server-event-register event key mode padding))))))
 
@@ -695,7 +706,7 @@
    (define (websocket-register-event! req key name)
       (with-trace 3 "websocket-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
-	    (when (debug-websocket)
+	    (when (websocket-debug)
 	       (tprint "websocket-register-event key=" key " name=" name " c=" c))
 	    (if (pair? c)
 		(let ((resp (cdr c)))
@@ -710,7 +721,7 @@
 
    (with-trace 2 "server-register-event!"
       (synchronize *event-mutex*
-	 (when (or debug-ajax (debug-websocket) debug-multipart debug-flash)
+	 (when (or debug-ajax (websocket-debug) debug-multipart debug-flash)
 	    (tprint ">>> server-event-register: event=[" event "] key="
 	       key " mode=" mode " padding=" padding))
 	 (if (<fx *clients-number* (hop-event-max-clients))
@@ -849,7 +860,7 @@
       ;; close the socket
       (with-access::http-request req (socket)
 	 (socket-close socket)
-	 (when (debug-websocket)
+	 (when (websocket-debug)
 	    (tprint "!!! websocket-close-request! " socket)))
       ;; decrement the current number of connected clients
       (set! *clients-number* (-fx *clients-number* 1))
@@ -1044,7 +1055,7 @@
 	 (bind-exit (esc)
 	    (with-handler
 	       (lambda (e)
-		  (when (debug-websocket)
+		  (when (websocket-debug)
 		     (tprint "WEBSOCKET EVENT ERROR: " e
 			" socket=" socket
 			" thread=" (current-thread)
@@ -1052,10 +1063,10 @@
 			" vlen=" (string-length vstr)))
 		  (if (isa? e &io-error)
 		      (begin
-			 (when (debug-websocket)
+			 (when (websocket-debug)
 			    (tprint ">>> WS CLOSE " socket))
 			 (websocket-close-request! resp)
-			 (when (debug-websocket)
+			 (when (websocket-debug)
 			    (tprint "<<< WS CLOSED " socket))
 			 (esc #f))
 		      (raise e)))
@@ -1264,7 +1275,7 @@
 	    *websocket-socket-table*
 	    name
 	    (lambda (l)
-	       (when (debug-websocket)
+	       (when (websocket-debug)
 		  (tprint "!!! websocket-event-broadcast \"" name "\" "
 		     (length l)
 		     " clients "
@@ -1361,7 +1372,7 @@
 		      key)))
 	 (letrec* ((th (cond-expand
 			  (enable-threads
-			     (instantiate::pthread
+			     (instantiate::hopthread
 				(body (lambda () (hopsocket-loop hs)))))
 			  (else
 			   (error "add-server-listener!"

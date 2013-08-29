@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -48,6 +48,7 @@
 
 (define (config conf)
    (read-config (thread-parameter '*scheme2js-config*) conf))
+
 (define scheme2js-config config)
 
 (define (config-set! conf val)
@@ -178,7 +179,7 @@
 	(compress . #f)
 	(call-check . #t)
 	(debug . #f)
-	(module-resolver . ,(lambda (mod dir) #f)))
+	(module-resolver . ,(lambda (mod files dir) #f)))
       `((library-path . ,(bigloo-library-path)))
       *O1*))
 

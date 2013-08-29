@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 06:41:38 2008                          */
-;*    Last change :  Sun Nov 18 16:46:28 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:51:24 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    One to one scheduler                                             */
 ;*    -------------------------------------------------------------    */
@@ -19,10 +19,6 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hop_scheduler-one-to-one
-
-   (cond-expand
-      (enable-threads
-       (library pthread)))
 
    (library hop)
    
@@ -67,7 +63,7 @@
 		  ;; we have to wait for a thread to complete
 		  (condition-variable-wait! condv mutex)
 		  (loop)))
-	    (set! thread (instantiate::hopthread
+	    (set! thread (instantiate::scdthread
 			    (condv dummy-condv)
 			    (mutex dummy-mutex)
 			    (scheduler scd)
@@ -94,7 +90,7 @@
 		  ;; we have to wait for a thread to complete
 		  (condition-variable-wait! condv mutex)
 		  (loop)))
-	    (set! thread (instantiate::hopthread
+	    (set! thread (instantiate::scdthread
 			    (condv dummy-condv)
 			    (mutex dummy-mutex)
 			    (scheduler scd)

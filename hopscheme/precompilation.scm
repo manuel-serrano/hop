@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Tue Nov  6 07:42:00 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Fri Jun 21 08:39:00 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
 ;*    precompile-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (precompile-module m resolver)
-   (let* ((files (resolver m '*))
+   (let* ((files (resolver m '() '*))
 	  (compiled (any (lambda (f)
 			    (precompile-imported-module-file m f
 			       *hop-reader*

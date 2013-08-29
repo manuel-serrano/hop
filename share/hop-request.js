@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Nov 15 09:44:06 2012 (serrano)                */
-/*    Copyright   :  2004-12 Manuel Serrano                            */
+/*    Last change :  Thu Jun 27 06:41:08 2013 (serrano)                */
+/*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -348,67 +348,54 @@ function hop_duplicate_error( exc ) {
 function hop_request_onready( xhr, svc, succ, fail, err ) {
    try {
       switch( xhr.status ) {
-      case 200:
-	 try {
-	    return succ( xhr.unserialize( svc ), xhr );
-	  } catch( exc ) {
-	     // Exception are read-only in Firefox, duplicate then
-	     var frame = sc_cons( succ, sc_cons( xhr, null ) );
-	     var nexc = err( exc );
-
-	     nexc.hopLocation = exc.hopLocation;
-	     nexc.scObject = exc.scObject;
-	     nexc.hopStack = sc_cons( frame, xhr.hopStack );
-	     nexc.hopService = svc;
-	     
-	     xhr.exception = nexc;
-	     
-	     fail( nexc, xhr );
-	     return false;
-	  }
+        case 200:
+	   return succ( xhr.unserialize( svc ), xhr );
 	 
-      case 204:
-	 return false;
+        case 204:
+  	   return false;
 	 
-      case 259:
-	 hop_set_cookie( xhr );
-	 return false;
+        case 259:
+	   hop_set_cookie( xhr );
+	   return false;
 	 
-      case 400:
-	 fail( xhr.unserialize( svc ), xhr );
-	 return false;
+        case 400:
+	   fail( xhr.unserialize( svc ), xhr );
+	   return false;
 	 
-      case 407:
-	 fail( 407, xhr );
-	 return false;
+        case 407:
+  	   fail( 407, xhr );
+	   return false;
 	 
-      default:
-	 if( (typeof xhr.status === "number") &&
-	     (xhr.status > 200) && (xhr.status < 300) ) {
-	    return succ( xhr.responseText, xhr );
-	 } else {
-	    var frame = sc_cons( fail, sc_cons( xhr, null ) );
-	    
-	    xhr.hopStack = sc_cons( frame, xhr.hopStack );
-	    fail( xhr.status, xhr );
-	    return false;
-	 }
+        default:
+	   if( (typeof xhr.status === "number") &&
+  	       (xhr.status > 200) && (xhr.status < 300) ) {
+  	      return succ( xhr.responseText, xhr );
+  	   } else {
+  	      var frame = sc_cons( fail, sc_cons( xhr, null ) );
+  	    
+  	      xhr.hopStack = sc_cons( frame, xhr.hopStack );
+  	      fail( xhr.status, xhr );
+  	      return false;
+  	   }
       }
    } catch( exc ) {
+      // Exception are read-only in Firefox, duplicate then
+      var frame = sc_cons( succ, sc_cons( xhr, null ) );
       var nexc = err( exc );
-      
-      nexc.hopStack = xhr.hopStack;
+
+      nexc.hopLocation = exc.hopLocation;
+      nexc.scObject = exc.scObject;
+      nexc.hopStack = sc_cons( frame, xhr.hopStack );
       nexc.hopService = svc;
       
-      xhr.exception = nexc;
-      
-      fail( nexc, xhr );
-      return false;
+      throw nexc;
    } finally {
       if( typeof hop_stop_anim === "function" ) { 
 	 hop_stop_anim( xhr );
       }
    }
+      
+   return false;
 }
    
 /*---------------------------------------------------------------------*/

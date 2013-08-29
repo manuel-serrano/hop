@@ -30,6 +30,22 @@
         <item>-g3</item>
     </string-array>
 
+    <string-array name="entries_verbose_preference">
+        <item>silent</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="entriesvalues_verbose_preference">
+        <item></item>
+        <item>-v</item>
+        <item>-v2</item>
+        <item>-v3</item>
+        <item>-v4</item>
+    </string-array>
+
 	<!-- Do not localize entryvalues -->
     <string-array name="entryvalues_fontsize_preference">
         <item>0</item>

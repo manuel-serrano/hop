@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Dec  2 11:09:22 2011 (serrano)                */
+#*    Last change :  Thu Apr 11 11:30:04 2013 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -61,9 +61,6 @@ EOBJECTS = o/make_lib.o
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
 SOURCES = $(_OBJECTS:%=%.scm)
 
 INCLUDES = mapping.sch
@@ -80,13 +77,12 @@ POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native jvm 
 
 build: $(BACKEND) runtime-build
 
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
 
 clean: runtime-clean mco-clean
 

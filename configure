@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan 31 16:47:45 2013 (serrano)                */
+#*    Last change :  Sat Jul  6 08:09:27 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -31,9 +31,11 @@ install="install -m a+r,u+r"
 jar="jar cfm"
 javac=javac
 
+devmode=product
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bhflags=
 btflags="-gtrace"
 
 bcflagsdev=""
@@ -86,8 +88,8 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=3.9b
-bigloourl=http://www.inria.fr/indes/fp/Bigloo
+bigloorequired=4.0a
+bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
 
@@ -105,8 +107,10 @@ locevent="true"
 threads=""
 
 zeroconf="#f"
-zeroconfbe=""
+zeroconfbe="no"
 avahi=""
+
+upnp=""
 
 hopsrfis=""
 
@@ -218,20 +222,23 @@ while : ; do
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --devel)
+      devmode="devel";
       bcflagsrts=;
       bcflagsdev=-cg;
       bscm2jsflags=;;
 
     --debug)
+      devmode="debug";
       debug=yes;
-      bcflagsrts=;
-      bscm2jsflags=;
+      bcflagsrts=-g;
+      bscm2jsflags=-g;
       bcflags="$bcflags $bcflagsdbg";;
 
     --debug2)
+      devmode="debug2";
       debug=yes;
-      bcflagsrts=;
-      bscm2jsflags=;
+      bcflagsrts=-g;
+      bscm2jsflags=-g;
       bcflags="$bcflags $bcflagsdbg2";;
 
     --pmem)
@@ -258,6 +265,12 @@ while : ; do
 
     --disable-avahi)
       avahi=no;;
+
+    --enable-upnp)
+      upnp=yes;;
+
+    --disable-upnp)
+      upnp=no;;
 
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -325,6 +338,7 @@ while : ; do
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
+      echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
@@ -340,6 +354,10 @@ while : ; do
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
+      echo "   --enable-avahi........ Enables AVAHI support (default)" >&2;
+      echo "   --disable-avahi....... Disables AVAHI support" >&2;
+      echo "   --enable-upnp......... Enables UPNP support (default)" >&2;
+      echo "   --disable-upnp........ Disables UPNP support" >&2;
       echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
       echo "   --library=lib......... Add extra lib to Hop" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
@@ -352,7 +370,7 @@ while : ; do
 done
 
 #*---------------------------------------------------------------------*/
-#*    Versionning                                                      */
+#*    Versioning                                                       */
 #*---------------------------------------------------------------------*/
 if [ ! -x .hoprelease ]; then
   cat > .hoprelease <<EOF
@@ -444,7 +462,7 @@ if [ "$ccflags " = " " ]; then
   if [ "$debug " = "yes " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
-  ccflags="$ccflags -I$bigloolibdir"
+  ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -519,6 +537,25 @@ if [ "$threads" = "yes" ]; then
   hopsrfis="$hopsrfis enable-threads"
   libraries="$libraries pthread"
   bglcloselibs="$bglcloselibs pthread"
+else
+  if [ "$avahi " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Avahi requires threads, either disable avahi (--disable-avahi)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    avahi=no;
+  fi
+  if [ "$upnp " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Upnp requires threads, either disable upnp (--disable-upnp)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    upnp=no;
+  fi
 fi
 
 #*---------------------------------------------------------------------*/
@@ -532,7 +569,7 @@ if [ "$avahi " = " " ]; then
   fi
 fi
 
-if [ "$avahi" = "yes" ]; then
+if [ "$avahi " = "yes " ]; then
   if [ ! -f $bigloolibdir/avahi.heap ]; then
     echo "*** ERROR:configure:bigloo avahi. Aborting"
     echo ""
@@ -548,6 +585,33 @@ if [ "$avahi" = "yes" ]; then
   zeroconfbe="avahi"
   libraries="$libraries avahi"
   bglcloselibs="$bglcloselibs avahi"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Upnp                                                             */
+#*---------------------------------------------------------------------*/
+if [ "$upnp " = " " ]; then
+  if [ -f $bigloolibdir/upnp.heap ]; then
+    upnp=yes
+  else
+    upnp=no
+  fi
+fi
+
+if [ "$upnp " = "yes " ]; then
+  if [ ! -f $bigloolibdir/upnp.heap ]; then
+    echo "*** ERROR:configure:bigloo upnp. Aborting"
+    echo ""
+    echo "You have request a upnp support but it appears that"
+    echo "the installed Bigloo compiler does not support upnp."
+    echo "You must either, configure Hop without upnp support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-upnp"
+  libraries="$libraries upnp"
+  bglcloselibs="$bglcloselibs upnp"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -609,6 +673,7 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 #*---------------------------------------------------------------------*/
 for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
+    bhflags="$bhflags -srfi $srfi";
 done
 
 #*---------------------------------------------------------------------*/
@@ -684,6 +749,7 @@ cat $mkmf.in \
           -e "s|@JAR@|$jar|" \
           -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BHFLAGS@|$bhflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
@@ -961,13 +1027,12 @@ rm -f $and 2> /dev/null
 echo "#!/bin/sh" > $and
 echo "#* Automatically generated file (don't edit) */" >> $and
 
-
 cat $and.in \
    | sed -e "s|#!/bin/sh||" \
          -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
          -e "s|@VERSION@|$hopversion|" \
          -e "s|@MINOR@|$minorversion|" \
-   > $and  
+   >> $and  
 chmod a+rx $and
  
 #*---------------------------------------------------------------------*/
@@ -984,6 +1049,7 @@ echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  link.................................. $link"
+echo "  devel mode............................ $devmode"
 echo 
 echo "Optional features:"
 echo "  multi-threading....................... $threads"

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Feb 20 20:23:30 2013 (serrano)                */
+/*    Last change :  Tue Apr 23 09:35:30 2013 (serrano)                */
 /*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -31,6 +31,7 @@ import android.media.AudioManager;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
 import java.io.*;
+import java.lang.reflect.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -49,6 +50,55 @@ public class HopLauncher extends Activity {
    public static final int MSG_RESTART_HOP_SERVICE = 10;
    public static final int MSG_KILL_HOP_SERVICE = 11;
    public static final int MSG_REBIND_HOP_SERVICE = 12;
+
+   private static String WIFI_SLEEP_POLICY = null;
+   private static int WIFI_SLEEP_POLICY_NEVER = -1;
+
+   static {
+      // bind the WIFI_SLEEP constants
+      Class clazz = findSystemClass( "android.provider.Settings.Global" );
+
+      if( clazz == null ) {
+	 clazz = findSystemClass( "android.provider.Settings" );
+      }
+
+      try {
+	 Field fs = clazz.getField( "WIFI_SLEEP_POLICY" );
+	 WIFI_SLEEP_POLICY = (String)fs.get( clazz );
+	 
+	 Field fi = clazz.getField( "WIFI_SLEEP_POLICY_NEVER" );
+	 WIFI_SLEEP_POLICY_NEVER = fi.getInt( clazz );
+      } catch( Throwable e3 ) {
+	 // Fall back API < 17
+	 WIFI_SLEEP_POLICY =
+	    android.provider.Settings.System.WIFI_SLEEP_POLICY;
+	 WIFI_SLEEP_POLICY_NEVER =
+	    android.provider.Settings.System.WIFI_SLEEP_POLICY_NEVER;
+      }
+   }
+
+   // findSystem
+   static Class findSystemClass( String name ) {
+      try {
+	 Class clazz = Class.forName( name );
+	 Class[] clazzes = clazz.getClasses();
+	 String global_name = clazz.getName() + "$Global";
+	 String system_name = clazz.getName() + "$System";
+
+	 for( int i = 0; i < clazzes.length; i++ ) {
+	    if( clazzes[ i ].getName().equals( global_name ) ) {
+	       return clazzes[ i ];
+	    }
+	    if( clazzes[ i ].getName().equals( system_name ) ) {
+	       return clazzes[ i ];
+	    }
+	 }
+      } catch( ClassNotFoundException _ ) {
+	 ;
+      }
+
+      return null;
+   }
 
    // hop configuration class variable
    static boolean hop_log = true;
@@ -70,7 +120,7 @@ public class HopLauncher extends Activity {
 
    // Preferences listeners are stored in a weakhash tables! To prevent
    // the Hop preference listener to be collected we store it into an
-   // instance variable
+   // instance variable (thank you Android)
    SharedPreferences.OnSharedPreferenceChangeListener prefslistener = null;
    
    int maxlines = 0;
@@ -195,15 +245,13 @@ public class HopLauncher extends Activity {
 			break;
 
 		     case MSG_HOP_FAILED:
-			Log.i( "HopLauncher", "===== MSG_HOP_FAILED" );
-			HopUiUtils.fail( activity, "Hop", "failed", (Exception)msg.obj );
-			kill( 4000 );
+   		        Log.i( "HopLauncher", "===== MSG_HOP_FAILED: " + msg.obj );
+			HopUiUtils.failExit( activity, "Hop", "failed", msg.obj );
 			break;
 
 		     case MSG_HOPDROID_FAILED:
-			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED" );
-			HopUiUtils.fail( activity, "HopDroid", "failed", (Exception)msg.obj );
-			kill( 4000 );
+			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED: " + msg.obj );
+			HopUiUtils.failExit( activity, "HopDroid", "failed", msg.obj );
 			break;
 
 		     case MSG_RUN_WIZARD:
@@ -223,12 +271,12 @@ public class HopLauncher extends Activity {
 
 		     case MSG_INSTALL_FAILED:
 			Log.e( "HopLauncher", "installation failed..." );
-			HopUiUtils.fail( activity, "HopInstaller", "failed", (Exception)msg.obj );
+			HopUiUtils.failExit( activity, "HopInstaller", "failed", msg.obj );
 			break;
 
 		     case MSG_CONFIGURE_FAIL:
 			Log.e( "HopLauncher", "configuration failed..." );
-			HopUiUtils.fail( activity, "HopConfigurer", "failed", (Exception)msg.obj );
+			HopUiUtils.failExit( activity, "HopConfigurer", "failed", msg.obj );
 			break;
 
 		     case MSG_CONFIGURE:
@@ -312,12 +360,12 @@ public class HopLauncher extends Activity {
 		     try {
 			hopinstaller.join();
 		     } catch( Exception e ) {
-			HopUiUtils.fail( activity, "HopLauncher", " failed:", e );
+			HopUiUtils.failExit( activity, "HopLauncher", " failed:", e );
 		     }
 
 		     Log.v( "HopLauncher", "installation complete" );
 
-		     if( !HopConfigurer.configured( Hop.HOME ) ) {
+		     if( !HopConfigurer.configured( Hop.HOME() ) ) {
 			Log.v( "HopLauncher", "progress=" + progress );
 			handler.sendEmptyMessage( MSG_CONFIGURE );
 			configure();
@@ -336,14 +384,14 @@ public class HopLauncher extends Activity {
 	    hopinstaller.start();
 	    installscheduler.start();
 	 } else {
-	    if( !HopConfigurer.configured( Hop.HOME ) ) {
+	    if( !HopConfigurer.configured( Hop.HOME() ) ) {
 	       configure();
 	    } else {
 	       handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
 	    }
 	 }
       } catch( Exception e ) {
-	 HopUiUtils.fail( activity, "HopLauncher", " failed", e );
+	 HopUiUtils.failExit( activity, "HopLauncher", " failed", e );
       }
    }
 
@@ -442,11 +490,10 @@ public class HopLauncher extends Activity {
       // get the current wifi policy
       try {
 	 onresume_wifi_policy =
-	    Settings.System.getInt(
-	       getContentResolver(),
-	       Settings.System.WIFI_SLEEP_POLICY );
+	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
+
 	 // never switch off wifi when the hop console is on top
-	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+	 setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
       } catch( Throwable _ ) {
 	 onresume_wifi_policy = 0;
       }
@@ -460,7 +507,6 @@ public class HopLauncher extends Activity {
    @Override
    public void onPause() {
       Log.d( "HopLauncher", "onPause isFinishing=" + isFinishing() );
-      super.onPause();
       
       // restore the wifi policy
       if( onresume_wifi_policy != 0 ) {
@@ -471,6 +517,15 @@ public class HopLauncher extends Activity {
       if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "pause" , "" );
       }
+      
+      super.onPause();
+   }
+
+   @Override
+   public void onDestroy() {
+      Log.d( "HopLauncher", "onDestroy" );
+      
+      super.onDestroy();
    }
 
    @Override
@@ -484,31 +539,38 @@ public class HopLauncher extends Activity {
 
 
    private void setWifiPolicy( int policy ) {
-      Settings.System.putInt( getContentResolver(),
-			      Settings.System.WIFI_SLEEP_POLICY,
-			      policy );
+      Settings.System.putInt( getContentResolver(), WIFI_SLEEP_POLICY, policy );
    }
       
    private void loadPreferences() {
+      Log.d( "HopLauncher", "loadPreferences" );
       try {
 	 final Resources res = getResources();
 	 final SharedPreferences sp =
 	    PreferenceManager.getDefaultSharedPreferences( this );
-	 final int initial_wifi_policy =
-	    Settings.System.getInt(
-	       getContentResolver(),
-	       Settings.System.WIFI_SLEEP_POLICY );
 
+	 final int initial_wifi_policy =
+	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
+
+	 final String defaultverbose = res.getString( R.string.hopverbose );
 	 final String defaultport = res.getString( R.string.hopport );
+	 final String defaultthreads = res.getString( R.string.hopthreads );
+	 final String defaultdebug = res.getString( R.string.hopdebug );
+	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" );
+	 final boolean defaultzeroconf = res.getString( R.string.hopzeroconf ).equals( "true" );
       
 	 setHopPort( sp.getString( "hop_port", defaultport ) );
-	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
+	 Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
+	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", defaultzeroconf );
 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
-	 hop_log = sp.getBoolean( "hop_log", false );
+	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
+	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
+	 Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
+	 hop_log = sp.getBoolean( "hop_log", defaultlog );
 
 	 // keep wifi alive
 	 if( sp.getBoolean( "hop_wifi", false ) ) {
-	    setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+	    setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
 	 }
       
 	 if( prefslistener == null ) {
@@ -518,13 +580,17 @@ public class HopLauncher extends Activity {
 			setHopPort( sp.getString( "hop_port", defaultport ) );
 			return;
 		     } 
+		     if( key.equals( "hop_threads" ) ) {
+			Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
+			return;
+		     } 
 		     if( key.equals( "hop_zeroconf" ) ) {
 			Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
 			return;
 		     }
 		     if( key.equals( "hop_wifi" ) ) {
 			if( sp.getBoolean( "hop_wifi", false ) ) {
-			   setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
+			   setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
 			} else {
 			   setWifiPolicy( initial_wifi_policy );
 			}
@@ -534,12 +600,20 @@ public class HopLauncher extends Activity {
 			Hop.webdav = sp.getBoolean( "hop_webdav", false );
 			return;
 		     }
+		     if( key.equals( "hop_jobs" ) ) {
+			Hop.jobs = sp.getBoolean( "hop_jobs", false );
+			return;
+		     }
 		     if( key.equals( "hop_log" ) ) {
 			hop_log = sp.getBoolean( "hop_log", false );
 			return;
 		     }
 		     if( key.equals( "hop_debug" ) ) {
-			Hop.debug = sp.getString( "hop_debug", "" );
+			Hop.debug = sp.getString( "hop_debug", defaultdebug );
+			return;
+		     }
+		     if( key.equals( "hop_verbose" ) ) {
+			Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
 			return;
 		     }
 		  }
@@ -548,8 +622,9 @@ public class HopLauncher extends Activity {
 	    sp.registerOnSharedPreferenceChangeListener( prefslistener );
 	 }
       }
-      catch( Throwable _ ) {
-	 ;
+      catch( Throwable e ) {
+	 Log.d( "HopLauncher", "loadPreferences exception: " + e );
+	 e.printStackTrace();
       }
    }
    

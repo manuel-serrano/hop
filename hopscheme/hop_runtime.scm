@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov  5 19:11:10 2012                          */
-;*    Last change :  Tue Nov  6 07:50:34 2012 (serrano)                */
-;*    Copyright   :  2012 Manuel Serrano                               */
+;*    Last change :  Fri Jun 21 09:12:05 2013 (serrano)                */
+;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScheme runtime interface                                      */
 ;*=====================================================================*/
@@ -17,7 +17,7 @@
    (import __hopscheme_precompilation
 	   __hopscheme_config)
    (export (hop-runtime-modules::pair-nil)
-	   (hopscheme-runtime-resolver ::symbol ::obj)))
+	   (hopscheme-runtime-resolver ::symbol ::pair-nil ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *hop-runtime-afile* ...                                          */
@@ -56,10 +56,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-runtime-resolver ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-runtime-resolver mod _)
-   (let ((t (assq mod *hopscheme-alist*)))
-      (when (pair? t)
-	 (cdr t))))
+(define (hopscheme-runtime-resolver mod files _)
+   (with-trace 1 "hopscheme-runtime-resolver"
+      (trace-item "mod=" mod)
+      (trace-item "files=" files)
+      (if (pair? files)
+	  files
+	  (let ((t (assq mod *hopscheme-alist*)))
+	     (when (pair? t)
+		(cdr t))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    *hop-precompiled-modules* ...                                    */
@@ -71,8 +76,8 @@
 ;*---------------------------------------------------------------------*/
 (define (precompile-runtime!)
    (load-hopscheme-alist!)
-   (let ((resolver (lambda (m _)
-		      (let ((f (hopscheme-runtime-resolver m _)))
+   (let ((resolver (lambda (m f _)
+		      (let ((f (hopscheme-runtime-resolver m f _)))
 			 (if (not f)
 			     (error "hop-runtime"
 				"Internal error: runtime module not in alist"

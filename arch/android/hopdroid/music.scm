@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Sun Dec 30 19:02:50 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Fri Apr 19 10:56:04 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -145,7 +145,6 @@
 ;*    music-playlist-add! ::androidmusic ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (music-playlist-add! androidmusic::androidmusic n)
-   (tprint "ANDROID music-playlist-add n=" n)
    (call-next-method)
    (with-access::androidmusic androidmusic (%mutex %playlist %playlistlength %status)
       (synchronize %mutex
@@ -250,7 +249,6 @@
 (define-method (music-play o::androidmusic . s)
    (with-access::androidmusic o (%mutex %open %status phone)
       (with-access::musicstatus %status (song state playlistlength playlistid)
-	 (tprint "ANDROID-MUSIC-PLAY state=" state)
 	 (cond
 	    ((not %open)
 	     (error "music-play ::androidmusic"

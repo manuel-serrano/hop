@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sat Aug 18 20:17:53 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Fri Jun 14 11:06:46 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -14,7 +14,10 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_makelib
 
+   (include "thread.sch")
+
    (import __hop_configure
+	   __hop_thread
 	   __hop_param
 	   __hop_expanders
 	   __hop_misc
@@ -64,10 +67,13 @@
            __hop_wiki-toc
 	   __hop_hz
 	   __hop_security
-	   __hop_zeroconf)
+	   __hop_zeroconf
+	   __hop_upnp)
 	   
    (eval   (export-all)
 
+           (class hopthread)
+	   
 	   (class user)
 
 	   (class %http-message)
@@ -128,10 +134,14 @@
 	   (class zeroconf-service-event))
 
    (cond-expand
-      ((and enable-avahi (library pthread) (library avahi))
+      ((and enable-upnp (library upnp))
+       (eval (class upnp-event))))
+
+   (cond-expand
+      ((and enable-avahi (library avahi))
        (library avahi)))
       
    (cond-expand
-      ((and enable-avahi (library pthread) (library avahi))
+      ((and enable-avahi (library avahi))
        (eval (class avahi)))))
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Wed Feb 20 20:20:40 2013 (serrano)                */
+/*    Last change :  Fri Apr 19 09:08:41 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
@@ -61,11 +61,11 @@ public class HopPluginMusicPlayer extends HopPlugin {
       mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
 	    public void onPrepared( MediaPlayer mp ) {
 	       mp.start();
-	       Log.v( "HopPlugingMusicPlayer", "start" );
+	       Log.v( "HopPlugingMusicPlayer", "prepared..." );
 	       Log.v( "HopPlugingMusicPlayer", "mp=" + mp );
 	       Log.v( "HopPlugingMusicPlayer", "pos=" + mp.getCurrentPosition() );
 	       Log.v( "HopPlugingMusicPlayer", "dur=" + mp.getDuration() );
-	       hopdroid.pushEvent( "androidmusic-event", 
+	       hopdroid.pushEvent( "androidmusic-event",
 				   "(position "
 				   + Integer.toString( mp.getCurrentPosition() )
 				   + " "
@@ -186,8 +186,6 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    if( file.exists() ) {
 	       mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
 	       mplayer.prepare();
-	       Log.v( "HopPluginMusicPlayer", "start..." );
-	       mplayer.start();
 	    } else {
 	       mplayer.setDataSource( datasrc );
 	       mplayer.prepareAsync();

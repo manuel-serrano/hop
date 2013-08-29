@@ -2472,6 +2472,36 @@ function sc_hashtableMap(ht, f) {
    return hd.cdr;
 }
 
+/*** META ((export #t) (arity #t)) */
+function sc_hashtableKeyList(ht) {
+   var hd = sc_cons( null, null );
+   var res = hd;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res.cdr = sc_cons( ht[v].key, null );
+	 res = res.cdr;
+      }
+   }
+
+   return hd.cdr;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_hashtable2List(ht) {
+   var hd = sc_cons( null, null );
+   var res = hd;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res.cdr = sc_cons( ht[v].val, null );
+	 res = res.cdr;
+      }
+   }
+
+   return hd.cdr;
+}
+
 /*** META ((export hashtable-contains?)
            (arity #t)
            (peephole (hole 2 "sc_hash(" 1 ") in " 0)))

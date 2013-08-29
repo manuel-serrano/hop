@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -15,20 +15,24 @@
 ;*---------------------------------------------------------------------*/
 (module module-resolver
    (import config)
-   (export (scheme2js-module-resolver mod file)))
+   (export (scheme2js-module-resolver mod files file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-module-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (scheme2js-module-resolver mod file)
-   (with-abase file
-      (lambda ()
-	 (or ((config 'module-resolver) mod (module-abase))
-	     ((bigloo-module-resolver) mod (module-abase))
-	     (let ((path (if (string? file)
-			     (cons (dirname file) (config 'include-paths))
-			     (config 'include-paths))))
-		(extension-resolver mod path))))))
+(define (scheme2js-module-resolver mod files file)
+   (with-trace 1 "scheme2js-module-resolver"
+      (trace-item "mod=" mod)
+      (trace-item "files=" files)
+      (with-abase file
+	 (lambda ()
+	    (trace-item "abase=" (module-abase))
+	    (or ((config 'module-resolver) mod files (module-abase))
+		((bigloo-module-resolver) mod files (module-abase))
+		(let ((path (if (string? file)
+				(cons (dirname file) (config 'include-paths))
+				(config 'include-paths))))
+		   (extension-resolver mod path)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    config-runtime-resolver ...                                      */

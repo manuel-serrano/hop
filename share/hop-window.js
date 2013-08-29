@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sun Feb 17 08:30:52 2013 (serrano)                */
+/*    Last change :  Fri Apr 26 08:58:17 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -696,20 +696,14 @@ function hop_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src === "string" ) ) {
-	 if( width )
-	    prop += ",width=" + unpx( width );
-	 else
-	    prop += ",width=" + hop_current_window_width();
-	 if( height )
-	    prop += ",height=" + unpx( height );
-	 else
-	    prop += ",height=" + hop_current_window_height();
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
 	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
 
-	 if( prop.charAt( 0 ) == ',' ) {
-	    prop = prop.substring( 1, prop.length );
-	 }
+	 prop = "width="
+	    + (width ? unpx( width ) : hop_current_window_width())
+	    + ",height="
+	    + (height ? unpx( height ) : hop_current_window_height())
+	    + (( prop.charAt( 0 ) == ',' ) ? prop : "," + prop );
 
 	 var win = window.open( src, title, prop );
 	 win.iconify = function( w ) { ; };

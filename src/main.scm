@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Feb 10 17:26:48 2013 (serrano)                */
+;*    Last change :  Wed Jul 17 10:23:00 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -50,24 +50,6 @@
 	      (exit 2))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-server-socket ...                                            */
-;*    -------------------------------------------------------------    */
-;*    Create the Hop server socket according to user options.          */
-;*---------------------------------------------------------------------*/
-(define (hop-server-socket)
-   (if (hop-enable-https)
-       (cond-expand
-	  (enable-ssl
-	   (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
-		 (pkey (read-private-key "/etc/ssl/private/hop.pem")))
-	      (make-ssl-server-socket (hop-port)
-				      :protocol (hop-https-protocol)
-				      :cert cert :pkey pkey)))
-	  (else
-	   (error "hop" "SSL not supported by this version of Hop" #f)))
-       (make-server-socket (hop-port) :backlog (hop-somaxconn))))
-
-;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
@@ -81,7 +63,9 @@
    (hop-install-expanders!)
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
-   (bigloo-load-module-set! (lambda (f) (hop-load-modified f :abase #f)))
+   (bigloo-load-module-set!
+      (lambda (f)
+	 (hop-load-modified f :abase #t :afile #f)))
    ;; setup the hop module resolvers
    (bigloo-module-extension-handler-set! hop-module-extension-handler)
    (bigloo-module-resolver-set! (make-hop-module-resolver (bigloo-module-resolver)))
@@ -108,29 +92,20 @@
 	    (fprint (current-error-port)
 	       "An error has occurred in the Hop main loop, exiting...")
 	    (exit 1))
-	 (let ((serv (with-handler
-			(lambda (e)
-			   (exception-notify e)
-			   (fprint (current-error-port)
-			      "Cannot start Hop server, exiting...")
-			   (exit 2))
-			(hop-server-socket))))
+	 (let ((serv (hop-server-socket)))
+	    ;; adjust the actual hop-port
+	    (hop-port-set! (socket-port-number serv))
+	    (hop-fast-server-event-port-set! (socket-port-number serv))
+	    ;; ready to now say hello
+	    (hello-world)
 	    ;; tune the server socket
 	    (socket-option-set! serv :TCP_NODELAY #t)
 	    ;; start the job (background taks, a la cron) scheduler
-	    (when (>fx (hop-max-threads) 1)
+	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
 	    ;; when needed, start the HOP repl
 	    (when (hop-enable-repl)
-	       (if (>fx (hop-max-threads) 1)
-		   (hop-repl (hop-scheduler))
-		   (error "hop" "No thread available for the REPL" "aborting.")))
-	    ;; when needed, start the HOP discovery thread
-;* 	    (hop-discovery-init!)                                      */
-;* 	    (when (hop-enable-discovery)                               */
-;* 	       (if (>fx (hop-max-threads) 1)                           */
-;* 		   (hop-discovery-server (hop-discovery-port))         */
-;* 		   (error "hop" "No thread available for discovery" "aborting."))) */
+	       (hop-repl (hop-scheduler)))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -228,12 +203,14 @@
 ;*    hop-repl ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-repl scd)
-   (with-access::scheduler scd (size)
-      (if (<=fx size 1)
-	  (error "hop-repl"
-	     "HOP REPL cannot be spawned without multi-threading"
-	     scd)
-	  (spawn0 scd stage-repl))))
+   (if (>fx (hop-max-threads) 1)
+       (with-access::scheduler scd (size)
+	  (if (<=fx size 1)
+	      (error "hop-repl"
+		 "HOP REPL cannot be spawned without multi-threading"
+		 scd)
+	      (spawn0 scd stage-repl)))
+       (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
@@ -247,19 +224,10 @@
 ;*    hop-event-server ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-server scd)
-   (cond
-      ((not (hop-enable-fast-server-event))
-       ;; fast event are disabled
-       (hop-event-init!))
-      ((=fx (hop-fast-server-event-port) (hop-port))
-       ;; will use the regular HOP port
-       (hop-event-init!))
-      ((<=fx (with-access::scheduler scd (size) size) 1)
-       ;; disable fast event because no thread is available
-       ;; and extra port is needed
-       (hop-event-init!))
-      (else
-       ;; run in a separate thread
-       (hop-event-init!)
-       (let ((serv (make-server-socket (hop-fast-server-event-port))))
-	  (scheduler-accept-loop scd serv #f)))))
+   (hop-event-init!)
+   (when (and (hop-enable-fast-server-event)
+	      (not (=fx (hop-fast-server-event-port) (hop-port)))
+	      (>fx (with-access::scheduler scd (size) size) 1))
+      ;; run an event server socket in a separate thread
+      (let ((serv (make-server-socket (hop-fast-server-event-port))))
+	 (scheduler-accept-loop scd serv #f))))

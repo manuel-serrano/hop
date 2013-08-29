@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -1026,6 +1026,25 @@ function sc_format(s) {
 	 }
       }
    }
+
+   function format_list(sep, l, p) {
+      if (sc_isPair(l)) {
+	 while (true) {
+	    format_list(sep, l.car, p);
+	    if (sc_isPair(l.cdr)) {
+	       p.appendJSString(sep);
+	       l = l.cdr;
+	    } else {
+	       if (l.cdr != null) {
+		  format_list(sep, l.cdr, p);
+	       }
+	       break;
+	    }
+	 }
+      } else {
+	 sc_display(l, p);
+      }
+   }
 	 
    while( i < len ) {
       var i2 = s.indexOf("~", i);
@@ -1126,6 +1145,18 @@ function sc_format(s) {
 	  case 114:
 	      // r
 	      p.appendJSString("\r");
+	      break;
+
+	  case 40:
+	      // (
+	      var i3 = s.indexOf(")", i2+2);
+
+	      if (i3) {
+  	        format_list(s.substring(i2+2,i3),arguments[j++], p);
+		i = i3 + 1;
+	      } else {
+		 i++;
+	      }
 	      break;
 
 	  case 126:

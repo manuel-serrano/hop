@@ -34,7 +34,7 @@ pop:
 .PHONY: populate commit revision log
 
 populate:
-	find . -name '*~' -exec /bin/rm {} \;
+	find . -name '*~' -exec $(RM) {} \;
 	$(VM-POPULATE) `$(MAKE) -s pop`
 
 commit:

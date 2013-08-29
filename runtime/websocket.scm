@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Jan 17 11:50:43 2013 (serrano)                */
+;*    Last change :  Fri Apr 19 08:04:47 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -15,15 +15,13 @@
 (module __hop_websocket
 
    (include "http_lib.sch"
-            "verbose.sch")
+            "verbose.sch"
+	    "thread.sch")
 
    (library web)
 
-   (cond-expand
-      (enable-threads
-       (library pthread)))
-
-   (import __hop_configure
+   (import  __hop_configure
+	    __hop_thread
 	    __hop_param
 	    __hop_types
 	    __hop_user
@@ -44,12 +42,13 @@
    (export (websocket-proxy-request? ::pair-nil)
 	   (websocket-proxy-connect! ::bstring ::int)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
-	   (websocket-server-response header req)))
+	   (websocket-server-response header req)
+	   (websocket-debug)))
 
 ;*---------------------------------------------------------------------*/
-;*    debug-websocket ...                                              */
+;*    websocket-debug ...                                              */
 ;*---------------------------------------------------------------------*/
-(define debug-websocket #f)
+(define (websocket-debug) (>= (bigloo-debug) 1))
 
 ;*---------------------------------------------------------------------*/
 ;*    *connect-host-table* ...                                         */
@@ -152,7 +151,7 @@
 	 (string-set! buf o (integer->char b0))))
    
    (define (webwocket-hixie-protocol-76 key1 key2 req)
-      (when debug-websocket
+      (when (websocket-debug)
 	 (tprint "websocket-protocol76 key1=[" key1 "] key2=[" key2 "]"))
       ;; Handshake known as draft-hixie-thewebsocketprotocol-76
       ;; see http://www.whatwg.org/specs/web-socket-protocol/
@@ -191,7 +190,7 @@
    
    (define (websocket-hybi-protocol header req)
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
-      (when debug-websocket
+      (when (websocket-debug)
 	 (tprint "websocket-hybi-protocol-08, header: " header))
       (let* ((key (get-header header sec-websocket-key: #f))
 	     (i (string-index key #\space))
@@ -211,7 +210,7 @@
 	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (when debug-websocket
+	 (when (websocket-debug)
 	    (tprint "websocket-register, protocol-version: " version))
 	 (let ((v (string->integer version)))
 	    (cond
@@ -277,7 +276,7 @@
       (cond-expand
 	 (enable-threads
 	    (thread-start!
-	       (instantiate::pthread
+	       (instantiate::hopthread
 		  (body
 		     (lambda () (websocket-tunel r socket)))))
 	    'persistent)

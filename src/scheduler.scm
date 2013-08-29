@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Thu Nov  8 13:48:48 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:50:36 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -16,13 +16,7 @@
    
    (library hop)
    
-   (cond-expand
-      (enable-threads
-       (library pthread))
-      (else
-       (export (class pthread::thread))))
-   
-   (export (class hopthread::pthread
+   (export (class scdthread::hopthread
 	      (proc::procedure (default (lambda (t) #f)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (mutex::mutex read-only (default (make-mutex)))
@@ -89,12 +83,12 @@
 ;*     - it avoids installing a new error handler at the entry         */
 ;*       of each stage by using a per-thread handler.                  */
 ;*     - it avoids creating closure for handlers by storing the        */
-;*       free variables of the handler inside hopthread specific       */
+;*       free variables of the handler inside scdthread specific       */
 ;*       fields.                                                       */
 ;*---------------------------------------------------------------------*/
 (define-macro (with-stage-handler handler args . body)
    (let ((len (length args)))
-      `(with-access::hopthread thread (onerror error-args-length error-args)
+      `(with-access::scdthread thread (onerror error-args-length error-args)
 	  (set! onerror ,handler)
 	  (set! error-args-length ,len)
 	  ,@(map (lambda (v i)
@@ -219,35 +213,35 @@
    (set! *thread-info* info))
 	  
 ;*---------------------------------------------------------------------*/
-;*    thread-info ::hopthread ...                                      */
+;*    thread-info ::scdthread ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-info th::hopthread)
-   (with-access::hopthread th (info)
+(define-method (thread-info th::scdthread)
+   (with-access::scdthread th (info)
       info))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-info ::hopthread ...                                      */
+;*    thread-info ::scdthread ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-info-set! th::hopthread i)
-   (with-access::hopthread th (info)
+(define-method (thread-info-set! th::scdthread i)
+   (with-access::scdthread th (info)
       (set! info i)))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-request ::hopthread ...                                   */
+;*    thread-request ::scdthread ...                                   */
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (enable-threads
-      (define-method (thread-request th::hopthread)
-	 (with-access::hopthread th (request)
+      (define-method (thread-request th::scdthread)
+	 (with-access::scdthread th (request)
 	    request))))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-request-set! ::hopthread ...                              */
+;*    thread-request-set! ::scdthread ...                              */
 ;*---------------------------------------------------------------------*/
 (cond-expand
    (enable-threads
-    (define-method (thread-request-set! th::hopthread req)
-	 (with-access::hopthread th (request)
+    (define-method (thread-request-set! th::scdthread req)
+	 (with-access::scdthread th (request)
 	    (set! request req)))))
 
 ;*---------------------------------------------------------------------*/
@@ -272,7 +266,7 @@
 ;*    scheduler-error-handler ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (scheduler-error-handler e t)
-   (with-access::hopthread t (onerror error-args-length error-args)
+   (with-access::scdthread t (onerror error-args-length error-args)
       (if (procedure? onerror)
 	  (let ((onerr onerror))
 	     (set! onerror #f)

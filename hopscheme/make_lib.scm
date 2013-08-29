@@ -8,7 +8,6 @@
 (module __hopscheme_makelib
    
    (import __hopscheme
-	   __hopscheme_tilde-escape
-	   __hopscheme_config)
+	   (init-hopscheme! __hopscheme_config))
    
    (eval   (export-all)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Sun Nov 18 15:45:50 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Thu Apr 11 08:21:16 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -14,11 +14,10 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_job
 
-   (cond-expand
-      (enable-threads
-       (library pthread)))
+   (include "thread.sch")
    
    (import  __hop_param
+	    __hop_thread
 	    __hop_read)
 
    (static  (class job
@@ -64,7 +63,7 @@
       (enable-threads
        (synchronize *job-mutex*
 	  (thread-start!
-	     (instantiate::pthread
+	     (instantiate::hopthread
 		(name "job-scheduler")
 		(body job-scheduler)))
 	  (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
@@ -78,7 +77,7 @@
    (cond-expand
       (enable-threads
        (with-access::job job (proc name %thread date interval repeat)
-	  (let ((t (instantiate::pthread
+	  (let ((t (instantiate::hopthread
 		      (name name)
 		      (body (lambda ()
 			       (let ((res (proc job)))

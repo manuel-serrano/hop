@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Jan 28 11:09:39 2013 (serrano)                */
+;*    Last change :  Fri May 24 11:42:26 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -223,7 +223,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (string-append dir "/" p))))
    
    (define (script p inl)
-      (<SCRIPT> :type (hop-configure-javascript-mime-type) :inline inl :src p))
+      (<SCRIPT> :type (hop-configure-javascript-mime-type)
+	 :inline inl :src p))
    
    (define (find-head p)
       (call-with-input-file p
@@ -341,7 +342,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	 (if (null? res)
 	     (cond
 		((not (file-exists? f))
-		 (error "<HEAD>" (format "Can't find include \"~s\" in path" f)
+		 (error "<HEAD>" (format "Can't find include ~s in path" f)
 		    path))
 		((or (is-suffix? f "hss") (is-suffix? f "css"))
 		 (list (css f #f inl)))
@@ -351,7 +352,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 (list (script f inl)))
 		(else
 		 (error "<HEAD>"
-		    (format "Can't find include \"~s\" in path" f)
+		    (format "Can't find include ~s in path" f)
 		    path)))
 	     res)))
    
