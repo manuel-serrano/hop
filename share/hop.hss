@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Thu Aug  1 09:25:21 2013 (serrano)                */
+/*    Last change :  Thu Aug  8 11:34:01 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
@@ -78,7 +78,7 @@ div[data-hss-class=hop-exception-background] {
   left: 0; right: 0;
   position: fixed;
   z-index: 100001;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 div[data-hss-class=hop-exception] {
@@ -170,6 +170,7 @@ table[data-hss-class=hop-exception-stack] {
 table[data-hss-class=hop-exception-stack] th {
   text-align: left;
   font-size: 11pt;
+  white-space: nowrap;
 }
 
 table[data-hss-class=hop-exception-stack] td {
@@ -180,14 +181,21 @@ table[data-hss-class=hop-exception-stack] td {
 }
 
 td.hop-exception-frame-line {
-  color: #00a;
+  color: #333;
 }
 
 .hop-exception-frame-js {
   display: none;
 }
+.hop-exception-js {
+  display: none;
+}
 div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-frame-js {
   display: table-row;
+}
+
+div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-js {
+  display: block;
 }
 
 .hop-exception-frame-js td.hop-exception-frame-line {

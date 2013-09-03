@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 18 15:15:05 2013                          */
-;*    Last change :  Wed Jul 31 10:47:18 2013 (serrano)                */
+;*    Last change :  Mon Aug 19 08:30:52 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Simple tool to debug the compiler                                */
@@ -16,6 +16,7 @@
    
    (import export-desc
 	   nodes
+	   tail
 	   mark-statements
 	   push-declarations)
    
@@ -104,6 +105,16 @@
 	  ,(node->list operator)
 	  ,@(map node->list operands))))
    
+;*---------------------------------------------------------------------*/
+;*    node->list ::Tail-Call ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (node->list n::Tail-Call)
+   (with-access::Tail-Call n (location operator operands)
+      `(tail-call ,@(if *location* `(:location ,location) '())
+	  ,@(if *location* `(:location ,location) '())
+	  ,(node->list operator)
+	  ,@(map node->list operands))))
+
 ;*---------------------------------------------------------------------*/
 ;*    node->list ::Stmt-Call ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -231,3 +242,10 @@
       `(Continue ,@(if *location* `(:location ,location) '())
 	  ,(node->list label))))
 
+;*---------------------------------------------------------------------*/
+;*    node->list ::Pragma ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (node->list n::Pragma)
+   (with-access::Pragma n (location str args)
+      `(Pragma ,@(if *location* `(:location ,location) '())
+	  ,str ,@(map node->list args))))

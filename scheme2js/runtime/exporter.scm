@@ -47,6 +47,8 @@
 
 (define *scheme2js-modules?* #f)
 
+(define *scheme2js-macros?* #f)
+
 (define (unmarshall s)
    (define (is-has-bang str)
       (cond
@@ -116,12 +118,14 @@
 
 (define (construct-scheme2js-module-clause exports-ht macros-ht)
    `(module ,(string->symbol *module-name*)
-       (export-macros ,@(hashtable-map macros-ht
-				       (lambda (ignored macro)
-					  macro)))
+       ,@(if *scheme2js-macros?*
+	     `((export-macros ,@(hashtable-map macros-ht
+				   (lambda (ignored macro)
+				      macro))))
+	     '())
        (export ,@(hashtable-map exports-ht
-				(lambda (scheme-name export-clause)
-				   (cons scheme-name export-clause))))))
+		    (lambda (scheme-name export-clause)
+		       (cons scheme-name export-clause))))))
 
 (define (construct-bigloo-module-clause exports-ht macros-ht)
    `(module ,(string->symbol *module-name*)
@@ -202,7 +206,7 @@
       (("--module" ?name (help "The module name"))
        (set! *module-name* name))
       (("--ignored-prefixes" ?list
-			     (help "scheme-list of ignored prefixes"))
+	  (help "scheme-list of ignored prefixes"))
        (set! *ignored-prefixes* (with-input-from-string list read)))
       (("--no-camelCase" (help "Disable camel-case unmarshalling"))
        (set! *camel-case?* #f))
@@ -211,11 +215,14 @@
       (("--constant" (help "Add (constant? #t) clause to every export"))
        (set! *constant?* #t))
       (("--constant-functions"
-	(help "Add (constant? #t) clause to exported functions."))
+	  (help "Add (constant? #t) clause to exported functions."))
        (set! *constant-functions?* #t))
       (("--scheme2js-modules"
-	(help "Create scheme2js-modules and not Bigloo modules."))
+	  (help "Create scheme2js-modules and not Bigloo modules."))
        (set! *scheme2js-modules?* #t))
+      (("--no-macros"
+	  (help "Disable export-macro clause"))
+       (set! *scheme2js-macros?* #f))
       (else
        (set! *in-files* (append! *in-files* (list else))))))
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Aug  2 15:24:59 2013 (serrano)                */
+/*    Last change :  Sun Aug 11 15:32:22 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -45,7 +45,12 @@ function hop_event_stoppedp( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-event-listener!) (arity -3))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
-   var p = hop_callback( proc, obj + "<-" + event );
+   var p = proc;
+
+   if( hop_debug() > 0 ) {
+      var msg = obj + "<-" + event;
+      p = hop_callback( proc, hop_callback_listener_context( msg ) );
+   }
    
    if( event === "server" ) {
       alert( "deprecated (add-event-listener! \"" + obj + "\" \"server\"...)" );
@@ -207,8 +212,8 @@ function hop_get_hashchange_interval() {
 	       window.hop_hashchange_href = window.location.href;
 	       
 	       while( sc_isPair( l ) ) {
-		  l.car( window.location )( e );
-		  l = l.cdr;
+		  l.__hop_car( window.location )( e );
+		  l = l.__hop_cdr;
 	       }
 	    }
 	 }
@@ -253,7 +258,7 @@ function hop_remove_active_hashchange_listener( obj, proc ) {
       var c = sc_assq( proc, obj.hop_hashchange_listener );
 
       if( c ) {
-	 clearInterval( c.cdr );
+	 clearInterval( c.__hop_cdr );
 	 obj.hop_hashchange_listener =
 	    sc_deleteBang( c, obj.hop_hashchange_listener );
       }
@@ -606,16 +611,16 @@ function start_servevt_ajax_proxy( key ) {
 	       // invoke all the user handlers (we have received a list of
 	       // values corresponding to server buffer).
 	       while( sc_isPair( val ) ) {
-		  var v = val.car;
-		  var id = v.car;
-		  var vals = v.cdr;
+		  var v = val.__hop_car;
+		  var id = v.__hop_car;
+		  var vals = v.__hop_cdr;
 
 		  while( vals != null ) {
-		     hop_trigger_servevt( id, vals.car, vals.car, false );
-		     vals = vals.cdr;
+		     hop_trigger_servevt( id, vals.__hop_car, vals.__hop_car, false );
+		     vals = vals.__hop_cdr;
 		  }
 
-		  val = val.cdr;
+		  val = val.__hop_cdr;
 	       }
 	    }
 	 }
@@ -692,16 +697,16 @@ function hop_servevt_signal( val ) {
       // invoke all the user handlers (we have received a list of
       // values corresponding to server buffer).
       while( sc_isPair( val ) ) {
-	 var v = val.car;
-	 var id = v.car;
-	 var vals = v.cdr;
+	 var v = val.__hop_car;
+	 var id = v.__hop_car;
+	 var vals = v.__hop_cdr;
 
 	 while( vals != null ) {
-	    hop_trigger_servevt( id, vals.car, vals.car, false );
-	    vals = vals.cdr;
+	    hop_trigger_servevt( id, vals.__hop_car, vals.__hop_car, false );
+	    vals = vals.__hop_cdr;
 	 }
 
-	 val = val.cdr;
+	 val = val.__hop_cdr;
       }
    }
 }
@@ -1127,9 +1132,9 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 var p1 = hop_servevt_dlist;
 
 	 while( sc_isPair( p1 ) ) {
-	    proc = p1.car;
+	    proc = p1.__hop_car;
 	    proc( evt );
-	    p1 = p1.cdr;
+	    p1 = p1.__hop_cdr;
 	 }
       }
 
@@ -1137,14 +1142,14 @@ function hop_trigger_servevt( id, text, value, js ) {
 
       while( sc_isPair( p2 ) ) {
 	 try {
-	    proc = p2.car;
+	    proc = p2.__hop_car;
 	    proc( evt );
 	 } catch( exc ) {
 	    throw exc;
 	 }
 	 
 	 if( evt.isStopped ) break;
-	 p2 = p2.cdr;
+	 p2 = p2.__hop_cdr;
       }
    } catch( exc ) {
       if( "displayName" in proc ) {
@@ -1238,9 +1243,9 @@ function hop_servevt_onclose() {
    var p = hop_serverdown_list;
 
    while( sc_isPair( p ) ) {
-      p.car( evt );
+      p.__hop_car( evt );
       if( evt.isStopped ) break;
-      p = p.cdr;
+      p = p.__hop_cdr;
    }
 
    hop_serverdown_triggered = true;
@@ -1336,9 +1341,9 @@ function hop_trigger_serverready_event() {
       hop_serverready_triggered = true;
 
       while( sc_isPair( l ) ) {
-	 l.car( evt );
+	 l.__hop_car( evt );
 	 if( evt.isStopped ) break;
-	 l = l.cdr;
+	 l = l.__hop_cdr;
       }
    }
 }
@@ -1398,9 +1403,9 @@ function hop_trigger_servererror_event( v ) {
    var l = hop_servererror_list;
       
    while( sc_isPair( l ) ) {
-      l.car( evt );
+      l.__hop_car( evt );
       if( evt.isStopped ) break;
-      l = l.cdr;
+      l = l.__hop_cdr;
    }
 }
 
@@ -1450,17 +1455,17 @@ function hop_remove_timeout_listener( proc ) {
    var p = hop_timeout_listeners;
    
    if( sc_isPair( p ) ) {
-      if( p.car.car === proc ) {
-	 clearInterval( p.car.cdr );
-	 hop_timeout = p.cdr;
+      if( p.__hop_car.__hop_car === proc ) {
+	 clearInterval( p.__hop_car.__hop_cdr );
+	 hop_timeout = p.__hop_cdr;
       } else {
-	 while( sc_isPair( p.cdr ) ) {
-	    if( p.cdr.car === proc ) {
-	       clearInterval( p.cdr.cdr );
-	       p.cdr = p.cdr.cdr;
+	 while( sc_isPair( p.__hop_cdr ) ) {
+	    if( p.__hop_cdr.__hop_car === proc ) {
+	       clearInterval( p.__hop_cdr.__hop_cdr );
+	       p.__hop_cdr = p.__hop_cdr.__hop_cdr;
 	       break;
 	    } else {
-	       p = p.cdr;
+	       p = p.__hop_cdr;
 	    }
 	 }
       }
@@ -1478,13 +1483,13 @@ hop_add_native_event_listener(
 	    hop_is_ready = true;
 	    
 	    while( sc_isPair( hop_window_ready_list ) ) {
-	       if( hop_window_ready_list.car.enable ) {
-		  window.ready = hop_window_ready_list.car;
+	       if( hop_window_ready_list.__hop_car.enable ) {
+		  window.ready = hop_window_ready_list.__hop_car;
 		  window.ready( evt );
 	       
 		  if( evt.isStopped ) break;
 	       }
-	       hop_window_ready_list = hop_window_ready_list.cdr;
+	       hop_window_ready_list = hop_window_ready_list.__hop_cdr;
 	    }
 	 }
       }, hop_ready_timeout + 1 );

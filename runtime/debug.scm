@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Thu Aug  1 09:04:32 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 09:10:36 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -17,7 +17,10 @@
    (include "xml.sch"
 	    "service.sch"
 	    "verbose.sch"
-	    "param.sch")
+	    "param.sch"
+	    "client-exception.sch"
+	    "sourcemap.sch"
+	    "../scheme2js/base64_vlq.sch")
 
    (library web)
 
@@ -27,9 +30,12 @@
 	   __hop_service
 	   __hop_param
 	   __hop_hop
-	   __hop_http-error)
+	   __hop_http-error
+	   __hop_clientc
+	   __hop_json)
    
-   (export (hop-debug-init! ::output-port)))
+   (export (hop-debug-init! ::output-port)
+	   (hop-debug-exception-stack ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    services ...                                                     */
@@ -83,8 +89,53 @@
 		(charset (hop-locale)))
 	     (http-file-not-found file)))))
 	 
+;*---------------------------------------------------------------------*/
+;*    hop-source-map ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hop-source-map file line col)
+   (let ((i (string-index file #\?)))
+      (if (and (integer? i)
+	       (substring-at? file (hop-scm-compile-suffix) (+fx i 1)))
+	  (let ((cache (clientc-cached-response (substring file 0 i))))
+	     (or (source-map-translate cache file line col) file))
+	  file)))
 
+;*---------------------------------------------------------------------*/
+;*    *smap-cache* ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Simple one-entry cache.                                          */
+;*---------------------------------------------------------------------*/
+(define *smap-cache* (cons "" #f))
+(define *smap-mutex* (make-mutex))
 
+;*---------------------------------------------------------------------*/
+;*    get-smap ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (get-smap smap)
+   (synchronize *smap-mutex*
+      (if (string=? (car *smap-cache*) smap)
+	  (cdr *smap-cache*)
+	  (let ((o (json->obj (call-with-input-file smap read-string))))
+	     (set-car! *smap-cache* smap)
+	     (set-cdr! *smap-cache* o)
+	     o))))
 
+;*---------------------------------------------------------------------*/
+;*    source-map-translate ...                                         */
+;*---------------------------------------------------------------------*/
+(define (source-map-translate cache file line col)
+   (when (string? cache)
+      (let ((smap (string-append cache ".map")))
+	 (when (file-exists? smap)
+	    (with-handler
+	       (lambda (e)
+		  #f)
+	       (let ((s (get-smap smap)))
+		  (when (pair? s)
+		     (let ((mappings (assq 'mappings s))
+			   (sources (assq 'sources s)))
+			(when (and (pair? mappings) (pair? sources))
+			   (hop-debug-source-map-file/smap (cdr mappings)
+			      (cdr sources) file line col))))))))))
 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Jul 30 09:56:16 2013 (serrano)                */
+;*    Last change :  Tue Aug  6 12:13:19 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Set variables name                                               */
@@ -46,8 +46,8 @@
    (find-free tree #f #f '()) ;; local version
    (let ((env (instantiate::Name-Env
 		 (compress? (config 'compress))
-		 (suffix (and (config 'statics-suffix)
-			      (suffix-mangle (config 'statics-suffix)))))))
+		 (suffix (when (config 'statics-suffix)
+			    (suffix-mangle (config 'statics-suffix)))))))
       (name-gen tree env #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -334,23 +334,10 @@
 	  (allocate-local-name v env used-ht)
 	  (with-access::Var v (id escapes?)
 	     (widen!::Named-Var v
-		(js-id (bigloo-mangle
-			  (string-append (symbol->string id)
-			     "." (JS-stamp) "@" suffix))))))))
+		(js-id (bigloo-module-mangle
+			  (string-append (symbol->string id) "." (JS-stamp))
+			  suffix)))))))
 
-;* (define (allocate-global-name v::Var env used-ht)                   */
-;*    (with-access::Name-Env env (suffix)                              */
-;*       (if (not suffix)                                              */
-;* 	  (begin ;; no suffix -> treat it, as if it was a local var.   */
-;* 	     (allocate-local-name v env used-ht))                      */
-;* 	  (with-access::Var v (id escapes?)                            */
-;* 	     (let* ((short (string-append (nice-mangle (symbol->string id)) */
-;* 					  suffix)))                    */
-;* 		(widen!::Named-Var v                                   */
-;* 		   (js-id (if (or (not (valid? short))                 */
-;* 				  (used? short used-ht))               */
-;* 			      (string-append (gen-JS-sym id) suffix)   */
-;* 			      short))))))))                            */
 ;*---------------------------------------------------------------------*/
 ;*    name-gen ::Node ...                                              */
 ;*---------------------------------------------------------------------*/

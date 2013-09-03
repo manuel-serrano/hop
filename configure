@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug  2 09:20:15 2013 (serrano)                */
+#*    Last change :  Thu Aug  8 15:01:16 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -65,6 +65,7 @@ version="2.5.0"
 devel=pre
 
 hopc=$PWD/bin/hopc
+bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
 date=`date +"%d %B %Y"`
@@ -734,6 +735,7 @@ cat $mkmf.in \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@HOPC@|$hopc|" \
+          -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \

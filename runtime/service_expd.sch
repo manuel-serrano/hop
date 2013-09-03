@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/2.5.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Jul 14 09:53:16 2013 (serrano)                */
+;*    Last change :  Fri Aug  9 18:38:01 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -14,7 +14,17 @@
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (jscript-funcall path args)
-   `(format "(function () { return hop_apply_url( ~s, arguments ); })" ,path))
+   (if (=fx (bigloo-debug) 0)
+       `(format "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
+       (let loop ((args (dsssl-formals->scheme-formals args error))
+		  (arity 0))
+	  (cond
+	     ((null? args)
+	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
+	     ((not (pair? args))
+	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
+	     (else
+	      (loop (cdr args) (+fx arity 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */

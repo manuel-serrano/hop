@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Jul 26 10:39:21 2013 (serrano)                */
+/*    Last change :  Fri Aug 23 07:41:00 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -33,26 +33,25 @@
 /*    See HOP-CALLBACK-HANDLER, hop-exception.scm.                     */
 /*    See also XML-TILDE->STATEMENT, runtime/xml.scm                   */
 /*---------------------------------------------------------------------*/
-function hop_callback( proc, ctx ) {
-   if( hop_debug() > 0 ) {
-      // debug mode
-      var applyCallback = function() {
-	 try {
-	    hop_current_stack_context = ctx;
-	    return proc.apply( this, arguments );
-	 } catch( e ) {
-	    hop_callback_handler( e, ctx );
-	 }
-      }
-
-      if( "displayName" in proc ) {
-	 applyCallback.displayName = proc.displayName;
-      }
-
-      return applyCallback;
-   } else {
-      return proc;
+function hop_callback( proc, ctx, id ) {
+   if( !("apply" in proc) ) {
+      sc_typeError( id, "procedure", proc, 2 );
    }
+   
+   var applyCallback = function() {
+      try {
+	 hop_current_stack_context = ctx;
+	 return proc.apply( this, arguments );
+      } catch( e ) {
+	 hop_callback_handler( e, ctx );
+      }
+   }
+
+   if( "displayName" in proc ) {
+      applyCallback.displayName = proc.displayName;
+   }
+
+   return applyCallback;
 }
    
 /*---------------------------------------------------------------------*/
@@ -82,8 +81,8 @@ function hop_tprint( file, pos, args ) {
 	 var str = file + ", " + pos + ": ";
 	 
 	 while( sc_isPair( args ) ) {
-	    str += args.car;
-	    args = args.cdr;
+	    str += args.__hop_car;
+	    args = args.__hop_cdr;
 	 }
 	 
 	 alert( str );
@@ -389,25 +388,22 @@ function hop_typeof( obj ) {
 /*** META ((export after) (arity #t)) */
 function sc_after( timeout, proc ) {
    var tm = sc_isNumber( timeout ) ? timeout : 1;
-   var wproc;
    
-   if( hop_debug() == 0 ) {
-      wproc = proc;
-   } else {
-      if( sc_arity_check( proc, 0 ) ) {
+#if HOP_RTS_DEBUG
+   if( hop_debug() > 0 ) {
+      try {
 	 /* raise an error to get the execution stack */
-	 try {
-	    var e = new Error( "after" );
-	    e.precontext = hop_current_stack_context;
-
-	    throw e;
-	 } catch( e ) {
-	    wproc = hop_callback( proc, e );
-	 }
+	 throw new Error( "after" );
+      } catch( e ) {
+	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var ctx = sc_cons( "After trace:", stk );
+	 
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "after" );
       }
    }
+#endif
    
-   var i = setInterval( function() { clearInterval( i ); wproc() }, tm );
+   var i = setInterval( function() { clearInterval( i ); proc() }, tm );
    
    return true;
 }
@@ -417,27 +413,23 @@ function sc_after( timeout, proc ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export timeout) (arity #t)) */
 function sc_timeout( tm, proc ) {
-   var wproc;
-   
-   if( hop_debug() == 0 ) {
-      wproc = proc;
-   } else {
-      if( sc_arity_check( proc, 0 ) ) {
+#if HOP_RTS_DEBUG
+   if( hop_debug() > 0 ) {
+      try {
 	 /* raise an error to get the execution stack */
-	 try {
-	    var e = new Error( "timeout" );
-	    e.precontext = hop_current_stack_context;
+	 throw new Error( "timeout" );
+      } catch( e ) {
+	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var ctx = sc_cons( "Timeout trace:", stk );
 
-	    throw e;
-	 } catch( e ) {
-	    wproc = hop_callback( proc, e );
-	 }
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "timeout" );
       }
    }
-      
-   if( wproc() ) {
+#endif
+   
+   if( proc() ) {
       var i = setInterval(
-	 function() { if( !wproc() ) clearInterval( i )}, tm );
+	 function() { if( !proc() ) clearInterval( i )}, tm );
    }
 }
 
@@ -764,13 +756,13 @@ function hop_alist2jsobject( alist ) {
    var o = {};
 
    while( sc_isPair( alist ) ) {
-      if( !sc_isPair( alist.car ) || !sc_isPair( alist.car.cdr ) )
-	 sc_error( "alist->object", "Illegal entry", alist.car );
-      if( !sc_isKeyword( alist.car.car ) )
-	 sc_error( "alist->object", "Illegal key", alist.car.car );
+      if( !sc_isPair( alist.__hop_car ) || !sc_isPair( alist.__hop_car.__hop_cdr ) )
+	 sc_error( "alist->object", "Illegal entry", alist.__hop_car );
+      if( !sc_isKeyword( alist.__hop_car.__hop_car ) )
+	 sc_error( "alist->object", "Illegal key", alist.__hop_car.__hop_car );
       
-      o[ sc_keyword2jsstring( alist.car.car ) ] = alist.car.cdr.car;
-      alist = alist.cdr;
+      o[ sc_keyword2jsstring( alist.__hop_car.__hop_car ) ] = alist.__hop_car.__hop_cdr.__hop_car;
+      alist = alist.__hop_cdr;
    }
 
    return o;
@@ -799,13 +791,13 @@ function hop_plist2jsobject( plist ) {
    var o = {};
 
    while( sc_isPair( plist ) ) {
-      if( !sc_isKeyword( plist.car ) )
-	 sc_error( "plist->object", "Illegal key", plist.car.car );
-      if( !sc_isPair( plist.cdr ) ) 
+      if( !sc_isKeyword( plist.__hop_car ) )
+	 sc_error( "plist->object", "Illegal key", plist.__hop_car.__hop_car );
+      if( !sc_isPair( plist.__hop_cdr ) ) 
 	 sc_error( "plist->object", "Illegal entry", plist );
       
-      o[ sc_keyword2jsstring( plist.car ) ] = plist.cdr.car;
-      plist = plist.cdr.cdr;
+      o[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      plist = plist.__hop_cdr.__hop_cdr;
    }
 
    return o;

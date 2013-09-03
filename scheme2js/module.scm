@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Sun Jul 21 10:25:02 2013 (serrano)                */
+;*    Last change :  Fri Aug  9 17:45:51 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -512,6 +512,7 @@
 				   (provide (cddr header))
 				   (else '()))
 			      ,@(apply append merge-lasts))))
+		
 		(cond
 		   ((epair? replace)
 		    (set! header (econs (car h) (cdr h) (cer replace))))
@@ -519,6 +520,7 @@
 		    (set! header (econs (car h) (cdr h) (cer header))))
 		   (else
 		    (set! header h)))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    set-name! ...                                                    */
 ;*---------------------------------------------------------------------*/

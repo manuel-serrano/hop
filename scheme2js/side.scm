@@ -1,89 +1,138 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/side.scm                */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Sun Aug 11 16:48:11 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Side effects                                                     */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module side
+   
    (import config
 	   error
 	   nodes
 	   export-desc
+	   dump-node
 	   walk
 	   verbose)
+   
    (static (class Side-Env
-	      runtime-is-constant?::bool))
+	      runtime-is-constant?::bool
+	      (pass::int read-only))
+
+	   (wide-class DefinedVar::Var
+	      (pass::int (default -1))))
+   
    (export (side-effect tree::Module)))
 
+;*---------------------------------------------------------------------*/
+;*    side-effect ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (side-effect tree)
    (verbose "side-effect")
-   (side tree (instantiate::Side-Env (runtime-is-constant? (config 'runtime-is-constant)))))
+   (set! *pass-index* (+fx 1 *pass-index*))
+   (side tree
+      (instantiate::Side-Env
+	 (runtime-is-constant? (config 'runtime-is-constant))
+	 (pass *pass-index*))))
 
+;*---------------------------------------------------------------------*/
+;*    *pass-index* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *pass-index* 0)
+
+;*---------------------------------------------------------------------*/
+;*    side ::Node ...                                                  */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.side)
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    side ::Module ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.side)
    (with-access::Module this (runtime-vars imported-vars scope-vars)
       (for-each (lambda (js-var)
-		   (with-access::Var js-var (already-defined? constant? value)
-		      (set! already-defined? #t)
-		      (set! constant? (with-access::Side-Env env (runtime-is-constant?) runtime-is-constant?))
+		   (with-access::Var js-var (constant? value)
+		      (with-access::Side-Env env (runtime-is-constant? pass)
+			 (widen!::DefinedVar js-var
+			    (pass pass))
+			 (set! constant? runtime-is-constant?))
 		      (set! value #f)))
-		runtime-vars)
+	 runtime-vars)
       (for-each (lambda (js-var)
 		   (with-access::Var js-var
-			 (export-desc already-defined? constant? value)
+			 (export-desc constant? value)
+		      (with-access::Side-Env env (pass)
+			 (widen!::DefinedVar js-var
+			    (pass pass))
+			 (with-access::Export-Desc export-desc (exported-as-const?)
+			    (set! constant? exported-as-const?)
+			    (set! value #f)))))
+	 imported-vars)
+      (for-each (lambda (js-var)
+		   (with-access::Var js-var
+			 (export-desc constant? value id)
+		      (with-access::Side-Env env (pass)
+			 (widen!::DefinedVar js-var
+			    (pass (-fx pass 1))))
 		      (with-access::Export-Desc export-desc (exported-as-const?)
-			 (set! already-defined? #t)
 			 (set! constant? exported-as-const?)
 			 (set! value #f))))
-		imported-vars)
-      (for-each (lambda (js-var)
-		   (with-access::Var js-var
-			 (export-desc already-defined? constant? value)
-		      (with-access::Export-Desc export-desc (exported-as-const?)
-			 (set! already-defined? (not exported-as-const?))
-			 (set! constant? #f)
-			 (set! value #f))))
-		scope-vars)
+	 scope-vars)
       (default-walk this)))
 
+;*---------------------------------------------------------------------*/
+;*    side ::Lambda ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.side)
    (with-access::Lambda this (scope-vars)
       (for-each (lambda (var)
-		   (with-access::Var var (already-defined? constant? value)
-		      (set! already-defined? #t)
+		   (with-access::Var var (constant? value)
+		      (with-access::Side-Env env (pass)
+			 (widen!::DefinedVar var
+			    (pass pass)))
 		      (set! constant? #t)
 		      (set! value #f)))
-		scope-vars))
+	 scope-vars))
    ;; revisits the formals, but doesn't make any difference.
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    clean-local ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (clean-local l::Var)
-   (with-access::Var l (already-defined? constant? value)
-      (set! already-defined? #f)
+   (when (isa? l DefinedVar)
+      (shrink! l))
+   (with-access::Var l (constant? value)
       (set! constant? #f)
       (set! value #f)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    side ::Tail-rec ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Tail-rec.side)
    (with-access::Tail-rec this (inits scope-vars body)
       (for-each clean-local scope-vars)
-
+      
       (for-each walk inits)
       ;; we can leave the "constant?" flag, but we have to remove the
       ;; value-entry. Otherwise we might propagate the init-value.
       (for-each (lambda (var)
 		   (with-access::Var var (value)
 		      (set! value #f)))
-		scope-vars)
+	 scope-vars)
       (walk body)))
 
+;*---------------------------------------------------------------------*/
+;*    side ::While ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (While.side)
    (with-access::While this (init scope-vars body)
       (for-each clean-local scope-vars)
@@ -97,11 +146,17 @@
 		scope-vars)
       (walk body)))
 
+;*---------------------------------------------------------------------*/
+;*    side ::Scope ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Scope.side)
    (with-access::Scope this (scope-vars)
       (for-each clean-local scope-vars))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    side ::Set! ...                                                  */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Set!.side)
    (with-access::Set! this (lvalue val)
       (walk val)
@@ -114,12 +169,16 @@
 		  "Imported variable is constant, and must not be modified."
 		  (with-access::Var var (id) id)
 		  lvalue))
-	    (with-access::Var var (already-defined? constant? value)
-	       (if already-defined?
-		   (begin
-		      (set! constant? #f)
-		      (set! value #f))
-		   (begin
-		      (set! already-defined? #t)
-		      (set! constant? #t)
-		      (set! value val))))))))
+	    (with-access::Var var (constant? value)
+	       (with-access::Side-Env env (pass)
+		  (if (and (isa? var DefinedVar)
+			   (with-access::DefinedVar var ((vpass pass))
+			      (=fx vpass pass)))
+		      (begin
+			 (set! constant? #f)
+			 (set! value #f))
+		      (begin
+			 (widen!::DefinedVar var
+			    (pass pass))
+			 (set! constant? #t)
+			 (set! value val)))))))))

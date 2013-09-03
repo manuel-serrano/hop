@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Tue Jul 30 10:44:39 2013 (serrano)                */
+;*    Last change :  Fri Aug  9 12:01:53 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -102,6 +102,7 @@
 ;*    const! ::Const ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Const.const! constant-ht)
+   
    (define (long-enough-list? l)
       (let loop ((l l)
 		 (nb 0))

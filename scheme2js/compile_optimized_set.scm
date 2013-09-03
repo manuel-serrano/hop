@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Mon Jul 22 09:13:37 2013 (serrano)                */
+;*    Last change :  Sun Aug 11 15:49:00 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compile set! expression                                          */
@@ -75,7 +75,7 @@
 				  (template-display p
 				     "($js-id ~a= ~e)"
 				     (cadr entry)
-				     (compile (cadr operands) p #f tmp))))
+				     (compile (cadr operands) p #f tmp #f))))
 			   (compile-unoptimized-set! p compile n tmp)))
 		    (compile-unoptimized-set! p compile n tmp)))
 	     (compile-unoptimized-set! p compile n tmp)))))
@@ -87,8 +87,8 @@
    (with-access::Set! n (lvalue val)
       (template-display p
 	 "~e = ~e"
-	 (compile lvalue p #f tmp)
-	 (compile val p #f tmp))))
+	 (compile lvalue p #f tmp #f)
+	 (compile val p #f tmp #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-set! ...                                                 */

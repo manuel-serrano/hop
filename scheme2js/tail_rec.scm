@@ -1,16 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/tail_rec.scm            */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Mon Aug 19 08:31:48 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Tail-rec optimization                                            */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module tail-rec
+   
    (import config
 	   tools
 	   nodes
@@ -24,26 +27,34 @@
 	   loop-updates
 	   captured-vars
 	   verbose)
+   
    (static (wide-class Tail-Lambda::Lambda
 	      label::Label)
 	   (wide-class Repl-Var::Var
 	      replacement::Ref))
+   
    (export (tail-rec! tree::Module)))
 
-;; (define (foo x y z)
-;;     bar
-;;     (foo x_up y_up z_up))
-;;
-;; is transformed into:
-;;
-;; (define (foo x_ y_ z_)
-;;    (tail-rec (x y z)
-;;              (x_ y_ z_))
-;;       bar
-;;       (tail-rec-call (x_up y_up z_up))))
-;;
-;; The meaning of tail-rec being: (let loop ((x x_) (y y_) (z z_))
-;; The meaning of tail-rec-call: (loop x_up y_up z_up)
+;*---------------------------------------------------------------------*/
+;*    tail-rec ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    (define (foo x y z)                                              */
+;*        bar                                                          */
+;*        (foo x_up y_up z_up))                                        */
+;*                                                                     */
+;*    is transformed into:                                             */
+;*                                                                     */
+;*    (define (foo x_ y_ z_)                                           */
+;*       (tail-rec (x y z)                                             */
+;*                 (x_ y_ z_))                                         */
+;*          bar                                                        */
+;*          (tail-rec-call (x_up y_up z_up))))                         */
+;*                                                                     */
+;*    The meaning of tail-rec being:                                   */
+;*      (let loop ((x x_) (y y_) (z z_))                               */
+;*    The meaning of tail-rec-call:                                    */
+;*      (loop x_up y_up z_up)                                          */
+;*---------------------------------------------------------------------*/
 (define (tail-rec! tree)
    (verbose "tail-rec")
    (tail-calls tree)
@@ -51,9 +62,15 @@
       (side-effect tree)
       (rec! tree #f #f)))
 
+;*---------------------------------------------------------------------*/
+;*    rec! ::Node ...                                                  */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.rec! current-fun)
    (default-walk! this current-fun))
 
+;*---------------------------------------------------------------------*/
+;*    rec! ::Tail-Call ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Tail-Call.rec! current-fun)
    (default-walk! this current-fun)
    (with-access::Call this (operator operands)
@@ -82,6 +99,9 @@
 				   label)))))))
 	  this)))
 
+;*---------------------------------------------------------------------*/
+;*    rec! ::Lambda ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.rec! current-fun)
    (default-walk! this this)
    (when (isa? this Tail-Lambda)
@@ -97,9 +117,9 @@
 					   (with-access::Ref formal (var id)
 					      (let ((decl (Ref-of-new-Var id)))
 						 (widen!::Repl-Var var
-						       (replacement decl))
+						    (replacement decl))
 						 decl)))
-					formals))
+				      formals))
 		(replacement-vars (map (lambda (r)
 					  (with-access::Ref r (var) var))
 				     replacement-decls))
@@ -108,30 +128,30 @@
 				  (location -50)
 				  (lvalue formal)
 				  (val (var-reference repl-var
-						      :location formal))))
-			    formals
-			    replacement-vars))
+					  :location formal))))
+			  formals
+			  replacement-vars))
 		(tail-rec (instantiate::Tail-rec
 			     (scope-vars formals-vars)
 			     (inits inits)
 			     (body return-val)
 			     (label label))))
-				 
+	    
 	    (set! scope-vars
-		  (map! (lambda (var)
-			   (if (isa? var Repl-Var)
-			       (with-access::Repl-Var var (replacement)
-				  (with-access::Ref replacement (var)
-				     var))
-			       var))
-			scope-vars))
+	       (map! (lambda (var)
+			(if (isa? var Repl-Var)
+			    (with-access::Repl-Var var (replacement)
+			       (with-access::Ref replacement (var)
+				  var))
+			    var))
+		  scope-vars))
 	    (set! formals (map (lambda (formal)
 				  (with-access::Ref formal (var)
 				     (with-access::Repl-Var var (replacement)
 					(let ((tmp replacement))
 					   (shrink! var)
 					   tmp))))
-			       formals))
+			     formals))
 	    (with-access::Return body (val)
 	       (set! val tail-rec))
 	    (shrink! this))))

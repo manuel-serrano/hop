@@ -1,38 +1,50 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/export.scm              */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Aug 23 07:30:01 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    export                                                           */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module export-desc
+   
    (import gen-js error)
-   (export
-    (find-desc-in-exports sym::symbol l/ht)
-    (empty-exports?::bool l/ht)
-    (final-class Export-Desc
-       (id::symbol read-only)
-       (js-id::bstring read-only)
-       (exported-as-const?::bool (default #f))
-       (runtime?::bool (default #f) read-only)
-       (peephole       (default #f) read-only)
-       (higher?::bool  (default #f) read-only)
-       (higher-params  (default #f) read-only) 
-       (return-type    (default #f) read-only)
-       (arity          (default #f) read-only))
+   
+   (export (find-desc-in-exports sym::symbol l/ht)
+	   
+	   (empty-exports?::bool l/ht)
+	   
+	   (final-class Export-Desc
+	      (id::symbol read-only)
+	      (js-id::bstring read-only)
+	      (exported-as-const?::bool (default #f))
+	      (runtime?::bool (default #f) read-only)
+	      (peephole       (default #f) read-only)
+	      (higher?::bool  (default #f) read-only)
+	      (higher-params  (default #f) read-only) 
+	      (return-type    (default #f) read-only)
+	      (arity          (default #f) read-only))
+	   
     (create-Export-Desc::Export-Desc info module-name runtime?::bool)))
 
 
+;*---------------------------------------------------------------------*/
+;*    empty-exports? ...                                               */
+;*---------------------------------------------------------------------*/
 (define (empty-exports? l/ht)
    (or (null? l/ht)
        (and (hashtable? l/ht)
 	    (zerofx? (hashtable-size l/ht)))))
 
+;*---------------------------------------------------------------------*/
+;*    find-desc-in-exports ...                                         */
+;*---------------------------------------------------------------------*/
 (define (find-desc-in-exports sym l/ht)
    (cond
       ((pair? l/ht)
@@ -47,17 +59,23 @@
       (else
        (error "export.scm" "internal error" sym))))
 
+;*---------------------------------------------------------------------*/
+;*    entry-val ...                                                    */
+;*---------------------------------------------------------------------*/
 (define (entry-val sym l)
    (let ((try (assq sym (cdr l))))
       (and try
 	   (cadr try))))
 
+;*---------------------------------------------------------------------*/
+;*    normalize-export ...                                             */
+;*---------------------------------------------------------------------*/
 (define (normalize-export export module-name)
    (cond
       ((symbol? export)
        (list export
-	     (list 'JS
-		   (mangle-qualified-var export module-name))))
+	  (list 'JS
+	     (mangle-qualified-var export module-name))))
       ((pair? export)
        (cond
 	  ((assq 'JS (cdr export))
@@ -65,15 +83,18 @@
 	  (else
 	   (let ((scheme-sym (car export)))
 	      (cons* scheme-sym
-		     (list 'JS
-			   (mangle-qualified-var scheme-sym module-name))
-		     (cdr export))))))
+		 (list 'JS
+		    (mangle-qualified-var scheme-sym module-name))
+		 (cdr export))))))
       (else
        (scheme2js-error "normalize-export"
-			"bad import/export clause"
-			export
-			export))))
+	  "bad import/export clause"
+	  export
+	  export))))
 
+;*---------------------------------------------------------------------*/
+;*    normalize-js-id ...                                              */
+;*---------------------------------------------------------------------*/
 (define (normalize-js-id normalized)
    (let* ((clause (assq 'JS (cdr normalized)))
 	  (id (and clause
@@ -85,10 +106,13 @@
 	  id)
 	 (else 
 	  (scheme2js-error "exported variable"
-			   "JS-clause must be either symbol or string"
-			   id
-			   clause)))))
+	     "JS-clause must be either symbol or string"
+	     id
+	     clause)))))
 
+;*---------------------------------------------------------------------*/
+;*    create-Export-Desc ...                                           */
+;*---------------------------------------------------------------------*/
 (define (create-Export-Desc::Export-Desc info module-name runtime?)
    (let* ((normalized (normalize-export info module-name))
 	  (scheme-sym (car normalized))

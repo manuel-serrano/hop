@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Aug  2 09:23:07 2013 (serrano)                */
+;*    Last change :  Fri Aug 23 07:15:36 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -51,7 +51,7 @@
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()
-			 (let ((sexp (hop-read (current-input-port))))
+			 (let ((sexp (hopc-read (current-input-port))))
 			    (with-handler
 			       (lambda (e)
 				  (if (isa? e &eval-warning)
@@ -73,6 +73,18 @@
 	     (compile-sources)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-read ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hopc-read p)
+   (if (=fx (bigloo-debug) 0)
+       (begin
+	  (bigloo-debug-set! 1)
+	  (let ((v (hop-read p)))
+	     (bigloo-debug-set! 0)
+	     v))
+       (hop-read p)))
+
+;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (setup-client-compiler!)
@@ -80,7 +92,7 @@
    ;; invocations of hopc are impossible because one removes
    ;; the file of the other.
    (hop-clientc-clear-cache-set! #f)
-   (init-hopscheme! :reader (lambda (p v) (hop-read p))
+   (init-hopscheme! :reader (lambda (p v) (hopc-read p))
       :share (hopc-share-directory)
       :verbose (hop-verbose)
       :eval (lambda (e) (let ((op (open-output-string)))
@@ -95,7 +107,14 @@
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
       :expanders `(labels match-case
-			(define-tag . ,(eval 'hop-client-define-tag))))
+			(define-tag . ,(eval 'hop-client-define-tag)))
+      :source-map (hopc-clientc-source-map)
+      :arity-check (hopc-clientc-arity-check)
+      :type-check (hopc-clientc-type-check)
+      :meta (hopc-clientc-meta)
+      :debug (hopc-clientc-debug)
+      :module-use-strict (hopc-clientc-use-strict)
+      :function-use-strict (hopc-clientc-use-strict))
    (init-clientc-compiler! :modulec hopscheme-compile-module
       :expressionc hopscheme-compile-expression
       :valuec hopscheme-compile-value 
@@ -136,7 +155,7 @@
       
       (define (generate out)
 	 (let loop ()
-	    (let ((exp (hop-read in)))
+	    (let ((exp (hopc-read in)))
 	       (unless (eof-object? exp)
 		  (match-case exp
 		     ((module . ?-)
@@ -177,7 +196,7 @@
 	 (hop-verb 1 cmd "\n")
 	 (unwind-protect
 	    (let loop ()
-	       (let ((exp (hop-read in)))
+	       (let ((exp (hopc-read in)))
 		  (unless (eof-object? exp)
 		     (match-case exp
 			((module . ?-)

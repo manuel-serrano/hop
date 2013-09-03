@@ -791,12 +791,12 @@ function sc_toDisplayString(o) {
    else if (o === undefined)
       return "#unspecified";
     // window is only declared inside browsers. Otherwise this.window should be undefined
-   else if (o === this.window)
-      return "window";
    else if (typeof o === 'function' && !("toString" in o) )
       return sc_toWriteStringProcedure(o);
    else if (o.sc_toDisplayString)
       return o.sc_toDisplayString();
+   else if ((this != undefined) && ("window" in this) && (o === this.window))
+      return "window";
    else
       return o.toString();
 }
@@ -856,8 +856,8 @@ function sc_prepCircle(o, symb, nbPointer) {
 	}
 	o[symb] = 0;
 	if (o instanceof sc_Pair) {
-	    sc_prepCircle(o.car, symb, nbPointer);
-	    sc_prepCircle(o.cdr, symb, nbPointer);
+	    sc_prepCircle(o.__hop_car, symb, nbPointer);
+	    sc_prepCircle(o.__hop_cdr, symb, nbPointer);
 	} else {
 	    for (var i = 0; i < o.length; i++)
 		sc_prepCircle(o[i], symb, nbPointer);
@@ -905,12 +905,12 @@ sc_Pair.prototype.sc_toCircleString = function(symb, writeOrDisplay, inList) {
 	res += "(";
     
     // print car
-    res += sc_genToCircleString(this.car, symb, writeOrDisplay);
+    res += sc_genToCircleString(this.__hop_car, symb, writeOrDisplay);
     
-    if (sc_isPair(this.cdr)) {
-	res += " " + this.cdr.sc_toCircleString(symb, writeOrDisplay, true);
-    } else if (this.cdr !== null) {
-	res += " . " + sc_genToCircleString(this.cdr, symb, writeOrDisplay);
+    if (sc_isPair(this.__hop_cdr)) {
+	res += " " + this.__hop_cdr.sc_toCircleString(symb, writeOrDisplay, true);
+    } else if (this.__hop_cdr !== null) {
+	res += " . " + sc_genToCircleString(this.__hop_cdr, symb, writeOrDisplay);
     }
     if (!inList)
 	res += ")";
@@ -1030,13 +1030,13 @@ function sc_format(s) {
    function format_list(sep, l, p) {
       if (sc_isPair(l)) {
 	 while (true) {
-	    format_list(sep, l.car, p);
-	    if (sc_isPair(l.cdr)) {
+	    format_list(sep, l.__hop_car, p);
+	    if (sc_isPair(l.__hop_cdr)) {
 	       p.appendJSString(sep);
-	       l = l.cdr;
+	       l = l.__hop_cdr;
 	    } else {
-	       if (l.cdr != null) {
-		  format_list(sep, l.cdr, p);
+	       if (l.__hop_cdr != null) {
+		  format_list(sep, l.__hop_cdr, p);
 	       }
 	       break;
 	    }

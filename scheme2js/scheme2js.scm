@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Aug  2 10:59:31 2013 (serrano)                */
+;*    Last change :  Fri Aug 23 07:09:19 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -39,6 +39,7 @@
 	   pragma
 	   call-check
 	   rm-unused-vars
+	   tail
 	   tail-rec
 	   constant-propagation
 	   constants
@@ -53,7 +54,8 @@
 	   callcc
 	   trampoline
 	   dump-node
-	   source-map)
+	   source-map
+	   stdlib)
    
    ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
@@ -108,13 +110,15 @@
 	 (pass 'symbol         (symbol-resolution tree imports exports))
 	 (pass 'encapsulation  (encapsulation! tree))
 	 (pass 'node-elim1     (node-elimination! tree))
-	 (when (config 'frame-push)
-	    (pass 'tail-rec    (tail-rec! tree)))
+	 (if (config 'frame-push)
+	     (pass 'tail-rec   (tail-rec! tree))
+	     (pass 'tail-rec   (tail-calls tree)))
 	 (pass 'node-elim2     (node-elimination! tree))
 	 (pass 'inline         (inline! tree #t))
 	 (pass 'call-check     (call-check tree))
-	 (when (config 'frame-push)
-	    (pass 'tail-rec2   (tail-rec! tree)))
+	 (if (config 'frame-push)
+	     (pass 'tail-rec2  (tail-rec! tree))
+	     (pass 'tail-rec2  (tail-calls tree)))
 	 (pass 'inline2        (inline! tree #f)) ;; a second faster inlining.
 	 (pass 'constant       (constant-propagation! tree))
 	 (pass 'pragmas        (pragmas! tree))
@@ -122,7 +126,6 @@
 	 (pass 'node-elim3     (node-elimination! tree))
 	 (pass 'call/cc-early  (call/cc-early! tree))
 	 (pass 'trampoline     (trampoline tree))
-;* 	 (scheme2js-dump-temporary tree "trampoline")                  */
 	 (pass 'scope          (scope-resolution! tree))
 	 (pass 'constants      (constants! tree))
 	 (pass 'tail-rec       (tail-rec! tree))
@@ -133,13 +136,12 @@
 	 (pass 'call/cc-middle (call/cc-middle tree))
 	 (pass 'flatten        (scope-flattening! tree))
 	 (pass 'stmts          (statements! tree))
-;* 	 (scheme2js-dump-temporary tree "stmts")                       */
 	 (pass 'while-optim    (optimize-while! tree))
 	 (pass 'node-elim4     (node-elimination! tree))
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
+;* 	 (scheme2js-dump-temporary tree "last")                        */
 	 (pass 'call/cc-late   (call/cc-late! tree))
-;* 	 (scheme2js-dump-temporary tree "preout")                      */
 	 ;;(locations tree)
 	 (out tree p)
 	 (verbose "--- compiled")
@@ -209,9 +211,9 @@
 		  ;; same as the module's name, if any was given).
 		  (unless (or (config 'statics-suffix)
 			      (string=? "-" in-file))
-		     (config-set! 'statics-suffix
-			(string-append "_"
-			   (prefix (basename in-file)))))
+		     (with-access::Compilation-Unit module (name)
+			(config-set! 'statics-suffix
+			   (symbol->string name))))
 		  
 		  (with-access::Compilation-Unit module (declared-module?)
 		     (when (eq? (config 'export-globals) 'module)
@@ -226,6 +228,9 @@
 				 (actual-file?
 				  (call-with-output-file out-file
 				     (lambda (out-p)
+					(fprintf out-p "/* scheme2js generated file ~a */\n" (current-date))
+					(when (config 'use-strict/module)
+					   (fprintf out-p "\"use strict\";\n\n"))
 					(scheme2js module out-p))))
 				 ((config 'source-map)
 				  (set! actual-file? #t)
@@ -241,6 +246,10 @@
 					   (send-chars p (current-output-port))))
 				     tree))
 				 (else
+				  (printf "/* scheme2js generated file ~a */\n"
+				     (current-date))
+				  (when (config 'use-strict/module)
+				     (print "\"use strict\";\n"))
 				  (scheme2js module (current-output-port))))))
 		     (when (config 'source-map)
 			(let* ((srcmap (string-append out-file ".map"))

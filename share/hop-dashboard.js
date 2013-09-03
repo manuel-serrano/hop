@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Tue Jul 23 14:31:02 2013 (serrano)                */
+/*    Last change :  Sun Aug 11 15:31:56 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
@@ -81,13 +81,13 @@ function hop_dashboard_populate( proc ) {
       div2.innerHTML = "";
 
       while( h !== null ) {
-	 var p = h.car;
+	 var p = h.__hop_car;
 	 var app = document.createElement( "span" );
 	 var img = document.createElement( "img" );
 		   
-	 img.src = p.cdr.car
-	 img.title = p.car;
-	 app.title = p.car;
+	 img.src = p.__hop_cdr.__hop_car
+	 img.title = p.__hop_car;
+	 app.title = p.__hop_car;
 
 	 node_style_set( app, "width", app_size + "px");
 	 node_style_set( app, "height", app_size + "px");
@@ -108,8 +108,8 @@ function hop_dashboard_populate( proc ) {
 	    node_style_set( this, "-moz-border-radius", "4px" );
 	    node_style_set( this, "-webkit-border-radius", "4px" );
 	 }
-	 app.name = p.car
-	 app.svc = p.cdr.cdr.car;
+	 app.name = p.__hop_car
+	 app.svc = p.__hop_cdr.__hop_cdr.__hop_car;
 	 app.onclick = function( e ) {
 	    hop_dashboard_start_applet( this.name, this.svc );
 	 }
@@ -117,7 +117,7 @@ function hop_dashboard_populate( proc ) {
 	 app.appendChild( img );
 	 div.appendChild( app );
 
-	 h = h.cdr;
+	 h = h.__hop_cdr;
 	 width += (app_size + 10);
       }
 

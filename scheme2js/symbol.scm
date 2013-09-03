@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Jul 23 10:20:39 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 06:11:48 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js symbol resolution                                      */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module symbol
    
-   (import mapping1 mapping2
+   (import stdlib
 	   tools
 	   symbol-table
 	   config
@@ -40,23 +40,36 @@
 	      (allow-unresolved?::procedure (default (lambda (id loc) #f)))
 	      (unbound-add!::procedure (default (lambda (id) #f))))))
 
-(define *scheme2js-compilation-runtime-vars* '(list js-call not))
+;*---------------------------------------------------------------------*/
+;*    *scheme2js-compilation-runtime-vars* ...                         */
+;*---------------------------------------------------------------------*/
+(define *scheme2js-compilation-runtime-vars*
+   '(list js-call not))
 
+;*---------------------------------------------------------------------*/
+;*    runtime-reference ...                                            */
+;*---------------------------------------------------------------------*/
 (define (runtime-reference id)
    (var-reference ((thread-parameter '*runtime-id->var*) id)))
 
+;*---------------------------------------------------------------------*/
+;*    runtime-reference-init! ...                                      */
+;*---------------------------------------------------------------------*/
 (define (runtime-reference-init! f)
    (thread-parameter-set! '*runtime-id->var*
-			  (lambda (sym)
-			     [assert (*scheme2js-compilation-runtime-vars* sym)
-				     (memq sym *scheme2js-compilation-runtime-vars*)]
-			     (f sym))))
+      (lambda (sym)
+	 [assert (*scheme2js-compilation-runtime-vars* sym)
+(memq sym *scheme2js-compilation-runtime-vars*)]
+	 (f sym))))
 
-;; selects runtime imported from 'runtime_mapping.sch'
+;*---------------------------------------------------------------------*/
+;*    select-runtime ...                                               */
+;*    -------------------------------------------------------------    */
+;*    selects runtime imported from 'runtime_mapping.sch'              */
+;*---------------------------------------------------------------------*/
 (define (select-runtime)
    (cond
-      ((and (config 'suspend/resume)
-	    (config 'runtime-is-constant))
+      ((and (config 'suspend/resume) (config 'runtime-is-constant))
        *call/cc-constant-runtime-var-mapping*)
       ((config 'suspend/resume)
        *call/cc-runtime-var-mapping*)
@@ -65,44 +78,64 @@
       (else
        *default-runtime-var-mapping*)))
 
-;; symbol-resolution is done in one pass now:
-;; defines are not valid everywhere, but must be at the beginning of
-;; bodies, or at the top-level. The declaration will be moved to the top of
-;; the Let/Module/Lambda (where it becomes a local variable).
-;;
-;; Every variable has a declaration-node (in the Let/Module/Lambda) and all
-;; other uses are define to be References.
+;*---------------------------------------------------------------------*/
+;*    symbol-resolution ...                                            */
+;*    -------------------------------------------------------------    */
+;*    symbol-resolution is done in one pass now:                       */
+;*    defines are not valid everywhere, but must be at the beginning   */
+;*    of bodies, or at the top-level. The declaration will be moved    */
+;*    to the top of the Let/Module/Lambda (where it becomes a local    */
+;*    variable).                                                       */
+;*                                                                     */
+;*    Every variable has a declaration-node (in the Let/Module/Lambda) */
+;*    and all other uses are define to be References.                  */
+;*---------------------------------------------------------------------*/
 (define (symbol-resolution tree imports exports)
    (verbose "symbol-resolution")
    (resolve! tree
-	     (instantiate::Symbol-Env
-		(runtime (select-runtime))
-		(imports imports)
-		(exports exports)
-		(export-globals (config 'export-globals)))
-	     '()))
+      (instantiate::Symbol-Env
+	 (runtime (select-runtime))
+	 (imports imports)
+	 (exports exports)
+	 (export-globals (config 'export-globals)))
+      '()))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Node ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.resolve! symbol-table)
    (default-walk! this symbol-table))
 
+;*---------------------------------------------------------------------*/
+;*    create-js-var ...                                                */
+;*---------------------------------------------------------------------*/
 (define (create-js-var id imported? desc)
    (instantiate::Var
       (id id)
       (kind (if imported? 'imported 'exported))
       (export-desc desc)))
 
+;*---------------------------------------------------------------------*/
+;*    js-symbol-add! ...                                               */
+;*---------------------------------------------------------------------*/
 (define (js-symbol-add! scope desc imported?)
    (with-access::Export-Desc desc (id) 
       (let ((scheme-sym id))
 	 (symbol-var-set! scope scheme-sym
 	    (create-js-var scheme-sym imported? desc)))))
 
-;; lazy lookup will not create Vars until they are actually used.
-;; if JS? is true then direct accesses are to be found/added here.
+;*---------------------------------------------------------------------*/
+;*    lazy-imported-lookup ...                                         */
+;*    -------------------------------------------------------------    */
+;*    lazy lookup will not create Vars until they are actually used.   */
+;*    if JS? is true then direct accesses are to be found/added here.  */
+;*---------------------------------------------------------------------*/
 (define (lazy-imported-lookup imports JS?)
-   (define (qualified? v) ;; just assume it is correctly formed.
+   
+   (define (qualified? v)
+      ;; just assume it is correctly formed.
       (pair? v))
-
+   
    (define (id-symbol id)
       (if (qualified? id)
 	  (car id)
@@ -111,10 +144,10 @@
       (if (qualified? id)
 	  (cadr id)
 	  #f))
-
+   
    (define (update-scope! scope symbol qualified v)
       (symbol-var-set! scope qualified v))
-      
+   
    (define (lazy-lookup scope id)
       (let ((sym (id-symbol id))
 	    (qualifier (id-qualifier id)))
@@ -133,14 +166,14 @@
 		       (lambda (desc)
 			  (let ((v (create-js-var sym #t desc)))
 			     (update-scope! scope sym
-					    (if (qualified? id)
-						id
-						(list sym imps-qualifier))
-					    v)
+				(if (qualified? id)
+				    id
+				    (list sym imps-qualifier))
+				v)
 			     v)))
 		      (else
 		       (loop (cdr imports)))))))))
-      
+   
    ;; when this fun is called then the scope does not contain the id that we
    ;; are looking for. -> if we want to cache, just add the new var to the
    ;; scope.
@@ -164,20 +197,25 @@
 				   (cons '@ id)
 				   id))))
 		    (var (create-js-var scheme-sym #t
-					(instantiate::Export-Desc
-					   (id scheme-sym)
-					   (js-id js-str)
-					   (exported-as-const? #f)))))
+			    (instantiate::Export-Desc
+			       (id scheme-sym)
+			       (js-id js-str)
+			       (exported-as-const? #f)))))
 		(update-scope! scope scheme-sym id var)
 		var))
 	    (else #f)))))
-    
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Module ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.resolve! symbol-table)
-   (let* ((runtime-scope (make-lazy-scope
-			    (lazy-imported-lookup `((* . ,(with-access::Symbol-Env env (runtime) runtime)))
-			       #f)))
-	  (imported-scope (make-lazy-scope
-			     (lazy-imported-lookup (with-access::Symbol-Env env (imports) imports) #t)))
+   (let* ((runtime-scope (with-access::Symbol-Env env (runtime) 
+			    (make-lazy-scope
+			       (lazy-imported-lookup
+				  `((* . ,runtime)) #f))))
+	  (imported-scope (with-access::Symbol-Env env (runtime imports) 
+			     (make-lazy-scope
+				(lazy-imported-lookup imports #t))))
 	  ;; module-scope might grow, but 'length' is just an indication. 
 	  (module-scope (make-scope (length (with-access::Symbol-Env env (exports) exports))))
 	  (extended-symbol-table (cons* module-scope
@@ -204,8 +242,8 @@
 				  (symbol-var runtime-scope id)))
       
       (with-access::Symbol-Env env ((rs runtime-scope)
-			     allow-unresolved?
-			     unbound-add!)
+				    allow-unresolved?
+				    unbound-add!)
 	 (set! rs runtime-scope)
 	 
 	 (set! allow-unresolved?
@@ -279,7 +317,7 @@
 					(with-access::Var var (kind)
 					   (eq? kind 'exported)))
 				module-vars))
-	 
+	    
 	    ;; the following is only useful when used as library.
 	    (let ((exported-declare! (config 'exported-declare)))
 	       (when exported-declare!
@@ -289,7 +327,7 @@
 					(id js-id)
 				     (exported-declare! id js-id))))
 		     scope-vars)))
-	 
+	    
 	    (set! body (instantiate::Let
 			  (scope-vars local-vars)
 			  (bindings '())
@@ -297,21 +335,27 @@
 			  (kind 'let)))))
       this))
 
+;*---------------------------------------------------------------------*/
+;*    collect ...                                                      */
+;*---------------------------------------------------------------------*/
 (define (collect decl::Ref scope)
    (with-access::Ref decl (id var)
       (let ((v (symbol-var scope id)))
 	 (if v
 	     ;; already declared
 	     (scheme2js-error "symbol-resolution"
-			      "Variable already declared"
-			      id
-			      decl)
+		"Variable already declared"
+		id
+		decl)
 	     (let ((new-var (instantiate::Var
 			       (id id)
 			       (kind 'local))))
 		(set! var new-var)
 		(symbol-var-set! scope id new-var))))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Lambda ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.resolve! symbol-table)
    ;; this.body must be 'return'.
    (with-access::Lambda this (body formals scope-vars this-var)
@@ -319,7 +363,7 @@
 	     (new-symbol-table (cons formals-scope symbol-table)))
 	 (for-each (lambda (formal)
 		      (collect formal formals-scope))
-		   formals)
+	    formals)
 	 (set! scope-vars (map (lambda (f)
 				  (with-access::Ref f (var) var))
 			     formals))
@@ -327,14 +371,17 @@
 	 (when (config 'procedures-provide-js-this)
 	    (symbol-var-set! formals-scope 'this this-var))
 	 (default-walk! this new-symbol-table))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Let ...                                               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Let.resolve! symbol-table)
    (with-access::Let this (body bindings kind scope-vars)
       (let ((local-scope (make-scope)))
 	 (for-each (lambda (binding)
 		      (with-access::Set! binding (lvalue)
 			 (collect lvalue local-scope)))
-		   bindings)
+	    bindings)
 	 (let* ((extended-table (cons local-scope symbol-table))
 		(bindings-table (if (eq? kind 'let)
 				    symbol-table
@@ -345,21 +392,24 @@
 			    ;; than the table for the body.
 			    (set! val (walk! val bindings-table))
 			    n))
-		      bindings)
+	       bindings)
 	    (set! body (walk! body extended-table))
 	    
 	    (set! scope-vars (map (lambda (b)
 				     (with-access::Set! b (lvalue)
 					(with-access::Ref lvalue (var)
 					   var)))
-				  bindings))
+				bindings))
 	    this))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Ref ...                                               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Ref.resolve! symbol-table)
-   (with-access::Ref this (id var)
+   (with-access::Ref this (id var location)
       (let ((v (any (lambda (scope)
 		       (symbol-var scope id))
-		    symbol-table)))
+		  symbol-table)))
 	 (with-access::Symbol-Env env (allow-unresolved? unbound-add!)
 	    (cond
 	       (v (set! var v))
@@ -370,21 +420,29 @@
 		(scheme2js-error "scheme2js" "Unresolved symbol" id this))))))
    this)
 
-;; runtime-var-ref directly queries the js-var-scope (short-cutting the
-;; intermediate scopes).
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Runtime-Ref ...                                       */
+;*    -------------------------------------------------------------    */
+;*    runtime-var-ref directly queries the js-var-scope (short-cutting */
+;*    the intermediate scopes).                                        */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Runtime-Ref.resolve! symbol-table)
    (with-access::Runtime-Ref this (id var)
       (let ((v (symbol-var (with-access::Symbol-Env env (runtime-scope) runtime-scope) id)))
 	 ;; error should never happen (programming error)
 	 (when (not v) (error "Runtime-Var-Ref.resolve!"
-			      "Internal Error: Runtime-variable not found"
-		      id))
+			  "Internal Error: Runtime-variable not found"
+			  id))
 	 (set! var v)))
    (shrink! this)
    this)
 
-;; all global 'defines' have been shrunk to Set!s.
-;; all local 'defines' have been transformed to letrecs.
+;*---------------------------------------------------------------------*/
+;*    resolve! ::Define ...                                            */
+;*    -------------------------------------------------------------    */
+;*    all global 'defines' have been shrunk to Set!s.                  */
+;*    all local 'defines' have been transformed to letrecs.            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Define.resolve! symbol-table)
    (with-access::Define this (lvalue)
       (with-access::Ref lvalue (id)
@@ -393,12 +451,15 @@
 			  id
 			  this))))
 
+;*---------------------------------------------------------------------*/
+;*    find-globals ...                                                 */
+;*---------------------------------------------------------------------*/
 (define (find-globals env n module-scope)
    (cond
       ((isa? n Begin)
        (with-access::Begin n (exprs)
 	  (for-each (lambda (e) (find-globals env e module-scope))
-		    exprs)))
+	     exprs)))
       ((isa? n Define)
        (shrink! n)
        (with-access::Set! n (lvalue)
@@ -408,10 +469,10 @@
 			       ((js-field ?v ?f) (format "~a.~a" v f))
 			       (else id))))
 		   (scheme2js-error "define"
-				    ;; probably internal error.
-				    "Illegal identifier"
-				    name
-				    n)))
+		      ;; probably internal error.
+		      "Illegal identifier"
+		      name
+		      n)))
 	     (let ((var (symbol-var module-scope id)))
 		(cond
 		   (var

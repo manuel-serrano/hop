@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Aug  1 09:28:06 2013 (serrano)                */
+/*    Last change :  Mon Aug 19 06:59:41 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -49,7 +49,7 @@ function dom_add_child( id, e ) {
 	    node.appendChild( document.createTextNode( e ) );
 	 } else {
 	    if( sc_isPair( e ) ) {
-	       sc_forEach( add, e )
+	       sc_forEach( add, e );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
@@ -1291,7 +1291,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
-   n = (e instanceof String) || (typeof e == "string") ?
+   var  n = (e instanceof String) || (typeof e == "string") ?
       document.getElementById( e ) : e;
    
    if( n == undefined ) sc_error( "bounding-box", "illegal node", e );

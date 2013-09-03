@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Mon Jul 22 09:23:46 2013 (serrano)                */
+;*    Last change :  Sun Aug 11 15:48:42 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Conditional expression compilation                               */
@@ -33,7 +33,7 @@
 		  (not value)))
 	  (template-display p
 	     "(~e&&~e)"
-	     (compile test p #f tmp)
+	     (compile test p #f tmp #f)
 	     (compile-optimized-boolify p compile then tmp))
 	  (compile-unoptimized-boolify p compile n tmp))))
 
@@ -52,7 +52,7 @@
 			     (eq? (with-access::Export-Desc export-desc
 					(return-type) return-type)
 				'bool))
-			(compile n p #f tmp)
+			(compile n p #f tmp #f)
 			(compile-unoptimized-boolify p compile n tmp))))
 	      (compile-unoptimized-boolify p compile n tmp))))
       ((isa? n If)
@@ -70,7 +70,7 @@
 (define (compile-unoptimized-boolify p compile node tmp)
    (template-display p
       "(~e !== false)"
-      (compile node p #f tmp)))
+      (compile node p #f tmp #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-boolified ...                                            */

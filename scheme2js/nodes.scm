@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Aug  2 10:33:23 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 09:51:15 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js AST definition                                         */
@@ -44,11 +44,8 @@
 	 (needs-update?::bool (default #f))
 	 
 	 ;; not essential, but handy.
-	 (indirect?::bool (default #f)) 
-	 
-	 ;; TODO: remove (side)
-	 (already-defined?::bool (default #f)))
-      
+	 (indirect?::bool (default #f)))
+
       ;; Nodes
       (class Node
 	 (location (default #f))
@@ -94,6 +91,7 @@
 	 ;; list of Refs
 	 formals::pair-nil           
 	 vaarg?::bool
+	 (arity::int read-only)
 	 (closure?::bool (default #f))
 	 (nested-closures?::bool (default #f))
 	 (size::bint (default 0))

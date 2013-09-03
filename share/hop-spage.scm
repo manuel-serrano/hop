@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/2.5.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Sat Jun 15 17:45:08 2013 (serrano)                */
+;*    Last change :  Thu Aug 22 07:05:47 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -50,6 +50,7 @@
       (set! spage.num 0)
       (set! spage.tabs (list (dom-first-child spage.spviewport)))
       (set! spage.heads '())
+      (set! spage.inpop #f)
       (set! spage.onchg onchange)
       (set! spage.transitionstyle 'none)
       (set! spage.hop_add_event_listener spage-add-event-listener!)
@@ -192,15 +193,16 @@
    
    (or (css-get el "transition-duration")
        (css-get el "-webkit-transition-duration")
-       (css-get el "-firefox-transition-duration")
-       (css-get el "-o-transition-duration")))
+       (css-get el "-moz-transition-duration")
+       (css-get el "-o-transition-duration")
+       0.5))
 
 ;*---------------------------------------------------------------------*/
 ;*    fade ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (fade el el2 duration val0 val1 proc)
    (let* ((width (- val1 val0))
-	  (n (/ duration 10))
+	  (n (round (* duration 100)))
 	  (inc (/ width n)))
       (timeout 10
 	 (lambda ()
@@ -222,7 +224,7 @@
 ;*---------------------------------------------------------------------*/
 (define (slide el duration offset0 offset1 proc)
    (let* ((width (- offset1 offset0))
-	  (n (/ duration 10))
+	  (n (round (* duration 100)))
 	  (inc (/ width n)))
       (timeout 10
 	 (lambda ()
@@ -257,7 +259,7 @@
 	     :left (format "-~apx" spage.spoffset))
 	  (let ((offset0 (- spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
-	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1 #f))))
+	     (slide spviewport (css-transition-duration tbody) offset0 offset1 #f))))
    
    (define (spage-push-fade spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
@@ -286,7 +288,7 @@
 			 :transition-property "opacity"
 			 :opacity 0)))
 	  (fade tbody (cadr spage.tabs)
-		(or (css-transition-duration tbody) 400) 0 1 #f)))
+		(css-transition-duration tbody) 0 1 #f)))
    
    (define (spage-push-auto spage spviewport tbody otab)
       (cond
@@ -372,7 +374,7 @@
 	     (begin
 		(node-style-set! tbody :opacity 0)
 		(node-style-set! (car spage.tabs) :opacity 1))
-	     (after (+ 100 (round (* 1000 d)))
+	     (after d
 		(lambda ()
 		   (node-style-set! tbody
 		      :-webkit-transition-property "none"
@@ -384,7 +386,7 @@
 		   (shrink-viewport spviewport)
 		   (when (procedure? kont) (kont spage))
 		   (set! spage.inpop #f))))
-	  (fade tbody (car spage.tabs) (or (css-transition-duration tbody) 400) 1 0
+	  (fade tbody (car spage.tabs) (css-transition-duration tbody) 1 0
 	     (lambda (tbody)
 		(dom-remove-child! (dom-parent-node tbody) tbody)
 		(restore-static-body tbody.tab)
@@ -397,7 +399,7 @@
 	  (let ((d (css-transition-duration tbody)))
 	     (node-style-set! spviewport
 		:left (format "-~apx" spage.spoffset))
-	     (after (+ 100 (round (* 1000 d)))
+	     (after d
 		(lambda ()
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
@@ -407,7 +409,7 @@
 		   (set! spage.inpop #f))))
 	  (let ((offset0 (+ spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
-	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1
+	     (slide spviewport (css-transition-duration tbody) offset0 offset1
 		(lambda (el)
 		   (dom-remove-child! (dom-parent-node tbody) tbody)
 		   (restore-static-body tbody.tab)
@@ -467,10 +469,10 @@
 		 el)))
       (let loop ((parent (dom-parent-node el)))
 	 (cond
-	    ((string=? (parent.getAttribute "data-hss-tag") tag)
-	     parent)
 	    ((or (not parent) (eq? parent #unspecified))
 	     (error "find-spage-tag" "cannot find parent spage" el))
+	    ((string=? (parent.getAttribute "data-hss-tag") tag)
+	     parent)
 	    (else
 	     (loop (dom-parent-node parent)))))))
 
@@ -515,7 +517,7 @@
 	 (when (= spage.num 0) (set! spheadbutton.className ""))))
 
    (let ((spage (find-spage button)))
-      (unless (eq? spage.inpop #t)
+      (unless spage.inpop
 	 (set! spage.inpop #t)
 	 (let* ((head (car spage.heads))
 		(tabs spage.tabs)
@@ -555,7 +557,7 @@
 ;*    spage-push-service ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-service tab svc)
-   (unless (eq? tab.pushed #t)
+   (unless (and (js-in? "pushed" tab) (eq? tab.pushed #t))
       (set! tab.pushed #t)
       (with-hop (svc)
 	 (lambda (body)

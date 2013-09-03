@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Wed Jul 31 14:24:21 2013 (serrano)                */
+;*    Last change :  Wed Aug 14 17:28:24 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Call compilation                                                 */
@@ -26,13 +26,14 @@
 	      compile::procedure
 	      operator::Node
 	      operands::pair-nil
-	      tmp)))
+	      tmp
+	      debug::bool)))
 
 ;*---------------------------------------------------------------------*/
 ;*    infix-op ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (infix-op nb-operands-min nb-operands-max infix-operator
-	   #!optional default-val)
+	   #!optional default-val pattern)
    (lambda (p compile operands tmp)
       (let ((nb-operands (length operands)))
 	 (and (>=fx nb-operands nb-operands-min)
@@ -45,7 +46,7 @@
 			"(~e)"
 			(separated infix-operator
 			   (lambda (e)
-			      "~e" (compile e p #f tmp))
+			      "~e" (compile e p #f tmp #f))
 			   operands)))
 		 #t)))))
 
@@ -59,7 +60,7 @@
 	   (begin
 	      (template-display p
 		 "((~e)~a)"
-		 (compile (car operands) p #f tmp)
+		 (compile (car operands) p #f tmp #f)
 		 postfix-operator)
 	      #t))))
 
@@ -74,7 +75,7 @@
 	      (template-display p
 		 "(~a~e)"
 		 prefix-operator
-		 (compile (car operands) p #f tmp))
+		 (compile (car operands) p #f tmp #f))
 	      #t))))
 
 
@@ -96,10 +97,10 @@
 			(template-display p "$(car pattern)")
 			(loop (cdr pattern) operands))
 		       ((number? (car pattern))
-			(compile (list-ref operands (car pattern)) p #f tmp)
+			(compile (list-ref operands (car pattern)) p #f tmp #f)
 			(loop (cdr pattern) operands))
 		       (else
-			(compile (car operands) p #f tmp)
+			(compile (car operands) p #f tmp #f)
 			(loop (cdr pattern) (cdr operands))))))
 	      #t))))
 
@@ -108,11 +109,12 @@
 ;*---------------------------------------------------------------------*/
 (define (minus-op p compile operands tmp)
    (cond
-      ((null? operands) #f)
+      ((null? operands)
+       #f)
       ((null? (cdr operands))
        (template-display p
 	  "(- ~e)"
-	  (compile (car operands) p #f tmp))
+	  (compile (car operands) p #f tmp #f))
        #t)
       (else
        ((infix-op 1 #f "-") p compile operands tmp))))
@@ -126,7 +128,7 @@
       ((null? (cdr operands))
        (template-display p
 	  "(1/~e)"
-	  (compile (car operands) p #f tmp))
+	  (compile (car operands) p #f tmp #f))
        #t)
       (else
        ((infix-op 1 #f "/") p compile operands tmp))))
@@ -138,7 +140,7 @@
    (template-display p
       "[~e]"
       (separated ", "
-	 (lambda (e) "~e" (compile e p #f tmp))
+	 (lambda (e) "~e" (compile e p #f tmp #f))
 	 operands))
    #t)
 
@@ -149,7 +151,7 @@
    (and (pair? operand)
 	(null? (cdr operand))
 	(begin
-	   (compile (car operand) p #f tmp)
+	   (compile (car operand) p #f tmp #f)
 	   #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -160,9 +162,9 @@
 	(begin
 	   (template-display p
 	      "new ~e(~e)"
-	      (compile (car operands) p #f tmp)
+	      (compile (car operands) p #f tmp #f)
 	      (separated ", "
-		 (lambda (e) "~e" (compile e p #f tmp))
+		 (lambda (e) "~e" (compile e p #f tmp #f))
 		 (cdr operands)))
 	   #t)))
 
@@ -175,9 +177,9 @@
 	(begin
 	   (template-display p
 	      "(~e).call(~e~e)"
-	      (compile (cadr operands) p #f tmp)
-	      (compile (car operands) p #f tmp)
-	      (each (lambda (e) ", ~e" (compile e p #f tmp))
+	      (compile (cadr operands) p #f tmp #f)
+	      (compile (car operands) p #f tmp #f)
+	      (each (lambda (e) ", ~e" (compile e p #f tmp #f))
 		 (cddr operands)))
 	   #t)))
 
@@ -190,10 +192,10 @@
 	(begin
 	   (template-display p
 	      "~e[~e](~e)"
-	      (compile (car operands) p #f tmp)
-	      (compile (cadr operands) p #f tmp)
+	      (compile (car operands) p #f tmp #f)
+	      (compile (cadr operands) p #f tmp #f)
 	      (separated ", "
-		 (lambda (e) "~e" (compile e p #f tmp))
+		 (lambda (e) "~e" (compile e p #f tmp #f))
 		 (cddr operands)))
 	   #t)))
 
@@ -205,11 +207,11 @@
       (cond
 	 ((= nb-operands 0)
 	  (template-display p "'\\uEBAC'")) ;; sc_SYMBOL_PREFIX
-	 ((= nb-operands 1) (compile (car operands) p #f tmp))
+	 ((= nb-operands 1) (compile (car operands) p #f tmp #f))
 	 (else
 	  (template-display p
 	     "(~e~e)"
-	     (compile (car operands) p #f tmp)
+	     (compile (car operands) p #f tmp #f)
 	     (for-each (lambda (operand)
 			  (if (isa? operand Const)
 			      (with-access::Const operand (value)
@@ -223,7 +225,7 @@
 				      operand)))
 			      (template-display p
 				 "+~e.slice(1)"
-				 (compile operand p #f tmp))))
+				 (compile operand p #f tmp #f))))
 		       (cdr operands)))))
       #t))
 
@@ -242,12 +244,12 @@
 		  value
 		  operand)))
 	  (template-display p
-	     "~e.val" (compile operand p #f tmp))))
+	     "~e.val" (compile operand p #f tmp #f))))
 
    (let ((nb-operands (length operands)))
       (cond
 	 ((= nb-operands 0) (template-display p "(new sc_String(''))"))
-	 ((= nb-operands 1) (compile (car operands) p #f tmp))
+	 ((= nb-operands 1) (compile (car operands) p #f tmp #f))
 	 (else
 	  (template-display p
 	     "(new sc_String(~e~e))"
@@ -280,7 +282,7 @@
 	  (template-display p
 	     "(new sc_Values([~e]))"
 	     (separated ","
-		(lambda (e) "~e" (compile e p #f tmp))
+		(lambda (e) "~e" (compile e p #f tmp #f))
 		operands))))
       #t))
 
@@ -295,7 +297,7 @@
 		 ((isa? operand Const)
 		  (with-access::Const operand (value)
 		     (set! value (not value)))
-		  (compile operand p #f tmp))
+		  (compile operand p #f tmp #f))
 		 ((and (isa? operand Call)
 		       (isa? (with-access::Call operand (operator) operator) Ref)
 		       (with-access::Call operand (operator)
@@ -308,11 +310,11 @@
 					(eq? (with-access::Export-Desc desc (return-type) return-type)
 					   'bool)))))))
 		  (template-display p
-		     "!~e" (compile operand p #f tmp)))
+		     "!~e" (compile operand p #f tmp #f)))
 		 (else
 		  (template-display p
 		     "(~e === false)"
-		     (compile operand p #f tmp))))
+		     (compile operand p #f tmp #f))))
 	      #t))))
 
 ;*---------------------------------------------------------------------*/
@@ -336,7 +338,7 @@
 			   operand)))
 		 (template-display p
 		    "(~e.val)"
-		    (compile operand p #f tmp))))))
+		    (compile operand p #f tmp #f))))))
       ;; 0 et 1 have been handled.
       (< nb-operands 2))) 
 
@@ -353,21 +355,17 @@
 		 (with-access::Const operand (value)
 		    (if (symbol? value)
 			(template-display p "\"$value\"")
-			(scheme2js-error
-			   "symbol2jsstring_immutable-op"
-			   "symbol->jsstring requires symbol as argument"
-			   value
-			   operand)))
+			(fprintf p "sc_typeError( \"symbol->string\", \"symbol\", ~s )" value)))
 		 (template-display p
-		    "(~e).slice(1)" (compile operand p #f tmp))))))
+		    "(~e).slice(1)" (compile operand p #f tmp #f))))))
       ;; 0 et 1 have been handled.
       (< nb-operands 2))) 
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-optimized-call ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (compile-optimized-call p compile operator operands tmp)
-   (when (and (=fx (bigloo-debug) 0)
+(define (compile-optimized-call p compile operator operands tmp debug)
+   (when (and (config 'do-inlining)
 	      (isa? operator Ref)
 	      (with-access::Ref operator (var)
 		 (with-access::Var var (constant?) constant?))
@@ -377,46 +375,70 @@
 	     (desc (with-access::Var var (export-desc) export-desc))
 	     (peephole (with-access::Export-Desc desc (peephole) peephole)))
 	 (when peephole
-	    (let* ((optimize-fun
-		      (case (car peephole)
-			 ((infix) (apply infix-op (cdr peephole)))
-			 ((postfix)
-			  (match-case peephole
-			     ((?- ?v) (postfix-op v))
-			     (else (scheme2js-error
-				      "compile-optimized-call"
-				      "Illegal postfix arity"
-				      (car peephole)
-				      operator))))
-			 ((prefix)
-			  (match-case peephole
-			     ((?- ?v) (prefix-op v))
-			     (else (scheme2js-error
-				      "compile-optimized-call"
-				      "Illegal prefix arity"
-				      (car peephole)
-				      operator))))
-			 ((hole) (apply hole-op (cdr peephole)))
-			 ((minus) minus-op)
-			 ((div) div-op)
-			 ((vector) vector-op)
-			 ((id) id)
-			 ((jsNew) jsNew-op)
-			 ((jsCall) jsCall-op)
-			 ((jsMethodCall) jsMethodCall-op)
-			 ((symbolAppend_immutable) symbolAppend_immutable-op)
-			 ((stringAppend_mutable) stringAppend_mutable-op)
-			 ((string2jsstring_mutable string2symbol_mutable)
-			  string2jsstring_mutable-op)
-			 ((symbol2jsstring_immutable symbol2string_immutable)
-			  symbol2jsstring_immutable-op)
-			 ((modulo) modulo-op)
-			 ((values) values-op)
-			 ((not) not-op)
-			 (else
-			  (scheme2js-error
-			     "compile-optimized-call"
-			     "forgot optimize-fun:"
-			     (car peephole)
-			     operator)))))
-	       (optimize-fun p compile operands tmp))))))
+	    (if debug
+		;; in debug mode, only safe peephole are applied
+		(case (car peephole)
+		   ((safe-infix)
+		    ((apply infix-op (cdr peephole))
+		     p compile operands tmp))
+		   ((safe-postfix)
+		    (match-case peephole
+		       ((?- ?v)
+			((postfix-op v) p compile operands tmp))
+		       (else
+			(scheme2js-error "compile-optimized-call"
+			   "Illegal postfix arity"
+			   (car peephole)
+			   operator))))
+		   ((safe-hole)
+		    ((apply hole-op (cdr peephole))
+		     p compile operands tmp))
+		   ((safe-not)
+		    (not-op p compile operands tmp))
+		   (else
+		    #f))
+		;; production mode, apply every optimization
+		(let* ((optimize-fun
+			  (case (car peephole)
+			     ((infix safe-infix)
+			      (apply infix-op (cdr peephole)))
+			     ((postfix safe-postfix)
+			      (match-case peephole
+				 ((?- ?v) (postfix-op v))
+				 (else (scheme2js-error
+					  "compile-optimized-call"
+					  "Illegal postfix arity"
+					  (car peephole)
+					  operator))))
+			     ((prefix)
+			      (match-case peephole
+				 ((?- ?v) (prefix-op v))
+				 (else (scheme2js-error
+					  "compile-optimized-call"
+					  "Illegal prefix arity"
+					  (car peephole)
+					  operator))))
+			     ((hole safe-hole) (apply hole-op (cdr peephole)))
+			     ((minus) minus-op)
+			     ((div) div-op)
+			     ((vector) vector-op)
+			     ((id) id)
+			     ((jsNew) jsNew-op)
+			     ((jsCall) jsCall-op)
+			     ((jsMethodCall) jsMethodCall-op)
+			     ((symbolAppend_immutable) symbolAppend_immutable-op)
+			     ((stringAppend_mutable) stringAppend_mutable-op)
+			     ((string2jsstring_mutable string2symbol_mutable)
+			      string2jsstring_mutable-op)
+			     ((symbol2jsstring_immutable symbol2string_immutable)
+			      symbol2jsstring_immutable-op)
+			     ((modulo) modulo-op)
+			     ((values) values-op)
+			     ((not safe-not) not-op)
+			     (else
+			      (scheme2js-error
+				 "compile-optimized-call"
+				 "forgot optimize-fun:"
+				 (car peephole)
+				 operator)))))
+		   (optimize-fun p compile operands tmp)))))))

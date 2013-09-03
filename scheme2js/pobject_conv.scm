@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Fri Aug  2 17:40:32 2013 (serrano)                */
+;*    Last change :  Thu Aug 15 07:08:12 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -125,7 +125,7 @@
 ;*    type-checks ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-checks vars body loc procname)
-   (if (=fx (bigloo-debug) 0)
+   (if (config 'type-check)
        body
        (let loop ((vars vars))
 	  (if (null? vars)
@@ -187,7 +187,15 @@
 			(begin ,@body)))
 		    ,tmp)))
 	  body))
-
+   
+   (define (analyze-arity L)
+      (let loop ((L L)
+		 (res 0))
+	 (cond
+	    ((null? L) res)
+	    ((pair? L) (loop (cdr L) (+fx res 1)))
+	    (else (negfx (+fx res 1))))))
+   
    (multiple-value-bind (formals vaarg?)
       (vaarg-list! arguments)
       
@@ -208,6 +216,7 @@
 	    (location loc)
 	    (formals formal-decls)
 	    (vaarg? vaarg?)
+	    (arity (analyze-arity arguments))
 	    (body (instantiate::Return
 		     (location loc)
 		     (val (expr-list->Begin

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Jul 30 14:33:10 2013 (serrano)                */
+;*    Last change :  Mon Aug 19 08:10:21 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript scopes                                                */
@@ -938,6 +938,7 @@
 				     (location location)
 				     (val body)))
 			    (vaarg? #f)
+			    (arity (length formals))
 			    (closure? #f)))
 		    (call (instantiate::Call
 			     (location location)
@@ -946,10 +947,6 @@
 		    (mod (duplicate::Module env
 			    (body call))))
 		(captured-vars mod)
-;* 		(scope-widen-vars! mod)                                */
-;* 		(scope-predicates mod)                                 */
-;* 		(scope-temporaries! mod)                               */
-;* 		(scope-shrink-vars! mod)                               */
 		call))
 	    (else
 	     ;; create storage-var
@@ -966,7 +963,7 @@
 		(widen!::Scope-Var storage-var)
 		
 		(default-walk! this)
-		
+
 		(instantiate::Let
 		   (location location)
 		   (scope-vars (list storage-var))

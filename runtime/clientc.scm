@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Mon Jul 29 09:29:14 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 07:42:45 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -60,6 +60,7 @@
 	    (current-module-clientc-import)
 	    
 	    (clientc-url ::bstring)
+	    (clientc-cached-response ::bstring)
 	    (clientc-response::%http-response ::http-request ::bstring)
 	    (get-clientc-compiled-file ::bstring)))
 
@@ -87,7 +88,7 @@
 				precompiled-free-variables)
 
    (define (null e) '())
-   
+
    ;; prepare the client-code compiler cache
    (set! clientc-cache
 	 (instantiate::cache-disk
@@ -186,6 +187,16 @@
 					    (lambda ()
 					       (filec path "-" '()))))))))
 		      (eval-module-set! m))))))))
+
+;*---------------------------------------------------------------------*/
+;*    clientc-cached-response ...                                      */
+;*---------------------------------------------------------------------*/
+(define (clientc-cached-response path)
+   (synchronize clientc-mutex
+      (let ((ce (cache-get clientc-cache path)))
+	 (when (isa? ce cache-entry)
+	    (with-access::cache-entry ce (value)
+	       value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dummy-request ...                                                */

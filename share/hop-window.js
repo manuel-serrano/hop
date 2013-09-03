@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Fri Aug  2 15:30:03 2013 (serrano)                */
+/*    Last change :  Sun Aug 11 15:32:59 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -23,11 +23,11 @@ function HopWindowEvent() {
 /*---------------------------------------------------------------------*/
 function hop_iwindow_invoke_listener( lst, event ) {
    while( sc_isPair( lst ) ) {
-      lst.car( event );
+      lst.__hop_car( event );
 
       if( event.isStopped ) break;
 
-      lst = lst.cdr;
+      lst = lst.__hop_cdr;
    }
 }
 

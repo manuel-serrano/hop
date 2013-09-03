@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Jul 31 07:14:23 2013 (serrano)                */
+#*    Last change :  Mon Aug 19 06:54:26 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -243,13 +243,15 @@ uninstall:
 hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
-	echo "/* " >> $@
-	date >> $@
-	echo " */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) \
                  >> $@; \
         else \
 	  cat $^ >> $@; \
@@ -258,13 +260,15 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(R
 hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
-	echo "/* " >> $@
-	date >> $@
-	echo " */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
 	  cat $^ >> $@; \
@@ -297,23 +301,23 @@ flash/%.swf: flash/%.as
 #*---------------------------------------------------------------------*/
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
-hop-exception.js: hop-exception.scm
+hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
          export DYLD_LIBRARY_PATH; \
          PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
          export PATH; \
-	 $(call compile3,$(HOPC),$(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
 
-hop-debug.js: hop-debug.scm
+hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
          export LD_LIBRARY_PATH; \
          DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
          export DYLD_LIBRARY_PATH; \
          PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
          export PATH; \
-	 $(call compile3,$(HOPC),$(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
@@ -347,7 +351,8 @@ predistrib-clean:
 .PHONY: clean predistrib-clean devclean
 
 clean:
-	$(RM) hop_u.js hop_s.js hop-exception.js hop-debug.js
+	$(RM) hop_u.js hop_s.js hop-exception.js hop-debug.js 
+	$(RM) hop-runtime.sch 
 
 devclean:
 

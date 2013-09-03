@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jul 26 21:01:11 2013 (serrano)                */
+;*    Last change :  Wed Aug  7 13:51:44 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -141,7 +141,7 @@
 ;*    hop-xml-backend ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xml-backend
-   *html-4.01-backend*
+   *html5-backend*
    (lambda (v)
       (if (isa? v xml-backend)
 	  v
@@ -907,15 +907,15 @@
 		    (format "~a#~a" tag id)))))
 	 (else
 	  "")))
-	  
+
    (define (js-catch-callback/location stmt parent file point)
       ;; this is an inlined version of hop_callback (hop-lib.js)
       (format "var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a );
 hop_current_stack_context=ctx;
 try { ~a } catch( e ) { hop_callback_handler(e, ctx); }"
-	 (string-replace (xml-attribute-encode (parent-context parent))
-	    #\Newline #\Space)
-	 file point stmt))
+         (string-replace (xml-attribute-encode (parent-context parent))
+            #\Newline #\Space)
+         file point stmt))
    
    (define (js-catch-callback stmt)
       (format "try { ~a } catch( e ) { hop_callback_handler( e ); }" stmt))

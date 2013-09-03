@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 31 07:13:32 2013 (serrano)                */
+;*    Last change :  Thu Aug 15 16:43:48 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -48,7 +48,15 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
-	 (setuser #f))
+	 (setuser #f)
+	 (clientc-source-map #f)
+	 (clientc-arity-check #f)
+	 (clientc-type-check #f)
+	 (clientc-debug #f)
+	 (clientc-pp #f)
+	 (clientc-compress #f)
+	 (clientc-inlining #t)
+	 (clientc-use-strict #t))
       
       (bigloo-debug-set! 0)
 
@@ -111,18 +119,49 @@
          (("-g?level" (help "Increase/set debug level"))
           (cond
 	     ((string=? level "")
+	      (set! clientc-source-map #t)
 	      (hop-clientc-debug-unbound-set! 1)
+	      (set! clientc-debug #t)
+	      (set! clientc-inlining #f)
+	      (set! clientc-arity-check #t)
+	      (set! clientc-type-check #t)
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug))))
+	     ((string=? level "clientc-debug")
+	      (set! clientc-debug #t)
+	      (set! clientc-inlining #f))
+	     ((string=? level "no-clientc-debug")
+	      (set! clientc-debug #t))
+	     ((string=? level "clientc-arity-check")
+	      (set! clientc-arity-check #t))
+	     ((string=? level "no-clientc-arity-check")
+	      (set! clientc-arity-check #f))
+	     ((string=? level "clientc-type-check")
+	      (set! clientc-type-check #t))
+	     ((string=? level "no-clientc-type-check")
+	      (set! clientc-type-check #f))
+	     ((string=? level "clientc-use-strict")
+	      (set! clientc-use-strict #t))
+	     ((string=? level "no-clientc-use-strict")
+	      (set! clientc-use-strict #f))
 	     ((string=? level "clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 1))
 	     ((string=? level "no-clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 0))
+	     ((string=? level "clientc-source-map")
+	      (set! clientc-source-map #t))
+	     ((string=? level "no-clientc-source-map")
+	      (set! clientc-source-map #f))
 	     ((string=? level "module")
 	      (bigloo-debug-module-set! 2))
 	     ((string=? level "0")
 	      #f)
 	     (else
 	      (let ((l (string->integer level)))
+		 (set! clientc-source-map #t)
+		 (set! clientc-debug #t)
+		 (set! clientc-inlining #f)
+		 (set! clientc-arity-check #t)
+		 (set! clientc-type-check #t)
 		 (bigloo-debug-module-set! (-fx l 1))
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
@@ -325,7 +364,16 @@
 	 :javascript-version (hop-javascript-version)
 	 :expanders `(labels match-case
 			   (define-tag . ,hop-client-define-tag)
-			(define-xml-compound . ,hop-client-define-xml-compound)))
+			(define-xml-compound . ,hop-client-define-xml-compound))
+	 :source-map clientc-source-map
+	 :arity-check clientc-arity-check
+	 :type-check clientc-type-check
+	 :debug clientc-debug
+	 :pp clientc-pp
+	 :compress clientc-compress
+	 :inlining clientc-inlining
+	 :module-use-strict clientc-use-strict
+	 :function-use-strict clientc-use-strict)
 
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
