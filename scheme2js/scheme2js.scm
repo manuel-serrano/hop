@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Aug 23 07:09:19 2013 (serrano)                */
+;*    Last change :  Wed Sep  4 17:56:44 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -51,11 +51,13 @@
 	   out
 	   scm-out
 	   verbose
-	   callcc
 	   trampoline
 	   dump-node
 	   source-map
 	   stdlib)
+
+   (cond-expand
+      (enable-callcc (import callcc)))
    
    ;; see module.scm for information on module-headers.
    (export (scheme2js-compile-expr expr
@@ -92,7 +94,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (scheme2js module p)
+(define (scheme2js module source-file p)
    (with-access::Compilation-Unit module (imports exports top-level macros name)
       (let* ((debug-stage (config 'debug-stage))
 	     (top-level-e (my-expand `(begin ,@top-level) macros))
@@ -107,6 +109,7 @@
 	     (tree::Module (pobject-conv dsssl-e)))
 	 ;;we could do the letrec-expansion in list-form too.
 	 (pass 'letrec         (letrec-expansion! tree))
+;* 	 (scheme2js-dump-temporary tree "letrec")                      */
 	 (pass 'symbol         (symbol-resolution tree imports exports))
 	 (pass 'encapsulation  (encapsulation! tree))
 	 (pass 'node-elim1     (node-elimination! tree))
@@ -114,6 +117,7 @@
 	     (pass 'tail-rec   (tail-rec! tree))
 	     (pass 'tail-rec   (tail-calls tree)))
 	 (pass 'node-elim2     (node-elimination! tree))
+;* 	 (scheme2js-dump-temporary tree "elim2")                       */
 	 (pass 'inline         (inline! tree #t))
 	 (pass 'call-check     (call-check tree))
 	 (if (config 'frame-push)
@@ -124,7 +128,9 @@
 	 (pass 'pragmas        (pragmas! tree))
 	 (pass 'rm-unused      (rm-unused-vars! tree))
 	 (pass 'node-elim3     (node-elimination! tree))
-	 (pass 'call/cc-early  (call/cc-early! tree))
+	 (cond-expand
+	    (enable-callcc
+	     (pass 'call/cc-early (call/cc-early! tree))))
 	 (pass 'trampoline     (trampoline tree))
 	 (pass 'scope          (scope-resolution! tree))
 	 (pass 'constants      (constants! tree))
@@ -133,7 +139,9 @@
 	 (pass 'propagation    (propagation! tree))
 	 ;(var-elimination! tree)
 	 (pass 'rm-unused2     (rm-unused-vars! tree))
-	 (pass 'call/cc-middle (call/cc-middle tree))
+	 (cond-expand
+	    (enable-callcc
+	     (pass 'call/cc-middle (call/cc-middle tree))))
 	 (pass 'flatten        (scope-flattening! tree))
 	 (pass 'stmts          (statements! tree))
 	 (pass 'while-optim    (optimize-while! tree))
@@ -141,9 +149,11 @@
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
 ;* 	 (scheme2js-dump-temporary tree "last")                        */
-	 (pass 'call/cc-late   (call/cc-late! tree))
+	 (cond-expand
+	    (enable-callcc
+	     (pass 'call/cc-late (call/cc-late! tree))))
 	 ;;(locations tree)
-	 (out tree p)
+	 (out tree source-file p)
 	 (verbose "--- compiled")
 ;* 	 (scheme2js-dump-temporary tree "final")                       */
 	 tree)))
@@ -172,7 +182,7 @@
 	 (begin
 	    (config-init! configuration)
 	    (let* ((module (create-module-from-expr expr module-headers)))
-	       (scheme2js module out-p)))
+	       (scheme2js module #f out-p)))
 	 (configs-restore! old-configs))))
 
 ;*---------------------------------------------------------------------*/
@@ -231,7 +241,7 @@
 					(fprintf out-p "/* scheme2js generated file ~a */\n" (current-date))
 					(when (config 'use-strict/module)
 					   (fprintf out-p "\"use strict\";\n\n"))
-					(scheme2js module out-p))))
+					(scheme2js module in-file out-p))))
 				 ((config 'source-map)
 				  (set! actual-file? #t)
 				  (set! out-file
@@ -240,7 +250,7 @@
 					(format "~a.js" (tmpfile))))
 				  (let ((tree (call-with-output-file out-file
 						 (lambda (out-p)
-						    (scheme2js module out-p)))))
+						    (scheme2js module in-file out-p)))))
 				     (call-with-input-file out-file
 					(lambda (p)
 					   (send-chars p (current-output-port))))
@@ -250,7 +260,7 @@
 				     (current-date))
 				  (when (config 'use-strict/module)
 				     (print "\"use strict\";\n"))
-				  (scheme2js module (current-output-port))))))
+				  (scheme2js module in-file (current-output-port))))))
 		     (when (config 'source-map)
 			(let* ((srcmap (string-append out-file ".map"))
 			       (files (call-with-output-file srcmap

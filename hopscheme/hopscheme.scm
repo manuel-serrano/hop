@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Aug  9 17:30:32 2013 (serrano)                */
+;*    Last change :  Sat Sep  7 13:19:40 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -196,8 +196,8 @@
        ;; we don't test for 'list?' anymore. this has been done before.
        (for-each (lambda (e) (add-macros! e menv)) es))
       (else (error "add-macros"
-		   "internal Error. e different than macro or begin"
-		   e))))
+	       "internal Error. e different than macro or begin"
+	       e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-expression ...                                           */

@@ -31,7 +31,6 @@
 	      (debug #f)
 	      (inlining #t)
 	      (compress (=fx (bigloo-debug) 0))
-	      (pp (>=fx (bigloo-debug) 4))
 	      (module-use-strict (<=fx (bigloo-debug) 2))
 	      (function-use-strict (<=fx (bigloo-debug) 2)))
 	   *hop-reader*
@@ -106,9 +105,6 @@
 ;; compress the generated JS file
 (define *scheme2js-compress* (=fx (bigloo-debug) 0))
 
-;; pretty-print the generated JS file
-(define *scheme2js-pp* (>=fx (bigloo-debug) 4))
-
 ;*---------------------------------------------------------------------*/
 ;*    get-cached-config ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -132,8 +128,6 @@
 	      (bigloo-modules . #t)
 	      ;; compress the output
 	      (compress . ,*scheme2js-compress*)
-	      ;; pp in debug mode
-	      (pp . ,*scheme2js-pp*)
 	      ;; allow $(import xyz) ...
 	      (module-preprocessor . ,(dollar-modules-adder))
 	      ;; hop-compile compiles HOP values.
@@ -248,7 +242,6 @@
 	   (debug #f)
 	   (inlining #t)
 	   (compress (=fx (bigloo-debug) 0))
-	   (pp (>=fx (bigloo-debug) 4))
 	   (module-use-strict (<=fx (bigloo-debug) 2))
 	   (function-use-strict (<=fx (bigloo-debug) 2)))
    (set! *hop-reader* reader)
@@ -267,7 +260,6 @@
    (set! *scheme2js-type-check* type-check)
    (set! *scheme2js-meta* meta)
    (set! *scheme2js-inlining* inlining)
-   (set! *scheme2js-pp* pp)
    (set! *scheme2js-compress* compress)
    (set! *scheme2js-module-use-strict* module-use-strict)
    (set! *scheme2js-function-use-strict* function-use-strict)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Sun Aug 11 16:48:11 2013 (serrano)                */
+;*    Last change :  Wed Sep  4 15:26:56 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Side effects                                                     */
@@ -59,7 +59,7 @@
 (define-nmethod (Module.side)
    (with-access::Module this (runtime-vars imported-vars scope-vars)
       (for-each (lambda (js-var)
-		   (with-access::Var js-var (constant? value)
+		   (with-access::Var js-var (constant? value id)
 		      (with-access::Side-Env env (runtime-is-constant? pass)
 			 (widen!::DefinedVar js-var
 			    (pass pass))
@@ -67,8 +67,7 @@
 		      (set! value #f)))
 	 runtime-vars)
       (for-each (lambda (js-var)
-		   (with-access::Var js-var
-			 (export-desc constant? value)
+		   (with-access::Var js-var (export-desc constant? value id)
 		      (with-access::Side-Env env (pass)
 			 (widen!::DefinedVar js-var
 			    (pass pass))
@@ -77,8 +76,7 @@
 			    (set! value #f)))))
 	 imported-vars)
       (for-each (lambda (js-var)
-		   (with-access::Var js-var
-			 (export-desc constant? value id)
+		   (with-access::Var js-var (export-desc constant? value id)
 		      (with-access::Side-Env env (pass)
 			 (widen!::DefinedVar js-var
 			    (pass (-fx pass 1))))
@@ -94,7 +92,7 @@
 (define-nmethod (Lambda.side)
    (with-access::Lambda this (scope-vars)
       (for-each (lambda (var)
-		   (with-access::Var var (constant? value)
+		   (with-access::Var var (constant? value id)
 		      (with-access::Side-Env env (pass)
 			 (widen!::DefinedVar var
 			    (pass pass)))
@@ -158,22 +156,30 @@
 ;*    side ::Set! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Set!.side)
+
+   (define (export-mutable? var)
+      (with-access::Var var (export-desc kind)
+	 (and (eq? kind 'exported)
+	      (isa? export-desc Export-Desc)
+	      (with-access::Export-Desc export-desc (exported-as-const?)
+		 (not exported-as-const?)))))
+      
    (with-access::Set! this (lvalue val)
       (walk val)
       (with-access::Ref lvalue (var)
 	 (with-access::Var var (kind constant?)
 	    (when (and (eq? kind 'imported) constant?)
 	       ;; equal to exported-as-const?
-	       (scheme2js-error
-		  "Set!"
+	       (scheme2js-error "Set!"
 		  "Imported variable is constant, and must not be modified."
 		  (with-access::Var var (id) id)
 		  lvalue))
-	    (with-access::Var var (constant? value)
+	    (with-access::Var var (constant? value id export-desc kind)
 	       (with-access::Side-Env env (pass)
-		  (if (and (isa? var DefinedVar)
-			   (with-access::DefinedVar var ((vpass pass))
-			      (=fx vpass pass)))
+		  (if (or (export-mutable? var)
+			  (and (isa? var DefinedVar)
+			       (with-access::DefinedVar var ((vpass pass))
+				  (=fx vpass pass))))
 		      (begin
 			 (set! constant? #f)
 			 (set! value #f))

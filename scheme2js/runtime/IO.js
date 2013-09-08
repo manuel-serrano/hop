@@ -725,10 +725,6 @@ function sc_toWriteString(o) {
       return "#f";
    if (o === undefined)
       return "#unspecified";
-    // window is only declared inside browsers. Otherwise this.window should be undefined
-   if (o === this.window)
-
-      return "window";
    if (typeof o === 'function' && !("toString" in o) ) {
       sc_toWriteStringProcedure(o);
    }

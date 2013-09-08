@@ -175,7 +175,6 @@
 	(indent . 2)
 	(statics-suffix . #f)
 	(bigloo-modules . #t)
-	(pp . #f)
 	(source-map . #f)
 	(compress . #f)
 	(call-check . #t)

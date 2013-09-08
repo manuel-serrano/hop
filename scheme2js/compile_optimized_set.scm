@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Sun Aug 11 15:49:00 2013 (serrano)                */
+;*    Last change :  Thu Sep  5 16:05:56 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compile set! expression                                          */
@@ -21,8 +21,8 @@
 	   allocate-names
 	   export-desc)
    
-   (export (compile-unoptimized-set! p compile::procedure n::Node tmp)
-	   (compile-set! p compile::procedure node::Node tmp)))
+   (export (compile-unoptimized-set! p compile::procedure n::Node)
+	   (compile-set! p compile::procedure node::Node)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *set!-operators*                                                 */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-optimized-set! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (compile-optimized-set! p compile n tmp)
+(define (compile-optimized-set! p compile n)
    (with-access::Set! n (lvalue val)
       (with-access::Ref lvalue (var)
 	 (if (isa? val Call)
@@ -75,26 +75,26 @@
 				  (template-display p
 				     "($js-id ~a= ~e)"
 				     (cadr entry)
-				     (compile (cadr operands) p #f tmp #f))))
-			   (compile-unoptimized-set! p compile n tmp)))
-		    (compile-unoptimized-set! p compile n tmp)))
-	     (compile-unoptimized-set! p compile n tmp)))))
+				     (compile (cadr operands) p #f #f))))
+			   (compile-unoptimized-set! p compile n)))
+		    (compile-unoptimized-set! p compile n)))
+	     (compile-unoptimized-set! p compile n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-unoptimized-set! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (compile-unoptimized-set! p compile n tmp)
+(define (compile-unoptimized-set! p compile n)
    (with-access::Set! n (lvalue val)
       (template-display p
 	 "~e = ~e"
-	 (compile lvalue p #f tmp #f)
-	 (compile val p #f tmp #f))))
+	 (compile lvalue p #f #f)
+	 (compile val p #f #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-set! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (compile-set! p compile n tmp)
+(define (compile-set! p compile n)
    ;; TODO: get rid of '(config ...)
    (if (config 'optimize-set!)
-       (compile-optimized-set! p compile n tmp)
-       (compile-unoptimized-set! p compile n tmp)))
+       (compile-optimized-set! p compile n)
+       (compile-unoptimized-set! p compile n)))

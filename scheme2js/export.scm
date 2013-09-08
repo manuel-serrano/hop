@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Fri Aug 23 07:30:01 2013 (serrano)                */
+;*    Last change :  Thu Sep  5 16:26:57 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    export                                                           */
@@ -64,8 +64,14 @@
 ;*---------------------------------------------------------------------*/
 (define (entry-val sym l)
    (let ((try (assq sym (cdr l))))
-      (and try
-	   (cadr try))))
+      (and try (cadr try))))
+
+;*---------------------------------------------------------------------*/
+;*    entry-vals ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (entry-vals sym l)
+   (let ((try (assq sym (cdr l))))
+      (and try (cdr try))))
 
 ;*---------------------------------------------------------------------*/
 ;*    normalize-export ...                                             */
@@ -117,7 +123,7 @@
    (let* ((normalized (normalize-export info module-name))
 	  (scheme-sym (car normalized))
 	  (js-id (normalize-js-id normalized))
-	  (peephole (entry-val 'peephole normalized))
+	  (peephole (entry-vals 'peephole normalized))
 	  (higher? (entry-val 'call/cc? normalized))
 	  (higher-params (entry-val 'call/cc-params normalized))
 	  (return-type (entry-val 'type normalized))

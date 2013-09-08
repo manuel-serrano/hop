@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Aug 15 16:43:48 2013 (serrano)                */
+;*    Last change :  Wed Sep  4 16:58:57 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -53,7 +53,6 @@
 	 (clientc-arity-check #f)
 	 (clientc-type-check #f)
 	 (clientc-debug #f)
-	 (clientc-pp #f)
 	 (clientc-compress #f)
 	 (clientc-inlining #t)
 	 (clientc-use-strict #t))
@@ -122,7 +121,6 @@
 	      (set! clientc-source-map #t)
 	      (hop-clientc-debug-unbound-set! 1)
 	      (set! clientc-debug #t)
-	      (set! clientc-inlining #f)
 	      (set! clientc-arity-check #t)
 	      (set! clientc-type-check #t)
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug))))
@@ -143,6 +141,10 @@
 	      (set! clientc-use-strict #t))
 	     ((string=? level "no-clientc-use-strict")
 	      (set! clientc-use-strict #f))
+	     ((string=? level "clientc-inlining")
+	      (set! clientc-inlining #t))
+	     ((string=? level "no-clientc-inlining")
+	      (set! clientc-inlining #f))
 	     ((string=? level "clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 1))
 	     ((string=? level "no-clientc-debug-unbound")
@@ -159,7 +161,7 @@
 	      (let ((l (string->integer level)))
 		 (set! clientc-source-map #t)
 		 (set! clientc-debug #t)
-		 (set! clientc-inlining #f)
+		 (set! clientc-inlining (<=fx l 2))
 		 (set! clientc-arity-check #t)
 		 (set! clientc-type-check #t)
 		 (bigloo-debug-module-set! (-fx l 1))
@@ -369,7 +371,6 @@
 	 :arity-check clientc-arity-check
 	 :type-check clientc-type-check
 	 :debug clientc-debug
-	 :pp clientc-pp
 	 :compress clientc-compress
 	 :inlining clientc-inlining
 	 :module-use-strict clientc-use-strict

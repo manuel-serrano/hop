@@ -68,15 +68,23 @@
 ;*    selects runtime imported from 'runtime_mapping.sch'              */
 ;*---------------------------------------------------------------------*/
 (define (select-runtime)
-   (cond
-      ((and (config 'suspend/resume) (config 'runtime-is-constant))
-       *call/cc-constant-runtime-var-mapping*)
-      ((config 'suspend/resume)
-       *call/cc-runtime-var-mapping*)
-      ((config 'runtime-is-constant)
-       *default-constant-runtime-var-mapping*)
+   (cond-expand
+      (enable-callcc
+       (cond
+	  ((and (config 'suspend/resume) (config 'runtime-is-constant))
+	   *call/cc-constant-runtime-var-mapping*)
+	  ((config 'suspend/resume)
+	   *call/cc-runtime-var-mapping*)
+	  ((config 'runtime-is-constant)
+	   *default-constant-runtime-var-mapping*)
+	  (else
+	   *default-runtime-var-mapping*)))
       (else
-       *default-runtime-var-mapping*)))
+       (cond
+	  ((config 'runtime-is-constant)
+	   *default-constant-runtime-var-mapping*)
+	  (else
+	   *default-runtime-var-mapping*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    symbol-resolution ...                                            */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Aug 11 15:32:22 2013 (serrano)                */
+/*    Last change :  Wed Sep  4 07:42:18 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -76,7 +76,7 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 
       if( obj === window ) {
 	 if( hop_is_ready ) {
-	    evt = new HopEvent( "ready", window )
+	    var evt = new HopEvent( "ready", window )
 	    evt.target = window;
 	    
 	    window.ready = p;

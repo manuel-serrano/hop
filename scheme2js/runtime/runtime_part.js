@@ -39,7 +39,7 @@ function initRuntime() {
 }
 */
 
-var sc_lambda, sc_let;
+var sc_lambda, sc_let, sc_context;
 
 function sc_print_debug() {
     sc_print.apply(null, arguments);
@@ -404,7 +404,7 @@ function sc_equal(x) {
 /*---------------------------------------------------------------------*/
 /*** META ((export <)
            (type bool)
-           (peephole (infix 2 2 "<"))
+           (peephole (infix 2 2 "<") (safe-binary sc_less2))
            (arity -3))
 */
 function sc_less(x) {
@@ -428,7 +428,7 @@ function sc_less(x) {
 
 /*** META ((export <fx <fl)
            (type bool)
-           (peephole (infix 2 2 "<"))
+           (peephole (infix 2 2 "<") (safe-binary sc_less2))
            (arity 2))
 */
 function sc_less2( x, y ) {
@@ -449,7 +449,7 @@ function sc_less2( x, y ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export >)
            (type bool)
-           (peephole (infix 2 2 ">"))
+           (peephole (infix 2 2 ">") (safe-binary sc_greater2))
            (arity -3))
 */
 function sc_greater(x, y) {
@@ -494,7 +494,7 @@ function sc_greater2( x, y ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export <=)
            (type bool)
-           (peephole (infix 2 2 "<="))
+           (peephole (infix 2 2 "<=") (safe-binary sc_lessEqual2))
            (arity -3))
 */
 function sc_lessEqual(x, y) {
@@ -539,7 +539,7 @@ function sc_lessEqual2( x, y ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export >=)
            (type bool)
-           (peephole (infix 2 2 ">="))
+           (peephole (infix 2 2 ">=") (safe-binary sc_greaterEqual2))
            (arity -3))
 */
 function sc_greaterEqual(x, y) {
@@ -685,7 +685,7 @@ function sc_checkNumericTypes(fun, res, args) {
 /*    sc_plus ...                                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export +)
-           (peephole (infix 0 #f "+" "0"))
+           (peephole (infix 0 #f "+" "0") (safe-binary sc_plus2))
            (arity -1))
 */
 function sc_plus() {
@@ -742,7 +742,7 @@ function sc_plus2(x, y) {
 /*    sc_minus ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export - negfx negfl)
-           (peephole (minus))
+           (peephole (minus) (safe-binary sc_minus2))
            (arity -2))
 */
 function sc_minus(x) {
@@ -812,7 +812,7 @@ function sc_minus2( x, y ) {
 /*    sc_multi ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export *)
-           (peephole (infix 0 #f "*" "1"))
+           (peephole (infix 0 #f "*" "1") (safe-binary sc_multi2))
            (arity -1))
 */
 function sc_multi() {
@@ -868,7 +868,7 @@ function sc_multi2( x, y ) {
 /*    sc_div ...                                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export /)
-           (peephole (div))
+           (peephole (div) (safe-binary sc_div2))
            (arity -2))
 */
 function sc_div(x) {
@@ -2247,7 +2247,7 @@ function sc_vector() {
     return a;
 }
 
-/*** META ((export vector-length f32vector-length array-length) (arity #t)
+/*** META ((export vector-length array-length) (arity #t)
            (peephole (postfix ".length")))
 */
 function sc_vectorLength(v) {
@@ -2259,7 +2259,7 @@ function sc_vectorLength(v) {
    return v.length;
 }
 
-/*** META ((export vector-ref f32vector-ref array-ref) (arity #t)
+/*** META ((export vector-ref array-ref) (arity #t)
            (peephole (hole 2 v "[" pos "]")))
 */
 function sc_vectorRef(v, pos) {
@@ -2277,7 +2277,7 @@ function sc_vectorRef(v, pos) {
     return v[pos];
 }
 
-/*** META ((export vector-set! f32vector-set! array-set!) (arity #t)
+/*** META ((export vector-set! array-set!) (arity #t)
            (peephole (hole 3 v "[" pos "] = " val)))
 */
 function sc_vectorSetBang(v, pos, val) {
@@ -2293,6 +2293,159 @@ function sc_vectorSetBang(v, pos, val) {
    }
 #endif   
     v[pos] = val;
+}
+
+/*** META ((export u8vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_u8vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-length", "u8vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export u8vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_u8vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-set!", "u8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "u8vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "u8vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "u8vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export u8vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_u8vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-ref", "u8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "u8vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "u8vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
+}
+
+/*** META ((export s8vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_s8vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-length", "s8vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export s8vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_s8vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-set!", "s8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "s8vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "s8vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "s8vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export s8vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_s8vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-ref", "s8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "s8vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "s8vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
+}
+
+/*** META ((export f32vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_f32vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-length", "f32vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export f32vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_f32vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-set!", "f32vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "f32vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "f32vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "f32vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export f32vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_f32vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-ref", "f32vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "f32vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "f32vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
 }
 
 /*** META ((export vector->list f32vector->list array->list) (arity #t)) */

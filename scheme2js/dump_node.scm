@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 18 15:15:05 2013                          */
-;*    Last change :  Mon Aug 19 08:30:52 2013 (serrano)                */
+;*    Last change :  Wed Sep  4 15:21:07 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Simple tool to debug the compiler                                */
@@ -26,7 +26,8 @@
 ;*    *location*                                                       */
 ;*---------------------------------------------------------------------*/
 (define *location* #f)
-(define *verbose* #f)
+(define *constant* #t)
+(define *verbose* #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    node->list ...                                                   */
@@ -38,8 +39,8 @@
 ;*    node->list ::Var ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (node->list v::Var)
-   (with-access::Var v (id)
-      (if *verbose* `(var ,id) id)))
+   (with-access::Var v (id constant?)
+      (if *verbose* `(var (constant? ,constant?) ,id) id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node->list ::Const ...                                           */
@@ -71,11 +72,14 @@
 ;*    node->list ::Ref ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (node->list n::Ref)
-   (with-access::Ref n (location id)
-      (let ((id (if (pair? id) (cons '@ id) id)))
-	 (if *verbose*
-	     `(ref ,@(if *location* `(:location ,location) '()) ,id)
-	     id))))
+   (with-access::Ref n (location id var)
+      (with-access::Var var (constant?)
+	 (let ((id (if (pair? id) (cons '@ id) id)))
+	    (if *verbose*
+		`(ref ,id
+		    ,@(if *location* `(:location ,location) '())
+		    ,@(if *constant* `(:constant? ,constant?) '()))
+		id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node->list ::Begin ...                                           */

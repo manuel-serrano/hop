@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:23:39 2011                          */
-;*    Last change :  Thu Aug 15 07:08:12 2013 (serrano)                */
+;*    Last change :  Sat Sep  7 09:45:53 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -125,7 +125,7 @@
 ;*    type-checks ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-checks vars body loc procname)
-   (if (config 'type-check)
+   (if (not (config 'type-check))
        body
        (let loop ((vars vars))
 	  (if (null? vars)

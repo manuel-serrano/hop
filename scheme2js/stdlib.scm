@@ -18,11 +18,14 @@
    
    (import export-desc
 	   tools)
-   
+
+   (cond-expand
+      (enable-callcc
+       (export *call/cc-runtime-var-mapping*
+	       *call/cc-constant-runtime-var-mapping*)))
+
    (export *default-runtime-var-mapping*
-	   *call/cc-runtime-var-mapping*
 	   *default-constant-runtime-var-mapping*
-	   *call/cc-constant-runtime-var-mapping*
 
 	   (add-extra-mapping! ::bstring)))
 

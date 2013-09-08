@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Aug 23 07:17:01 2013 (serrano)                */
+#*    Last change :  Sat Sep  7 13:37:13 2013 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -29,7 +29,7 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _BGL_OBJECTS = main scheme2js srfi0 \
-        tools \
+        tools trampoline \
         config mutable_strings verbose error \
         module module_resolver module_class module_library \
         expand expanders runtime_expander dsssl_expander dot_expand \
@@ -38,7 +38,7 @@ _BGL_OBJECTS = main scheme2js srfi0 \
         symbol symbol_table gen_js stdlib \
         letrec_expansion encapsulation node_elimination mark_statements \
 	inline deep_clone side use_count nested_closures captured_vars \
-          free_vars fun_size transform_util call_check \
+        free_vars fun_size transform_util call_check \
         rm_unused_vars \
         tail_rec tail loop_updates var_ref_util \
         constant_propagation constants scope while \
@@ -47,10 +47,11 @@ _BGL_OBJECTS = main scheme2js srfi0 \
 	out compile_optimized_call compile_optimized_set \
         compile_optimized_boolify allocate_names template_display \
         push_declarations scm_out \
-        callcc callcc_anormalform callcc_resume_push callcc_locations \
-        callcc_checkpoint trampoline \
-	pipe_port js_pp js_lexer js_parser js_nodes js_out \
 	pragma dump_node source_map base64_vlq
+
+_BGL_CALLCC_OBJECTS = callcc \
+        callcc_anormalform callcc_resume_push callcc_locations \
+        callcc_checkpoint callcc_out
 
 _OBJECTS = $(_BGL_OBJECTS)
 
