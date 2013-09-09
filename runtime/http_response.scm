@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Aug  3 08:26:54 2013 (serrano)                */
+;*    Last change :  Mon Sep  9 16:18:14 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -765,9 +765,12 @@
 			       (loop (or rhost host)
 				  (or rport port)
 				  (or ruser user)
-				  (if rhost
-				      (make-file-name (dirname path) rpath)
-				      rpath)))
+				  (cond
+				     (rhost rpath)
+				     ((string-prefix? "/" rpath)
+				      rpath)
+				     (else
+				      (make-file-name (dirname path) rpath)))))
 			    (raise e)))
 		     (set! header (cons (cons connection: connection) header))
 		     (let ((auth (if (and (isa? req http-server-request)
@@ -799,14 +802,14 @@
       (multiple-value-bind (rproto ruser rhost rport rpath)
 	 (url-parse url)
 	 (cond
-	    ((not rproto)
+	    ((string=? rproto "file")
 	     (values #f #f #f rpath))
-	    ((not (string? rhost))
-	     (raise
-	      (instantiate::&io-malformed-url-error
-		 (proc "http-send-request")
-		 (msg "Illegal host")
-		 (obj url))))
+;* 	    ((not (string? rhost))                                     */
+;* 	     (raise                                                    */
+;* 	      (instantiate::&io-malformed-url-error                    */
+;* 		 (proc "http-send-request")                            */
+;* 		 (msg "Illegal host")                                  */
+;* 		 (obj url))))                                          */
 	    (else
 	     (values rhost rport ruser rpath))))))
 

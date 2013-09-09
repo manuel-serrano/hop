@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Aug 23 07:41:00 2013 (serrano)                */
+/*    Last change :  Mon Sep  9 09:43:59 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -387,23 +387,39 @@ function hop_typeof( obj ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export after) (arity #t)) */
 function sc_after( timeout, proc ) {
-   var tm = sc_isNumber( timeout ) ? timeout : 1;
-   
 #if HOP_RTS_DEBUG
+   var mark = "After trace:";
+   
    if( hop_debug() > 0 ) {
+      if( !sc_isNumber( timeout ) ) {
+	 sc_typeError( "after", "integer", timeout, 1 );
+      }
+   
+      if( !("apply" in proc) ) {
+	 sc_typeError( "after", "procedure", proc, 1 );
+      }
+   
       try {
 	 /* raise an error to get the execution stack */
 	 throw new Error( "after" );
       } catch( e ) {
-	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
-	 var ctx = sc_cons( "After trace:", stk );
-	 
+	 var ctx;
+	 var estk = hop_get_exception_stack( e );
+
+	 if( !(sc_isPair( hop_current_stack_context )) ||
+	     hop_current_stack_context.__hop_car !== mark ) {
+	    ctx = sc_cons( mark, hop_extend_stack_context( estk ) );
+	 } else {
+	    ctx = hop_current_stack_context;
+	    ctx.__hop_cdr.__hop_car = estk;
+	 }
+
 	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "after" );
       }
    }
 #endif
    
-   var i = setInterval( function() { clearInterval( i ); proc() }, tm );
+   var i = setInterval( function() { clearInterval( i ); proc() }, timeout );
    
    return true;
 }
@@ -415,6 +431,14 @@ function sc_after( timeout, proc ) {
 function sc_timeout( tm, proc ) {
 #if HOP_RTS_DEBUG
    if( hop_debug() > 0 ) {
+      if( !sc_isNumber( tm ) ) {
+	 sc_typeError( "timeout", "integer", tm, 1 );
+      }
+   
+      if( !("apply" in proc) ) {
+	 sc_typeError( "timeout", "procedure", proc, 1 );
+      }
+   
       try {
 	 /* raise an error to get the execution stack */
 	 throw new Error( "timeout" );
