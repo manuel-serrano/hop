@@ -622,52 +622,6 @@
 	 (display ">" p))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-attribute-encode ...                                         */
-;*---------------------------------------------------------------------*/
-(define (xml-attribute-encode obj)
-   (if (not (string? obj))
-       obj
-       (let ((ol (string-length obj)))
-	  (define (count str ol)
-	     (let loop ((i 0)
-			(j 0))
-		(if (=fx i ol)
-		    j
-		    (let ((c (string-ref str i)))
-		       ;; attribute values should escape &#...
-		       (if (or (char=? c #\') (char=? c #\&))
-			   (loop (+fx i 1) (+fx j 5))
-			   (loop (+fx i 1) (+fx j 1)))))))
-	  (define (encode str ol nl)
-	     (if (=fx nl ol)
-		 obj
-		 (let ((nstr (make-string nl)))
-		    (let loop ((i 0)
-			       (j 0))
-		       (if (=fx j nl)
-			   nstr
-			   (let ((c (string-ref str i)))
-			      (case c
-				 ((#\')
-				  (string-set! nstr j #\&)
-				  (string-set! nstr (+fx j 1) #\#)
-				  (string-set! nstr (+fx j 2) #\3)
-				  (string-set! nstr (+fx j 3) #\9)
-				  (string-set! nstr (+fx j 4) #\;)
-				  (loop (+fx i 1) (+fx j 5)))
-				 ((#\&)
-				  (string-set! nstr j #\&)
-				  (string-set! nstr (+fx j 1) #\#)
-				  (string-set! nstr (+fx j 2) #\3)
-				  (string-set! nstr (+fx j 3) #\8)
-				  (string-set! nstr (+fx j 4) #\;)
-				  (loop (+fx i 1) (+fx j 5)))
-				 (else
-				  (string-set! nstr j c)
-				  (loop (+fx i 1) (+fx j 1))))))))))
-	  (encode obj ol (count obj ol)))))
-
-;*---------------------------------------------------------------------*/
 ;*    xml-write-attributes ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-attributes attr p backend)
