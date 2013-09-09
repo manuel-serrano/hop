@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep  9 13:35:47 2013 (serrano)                */
+;*    Last change :  Mon Sep  9 16:18:14 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -766,7 +766,7 @@
 				  (or rport port)
 				  (or ruser user)
 				  (cond
-				     ((rhost rpath))
+				     (rhost rpath)
 				     ((string-prefix? "/" rpath)
 				      rpath)
 				     (else
