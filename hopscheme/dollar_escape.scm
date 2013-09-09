@@ -211,10 +211,7 @@
 		     (set-car! l `(pragma ,val))
 		     (set-cdr! l (unhop-list! (cddr l)))
 		     l)))
-	   (begin
-	      (error "dollar-escape"
-		     "Internal Error"
-		     #f))))
+	   (error "dollar-escape" "Internal Error" l)))
       (else
        (set-cdr! l (unhop-list! (cdr l)))
        l)))

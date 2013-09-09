@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -71,9 +71,7 @@
       (for-each count+ vars)))
 
 (define-nmethod (Frame-push.count)
-   (with-access::Frame-push this (frame-allocs)
-      (for-each (lambda (frame-alloc)
-		   (with-access::Frame-alloc frame-alloc (storage-var)
-		      (count+ storage-var)))
-		frame-allocs))
+   (with-access::Frame-push this (frame-alloc)
+      (with-access::Frame-alloc frame-alloc (storage-var)
+	 (count+ storage-var)))
    (default-walk this))

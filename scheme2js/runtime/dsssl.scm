@@ -1,13 +1,13 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/scheme2js/dsssl.scm               */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/runtime/dsssl.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jul  3 11:30:29 1997                          */
-;*    Last change :  Thu Jan  6 14:18:46 2011 (serrano)                */
+;*    Last change :  Fri Aug 23 06:47:25 2013 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Extracted from Bigloo support for Dsssl.                         */
 ;*    -------------------------------------------------------------    */
-;*    WARNING!!!This file is only used to generate dsssl.js. As it     */
+;*    WARNING!!! This file is only used to generate dsssl.js. As it    */
 ;*    is not used in the scheme2js runtime.                            */
 ;*=====================================================================*/
 
@@ -75,13 +75,13 @@
 	  (loop (cdr args)))
 	 ((eq? (car args) keyword)
 	  (if (not (pair? (cdr args)))
-	      (error 'dsssl-get-key-arg
+	      (error "dsssl-get-key-arg"
 		     "keyword argument misses value"
 		     (car args))
 	      (cadr args)))
 	 (else
 	  (if (not (pair? (cdr args)))
-	      (error 'dsssl-get-key-arg
+	      (error "dsssl-get-key-arg"
 		     "keyword argument misses value"
 		     (car args))
 	      (loop (cddr args)))))))

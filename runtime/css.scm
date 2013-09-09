@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Dec  9 00:56:41 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Sun Mar 31 07:55:12 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -123,7 +123,8 @@
       (when element
 	 (with-access::css-selector-name element (name)
 	    (when (string? name)
-	       (hashtable-get *hss-type-env* (string-downcase name)))))))
+	       (synchronize *hss-compiler-mutex*
+		  (hashtable-get *hss-type-env* (string-downcase name))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-bind-property-compiler! ...                                  */
@@ -747,7 +748,8 @@
 (define (hss-unalias-selector-name::pair s::css-selector o::css-selector-name)
    (with-access::css-selector-name o (name)
       (if (string? name)
-	  (let ((new (hashtable-get *hss-type-env* (string-downcase name))))
+	  (let ((new (synchronize *hss-compiler-mutex*
+			(hashtable-get *hss-type-env* (string-downcase name)))))
 	     (if (isa? new hss-compiler)
 		 (with-access::hss-compiler new (selector)
 		    selector)

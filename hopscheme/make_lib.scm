@@ -1,5 +1,12 @@
 ;*=====================================================================*/
-;*    The module used to build the hopscheme heap file.                */
+;*    serrano/prgm/project/hop/2.5.x/hopscheme/make_lib.scm            */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
+;*    Last change :                                                    */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    THe module used to build the hopscheme heap file.                */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -8,7 +15,6 @@
 (module __hopscheme_makelib
    
    (import __hopscheme
-	   __hopscheme_tilde-escape
-	   __hopscheme_config)
+	   (init-hopscheme! __hopscheme_config))
    
    (eval   (export-all)))

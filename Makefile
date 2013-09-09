@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/Makefile                          */
+#*    serrano/prgm/project/hop/2.5.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Jul  2 08:02:31 2012 (serrano)                */
+#*    Last change :  Fri Aug  9 13:44:19 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -30,7 +30,8 @@ POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay hophz \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: bindir libdir lib widget share weblets bin share-afile scheme2js \
+.PHONY: bindir libdir lib widget share weblets bin \
+  share-afile scheme2js \
   android
 
 build: bindir libdir lib weblets widget $(BUILDSPECIFIC) bin share

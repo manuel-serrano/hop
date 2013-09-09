@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/2.5.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Oct 13 07:47:28 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Fri Aug  9 18:38:01 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -14,7 +14,17 @@
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (jscript-funcall path args)
-   `(format "function() { return hop_apply_url( ~s, arguments ) }" ,path))
+   (if (=fx (bigloo-debug) 0)
+       `(format "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
+       (let loop ((args (dsssl-formals->scheme-formals args error))
+		  (arity 0))
+	  (cond
+	     ((null? args)
+	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
+	     ((not (pair? args))
+	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
+	     (else
+	      (loop (cdr args) (+fx arity 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-service ...                                               */
@@ -237,7 +247,7 @@
    (define (with-hop-local svc args success failure auth)
       `(with-access::hop-service (procedure-attr ,svc) (proc)
 	  (with-hop-local (proc ,@args) ,success ,failure ,auth)))
-
+   
    (define (with-hop-remote svc args success fail opts)
       `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))
    
@@ -269,44 +279,44 @@
 		  (loop (cdr opts) args success (car opts) host port sync auth))
 		 (else
 		  (error "with-hop"
-			 (format "Illegal optional argument: ~a" (car opts))
-			 x))))
+		     (format "Illegal optional argument: ~a" (car opts))
+		     x))))
 	     ((null? (cdr opts))
 	      (error "with-hop"
-		     (format "missing value for optional argument: ~a"
-			     (car opts))
-		     x))
+		 (format "missing value for optional argument: ~a"
+		    (car opts))
+		 x))
 	     ((eq? (car opts) :host)
 	      (loop (cddr opts)
-		    (cons* (cadr opts) (car opts) args)
-		    success fail
-		    (cadr opts)
-		    port
-		    sync auth))
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 (cadr opts)
+		 port
+		 sync auth))
 	     ((eq? (car opts) :port)
 	      (loop (cddr opts)
-		    (cons* (cadr opts) (car opts) args)
-		    success fail
-		    host
-		    (cadr opts)
-		    sync auth))
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 host
+		 (cadr opts)
+		 sync auth))
 	     ((eq? (car opts) :sync)
 	      (loop (cddr opts)
-		    args
-		    success fail
-		    host port
-		    (cadr opts)
-		    auth))
+		 args
+		 success fail
+		 host port
+		 (cadr opts)
+		 auth))
 	     ((eq? (car opts) :authorization)
 	      (loop (cddr opts)
-		    (cons* (cadr opts) (car opts) args)
-		    success fail
-		    host port sync
-		    (cadr opts)))
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 host port sync
+		 (cadr opts)))
 	     (else
 	      (loop (cddr opts)
-		    (cons* (cadr opts) (car opts) args)
-		    success fail host port sync auth)))))
+		 (cons* (cadr opts) (car opts) args)
+		 success fail host port sync auth)))))
       (else
        (error "with-hop" "Illegal form" x))))
    

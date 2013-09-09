@@ -5,7 +5,12 @@
    <string name="hopversion">Hop @HOPVERSION@</string>
    <string name="hopurl">@HOPURL@</string>
    <string name="hopport">@HOPPORT@</string>
+   <string name="hopthreads">@HOPTHREADS@</string>
    <string name="hopservicestarted">Hop</string>
+   <string name="hoplog">@HOPCONSOLELOG@</string>
+   <string name="hopverbose">@HOPVERBOSELEVEL@</string>
+   <string name="hopdebug">@HOPDEBUGLEVEL@</string>
+   <string name="hopzeroconf">@HOPZEROCONF@</string>
 
    <!-- Activities -->
    <string name="activity_hop">Hop</string>
@@ -29,6 +34,8 @@
 
    <string name="prefs_port">Port</string>
    <string name="prefs_port_summary">Hop port number (requires restarting Hop)</string>
+   <string name="prefs_threads">Multithreading</string>
+   <string name="prefs_threads_summary">Maximum number of HTTP threads (requires restarting Hop)</string>
    <string name="prefs_zeroconf">Zeroconf</string>
    <string name="prefs_zeroconf_summary">Enable zeroconf (prior to 4.2 this slightly drains the battery)</string>
 
@@ -38,6 +45,9 @@
    <string name="prefs_webdav">WebDav</string>
    <string name="prefs_webdav_summary">Act as WebDav server</string>
 
+   <string name="prefs_jobs">Jobs</string>
+   <string name="prefs_jobs_summary">Enable background jobs</string>
+
    <string name="prefs_autostart">Start on boot</string>
    <string name="prefs_autostart_summary">Start automatically Hop in background on boot</string>
 
@@ -45,6 +55,9 @@
 
    <string name="prefs_log">Log</string>
    <string name="prefs_log_summary">Enable ADB logging</string>
+
+   <string name="prefs_verbose">Verbose</string>
+   <string name="prefs_verbose_summary">Verbosity (requires restarting Hop)</string>
 
    <string name="prefs_debug">Debug</string>
    <string name="prefs_debug_summary">Debugging mode (requires restarting Hop)</string>

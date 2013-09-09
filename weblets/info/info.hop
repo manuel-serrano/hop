@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/weblets/info/info.hop             */
+;*    serrano/prgm/project/hop/2.5.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jan 16 08:28:28 2013 (serrano)                */
+;*    Last change :  Tue Aug 13 06:46:23 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -284,8 +284,8 @@
 	       (<TD> :align 'left (os-arch)))
 	    (<TR>
 	       (<TH> :align 'right "Server IP")
-	       (<TD> :align 'left (<TT> (host (hostname)))
-		  " (" (hostname) ")"))
+	       (<TD> :align 'left (<TT> (hop-server-hostip))
+		  " (" (hop-server-name) ")"))
 	    (<TR>
 	       (<TH> :align 'right "Client IP")
 	       (<TD> :align 'left (<TT> (socket-host-address socket))
@@ -357,7 +357,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<CONFIG:CLIENT>)
    ~(<TABLE> :class "hop-info"
-       (<TR> (<TH> :align 'right "user-argent")
+       (<TR> (<TH> :align 'right "user-agent")
 	     (<TD> :align 'left navigator.userAgent))
        (map (lambda (e)
 	       (<TR> (<TH> :align 'right (symbol->string (car e)))

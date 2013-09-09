@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.5.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Oct 13 07:48:09 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Jul 19 16:03:47 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -138,7 +138,7 @@
       (with-access::html-tree obj (klass)
 	 (fprintf p "<div id='~a' class='hop-tree-container ~a'>" parent klass))
       (display " <script type='" p)
-      (display (hop-configure-javascript-mime-type) p)
+      (display (hop-mime-type) p)
       (display "'>" p)
       (display "hop_add_event_listener('" p)
       (display (string-escape parent #\') p)
@@ -203,10 +203,18 @@
 	   (procedure->service
 	    (lambda ()
 	       (let* ((p (open-output-string))
-		      (v (html-write-tree-body (+ 1 level)
-					       (car body)
-					       id p
-					       be))
+		      (v (html-write-tree-body
+			    (+ 1 level) (car body) id p be))
+		      (vp (close-output-port p)))
+		  (or v vp))))
+	   p))
+	 ((service-tree-body? body)
+	  (obj->javascript-attr
+	   (procedure->service
+	    (lambda ()
+	       (let* ((p (open-output-string))
+		      (v (html-write-tree-body
+			    (+ 1 level) (car body) id p be))
 		      (vp (close-output-port p)))
 		  (or v vp))))
 	   p))
@@ -231,7 +239,11 @@
 	     (display ", " p))
 	  (display (if open "true, " "false, ") p))
       ;; is the tree cached
-      (display (if (delayed-tree-body? body) "true, " "false, ") p)
+      (display
+	 (if (or (delayed-tree-body? body) (service-tree-body? body))
+	     "true, "
+	     "false, ")
+	 p)
       ;; multi-selection
       (display (if multiselect "true, " "false, ") p)
       ;; onselect/onunselect event handlers
@@ -310,6 +322,14 @@
 	 (and (pair? body) (isa? (car body) xml-delay)))))
 	   
 ;*---------------------------------------------------------------------*/
+;*    service-tree-body? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (service-tree-body? body)
+   (when (and (pair? body) (isa? (car body) html-trbody))
+      (with-access::xml-element (car body) (body)
+	 (and (pair? body) (service? (car body))))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    xml-write-body ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-body body p be)
@@ -329,6 +349,8 @@
 			    ((isa? b xml-delay)
 			     (with-access::xml-delay b (thunk)
 				(loop (thunk))))
+			    ((service? b)
+			     (loop ((service-proc b))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))

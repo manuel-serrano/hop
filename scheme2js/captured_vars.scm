@@ -1,47 +1,65 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/captured_vars.scm       */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Tue Jul 30 07:14:15 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Free/bound variables property                                    */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module captured-vars
+   
    (import nodes
+	   dump-node
 	   export-desc
 	   walk
 	   free-vars
 	   side
 	   verbose)
+   
    (static (class Capture-Env
 	      token::symbol)
 	   (wide-class Capture-Lambda::Lambda
 	      token::symbol))
+   
    (export (captured-vars tree::Module)))
 
-;; if a function captures a variable, it is marked as ".closure?".
-;; Every variable that is captured is marked as ".captured?".
-;;
-;; we handle some cases, where the function is only used within the scope
-;; of its variables. That is, if a function has free variables, but the
-;; lifetime of the function itself is shorter than those of its free variables,
-;; then the function is not considered to be a closure. (and the function is
-;; not marked es .closure, nor are its free variables marked as .captured?.
+;*---------------------------------------------------------------------*/
+;*    captured-vars ...                                                */
+;*    -------------------------------------------------------------    */
+;*    if a function captures a variable, it is marked as ".closure?".  */
+;*    Every variable that is captured is marked as ".captured?".       */
+;*                                                                     */
+;*    we handle some cases, where the function is only used within the */
+;*    scope of its variables. That is, if a function has free          */
+;*    variables, but the lifetime of the function itself is shorter    */
+;*    than those of its free variables, then the function is not       */
+;*    considered to be a closure. (and the function is not marked es   */
+;*    .closure, nor are its free variables marked as .captured?.       */
+;*---------------------------------------------------------------------*/
 (define (captured-vars tree)
    (verbose " collect captured")
    (free-vars tree)
    (side-effect tree)
    (captured tree (instantiate::Capture-Env (token (gensym 'token)))))
 
+;*---------------------------------------------------------------------*/
+;*    clean-var ...                                                    */
+;*---------------------------------------------------------------------*/
 (define (clean-var v::Var)
    (with-access::Var v (captured? id)
       (set! captured? #f)))
 
-;; cleans lambda, if it's the first time we encounter the lambda.
+;*---------------------------------------------------------------------*/
+;*    clean-lambda ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    cleans lambda, if it's the first time we encounter the lambda.   */
+;*---------------------------------------------------------------------*/
 (define (clean-lambda l::Lambda env)
    (with-access::Capture-Env env (token)
       (unless (and (isa? l Capture-Lambda)
@@ -52,6 +70,9 @@
 	    ;; this-var cannot leave local scope and can thus not be captured
 	    (for-each clean-var scope-vars)))))
 
+;*---------------------------------------------------------------------*/
+;*    mark-closure! ...                                                */
+;*---------------------------------------------------------------------*/
 (define (mark-closure! proc)
    (with-access::Lambda proc (closure? free-vars)
       (unless closure? ;; already done
@@ -61,21 +82,32 @@
 			 (set! captured? #t)))
 		   free-vars))))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Node ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.captured)
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    Lambda-non-closure-walk ...                                      */
+;*---------------------------------------------------------------------*/
 (define (Lambda-non-closure-walk l::Lambda env)
    (clean-lambda l env)
    (walk0 l env captured))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Lambda ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.captured)
    (clean-lambda this env)
-
    (with-access::Lambda this (free-vars)
       (when (not (null? free-vars))
 	 (mark-closure! this))
       (default-walk this)))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Set! ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Set!.captured)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
@@ -87,7 +119,11 @@
 	     (Lambda-non-closure-walk val env)
 	     (walk val)))))
 
-;; a Call is the only place, where we allow capturing functions.
+;*---------------------------------------------------------------------*/
+;*    captured ::Module ...                                            */
+;*    -------------------------------------------------------------    */
+;*    a Call is the only place, where we allow capturing functions.    */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Call.captured)
    (with-access::Call this (operator operands)
       (cond
@@ -101,27 +137,38 @@
 	  (walk operator)))
       (for-each walk operands)))
 
-
+;*---------------------------------------------------------------------*/
+;*    captured ::Module ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.captured)
    (with-access::Module this (scope-vars)
       ;; don't care for runtime and imported variables.
       (for-each (lambda (v)
 		   (with-access::Var v (captured?)
 		      (set! captured? #t)))
-		scope-vars))
+	 scope-vars))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Scope ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Scope.captured)
    (with-access::Scope this (scope-vars)
       (for-each clean-var scope-vars))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Frame-alloc ...                                       */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Frame-alloc.captured)
    (default-walk this)
    (with-access::Frame-alloc this (storage-var)
       (with-access::Var storage-var (captured?)
 	 (set! captured? #t))))
 
+;*---------------------------------------------------------------------*/
+;*    captured ::Ref ...                                               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Ref.captured)
    (with-access::Ref this (var)
       (with-access::Var var (constant? value)

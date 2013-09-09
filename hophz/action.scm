@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Wed Feb 20 19:43:52 2013 (serrano)                */
+;*    Last change :  Sat Mar 30 20:22:12 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
@@ -185,7 +185,7 @@
 	    (when (pair? to-install)
 	       (with-access::weblet (car to-install) (installable name)
 		  (if (and (not installable) (not (hophz-force-action)))
-		      (error "hophz" "weblet not installable" name)
+		      (error "hophz" "Weblet not installable" name)
 		      (hz-with-hop (hz/weblet/install :weblet (car to-install)
 				      :override (hophz-force-download))
 			 (lambda (w)
@@ -214,9 +214,12 @@
 		      :name name
 		      :category (when (pair? args) (car args)))
 	 (lambda (w)
-	    (hz-with-hop (hz/weblet/depends :weblet w)
-	       (lambda (l)
-		  (install-weblets (list l))))))))
+	    (if (isa? w weblet)
+		(hz-with-hop (hz/weblet/depends :weblet w)
+		   (lambda (l)
+		      (when l
+			 (install-weblets (list l)))))
+		(error "hophz" "Cannot find weblet" name))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    action-exec ::uninstall-action ...                               */
@@ -290,12 +293,11 @@
    (with-access::list-action a (args verbose)
       (if (null? args)
 	  ;; a plain list
-	  (with-access::list-action a (args)
-	     (hz-with-hop (hz/list/weblets)
-		(lambda (w)
-		   (for-each (lambda (w)
-				(show-weblet w (+fx (hophz-verbose) verbose)))
-		      (filter-publishers w)))))
+	  (hz-with-hop (hz/list/weblets)
+	     (lambda (w)
+		(for-each (lambda (w)
+			     (show-weblet w (+fx (hophz-verbose) verbose)))
+		   (filter-publishers w))))
 	  ;; a search
 	  (hz-with-hop (hz/search/weblets
 			  :regexp (car args)

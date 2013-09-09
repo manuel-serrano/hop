@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/2.5.x/widget/spage.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Fri Dec 21 15:39:27 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Mon Aug 19 06:40:57 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -69,7 +69,8 @@
       (tag 'div)
       (attributes `(:data-hss-tag "hop-sphead" ,@attr))
       (id id)
-      (body (list (<DIV> body)
+      (body (list
+	       (<DIV> :data-hss-tag "hop-spheadbody" body)
 	       (<DIV> :data-hss-tag "hop-sppopbutton"
 		  :onclick ~(spage-pop-update this)
 		  (<SPAN> ""))))))
@@ -92,6 +93,7 @@
 ;*---------------------------------------------------------------------*/
 (define-tag <SPTAB> ((id (xml-make-id 'SPTAB) string)
 		     (onselect #f)
+		     (direction "push")
 		     (class #f)
 		     (attr)
 		     body)
@@ -117,25 +119,44 @@
    
    (let* ((head (filter (lambda (b) (isa? b xml-sphead-element)) body))
 	  (body (filter (lambda (x) (not (isa? x xml-sphead-element))) body)))
-      (if (and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
-	  ;; a dynamic tab
+      (cond
+	 ((and (pair? body) (null? (cdr body)) (service? (car body)))
+	  ;; a dynamic tab (new service syntax)
+	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
+			(<DIV> :data-hss-tag "hop-spbody"
+			   :class class
+			   attr
+			   (<DELAY> (service-proc (car body)))))))
+	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
+		:onclick ~(begin
+			     (stop-event-propagation event #f)
+			     (spage-push-service this $svc))
+		:data-hop-svc svc
+		:data-hop-svc-direction direction
+		(if (null? head) "?" (car head))
+		(init-sptab id onselect))))
+	 ((and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
+	  ;; a dynamic tab (old delay syntax)
 	  (let ((svc (service :name (format "public/sptab/~a/~a" id (get-svc-stamp)) ()
 			(<DIV> :data-hss-tag "hop-spbody"
 			   :class class
 			   attr
 			   body))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-		:onclick ~(spage-push-service this $svc)
+		:onclick ~(begin
+			     (stop-event-propagation event #f)
+			     (spage-push-service this $svc))
 		:data-hop-svc svc
 		(if (null? head) "?" (car head))
-		(init-sptab id onselect)))
+		(init-sptab id onselect))))
+	 (else
 	  ;; a static tab
 	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
 	     :onclick ~(spage-push-node this (dom-first-child (dom-last-child this)))
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)
 	     (<DIV> :data-hss-tag "hop-sptab-static"
-		(<DIV> :data-hss-tag "hop-spbody":class class attr body))))))
+		(<DIV> :data-hss-tag "hop-spbody":class class attr body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */

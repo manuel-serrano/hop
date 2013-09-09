@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.3.x/weblets/workbench/workbench.hop       */
+;*    .../prgm/project/hop/2.5.x/weblets/workbench/workbench.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 20 07:04:35 2010                          */
-;*    Last change :  Fri Feb 17 15:25:40 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Sat Sep  7 09:01:40 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop workbench                                                */
 ;*=====================================================================*/
@@ -112,19 +112,25 @@
 ;*    redirect-io! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (redirect-io! key thunk)
-   (let ((port (open-output-procedure
-		(lambda (s)
-		   (hop-event-broadcast! key s)))))
-      (unwind-protect
-	 (with-output-to-port port
-	    (lambda ()
-	       (with-error-to-port port
-		  (lambda ()
-		     (with-handler
-			(lambda (e)
-			   (exception-notify e))
-			(thunk))))))
-	 (close-output-port port))))
+   (let* ((eport (current-error-port))
+	  (port (open-output-procedure
+		   (lambda (s)
+		      (with-error-to-port eport
+			 (lambda ()
+			    (hop-event-broadcast! key s)))))))
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e))
+	 (unwind-protect
+	    (with-output-to-port port
+	       (lambda ()
+		  (with-error-to-port port
+		     (lambda ()
+			(with-handler
+			   (lambda (e)
+			      (exception-notify e))
+			   (thunk))))))
+	    (close-output-port port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    workbench/load ...                                               */

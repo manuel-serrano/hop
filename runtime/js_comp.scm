@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Jun 16 18:51:08 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Sat Jul 27 06:37:03 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -71,8 +71,15 @@
    (let ((fields (class-all-fields (object-class o))))
       (for i 0 (vector-length fields)
 	 (let* ((f (vector-ref fields i))
-		(gv (class-field-accessor f)))
-	    (register (gv o))))))
+		(iv (class-field-info f)))
+	    (cond
+	       ((and (pair? iv) (memq :client iv))
+		=>
+		(lambda (x)
+		   (when (pair? (cdr x)) (register (cadr x)))))
+	       (else
+		(let ((gv (class-field-accessor f)))
+		   (register (gv o)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ...                                           */
@@ -135,10 +142,17 @@
       (display "{ " op)
       (display-seq fields op
 	 (lambda (f op)
-	    (display "'" op)
-	    (display (class-field-name f) op)
-	    (display "': " op)
-	    (compile ((class-field-accessor f) obj) op)))
+	    (let ((iv (class-field-info f)))
+	       (display "'" op)
+	       (display (class-field-name f) op)
+	       (display "': " op)
+	       (cond
+		  ((and (pair? iv) (memq :client iv))
+		   =>
+		   (lambda (x)
+		      (compile (when (pair? (cdr x)) (cadr x)) op)))
+		  (else 
+		   (compile ((class-field-accessor f) obj) op))))))
       (display "}" op))
    
    (let ((klass (object-class obj)))

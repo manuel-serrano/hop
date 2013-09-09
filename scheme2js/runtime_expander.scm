@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -110,17 +110,23 @@
 	     clauses))
 
 (define (rt-expand-let-form! bindings body type env)
+   (let ((b (find (lambda (b)
+		     (match-case b
+			((? symbol?) #f)
+			(((? symbol?) ?-) #f)
+			(else b)))
+	       bindings)))
+      (when b (scheme2js-error "let" "illegal binding" b b)))
    (let* ((ids (map car bindings))
 	  (filtered-ids (filter! (lambda (id)
 				    (and (has-rt-expander? id)
 					 (not (memq id env))))
-				 ids))
+			   ids))
 	  (extended-env (append! filtered-ids env)))
       (for-each (lambda (binding)
-		   (rt-expand! (cadr binding) (if (eq? type 'let)
-						  env
-						  extended-env)))
-		bindings)
+		   (rt-expand! (cadr binding)
+		      (if (eq? type 'let) env extended-env)))
+	 bindings)
       (rt-expand-list! body extended-env)))
       
 (define (rt-expand! exp env)
@@ -186,10 +192,7 @@
 		(cons (f (car L))
 		      rev-res)))
 	 (else
-	  (scheme2js-error  "expander"
-			    "not a list"
-			    orig-L
-			    orig-L)))))
+	  (scheme2js-error  "expander" "not a list" orig-L orig-L)))))
 
 (define (emap2 f orig-L)
    (let loop ((L orig-L)

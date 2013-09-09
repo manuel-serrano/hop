@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Mon Feb 18 09:40:50 2013 (serrano)                */
+;*    Last change :  Thu Apr 11 16:59:13 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -14,15 +14,17 @@
 ;*---------------------------------------------------------------------*/
 (directives
 
-   (include "verbose.sch")
+   (include "verbose.sch"
+	    "thread.sch")
    
    (import __hop_configure
 	   __hop_param
 	   __hop_misc
 	   __hop_weblets
-	   __hop_types)
+	   __hop_types
+	   __hop_thread)
    
-   (library avahi pthread)
+   (library avahi)
    
    (export (class avahi::zeroconf
 	      (lock::mutex read-only (default (make-mutex)))
@@ -98,7 +100,8 @@
 (define-method (zeroconf-backend-start o::avahi)
    (call-next-method)
    (thread-start!
-      (instantiate::pthread
+      (instantiate::hopthread
+	 (name "zeroconf-avahi")
 	 (body (lambda ()
 		  (with-access::avahi o (poll client lock state exception)
 		     (with-handler
@@ -121,9 +124,8 @@
 	 0
 	 (lambda ()
 	    (avahi-simple-poll-quit poll)))
-      (mutex-lock! lock)
-      (set! state 'close)
-      (mutex-unlock! lock)))
+      (synchronize lock
+	 (set! state 'close))))
 
 ;*---------------------------------------------------------------------*/
 ;*    client-callback ...                                              */

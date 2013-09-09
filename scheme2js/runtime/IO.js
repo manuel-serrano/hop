@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -708,7 +708,7 @@ function sc_write(o, p) {
 
 function sc_toWriteStringProcedure(o) {
    if ("sc_name" in o) {
-      return "#<procedure " + o.sc_name + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
+      return "#<procedure " + o.displayName + " " + (o.sc_location != "#f" ? o.sc_location : "") + ":" + sc_hash(o) + ">";
    } else {
       var n = o.toString().match( /function[ \t\n]+([_a-zA-Z0-9$]+)/ );
       
@@ -725,10 +725,6 @@ function sc_toWriteString(o) {
       return "#f";
    if (o === undefined)
       return "#unspecified";
-    // window is only declared inside browsers. Otherwise this.window should be undefined
-   if (o === this.window)
-
-      return "window";
    if (typeof o === 'function' && !("toString" in o) ) {
       sc_toWriteStringProcedure(o);
    }
@@ -791,12 +787,12 @@ function sc_toDisplayString(o) {
    else if (o === undefined)
       return "#unspecified";
     // window is only declared inside browsers. Otherwise this.window should be undefined
-   else if (o === this.window)
-      return "window";
    else if (typeof o === 'function' && !("toString" in o) )
       return sc_toWriteStringProcedure(o);
    else if (o.sc_toDisplayString)
       return o.sc_toDisplayString();
+   else if ((this != undefined) && ("window" in this) && (o === this.window))
+      return "window";
    else
       return o.toString();
 }
@@ -856,8 +852,8 @@ function sc_prepCircle(o, symb, nbPointer) {
 	}
 	o[symb] = 0;
 	if (o instanceof sc_Pair) {
-	    sc_prepCircle(o.car, symb, nbPointer);
-	    sc_prepCircle(o.cdr, symb, nbPointer);
+	    sc_prepCircle(o.__hop_car, symb, nbPointer);
+	    sc_prepCircle(o.__hop_cdr, symb, nbPointer);
 	} else {
 	    for (var i = 0; i < o.length; i++)
 		sc_prepCircle(o[i], symb, nbPointer);
@@ -905,12 +901,12 @@ sc_Pair.prototype.sc_toCircleString = function(symb, writeOrDisplay, inList) {
 	res += "(";
     
     // print car
-    res += sc_genToCircleString(this.car, symb, writeOrDisplay);
+    res += sc_genToCircleString(this.__hop_car, symb, writeOrDisplay);
     
-    if (sc_isPair(this.cdr)) {
-	res += " " + this.cdr.sc_toCircleString(symb, writeOrDisplay, true);
-    } else if (this.cdr !== null) {
-	res += " . " + sc_genToCircleString(this.cdr, symb, writeOrDisplay);
+    if (sc_isPair(this.__hop_cdr)) {
+	res += " " + this.__hop_cdr.sc_toCircleString(symb, writeOrDisplay, true);
+    } else if (this.__hop_cdr !== null) {
+	res += " . " + sc_genToCircleString(this.__hop_cdr, symb, writeOrDisplay);
     }
     if (!inList)
 	res += ")";
@@ -1026,6 +1022,25 @@ function sc_format(s) {
 	 }
       }
    }
+
+   function format_list(sep, l, p) {
+      if (sc_isPair(l)) {
+	 while (true) {
+	    format_list(sep, l.__hop_car, p);
+	    if (sc_isPair(l.__hop_cdr)) {
+	       p.appendJSString(sep);
+	       l = l.__hop_cdr;
+	    } else {
+	       if (l.__hop_cdr != null) {
+		  format_list(sep, l.__hop_cdr, p);
+	       }
+	       break;
+	    }
+	 }
+      } else {
+	 sc_display(l, p);
+      }
+   }
 	 
    while( i < len ) {
       var i2 = s.indexOf("~", i);
@@ -1126,6 +1141,18 @@ function sc_format(s) {
 	  case 114:
 	      // r
 	      p.appendJSString("\r");
+	      break;
+
+	  case 40:
+	      // (
+	      var i3 = s.indexOf(")", i2+2);
+
+	      if (i3) {
+  	        format_list(s.substring(i2+2,i3),arguments[j++], p);
+		i = i3 + 1;
+	      } else {
+		 i++;
+	      }
 	      break;
 
 	  case 126:

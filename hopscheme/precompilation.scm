@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopscheme/precompilation.scm      */
+;*    serrano/prgm/project/hop/2.5.x/hopscheme/precompilation.scm      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Tue Mar  9 05:13:01 2010                          */
-;*    Last change :  Tue Nov  6 07:42:00 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Fri Aug  9 13:42:41 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Module pre-compilation                                           */
 ;*=====================================================================*/
@@ -13,8 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscheme_precompilation
+   
    (library scheme2js)
+   
    (import __hopscheme_config)
+   
    (export (precompile-module m::symbol resolver::procedure)
 	   (precompile-headers headers::pair-nil)))
 
@@ -22,7 +25,7 @@
 ;*    precompile-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (precompile-module m resolver)
-   (let* ((files (resolver m '*))
+   (let* ((files (resolver m '() '*))
 	  (compiled (any (lambda (f)
 			    (precompile-imported-module-file m f
 			       *hop-reader*

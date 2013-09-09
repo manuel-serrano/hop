@@ -123,7 +123,14 @@ need a second one to access the virtual machine from the host.
 activate the tab "++Adapter 2++".  Select "++enable network adapter++" and
 attach it to "++host-only-adapter++". Click on "++ok++", you are done.
 
+
+~~ Depending on your Linux version, it might be needed to activate the
+PAE option of the emulated processor of the virtual machine (the
+Settings/Processor option associated with a created virtual
+machine). This is for instance needed for Wheezy Debian distribution.
+
 ~~ Now select "++start++". The virtual machine will boot.
+
 
 === 2.2 VMWare ===
 

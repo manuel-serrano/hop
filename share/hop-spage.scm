@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/2.5.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri Mar  1 10:26:33 2013 (serrano)                */
+;*    Last change :  Thu Aug 22 07:05:47 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -22,7 +22,7 @@
 	   (spage-resize spage)
 	   (sptab-add-event-listener! obj event proc capture)
 	   (spage-push spage tab tbody)
-	   (spage-pop spage)
+	   (spage-pop spage #!optional kont)
 	   (spage-pop-all spage)
 	   (spage-tab-update tab)
 	   (spage-tab-pop tab)
@@ -50,6 +50,7 @@
       (set! spage.num 0)
       (set! spage.tabs (list (dom-first-child spage.spviewport)))
       (set! spage.heads '())
+      (set! spage.inpop #f)
       (set! spage.onchg onchange)
       (set! spage.transitionstyle 'none)
       (set! spage.hop_add_event_listener spage-add-event-listener!)
@@ -192,15 +193,16 @@
    
    (or (css-get el "transition-duration")
        (css-get el "-webkit-transition-duration")
-       (css-get el "-firefox-transition-duration")
-       (css-get el "-o-transition-duration")))
+       (css-get el "-moz-transition-duration")
+       (css-get el "-o-transition-duration")
+       0.5))
 
 ;*---------------------------------------------------------------------*/
 ;*    fade ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (fade el el2 duration val0 val1 proc)
    (let* ((width (- val1 val0))
-	  (n (/ duration 10))
+	  (n (round (* duration 100)))
 	  (inc (/ width n)))
       (timeout 10
 	 (lambda ()
@@ -222,7 +224,7 @@
 ;*---------------------------------------------------------------------*/
 (define (slide el duration offset0 offset1 proc)
    (let* ((width (- offset1 offset0))
-	  (n (/ duration 10))
+	  (n (round (* duration 100)))
 	  (inc (/ width n)))
       (timeout 10
 	 (lambda ()
@@ -257,7 +259,7 @@
 	     :left (format "-~apx" spage.spoffset))
 	  (let ((offset0 (- spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
-	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1 #f))))
+	     (slide spviewport (css-transition-duration tbody) offset0 offset1 #f))))
    
    (define (spage-push-fade spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
@@ -286,7 +288,7 @@
 			 :transition-property "opacity"
 			 :opacity 0)))
 	  (fade tbody (cadr spage.tabs)
-		(or (css-transition-duration tbody) 400) 0 1 #f)))
+		(css-transition-duration tbody) 0 1 #f)))
    
    (define (spage-push-auto spage spviewport tbody otab)
       (cond
@@ -340,7 +342,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    spage-pop ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (spage-pop spage)
+(define (spage-pop spage #!optional kont)
 
    (define (shrink-viewport spviewport)
       (set! spage.spscrollwidth (- spage.spscrollwidth spage.spoffset))
@@ -362,7 +364,9 @@
       (dom-remove-child! spviewport tbody)
       (restore-static-body tbody.tab)
       (shrink-viewport spviewport)
-      (node-style-set! otab :display "block"))
+      (node-style-set! otab :display "block")
+      (when (procedure? kont) (kont spage))
+      (set! spage.inpop #f))
 
    (define (spage-pop-fade spage spviewport tbody otab)
       (if (hop-config 'css_transition)
@@ -370,7 +374,7 @@
 	     (begin
 		(node-style-set! tbody :opacity 0)
 		(node-style-set! (car spage.tabs) :opacity 1))
-	     (after (+ 100 (round (* 1000 d)))
+	     (after d
 		(lambda ()
 		   (node-style-set! tbody
 		      :-webkit-transition-property "none"
@@ -379,31 +383,39 @@
 		      :transition-property "none")
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
-		   (shrink-viewport spviewport))))
-	  (fade tbody (car spage.tabs) (or (css-transition-duration tbody) 400) 1 0
-		(lambda (tbody)
-		   (dom-remove-child! (dom-parent-node tbody) tbody)
-		   (restore-static-body tbody.tab)
-		   (shrink-viewport spviewport)))))
+		   (shrink-viewport spviewport)
+		   (when (procedure? kont) (kont spage))
+		   (set! spage.inpop #f))))
+	  (fade tbody (car spage.tabs) (css-transition-duration tbody) 1 0
+	     (lambda (tbody)
+		(dom-remove-child! (dom-parent-node tbody) tbody)
+		(restore-static-body tbody.tab)
+		(shrink-viewport spviewport)
+		(when (procedure? kont) (kont spage))
+		(set! spage.inpop #f)))))
    
    (define (spage-pop-slide spage spviewport tbody otab)
       (if (hop-config 'css_transition)
 	  (let ((d (css-transition-duration tbody)))
 	     (node-style-set! spviewport
 		:left (format "-~apx" spage.spoffset))
-	     (after (+ 100 (round (* 1000 d)))
+	     (after d
 		(lambda ()
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
 		   (node-style-set! spviewport
-		      :width (format "~apx" spage.spscrollwidth)))))
+		      :width (format "~apx" spage.spscrollwidth))
+		   (when (procedure? kont) (kont spage))
+		   (set! spage.inpop #f))))
 	  (let ((offset0 (+ spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
-	     (slide spviewport (or (css-transition-duration tbody) 400) offset0 offset1
-		    (lambda (el)
-		       (dom-remove-child! (dom-parent-node tbody) tbody)
-		       (restore-static-body tbody.tab)
-		       (shrink-viewport spviewport))))))
+	     (slide spviewport (css-transition-duration tbody) offset0 offset1
+		(lambda (el)
+		   (dom-remove-child! (dom-parent-node tbody) tbody)
+		   (restore-static-body tbody.tab)
+		   (shrink-viewport spviewport)
+		   (when (procedure? kont) (kont spage))
+		   (set! spage.inpop #f))))))
 
    (define (spage-pop-auto spage spviewport tbody otab)
       (cond
@@ -419,6 +431,8 @@
       (when (pair? spage.tabs)
 	 (let ((tbody (car spage.tabs))
 	       (otab (cadr spage.tabs)))
+	    ;; mark the tab no longer pushed
+	    (set! tbody.tab.pushed #f)
 	    ;; decrement the number of pushed elements
 	    (set! spage.num (-fx spage.num 1))
 	    (set! spage.tabs (cdr spage.tabs))
@@ -455,10 +469,10 @@
 		 el)))
       (let loop ((parent (dom-parent-node el)))
 	 (cond
-	    ((string=? (parent.getAttribute "data-hss-tag") tag)
-	     parent)
 	    ((or (not parent) (eq? parent #unspecified))
 	     (error "find-spage-tag" "cannot find parent spage" el))
+	    ((string=? (parent.getAttribute "data-hss-tag") tag)
+	     parent)
 	    (else
 	     (loop (dom-parent-node parent)))))))
 
@@ -486,20 +500,39 @@
 ;*    spage-pop-update ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (spage-pop-update button)
-   (let* ((spage (find-spage button))
-	  (head (car spage.heads))
-	  (sphead spage.sphead)
-	  (spheadcontent (dom-first-child sphead))
-	  (spheadbutton (dom-last-child sphead))
-	  (tabs spage.tabs)
-	  (tbody (car tabs)))
-      (set! spage.heads (cdr spage.heads))
-      (innerHTML-set! (dom-first-child spheadbutton) (caddr head))
-      (innerHTML-set! (dom-first-child (dom-first-child tbody.tab)) (car head))
-      (innerHTML-set! spheadcontent (cadr head))
-      (spage-pop spage)
-      (when (= spage.num 0)
-	 (set! spheadbutton.className ""))))
+   
+   (define (pop-body-node spage body kont)
+      (let* ((head (car spage.heads))
+	     (sphead spage.sphead)
+	     (spheadcontent (dom-first-child sphead))
+	     (spheadbutton (dom-last-child sphead))
+	     (tabs spage.tabs)
+	     (tbody (car tabs))
+	     (tab tbody.tab))
+	 (set! spage.heads (cdr spage.heads))
+	 (innerHTML-set! (dom-first-child spheadbutton) (caddr head))
+	 (innerHTML-set! (dom-first-child (dom-first-child tab)) body)
+	 (innerHTML-set! spheadcontent (cadr head))
+	 (spage-pop spage kont)
+	 (when (= spage.num 0) (set! spheadbutton.className ""))))
+
+   (let ((spage (find-spage button)))
+      (unless spage.inpop
+	 (set! spage.inpop #t)
+	 (let* ((head (car spage.heads))
+		(tabs spage.tabs)
+		(tbody (car tabs))
+		(tparent (if (pair? (cdr tabs)) (cadr tabs)))
+		(tab (if tparent tparent.tab)))
+	    (when tbody.tab.pushed
+	       (if (and (not (eq? tab #unspecified))
+			(procedure? tab.svc)
+			(equal? (tab.getAttribute "data-hop-svc-direction") "both"))
+		   (pop-body-node spage (car head)
+		      (lambda (spage)
+			 (let ((t (car spage.tabs)))
+			    (spage-tab-update t.tab))))
+		   (pop-body-node spage (car head) #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-push-body ...                                              */
@@ -524,11 +557,15 @@
 ;*    spage-push-service ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-service tab svc)
-   (with-hop (svc)
-      (lambda (body)
-	 (set! tab.svc svc)
-	 (set! tab.static-node #unspecified)
-	 (spage-push-body tab body))))
+   (unless (and (js-in? "pushed" tab) (eq? tab.pushed #t))
+      (set! tab.pushed #t)
+      (with-hop (svc)
+	 (lambda (body)
+	    (set! tab.svc svc)
+	    (set! tab.static-node #unspecified)
+	    (spage-push-body tab body))
+	 (lambda (xhr)
+	    (set! tab.pushed #f)))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    spage-push-node ...                                              */
@@ -536,11 +573,22 @@
 (define (spage-push-node tab node)
    ;; save the static-body that will be restore when poped
    (let ((p (dom-parent-node node)))
+      (set! tab.pushed #t)
       (set! tab.static-node node)
       (set! tab.static-body p)
       (dom-remove-child! p node))
    (spage-push-body tab node))
 	    
+;*---------------------------------------------------------------------*/
+;*    spage-tab-push ...                                               */
+;*---------------------------------------------------------------------*/
+(define (spage-tab-push tab)
+   (let* ((el (if (string? tab) (dom-get-element-by-id tab) tab))
+	  (svc (el.getAttribute "data-hop-svc")))
+      (if (string? svc)
+	  (spage-push-service el (lambda () svc))
+	  (spage-push-node el (dom-first-child (dom-last-child el))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-update ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -552,31 +600,18 @@
                (let* ((spage (find-spage tab))
                       (spviewport spage.spviewport))
 		  (spage-resize spage)
-                  (dom-remove-child! spviewport (dom-last-child spviewport))
 		  (node-style-set! body
 		     :width (format "~apx" spage.spbodywidth))
-                  (dom-append-child! spviewport body)
+                  (dom-remove-child! spviewport (car spage.tabs))
 		  (set! spage.tabs (cons body (cdr spage.tabs)))
 		  (set! body.tab tab)
-		  (spage-invoke-onchange-listener! spage body "push")
-		  (sptab-invoke-onselect-listener! body.tab body "push")))))))
+                  (dom-append-child! spviewport body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-pop ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (spage-tab-pop tab)
-   (let ((tab (if (string? tab) (dom-get-element-by-id tab) tab)))
-      (spage-pop (find-spage tab))))
-
-;*---------------------------------------------------------------------*/
-;*    spage-tab-push ...                                               */
-;*---------------------------------------------------------------------*/
-(define (spage-tab-push tab)
-   (let ((el (if (string? tab) (dom-get-element-by-id tab) tab)))
-      (let ((svc (el.getAttribute "data-hop-svc")))
-	 (if svc
-	     (spage-push-service el (lambda () svc))
-	     (spage-push-node el (dom-first-child (dom-last-child el)))))))
+   (spage-pop-update tab))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-head ...                                                   */

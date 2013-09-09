@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.5.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 17 08:57:17 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Fri Aug 23 07:15:36 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -19,6 +19,8 @@
    (import  hopc_parseargs
 	    hopc_param)
 
+   (eval    (library hop))
+
    (main    main))
 
 ;*---------------------------------------------------------------------*/
@@ -30,6 +32,8 @@
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
+    ;; define the Hop macros
+   (hop-install-expanders!)
    ;; parse the command line
    (let ((exprs (parse-args args)))
       ;; access file
@@ -38,8 +42,6 @@
 	  (module-load-access-file (hopc-access-file)))
 	 ((file-exists? ".afile")
 	  (module-load-access-file ".afile")))
-      ;; preload the hop library
-      (eval `(library-load 'hop))
       ;; setup the client-side compiler
       (setup-client-compiler!)
       ;; setup the hop module resolvers
@@ -49,7 +51,7 @@
       (for-each (lambda (expr)
 		   (with-input-from-string expr
 		      (lambda ()
-			 (let ((sexp (hop-read (current-input-port))))
+			 (let ((sexp (hopc-read (current-input-port))))
 			    (with-handler
 			       (lambda (e)
 				  (if (isa? e &eval-warning)
@@ -71,6 +73,18 @@
 	     (compile-sources)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-read ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hopc-read p)
+   (if (=fx (bigloo-debug) 0)
+       (begin
+	  (bigloo-debug-set! 1)
+	  (let ((v (hop-read p)))
+	     (bigloo-debug-set! 0)
+	     v))
+       (hop-read p)))
+
+;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (setup-client-compiler!)
@@ -78,7 +92,7 @@
    ;; invocations of hopc are impossible because one removes
    ;; the file of the other.
    (hop-clientc-clear-cache-set! #f)
-   (init-hopscheme! :reader (lambda (p v) (hop-read p))
+   (init-hopscheme! :reader (lambda (p v) (hopc-read p))
       :share (hopc-share-directory)
       :verbose (hop-verbose)
       :eval (lambda (e) (let ((op (open-output-string)))
@@ -87,12 +101,20 @@
       :hop-compile (lambda (obj op compile)
 		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value
+      :javascript-version (hop-javascript-version)
       :hop-library-path (hop-library-path)
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))
       :expanders `(labels match-case
-			(define-tag . ,(eval 'hop-client-define-tag))))
+			(define-tag . ,(eval 'hop-client-define-tag)))
+      :source-map (hopc-clientc-source-map)
+      :arity-check (hopc-clientc-arity-check)
+      :type-check (hopc-clientc-type-check)
+      :meta (hopc-clientc-meta)
+      :debug (hopc-clientc-debug)
+      :module-use-strict (hopc-clientc-use-strict)
+      :function-use-strict (hopc-clientc-use-strict))
    (init-clientc-compiler! :modulec hopscheme-compile-module
       :expressionc hopscheme-compile-expression
       :valuec hopscheme-compile-value 
@@ -110,11 +132,9 @@
 (define (compile-sources::int)
 
    (define (compile-javascript p)
-      (let ((s (hopscheme-compile-file p '())))
-	 (if (string? (hopc-destination))
-	     (call-with-output-file (hopc-destination)
-		(lambda (p) (display s p)))
-	     (display s))))
+      (hopscheme-compile-file p
+	 (if (string? (hopc-destination)) (hopc-destination) "-")
+	 '()))
 
    (define (compile-module exp)
       (match-case exp
@@ -135,7 +155,7 @@
       
       (define (generate out)
 	 (let loop ()
-	    (let ((exp (hop-read in)))
+	    (let ((exp (hopc-read in)))
 	       (unless (eof-object? exp)
 		  (match-case exp
 		     ((module . ?-)
@@ -176,7 +196,7 @@
 	 (hop-verb 1 cmd "\n")
 	 (unwind-protect
 	    (let loop ()
-	       (let ((exp (hop-read in)))
+	       (let ((exp (hopc-read in)))
 		  (unless (eof-object? exp)
 		     (match-case exp
 			((module . ?-)
@@ -225,7 +245,7 @@
 	 (((and (? symbol?) ?sym) (and (? string?) ?path))
 	  (load-module sym path))
 	 ((? symbol?)
-	  (load-module module (car ((bigloo-module-resolver) module (module-abase)))))
+	  (load-module module (car ((bigloo-module-resolver) module '() (module-abase)))))
 	 (else
 	  (error "hopc" "Illegal module clause" module))))
 	     

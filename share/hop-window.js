@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sun Feb 17 08:30:52 2013 (serrano)                */
+/*    Last change :  Sun Aug 11 15:32:59 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
@@ -23,11 +23,11 @@ function HopWindowEvent() {
 /*---------------------------------------------------------------------*/
 function hop_iwindow_invoke_listener( lst, event ) {
    while( sc_isPair( lst ) ) {
-      lst.car( event );
+      lst.__hop_car( event );
 
       if( event.isStopped ) break;
 
-      lst = lst.cdr;
+      lst = lst.__hop_cdr;
    }
 }
 
@@ -510,6 +510,9 @@ function make_hop_iwindow( id, klass, parent ) {
    win.oniconify = false;
    win.onresize = false;
    win.onmaximize = false;
+   win.onclose = false;
+   win.onmove = false;
+   win.onraise = false;
 
    hop_add_event_listener(
       win.el_handle,
@@ -696,20 +699,14 @@ function hop_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src === "string" ) ) {
-	 if( width )
-	    prop += ",width=" + unpx( width );
-	 else
-	    prop += ",width=" + hop_current_window_width();
-	 if( height )
-	    prop += ",height=" + unpx( height );
-	 else
-	    prop += ",height=" + hop_current_window_height();
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
 	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
 
-	 if( prop.charAt( 0 ) == ',' ) {
-	    prop = prop.substring( 1, prop.length );
-	 }
+	 prop = "width="
+	    + (width ? unpx( width ) : hop_current_window_width())
+	    + ",height="
+	    + (height ? unpx( height ) : hop_current_window_height())
+	    + (( prop.charAt( 0 ) == ',' ) ? prop : "," + prop );
 
 	 var win = window.open( src, title, prop );
 	 win.iconify = function( w ) { ; };

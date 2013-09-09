@@ -39,7 +39,7 @@ function initRuntime() {
 }
 */
 
-var sc_tmp;
+var sc_lambda, sc_let, sc_context;
 
 function sc_print_debug() {
     sc_print.apply(null, arguments);
@@ -66,7 +66,13 @@ function sc_alert() {
 
 /*** META ((export #t) (arity #t)) */
 function sc_typeof( x ) {
-   return typeof x;
+   if( sc_isSymbol( x ) ) {
+      return "symbol";
+   } else if( sc_isVector( x ) ) {
+      return "vector";
+   } else {
+      return typeof x;
+   }
 }
 
 var __sc_errorHook = false;
@@ -81,16 +87,24 @@ function sc_errorHook() {
    return __sc_errorHook;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_error ...                                                     */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -1)) */
 function sc_error() {
-   var e = new Error("sc_error");
+   var e = new Error( "sc_error" );
 
-   if (arguments.length >= 1) {
-      e.name = arguments[0];
-      if (arguments.length >= 2) {
-	 e.message = arguments[1];
-	 if (arguments.length >= 3) {
-	    e.scObject = arguments[2];
+   if( arguments.length >= 1 ) {
+      e.name = arguments[ 0 ];
+      if( arguments.length >= 2 ) {
+	 e.message = arguments[ 1 ];
+	 if( arguments.length >= 3 ) {
+	    e.scObject = arguments[ 2 ];
+	    if( arguments.length >= 4 ) {
+	       e.scOffset = arguments[ 3 ];
+	    } else {
+	       e.scOffset = 1;
+	    }
 	 }
       }
    }
@@ -98,31 +112,49 @@ function sc_error() {
    throw __sc_errorHook ? __sc_errorHook( e, arguments ) : e;
 }
 
-function sc_arity_check(fun, nbArgs) {
-   function err( args, msg, obj ) {
-      var where = ("callee" in args && "caller" in args.callee ?
-		   ("sc_name" in args.callee.caller ?
-		    args.callee.caller.sc_name : args.callee.caller)
-		   : "arity-check");
-      sc_error(where, msg, obj);
-      return undefined;
-   }
+/*---------------------------------------------------------------------*/
+/*    sc_typeError ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity 3)) */
+function sc_typeError( proc, type, obj ) {
+   var msg = "Type \"" + type + "\" expected, "
+      + "\"" + sc_typeof( obj ) + "\" provided";
 
-   if (typeof fun !== "function") {
-      return err(arguments, "not a function", fun);
-   }
-       
-   var fun_arity = fun.sc_arity;
-
-   if (fun_arity === undefined || fun_arity === false) return fun;
-   if (fun_arity >= 0 && nbArgs == fun_arity) return fun;
-   if (fun_arity < 0 && nbArgs >= -1-fun_arity) return fun;
-   var errorMsg = "Wrong number of arguments: " + fun_arity + " expected, " +
-      nbArgs + " provided";
-   return err(arguments, errorMsg, fun);
+   return sc_error( proc, msg, obj, arguments.length >= 4 ? arguments[ 3 ] : 3 );
 }
 
-/*** META ((export #t) (arity #t)) */
+/*---------------------------------------------------------------------*/
+/*    sc_function_name ...                                             */
+/*---------------------------------------------------------------------*/
+function sc_function_name( fun ) {
+   return ("displayName" in fun) ? fun.displayName : fun;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_arity_check ...                                               */
+/*---------------------------------------------------------------------*/
+function sc_arity_check( fun, nbargs ) {
+   if( !("sc_arity" in fun) ) {
+      return fun;
+   } else {
+      var arity = fun.sc_arity;
+      var glop = fun;
+
+      if( (arity == nbargs) || ((arity < 0) && (nbargs >= -1-arity)) ) {
+	 // arity correct
+	 return fun;
+      } else {
+	 // arity error
+	 var msg = "Wrong number of arguments: " + arity + " expected, "
+	    + nbargs + " provided";
+	 var obj = sc_function_name( fun );
+
+	 sc_error( "funcall", msg, obj, 2 );
+      }
+   }
+}
+   
+/*** META ((export #t) (arity 1)) */
 function sc_raise(obj) {
     throw obj;
 }
@@ -161,7 +193,7 @@ function sc_withTraceConsole( level, name, thunk ) {
 
 /*** META ((export #t) (arity -1)) */
 function sc_traceItem() {
-    if( __sc_traceBlockStack != null && __sc_traceBlockStack.car ) {
+    if( __sc_traceBlockStack != null && __sc_traceBlockStack.__hop_car ) {
 	if( arguments.length > 0 ) {
 	    console.log.apply( console, arguments );
 	}
@@ -202,8 +234,8 @@ function sc_circle_force( cache, obj ) {
    } else if( obj instanceof sc_circle_delay ) {
       return cache[ obj.index ];
    } if( sc_isPair( obj ) ) {
-      obj.car = sc_circle_force( cache, obj.car );
-      obj.cdr = sc_circle_force( cache, obj.cdr );
+      obj.__hop_car = sc_circle_force( cache, obj.__hop_car );
+      obj.__hop_cdr = sc_circle_force( cache, obj.__hop_cdr );
       return obj;
    } else if( sc_isVector( obj ) ) {
       for( var i = 0; i < obj.length; i++ ) {
@@ -287,7 +319,7 @@ function sc_any2String(o) {
 }    
 
 /*** META ((export #t) (arity #t)
-           (peephole (infix 2 2 "==="))
+           (peephole (safe-infix 2 2 "==="))
            (type bool))
 */
 function sc_isEqv(o1, o2) {
@@ -295,7 +327,7 @@ function sc_isEqv(o1, o2) {
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (infix 2 2 "==="))
+           (peephole (safe-infix 2 2 "==="))
            (type bool))
 */
 function sc_isEq(o1, o2) {
@@ -303,7 +335,8 @@ function sc_isEq(o1, o2) {
 }
 
 /*** META ((export #t) (arity #t)
-           (type bool))
+           (type bool)
+	   (peephole (safe-hole 1 "(typeof (" n ") === 'number')")))
 */
 function sc_isNumber(n) {
     return (typeof n === "number");
@@ -356,7 +389,7 @@ function sc_isInexact(n) {
 
 /*** META ((export = =fx =fl)
            (type bool)
-           (peephole (infix 2 2 "==="))
+           (peephole (safe-infix 2 2 "==="))
            (arity -3))
 */
 function sc_equal(x) {
@@ -366,13 +399,26 @@ function sc_equal(x) {
     return true;
 }
 
-/*** META ((export < <fx <fl)
+/*---------------------------------------------------------------------*/
+/*    sc_less ...                                                      */
+/*---------------------------------------------------------------------*/
+/*** META ((export <)
            (type bool)
-           (peephole (infix 2 2 "<"))
+           (peephole (infix 2 2 "<") (safe-binary sc_less2))
            (arity -3))
 */
 function sc_less(x) {
+#if HOP_RTS_DEBUG
+   if (typeof arguments[0] !== "number") {
+      sc_typeError( "<", "number", arguments[0], 3 );
+   }
+#endif       
     for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "<", "number", arguments[i], 3 );
+       }
+#endif       
 	if (x >= arguments[i])
 	    return false;
 	x = arguments[i];
@@ -380,13 +426,44 @@ function sc_less(x) {
     return true;
 }
 
-/*** META ((export > >fx >fl)
+/*** META ((export <fx <fl)
            (type bool)
-           (peephole (infix 2 2 ">"))
+           (peephole (infix 2 2 "<") (safe-binary sc_less2))
+           (arity 2))
+*/
+function sc_less2( x, y ) {
+#if HOP_RTS_DEBUG
+   if( typeof x !== "number" ) {
+      sc_typeError( "<", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "<", "number", y, 3 );
+   }
+#endif
+
+   return x < y;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_greater ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export >)
+           (type bool)
+           (peephole (infix 2 2 ">") (safe-binary sc_greater2))
            (arity -3))
 */
 function sc_greater(x, y) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( ">", "number", x, 3 );
+   }
+#endif       
     for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( ">", "number", arguments[i], 3 );
+       }
+#endif       
 	if (x <= arguments[i])
 	    return false;
 	x = arguments[i];
@@ -394,13 +471,44 @@ function sc_greater(x, y) {
     return true;
 }
 
-/*** META ((export <= <=fx <=fl)
+/*** META ((export >fx >fl)
            (type bool)
-           (peephole (infix 2 2 "<="))
+           (peephole (infix 2 2 ">"))
+           (arity 2))
+*/
+function sc_greater2( x, y ) {
+#if HOP_RTS_DEBUG
+   if( typeof x !== "number" ) {
+      sc_typeError( ">", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( ">", "number", y, 3 );
+   }
+#endif
+
+   return x > y;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_lessEqual ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export <=)
+           (type bool)
+           (peephole (infix 2 2 "<=") (safe-binary sc_lessEqual2))
            (arity -3))
 */
 function sc_lessEqual(x, y) {
+#if HOP_RTS_DEBUG
+   if (typeof arguments[0] !== "number") {
+      sc_typeError( "<=", "number", arguments[0], 3 );
+   }
+#endif       
     for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "<=", "number", arguments[i], 3 );
+       }
+#endif       
 	if (x > arguments[i])
 	    return false;
 	x = arguments[i];
@@ -408,13 +516,44 @@ function sc_lessEqual(x, y) {
     return true;
 }
 
-/*** META ((export >= >=fl >=fx)
+/*** META ((export <=fx <=fl)
            (type bool)
-           (peephole (infix 2 2 ">="))
+           (peephole (infix 2 2 "<="))
+           (arity 2))
+*/
+function sc_lessEqual2( x, y ) {
+#if HOP_RTS_DEBUG
+   if( typeof x !== "number" ) {
+      sc_typeError( "<=", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "<=", "number", y, 3 );
+   }
+#endif
+
+   return x <= y;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_greaterEqual ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export >=)
+           (type bool)
+           (peephole (infix 2 2 ">=") (safe-binary sc_greaterEqual2))
            (arity -3))
 */
 function sc_greaterEqual(x, y) {
+#if HOP_RTS_DEBUG
+   if (typeof arguments[0] !== "number") {
+      sc_typeError( ">=", "number", arguments[0], 3 );
+   }
+#endif       
     for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( ">=", "number", arguments[i], 3 );
+       }
+#endif       
 	if (x < arguments[i])
 	    return false;
 	x = arguments[i];
@@ -422,11 +561,37 @@ function sc_greaterEqual(x, y) {
     return true;
 }
 
+/*** META ((export >=fx >=fl)
+           (type bool)
+           (peephole (infix 2 2 ">="))
+           (arity 2))
+*/
+function sc_greaterEqual2( x, y ) {
+#if HOP_RTS_DEBUG
+   if( typeof x !== "number" ) {
+      sc_typeError( ">=", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( ">=", "number", y, 3 );
+   }
+#endif
+
+   return x >= y;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_isZero ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export zero? zerofx? zerofl?) (arity #t)
            (type bool)
            (peephole (postfix "=== 0")))
 */
 function sc_isZero(x) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "zero?", "number", x, 3 );
+   }
+#endif       
     return (x === 0);
 }
 
@@ -435,6 +600,11 @@ function sc_isZero(x) {
            (peephole (postfix "> 0")))
 */
 function sc_isPositive(x) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "positive?", "number", x, 3 );
+   }
+#endif       
     return (x > 0);
 }
 
@@ -443,6 +613,11 @@ function sc_isPositive(x) {
            (peephole (postfix "< 0")))
 */
 function sc_isNegative(x) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "negative?", "number", x, 3 );
+   }
+#endif       
     return (x < 0);
 }
 
@@ -451,6 +626,11 @@ function sc_isNegative(x) {
            (peephole (postfix "%2===1")))
 */
 function sc_isOdd(x) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "odd?", "number", x, 3 );
+   }
+#endif       
     return (x % 2 === 1);
 }
 
@@ -459,6 +639,11 @@ function sc_isOdd(x) {
            (peephole (postfix "%2===0")))
 */
 function sc_isEven(x) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "even?", "number", x, 3 );
+   }
+#endif       
     return (x % 2 === 0);
 }
 
@@ -469,45 +654,221 @@ var sc_max = Math.max;
            (arity -2)) */
 var sc_min = Math.min;
 
-/*** META ((export + +fx +fl)
-           (peephole (infix 0 #f "+" "0"))
+
+/*---------------------------------------------------------------------*/
+/*    HOP_RTS_DEBUG_NUMERIC_TYPE                                       */
+/*    -------------------------------------------------------------    */
+/*    If set, the type checking of the safe runtime system is          */
+/*    implemented with explicit type checks. Otherwise, JavaScript     */
+/*    isNaN is used.                                                   */
+/*---------------------------------------------------------------------*/
+#define HOP_RTS_DEBUG_NUMERIC_TYPE 1
+
+/*---------------------------------------------------------------------*/
+/*    sc_checkNumericTypes ...                                         */
+/*---------------------------------------------------------------------*/
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+function sc_checkNumericTypes(fun, res, args) {
+   for (var i = 0; i < args.length; i++) {
+      if (typeof args[i] !== "number") {
+	 sc_typeError( fun, "number", args[i], 4 );
+      }
+   }
+
+   return res;
+}
+#endif
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    sc_plus ...                                                      */
+/*---------------------------------------------------------------------*/
+/*** META ((export +)
+           (peephole (infix 0 #f "+" "0") (safe-binary sc_plus2))
            (arity -1))
 */
 function sc_plus() {
-    var sum = 0;
-    for (var i = 0; i < arguments.length; i++)
-	sum += arguments[i];
-    return sum;
+    var res = 0;
+    for (var i = 0; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "+", "number", arguments[i], 3 );
+       }
+#endif       
+#endif       
+       res += arguments[i];
+    }
+
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes("+",res,arguments);
+   }
+#endif
+#endif
+   return res;
 }
 
-/*** META ((export * *fx *fl)
-           (peephole (infix 0 #f "*" "1"))
-           (arity -1))
+/*** META ((export +fx +fl)
+           (peephole (infix 0 #f "+" "0"))
+           (arity 2))
 */
-function sc_multi() {
-    var product = 1;
-    for (var i = 0; i < arguments.length; i++)
-	product *= arguments[i];
-    return product;
+function sc_plus2(x, y) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( typeof x !== "number" ) {
+      sc_typeError( "+", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "+", "number", y, 3 );
+   }
+#endif   
+#endif
+   var res = x + y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "+", res, x, y );
+   }
+#endif
+#endif
+   return res;
 }
 
-/*** META ((export - -fx -fl negfx negfl)
-           (peephole (minus))
+/*---------------------------------------------------------------------*/
+/*    sc_minus ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META ((export - negfx negfl)
+           (peephole (minus) (safe-binary sc_minus2))
            (arity -2))
 */
 function sc_minus(x) {
-    if (arguments.length === 1)
-	return -x;
-    else {
-	var res = x;
-	for (var i = 1; i < arguments.length; i++)
-	    res -= arguments[i];
-	return res;
-    }
+   if (arguments.length === 1) {
+#if HOP_RTS_DEBUG
+   if (typeof x !== "number") {
+      sc_typeError( "-", "number", x, 3 );
+   }
+#endif
+      return -x;
+   } else {
+       var res = x;
+      
+       for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+	  if (typeof arguments[i] !== "number") {
+	     sc_typeError( "-", "number", arguments[i], 3 );
+	  }
+#endif
+#endif       
+	  res -= arguments[i];
+       }
+
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+      if( isNaN( res ) ) {
+	 return sc_checkNumericTypes("-",res,arguments);
+      }
+#endif
+#endif
+
+      return res;
+   }
 }
 
-/*** META ((export / /fl)
-           (peephole (div))
+/*** META ((export -fx -fl)
+           (peephole (minus))
+           (arity 2))
+*/
+function sc_minus2( x, y ) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( typeof x !== "number" ) {
+      sc_typeError( "-", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "-", "number", y, 3 );
+   }
+#endif   
+#endif
+
+   var res = x - y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "-", res, x, y );
+   }
+#endif
+#endif
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_multi ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META ((export *)
+           (peephole (infix 0 #f "*" "1") (safe-binary sc_multi2))
+           (arity -1))
+*/
+function sc_multi() {
+    var res = 1;
+    for (var i = 0; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "*", "number", arguments[i], 3 );
+       }
+#endif
+#endif
+	res *= arguments[i];
+    }
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes("+",res,arguments);
+   }
+#endif
+#endif
+    return res;
+}
+
+/*** META ((export *fx *fl)
+           (peephole (infix 0 #f "*" "1"))
+           (arity 2))
+*/
+function sc_multi2( x, y ) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( typeof x !== "number" ) {
+      sc_typeError( "*", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "*", "number", y, 3 );
+   }
+#endif   
+#endif
+   var res = x * y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "*", res, x, y );
+   }
+#endif
+#endif
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sc_div ...                                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export /)
+           (peephole (div) (safe-binary sc_div2))
            (arity -2))
 */
 function sc_div(x) {
@@ -515,35 +876,141 @@ function sc_div(x) {
 	return 1/x;
     else {
 	var res = x;
-	for (var i = 1; i < arguments.length; i++)
-	    res /= arguments[i];
+	for (var i = 1; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+	  if (typeof arguments[i] !== "number") {
+	     sc_typeError( "-", "number", arguments[i], 3 );
+	  }
+#endif       
+	   res /= arguments[i];
+	}
 	return res;
     }
 }
 
+/*** META ((export /fl)
+           (peephole (div))
+           (arity 2))
+*/
+function sc_div2(x, y) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( typeof x !== "number" ) {
+      sc_typeError( "/", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "/", "number", y, 3 );
+   }
+#endif   
+#endif
+   var res = x / y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "/", res, x, y );
+   }
+#endif
+#endif
+   return res;
+}
+
+
+/*---------------------------------------------------------------------*/
+/*    abs ...                                                          */
+/*---------------------------------------------------------------------*/
 /*** META ((export abs absfx absfl)
            (arity 1))
 */
 var sc_abs = Math.abs;
 
+/*---------------------------------------------------------------------*/
+/*    sc_quotient ...                                                  */
+/*---------------------------------------------------------------------*/
 /*** META ((export quotient /fx) (arity #t)
            (peephole (hole 2 "parseInt(" x "/" y ")")))
 */
 function sc_quotient(x, y) {
-    return parseInt(x / y);
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "quotient", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "quotient", "number", y, 3 );
+   }
+#endif
+#endif
+   var res = (x / y);
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "/fx", res, x, y );
+   }
+#endif
+#endif
+   
+   return parseInt( res );
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_remainder ...                                                 */
+/*---------------------------------------------------------------------*/
 /*** META ((export remainder remainderfx remainderfl) (arity #t)
            (peephole (infix 2 2 "%")))
 */
 function sc_remainder(x, y) {
-    return x % y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "remainder", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "remainder", "number", y, 3 );
+   }
+#endif
+#endif
+
+   var res = x % y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "remainder", res, x, y );
+   }
+#endif
+#endif
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_modulo ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export modulo modulofx) (arity #t))
 */
 function sc_modulo(x, y) {
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "modulo", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "modulo", "number", y, 3 );
+   }
+#endif
+#endif
+   
     var remainder = x % y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( remainder ) ) {
+      return sc_checkNumericTypes( "modulo", remainder, x, y );
+   }
+#endif
+#endif
     // if they don't have the same sign
     if ((remainder * y) < 0)
 	return remainder + y;
@@ -551,6 +1018,9 @@ function sc_modulo(x, y) {
 	return remainder;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_euclid_gcd ...                                                */
+/*---------------------------------------------------------------------*/
 function sc_euclid_gcd(a, b) {
     var temp;
     if (a === 0) return b;
@@ -564,27 +1034,43 @@ function sc_euclid_gcd(a, b) {
 	b %= a;
 	if(b === 0) {return a;};
     };
-    return b;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_gcd ...                                                       */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t)
            (arity -1))
 */
 function sc_gcd() {
     var gcd = 0;
-    for (var i = 0; i < arguments.length; i++)
-	gcd = sc_euclid_gcd(gcd, arguments[i]);
+    for (var i = 0; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "gcd", "number", arguments[i], 3 );
+       }
+#endif       
+       gcd = sc_euclid_gcd(gcd, arguments[i]);
+    }
     return gcd;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_lcm ...                                                       */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t)
            (arity -1))
 */
 function sc_lcm() {
     var lcm = 1;
     for (var i = 0; i < arguments.length; i++) {
-	var f = Math.round(arguments[i] / sc_euclid_gcd(arguments[i], lcm));
-	lcm *= Math.abs(f);
+#if HOP_RTS_DEBUG
+       if (typeof arguments[i] !== "number") {
+	  sc_typeError( "lcm", "number", arguments[i], 3 );
+       }
+#endif       
+       var f = Math.round(arguments[i] / sc_euclid_gcd(arguments[i], lcm));
+       lcm *= Math.abs(f);
     }
     return lcm;
 }
@@ -672,6 +1158,11 @@ var sc_expt = Math.pow;
            (peephole (id)))
 */
 function sc_exact2inexact(x) {
+#if HOP_RTS_DEBUG
+       if (!typeof x === "number") {
+	  sc_typeError( "exact->inexact", "number", x, 3 );
+       }
+#endif       
     return x;
 }
 
@@ -679,14 +1170,30 @@ function sc_exact2inexact(x) {
            (peephole (postfix "<< 0")))
 */
 function sc_inexact2exact(x) {
+#if HOP_RTS_DEBUG
+       if (!typeof x === "number") {
+	  sc_typeError( "inexact->exact", "number", x, 3 );
+       }
+#endif       
     return x << 0;
 }
 
 function sc_number2jsstring(x, radix) {
-    if (radix)
-	return x.toString(radix);
-    else
-	return x.toString();
+#if HOP_RTS_DEBUG
+       if (!typeof x === "number") {
+	  sc_typeError( "number->string", "number", x, 3 );
+       }
+#endif       
+    if (radix) {
+#if HOP_RTS_DEBUG
+       if (!typeof radix === "number") {
+	  sc_typeError( "number->string", "number", radix, 3 );
+       }
+#endif       
+       return x.toString(radix);
+    } else {
+       return x.toString();
+    }
 }
 
 function sc_jsstring2number(s, radix) {
@@ -714,7 +1221,7 @@ function sc_jsstring2number(s, radix) {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (not)))
+           (peephole (safe-not)))
 */
 function sc_not(b) {
     return b === false;
@@ -727,10 +1234,46 @@ function sc_isBoolean(b) {
     return (b === true) || (b === false);
 }
 
+#if HOP_RTS_DEBUG
+var dynamic_type_check = ((hop_debug() >= 1) && ("defineProperty" in Object));
+
 function sc_Pair(car, cdr) {
-    this.car = car;
-    this.cdr = cdr;
+   if( dynamic_type_check ) {
+      this.__safe_hop_car = car;
+      this.__safe_hop_cdr = cdr;
+   } else {
+      this.__hop_car = car;
+      this.__hop_cdr = cdr;
+   }
 }
+
+if( dynamic_type_check ) {
+   Object.defineProperty( Object.prototype, "__hop_car", {
+      get: function() { sc_typeError( "car", "pair", this, 4 ); },
+      set: function( v ) { sc_typeError( "set-car!", "pair", this, 4 ); }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "__hop_car", {
+      get: function() { return this.__safe_hop_car; },
+      set: function( v ) { this.__safe_hop_car = v; }
+   } );
+
+   Object.defineProperty( Object.prototype, "__hop_cdr", {
+      get: function() { sc_typeError( "cdr", "pair", this, 4 ); },
+      set: function( v ) { sc_typeError( "set-cdr!", "pair", this, 4 ); }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "__hop_cdr", {
+      get: function() { return this.__safe_hop_cdr; },
+      set: function( v ) { this.__safe_hop_cdr = v; }
+   } );
+}
+#else
+function sc_Pair(car, cdr) {
+   this.__hop_car = car;
+   this.__hop_cdr = cdr;
+}
+#endif
 
 sc_Pair.prototype.toString = function() {
     return sc_toDisplayString(this);
@@ -741,14 +1284,14 @@ sc_Pair.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
     var res = "(";
 
     while(true) {
-	res += writeOrDisplay(current.car);
-	if (sc_isPair(current.cdr)) {
+	res += writeOrDisplay(current.__hop_car);
+	if (sc_isPair(current.__hop_cdr)) {
 	    res += " ";
-	    current = current.cdr;
-	} else if (current.cdr !== null) {
-	    res += " . " + writeOrDisplay(current.cdr);
+	    current = current.__hop_cdr;
+	} else if (current.__hop_cdr !== null) {
+	    res += " . " + writeOrDisplay(current.__hop_cdr);
 	    break;
-	} else // current.cdr == null
+	} else // current.__hop_cdr == null
 	    break;
     }
 	
@@ -766,7 +1309,7 @@ sc_Pair.prototype.sc_toWriteString = function() {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (postfix " instanceof sc_Pair")))
+           (peephole (safe-postfix " instanceof sc_Pair")))
 */
 function sc_isPair(p) {
     return (p instanceof sc_Pair);
@@ -775,15 +1318,15 @@ function sc_isPair(p) {
 /*** META ((export #t) (arity #t)
            (type bool)) */
 function sc_isEpair(p) {
-    return (p instanceof sc_Pair) && "cer" in p;
+    return (p instanceof sc_Pair) && ("cer" in p);
 }
 
 function sc_isPairEqual(p1, p2, comp) {
-    return (comp(p1.car, p2.car) && comp(p1.cdr, p2.cdr));
+    return (comp(p1.__hop_car, p2.__hop_car) && comp(p1.__hop_cdr, p2.__hop_cdr));
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (hole 2 "new sc_Pair(" car ", " cdr ")")))
+           (peephole (hole 2 "new sc_Pair(" _car ", " cdr ")")))
 */
 function sc_cons(car, cdr) {
     return new sc_Pair(car, cdr);
@@ -807,168 +1350,168 @@ function sc_consStar() {
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car")))
+           (peephole (safe-postfix ".__hop_car")))
 */
 function sc_car(p) {
-    return p.car;
+   return p.__hop_car;
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr")))
+           (peephole (safe-postfix ".__hop_cdr")))
 */
 function sc_cdr(p) {
-    return p.cdr;
+   return p.__hop_cdr;
 }
 
 /*** META ((export #t) (arity #t)
            (peephole (postfix ".cer")))
 */
 function sc_cer(p) {
-    return p.cer;
+   return p.cer;
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (hole 2 p ".car = " val)))
+           (peephole (safe-hole 2 p ".__hop_car = " val)))
 */
 function sc_setCarBang(p, val) {
-    p.car = val;
+   p.__hop_car = val;
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (hole 2 p ".cdr = " val)))
+           (peephole (safe-hole 2 p ".__hop_cdr = " val)))
 */
 function sc_setCdrBang(p, val) {
-    p.cdr = val;
+   p.__hop_cdr = val;
 }
 
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_car")))
 */
-function sc_caar(p) { return p.car.car; }
+function sc_caar(p) { return p.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car")))
 */
-function sc_cadr(p) { return p.cdr.car; }
+function sc_cadr(p) { return p.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr")))
 */
-function sc_cdar(p) { return p.car.cdr; }
+function sc_cdar(p) { return p.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr")))
 */
-function sc_cddr(p) { return p.cdr.cdr; }
+function sc_cddr(p) { return p.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_car")))
 */
-function sc_caaar(p) { return p.car.car.car; }
+function sc_caaar(p) { return p.__hop_car.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_car")))
 */
-function sc_cadar(p) { return p.car.cdr.car; }
+function sc_cadar(p) { return p.__hop_car.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_car")))
 */
-function sc_caadr(p) { return p.cdr.car.car; }
+function sc_caadr(p) { return p.__hop_cdr.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_car")))
 */
-function sc_caddr(p) { return p.cdr.cdr.car; }
+function sc_caddr(p) { return p.__hop_cdr.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_cdr")))
 */
-function sc_cdaar(p) { return p.car.car.cdr; }
+function sc_cdaar(p) { return p.__hop_car.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_cdr")))
 */
-function sc_cdadr(p) { return p.cdr.car.cdr; }
+function sc_cdadr(p) { return p.__hop_cdr.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_cdr")))
 */
-function sc_cddar(p) { return p.car.cdr.cdr; }
+function sc_cddar(p) { return p.__hop_car.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_cdr")))
 */
-function sc_cdddr(p) { return p.cdr.cdr.cdr; }
+function sc_cdddr(p) { return p.__hop_cdr.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.car.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_car.__hop_car")))
 */
-function sc_caaaar(p) { return p.car.car.car.car; }
+function sc_caaaar(p) { return p.__hop_car.__hop_car.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.car.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_car.__hop_car")))
 */
-function sc_caadar(p) { return p.car.cdr.car.car; }
+function sc_caadar(p) { return p.__hop_car.__hop_cdr.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.car.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_car.__hop_car")))
 */
-function sc_caaadr(p) { return p.cdr.car.car.car; }
+function sc_caaadr(p) { return p.__hop_cdr.__hop_car.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.car.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_car.__hop_car")))
 */
-function sc_caaddr(p) { return p.cdr.cdr.car.car; }
+function sc_caaddr(p) { return p.__hop_cdr.__hop_cdr.__hop_car.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.car.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_car.__hop_cdr")))
 */
-function sc_cdaaar(p) { return p.car.car.car.cdr; }
+function sc_cdaaar(p) { return p.__hop_car.__hop_car.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.car.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_car.__hop_cdr")))
 */
-function sc_cdadar(p) { return p.car.cdr.car.cdr; }
+function sc_cdadar(p) { return p.__hop_car.__hop_cdr.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.car.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_car.__hop_cdr")))
 */
-function sc_cdaadr(p) { return p.cdr.car.car.cdr; }
+function sc_cdaadr(p) { return p.__hop_cdr.__hop_car.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.car.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_car.__hop_cdr")))
 */
-function sc_cdaddr(p) { return p.cdr.cdr.car.cdr; }
+function sc_cdaddr(p) { return p.__hop_cdr.__hop_cdr.__hop_car.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.cdr.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_cdr.__hop_car")))
 */
-function sc_cadaar(p) { return p.car.car.cdr.car; }
+function sc_cadaar(p) { return p.__hop_car.__hop_car.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.cdr.car")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_cdr.__hop_car")))
 */
-function sc_caddar(p) { return p.car.cdr.cdr.car; }
+function sc_caddar(p) { return p.__hop_car.__hop_cdr.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.cdr.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_cdr.__hop_car")))
 */
-function sc_cadadr(p) { return p.cdr.car.cdr.car; }
+function sc_cadadr(p) { return p.__hop_cdr.__hop_car.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.cdr.car")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_cdr.__hop_car")))
 */
-function sc_cadddr(p) { return p.cdr.cdr.cdr.car; }
+function sc_cadddr(p) { return p.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.car.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_car.__hop_cdr.__hop_cdr")))
 */
-function sc_cddaar(p) { return p.car.car.cdr.cdr; }
+function sc_cddaar(p) { return p.__hop_car.__hop_car.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".car.cdr.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_car.__hop_cdr.__hop_cdr.__hop_cdr")))
 */
-function sc_cdddar(p) { return p.car.cdr.cdr.cdr; }
+function sc_cdddar(p) { return p.__hop_car.__hop_cdr.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.car.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_car.__hop_cdr.__hop_cdr")))
 */
-function sc_cddadr(p) { return p.cdr.car.cdr.cdr; }
+function sc_cddadr(p) { return p.__hop_cdr.__hop_car.__hop_cdr.__hop_cdr; }
 /*** META ((export #t) (arity #t)
-           (peephole (postfix ".cdr.cdr.cdr.cdr")))
+           (peephole (safe-postfix ".__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr")))
 */
-function sc_cddddr(p) { return p.cdr.cdr.cdr.cdr; }
+function sc_cddddr(p) { return p.__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr; }
 
 /*** META ((export #t) (arity #t)) */
 function sc_lastPair(l) {
     if (!sc_isPair(l)) sc_error("sc_lastPair: pair expected");
     var res = l;
-    var cdr = l.cdr;
+    var cdr = l.__hop_cdr;
     while (sc_isPair(cdr)) {
 	res = cdr;
-	cdr = res.cdr;
+	cdr = res.__hop_cdr;
     }
     return res;
 }
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (postfix " === null")))
+           (peephole (safe-postfix " === null")))
 */
 function sc_isNull(o) {
     return (o === null);
@@ -983,13 +1526,13 @@ function sc_isList(o) {
 
    while (true) {
        if (rabbit === null ||
-	   (rabbit instanceof sc_Pair && rabbit.cdr === null))
+	   (rabbit instanceof sc_Pair && rabbit.__hop_cdr === null))
 	   return true;  // end of list
        else {
 	   if ((rabbit instanceof sc_Pair) &&
-	       (rabbit.cdr instanceof sc_Pair)) {
-	       rabbit = rabbit.cdr.cdr;
-	       turtle = turtle.cdr;
+	       (rabbit.__hop_cdr instanceof sc_Pair)) {
+	       rabbit = rabbit.__hop_cdr.__hop_cdr;
+	       turtle = turtle.__hop_cdr;
 	       if (rabbit === turtle) return false; // cycle
 	   } else
 	       return false; // not pair
@@ -1034,7 +1577,7 @@ function sc_length(l) {
     var res = 0;
     while (l !== null) {
 	res++;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return res;
 }
@@ -1044,13 +1587,13 @@ function sc_remq(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
     while (l !== null) {
-	if (l.car !== o) {
-	    tail.cdr = sc_cons(l.car, null);
-	    tail = tail.cdr;
+	if (l.__hop_car !== o) {
+	    tail.__hop_cdr = sc_cons(l.__hop_car, null);
+	    tail = tail.__hop_cdr;
 	}
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
-    return dummy.cdr;
+    return dummy.__hop_cdr;
 }
 
 /*** META ((export #t) (arity #t)) */
@@ -1059,19 +1602,19 @@ function sc_remqBang(o, l) {
     var tail = dummy;
     var needsAssig = true;
     while (l !== null) {
-	if (l.car === o) {
+	if (l.__hop_car === o) {
 	    needsAssig = true;
 	} else {
 	    if (needsAssig) {
-		tail.cdr = l;
+		tail.__hop_cdr = l;
 		needsAssig = false;
 	    }
 	    tail = l;
 	}
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
-    tail.cdr = null;
-    return dummy.cdr;
+    tail.__hop_cdr = null;
+    return dummy.__hop_cdr;
 }
 
 /*** META ((export #t) (arity #t)) */
@@ -1079,13 +1622,13 @@ function sc_delete(o, l) {
     var dummy = { cdr : null };
     var tail = dummy;
     while (l !== null) {
-	if (!sc_isEqual(l.car, o)) {
-	    tail.cdr = sc_cons(l.car, null);
-	    tail = tail.cdr;
+	if (!sc_isEqual(l.__hop_car, o)) {
+	    tail.__hop_cdr = sc_cons(l.__hop_car, null);
+	    tail = tail.__hop_cdr;
 	}
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
-    return dummy.cdr;
+    return dummy.__hop_cdr;
 }
 
 /*** META ((export #t) (arity #t)) */
@@ -1094,19 +1637,19 @@ function sc_deleteBang(o, l) {
     var tail = dummy;
     var needsAssig = true;
     while (l !== null) {
-	if (sc_isEqual(l.car, o)) {
+	if (sc_isEqual(l.__hop_car, o)) {
 	    needsAssig = true;
 	} else {
 	    if (needsAssig) {
-		tail.cdr = l;
+		tail.__hop_cdr = l;
 		needsAssig = false;
 	    }
 	    tail = l;
 	}
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
-    tail.cdr = null;
-    return dummy.cdr;
+    tail.__hop_cdr = null;
+    return dummy.__hop_cdr;
 }
 
 function sc_reverseAppendBang(l1, l2) {
@@ -1114,8 +1657,8 @@ function sc_reverseAppendBang(l1, l2) {
     while (l1 !== null) {
 	var tmp = res;
 	res = l1;
-	l1 = l1.cdr;
-	res.cdr = tmp;
+	l1 = l1.__hop_cdr;
+	res.__hop_cdr = tmp;
     }
     return res;
 }
@@ -1143,8 +1686,8 @@ function sc_dualAppendBang(l1, l2) {
     if (l1 === null) return l2;
     if (l2 === null) return l1;
     var tmp = l1;
-    while (tmp.cdr !== null) tmp=tmp.cdr;
-    tmp.cdr = l2;
+    while (tmp.__hop_cdr !== null) tmp=tmp.__hop_cdr;
+    tmp.__hop_cdr = l2;
     return l1;
 }
     
@@ -1162,8 +1705,8 @@ function sc_appendBang() {
 function sc_reverse(l1) {
     var res = null;
     while (l1 !== null) {
-	res = sc_cons(l1.car, res);
-	l1 = l1.cdr;
+	res = sc_cons(l1.__hop_car, res);
+	l1 = l1.__hop_cdr;
     }
     return res;
 }
@@ -1174,25 +1717,35 @@ function sc_reverseBang(l) {
 }
 
 /*** META ((export #t) (arity #t)) */
+function sc_take(l, k) {
+   var res = null;
+   while (k-- > 0) {
+      res = sc_cons(l.__hop_car, res);
+   } 
+
+   return sc_reverse(res);
+}
+   
+/*** META ((export #t) (arity #t)) */
 function sc_listTail(l, k) {
     var res = l;
     for (var i = 0; i < k; i++) {
-	res = res.cdr;
+	res = res.__hop_cdr;
     }
     return res;
 }
 
 /*** META ((export #t) (arity #t)) */
 function sc_listRef(l, k) {
-    return sc_listTail(l, k).car;
+    return sc_listTail(l, k).__hop_car;
 }
 
 /* // unoptimized generic versions
 function sc_memX(o, l, comp) {
     while (l != null) {
-	if (comp(l.car, o))
+	if (comp(l.__hop_car, o))
 	    return l;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return false;
 }
@@ -1205,27 +1758,27 @@ function sc_member(o, l) { return sc_memX(o, l, sc_isEqual); }
 /*** META ((export #t) (arity #t)) */
 function sc_memq(o, l) {
     while (l !== null) {
-	if (l.car === o)
+	if (l.__hop_car === o)
 	    return l;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return false;
 }
 /*** META ((export #t) (arity #t)) */
 function sc_memv(o, l) {
     while (l !== null) {
-	if (l.car === o)
+	if (l.__hop_car === o)
 	    return l;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return false;
 }
 /*** META ((export #t) (arity #t)) */
 function sc_member(o, l) {
     while (l !== null) {
-	if (sc_isEqual(l.car,o))
+	if (sc_isEqual(l.__hop_car,o))
 	    return l;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return false;
 }
@@ -1233,9 +1786,9 @@ function sc_member(o, l) {
 /* // generic unoptimized versions
 function sc_assX(o, al, comp) {
     while (al != null) {
-	if (comp(al.car.car, o))
-	    return al.car;
-	al = al.cdr;
+	if (comp(al.__hop_car.__hop_car, o))
+	    return al.__hop_car;
+	al = al.__hop_cdr;
     }
     return false;
 }
@@ -1247,27 +1800,27 @@ function sc_assoc(o, al) { return sc_assX(o, al, sc_isEqual); }
 /*** META ((export #t) (arity #t)) */
 function sc_assq(o, al) {
     while (al !== null) {
-	if (al.car.car === o)
-	    return al.car;
-	al = al.cdr;
+	if (al.__hop_car.__hop_car === o)
+	    return al.__hop_car;
+	al = al.__hop_cdr;
     }
     return false;
 }
 /*** META ((export #t) (arity #t)) */
 function sc_assv(o, al) {
     while (al !== null) {
-	if (al.car.car === o)
-	    return al.car;
-	al = al.cdr;
+	if (al.__hop_car.__hop_car === o)
+	    return al.__hop_car;
+	al = al.__hop_cdr;
     }
     return false;
 }
 /*** META ((export #t) (arity #t)) */
 function sc_assoc(o, al) {
     while (al !== null) {
-	if (sc_isEqual(al.car.car, o))
-	    return al.car;
-	al = al.cdr;
+	if (sc_isEqual(al.__hop_car.__hop_car, o))
+	    return al.__hop_car;
+	al = al.__hop_cdr;
     }
     return false;
 }
@@ -1301,91 +1854,90 @@ function sc_Char(c) {
 sc_Char.lazy = new Object();
 // thanks to Eric
 sc_Char.char2readable = {
-    "\000": "#\\null",
-    "\007": "#\\bell",
-    "\010": "#\\backspace",
-    "\011": "#\\tab",
-    "\012": "#\\newline",
-    "\014": "#\\page",
-    "\015": "#\\return",
-    "\033": "#\\escape",
-    "\040": "#\\space",
-    "\177": "#\\delete",
+    "\x00": "#\\null",
+    "\x07": "#\\bell",
+    "\x08": "#\\backspace",
+    "\x09": "#\\tab",
+    "\x0a": "#\\newline",
+    "\x0c": "#\\page",
+    "\x0d": "#\\return",
+    "\x1b": "#\\escape",
+    "\x20": "#\\space",
+    "\x7f": "#\\delete",
 
   /* poeticless names */
-    "\001": "#\\soh",
-    "\002": "#\\stx",
-    "\003": "#\\etx",
-    "\004": "#\\eot",
-    "\005": "#\\enq",
-    "\006": "#\\ack",
+    "\x01": "#\\soh",
+    "\x02": "#\\stx",
+    "\x03": "#\\etx",
+    "\x04": "#\\eot",
+    "\x05": "#\\enq",
+    "\x06": "#\\ack",
 
-    "\013": "#\\vt",
-    "\016": "#\\so",
-    "\017": "#\\si",
+    "\x0b": "#\\vt",
+    "\x0e": "#\\so",
+    "\x0f": "#\\si",
 
-    "\020": "#\\dle",
-    "\021": "#\\dc1",
-    "\022": "#\\dc2",
-    "\023": "#\\dc3",
-    "\024": "#\\dc4",
-    "\025": "#\\nak",
-    "\026": "#\\syn",
-    "\027": "#\\etb",
+    "\x10": "#\\dle",
+    "\x11": "#\\dc1",
+    "\x12": "#\\dc2",
+    "\x13": "#\\dc3",
+    "\x14": "#\\dc4",
+    "\x15": "#\\nak",
+    "\x16": "#\\syn",
+    "\x17": "#\\etb",
 
-    "\030": "#\\can",
-    "\031": "#\\em",
-    "\032": "#\\sub",
-    "\033": "#\\esc",
-    "\034": "#\\fs",
-    "\035": "#\\gs",
-    "\036": "#\\rs",
-    "\037": "#\\us"};
+    "\x18": "#\\can",
+    "\x19": "#\\em",
+    "\x1a": "#\\sub",
+    "\x1c": "#\\fs",
+    "\x1d": "#\\gs",
+    "\x1e": "#\\rs",
+    "\x1f": "#\\us"};
 
 sc_Char.readable2char = {
-    "null": "\000",
-    "bell": "\007",
-    "backspace": "\010",
-    "tab": "\011",
-    "newline": "\012",
-    "page": "\014",
-    "return": "\015",
-    "escape": "\033",
-    "space": "\040",
-    "delete": "\000",
-    "soh": "\001",
-    "stx": "\002",
-    "etx": "\003",
-    "eot": "\004",
-    "enq": "\005",
-    "ack": "\006",
-    "bel": "\007",
-    "bs": "\010",
-    "ht": "\011",
-    "nl": "\012",
-    "vt": "\013",
-    "np": "\014",
-    "cr": "\015",
-    "so": "\016",
-    "si": "\017",
-    "dle": "\020",
-    "dc1": "\021",
-    "dc2": "\022",
-    "dc3": "\023",
-    "dc4": "\024",
-    "nak": "\025",
-    "syn": "\026",
-    "etb": "\027",
-    "can": "\030",
-    "em": "\031",
-    "sub": "\032",
-    "esc": "\033",
-    "fs": "\034",
-    "gs": "\035",
-    "rs": "\036",
-    "us": "\037",
-    "sp": "\040",
-    "del": "\177"};
+    "null": "\x00",
+    "bell": "\x07",
+    "backspace": "\x08",
+    "tab": "\x08",
+    "newline": "\x0a",
+    "page": "\x0c",
+    "return": "\x0d",
+    "escape": "\x1b",
+    "space": "\x20",
+    "delete": "\x00",
+    "soh": "\x01",
+    "stx": "\x02",
+    "etx": "\x03",
+    "eot": "\x04",
+    "enq": "\x05",
+    "ack": "\x06",
+    "bel": "\x07",
+    "bs": "\x08",
+    "ht": "\x09",
+    "nl": "\x0a",
+    "vt": "\x0b",
+    "np": "\x0c",
+    "cr": "\x0d",
+    "so": "\x0e",
+    "si": "\x0f",
+    "dle": "\x10",
+    "dc1": "\x11",
+    "dc2": "\x12",
+    "dc3": "\x13",
+    "dc4": "\x14",
+    "nak": "\x15",
+    "syn": "\x16",
+    "etb": "\x17",
+    "can": "\x18",
+    "em": "\x19",
+    "sub": "\x1a",
+    "esc": "\x1b",
+    "fs": "\x1c",
+    "gs": "\x1d",
+    "rs": "\x1e",
+    "us": "\x1f",
+    "sp": "\x20",
+    "del": "\x7f"};
     
 sc_Char.prototype.toString = function() {
     return this.val;
@@ -1401,7 +1953,7 @@ sc_Char.prototype.sc_toWriteString = function() {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (postfix "instanceof sc_Char")))
+           (peephole (safe-postfix "instanceof sc_Char")))
 */
 function sc_isChar(c) {
     return (c instanceof sc_Char);
@@ -1565,8 +2117,8 @@ function sc_jsstring2list(s) {
 function sc_list2jsstring(l) {
     var a = new Array();
     while(l !== null) {
-	a.push(l.car.val);
-	l = l.cdr;
+	a.push(l.__hop_car.val);
+	l = l.__hop_cdr;
     }
     return "".concat.apply("", a);
 }
@@ -1611,12 +2163,20 @@ function sc_isF32Vector(v) {
    if ("Float32Array" in window) {
       return (v instanceof Float32Array);
    } else {
-      return false;
+      return (v instanceof sc_Vector);
    }
 }
 
 // only applies to vectors
 function sc_isVectorEqual(v1, v2, comp) {
+#if HOP_RTS_DEBUG
+   if (!(v1 instanceof sc_Vector) ) {
+      sc_typeError( "vector-equal", "vector", v1, 3 );
+   }
+   if (!(v2 instanceof sc_Vector) ) {
+      sc_typeError( "vector-equal", "vector", v2, 3 );
+   }
+#endif   
     if (v1.length !== v2.length) return false;
     for (var i = 0; i < v1.length; i++)
 	if (!comp(v1[i], v2[i])) return false;
@@ -1626,8 +2186,13 @@ function sc_isVectorEqual(v1, v2, comp) {
 /*** META ((export make-vector make-array)
            (arity -2))
 */
-function sc_makeVector(size, fill) {
-    var a = new sc_Vector(size);
+function sc_makeVector(sz, fill) {
+#if HOP_RTS_DEBUG
+   if (typeof sz !== "number") {
+      sc_typeError( "make-vector", "number", sz, 3 );
+   }
+#endif   
+    var a = new sc_Vector(sz);
     if (fill !== undefined)
 	sc_vectorFillBang(a, fill);
     return a;
@@ -1637,14 +2202,41 @@ function sc_makeVector(size, fill) {
            (arity -2))
 */
 function sc_makeF32Vector(sz, fill) {
+#if HOP_RTS_DEBUG
+   if (typeof sz !== "number") {
+      sc_typeError( "make-f32vector", "number", sz, 3 );
+   }
+   if (typeof fill !== "number") {
+      sc_typeError( "make-f32vector", "number", fill, 3 );
+   }
+#endif   
    var a = ("Float32Array" in window) ? new Float32Array(sz):new sc_Vector(sz);
       
-    if (fill !== undefined)
-	sc_vectorFillBang(a, fill);
-    return a;
+   if (fill !== undefined)
+      sc_vectorFillBang(a, fill);
+   return a;
 }
 
-/*** META ((export vector f32vector array)
+/*** META ((export f32vector)
+           (arity -1))
+*/
+function sc_F32vector() {
+   var sz = arguments.length;
+   var a = ("Float32Array" in window) ? new Float32Array(sz):new sc_Vector(sz);
+   
+   for (var i = 0; i < arguments.length; i++) {
+#if HOP_RTS_DEBUG
+      if (typeof arguments[i] !== "number" ) {
+	 sc_typeError( "f32vector", "number", arguments[i], 3 );
+      }
+#endif   
+      a[i] = arguments[i];
+   }
+   
+   return a;
+}
+
+/*** META ((export vector array)
            (arity -1)
            (peephole (vector)))
 */
@@ -1655,25 +2247,205 @@ function sc_vector() {
     return a;
 }
 
-/*** META ((export vector-length f32vector-length array-length) (arity #t)
+/*** META ((export vector-length array-length) (arity #t)
            (peephole (postfix ".length")))
 */
 function sc_vectorLength(v) {
-    return v.length;
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector) ) {
+      sc_typeError( "vector-length", "vector", v, 3 );
+   }
+#endif   
+   return v.length;
 }
 
-/*** META ((export vector-ref f32vector-ref array-ref) (arity #t)
+/*** META ((export vector-ref array-ref) (arity #t)
            (peephole (hole 2 v "[" pos "]")))
 */
 function sc_vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector) ) {
+      sc_typeError( "vector-ref", "vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
     return v[pos];
 }
 
-/*** META ((export vector-set! f32vector-set! array-set!) (arity #t)
+/*** META ((export vector-set! array-set!) (arity #t)
            (peephole (hole 3 v "[" pos "] = " val)))
 */
 function sc_vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector) ) {
+      sc_typeError( "vector-set!", "vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
     v[pos] = val;
+}
+
+/*** META ((export u8vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_u8vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-length", "u8vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export u8vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_u8vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-set!", "u8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "u8vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "u8vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "u8vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export u8vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_u8vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Uint8Array) && !(v instanceof Uint8ClampedArray)) {
+      sc_typeError( "u8vector-ref", "u8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "u8vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "u8vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
+}
+
+/*** META ((export s8vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_s8vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-length", "s8vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export s8vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_s8vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-set!", "s8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "s8vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "s8vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "s8vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export s8vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_s8vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "s8vector-ref", "s8vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "s8vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "s8vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
+}
+
+/*** META ((export f32vector-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_f32vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-length", "f32vector", v, 3 );
+   }
+#endif   
+   return v.length;
+}
+
+/*** META ((export f32vector-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_f32vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-set!", "f32vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "f32vector-set!", "number", pos, 3 );
+   }
+   if (typeof val !== "number") {
+      sc_typeError( "f32vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "f32vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
+}
+
+/*** META ((export f32vector-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_f32vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof Int8Array) ) {
+      sc_typeError( "f32vector-ref", "f32vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "f32vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "f32vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
 }
 
 /*** META ((export vector->list f32vector->list array->list) (arity #t)) */
@@ -1688,14 +2460,19 @@ function sc_vector2list(a) {
 function sc_list2vector(l) {
     var a = new sc_Vector();
     while(l !== null) {
-	a.push(l.car);
-	l = l.cdr;
+	a.push(l.__hop_car);
+	l = l.__hop_cdr;
     }
     return a;
 }
 
 /*** META ((export vector-fill! array-fill!) (arity #t)) */
 function sc_vectorFillBang(a, fill) {
+#if HOP_RTS_DEBUG
+   if (!(a instanceof sc_Vector) ) {
+      sc_typeError( "vector-fill!", "vector", a, 3 );
+   }
+#endif   
     for (var i = 0; i < a.length; i++)
 	a[i] = fill;
 }
@@ -1703,6 +2480,14 @@ function sc_vectorFillBang(a, fill) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_copyVector(a, len) {
+#if HOP_RTS_DEBUG
+   if (!(a instanceof sc_Vector) ) {
+      sc_typeError( "copy-vector", "vector", a, 3 );
+   }
+   if (typeof len !== "number") {
+      sc_typeError( "copy-vector", "number", len, 3 );
+   }
+#endif   
     if (len <= a.length)
 	return a.slice(0, len);
     else {
@@ -1716,11 +2501,33 @@ function sc_copyVector(a, len) {
            (peephole (hole 3 a ".slice(" start "," end ")")))
 */
 function sc_vectorCopy(a, start, end) {
-    return a.slice(start, end);
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector) ) {
+      sc_typeError( "vector-copy", "vector", v, 3 );
+   }
+#endif   
+   return a.slice(start, end);
 }
 
 /*** META ((export #t) (arity -4)) */
 function sc_vectorCopyBang(target, tstart, source, sstart, send) {
+#if HOP_RTS_DEBUG
+   if (!(target instanceof sc_Vector) ) {
+      sc_typeError( "vector-copy!", "vector", target, 3 );
+   }
+   if (!(source instanceof sc_Vector) ) {
+      sc_typeError( "vector-copy!", "vector", source, 3 );
+   }
+   if (typeof tstart !== "number") {
+      sc_typeError( "vector-copy!", "number", tstart, 3 );
+   }
+   if (typeof sstart !== "number") {
+      sc_typeError( "vector-copy!", "number", sstart, 3 );
+   }
+   if (typeof send !== "number") {
+      sc_typeError( "vector-copy!", "number", ssend, 3 );
+   }
+#endif   
     if (!sstart) sstart = 0;
     if (!send) send = source.length;
 
@@ -1747,6 +2554,12 @@ function sc_vectorAppend() {
    }
 
    if( arguments.length === 1 ) {
+#if HOP_RTS_DEBUG
+      if (!(arguments[0] instanceof sc_Vector) ) {
+	 sc_typeError( "vector-append", "vector", arguments[0], 3 );
+      }
+#endif
+   
       return arguments[ 0 ];
    } else {
       var len = 0;
@@ -1754,6 +2567,11 @@ function sc_vectorAppend() {
       var j = 0;
       
       for( i = 0; i < arguments.length; i++ ) {
+#if HOP_RTS_DEBUG
+	 if (!(arguments[i] instanceof sc_Vector) ) {
+	    sc_typeError( "vector-append", "vector", arguments[i], 3 );
+	 }
+#endif
 	 len += arguments[ i ].length;
       }
 
@@ -1774,6 +2592,16 @@ function sc_vectorMapRes(res, proc, args) {
    var applyArgs = new Array(nbApplyArgs);
    var len = res.length;
    
+#if HOP_RTS_DEBUG
+   if (!(res instanceof sc_Vector) ) {
+      sc_typeError( "vector-map", "vector", res, 3 );
+   }
+   for (var i = 1; i <= len; i++) {
+      if (!(args[i] instanceof sc_Vector) ) {
+	 sc_typeError( "vector-map", "vector", args[i], 3 );
+      }
+   }
+#endif
    for (var i = 0; i < len; i++) {
       for (var j = 0; j < nbApplyArgs; j++) {
 	 applyArgs[j] = args[j + 1][ i ];
@@ -1803,7 +2631,7 @@ function sc_vectorMapBang(proc, v1) {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (hole 1 "typeof " o " === 'function'")))
+           (peephole (safe-hole 1 "typeof " o " === 'function'")))
 */
 function sc_isProcedure(o) {
     return (typeof o === "function");
@@ -1811,71 +2639,84 @@ function sc_isProcedure(o) {
 
 /*** META ((export #t) (arity -3)) */
 function sc_apply(proc) {
-    var args = new Array();
-    // first part of arguments are not in list-form.
-    for (var i = 1; i < arguments.length - 1; i++)
-	args.push(arguments[i]);
-    var l = arguments[arguments.length - 1];
-    while (l !== null) {
-	args.push(l.car);
-	l = l.cdr;
-    }
-    return proc.apply(null, args);
+   var args = new Array();
+   
+   // first part of arguments are not in list-form.
+   for (var i = 1; i < arguments.length - 1; i++) {
+      args.push(arguments[i]);
+   }
+
+   var l = arguments[arguments.length - 1];
+   while (l !== null) {
+      args.push(l.__hop_car);
+      l = l.__hop_cdr;
+   }
+   
+#if HOP_RTS_DEBUG
+   sc_arity_check( proc, args.length );
+#endif       
+   
+   return proc.apply(null, args);
 }
 
 /*** META ((export #t) (arity -2)) */
 function sc_map(proc, l1) {
-    if (l1 === undefined)
-	return null;
-    // else
-    var nbApplyArgs = arguments.length - 1;
-    var applyArgs = new Array(nbApplyArgs);
-    var revres = null;
-    while (l1 !== null) {
-	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
-	}
-	revres = sc_cons(proc.apply(null, applyArgs), revres);
-    }
-    return sc_reverseAppendBang(revres, null);
+   if (l1 === undefined) {
+      return null;
+   } else {
+      var nbApplyArgs = arguments.length - 1;
+      var applyArgs = new Array(nbApplyArgs);
+      var revres = null;
+      while (l1 !== null) {
+	 for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].__hop_car;
+	    arguments[i + 1] = arguments[i + 1].__hop_cdr;
+	 }
+	 revres = sc_cons(proc.apply(null, applyArgs), revres);
+      }
+      return sc_reverseAppendBang(revres, null);
+   }
 }
 
 /*** META ((export #t) (arity -2)) */
 function sc_mapBang(proc, l1) {
-    if (l1 === undefined)
-	return null;
-    // else
-    var l1_orig = l1;
-    var nbApplyArgs = arguments.length - 1;
-    var applyArgs = new Array(nbApplyArgs);
-    while (l1 !== null) {
-	var tmp = l1;
-	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
-	}
-	tmp.car = proc.apply(null, applyArgs);
+    if (l1 === undefined) {
+       return null;
+    } else {
+       var l1_orig = l1;
+       var nbApplyArgs = arguments.length - 1;
+       var applyArgs = new Array(nbApplyArgs);
+      /* firebug seems to break the alias l1=arguments[1] */
+       while (arguments[1] !== null) {
+	  var tmp = l1;
+	  for (var i = 0; i < nbApplyArgs; i++) {
+	     applyArgs[i] = arguments[i + 1].__hop_car;
+	     arguments[i + 1] = arguments[i + 1].__hop_cdr;
+	  }
+	  tmp.__hop_car = proc.apply(null, applyArgs);
+       }
+       return l1_orig;
     }
-    return l1_orig;
 }
      
 /*** META ((export #t) (arity -2)) */
 function sc_forEach(proc, l1) {
-    if (l1 === undefined)
-	return undefined;
-    // else
-    var nbApplyArgs = arguments.length - 1;
-    var applyArgs = new Array(nbApplyArgs);
-    while (l1 !== null) {
-	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
-	}
-	proc.apply(null, applyArgs);
-    }
-    // add return so FF does not complain.
-    return undefined;
+   if (l1 === undefined) {
+      return undefined;
+   } else {
+      var nbApplyArgs = arguments.length - 1;
+      var applyArgs = new Array(nbApplyArgs);
+      /* firebug seems to break the alias l1=arguments[1] */
+      while (arguments[1] !== null) {
+	 for (var i = 0; i < nbApplyArgs; i++) {
+	    applyArgs[i] = arguments[i + 1].__hop_car;
+	    arguments[i + 1] = arguments[i + 1].__hop_cdr;
+	 }
+	 proc.apply(null, applyArgs);
+      }
+      // add return so FF does not complain.
+      return undefined;
+   }
 }
 
 /*** META ((export #t) (arity #t)) */
@@ -1883,22 +2724,22 @@ function sc_filter(proc, l1) {
     var dummy = { cdr : null };
     var tail = dummy;
     while (l1 !== null) {
-	if (proc(l1.car) !== false) {
-	    tail.cdr = sc_cons(l1.car, null);
-	    tail = tail.cdr;
+	if (proc(l1.__hop_car) !== false) {
+	    tail.__hop_cdr = sc_cons(l1.__hop_car, null);
+	    tail = tail.__hop_cdr;
 	}
-	l1 = l1.cdr;
+	l1 = l1.__hop_cdr;
     }
-    return dummy.cdr;
+    return dummy.__hop_cdr;
 }
 
 /*** META ((export #t) (arity #t)) */
 function sc_findTail(proc, l1) {
    while (l1 !== null) {
-      if (proc(l1.car)) {
+      if (proc(l1.__hop_car)) {
 	 return l1;
       } else {
-	 l1 = l1.cdr;
+	 l1 = l1.__hop_cdr;
       }
    }
 }
@@ -1907,7 +2748,7 @@ function sc_findTail(proc, l1) {
 function sc_find(proc, l1) {
    var l = sc_findTail(proc, l1);
 
-   return l ? l.car : false;
+   return l ? l.__hop_car : false;
 }
 	 
 /*** META ((export #t) (arity #t)) */
@@ -1916,32 +2757,32 @@ function sc_filterBang(proc, l1) {
     var it = head;
     var next = l1;
     while (next !== null) {
-        if (proc(next.car) !== false) {
-	    it.cdr = next
+        if (proc(next.__hop_car) !== false) {
+	    it.__hop_cdr = next
 	    it = next;
 	}
-	next = next.cdr;
+	next = next.__hop_cdr;
     }
-    it.cdr = null;
-    return head.cdr;
+    it.__hop_cdr = null;
+    return head.__hop_cdr;
 }
 
 function sc_filterMap1(proc, l1) {
     var revres = null;
     while (l1 !== null) {
-        var tmp = proc(l1.car)
+        var tmp = proc(l1.__hop_car)
         if (tmp !== false) revres = sc_cons(tmp, revres);
-        l1 = l1.cdr;
+        l1 = l1.__hop_cdr;
     }
     return sc_reverseAppendBang(revres, null);
 }
 function sc_filterMap2(proc, l1, l2) {
     var revres = null;
     while (l1 !== null) {
-        var tmp = proc(l1.car, l2.car);
+        var tmp = proc(l1.__hop_car, l2.__hop_car);
         if(tmp !== false) revres = sc_cons(tmp, revres);
-	l1 = l1.cdr;
-	l2 = l2.cdr
+	l1 = l1.__hop_cdr;
+	l2 = l2.__hop_cdr
     }
     return sc_reverseAppendBang(revres, null);
 }
@@ -1958,8 +2799,8 @@ function sc_filterMap(proc, l1, l2, l3) {
     var revres = null;
     while (l1 !== null) {
 	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
+	    applyArgs[i] = arguments[i + 1].__hop_car;
+	    arguments[i + 1] = arguments[i + 1].__hop_cdr;
 	}
 	var tmp = proc.apply(null, applyArgs);
 	if(tmp !== false) revres = sc_cons(tmp, revres);
@@ -1970,9 +2811,9 @@ function sc_filterMap(proc, l1, l2, l3) {
 function sc_any1(proc, l) {
     var revres = null;
     while (l !== null) {
-        var tmp = proc(l.car);
+        var tmp = proc(l.__hop_car);
         if(tmp !== false) return tmp;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return false;
 }
@@ -1988,8 +2829,8 @@ function sc_any(proc, l1, l2) {
     var applyArgs = new Array(nbApplyArgs);
     while (l1 !== null) {
 	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
+	    applyArgs[i] = arguments[i + 1].__hop_car;
+	    arguments[i + 1] = arguments[i + 1].__hop_cdr;
 	}
 	var tmp =  proc.apply(null, applyArgs);
 	if (tmp !== false) return tmp;
@@ -2001,9 +2842,9 @@ function sc_every1(proc, l) {
     var revres = null;
     var tmp = true;
     while (l !== null) {
-        tmp = proc(l.car);
+        tmp = proc(l.__hop_car);
         if (tmp === false) return false;
-	l = l.cdr;
+	l = l.__hop_cdr;
     }
     return tmp;
 }
@@ -2020,8 +2861,8 @@ function sc_every(proc, l1, l2) {
     var tmp = true;
     while (l1 !== null) {
 	for (var i = 0; i < nbApplyArgs; i++) {
-	    applyArgs[i] = arguments[i + 1].car;
-	    arguments[i + 1] = arguments[i + 1].cdr;
+	    applyArgs[i] = arguments[i + 1].__hop_car;
+	    arguments[i + 1] = arguments[i + 1].__hop_cdr;
 	}
 	var tmp = proc.apply(null, applyArgs);
 	if (tmp === false) return false;
@@ -2113,7 +2954,7 @@ function sc_makeStruct(name) {
 
 /*** META ((export #t) (arity 1)
            (type bool)
-           (peephole (postfix " instanceof sc_Struct")))
+           (peephole (safe-postfix " instanceof sc_Struct")))
 */
 function sc_isStruct(o) {
     return (o instanceof sc_Struct);
@@ -2121,7 +2962,7 @@ function sc_isStruct(o) {
 
 /*** META ((export #t) (arity #t)
            (type bool)
-           (peephole (hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 "['sc_struct name'] === " 0 ")")))
+           (peephole (safe-hole 2 "(" 1 " instanceof sc_Struct) && ( " 1 "['sc_struct name'] === " 0 ")")))
 */
 function sc_isStructNamed(name, s) {
     return ((s instanceof sc_Struct) && (s['sc_struct name'] === name));
@@ -2131,6 +2972,11 @@ function sc_isStructNamed(name, s) {
            (peephole (hole 3 0 "[" 2 "]")))
 */
 function sc_getStructField(s, name, field) {
+#if HOP_RTS_DEBUG
+   if (!(s instanceof sc_Struct) ) {
+      sc_typeError( "struct-ref", "struct", s, 3 );
+   }
+#endif
     return s[field];
 }
 
@@ -2138,56 +2984,219 @@ function sc_getStructField(s, name, field) {
            (peephole (hole 4 0 "[" 2 "] = " 3)))
 */
 function sc_setStructFieldBang(s, name, field, val) {
+#if HOP_RTS_DEBUG
+   if (!(s instanceof sc_Struct) ) {
+      sc_typeError( "struct-set!", "struct", s, 3 );
+   }
+#endif
     s[field] = val;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_bitNot ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (prefix "~")))
 */
 function sc_bitNot(x) {
-    return ~x;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-not", "number", x, 3 );
+   }
+#endif
+#endif
+   var res = ~x;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-not", res, x );
+   }
+#endif
+#endif
+   
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_bitAnd ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "&")))
 */
 function sc_bitAnd(x, y) {
-    return x & y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-and", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-and", "number", y, 3 );
+   }
+#endif
+#endif
+   var res = x & y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-and", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    bit-or ...                                                       */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "|")))
 */
 function sc_bitOr(x, y) {
-    return x | y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-or", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-or", "number", y, 3 );
+   }
+#endif
+#endif   
+   var res = x | y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-or", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    bit-xor ...                                                      */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "^")))
 */
 function sc_bitXor(x, y) {
-    return x ^ y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-xor", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-xor", "number", y, 3 );
+   }
+#endif       
+#endif   
+   var res = x ^ y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-xor", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_bitLsh ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 "<<")))
 */
 function sc_bitLsh(x, y) {
-    return x << y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-lsh", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-lsh", "number", y, 3 );
+   }
+#endif
+#endif
+   var res = x << y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-lsh", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_bitRsh ...                                                    */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 ">>")))
 */
 function sc_bitRsh(x, y) {
-    return x >> y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-rsh", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-rsh", "number", y, 3 );
+   }
+#endif
+#endif   
+   var res = x >> y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-rsh", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    sc_bitUrsh ...                                                   */
+/*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)
            (peephole (infix 2 2 ">>>")))
 */
 function sc_bitUrsh(x, y) {
-    return x >>> y;
+#if HOP_RTS_DEBUG
+#if HOP_RTS_DEBUG_NUMERIC_TYPE
+   if (typeof x !== "number") {
+      sc_typeError( "bit-ursh", "number", x, 3 );
+   }
+   if (typeof y !== "number") {
+      sc_typeError( "bit-ursh", "number", y, 3 );
+   }
+#endif
+#endif
+   var res = x >>> y;
+   
+#if HOP_RTS_DEBUG
+#if !HOP_RTS_DEBUG_NUMERIC_TYPE
+   if( isNaN( res ) ) {
+      return sc_checkNumericTypes( "bit-ursh", res, x, y );
+   }
+#endif
+#endif   
+
+   return res;
 }
 
 /*** META ((export js-field js-property js-ref) (arity #t)
@@ -2414,6 +3423,11 @@ function sc_isHashtable(o) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableSize(ht) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-size", "hashtable", ht, 3 );
+   }
+#endif       
     var count = 0
     for (hash in ht) {
 	if (ht[hash] instanceof sc_HashtableElement)
@@ -2424,12 +3438,22 @@ function sc_hashtableSize(ht) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtablePutBang(ht, key, val) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-put!", "hashtable", ht, 3 );
+   }
+#endif       
     var hash = sc_hash(key);
     ht[hash] = new sc_HashtableElement(key, val);
 }
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableGet(ht, key) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-get", "hashtable", ht, 3 );
+   }
+#endif       
     var hash = sc_hash(key);
     if (hash in ht)
 	return ht[hash].val;
@@ -2439,6 +3463,11 @@ function sc_hashtableGet(ht, key) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableRemoveBang(ht, key) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-remove!", "hashtable", ht, 3 );
+   }
+#endif       
     var hash = sc_hash(key);
     if (hash in ht) {
 	delete ht[hash];
@@ -2450,6 +3479,11 @@ function sc_hashtableRemoveBang(ht, key) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableForEach(ht, f) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-for-each", "hashtable", ht, 3 );
+   }
+#endif       
     for (var v in ht) {
 	if (ht[v] instanceof sc_HashtableElement)
 	    f(ht[v].key, ht[v].val);
@@ -2459,17 +3493,62 @@ function sc_hashtableForEach(ht, f) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_hashtableMap(ht, f) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-map", "hashtable", ht, 3 );
+   }
+#endif       
    var hd = sc_cons( null, null );
    var res = hd;
    
    for (var v in ht) {
       if (ht[v] instanceof sc_HashtableElement) {
-	 res.cdr = sc_cons( f(ht[v].key, ht[v].val), null );
-	 res = res.cdr;
+	 res.__hop_cdr = sc_cons( f(ht[v].key, ht[v].val), null );
+	 res = res.__hop_cdr;
       }
    }
 
-   return hd.cdr;
+   return hd.__hop_cdr;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_hashtableKeyList(ht) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-key-list", "hashtable", ht, 3 );
+   }
+#endif       
+   var hd = sc_cons( null, null );
+   var res = hd;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res.__hop_cdr = sc_cons( ht[v].key, null );
+	 res = res.__hop_cdr;
+      }
+   }
+
+   return hd.__hop_cdr;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_hashtable2List(ht) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable->list", "hashtable", ht, 3 );
+   }
+#endif       
+   var hd = sc_cons( null, null );
+   var res = hd;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res.__hop_cdr = sc_cons( ht[v].val, null );
+	 res = res.__hop_cdr;
+      }
+   }
+
+   return hd.__hop_cdr;
 }
 
 /*** META ((export hashtable-contains?)
@@ -2477,6 +3556,11 @@ function sc_hashtableMap(ht, f) {
            (peephole (hole 2 "sc_hash(" 1 ") in " 0)))
 */
 function sc_hashtableContains(ht, key) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable-contains", "hashtable", ht, 3 );
+   }
+#endif       
     var hash = sc_hash(key);
     if (hash in ht)
 	return true;
@@ -2668,6 +3752,11 @@ function sc_class_nil( clazz ) {
    
 /*** META ((export #t) (arity #t)) */
 function sc_class_name( clazz ) {
+#if HOP_RTS_DEBUG
+   if (!sc_isClass(clazz)) {
+      sc_typeError( "class-fields", "class", clazz, 3 );
+   }
+#endif       
    return clazz.sc_name;
 }
 
@@ -2698,6 +3787,11 @@ function sc_class_creator( clazz ) {
 
       return o;
    }
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_isA( o, c ) {
+   return o instanceof c.allocator;
 }
 
 /*** META ((export #t) (arity #t)) */
@@ -2742,16 +3836,31 @@ function sc_object_class( o ) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_class_fields( clazz ) {
+#if HOP_RTS_DEBUG
+   if (!sc_isClass(clazz)) {
+      sc_typeError( "class-fields", "class", clazz, 3 );
+   }
+#endif       
    return clazz.sc_fields;
 }
 
 /*** META ((export #t) (arity #t)) */
 function sc_class_all_fields( clazz ) {
+#if HOP_RTS_DEBUG
+   if (!sc_isClass(clazz)) {
+      sc_typeError( "class-fields", "class", clazz, 3 );
+   }
+#endif       
    return clazz.sc_all_fields;
 }
 
 /*** META ((export #t) (arity #t)) */
 function sc_find_class_field( clazz, id ) {
+#if HOP_RTS_DEBUG
+   if (!sc_isClass(clazz)) {
+      sc_typeError( "class-field", "class", clazz, 3 );
+   }
+#endif       
    return clazz.sc_fields_table[ id ];
 }
 

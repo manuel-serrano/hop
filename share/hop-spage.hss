@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-spage.hss               */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-spage.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
-/*    Last change :  Tue Jul 10 14:37:45 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Mon Aug 19 08:55:49 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
 /*=====================================================================*/
@@ -44,6 +44,8 @@ $(define-hss-type sphead "div[data-hss-tag=hop-sphead]"
        (format "div[data-hss-tag=hop-sppopbutton]:before { color: ~l; }" v))
     (define-hss-property (button-width v)
        (format "div[data-hss-tag=hop-sppopbutton] { width: ~l; }" v)))
+
+$(define-hss-type spheadbody "div[data-hss-tag=hop-spheadbody]")
 
 $(define-hss-type sptab "div[data-hss-tag=hop-sptab]")
 $(define-hss-type spbody "div[data-hss-tag=hop-spbody]")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Mon Jan 28 14:03:42 2013 (serrano)                */
+;*    Last change :  Sun Jul 14 10:18:35 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -53,11 +53,17 @@
 ;*---------------------------------------------------------------------*/
 (define (make-hop-module-resolver resolver)
    (set! initial-resolver resolver)
-   (lambda (module abase)
-      (let ((files (resolver module '*)))
+   (lambda (module files abase)
+      (with-trace 1 "hop-module-resolver"
+	 (trace-item "module=" module)
+	 (trace-item "files=" files)
+	 (trace-item "abase=" abase)
 	 (if (pair? files)
-	     (hop-module-afile-resolver module files)
-	     (hop-module-path-resolver module ".")))))
+	     (hop-module-afile-resolver module files abase)
+	     (let ((rfiles (resolver module files '*)))
+		(if (pair? rfiles)
+		    (hop-module-afile-resolver module rfiles abase)
+		    (hop-module-path-resolver module ".")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-path-resolver ...                                     */
@@ -72,13 +78,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-afile-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (hop-module-afile-resolver module files)
-   (apply append (filter-map (lambda (f) (url-resolver module f)) files)))
+(define (hop-module-afile-resolver module files abase)
+   (apply append (filter-map (lambda (f) (url-resolver module f abase)) files)))
    
 ;*---------------------------------------------------------------------*/
 ;*    url-resolver ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (url-resolver module url)
+(define (url-resolver module url abase)
    (if (hz-package-filename? url)
        (hz-module-resolver module url)
        (list url)))
@@ -89,14 +95,18 @@
 (define (hz-module-resolver module url)
    
    (define (resolve-in-dir dir)
-      (let ((afile (make-file-path dir ".afile"))
-	    (abase (module-abase)))
-	 (when (file-exists? afile)
-	    (module-load-access-file afile)
-	    (module-abase-set! dir))
-	 (unwind-protect
-	    (initial-resolver module dir)
-	    (module-abase-set! abase))))
+      (with-trace 1 "resolve-in-dir"
+	 (trace-item "module=" module)
+	 (trace-item "url=" url)
+	 (trace-item "dir=" dir)
+	 (let ((afile (make-file-path dir ".afile"))
+	       (abase (module-abase)))
+	    (when (file-exists? afile)
+	       (hop-load-afile dir)
+	       (module-abase-set! dir))
+	    (unwind-protect
+	       (initial-resolver module '() dir)
+	       (module-abase-set! abase)))))
    
    (define (resolve-default)
       (let ((dir (hz-download-to-cache url (hop-hz-repositories))))
@@ -104,7 +114,10 @@
 	     (resolve-in-dir dir)
 	     '())))
 
-   (cond
-      ((hz-local-weblet-path url (get-autoload-directories)) => resolve-in-dir)
-      ((hz-cache-path url) => resolve-in-dir)
-      (else (resolve-default))))
+   (with-trace 1 "hz-module-resolver"
+      (trace-item "module=" module)
+      (trace-item "url=" url)
+      (cond
+	 ((hz-local-weblet-path url (get-autoload-directories)) => resolve-in-dir)
+	 ((hz-cache-path url) => resolve-in-dir)
+	 (else (resolve-default)))))

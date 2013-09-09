@@ -1,0 +1,8 @@
+Instructions to build a VirtualBox image and to run it:
+
+  - to build a VirtualBox the image:
+
+     make  virtualbox+ HOPTMPDIR=/misc/virtual/tmp RELEASE=4.0b-alpha21May13 HOPRELEASE=2.4.1
+
+  - To run it, activate the PAE option of the emulated processor (the Settings
+    menu of the machine).

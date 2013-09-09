@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Oct 13 08:02:05 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Mon Jul 22 14:31:25 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -18,88 +18,97 @@
 
    (export  (hop-scheduler::obj)
 	    (hop-scheduler-set! ::obj)
-
+	    
 	    (hop-max-threads::int)
 	    (hop-max-threads-set! ::int)
-
+	    
 	    (hop-autoload-directories::pair-nil)
 	    (hop-autoload-directories-set! ::pair-nil)
 	    (hop-autoload-directory-add! ::bstring)
-
+	    
 	    (hop-preload-libraries::pair-nil)
 	    (hop-preload-libraries-set! ::pair-nil)
-
+	    
 	    (hop-proxy-authentication::bool)
 	    (hop-proxy-authentication-set! ::bool)
-
+	    
 	    (hop-proxy-allow-remote-client::bool)
 	    (hop-proxy-allow-remote-client-set! ::bool)
-
+	    
 	    (hop-proxy-remote-authentication::bool)
 	    (hop-proxy-remote-authentication-set! ::bool)
-
+	    
 	    (hop-proxy-ip-mask::bstring)
 	    (hop-proxy-ip-mask-set! ::bstring)
-
+	    
 	    (hop-proxy-ip-mask-word::elong)
-
+	    
 	    (hop-ip-blacklist::obj)
 	    (hop-ip-blacklist-set! ::obj)
 	    (hop-ip-blacklist-table::obj)
-
+	    
 	    (hop-log-file::obj)
 	    (hop-log-file-set! ::obj)
-
+	    
 	    (hop-scheduling::symbol)
 	    (hop-scheduling-set! ::symbol)
-
+	    
 	    (hop-somaxconn::int)
 	    (hop-somaxconn-set! ::int)
-
+	    
 	    (hop-sndbuf::int)
 	    (hop-sndbuf-set! ::int)
-
+	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
-
+	    
 	    (hop-fast-server-event-port::int)
 	    (hop-fast-server-event-port-set! ::int)
-
+	    
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
-
+	    
 	    (hop-enable-repl::bool)
 	    (hop-enable-repl-set! ::bool)
-
+	    
+	    (hop-enable-jobs::bool)
+	    (hop-enable-jobs-set! ::bool)
+	    
 	    (hop-https-protocol::symbol)
 	    (hop-https-protocol-set! ::symbol)
-
+	    
 	    (hop-enable-webdav::bool)
 	    (hop-enable-webdav-set! ::bool)
-
+	    
 	    (hop-gzipped-directories::pair-nil)
 	    (hop-gzipped-directories-set! ::pair-nil)
-
+	    
 	    (hop-process-key::bstring)
 	    (hop-process-key-set! ::bstring)
-
+	    
 	    (hop-report-execution-time::bool)
 	    (hop-report-execution-time-set! ::bool)
-
+	    
 	    (hop-script-file::obj)
 	    (hop-script-file-set! ::obj)
-
+	    
 	    (hop-get-cache-size::int)
 	    (hop-get-cache-size-set! ::int)
-
+	    
 	    (hop-user::obj)
 	    (hop-user-set! ::obj)
-
+	    
 	    (hop-preload-services::pair-nil)
 	    (hop-preload-services-set! ::pair-nil)
-
+	    
 	    (hop-enable-zeroconf::bool)
-	    (hop-enable-zeroconf-set! ::bool))
+	    (hop-enable-zeroconf-set! ::bool)
+	    
+	    (hop-server-socket::obj)
+	    (hop-server-socket-set! ::obj)
+	    
+	    (hop-client-output-port::output-port)
+	    (hop-client-output-port-set! ::output-port))
 
    (eval    (export-exports)))
 
@@ -257,13 +266,7 @@
 ;*    hop-fast-server-event-port ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-fast-server-event-port
-   (hop-port)
-   (lambda (v)
-      (if (<fx v 1024)
-	  (error "hop-fast-server-event-port-set!"
-		 "Server event ports must be greater than 1023"
-		 v)
-	  v)))
+   (hop-port))
 
 (define-parameter hop-enable-fast-server-event
    #t)
@@ -272,6 +275,12 @@
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-jobs ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-jobs
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -331,3 +340,16 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-zeroconf
    (hop-zeroconf-default))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-socket ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-socket
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-client-output-port ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-client-output-port
+   (current-error-port))
+

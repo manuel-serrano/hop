@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/2.5.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Dec  2 15:55:03 2011 (serrano)                */
-;*    Copyright   :  2004-11 Manuel Serrano                            */
+;*    Last change :  Fri Aug 23 07:14:59 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -39,9 +39,35 @@
 	    (hopc-access-file-set! ::obj)
 
 	    (hopc-jsheap::obj)
-	    (hopc-jsheap-set! ::obj))
-   
-   
+	    (hopc-jsheap-set! ::obj)
+
+	    (hopc-clientc-source-map::bool)
+	    (hopc-clientc-source-map-set! ::bool)
+	    
+	    (hopc-clientc-use-strict::bool)
+	    (hopc-clientc-use-strict-set! ::bool)
+	    
+	    (hopc-clientc-arity-check::bool)
+	    (hopc-clientc-arity-check-set! ::bool)
+	    
+	    (hopc-clientc-type-check::bool)
+	    (hopc-clientc-type-check-set! ::bool)
+	    
+	    (hopc-clientc-meta::bool)
+	    (hopc-clientc-meta-set! ::bool)
+	    
+	    (hopc-clientc-debug::bool)
+	    (hopc-clientc-debug-set! ::bool)
+	    
+	    (hopc-clientc-pp::bool)
+	    (hopc-clientc-pp-set! ::bool)
+	    
+	    (hopc-clientc-compress::bool)
+	    (hopc-clientc-compress-set! ::bool)
+	    
+	    (hopc-clientc-inlining::bool)
+	    (hopc-clientc-inlining-set! ::bool))
+	    
    (eval    (export-exports)))
 
 ;*---------------------------------------------------------------------*/
@@ -97,3 +123,58 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-jsheap
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-source-map ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-source-map
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-use-strict ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-use-strict
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-arity-check ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-arity-check
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-type-check ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-type-check
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-meta ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-meta
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-debug ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-debug
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-pp ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-pp
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-compress ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-compress
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-clientc-inlining ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-clientc-inlining
+   #f)
+

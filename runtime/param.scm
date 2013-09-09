@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Feb  6 09:14:22 2013 (serrano)                */
+;*    Last change :  Thu Aug 15 16:35:20 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -165,7 +165,10 @@
 
 	    (hop-mime-type::bstring)
 	    (hop-mime-type-set! ::bstring)
-	    
+
+	    (hop-javascript-version::bstring)
+	    (hop-javascript-version-set! ::bstring)
+
 	    (hop-authorize-service-hook::procedure)
 	    (hop-authorize-service-hook-set! ::procedure)
 	    
@@ -241,7 +244,7 @@
 
 	    (hop-clientc-debug-unbound::int)
 	    (hop-clientc-debug-unbound-set! ::int)
-	    
+
 	    (hop-read-pre-hook::procedure)
 	    (hop-read-pre-hook-set! ::procedure)
 	    
@@ -832,6 +835,17 @@
    "application/x-javascript")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-javascript-version ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript-version
+   "1.5"
+   (lambda (v)
+      (if (>= (string-natural-compare3 v "1.7") 0)
+	  (hop-mime-type-set! (format "application/x-javascript;version=~a" v))
+	  (hop-mime-type-set! "application/x-javascript"))
+      v))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-icons-directory ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-icons-directory
@@ -1268,7 +1282,8 @@
 	  v)))
 
 (define (hop-runtime-extra-add! v)
-   (hop-runtime-extra-set! (cons v (hop-runtime-extra))))
+   (unless (member v (hop-runtime-extra))
+      (hop-runtime-extra-set! (cons v (hop-runtime-extra)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-loaded! ...                                               */

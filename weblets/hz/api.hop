@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/weblets/hz/api.hop                */
+;*    serrano/prgm/project/hop/2.5.x/weblets/hz/api.hop                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Fri Jul 27 20:16:42 2012 (serrano)                */
-;*    Copyright   :  2012 Manuel Serrano                               */
+;*    Last change :  Fri Aug  9 15:36:10 2013 (serrano)                */
+;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
 ;*=====================================================================*/
@@ -161,8 +161,7 @@
 		  (cond
 		     ((string? x) x)
 		     ((pair? x) (car x))
-		     (else
-		      (tprint "GLOP: " x))))
+		     (else #f)))
       (hz-publishers)))
 
 ;*---------------------------------------------------------------------*/

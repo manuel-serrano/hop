@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
+/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Mon Jan 17 16:56:25 2011 (serrano)                */
-/*    Copyright   :  2010-11 Manuel Serrano                            */
+/*    Last change :  Sat Mar 30 12:44:43 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
 /*=====================================================================*/
@@ -51,23 +51,19 @@ public class HopUiUtils {
    }
    
    // A failure
-   public static void fail( final Activity activity,
-			    final String task,
-			    final String msg,
-			    final Exception e,
-			    final boolean exit ) {
-      String emsg = e.getClass().getName() + ": " + e.getMessage();
-      String m = task + " " + msg + ": " + emsg;
+   public static void failExit( final Activity activity,
+				final String task,
+				final String msg,
+				final Object o ) {
+      if( o instanceof Exception ) {
+	 Exception e = (Exception)o;
+	 String emsg = e.getClass().getName() + ": " + e.getMessage();
+	 String m = task + " " + msg + ": " + emsg;
 
-      Log.e( task, m );
-      alert( activity, m, "ok", exit );
-   }
-   
-   // A failure
-   public static void fail( final Activity activity,
-			    final String task,
-			    final String msg,
-			    final Exception e ) {
-      fail( activity, task, msg, e, true );
+	 Log.e( task, m );
+	 alert( activity, m, "ok", true );
+      } else {
+	 alert( activity, o.toString(), "ok", true );
+      }
    }
 }

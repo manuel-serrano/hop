@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Wed Feb  6 11:19:16 2013 (serrano)                */
+;*    Last change :  Tue Apr  2 09:44:27 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopdroid-zeroconf
 
-   (library phone pthread hop)
+   (library phone hop)
 
    (import __hopdroid-phone)
    

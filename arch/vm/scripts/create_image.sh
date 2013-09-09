@@ -10,6 +10,19 @@ done
 
 create_install=1
 
+debian_pkgs_common=locales,cdbs,debhelper,libsqlite3-dev,\
+libssl-dev,libgstreamer-plugins-base0.10-dev,libgmp3-dev,build-essential,\
+mercurial,samba,psmisc,libasound2,libasound2-dev,libflac8,libflac-dev,sudo,\
+libmpg123-0,libmpg123-dev,ssh,\
+libavahi-core7,libavahi-core-dev,libavahi-common-dev,libavahi-common3,\
+libavahi-client3,libavahi-client-dev
+
+debian_pkgs_squeeze=linux-image-2.6-686,linux-headers-2.6-686
+
+debian_pkgs_wheezy=linux-image-2.6-686,linux-headers-2.6-486
+
+debian_pkgs_specific=$debian_pkgs_wheezy
+
 if [ "$1" == "--config-only" ]; then
    shift
    create_install=0
@@ -110,7 +123,7 @@ if [ $create_install -eq 1 ]; then
 
    # only one partition
    # /usr/sbin/grub-setup: warn: This msdos-style partition label has no post-MBR gap; embedding won't be possible!
-   # parted -s $raw_img mkpart primary ext2 0 $img_size
+   #parted -s $raw_img mkpart primary ext2 0 $img_size
    sfdisk -D $raw_img <<EOF
 ,,L,*
 ;
@@ -138,9 +151,7 @@ if [ $create_install -eq 1 ]; then
    echo "Debootstraping..."
    # install base and things needed by bigloo
    # TODO: || true?!?
-   debootstrap --arch i386 --include=locales,cdbs,debhelper,libsqlite3-dev,\
-libssl-dev,libgstreamer-plugins-base0.10-dev,libgmp3-dev,build-essential,\
-linux-image-2.6-686,linux-headers-2.6-686,mercurial,samba,psmisc,$other_pkgs stable $mnt_dir $mirror || true
+   debootstrap --arch i386 --include=$debian_pkgs_common,$debian_pkgs_specific,$oother_pkgs,$other_pkgs stable $mnt_dir $mirror || true
 fi
 
 echo

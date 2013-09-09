@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -206,6 +206,7 @@
 				    (with-access::Update-Var var (new-val)
 				       (begin0
 					(instantiate::Set!
+					   (location -60)
 					   (lvalue break-var-decl)
 					   (val new-val))
 					(clean-var! var)))))
@@ -272,5 +273,5 @@
 			 (new-val-tmp new-val)) ;; will be erased by clean-var!
 		      (clean-var! var)
 		      (loop new-pending
-			    (cons (var-assig var new-val-tmp)
+			    (cons (var-assig var new-val-tmp :location -123)
 				  rev-assigs)))))))))

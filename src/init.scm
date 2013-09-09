@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/2.5.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Dec 28 11:54:22 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Mon Jul 29 09:06:04 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -14,14 +14,45 @@
 ;*---------------------------------------------------------------------*/
 (module hop_init
 
+   (include "libraries.sch")
+
    (library hop)
 
    (import  hop_param)
    
-   (export  (init-http!)
+   (export  (init-server-socket!)
+	    (init-http!)
 	    (init-webdav!)
 	    (init-flash!)
 	    (init-zeroconf!)))
+
+;*---------------------------------------------------------------------*/
+;*    init-server-socket! ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Create the Hop server socket according to user options.          */
+;*---------------------------------------------------------------------*/
+(define (init-server-socket!)
+   (when (socket-server? (hop-server-socket))
+      (socket-shutdown (hop-server-socket)))
+   (with-handler
+      (lambda (e)
+	 (exception-notify e)
+	 (fprint (current-error-port)
+	    "Cannot start Hop server, exiting...")
+	 (exit 2))
+      (if (hop-enable-https)
+	  (cond-expand
+	     (enable-ssl
+	      (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
+		    (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+		 (hop-server-socket-set!
+		    (make-ssl-server-socket (hop-port)
+		       :protocol (hop-https-protocol)
+		       :cert cert :pkey pkey))))
+	     (else
+	      (error "hop" "SSL not supported by this version of Hop" #f)))
+	  (hop-server-socket-set!
+	     (make-server-socket (hop-port) :backlog (hop-somaxconn))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */
@@ -104,8 +135,8 @@
 	  ;; an error
 	  (http-get-file-not-found req))
 	 (query
-	    ;; a file with query arguments
-	    (http-get-file-query req))
+	  ;; a file with query arguments
+	  (http-get-file-query req))
 	 ((is-suffix? abspath ".hop")
 	  ;; hop source code
 	  (http-get-hop req #f))
@@ -211,31 +242,37 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file/cache ...                                          */
+;*    -------------------------------------------------------------    */
+;*    The performance of this function is critical. In must not        */
+;*    compute date unless needed.                                      */
 ;*---------------------------------------------------------------------*/
 (define (http-get-file/cache req)
    (with-access::http-request req (abspath header)
       (let ((ce (cache-get get-memory-cache abspath))
-	    (im (http-header-field header if-modified-since:))
-	    (lm (date->rfc2822-date
-		   (seconds->date (file-modification-time abspath)))))
-	 (cond
-	    ((and (string? im) (string<=? lm im))
-	     ;; not modified
-	     (instantiate::http-response-string
-		(request req)
-		(start-line "HTTP/1.1 304 Not Modified")
-		(content-type (mime-type (prefix abspath) "text/plain"))
-		(header `((Last-Modified: . ,lm)))
-		(charset (hop-locale))))
-	    ((isa? ce cache-entry)
-	     ;; in memory cache
+	    (im (http-header-field header if-modified-since:)))
+	 (if (and (not im) (isa? ce cache-entry))
+	     ;; fast path, in memory cache
 	     (with-access::cache-entry ce (value)
-		value))
-	    (else
-	     ;; a new entry
-	     (let ((resp (http-get-file req lm #t)))
-		(cache-put! get-memory-cache abspath resp)
-		resp))))))
+		value)
+	     (let ((lm (date->rfc2822-date
+			  (seconds->date (file-modification-time abspath)))))
+		(cond
+		   ((and im (string<=? lm im))
+		    ;; not modified
+		    (instantiate::http-response-string
+		       (request req)
+		       (start-line "HTTP/1.1 304 Not Modified")
+		       (content-type (mime-type (prefix abspath) "text/plain"))
+		       (header `((Last-Modified: . ,lm)))
+		       (charset (hop-locale))))
+		   ((isa? ce cache-entry)
+		    (with-access::cache-entry ce (value)
+		       value))
+		   (else
+		    ;; a new entry
+		    (let ((resp (http-get-file req lm #t)))
+		       (cache-put! get-memory-cache abspath resp)
+		       resp))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file ...                                                */

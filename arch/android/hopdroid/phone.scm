@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed Feb  6 10:22:14 2013 (serrano)                */
+;*    Last change :  Mon Apr  1 17:39:34 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopdroid-phone
 
-   (library phone mail pthread hop)
+   (library phone mail hop)
 
    (import __hopdroid-tts)
    
@@ -74,10 +74,12 @@
       ;; hopdroid event table
       (set! event-table (make-hashtable 8))
       ;; start the event listener thread
-      (set! event-thread
-	 (thread-start!
-	    (instantiate::pthread
-	       (body android-event-listener))))))
+      (cond-expand
+	 (enable-threads
+	  (set! event-thread
+	     (thread-start!
+		(instantiate::hopthread
+		   (body android-event-listener))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */

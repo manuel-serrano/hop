@@ -1,16 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/propagation.scm         */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Jul 19 15:31:15 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Constant/Variable propagation                                    */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module propagation
+   
    (import config
 	   tools
 	   nodes
@@ -21,6 +24,7 @@
 	   side
 	   verbose
 	   mutable-strings)
+   
    (static (class Prop-Env
 	      call/cc?::bool
 	      suspend/resume?::bool
@@ -37,8 +41,12 @@
 	      (current (default #f)))
 	   (class Prop-List-Box
 	      v::pair-nil))
+   
    (export (propagation! tree::Module)))
 
+;*---------------------------------------------------------------------*/
+;*    propagation! ...                                                 */
+;*---------------------------------------------------------------------*/
 ;; uses While -> must be after while-pass
 ;;
 ;; locally propagate variables/constants. -> Removes var-count.
@@ -62,6 +70,9 @@
       (pass1 tree)
       (pass2! tree)))
 
+;*---------------------------------------------------------------------*/
+;*    pass1 ...                                                        */
+;*---------------------------------------------------------------------*/
 (define (pass1 tree)
    (verbose " propagation1")
    (changed tree (instantiate::Prop-Env
@@ -70,13 +81,19 @@
 		    (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	    #f '() #f))
 
+;*---------------------------------------------------------------------*/
+;*    widen-vars! ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (widen-vars! vars)
    (for-each (lambda (v)
 		(widen!::Prop-Var v
 		   (escaping-mutated? #f)
 		   (current #f)))
 	     vars))
-   
+
+;*---------------------------------------------------------------------*/
+;*    widen-scope-vars! ...                                            */
+;*---------------------------------------------------------------------*/
 (define (widen-scope-vars! s::Scope)
    (with-access::Scope s (scope-vars)
       (widen-vars! scope-vars)))
@@ -190,7 +207,6 @@
 (define-nmethod (Let.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
    (default-walk this surrounding-fun surrounding-whiles call/ccs))
-
 
 (define-nmethod (While.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)

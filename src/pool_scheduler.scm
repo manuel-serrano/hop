@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Sun Nov 18 16:44:34 2012 (serrano)                */
-;*    Copyright   :  2008-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 29 10:51:42 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
@@ -24,10 +24,6 @@
 ;*---------------------------------------------------------------------*/
 (module hop_scheduler-pool
 
-   (cond-expand
-      (enable-threads
-       (library pthread)))
-   
    (library hop)
    
    (import  hop_scheduler
@@ -81,11 +77,11 @@
 		  (condition-variable-wait! condv smutex)
 		  (loop)))
 	    (set! thread (car free))
-	    (with-access::hopthread thread (userdata)
+	    (with-access::scdthread thread (userdata)
 	       (set! userdata free)
 	       (set! free (cdr free))
 	       (set! nfree (-fx nfree 1))))
-	 (with-access::hopthread thread (proc mutex condv)
+	 (with-access::scdthread thread (proc mutex condv)
 	    (set! proc (lambda (s t) (apply p s t args)))
 	    (synchronize mutex
 	       (condition-variable-signal! condv))
@@ -104,11 +100,11 @@
 		  (condition-variable-wait! condv smutex)
 		  (loop)))
 	    (set! thread (car free))
-	    (with-access::hopthread thread (userdata)
+	    (with-access::scdthread thread (userdata)
 	       (set! userdata free)
 	       (set! free (cdr free))
 	       (set! nfree (-fx nfree 1))))
-	 (with-access::hopthread thread (proc mutex condv)
+	 (with-access::scdthread thread (proc mutex condv)
 	    (set! proc (lambda (s t) (p s t a0 a1 a2 a3 a4)))
 	    (synchronize mutex
 	       (condition-variable-signal! condv))
@@ -118,7 +114,7 @@
 ;*    pool-thread-body ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (pool-thread-body t)
-   (with-access::hopthread t (proc userdata mutex condv scheduler)
+   (with-access::scdthread t (proc userdata mutex condv scheduler)
       (synchronize mutex
 	 (let loop ()
 	    (condition-variable-wait! condv mutex)
@@ -141,7 +137,7 @@
 ;*    make-pool-thread ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (make-pool-thread scd)
-   (letrec ((t (instantiate::hopthread
+   (letrec ((t (instantiate::scdthread
 		  (name (gensym 'pool-scheduler))
 		  (scheduler scd)
 		  (body (lambda () (pool-thread-body t))))))

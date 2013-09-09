@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Jan  5 15:59:45 2013 (serrano)                */
+/*    Last change :  Tue Apr 23 09:01:15 2013 (serrano)                */
 /*    Copyright   :  2010-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -33,19 +33,22 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
-   final static File HOME = new File( Environment.getExternalStorageDirectory(), "home" );
+   private static File _HOME = null;
    final static String HOP = "/bin/hop";
-   final static String HOPARGS = "-v --no-color";
+   final static String HOPARGS = "--no-color";
    final static String SHELL = "/system/bin/sh";
    final static int HOP_RESTART = 5;
 
    // global variables
    static String root = "/data/data/fr.inria.hop";
+   static String verbose = "";
    static String debug = "";
    static boolean zeroconf = false;
    static boolean webdav = false;
+   static boolean jobs = false;
 
    static String port = "8080";
+   static String maxthreads = "6";
 
    // instance variables
    private boolean killed = false;
@@ -66,9 +69,28 @@ public class Hop extends Thread {
       extra = args;
    }
 
+   // HOME
+   public static File HOME() {
+      if( _HOME == null ) {
+	 // try to find an actual directory
+	 File sdcard = new File( "/mnt/sdcard" );
+	 if( sdcard.exists() ) {
+	    Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
+	    _HOME = new File( sdcard, "home" );
+	 }
+
+	 if( _HOME == null ) {
+	    // fallback
+	    _HOME = new File( Environment.getExternalStorageDirectory(), "home" );
+	 }
+      }
+      
+      return _HOME;
+   }
+      
    // is hop already configured
    public boolean configured() {
-      return HOME.exists();
+      return HOME().exists();
    }
 
    // startWithArg
@@ -82,12 +104,15 @@ public class Hop extends Thread {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
 
-      String cmd = "export HOME=" + HOME.getAbsolutePath() +
+      String cmd = "export HOME=" + HOME().getAbsolutePath() +
 	 "; exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
+	 + " " + verbose
 	 + " " + debug
-	 + (zeroconf ? " -z" : "")
+	 + " --max-threads " + maxthreads
+	 + (zeroconf ? " -z" : " --no-zeroconf")
 	 + (webdav ? " -d" : "")
+	 + (jobs ? " --jobs" : " --no-jobs")
 	 + " " + extra;
 
       Log.i( "Hop", "executing [" + sh + " -c " + cmd + "]");

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/2.5.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Feb 10 19:00:38 2013 (serrano)                */
+#*    Last change :  Thu Aug  8 15:01:47 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -24,6 +24,7 @@ HOPDATE		= @DATE@
 BIGLOO          = @BIGLOO@
 RELEASE		= @BIGLOOVERSION@
 HOPC		= @HOPC@
+BGLCPP		= @BGLCPP@
 HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
 BACKEND         = @BACKEND@
 LINK		= @LINK@
@@ -60,7 +61,7 @@ BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
 BEJVMFLAGS	= -jvm-jar
 BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
 BLDOTNETFLAGS   = @BLFLAGS@ 
-BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
+BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
 

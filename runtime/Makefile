@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/2.5.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Aug 16 08:51:52 2012 (serrano)                */
+#*    Last change :  Sat Aug 10 07:16:28 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -33,7 +33,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = param misc priv types read module \
+_OBJECTS = param thread misc priv types read module \
            xml xml_types charset dom \
            html_base html_head html_img \
            svg mathml \
@@ -47,7 +47,7 @@ _OBJECTS = param misc priv types read module \
            http_error http_filter \
            hop_inline \
            event websocket color weblets preferences expanders \
-           security xdomain zeroconf
+           security xdomain zeroconf upnp debug
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -56,22 +56,18 @@ BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class) \
               $(CLASS_DIR)/configure.class
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
 SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES = http_lib.sch \
-           expanders.sch \
+INCLUDES = thread.sch http_lib.sch expanders.sch \
            xml.sch xml_expd.sch \
            param.sch param_expd.sch \
            hss.sch hss_expd.sch \
            prefs.sch prefs_expd.sch  \
            service.sch service_expd.sch \
            verbose.sch verbose_expd.sch \
-           enable_thread.sch disable_thread.sch \
            wiki_syntax.sch wiki_parser.sch \
-           zeroconf_avahi.sch zeroconf_dummy.sch
+           zeroconf_avahi.sch zeroconf_dummy.sch \
+           client-exception.sch sourcemap.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -83,13 +79,12 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native jvm
 
 build: $(BACKEND)
 
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -115,21 +110,24 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-o/thread.o thread.class: enable-thread.sch disable-thread.sch
+#* o/thread.o thread.class: enable-thread.sch disable-thread.sch       */
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-zeroconf_avahi.sch: verbose.sch 
-o/websocket.o websocket.class: http_lib.sch verbose.sch 
+zeroconf_avahi.sch: verbose.sch thread.sch 
+o/debug.o debug.class: xml.sch service.sch verbose.sch param.sch         \
+      client-exception.sch sourcemap.sch ../scheme2js/base64_vlq.sch 
+o/websocket.o websocket.class: http_lib.sch verbose.sch thread.sch 
 o/http_error.o ./http_error.class: xml.sch 
 o/http_filter.o http_filter.class: http_lib.sch verbose.sch 
-o/websocket.o ./websocket.class: http_lib.sch verbose.sch 
+o/websocket.o ./websocket.class: http_lib.sch verbose.sch thread.sch 
 o/wiki_parser.o wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/mathml.o ./mathml.class: xml.sch 
 o/clientc.o ./clientc.class: xml.sch service.sch 
 o/http_proxy.o ./http_proxy.class: http_lib.sch verbose.sch 
+o/read.o ./read.class: thread.sch 
 o/http_lib.o http_lib.class: http_lib.sch 
 o/security.o ./security.class: param.sch 
 o/preferences.o preferences.class: xml.sch service.sch 
@@ -146,12 +144,16 @@ o/http_error.o http_error.class: xml.sch
 o/hop.o hop.class: verbose.sch 
 o/css.o ./css.class: xml.sch service.sch hss.sch 
 o/mathml.o mathml.class: xml.sch 
-o/event.o event.class: xml.sch service.sch verbose.sch param.sch 
+o/event.o event.class: xml.sch service.sch verbose.sch param.sch         \
+      thread.sch 
 o/http_proxy.o http_proxy.class: http_lib.sch verbose.sch 
-o/event.o ./event.class: xml.sch service.sch verbose.sch param.sch 
+o/event.o ./event.class: xml.sch service.sch verbose.sch param.sch       \
+      thread.sch 
 o/user.o user.class: verbose.sch 
+o/job.o job.class: thread.sch 
 o/http_webdav.o http_webdav.class: http_lib.sch xml.sch 
 o/weblets.o weblets.class: xml.sch verbose.sch 
+o/thread.o ./thread.class: thread.sch 
 o/http_lib.o ./http_lib.class: http_lib.sch 
 o/html_img.o html_img.class: param.sch xml.sch 
 o/html_base.o html_base.class: param.sch xml.sch 
@@ -159,6 +161,7 @@ o/svg.o ./svg.class: xml.sch
 o/html_base.o ./html_base.class: param.sch xml.sch 
 o/html_head.o html_head.class: xml.sch service.sch 
 o/html_head.o ./html_head.class: xml.sch service.sch 
+o/upnp.o upnp.class: thread.sch 
 o/hop_inline.o ./hop_inline.class: xml.sch 
 o/http_filter.o ./http_filter.class: http_lib.sch verbose.sch 
 o/clientc.o clientc.class: xml.sch service.sch 
@@ -166,6 +169,7 @@ o/configure.o ./configure.class: configure_noarch.sch
 o/wiki_parser.o ./wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/user.o ./user.class: verbose.sch 
 o/hop_wiki.o hop_wiki.class: xml.sch 
+o/thread.o thread.class: thread.sch 
 o/xml.o xml.class: param.sch xml.sch 
 o/preferences.o ./preferences.class: xml.sch service.sch 
 o/service.o ./service.class: service.sch verbose.sch 
@@ -178,6 +182,7 @@ o/hop_inline.o hop_inline.class: xml.sch
 o/hop.o ./hop.class: verbose.sch 
 o/hop_rss.o hop_rss.class: xml.sch 
 o/http_shoutcast.o http_shoutcast.class: http_lib.sch 
+o/read.o read.class: thread.sch 
 o/security.o security.class: param.sch 
 o/weblets.o ./weblets.class: xml.sch verbose.sch 
 o/param.o param.class: param.sch 

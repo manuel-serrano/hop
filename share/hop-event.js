@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Thu Feb 14 10:29:01 2013 (serrano)                */
+/*    Last change :  Wed Sep  4 07:42:18 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -45,33 +45,42 @@ function hop_event_stoppedp( e ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export add-event-listener!) (arity -3))) */
 function hop_add_event_listener( obj, event, proc, capture ) {
+   var p = proc;
+
+   if( hop_debug() > 0 ) {
+      var msg = obj + "<-" + event;
+      p = hop_callback( proc, hop_callback_listener_context( msg ) );
+   }
+   
    if( event === "server" ) {
       alert( "deprecated (add-event-listener! \"" + obj + "\" \"server\"...)" );
-      return hop_add_server_listener( obj, proc, capture );
+      return hop_add_server_listener( obj, p, capture );
    }
 
    if( event === "serverready" ) {
       alert( "deprecated (add-event-listener! document \"serverready\"...)" );
-      return hop_add_serverready_listener( obj, proc );
+      return hop_add_serverready_listener( obj, p );
    }
 
    if( event === "serverclose" ) {
       alert( "deprecated (add-event-listener! document \"serverclose\"...)" );
-      return hop_add_serverclose_listener( obj, proc );
+      return hop_add_serverclose_listener( obj, p );
    }
 
    if( event === "timeout" )
-      return hop_add_timeout_listener( obj, proc );
+      return hop_add_timeout_listener( obj, p );
 
    if( event === "ready" ) {
-      var p = hop_callback( proc );
       proc.handler = p;
       proc.handler.enable = true;
 
       if( obj === window ) {
 	 if( hop_is_ready ) {
+	    var evt = new HopEvent( "ready", window )
+	    evt.target = window;
+	    
 	    window.ready = p;
-	    return window.ready( new HopEvent( "ready", window ) );
+	    return window.ready( evt );
 	 } else {
 	    hop_window_ready_list = sc_cons( p, hop_window_ready_list );
 	    return proc;
@@ -88,15 +97,21 @@ function hop_add_event_listener( obj, event, proc, capture ) {
    }
 
    if( ("hop_add_event_listener" in obj) &&
+       (obj != window) &&
        (obj.hop_add_event_listener != hop_add_event_listener) ) {
-      return obj.hop_add_event_listener( event, proc, capture );
+      return obj.hop_add_event_listener( event, p, capture );
    }
 
    if( event === "hashchange" && !hop_config.hashchange_event ) {
-      return hop_add_hashchange_listener( obj, proc );
+      return hop_add_hashchange_listener( obj, p );
    }
 
-   return hop_add_native_event_listener( obj, event, proc, capture );
+   /* store the actual listener for listener removal */
+   if( p != proc ) {
+      if( proc[ obj ] == undefined ) proc[ obj ] = new Object();
+      proc[ obj ][ event ] = p;
+   }
+   return hop_add_native_event_listener( obj, event, p, capture );
 }
 
 /*---------------------------------------------------------------------*/
@@ -138,7 +153,15 @@ function hop_remove_event_listener( obj, event, proc, capture ) {
    if( event === "hashchange" && !hop_config.hashchange_event )
       return hop_remove_hashchange_listener( obj, proc );
 
-   return hop_remove_native_event_listener( obj, event, proc, capture );
+
+   if( (obj in proc) && proc[ obj ] && proc[ obj ][ event ] ) {
+      var p = proc[ obj ][ event ];
+      /* remove the debug instrument listener */
+      return hop_remove_native_event_listener( obj, event, p, capture );
+   } else {
+      /* remove the actual listener */
+      return hop_remove_native_event_listener( obj, event, proc, capture );
+   }
 } 
 
 /*---------------------------------------------------------------------*/
@@ -151,7 +174,7 @@ function hop_add_ready_listener( obj, proc, ttl ) {
    
    if( !el ) {
       if( ttl > 0 ) {
-	 after( hop_ready_timeout, function() {
+	 sc_after( hop_ready_timeout, function() {
 	    return hop_add_ready_listener( obj, proc, ttl - 1 );
 	 } );
       } else {
@@ -164,8 +187,10 @@ function hop_add_ready_listener( obj, proc, ttl ) {
       hop_elements_ready_counter--;
 
       if( proc.enable ) {
+	 var evt = new HopEvent( "ready", el );
+	 evt.target = el;
 	 el.ready = proc;
-	 el.ready( new HopEvent( "ready", el ) );
+	 el.ready( evt );
       }
    }
 }
@@ -187,8 +212,8 @@ function hop_get_hashchange_interval() {
 	       window.hop_hashchange_href = window.location.href;
 	       
 	       while( sc_isPair( l ) ) {
-		  l.car( window.location )( e );
-		  l = l.cdr;
+		  l.__hop_car( window.location )( e );
+		  l = l.__hop_cdr;
 	       }
 	    }
 	 }
@@ -233,7 +258,7 @@ function hop_remove_active_hashchange_listener( obj, proc ) {
       var c = sc_assq( proc, obj.hop_hashchange_listener );
 
       if( c ) {
-	 clearInterval( c.cdr );
+	 clearInterval( c.__hop_cdr );
 	 obj.hop_hashchange_listener =
 	    sc_deleteBang( c, obj.hop_hashchange_listener );
       }
@@ -291,6 +316,20 @@ var hop_servevt_envelope_cdata_re =
    new RegExp( "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" );
 
 /*---------------------------------------------------------------------*/
+/*    hop_servevt_envelope_parse_error ...                             */
+/*---------------------------------------------------------------------*/
+function hop_servevt_envelope_parse_error( xhr ) {
+   exc = new Error( "bad server event envelope" );
+   
+   exc.name = "HopServerError";
+   exc.scObject = xhr;
+   exc.message = xhr.responseText === "" ? "Empty envelope" : xhr.responseText;
+   exc.scOffset = 2;
+
+   hop_callback_handler( exc, false );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_servevt_envelope_parse ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_servevt_envelope_parse( val, xhr ) {
@@ -306,7 +345,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
       } else if( k == "f" ) {
 	 hop_trigger_servevt( id, text, parseFloat( text ), false );
       } else if( k == "s" ) {
-	 hop_trigger_servevt( id, text, decodeURIComponent( text ), false );
+	 hop_trigger_servevt( id, text, unescape( text ), false );
       } else if( k == "x" ) {
 	 hop_trigger_servevt( id, text, hop_create_element( text ), false );
       } else if( k == "j" ) {
@@ -318,29 +357,11 @@ function hop_servevt_envelope_parse( val, xhr ) {
 	 // register, first event listener added to the server
 	 hop_trigger_serverready_event();
       } else {
-	 alert( "hop-event.js(debug), hop_servevt_envelope_parse val=" + val
-		+ " xhr=" + xhr );
 	 hop_servevt_envelope_parse_error( xhr );
       }
    } else {
-      alert( "hop-event.js(debug), hop_servevt_envelope_parse val=" + val
-	     + " xhr=" + xhr );
       hop_servevt_envelope_parse_error( xhr );
    }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_servevt_envelope_parse_error ...                             */
-/*---------------------------------------------------------------------*/
-function hop_servevt_envelope_parse_error( xhr ) {
-   exc = new Error( "bad server event envelope" );
-   
-   exc.hopStack = false;
-   exc.name = "HopServevtError";
-   exc.scObject = xhr;
-   exc.message = xhr.responseText === "" ? "Empty envelope" : xhr.responseText;
-
-   hop_report_exception( exc );
 }
 
 /*---------------------------------------------------------------------*/
@@ -453,7 +474,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	    if( max == -1 ) {
 	       hop_trigger_servererror_event( "Cannot reconnect" );
 	    } else {
-	       after( wait, function() {
+	       sc_after( wait, function() {
 		  var nwait = wait < hop_reconnect_max_wait ? wait * 2 : wait;
 		  var nmax = max === undefined ? max : max - 1;
 		  reconnect( nwait, nmax );
@@ -498,8 +519,8 @@ function start_servevt_xhr_multipart_proxy( key ) {
 
 	    var failure = function( xhr ) {
 	       if( xhr.exception ) {
-		  if( typeof hop_report_exception === "function" ) {
-		     hop_report_exception( xhr.exception );
+		  if( typeof hop_callback_handler === "function" ) {
+		     hop_callback_handler( xhr.exception, "multipart" );
 		  }
 	       }
 	    
@@ -590,16 +611,16 @@ function start_servevt_ajax_proxy( key ) {
 	       // invoke all the user handlers (we have received a list of
 	       // values corresponding to server buffer).
 	       while( sc_isPair( val ) ) {
-		  var v = val.car;
-		  var id = v.car;
-		  var vals = v.cdr;
+		  var v = val.__hop_car;
+		  var id = v.__hop_car;
+		  var vals = v.__hop_cdr;
 
 		  while( vals != null ) {
-		     hop_trigger_servevt( id, vals.car, vals.car, false );
-		     vals = vals.cdr;
+		     hop_trigger_servevt( id, vals.__hop_car, vals.__hop_car, false );
+		     vals = vals.__hop_cdr;
 		  }
 
-		  val = val.cdr;
+		  val = val.__hop_cdr;
 	       }
 	    }
 	 }
@@ -676,16 +697,16 @@ function hop_servevt_signal( val ) {
       // invoke all the user handlers (we have received a list of
       // values corresponding to server buffer).
       while( sc_isPair( val ) ) {
-	 var v = val.car;
-	 var id = v.car;
-	 var vals = v.cdr;
+	 var v = val.__hop_car;
+	 var id = v.__hop_car;
+	 var vals = v.__hop_cdr;
 
 	 while( vals != null ) {
-	    hop_trigger_servevt( id, vals.car, vals.car, false );
-	    vals = vals.cdr;
+	    hop_trigger_servevt( id, vals.__hop_car, vals.__hop_car, false );
+	    vals = vals.__hop_cdr;
 	 }
 
-	 val = val.cdr;
+	 val = val.__hop_cdr;
       }
    }
 }
@@ -738,7 +759,7 @@ function start_servevt_script_proxy( key ) {
 	       err_stamp = e.timeStamp;
 	       
 	       script.parentNode.removeChild( script );
-	       after( 1, function() { register( "" ) } );
+	       sc_after( 1, function() { register( "" ) } );
 	    }
 	 };
 
@@ -757,7 +778,7 @@ function start_servevt_script_proxy( key ) {
 	 }
 	 
 	 // hook the new script after a small timeout to avoid busy icons
-	 after( 10, function () { document.body.appendChild( script ); } );
+	 sc_after( 10, function () { document.body.appendChild( script ); } );
       }
 
       var unregister = function( id ) {
@@ -786,7 +807,7 @@ function start_servevt_script_proxy( key ) {
       }
       
       // trigger server_ready 
-      after( 100, function() {
+      sc_after( 100, function() {
 	 hop_trigger_serverready_event();
       } );
    }
@@ -856,7 +877,7 @@ function start_servevt_flash_proxy( key, host, port ) {
    fproxy.ready = false;
 
    /* give 4 seconds to flash to succeed or switch to long polling */
-   after( 4000, function() {
+   sc_after( 4000, function() {
       if( !fproxy.ready ) {
 	 document.body.removeChild( proxy );
 	 start_long_polling_proxy( key, host, port );
@@ -1098,6 +1119,8 @@ function hop_start_servevt_proxy() {
 /*    This function is invoked by Flash and Ajax upon event reception  */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, js ) {
+   var proc;
+
    try {
       var v = (js ? eval( value ) : value);
       var evt = new HopServerEvent( id, text, v );
@@ -1109,8 +1132,9 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 var p1 = hop_servevt_dlist;
 
 	 while( sc_isPair( p1 ) ) {
-	    p1.car( evt );
-	    p1 = p1.cdr;
+	    proc = p1.__hop_car;
+	    proc( evt );
+	    p1 = p1.__hop_cdr;
 	 }
       }
 
@@ -1118,17 +1142,23 @@ function hop_trigger_servevt( id, text, value, js ) {
 
       while( sc_isPair( p2 ) ) {
 	 try {
-	    p2.car( evt );
+	    proc = p2.__hop_car;
+	    proc( evt );
 	 } catch( exc ) {
-	    exc.scObject = ("event=" + id + ", val=" + p2.car );
 	    throw exc;
 	 }
 	 
 	 if( evt.isStopped ) break;
-	 p2 = p2.cdr;
+	 p2 = p2.__hop_cdr;
       }
    } catch( exc ) {
-      exc.scObject = ("event=" + id + ", val=" + value );
+      if( "displayName" in proc ) {
+	 var c = sc_assoc( "hop_trigger_servevt", hop_name_aliases );
+
+	 if( sc_isPair( c ) ) {
+	    sc_setCdrBang( c, proc.displayName );
+	 }
+      }
       throw exc;
    }
 }
@@ -1198,7 +1228,6 @@ function hop_remove_serverdown_listener( obj, proc ) {
    } else {
       throw new Error( "remove-event-listener!: Illegal `serverdown' recipient"
 		       + obj );
-      return false;
    }
 }
 
@@ -1214,9 +1243,9 @@ function hop_servevt_onclose() {
    var p = hop_serverdown_list;
 
    while( sc_isPair( p ) ) {
-      p.car( evt );
+      p.__hop_car( evt );
       if( evt.isStopped ) break;
-      p = p.cdr;
+      p = p.__hop_cdr;
    }
 
    hop_serverdown_triggered = true;
@@ -1312,9 +1341,9 @@ function hop_trigger_serverready_event() {
       hop_serverready_triggered = true;
 
       while( sc_isPair( l ) ) {
-	 l.car( evt );
+	 l.__hop_car( evt );
 	 if( evt.isStopped ) break;
-	 l = l.cdr;
+	 l = l.__hop_cdr;
       }
    }
 }
@@ -1347,7 +1376,6 @@ function hop_remove_serverready_listener( obj, proc ) {
    } else {
       throw new Error( "remove-event-listener!: Illegal `serverready' recipient"
 		       + obj );
-      return false;
    }
 }
 
@@ -1375,9 +1403,9 @@ function hop_trigger_servererror_event( v ) {
    var l = hop_servererror_list;
       
    while( sc_isPair( l ) ) {
-      l.car( evt );
+      l.__hop_car( evt );
       if( evt.isStopped ) break;
-      l = l.cdr;
+      l = l.__hop_cdr;
    }
 }
 
@@ -1403,7 +1431,6 @@ function hop_remove_servererror_listener( obj, proc ) {
    } else {
       throw new Error( "remove-event-listener!: Illegal `servererror' recipient"
 		       + obj );
-      return false;
    }
 }
 
@@ -1428,17 +1455,17 @@ function hop_remove_timeout_listener( proc ) {
    var p = hop_timeout_listeners;
    
    if( sc_isPair( p ) ) {
-      if( p.car.car === proc ) {
-	 clearInterval( p.car.cdr );
-	 hop_timeout = p.cdr;
+      if( p.__hop_car.__hop_car === proc ) {
+	 clearInterval( p.__hop_car.__hop_cdr );
+	 hop_timeout = p.__hop_cdr;
       } else {
-	 while( sc_isPair( p.cdr ) ) {
-	    if( p.cdr.car === proc ) {
-	       clearInterval( p.cdr.cdr );
-	       p.cdr = p.cdr.cdr;
+	 while( sc_isPair( p.__hop_cdr ) ) {
+	    if( p.__hop_cdr.__hop_car === proc ) {
+	       clearInterval( p.__hop_cdr.__hop_cdr );
+	       p.__hop_cdr = p.__hop_cdr.__hop_cdr;
 	       break;
 	    } else {
-	       p = p.cdr;
+	       p = p.__hop_cdr;
 	    }
 	 }
       }
@@ -1455,16 +1482,14 @@ hop_add_native_event_listener(
 	    clearInterval( i );
 	    hop_is_ready = true;
 	    
-	    new HopEvent( "ready", window )
-	    
 	    while( sc_isPair( hop_window_ready_list ) ) {
-	       if( hop_window_ready_list.car.enable ) {
-		  window.ready = hop_window_ready_list.car;
+	       if( hop_window_ready_list.__hop_car.enable ) {
+		  window.ready = hop_window_ready_list.__hop_car;
 		  window.ready( evt );
 	       
 		  if( evt.isStopped ) break;
 	       }
-	       hop_window_ready_list = hop_window_ready_list.cdr;
+	       hop_window_ready_list = hop_window_ready_list.__hop_cdr;
 	    }
 	 }
       }, hop_ready_timeout + 1 );

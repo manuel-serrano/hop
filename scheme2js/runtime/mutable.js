@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -213,6 +213,13 @@ function sc_char2symbol(c) { return c.val; }
 */
 function sc_isString(s) { return (s instanceof sc_String); }
 
+/*** META ((export #t)
+           (arity #t)
+           (type bool)
+           (peephole (postfix " === \"\"")))
+*/
+function sc_isStringNull(s) { return (s === ""); }
+
 /*** META ((export #t) (arity -2)) */
 function sc_makeString(k, c) {
     return new sc_String(sc_makejsString(k, c));
@@ -325,7 +332,7 @@ function sc_stringCIContains(s1,s2,start) {
            (arity -2))
 */
 function sc_substring(s, start, end) {
-   return s.val.substring(start, (!end || end < 0) ? s.length : end);
+   return s.val.substring(start, (end == undefined || end < 0) ? s.length : end);
 }
 
 /*** META ((export #t)
@@ -444,7 +451,7 @@ function sc_stringIndex(s, cset, start) {
       return res >= 0 ? res : false;
    } else {
       for (var i = start; i < s.val.length; i++ ) {
-	 if (cset.val.indexOf(s.val.charAt(i)))
+	 if (cset.val.indexOf(s.val.charAt(i)) >= 0)
 	    return i;
       }
 
@@ -466,12 +473,38 @@ function sc_stringIndexRight(s, cset, start) {
       return res >= 0 ? res : false;
    } else {
       for (var i = start; i >= 0; i-- ) {
-	 if (cset.val.indexOf(s.val.charAt(i)))
+	 if (cset.val.indexOf(s.val.charAt(i)) >= 0)
 	    return i;
       }
 
       return false;
    }
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkip(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i < s.length; i++ ) {
+      if( set.val.indexOf( s.val.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkipRight(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i >= 0; i-- ) {
+      if( set.va.indexOf( s.val.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
 }
 
 /*** META ((export #t) (arity 1)) */

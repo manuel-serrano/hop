@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -40,14 +40,15 @@
 
 (define (read-config c conf)
    (let ((tmp (assq conf c)))
-      (and tmp
-	   (cdr tmp))))
+      (and tmp (cdr tmp))))
 
 (define (config-init! #!optional config)
    (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
-   (read-config (thread-parameter '*scheme2js-config*) conf))
+   (read-config (or (thread-parameter '*scheme2js-config*) *default-config*)
+      conf))
+
 (define scheme2js-config config)
 
 (define (config-set! conf val)
@@ -174,11 +175,18 @@
 	(indent . 2)
 	(statics-suffix . #f)
 	(bigloo-modules . #t)
-	(pp . #f)
+	(source-map . #f)
 	(compress . #f)
 	(call-check . #t)
 	(debug . #f)
-	(module-resolver . ,(lambda (mod dir) #f)))
+	(meta . #f)
+	(arity-check . #f)
+	(type-check . #f)
+	(module-resolver . ,(lambda (mod files dir) #f))
+	(javascript-let . #f)
+	(frame-push . #f)
+	(tmp-dir . ,(os-tmp))
+	(use-strict . #t))
       `((library-path . ,(bigloo-library-path)))
       *O1*))
 

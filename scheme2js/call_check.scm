@@ -1,16 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/call_check.scm          */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Wed Sep  4 12:11:08 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme2js static call checks                                     */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module call-check
+   
    (import config
 	   error
 	   nodes
@@ -18,18 +21,27 @@
 	   walk
 	   side
 	   verbose)
+   
    (export (call-check tree::Module)))
 
+;*---------------------------------------------------------------------*/
+;*    call-check ...                                                   */
+;*---------------------------------------------------------------------*/
 (define (call-check tree)
    (when (config 'call-check)
       (verbose "call-check")
       (side-effect tree)
       (check tree #f)))
 
+;*---------------------------------------------------------------------*/
+;*    check ::Node ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.check)
    (default-walk this))
 
-
+;*---------------------------------------------------------------------*/
+;*    check-arity ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (check-arity call-len target-len id loc-node)
    (cond
       ((and (>=fx target-len 0)
@@ -49,13 +61,15 @@
 				(with-access::Node n (location) location))
 			   (cons operator operands))))
 		    (else #f))))
-       (scheme2js-error
-	'call-check
-	(format "Wrong number of arguments: ~a expected, ~a provided"
+	  (scheme2js-error "call-check"
+	     (format "Wrong number of arguments: ~a expected, ~a provided"
 		target-len call-len)
-	id
-	ln)))))
+	     id
+	     ln)))))
 
+;*---------------------------------------------------------------------*/
+;*    check ::Call ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Call.check)
    (with-access::Call this (operator operands)
       (when (isa? operator Ref)
@@ -64,10 +78,10 @@
 	       (when (and constant? value)
 		  (when (isa? value Const)
 		     ;; all others could potentially become functions.
-		     (scheme2js-error 'call-check
-				      "Call target not a function"
-				      (with-access::Const value (value) value)
-				      this))
+		     (scheme2js-error "call-check"
+			"Call target not a function"
+			(with-access::Const value (value) value)
+			this))
 		  (when (isa? value Lambda)
 		     (with-access::Lambda value (formals vaarg?)
 			(let ((call-len (length operands))

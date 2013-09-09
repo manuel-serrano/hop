@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/src/amany-scheduler.scm          */
+;*    serrano/prgm/project/hop/2.4.x/src/amany_scheduler.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
-;*    Last change :  Wed Nov 19 11:32:55 2008 (serrano)                */
-;*    Copyright   :  2008 Manuel Serrano                               */
+;*    Last change :  Fri Mar 29 10:51:07 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Accept-many scheduler                                            */
 ;*    -------------------------------------------------------------    */
@@ -21,10 +21,6 @@
 ;*---------------------------------------------------------------------*/
 (module hop_scheduler-accept-many
 
-   (cond-expand
-      (enable-threads
-       (library pthread)))
-   
    (library hop)
    
    (import  hop_scheduler

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 10 20:26:43 2013 (serrano)                */
+;*    Last change :  Wed Sep  4 16:58:57 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -16,12 +16,14 @@
 
    (library scheme2js hopscheme hop hopwidget web)
 
-   (import  hop_param)
+   (import  hop_param
+	    hop_init)
 
    (eval    (export hop-load-rc))
 
    (export  (parse-args::pair-nil ::pair)
-	    (hop-load-rc ::bstring)))
+	    (hop-load-rc ::bstring)
+	    (hello-world)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
@@ -46,7 +48,14 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
-	 (setuser #f))
+	 (setuser #f)
+	 (clientc-source-map #f)
+	 (clientc-arity-check #f)
+	 (clientc-type-check #f)
+	 (clientc-debug #f)
+	 (clientc-compress #f)
+	 (clientc-inlining #t)
+	 (clientc-use-strict #t))
       
       (bigloo-debug-set! 0)
 
@@ -109,21 +118,62 @@
          (("-g?level" (help "Increase/set debug level"))
           (cond
 	     ((string=? level "")
+	      (set! clientc-source-map #t)
 	      (hop-clientc-debug-unbound-set! 1)
+	      (set! clientc-debug #t)
+	      (set! clientc-arity-check #t)
+	      (set! clientc-type-check #t)
 	      (bigloo-debug-set! (+fx 1 (bigloo-debug))))
+	     ((string=? level "clientc-debug")
+	      (set! clientc-debug #t)
+	      (set! clientc-inlining #f))
+	     ((string=? level "no-clientc-debug")
+	      (set! clientc-debug #t))
+	     ((string=? level "clientc-arity-check")
+	      (set! clientc-arity-check #t))
+	     ((string=? level "no-clientc-arity-check")
+	      (set! clientc-arity-check #f))
+	     ((string=? level "clientc-type-check")
+	      (set! clientc-type-check #t))
+	     ((string=? level "no-clientc-type-check")
+	      (set! clientc-type-check #f))
+	     ((string=? level "clientc-use-strict")
+	      (set! clientc-use-strict #t))
+	     ((string=? level "no-clientc-use-strict")
+	      (set! clientc-use-strict #f))
+	     ((string=? level "clientc-inlining")
+	      (set! clientc-inlining #t))
+	     ((string=? level "no-clientc-inlining")
+	      (set! clientc-inlining #f))
 	     ((string=? level "clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 1))
 	     ((string=? level "no-clientc-debug-unbound")
 	      (hop-clientc-debug-unbound-set! 0))
+	     ((string=? level "clientc-source-map")
+	      (set! clientc-source-map #t))
+	     ((string=? level "no-clientc-source-map")
+	      (set! clientc-source-map #f))
 	     ((string=? level "module")
 	      (bigloo-debug-module-set! 2))
 	     ((string=? level "0")
 	      #f)
 	     (else
 	      (let ((l (string->integer level)))
+		 (set! clientc-source-map #t)
+		 (set! clientc-debug #t)
+		 (set! clientc-inlining (<=fx l 2))
+		 (set! clientc-arity-check #t)
+		 (set! clientc-type-check #t)
 		 (bigloo-debug-module-set! (-fx l 1))
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
+	 (("--client-output" ?file (help "Client output port [stderr]"))
+	  (if (string=? file "-")
+	      (hop-client-output-port-set! (current-output-port))
+	      (let ((p (open-output-file file)))
+		 (if (output-port? p)
+		     (hop-client-output-port-set! p)
+		     (error "hop" "Cannot open client port" file)))))
 	 (("--devel" (help "Enable devel mode"))
 	  (set! clear-cache #t)
 	  (hop-cache-enable-set! #f)
@@ -175,6 +225,10 @@
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
 	  (hop-enable-repl-set! #t))
+	 (("--jobs" (help "Enable jobs management"))
+	  (hop-enable-jobs-set! #t))
+	 (("--no-jobs" (help "Disable jobs management"))
+	  (hop-enable-jobs-set! #f))
 	 ((("-z" "--zeroconf") (help "Enable zeroconf support"))
 	  (set! zeroconf #t))
 	 (("--no-zeroconf" (help "Disable zeroconf support (default)"))
@@ -220,6 +274,8 @@
 	  (hop-max-threads-set! 1)
 	  (hop-enable-keep-alive-set! #f)
 	  (hop-scheduling-set! 'nothread))
+	 (("--max-threads" ?m (help "Maximum number of handling HTTP requests"))
+	  (hop-max-threads-set! (string->integer m)))
 	 (("--scheduler" ?ident (help (format "Set scheduling policy [~s] (see --help-scheduler)" (hop-scheduling))))
 	  (hop-scheduling-set! (string->symbol ident)))
 	 (("--help-scheduler" (help "Print available schedulers list"))
@@ -232,7 +288,12 @@
 		(print "  - pool (one thread per request from a pool)")
 		(print "  - accept-many (as pool but an accept-many call)")))
 	  (exit 0))
-	 (("-psn_?dummy") ;; Macosx sends process serial numbers this way.
+	 (("--javascript-version" ?version
+	     (help (format "JavaScript version to generate (default ~s)"
+		      (hop-javascript-version))))
+	  (hop-javascript-version-set! version))
+	 (("-psn_?dummy")
+	  ;; Macosx sends process serial numbers this way.
 	  ;; just ignore it.
 	  'do-nothing)
 	 (("-?dummy")
@@ -243,11 +304,13 @@
 
       ;; http port
       (hop-port-set! p)
-      (when (eq? ep #unspecified) (set! ep p))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
+      ;; open the server socket before switching to a different process owner
+      (init-server-socket!)
+      
       ;; set the hop process owner
       (when setuser
 	 (hop-user-set! setuser)
@@ -284,6 +347,7 @@
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
+	 :tmp-dir (os-tmp)
 	 :share (hop-share-directory)
 	 :verbose (hop-verbose)
 	 :eval (lambda (e)
@@ -299,9 +363,19 @@
 		       hop-client
 		       ,(string->symbol (format "hop-~a" (hop-branch)))
 		       ,(string->symbol (format "hop-~a" (hop-version))))
+	 :javascript-version (hop-javascript-version)
 	 :expanders `(labels match-case
 			   (define-tag . ,hop-client-define-tag)
-			(define-xml-compound . ,hop-client-define-xml-compound)))
+			(define-xml-compound . ,hop-client-define-xml-compound))
+	 :source-map clientc-source-map
+	 :arity-check clientc-arity-check
+	 :type-check clientc-type-check
+	 :debug clientc-debug
+	 :compress clientc-compress
+	 :inlining clientc-inlining
+	 :module-use-strict clientc-use-strict
+	 :function-use-strict clientc-use-strict)
+
       (init-clientc-compiler! :modulec hopscheme-compile-module
 	 :expressionc hopscheme-compile-expression
 	 :valuec hopscheme-compile-value
@@ -328,9 +402,6 @@
 	     :directories (hop-path)
 	     :preferences-filename #f))
 
-      ;; set the hop process owner
-      (set-hop-owner! (hop-user))
-
       ;; kill
       (when killp
 	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
@@ -348,19 +419,20 @@
       (when (boolean? zeroconf)
 	 (hop-enable-zeroconf-set! zeroconf))
 	 
-      ;; hello world
-      (hello-world)
-      
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       
       ;; server event port
       (when (hop-enable-fast-server-event)
-	 (if (<fx ep 1024)
+	 (cond
+	    ((eq? ep #unspecified)
+	     (set! ep p))
+	    ((and (>fx ep 0) (<fx ep 1024))
 	     (error "fast-server-event-port"
 		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		ep)
-	     (hop-fast-server-event-port-set! ep)))
+		ep))
+	    (else
+	     (hop-fast-server-event-port-set! ep))))
       
       (for-each (lambda (expr)
 		   (call-with-input-string expr
@@ -385,6 +457,10 @@
       (register-exit-function! (lambda (ret)
 				  (hop-process-key-delete (hop-port))
 				  ret))
+
+      ;; check if a new server socket must be opened
+      (unless (=fx (socket-port-number (hop-server-socket)) (hop-port))
+	 (init-server-socket!))
       (reverse files)))
 
 ;*---------------------------------------------------------------------*/
@@ -410,10 +486,12 @@
 	   (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)
 	   (let ((pw (getpwnam user)))
 	      (if (pair? pw)
-		  (let ((uid (caddr pw)))
+		  (let ((uid (caddr pw))
+			(gid (cadddr pw)))
 		     (unless (=fx (getuid) uid)
 			(hop-verb 2 "  switch to user: "
-			   (hop-color 2 "" user) " (" uid ")\n")
+			   (hop-color 2 "" user) " (" uid ":" gid ")\n")
+			(setgid gid)
 			(setuid uid)))
 		  (error "hop" "Hop is executed as root (which is forbidden) and fails to switch to the dedicated HOP system user" user)))))
       (user
