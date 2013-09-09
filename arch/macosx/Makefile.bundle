@@ -1,10 +1,17 @@
 # Not tested (and most probably won't work) if placed inside a directory with spaces.
 #
 # Typical usage to create macosx/hop.dmg (the -j3 is not necessary)
-# make -f arch/macosx/Makefile.bundle configure
-# make -f arch/macosx/Makefile.bundle -j3
-# make -f arch/macosx/Makefile.bundle bundle
-# make -f arch/macosx/Makefile.bundle dmg
+#   make -f arch/macosx/Makefile.bundle -j3 all
+# which is equivalent to
+#   make -f arch/macosx/Makefile.bundle configure
+#   make -f arch/macosx/Makefile.bundle -j3
+#   make -f arch/macosx/Makefile.bundle bundle
+#   make -f arch/macosx/Makefile.bundle app
+#   make -f arch/macosx/Makefile.bundle dmg
+# If you need a specific older version, set OSX. For example OSX=10.6
+
+# To create a dmg without graphical user interface use
+#   make -f arch/macosx/Makefile.bundle single
 
 default: build
 
@@ -13,27 +20,64 @@ default: build
 PWD := $(shell pwd)
 BOOTDIR := $(PWD)
 BIN_NAME := hop
-TITLE := $(BIN_NAME)
-MACOSX_DIR := $(BOOTDIR)/macosx
+PROJ_NAME := Hop
+MACOSX_DIR := $(BOOTDIR)/arch/macosx
 DMG_DIR := $(MACOSX_DIR)/dmg
-APP_DIR := $(DMG_DIR)/$(BIN_NAME).app
+APP_DIR := $(DMG_DIR)/$(PROJ_NAME).app
+SRC_DIR := $(MACOSX_DIR)/src
+PROJ_DIR := $(SRC_DIR)/$(PROJ_NAME)/$(PROJ_NAME).xcodeproj
+BUILD_DIR := $(SRC_DIR)/$(PROJ_NAME)/build
 CONTENTS_DIR := $(APP_DIR)/Contents
+HOP_ICON := hop.icns
+
+XCODEBUILD = xcodebuild
 
 CONTRIBS_DIR := /Library/Hop/Weblets
 
 HDIUTIL := hdiutil
 
-DMG := $(MACOSX_DIR)/$(TITLE).dmg
+DMG := $(MACOSX_DIR)/$(BIN_NAME)-$(HOPRELEASE).dmg
+DMG_TMP := $(MACOSX_DIR)/$(BIN_NAME)-$(HOPRELEASE)-tmp.dmg
+
+BIN_DIR := Resources
+
+all: 
+	$(MAKE) -f arch/macosx/Makefile.bundle configure && \
+        $(MAKE) -f arch/macosx/Makefile.bundle && \
+        $(MAKE) -f arch/macosx/Makefile.bundle bundle && \
+	$(MAKE) -f arch/macosx/Makefile.bundle app && \
+        $(MAKE) -f arch/macosx/Makefile.bundle dmg
+
+single: 
+	$(MAKE) -f arch/macosx/Makefile.bundle configure-single && \
+	$(MAKE) -f arch/macosx/Makefile.bundle && \
+        $(MAKE) -f arch/macosx/Makefile.bundle bundle && \
+        $(MAKE) -f arch/macosx/Makefile.bundle dmg
 
 build:
 	$(MAKE) LDEXTRA="-framework CoreFoundation"
 
 # note that we need declare webletsdir and libdir as relative paths.
 # during 'install' we need to override these values...
+
+# For getting a new icon of a file hopIcon
+# DeRez -only icns hopIcon/$'Icon\r' > HopIcon.rsrc 
+
 configure:
 	./configure --macosx-bundle \
         --prefix=/ \
-	--srfi=macosx 
+	--srfi=macosx \
+	--bindir=$(BIN_DIR) --mandir=Resources/man \
+	--contribsdir=$(CONTRIBS_DIR) \
+	--webletsdir=Resources/Weblets \
+	--etcdir=Resources/etc \
+	--sharedir=Resources \
+	--libdir=Frameworks
+
+configure-single:
+	./configure --macosx-bundle \
+        --prefix=/ \
+	--srfi=macosx \
 	--bindir=MacOS --mandir=Resources/man \
 	--contribsdir=$(CONTRIBS_DIR) \
 	--webletsdir=Resources/Weblets \
@@ -47,17 +91,34 @@ bundle:
 	BIGLOO_VERSION=`$(BIGLOO) -q -eval "(begin (print *bigloo-version*) (exit 0))"` && \
 	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
 	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
-	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ && \
-	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources
+	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources && \
+	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ 
+
+app:
+	$(XCODEBUILD) -project $(PROJ_DIR) -target Hop$(OSX) && \
+	cp -r $(BUILD_DIR)/Release/$(PROJ_NAME).app/Contents/* $(CONTENTS_DIR)/ 
 
 dmg: $(DMG)
 
-$(DMG):
+$(DMG): 
+	cp $(MACOSX_DIR)/$(HOP_ICON) $(DMG_DIR)/.VolumeIcon.icns && \
+	SetFile -c icnC $(DMG_DIR)/.VolumeIcon.icns && \
+	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(BIN_NAME) -format UDRW -ov $(DMG_TMP) && \
+	rm -rf $(DMG_DIR) && \
 	mkdir -p $(DMG_DIR) && \
-	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(TITLE) -format UDZO -ov "$@"
+	$(HDIUTIL) attach $(DMG_TMP)  -mountpoint $(DMG_DIR) && \
+	SetFile -a C $(DMG_DIR) && \
+	$(HDIUTIL) detach $(DMG_DIR) && \
+	$(HDIUTIL) convert $(DMG_TMP)  -format UDZO -o "$@" && \
+	rm -f $(DMG_TMP) && \
+	Rez -append $(MACOSX_DIR)/HopIcon.rsrc -o "$@" && \
+	SetFile -a C "$@"
 
 clean:
-	-rm -rf $(APP_DIR)
+	-rm -rf $(BUILD_DIR)
 	-rm -f $(DMG)
+	-rm -f $(DMG_TMP) 
+	-rm -rf $(DMG_DIR)/*
 
-.PHONY: configure build bundle lib dmg clean
+.PHONY: configure configure-single single build bundle lib app dmg clean
+
