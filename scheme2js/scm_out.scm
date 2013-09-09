@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -132,9 +132,10 @@
 	  'TODO)))
 
 (define-nmethod (Frame-push.scm)
-   (with-access::Frame-push this (frame-allocs body)
-      (let ((storage-vars (map (lambda (f) (with-access::Frame-alloc f (storage-var) storage-var)) frame-allocs)))
-	 `(let ((storage-vars ,(map var-out storage-vars)))
+   (with-access::Frame-push this (frame-alloc body)
+      (let ((storage-vars (with-access::Frame-alloc frame-alloc
+				(storage-var) storage-var)))
+	 `(let ((storage-vars ,(list (var-out storage-vars))))
 	     ,(walk body)))))
 
 (define-nmethod (Return.scm)

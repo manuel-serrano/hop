@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sun Dec  9 00:56:53 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Mon Jul 22 10:01:25 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -25,7 +25,8 @@
 
    (extern  (macro fork::int () "fork"))
 
-   (export  (hop-verb ::int . args)
+   (export  (verb-mutex::mutex)
+	    (hop-verb ::int . args)
 	    (hop-color ::obj ::obj ::obj)
 	    (shortest-prefix ::bstring)
 	    (longest-suffix ::bstring)
@@ -54,6 +55,12 @@
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define *verb-mutex* (make-mutex "verb"))
+
+;*---------------------------------------------------------------------*/
+;*    verb-mutex ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (verb-mutex)
+   *verb-mutex*)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verb ...                                                     */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/2.5.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 17 08:57:34 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Fri Jul 19 16:12:11 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -65,6 +65,7 @@
 		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value
       :hop-library-path (hop-library-path)
+      :javascript-version (hop-javascript-version)
       :features `(hop
 		  ,(string->symbol (format "hop-~a" (hop-branch)))
 		  ,(string->symbol (format "hop-~a" (hop-version))))

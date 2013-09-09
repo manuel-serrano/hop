@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -32,6 +32,7 @@
 		(encapsulation-lambda (instantiate::Lambda
 					 (scope-vars '())
 					 (formals '())
+					 (arity 0)
 					 (vaarg? #f)
 					 (body encapsulated-body)))
 		(call (instantiate::Call

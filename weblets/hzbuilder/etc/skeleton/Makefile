@@ -118,8 +118,8 @@ config.hop: config.hop.in Makefile
 	echo ")" >> $@
 
 clean:
-	/bin/rm -f etc/weblet.info
-	/bin/rm -f .afile .etags .hop
+	$(RM) -f etc/weblet.info
+	$(RM) -f .afile .etags .hop
 
 getsources: 
 	@echo $(filter %.scm %.hop %.sch, $(FILES))

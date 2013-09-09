@@ -1,40 +1,47 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/walk.scm                */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Fri Jul 19 15:30:19 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Generic AST traversal                                            */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module walk
+   
    (import nodes
 	   export-desc)
-   (export
-    (generic walk0 n::Node env p::procedure)
-    (generic walk1 n::Node env p::procedure arg0)
-    (generic walk2 n::Node env p::procedure arg0 arg1)
-    (generic walk3 n::Node env p::procedure arg0 arg1 arg2)
-    (generic walk4 n::Node env p::procedure arg0 arg1 arg2 arg3)
-    (generic walk0! n::Node env p::procedure)
-    (generic walk1! n::Node env p::procedure arg0)
-    (generic walk2! n::Node env p::procedure arg0 arg1)
-    (generic walk3! n::Node env p::procedure arg0 arg1 arg2)
-    (generic walk4! n::Node env p::procedure arg0 arg1 arg2 arg3)
-    (macro define-nmethod)
-    (macro ncall)))
+   
+   (export (generic walk0 n::Node env p::procedure)
+	   (generic walk1 n::Node env p::procedure arg0)
+	   (generic walk2 n::Node env p::procedure arg0 arg1)
+	   (generic walk3 n::Node env p::procedure arg0 arg1 arg2)
+	   (generic walk4 n::Node env p::procedure arg0 arg1 arg2 arg3)
+	   (generic walk0! n::Node env p::procedure)
+	   (generic walk1! n::Node env p::procedure arg0)
+	   (generic walk2! n::Node env p::procedure arg0 arg1)
+	   (generic walk3! n::Node env p::procedure arg0 arg1 arg2)
+	   (generic walk4! n::Node env p::procedure arg0 arg1 arg2 arg3)
+	   (macro define-nmethod)
+	   (macro ncall)))
 
-;; (define-nmethod (While.optim! x y) BODY)
-;; =>
-;; (define-method (optim! this::While env x y)
-;;   (define (default-walk! n x y)
-;;      (walk2! n env optim! x y))
-;;   (define (walk! n x y)
-;;      (optim! n env x y))
-;;   BODY)
+;*---------------------------------------------------------------------*/
+;*    define-nmethod ...                                               */
+;*    -------------------------------------------------------------    */
+;*    (define-nmethod (While.optim! x y) BODY)                         */
+;*    =>                                                               */
+;*    (define-method (optim! this::While env x y)                      */
+;*      (define (default-walk! n x y)                                  */
+;*         (walk2! n env optim! x y))                                  */
+;*      (define (walk! n x y)                                          */
+;*         (optim! n env x y))                                         */
+;*      BODY)                                                          */
+;*---------------------------------------------------------------------*/
 (define-macro (define-nmethod args . body)
    (define (without-type sym)
       (if (not (symbol? sym))
@@ -73,9 +80,15 @@
 	     (,name node env ,@(map without-type method-args)))
 	  ,@body)))
 
+;*---------------------------------------------------------------------*/
+;*    ncall ...                                                        */
+;*---------------------------------------------------------------------*/
 (define-macro (ncall method-name node . args)
    `(,method-name ,node env ,@args))
-    
+
+;*---------------------------------------------------------------------*/
+;*    generic walks ...                                                */
+;*---------------------------------------------------------------------*/
 (define-generic (walk0 n::Node env p::procedure)
    (error "walk0"
 	  "Internal Error: forgot Node type"
@@ -118,6 +131,9 @@
 	  "Internal Error: forgot Node type"
 	  (with-output-to-string (lambda () (write-circle n)))))
 
+;*---------------------------------------------------------------------*/
+;*    gen-walks ...                                                    */
+;*---------------------------------------------------------------------*/
 (define-macro (gen-walks class . fields)
    (define (field-name f)
       (if (pair? f)
@@ -172,6 +188,9 @@
        ,@(map (lambda (nb) (gen-method nb #f)) (iota 4))
        ,@(map (lambda (nb) (gen-method nb #t)) (iota 4))))
 
+;*---------------------------------------------------------------------*/
+;*    default walk                                                     */
+;*---------------------------------------------------------------------*/
 (gen-walks Const)
 (gen-walks Ref)
 (gen-walks Module body)

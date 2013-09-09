@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -68,8 +68,8 @@ function sc_map_callcc(proc) {
 	    var applyArgs = [];
 	    while (ls[0] !== null) {
 		for (var i = 0; i < nbApplyArgs; i++) {
-		    applyArgs[i] = ls[i].car;
-		    ls[i] = ls[i].cdr;
+		    applyArgs[i] = ls[i].__hop_car;
+		    ls[i] = ls[i].__hop_cdr;
 		}
 		revres = sc_cons(proc.apply(null, applyArgs), revres);
 	    }
@@ -107,16 +107,16 @@ function sc_mapBang_callcc(proc) {
 	    while (ls[0] !== null) {
 		var tmp = ls[0];
 		for (var i = 0; i < nbApplyArgs; i++) {
-		    applyArgs[i] = ls[i].car;
-		    ls[i] = ls[i].cdr;
+		    applyArgs[i] = ls[i].__hop_car;
+		    ls[i] = ls[i].__hop_cdr;
 		}
-		tmp.car = proc.apply(null, applyArgs);
+		tmp.__hop_car = proc.apply(null, applyArgs);
 	    }
 	    return res;
 	} catch(e) {
 	    if (e instanceof sc_CallCcException && e.backup) {
 		e.pushCont(function(v) {
-			tmp.car = v;
+			tmp.__hop_car = v;
 			return mapBang(ls.concat(), res);
 		    });
 	    }
@@ -148,8 +148,8 @@ function sc_forEach_callcc(proc, l1) {
 	args = new Array(arguments.length - 1);
 	while(l1 !== null) {
 	    for (var i = 1; i < arguments.length; i++) {
-		args[i-1] = arguments[i].car;
-		arguments[i] = arguments[i].cdr;
+		args[i-1] = arguments[i].__hop_car;
+		arguments[i] = arguments[i].__hop_cdr;
 	    }
 	    proc.apply(null, args);
 	}
@@ -171,22 +171,22 @@ function sc_filterBang_callcc(proc, l1) {
     function filterBang(tail, next, dummy) {
 	try {
 	    while (next !== null) {
-		if (proc(next.car) !== false) {
-		    tail.cdr = next;
+		if (proc(next.__hop_car) !== false) {
+		    tail.__hop_cdr = next;
 		    tail = next;
 		}
-		next = next.cdr;
+		next = next.__hop_cdr;
 	    }
-	    tail.cdr = null;
-	    return dummy.cdr;
+	    tail.__hop_cdr = null;
+	    return dummy.__hop_cdr;
 	} catch(e) {
 	    if (e instanceof sc_CallCcException && e.backup) {
 		e.pushCont(function(v) {
 			if (v !== false) {
-			    tail.cdr = next;
+			    tail.__hop_cdr = next;
 			    tail = next;
 			}
-			return filterBang(tail, next.cdr, dummy);
+			return filterBang(tail, next.__hop_cdr, dummy);
 		    });
 	    }
 	    throw e;
@@ -209,18 +209,18 @@ function sc_filter_callcc(proc, l1) {
     function filter(revres, l) {
 	try {
 	    while (l !== null) {
-		if (proc(l.car) !== false)
-		    revres = sc_cons(l.car, revres);
-		l = l.cdr;
+		if (proc(l.__hop_car) !== false)
+		    revres = sc_cons(l.__hop_car, revres);
+		l = l.__hop_cdr;
 	    }
 	    return sc_reverse(revres);
 	} catch(e) {
 	    if (e instanceof sc_CallCcException && e.backup) {
 		e.pushCont(function(v) {
 			if (v !== false)
-			    return filter(sc_cons(l.car, revres), l.cdr);
+			    return filter(sc_cons(l.__hop_car, revres), l.__hop_cdr);
 			else
-			    return filter(revres, l.cdr);
+			    return filter(revres, l.__hop_cdr);
 		    });
 	    }
 	    throw e;
@@ -258,16 +258,16 @@ function sc_any_callcc(proc, l) {
 	return sc_callCcRoot(this, arguments);
     try {
 	while (l !== null) {
-	    var tmp = proc(l.car);
+	    var tmp = proc(l.__hop_car);
 	    if (tmp !== false) return tmp;
-	    l = l.cdr;
+	    l = l.__hop_cdr;
 	}
 	return false;
     } catch(e) {
 	if (e instanceof sc_CallCcException && e.backup) {
 	    e.pushCont(function(v) {
 		    if (v !== false) return v;
-		    return sc_any_callcc(proc, l.cdr);
+		    return sc_any_callcc(proc, l.__hop_cdr);
 		});
 	}
 	throw e;
@@ -284,17 +284,17 @@ function sc_every_callcc(proc, l) {
     try {
 	var tmp;
 	while (l !== null) {
-	    tmp = proc(l.car);
+	    tmp = proc(l.__hop_car);
 	    if (tmp === false) return false;
-	    l = l.cdr;
+	    l = l.__hop_cdr;
 	}
 	return tmp;
     } catch(e) {
 	if (e instanceof sc_CallCcException && e.backup) {
 	    e.pushCont(function(v) {
 		    if (v === false) return false;
-		    if (l.cdr === null) return v;
-		    return sc_any_callcc(proc, l.cdr);
+		    if (l.__hop_cdr === null) return v;
+		    return sc_any_callcc(proc, l.__hop_cdr);
 		});
 	}
 	throw e;

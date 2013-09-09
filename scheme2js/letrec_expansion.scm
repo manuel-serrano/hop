@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -11,16 +11,20 @@
 ;*=====================================================================*/
 
 (module letrec-expansion
+   
    (import config
 	   error
 	   nodes
+	   dump-node
 	   pobject-conv
 	   export-desc
 	   walk
 	   verbose
 	   gen-js)
+   
    (static (final-class Letrec-Env
 	      (call/cc?::bool read-only)))
+   
    (export (letrec-expansion! tree::Module)))
 
 ;; This pass servers two purposes:
@@ -104,7 +108,7 @@
 		(new-bindings (map (lambda (tmp-var binding)
 				      (with-access::Set! binding (val)
 					 (instantiate::Set!
-					    (location location)
+					    (location (or location -70))
 					    (lvalue (instantiate::Ref
 						       (location location)
 						       (id tmp-var)))
@@ -114,7 +118,7 @@
 		(assigs (map (lambda (tmp-var binding)
 				(with-access::Set! binding (lvalue)
 				   (instantiate::Set!
-				      (location location)
+				      (location (or location -80))
 				      (lvalue lvalue)
 				      (val (instantiate::Ref
 					      (location location)
@@ -137,7 +141,8 @@
 		     (body (instantiate::Begin
 			      ;; and finally assign them back to the originals.
 			      (exprs (append! assigs (list body)))))
-		     (kind 'let)))))))
+		     (kind 'let)))
+	    body))))
 
 (define (defines->letrec! n)
    (cond

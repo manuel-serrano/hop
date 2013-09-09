@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -170,5 +170,5 @@
 
 ;; should not be necessary, as deep-clone is only called from inside 'inline'.
 (define-do-clone Frame-alloc storage-var (vars))
-(define-do-clone Frame-push body (frame-allocs))
+(define-do-clone Frame-push body frame-alloc)
 (define-do-clone While test body label)

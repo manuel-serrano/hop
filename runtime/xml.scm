@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/2.5.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jul 23 14:06:01 2013 (serrano)                */
+;*    Last change :  Wed Aug  7 13:51:44 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -141,7 +141,7 @@
 ;*    hop-xml-backend ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-xml-backend
-   *html-4.01-backend*
+   *html5-backend*
    (lambda (v)
       (if (isa? v xml-backend)
 	  v
@@ -179,7 +179,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (%xml-constructor o::xml-markup)
    (call-next-method)
-   (with-access::xml-markup o (body tag)
+   (with-access::xml-markup o (body tag attributes)
+      (for-each (lambda (attr)
+		   (when (isa? attr xml-tilde)
+		      (with-access::xml-tilde attr (parent)
+			 (set! parent o))))
+	 attributes)
       (let loop ((es body))
 	 (cond
 	    ((pair? es)
@@ -196,6 +201,9 @@
 	     (loop (cdr es)))
 	    ((isa? es xml-element)
 	     (with-access::xml-element es (parent)
+		(set! parent o)))
+	    ((isa? es xml-tilde)
+	     (with-access::xml-tilde es (parent)
 		(set! parent o)))))
       o))
 
@@ -412,7 +420,7 @@
 	  (xml-write (xml-tilde->statement obj) p backend)
 	  (with-access::xml-backend backend (cdata-start cdata-stop)
 	     (display "<script type='" p)
-	     (display (hop-configure-javascript-mime-type) p)
+	     (display (hop-mime-type) p)
 	     (display "'>" p)
 	     (when cdata-start (display cdata-start p))
 	     (display (xml-tilde->statement obj) p)
@@ -442,7 +450,7 @@
 	     (when (isa? security security-manager)
 		(for-each (lambda (r)
 			     (display "<script type='" p)
-			     (display (hop-configure-javascript-mime-type) p)
+			     (display (hop-mime-type) p)
 			     (fprintf p "' src='~a'>" r)
 			     (display "</script>" p))
 		   (with-access::security-manager security (runtime) runtime)))
@@ -734,6 +742,54 @@
       (xml-write-attribute (proc) id p backend)))
 
 ;*---------------------------------------------------------------------*/
+;*    xml-attribute-encode ...                                         */
+;*---------------------------------------------------------------------*/
+(define (xml-attribute-encode obj)
+   (if (not (string? obj))
+       obj
+       (let ((ol (string-length obj)))
+	  (define (count str ol)
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx i ol)
+		    j
+		    (let ((c (string-ref str i)))
+		       ;; MS 23 jul 2013, I don't understand anymore why
+		       ;; attribute values should escape &#...
+;* 		       (if (or (char=? c #\') (char=? c #\&))          */
+		       (if (char=? c #\')
+			   (loop (+fx i 1) (+fx j 5))
+			   (loop (+fx i 1) (+fx j 1)))))))
+	  (define (encode str ol nl)
+	     (if (=fx nl ol)
+		 obj
+		 (let ((nstr (make-string nl)))
+		    (let loop ((i 0)
+			       (j 0))
+		       (if (=fx j nl)
+			   nstr
+			   (let ((c (string-ref str i)))
+			      (case c
+				 ((#\')
+				  (string-set! nstr j #\&)
+				  (string-set! nstr (+fx j 1) #\#)
+				  (string-set! nstr (+fx j 2) #\3)
+				  (string-set! nstr (+fx j 3) #\9)
+				  (string-set! nstr (+fx j 4) #\;)
+				  (loop (+fx i 1) (+fx j 5)))
+;* 				 ((#\&)                                */
+;* 				  (string-set! nstr j #\&)             */
+;* 				  (string-set! nstr (+fx j 1) #\#)     */
+;* 				  (string-set! nstr (+fx j 2) #\3)     */
+;* 				  (string-set! nstr (+fx j 3) #\8)     */
+;* 				  (string-set! nstr (+fx j 4) #\;)     */
+;* 				  (loop (+fx i 1) (+fx j 5)))          */
+				 (else
+				  (string-set! nstr j c)
+				  (loop (+fx i 1) (+fx j 1))))))))))
+	  (encode obj ol (count obj ol)))))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initializations obj p backend)
@@ -755,7 +811,7 @@
 		       (loop (cddr attrs) var))
 		    (let ((var (gensym)))
 		       (display "<script type='" p)
-		       (display (hop-configure-javascript-mime-type) p)
+		       (display (hop-mime-type) p)
 		       (display "'>" p)
 		       (when cdata-start (display cdata-start p))
 		       (display "hop_add_event_listener( \"" p)
@@ -872,22 +928,56 @@
 ;*    xml-tilde->statement ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->statement::bstring obj)
+
+   (define (element-attribute el)
+      (with-access::xml-element el (attributes)
+	 (let loop ((attributes attributes))
+	    (if (or (null? attributes) (null? (cdr attributes)))
+		#f
+		(if (and (keyword? (car attributes))
+			 (eq? (cadr attributes) obj))
+		    (car attributes)
+		    (loop (cddr attributes)))))))
    
-   (define (js-catch-error stmt file line)
-      (if (and (string? file) (integer? line))
-	  (format "try { ~a } catch( e ) { hop_report_exception_location( e, \"~a\", ~a ); }" stmt file line)
-	  (format "try { ~a } catch( e ) { hop_report_exception( e ); }" stmt)))
+   (define (parent-context parent)
+      (cond
+	 ((string? parent)
+	  ;; I'm not sure this will be ever used...
+	  parent)
+	 ((isa? parent xml-element)
+	  ;; find the attribute (if any)
+	  (with-access::xml-element parent (tag id)
+	     (let ((attr (element-attribute parent)))
+		(if attr
+		    (format "~a#~a.~a" tag id (keyword->string attr))
+		    (format "~a#~a" tag id)))))
+	 (else
+	  "")))
+
+   (define (js-catch-callback/location stmt parent file point)
+      ;; this is an inlined version of hop_callback (hop-lib.js)
+      (format "var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a );
+hop_current_stack_context=ctx;
+try { ~a } catch( e ) { hop_callback_handler(e, ctx); }"
+         (string-replace (xml-attribute-encode (parent-context parent))
+            #\Newline #\Space)
+         file point stmt))
    
-   (with-access::xml-tilde obj (%js-statement body loc)
+   (define (js-catch-callback stmt)
+      (format "try { ~a } catch( e ) { hop_callback_handler( e ); }" stmt))
+   
+   (with-access::xml-tilde obj (%js-statement body loc parent)
       (when (not (string? %js-statement))
 	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
 	    (let ((stmt (precompiled->JS-statement body)))
 	       (if (>fx (bigloo-debug) 0)
 		   (match-case loc
-		      ((at ?file ?point)
-		       (set! %js-statement (js-catch-error stmt file point)))
+		      ((at (and (? string?) ?file) (and (? integer?) ?point))
+		       (set! %js-statement
+			  (js-catch-callback/location stmt parent file point)))
 		      (else
-		       (set! %js-statement (js-catch-error stmt #f #f))))
+		       (set! %js-statement
+			  (js-catch-callback stmt))))
 		   (set! %js-statement stmt)))))
       %js-statement))
 
@@ -1043,3 +1133,5 @@
 			 (let ((v (car v)))
 			    (hashtable-update! env v (lambda (x) #f) src)))
 	       (precompiled-free-variables body))))))
+
+

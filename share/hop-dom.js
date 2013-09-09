@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Feb 27 09:23:05 2013 (serrano)                */
+/*    Last change :  Mon Aug 19 06:59:41 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -49,7 +49,7 @@ function dom_add_child( id, e ) {
 	    node.appendChild( document.createTextNode( e ) );
 	 } else {
 	    if( sc_isPair( e ) ) {
-	       sc_forEach( add, e )
+	       sc_forEach( add, e );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
@@ -1161,12 +1161,38 @@ function hop_create_element( html ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_encoded_element ...                                   */
+/*    -------------------------------------------------------------    */
+/*    Don't remove this function, see HOP_FIND_CLASS_UNSERIALIZER      */
+/*    (hop-serialize.js).                                              */
 /*---------------------------------------------------------------------*/
 function hop_create_encoded_element( html ) {
    try {
       return hop_create_element( decodeURIComponent( html ) );
    } catch( e ) {
-      alert( "*** hop_create_encoded_element, cannot decode: " + html );
+      /* decoding has hitted an illegal UTF-8 surrogate, decode by hand */
+      var i = 0;
+      var l = html.length;
+      var r = "";
+
+      while( i < l ) {
+	 var j = html.indexOf( '%', i );
+
+	 if( j == -1 ) {
+	    return r + html.substring( i );
+	 } else {
+	    if( j > l - 3 )
+	       return r + html.substring( i );
+
+	    if( j > i )
+	       r += html.substring( i, j );
+
+	    r += string_hex_intern( html.substring( j + 1, j + 3 ) );
+
+	    i = j + 3;
+	 }
+      }
+
+      return hop_create_element( r );
    }
 }
 
@@ -1181,11 +1207,11 @@ function hop_innerHTML_set( nid, html ) {
       el = document.getElementById( nid );
 
       if( el == undefined ) {
-	 sc_error( "innerHTML-set!", "Cannot find element", nid );
+	 sc_error( "innerHTML-set!", "Cannot find element", nid, 2 );
       }
    } else {
       if( !nid ) {
-	 sc_error( "innerHTML-set!", "illegal element", nid );
+	 sc_error( "innerHTML-set!", "illegal element", nid, 2 );
 	 return;
       }
       el = nid;
@@ -1265,7 +1291,7 @@ function hop_element_y( obj ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
-   n = (e instanceof String) || (typeof e == "string") ?
+   var  n = (e instanceof String) || (typeof e == "string") ?
       document.getElementById( e ) : e;
    
    if( n == undefined ) sc_error( "bounding-box", "illegal node", e );

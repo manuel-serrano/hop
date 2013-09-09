@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.5.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jun 28 08:19:36 2013 (serrano)                */
+;*    Last change :  Mon Sep  9 16:18:14 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -116,31 +116,8 @@
 		      (error "http-response"
 			 "No serialization method specified"
 			 content-type))
-		     ((string=? content-type "application/x-hop")
-		      (with-access::http-request request (header)
-			 ;; check what the client can do
-			 (let ((c (assq hop-serialize: header)))
-			    (cond
-			       ((not (pair? c))
-				;; hop backward compatibility
-				(set! conn 'close)
-				(http-write-line p "Connection: " conn)
-				(http-write-line p)
-				(obj->javascript-expr value p))
-			       ((string=? (cdr c) "arraybuffer")
-				;; fast path
-				(let ((s (obj->string value)))
-				   (http-write-line p "Content-Length: " (string-length s))
-				   (http-write-line p "Connection: " conn)
-				   (http-write-line p)
-				   (display s p)))
-			       (else
-				;; slow explicity javascript serialization 
-				(set! conn 'close)
-				(http-write-line p "Connection: " conn)
-				(http-write-line p)
-				(byte-array->json (obj->string value) p))))))
-		     ((string=? content-type "application/x-javascript")
+		     ((string-prefix? "application/x-javascript" content-type)
+		      ;; standard javascript serialization
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
@@ -151,7 +128,27 @@
 			     (obj->javascript-expr value p)
 			     (display ")" p))
 			  (obj->javascript-expr value p)))
-		     ((string=? content-type "application/json")
+		     ((string-prefix? "application/x-hop" content-type)
+		      ;; fast path, bigloo serialization
+		      (let ((s (obj->string value)))
+			 (http-write-line p "Content-Length: " (string-length s))
+			 (http-write-line p "Connection: " conn)
+			 (http-write-line p)
+			 (display s p)))
+		     ((string-prefix? "application/x-url-hop" content-type)
+		      ;; fast path, bigloo serialization
+		      (let ((s (url-path-encode (obj->string value))))
+			 (http-write-line p "Content-Length: " (string-length s))
+			 (http-write-line p "Connection: " conn)
+			 (http-write-line p)
+			 (display s p)))
+		     ((string-prefix? "application/x-json-hop" content-type)
+		      (set! conn 'close)
+		      (http-write-line p "Connection: " conn)
+		      (http-write-line p)
+		      (byte-array->json (obj->string value) p))
+		     ((string-prefix? "application/json" content-type)
+		      ;; json encoding
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
@@ -164,7 +161,7 @@
 			  (obj->json value p)))
 		     (else
 		      (error "http-response"
-			 "Unspported serialization method"
+			 "Unsupported serialization method"
 			 content-type))))
 	       (flush-output-port p)
 	       conn)))))
@@ -644,7 +641,7 @@
 ;*    scheme->response ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (scheme->response obj::obj req)
-   (with-access::http-request req (method)
+   (with-access::http-request req (method header)
       (cond
 	 ((string? obj)
 	  (instantiate::http-response-string
@@ -654,14 +651,30 @@
 	     (bodyp (not (eq? method 'HEAD)))
 	     (body obj)))
 	 (else
-	  (instantiate::http-response-hop
-	     (backend (hop-xml-backend-secure))
-	     (content-type (hop-mime-type))
-	     (charset (hop-charset))
-	     (request req)
-	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	     (bodyp (not (eq? method 'HEAD)))
-	     (value obj))))))
+	  (let* ((c (assq hop-serialize: header))
+		 (ctype (cond
+			   ((or (not (pair? c)) (not (string? (cdr c))))
+			    "application/x-javascript")
+			   ((string=? (cdr c) "javascript")
+			    "application/x-javascript")
+			   ((string=? (cdr c) "arraybuffer")
+			    "application/x-hop")
+			   ((string=? (cdr c) "url-arraybuffer")
+			    "application/x-url-hop")
+			   ((string=? (cdr c) "json-byte-array")
+			    "application/x-json")
+			   ((string=? (cdr c) "json")
+			    "application/json")
+			   (else
+			    "application/x-javascript"))))
+	     (instantiate::http-response-hop
+		(backend (hop-xml-backend-secure))
+		(content-type ctype)
+		(charset (hop-charset))
+		(request req)
+		(header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+		(bodyp (not (eq? method 'HEAD)))
+		(value obj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::%http-response ...                            */
@@ -752,9 +765,12 @@
 			       (loop (or rhost host)
 				  (or rport port)
 				  (or ruser user)
-				  (if rhost
-				      (make-file-name (dirname path) rpath)
-				      rpath)))
+				  (cond
+				     (rhost rpath)
+				     ((string-prefix? "/" rpath)
+				      rpath)
+				     (else
+				      (make-file-name (dirname path) rpath)))))
 			    (raise e)))
 		     (set! header (cons (cons connection: connection) header))
 		     (let ((auth (if (and (isa? req http-server-request)
@@ -786,14 +802,14 @@
       (multiple-value-bind (rproto ruser rhost rport rpath)
 	 (url-parse url)
 	 (cond
-	    ((not rproto)
+	    ((string=? rproto "file")
 	     (values #f #f #f rpath))
-	    ((not (string? rhost))
-	     (raise
-	      (instantiate::&io-malformed-url-error
-		 (proc "http-send-request")
-		 (msg "Illegal host")
-		 (obj url))))
+;* 	    ((not (string? rhost))                                     */
+;* 	     (raise                                                    */
+;* 	      (instantiate::&io-malformed-url-error                    */
+;* 		 (proc "http-send-request")                            */
+;* 		 (msg "Illegal host")                                  */
+;* 		 (obj url))))                                          */
 	    (else
 	     (values rhost rport ruser rpath))))))
 

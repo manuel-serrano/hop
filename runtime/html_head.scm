@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/2.5.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri May 24 11:42:26 2013 (serrano)                */
+;*    Last change :  Wed Jul 31 07:26:30 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -89,7 +89,7 @@
 ;*    <HOP-SETUP> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SETUP>)
-   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+   (<SCRIPT> :type (hop-mime-type)
       (string-append "
 function hop_etc_directory() {return \"" (hop-etc-directory) "\";}
 function hop_bin_directory() {return \"" (hop-bin-directory) "\";}
@@ -106,7 +106,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    <HOP-SERVER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
-   (<SCRIPT> :type (hop-configure-javascript-mime-type)
+   (<SCRIPT> :type (hop-mime-type)
       (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""
 	 (hop-server-hostip) "\")")))
 
@@ -141,56 +141,58 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 (define (init-head!)
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed
-      (let ((hopcss (make-file-path (hop-share-directory) "hop.hss")))
+      (let* ((hopcss (make-file-path (hop-share-directory) "hop.hss"))
+	     (suffix (if (=fx (bigloo-debug) 0) "_u.js" "_s.js"))
+	     (rts (map (lambda (s) (string-append s suffix))
+		     (hop-runtime-system))))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
-	       (cons* (<HOP-SETUP>)
-		      (<LINK> :inline #f
-			 :rel "stylesheet"
-			 :type (hop-configure-css-mime-type) 
-			 :href hopcss)
-		      (append
-			 (map (lambda (f)
-				 (let ((p (make-file-name (hop-share-directory) f)))
-				    (<SCRIPT> :inline #f
-				       :type (hop-configure-javascript-mime-type)
-				       :src p)))
-			    (append (hop-runtime-system) (hop-runtime-extra)))
-			 (list (<HOP-SERVER>)))))
+	    (cons* (<HOP-SETUP>)
+	       (<LINK> :inline #f
+		  :rel "stylesheet"
+		  :type (hop-configure-css-mime-type) 
+		  :href hopcss)
+	       (append
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #f
+				:type (hop-mime-type)
+				:src p)))
+		     (append rts (hop-runtime-extra)))
+		  (list (<HOP-SERVER>)))))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
-	       (cons* (<HOP-SETUP>)
-		      (<LINK> :inline #f
-			 :rel "stylesheet"
-			 :type (hop-configure-css-mime-type) 
-			 :href hopcss)
-		      (append
-			 (map (lambda (f)
-				 (let ((p (make-file-name (hop-share-directory) f)))
-				    (<SCRIPT> :inline #f
-				       :type (hop-configure-javascript-mime-type)
-				       :src p)))
-			    (append (hop-runtime-system-files) (hop-runtime-extra)))
-			 (list (<HOP-SERVER>)))))
+	    (cons* (<HOP-SETUP>)
+	       (<LINK> :inline #f
+		  :rel "stylesheet"
+		  :type (hop-configure-css-mime-type) 
+		  :href hopcss)
+	       (append
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #f
+				:type (hop-mime-type)
+				:src p)))
+		     (append (hop-runtime-system-files)
+			(hop-runtime-extra)))
+		  (list (<HOP-SERVER>)))))
 	 ;; this is used for inlined headers
 	 (set! head-runtime-system-inline
-	       (cons* (<HOP-SETUP>)
-		      (<LINK> :inline #t
-			 :rel "stylesheet"
-			 :type (hop-configure-css-mime-type) 
-			 :href hopcss)
-		      (append
-			 (map (lambda (f)
-				 (let ((p (make-file-name (hop-share-directory) f)))
-				    (<SCRIPT> :inline #t
-				       :type (hop-configure-javascript-mime-type)
-				       :src p)))
-			    (append (hop-runtime-system)
-			       (hop-runtime-extra)
-			       (list "hop-exception.scm")))
-			 (list (<HOP-SERVER>))))))))
+	    (cons* (<HOP-SETUP>)
+	       (<LINK> :inline #t
+		  :rel "stylesheet"
+		  :type (hop-configure-css-mime-type) 
+		  :href hopcss)
+	       (append
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #t
+				:type (hop-mime-type)
+				:src p)))
+		     (append rts (hop-runtime-extra)))
+		  (list (<HOP-SERVER>))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    library-path ...                                                 */
@@ -223,7 +225,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (string-append dir "/" p))))
    
    (define (script p inl)
-      (<SCRIPT> :type (hop-configure-javascript-mime-type)
+      (<SCRIPT> :type (hop-mime-type)
 	 :inline inl :src p))
    
    (define (find-head p)
@@ -575,7 +577,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 (define-tag <SCRIPT> ((inline #f boolean)
 		      (src #unspecified string)
-		      (type (hop-configure-javascript-mime-type) string)
+		      (type (hop-mime-type) string)
 		      (attributes)
 		      body)
    
@@ -611,7 +613,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-   
+
    (purify
       (if (and inline (string? src))
 	  (if (file-exists? src)

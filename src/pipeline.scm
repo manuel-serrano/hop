@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Mar 29 10:51:33 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 07:13:07 2013 (serrano)                */
 ;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -251,6 +251,21 @@
 	     (http-response e socket))
 	  (begin
 	     (exception-notify e)
+	     (when (>=fx (bigloo-debug) 1)
+		(with-access::http-request req (header)
+		   (let ((stk (http-header-field header hop-debug-stack:)))
+		      (when (string? stk)
+			 (with-handler
+			    (lambda (e) #f)
+			    (let ((stk (hop-debug-exception-stack
+					  (string->obj (url-decode stk)))))
+			       (when (pair? stk)
+				  (display-trace-stack stk
+				     (current-error-port)
+				     (if (isa? e &exception)
+					 (with-access::&exception e (stack)
+					    (+fx 1 (length stack)))
+					 1)))))))))
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
 	     (let ((resp ((or (hop-http-response-error) http-error) e)))

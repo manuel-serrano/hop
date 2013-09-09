@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed May  1 09:17:07 2013 (serrano)                */
+/*    Last change :  Mon Sep  9 09:43:59 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -29,47 +29,30 @@
 
 /*---------------------------------------------------------------------*/
 /*    hop_callback ...                                                 */
+/*    -------------------------------------------------------------    */
+/*    See HOP-CALLBACK-HANDLER, hop-exception.scm.                     */
+/*    See also XML-TILDE->STATEMENT, runtime/xml.scm                   */
 /*---------------------------------------------------------------------*/
-function hop_callback( proc ) {
-   if( hop_debug() && this ) {
-      // debug and not strict mode
-      if( !(typeof proc === "function" ) ) {
-	 var hstack = hop_get_stack( 1 );
-	 e = new Error( "handler not a procedure: " + proc );
-	 
-	 e.hopStack = hstack;
-	 hop_report_exception( e );
-
-	 return function( e ) {
-	    throw( e );
-	 }
-      } else {
-	 var hstack =
-	    ((typeof hop_get_stack) === "function") ?
-	    hop_get_stack( 1 ) : null;
-	 
-	 return function( e ) {
-	    try {
-	       return proc.apply( this, arguments );
-	    } catch( exc ) {
-	       if( sc_isPair( exc.hopStack ) ) {
-		  exc.hopStack = sc_append( exc.hopStack, hstack );
-	       }
-	       else {
-		  try {
-		     exc.hopStack = hstack;
-		  } catch( _ ) {
-		  }
-	       }
-
-	       hop_report_exception( exc );
-	    }
-	 }
-      }
-   } else {
-      return proc;
+function hop_callback( proc, ctx, id ) {
+   if( !("apply" in proc) ) {
+      sc_typeError( id, "procedure", proc, 2 );
    }
-}   
+   
+   var applyCallback = function() {
+      try {
+	 hop_current_stack_context = ctx;
+	 return proc.apply( this, arguments );
+      } catch( e ) {
+	 hop_callback_handler( e, ctx );
+      }
+   }
+
+   if( "displayName" in proc ) {
+      applyCallback.displayName = proc.displayName;
+   }
+
+   return applyCallback;
+}
    
 /*---------------------------------------------------------------------*/
 /*    hop_trace ...                                                    */
@@ -86,21 +69,32 @@ function hop_trace() {
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
 function hop_tprint( file, pos, args ) {
-   // see scheme2js/runtime/runtime_part.js
-   if( __sc_traceHasConsole ) {
-      if( file || pos ) {
-	 console.log( file + ", " + pos + ": " );
+   // client console tprint
+   if( hop_config.tprint_mode === "both"
+       || hop_config.tprint_mode === "client" ) {
+      if( __sc_traceHasConsole ) {
+	 if( file || pos ) {
+	    console.log( file + ", " + pos + ": " );
+	 }
+	 console.log.apply( console, sc_list2vector( args ) );
+      } else {
+	 var str = file + ", " + pos + ": ";
+	 
+	 while( sc_isPair( args ) ) {
+	    str += args.__hop_car;
+	    args = args.__hop_cdr;
+	 }
+	 
+	 alert( str );
       }
-      console.log.apply( console, sc_list2vector( args ) );
-   } else {
-      var str = file + ", " + pos + ": ";
+   }
 
-      while( sc_isPair( args ) ) {
-	 str += args.car;
-	 args = args.cdr;
-      }
-      
-      alert( str );
+   // tprint on a server console
+   if( hop_config.tprint_mode === "both" 
+       || hop_config.tprint_mode === "server" ) {
+      var svc = hop_apply_url( hop_service_base() + "/public/server-debug/tprint",
+			       arguments );
+      hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
 }
 
@@ -389,27 +383,77 @@ function hop_typeof( obj ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    after ...                                                        */
+/*    sc_after ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t) (arity #t)) */
-function after( timeout, proc ) {
-   var tm = sc_isNumber( timeout ) ? timeout : 1;
-   var wproc = hop_callback( proc );
+/*** META ((export after) (arity #t)) */
+function sc_after( timeout, proc ) {
+#if HOP_RTS_DEBUG
+   var mark = "After trace:";
    
-   var i = setInterval( function() { clearInterval( i ); wproc() }, tm );
+   if( hop_debug() > 0 ) {
+      if( !sc_isNumber( timeout ) ) {
+	 sc_typeError( "after", "integer", timeout, 1 );
+      }
+   
+      if( !("apply" in proc) ) {
+	 sc_typeError( "after", "procedure", proc, 1 );
+      }
+   
+      try {
+	 /* raise an error to get the execution stack */
+	 throw new Error( "after" );
+      } catch( e ) {
+	 var ctx;
+	 var estk = hop_get_exception_stack( e );
+
+	 if( !(sc_isPair( hop_current_stack_context )) ||
+	     hop_current_stack_context.__hop_car !== mark ) {
+	    ctx = sc_cons( mark, hop_extend_stack_context( estk ) );
+	 } else {
+	    ctx = hop_current_stack_context;
+	    ctx.__hop_cdr.__hop_car = estk;
+	 }
+
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "after" );
+      }
+   }
+#endif
+   
+   var i = setInterval( function() { clearInterval( i ); proc() }, timeout );
+   
    return true;
 }
 
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t) (arity #t)) */
-function timeout( tm, proc ) {
-   var wproc = hop_callback( proc );
+/*** META ((export timeout) (arity #t)) */
+function sc_timeout( tm, proc ) {
+#if HOP_RTS_DEBUG
+   if( hop_debug() > 0 ) {
+      if( !sc_isNumber( tm ) ) {
+	 sc_typeError( "timeout", "integer", tm, 1 );
+      }
+   
+      if( !("apply" in proc) ) {
+	 sc_typeError( "timeout", "procedure", proc, 1 );
+      }
+   
+      try {
+	 /* raise an error to get the execution stack */
+	 throw new Error( "timeout" );
+      } catch( e ) {
+	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var ctx = sc_cons( "Timeout trace:", stk );
 
-   if( wproc() ) {
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "timeout" );
+      }
+   }
+#endif
+   
+   if( proc() ) {
       var i = setInterval(
-	 function() { if( !wproc() ) clearInterval( i )}, tm );
+	 function() { if( !proc() ) clearInterval( i )}, tm );
    }
 }
 
@@ -736,13 +780,13 @@ function hop_alist2jsobject( alist ) {
    var o = {};
 
    while( sc_isPair( alist ) ) {
-      if( !sc_isPair( alist.car ) || !sc_isPair( alist.car.cdr ) )
-	 sc_error( "alist->object", "Illegal entry", alist.car );
-      if( !sc_isKeyword( alist.car.car ) )
-	 sc_error( "alist->object", "Illegal key", alist.car.car );
+      if( !sc_isPair( alist.__hop_car ) || !sc_isPair( alist.__hop_car.__hop_cdr ) )
+	 sc_error( "alist->object", "Illegal entry", alist.__hop_car );
+      if( !sc_isKeyword( alist.__hop_car.__hop_car ) )
+	 sc_error( "alist->object", "Illegal key", alist.__hop_car.__hop_car );
       
-      o[ sc_keyword2jsstring( alist.car.car ) ] = alist.car.cdr.car;
-      alist = alist.cdr;
+      o[ sc_keyword2jsstring( alist.__hop_car.__hop_car ) ] = alist.__hop_car.__hop_cdr.__hop_car;
+      alist = alist.__hop_cdr;
    }
 
    return o;
@@ -771,13 +815,13 @@ function hop_plist2jsobject( plist ) {
    var o = {};
 
    while( sc_isPair( plist ) ) {
-      if( !sc_isKeyword( plist.car ) )
-	 sc_error( "plist->object", "Illegal key", plist.car.car );
-      if( !sc_isPair( plist.cdr ) ) 
+      if( !sc_isKeyword( plist.__hop_car ) )
+	 sc_error( "plist->object", "Illegal key", plist.__hop_car.__hop_car );
+      if( !sc_isPair( plist.__hop_cdr ) ) 
 	 sc_error( "plist->object", "Illegal entry", plist );
       
-      o[ sc_keyword2jsstring( plist.car ) ] = plist.cdr.car;
-      plist = plist.cdr.cdr;
+      o[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      plist = plist.__hop_cdr.__hop_cdr;
    }
 
    return o;

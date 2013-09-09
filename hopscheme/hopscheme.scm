@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/2.5.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Mon Apr  1 09:07:26 2013 (serrano)                */
+;*    Last change :  Sat Sep  7 13:19:40 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -23,7 +23,7 @@
 	   __dollar_scheme2js_module)
    
    (export (hopscheme-compile-module clauses::pair-nil)
-	   (hopscheme-compile-file file::bstring ::obj)
+	   (hopscheme-compile-file file::bstring ::bstring ::obj)
 	   (hopscheme-create-empty-macro-environment)
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
 	   (hopscheme-compile-value ::obj ::output-port ::procedure ::procedure ::obj)
@@ -42,13 +42,6 @@
 (define *hopscheme-mutex* (make-mutex "hopscheme"))
 
 ;*---------------------------------------------------------------------*/
-;*    sync ...                                                         */
-;*---------------------------------------------------------------------*/
-(define-macro (sync . body)
-;*    `(synchronize *hopscheme-mutex* ,@body))                         */
-   `(begin ,@body))
-
-;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-module ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Precompiles the given clauses, so they can be used as            */
@@ -57,23 +50,21 @@
 ;*    '(import m1), etc.                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-module clauses)
-   (sync 
-      (list (precompile-headers clauses))))
+   (list (precompile-headers clauses)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-file ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-compile-file file env)
-   (sync
-      (with-output-to-string
-	 (lambda ()
-	    (scheme2js-compile-file file   ;; input-files
-	       "-"               ;; output-file
-	       `(                ;; headers-overrides
-		 (merge-first (import ,@(hop-runtime-modules)))
-		 ,@env)
-	       (get-file-cached-config)
-	       :reader *hop-reader*)))))
+(define (hopscheme-compile-file ifile ofile env)
+   (scheme2js-compile-file
+      ;; input-files
+      ifile
+      ;; output-file
+      ofile
+      ;; headers-overrides
+      `((merge-first (import ,@(hop-runtime-modules))) ,@env)
+      (get-file-cached-config)
+      :reader *hop-reader*))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-create-empty-macro-environment ...                     */
@@ -100,19 +91,17 @@
 (define (hopscheme-compile-expression e env menv postproc)
    (unless (isa? menv Compilation-Unit)
       (error "hopscheme-compile-expression" "Illegal macro environment" menv))
-   (sync
-      (if (only-macros? e)
-	  (begin
-	     (add-macros! e menv)
-	     #unspecified)
-	  (compile-expression e env menv postproc))))
+   (if (only-macros? e)
+       (begin
+	  (add-macros! e menv)
+	  #unspecified)
+       (compile-expression e env menv postproc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-compile-value v p host-compiler host-register loc)
-   (sync
-      (scheme2js-compile-value v p host-compiler host-register loc)))
+   (scheme2js-compile-value v p host-compiler host-register loc))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-hop-client ...                                 */
@@ -128,12 +117,14 @@
       (with-handler
 	 (lambda (e)
 	    (error "compile-hop-client" "Compilation failed" e))
-	 (sync
+	 (begin
 	    (scheme2js-compile-expr
-	       e              ;; top-level
-	       s-port         ;; out-port
-	       `(             ;; override-headers
-		 (merge-first (import ,@(hop-runtime-modules)))
+	       ;; top-level
+	       e
+	       ;; out-port
+	       s-port         
+	       ;; override-headers
+	       `((merge-first (import ,@(hop-runtime-modules)))
 		 (merge-last (import ,unit))
 		 ,@env)
 	       (hopscheme-config #f))
@@ -205,8 +196,8 @@
        ;; we don't test for 'list?' anymore. this has been done before.
        (for-each (lambda (e) (add-macros! e menv)) es))
       (else (error "add-macros"
-		   "internal Error. e different than macro or begin"
-		   e))))
+	       "internal Error. e different than macro or begin"
+	       e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-expression ...                                           */
@@ -217,90 +208,95 @@
       `(,(begin 'quasiquote)
 	,(map (lambda (p)
 		 `(,(car p) ,(list 'unquote (cadr p))))
-	      dollar-map)))
-   (sync
-      (let ((s-port (open-output-string))
-	    (assig-var (gensym 'result)))
-	 (receive (expr dollar-map)
-	    (dollar-extraction! e)
-	    (unwind-protect
-	       (let* ((exported '())
-		      (unresolved '())
-		      (exported-declare! (lambda (scm-id js-id)
-					    (set! exported
-					       (cons (cons scm-id js-id)
-						  exported))))
-		      (unresolved-declare! (lambda (scm-id js-id)
-					      (set! unresolved
-						 (cons (cons scm-id js-id)
-						    unresolved)))))
-		  (scheme2js-compile-expr
-		     expr           ;; top-level
-		     s-port         ;; out-port
-		     `(             ;; override-headers
-		       (merge-first (import ,@(hop-runtime-modules)))
-		       (merge-last (import ,menv))
-		       ,@env)
-		     (extend-config* (hopscheme-config #f)	;; config
-			`((module-result-var . ,assig-var)
-			  (unresolved-declare . ,unresolved-declare!)
-			  (exported-declare . ,exported-declare!))))
-		  (let ((js-code (close-output-port s-port))
-			(command (gensym 'command))
-			(scm-expr (gensym 'scm-expr)))
-		     `(let* (,@dollar-map)
-			 (vector ',expr
-			    ',assig-var
-			    ',exported
-			    ',unresolved
-			    ,(postproc js-code)
-			    ,(quasiquote-map dollar-map)))))
-	       (close-output-port s-port))))))
+	    dollar-map)))
+   
+   (let ((s-port (open-output-string))
+	 (assig-var (gensym 'result)))
+      (receive (expr dollar-map)
+	 (dollar-extraction! e)
+	 (unwind-protect
+	    (let* ((exported '())
+		   (unresolved '())
+		   (exported-declare! (lambda (scm-id js-id)
+					 (set! exported
+					    (cons (cons scm-id js-id)
+					       exported))))
+		   (unresolved-declare! (lambda (scm-id js-id)
+					   (set! unresolved
+					      (cons (cons scm-id js-id)
+						 unresolved)))))
+	       (scheme2js-compile-expr
+		  ;; top-level
+		  expr
+		  ;; out-port
+		  s-port
+		  ;; override-headers
+		  `((merge-first (import ,@(hop-runtime-modules)))
+		    (merge-last (import ,menv))
+		    ,@env)
+		  ;; config
+		  (extend-config* (hopscheme-config #f)	
+		     `((module-result-var . ,assig-var)
+		       (unresolved-declare . ,unresolved-declare!)
+		       (exported-declare . ,exported-declare!))))
+	       (let ((js-code (close-output-port s-port))
+		     (command (gensym 'command))
+		     (scm-expr (gensym 'scm-expr)))
+		  `(let* (,@dollar-map)
+		      (vector ',expr
+			 ',assig-var
+			 ',exported
+			 ',unresolved
+			 ,(postproc js-code)
+			 ,(quasiquote-map dollar-map)))))
+	    (close-output-port s-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (sexp->hopscheme e env menv)
-   (sync
-      (let ((s-port (open-output-string))
-	    (menv (instantiate::Compilation-Unit
-		     (name (gensym 'macro))
-		     (top-level '())
-		     (exported-macros (create-hashtable :size 1))
-		     (exports '())))
-	    (assig-var (gensym 'result)))
-	 (receive (expr dollar-map)
-	    (dollar-extraction! e)
-	    (unwind-protect
-	       (let* ((exported '())
-		      (unresolved '())
-		      (exported-declare! (lambda (scm-id js-id)
-					    (set! exported
-					       (cons (cons scm-id js-id)
-						  exported))))
-		      (unresolved-declare! (lambda (scm-id js-id)
-					      (set! unresolved
-						 (cons (cons scm-id js-id)
-						    unresolved)))))
-		  (scheme2js-compile-expr
-		     expr           ;; top-level
-		     s-port         ;; out-port
-		     `(             ;; override-headers
-		       (merge-first (import ,@(hop-runtime-modules)))
-		       (merge-last (import ,menv))
-		       ,@env)
-		     (extend-config* (hopscheme-config #f)	;; config
-			`((module-result-var . ,assig-var)
-			  (unresolved-declare . ,unresolved-declare!)
-			  (exported-declare . ,exported-declare!))))
-		  (let ((js-code (close-output-port s-port)))
-		     (vector expr
-			assig-var
-			exported
-			unresolved
-			js-code
-			'())))
-	       (close-output-port s-port))))))
+   (let ((s-port (open-output-string))
+	 (menv (instantiate::Compilation-Unit
+		  (name (gensym 'macro))
+		  (top-level '())
+		  (exported-macros (create-hashtable :size 1))
+		  (exports '())))
+	 (assig-var (gensym 'result)))
+      (receive (expr dollar-map)
+	 (dollar-extraction! e)
+	 (unwind-protect
+	    (let* ((exported '())
+		   (unresolved '())
+		   (exported-declare! (lambda (scm-id js-id)
+					 (set! exported
+					    (cons (cons scm-id js-id)
+					       exported))))
+		   (unresolved-declare! (lambda (scm-id js-id)
+					   (set! unresolved
+					      (cons (cons scm-id js-id)
+						 unresolved)))))
+	       (scheme2js-compile-expr
+		  ;; top-level
+		  expr
+		  ;; out-port
+		  s-port
+		  ;; override-headers
+		  `((merge-first (import ,@(hop-runtime-modules)))
+		    (merge-last (import ,menv))
+		    ,@env)
+		  ;; config
+		  (extend-config* (hopscheme-config #f)	
+		     `((module-result-var . ,assig-var)
+		       (unresolved-declare . ,unresolved-declare!)
+		       (exported-declare . ,exported-declare!))))
+	       (let ((js-code (close-output-port s-port)))
+		  (vector expr
+		     assig-var
+		     exported
+		     unresolved
+		     js-code
+		     '())))
+	    (close-output-port s-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->sexp ...                                              */

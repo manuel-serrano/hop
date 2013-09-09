@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/2.5.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue May 21 16:10:54 2013 (serrano)                */
+;*    Last change :  Fri Jul 19 16:03:47 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -138,7 +138,7 @@
       (with-access::html-tree obj (klass)
 	 (fprintf p "<div id='~a' class='hop-tree-container ~a'>" parent klass))
       (display " <script type='" p)
-      (display (hop-configure-javascript-mime-type) p)
+      (display (hop-mime-type) p)
       (display "'>" p)
       (display "hop_add_event_listener('" p)
       (display (string-escape parent #\') p)

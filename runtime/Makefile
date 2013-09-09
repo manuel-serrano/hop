@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/2.5.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Apr 11 10:50:15 2013 (serrano)                */
+#*    Last change :  Sat Aug 10 07:16:28 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ _OBJECTS = param thread misc priv types read module \
            http_error http_filter \
            hop_inline \
            event websocket color weblets preferences expanders \
-           security xdomain zeroconf upnp
+           security xdomain zeroconf upnp debug
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -66,7 +66,8 @@ INCLUDES = thread.sch http_lib.sch expanders.sch \
            service.sch service_expd.sch \
            verbose.sch verbose_expd.sch \
            wiki_syntax.sch wiki_parser.sch \
-           zeroconf_avahi.sch zeroconf_dummy.sch
+           zeroconf_avahi.sch zeroconf_dummy.sch \
+           client-exception.sch sourcemap.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -115,15 +116,18 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Dependencies ...                                                 */
 #*---------------------------------------------------------------------*/
-zeroconf_avahi.sch: verbose.sch 
-o/websocket.o websocket.class: http_lib.sch verbose.sch 
+zeroconf_avahi.sch: verbose.sch thread.sch 
+o/debug.o debug.class: xml.sch service.sch verbose.sch param.sch         \
+      client-exception.sch sourcemap.sch ../scheme2js/base64_vlq.sch 
+o/websocket.o websocket.class: http_lib.sch verbose.sch thread.sch 
 o/http_error.o ./http_error.class: xml.sch 
 o/http_filter.o http_filter.class: http_lib.sch verbose.sch 
-o/websocket.o ./websocket.class: http_lib.sch verbose.sch 
+o/websocket.o ./websocket.class: http_lib.sch verbose.sch thread.sch 
 o/wiki_parser.o wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/mathml.o ./mathml.class: xml.sch 
 o/clientc.o ./clientc.class: xml.sch service.sch 
 o/http_proxy.o ./http_proxy.class: http_lib.sch verbose.sch 
+o/read.o ./read.class: thread.sch 
 o/http_lib.o http_lib.class: http_lib.sch 
 o/security.o ./security.class: param.sch 
 o/preferences.o preferences.class: xml.sch service.sch 
@@ -140,12 +144,16 @@ o/http_error.o http_error.class: xml.sch
 o/hop.o hop.class: verbose.sch 
 o/css.o ./css.class: xml.sch service.sch hss.sch 
 o/mathml.o mathml.class: xml.sch 
-o/event.o event.class: xml.sch service.sch verbose.sch param.sch 
+o/event.o event.class: xml.sch service.sch verbose.sch param.sch         \
+      thread.sch 
 o/http_proxy.o http_proxy.class: http_lib.sch verbose.sch 
-o/event.o ./event.class: xml.sch service.sch verbose.sch param.sch 
+o/event.o ./event.class: xml.sch service.sch verbose.sch param.sch       \
+      thread.sch 
 o/user.o user.class: verbose.sch 
+o/job.o job.class: thread.sch 
 o/http_webdav.o http_webdav.class: http_lib.sch xml.sch 
 o/weblets.o weblets.class: xml.sch verbose.sch 
+o/thread.o ./thread.class: thread.sch 
 o/http_lib.o ./http_lib.class: http_lib.sch 
 o/html_img.o html_img.class: param.sch xml.sch 
 o/html_base.o html_base.class: param.sch xml.sch 
@@ -153,6 +161,7 @@ o/svg.o ./svg.class: xml.sch
 o/html_base.o ./html_base.class: param.sch xml.sch 
 o/html_head.o html_head.class: xml.sch service.sch 
 o/html_head.o ./html_head.class: xml.sch service.sch 
+o/upnp.o upnp.class: thread.sch 
 o/hop_inline.o ./hop_inline.class: xml.sch 
 o/http_filter.o ./http_filter.class: http_lib.sch verbose.sch 
 o/clientc.o clientc.class: xml.sch service.sch 
@@ -160,6 +169,7 @@ o/configure.o ./configure.class: configure_noarch.sch
 o/wiki_parser.o ./wiki_parser.class: wiki_syntax.sch wiki_parser.sch 
 o/user.o ./user.class: verbose.sch 
 o/hop_wiki.o hop_wiki.class: xml.sch 
+o/thread.o thread.class: thread.sch 
 o/xml.o xml.class: param.sch xml.sch 
 o/preferences.o ./preferences.class: xml.sch service.sch 
 o/service.o ./service.class: service.sch verbose.sch 
@@ -172,6 +182,7 @@ o/hop_inline.o hop_inline.class: xml.sch
 o/hop.o ./hop.class: verbose.sch 
 o/hop_rss.o hop_rss.class: xml.sch 
 o/http_shoutcast.o http_shoutcast.class: http_lib.sch 
+o/read.o read.class: thread.sch 
 o/security.o security.class: param.sch 
 o/weblets.o ./weblets.class: xml.sch verbose.sch 
 o/param.o param.class: param.sch 

@@ -1,21 +1,25 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/mark_statements.scm     */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Jul 19 15:31:02 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js/Hop.                              */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module mark-statements
+   
    (import nodes
 	   export-desc
 	   walk
 	   config
 	   verbose)
+   
    (export (wide-class Stmt-If::If
 	      stmt-test?::bool
 	      stmt-then?::bool
@@ -23,12 +27,15 @@
 	   (wide-class Stmt-Case::Case
 	      stmt-key?::bool)
 	   (wide-class Stmt-Begin::Begin
-	      stmt-exprs) ;; may be #f if none is stmt.
+	      ;; may be #f if none is stmt.
+	      stmt-exprs) 
 	   (wide-class Stmt-Set!::Set!
 	      stmt-val?::bool)
 	   (wide-class Stmt-Call::Call
 	      stmt-operator?::bool
-	      stmt-operands)) ;; may be #f if none is stmt.
+	       ;; may be #f if none is stmt.
+	      stmt-operands))
+   
    (export (mark-statements tree::Module)))
 
 (define (mark-statements tree)

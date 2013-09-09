@@ -1,25 +1,37 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/gen_js.scm              */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-13                                           */
+;*    Last change :  Thu Jul 25 16:02:41 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    JS names                                                         */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module gen-js
    (export (mangle-JS-sym::bstring sym::symbol)
 	   (gen-JS-sym::bstring sym::symbol)
 	   (valid-JS-str?::bool str::bstring)
-	   (mangle-qualified-var::bstring sym::symbol qualifier)))
+	   (mangle-qualified-var::bstring sym::symbol qualifier)
+	   (JS-stamp::bstring)))
 
+;*---------------------------------------------------------------------*/
+;*    counter ...                                                      */
+;*---------------------------------------------------------------------*/
 (define counter 0)
 
+;*---------------------------------------------------------------------*/
+;*    *js-counter-mutex* ...                                           */
+;*---------------------------------------------------------------------*/
 (define *js-counter-mutex* (make-mutex))
 
+;*---------------------------------------------------------------------*/
+;*    mangle-qualified-var ...                                         */
+;*---------------------------------------------------------------------*/
 (define (mangle-qualified-var sym qualifier)
    (if (not qualifier)
        (mangle-JS-sym sym)
@@ -46,14 +58,22 @@
 ;* 				"__"                                   */
 ;* 				mangled-qual)))))))                    */
 
-;; mangle variables, so they are valid JS-vars.
+;*---------------------------------------------------------------------*/
+;*    mangle-JS-sym ...                                                */
+;*    -------------------------------------------------------------    */
+;*    mangle variables, so they are valid JS-vars.                     */
+;*---------------------------------------------------------------------*/
 (define (mangle-JS-sym sym)
    (let ((s (symbol->string sym)))
       (if (valid-JS-str? s)
 	  s
 	  (bigloo-mangle s))))
 
-;; kind of adapted gen-sym
+;*---------------------------------------------------------------------*/
+;*    gen-JS-sym ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    kind of adapted gen-sym                                          */
+;*---------------------------------------------------------------------*/
 (define (gen-JS-sym sym)
    (synchronize *js-counter-mutex*
       (set! counter (+ counter 1))
@@ -63,6 +83,17 @@
 	    '_
 	    (string->symbol (integer->string counter))))))
 
+;*---------------------------------------------------------------------*/
+;*    JS-stamp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (JS-stamp)
+   (synchronize *js-counter-mutex*
+      (set! counter (+ counter 1))
+      (integer->string counter)))
+   
+;*---------------------------------------------------------------------*/
+;*    *reserved-js* ...                                                */
+;*---------------------------------------------------------------------*/
 (define *reserved-js*
    '("as" "break" "case" "catch" "class" "const" "continue" "default"
      "delete" "do" "else" "extends" "false" "finally" "for"
@@ -74,6 +105,9 @@
      "synchronized" "throws" "transient" "volatile"
      ))
 
+;*---------------------------------------------------------------------*/
+;*    valid-JS-str? ...                                                */
+;*---------------------------------------------------------------------*/
 (define (valid-JS-str? str)
    (not (or (bigloo-need-mangling? str)
 	    (member str *reserved-js*)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/2.5.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 30 07:50:07 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Fri Aug 23 07:14:15 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -58,6 +58,9 @@
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
 	    (("-g?level" (help "Increase or set debug level"))
+	     (hopc-clientc-source-map-set! #t)
+	     (hopc-clientc-arity-check-set! #t)
+	     (hopc-clientc-type-check-set! #t)
 	     (if (string=? level "")
 		 (bigloo-debug-set! (+fx 1 (bigloo-debug)))
 		 (bigloo-debug-set! (string->integer level))))
@@ -85,6 +88,26 @@
 	     (hopc-access-file-set! file))
 	    (("--mkheap" (help "Build a js heap file"))
 	     (hopc-jsheap-set! #t))
+	    (("--source-map" (help "Enable source-map table generation"))
+	     (hopc-clientc-source-map-set! #t))
+	    (("--no-source-map" (help "Disable source-map table generation"))
+	     (hopc-clientc-source-map-set! #f))
+	    (("--use-strict" (help "Enable use-strict annotation"))
+	     (hopc-clientc-use-strict-set! #t))
+	    (("--no-use-strict" (help "Disable use-strict annotation"))
+	     (hopc-clientc-use-strict-set! #f))
+	    (("--arity-check" (help "Enable arity-check annotation"))
+	     (hopc-clientc-arity-check-set! #t))
+	    (("--no-arity-check" (help "Disable arity-check annotation"))
+	     (hopc-clientc-arity-check-set! #f))
+	    (("--type-check" (help "Enable type-check annotation"))
+	     (hopc-clientc-type-check-set! #t))
+	    (("--no-type-check" (help "Disable type-check annotation"))
+	     (hopc-clientc-type-check-set! #f))
+	    (("--meta" (help "Enable meta annotation"))
+	     (hopc-clientc-meta-set! #t))
+	    (("--no-meta" (help "Disable meta annotation"))
+	     (hopc-clientc-type-check-set! #f))
 	    (else
 	     (if (string=? else "--")
 		 (begin
