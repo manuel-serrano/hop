@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/macosx/Makefile                         */
+#*    serrano/prgm/project/hop/2.4.x/arch/macosx/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Tue Sep 10 08:17:11 2013 (serrano)                */
+#*    Last change :  Tue Sep 10 08:54:34 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    MacOS X port                                                     */
@@ -19,14 +19,13 @@
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
-  $(COMMON_POPULATION:%=common/%) \
-  $(GUI_POPULATION:%=gui/%) \
-  $(NOGUI_POPULATION:%=nogui/%) \
-  README Makefile.bundle \
-  $(POPULATION_SRC:%=src/%) 
+  $(POPULATION_COMMON:%=common/%) \
+  $(POPULATION_NOGUI:%=nogui/%) \
+  $(POPULATION_GUI:%=gui/%) \
+  README Makefile.bundle
 
-COMMON_POPULATION = hop.icns HopIcon.rsrc
-NOGUI_POPULATION = Info.plist
+POPULATION_COMMON = hop.icns HopIcon.rsrc
+POPULATION_NOGUI = Info.plist
 
 POPULATION_GUI=$(POPULATION_GUI_HOP:%=Hop/%)
 
