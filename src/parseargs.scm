@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 17 10:25:01 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 15:15:18 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -255,6 +255,15 @@
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
 
+      ;; kill
+      (when killp
+	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
+	 (let ((key (hop-process-key-read p)))
+	    (if (string? key)
+		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
+		(error "hop-kill" "Cannot find process key" (key-filepath p)))
+	    (exit 0)))
+
       ;; open the server socket before switching to a different process owner
       (init-server-socket!)
       
@@ -338,15 +347,6 @@
 	     :services '(home doc epassword wizard hz/list shutdown)
 	     :directories (hop-path)
 	     :preferences-filename #f))
-
-      ;; kill
-      (when killp
-	 (hop-verb 2 "Kill HOP process " (key-filepath p) "...\n")
-	 (let ((key (hop-process-key-read p)))
-	    (if (string? key)
-		(http :port p :path (format "/hop/shutdown/kill?key=~a" key))
-		(error "hop-kill" "Cannot find process key" (key-filepath p)))
-	    (exit 0)))
 
       ;; webdav
       (when (boolean? webdav)
