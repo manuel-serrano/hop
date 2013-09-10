@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar  2 07:14:10 2011                          */
-#*    Last change :  Tue Sep 10 08:54:34 2013 (serrano)                */
+#*    Last change :  Tue Sep 10 09:53:51 2013 (serrano)                */
 #*    Copyright   :  2011-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    MacOS X port                                                     */
@@ -24,7 +24,7 @@ POPULATION = Makefile \
   $(POPULATION_GUI:%=gui/%) \
   README Makefile.bundle
 
-POPULATION_COMMON = hop.icns HopIcon.rsrc
+POPULATION_COMMON = hop.icns HopIcon.rsrc macosx_bundle.h
 POPULATION_NOGUI = Info.plist
 
 POPULATION_GUI=$(POPULATION_GUI_HOP:%=Hop/%)

@@ -24,11 +24,13 @@ PROJ_NAME := Hop
 MACOSX_DIR := $(BOOTDIR)/arch/macosx
 DMG_DIR := $(MACOSX_DIR)/dmg
 APP_DIR := $(DMG_DIR)/$(PROJ_NAME).app
-SRC_DIR := $(MACOSX_DIR)/src
-PROJ_DIR := $(SRC_DIR)/$(PROJ_NAME)/$(PROJ_NAME).xcodeproj
-BUILD_DIR := $(SRC_DIR)/$(PROJ_NAME)/build
+GUI_DIR := $(MACOSX_DIR)/gui
+NOGUI_DIR := $(MACOSX_DIR)/nogui
+COMMON_DIR := $(MACOSX_DIR)/common
+PROJ_DIR := $(GUI_DIR)/$(PROJ_NAME)/$(PROJ_NAME).xcodeproj
+BUILD_DIR := $(GUI_DIR)/$(PROJ_NAME)/build
 CONTENTS_DIR := $(APP_DIR)/Contents
-HOP_ICON := hop.icns
+HOP_ICON := $(COMMON_DIR)/hop.icns
 
 XCODEBUILD = xcodebuild
 
@@ -91,8 +93,8 @@ bundle:
 	BIGLOO_VERSION=`$(BIGLOO) -q -eval "(begin (print *bigloo-version*) (exit 0))"` && \
 	mkdir -p $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION && \
 	cp -R $(BIGLOOLIBDIR)/*.dylib $(BIGLOOLIBDIR)/*.init $(BIGLOOLIBDIR)/*.heap $(CONTENTS_DIR)/Frameworks/bigloo/$$BIGLOO_VERSION/ && \
-	cp $(MACOSX_DIR)/hop.icns $(CONTENTS_DIR)/Resources && \
-	cp $(MACOSX_DIR)/Info.plist $(CONTENTS_DIR)/ 
+	cp $(HOP_ICON) $(CONTENTS_DIR)/Resources && \
+	cp $(NOGUI_DIR)/Info.plist $(CONTENTS_DIR)/ 
 
 app:
 	$(XCODEBUILD) -project $(PROJ_DIR) -target Hop$(OSX) && \
@@ -101,7 +103,7 @@ app:
 dmg: $(DMG)
 
 $(DMG): 
-	cp $(MACOSX_DIR)/$(HOP_ICON) $(DMG_DIR)/.VolumeIcon.icns && \
+	cp $(HOP_ICON) $(DMG_DIR)/.VolumeIcon.icns && \
 	SetFile -c icnC $(DMG_DIR)/.VolumeIcon.icns && \
 	$(HDIUTIL) create -srcfolder $(DMG_DIR) -volname $(BIN_NAME) -format UDRW -ov $(DMG_TMP) && \
 	rm -rf $(DMG_DIR) && \
@@ -111,7 +113,7 @@ $(DMG):
 	$(HDIUTIL) detach $(DMG_DIR) && \
 	$(HDIUTIL) convert $(DMG_TMP)  -format UDZO -o "$@" && \
 	rm -f $(DMG_TMP) && \
-	Rez -append $(MACOSX_DIR)/HopIcon.rsrc -o "$@" && \
+	Rez -append $(COMMON_DIR)/HopIcon.rsrc -o "$@" && \
 	SetFile -a C "$@"
 
 clean:

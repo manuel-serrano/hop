@@ -13,7 +13,7 @@
 ;*---------------------------------------------------------------------*/
 (directives
 
-   (extern (include "macosx_bundle.h")
+   (extern (include "common/macosx_bundle.h")
 	   (macro resource-dir-fill!::int (::string ::int) "resourceDirFill"))
    
    (export %etc-directory

@@ -77,9 +77,9 @@
 		E6727092178CAF20009F48D6 /* ic_green_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB59170476C5007A9625 /* ic_green_light.png */; };
 		E6727093178CAF20009F48D6 /* ic_red_light.png in Resources */ = {isa = PBXBuildFile; fileRef = E61AAB5A170476C5007A9625 /* ic_red_light.png */; };
 		E6727094178CAF20009F48D6 /* ic_menu_refresh.png in Resources */ = {isa = PBXBuildFile; fileRef = E66B77521746283600D8E5D1 /* ic_menu_refresh.png */; };
-		E672709B178CAF33009F48D6 /* Hop10.8-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E672709A178CAF33009F48D6 /* Hop10.8-info.plist */; };
-		E68EDC22178C469E004677A5 /* Hop10.6-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E68EDC21178C469E004677A5 /* Hop10.6-info.plist */; };
-		E6A5652C178CADE600A06C7D /* Hop10.7-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */; };
+		E672709B178CAF33009F48D6 /* Hop10.8-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E672709A178CAF33009F48D6 /* Hop10.8-Info.plist */; };
+		E68EDC22178C469E004677A5 /* Hop10.6-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E68EDC21178C469E004677A5 /* Hop10.6-Info.plist */; };
+		E6A5652C178CADE600A06C7D /* Hop10.7-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E6A5652B178CADE600A06C7D /* Hop10.7-Info.plist */; };
 		E6D205E816AE9A4C0028E565 /* ic_hop114.png in Resources */ = {isa = PBXBuildFile; fileRef = E6D205E716AE9A4C0028E565 /* ic_hop114.png */; };
 		E6FEAED716F74EF40096F9E4 /* ic_hop.icns in Resources */ = {isa = PBXBuildFile; fileRef = E6FEAED616F74EF40096F9E4 /* ic_hop.icns */; };
 /* End PBXBuildFile section */
@@ -113,9 +113,9 @@
 		E661B7A8178CAC6E00D6F647 /* Hop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E66B77521746283600D8E5D1 /* ic_menu_refresh.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_menu_refresh.png; sourceTree = "<group>"; };
 		E6727098178CAF20009F48D6 /* Hop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hop.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E672709A178CAF33009F48D6 /* Hop10.8-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.8-info.plist"; sourceTree = "<group>"; };
-		E68EDC21178C469E004677A5 /* Hop10.6-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.6-info.plist"; sourceTree = "<group>"; };
-		E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.7-info.plist"; sourceTree = "<group>"; };
+		E672709A178CAF33009F48D6 /* Hop10.8-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.8-Info.plist"; sourceTree = "<group>"; };
+		E68EDC21178C469E004677A5 /* Hop10.6-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.6-Info.plist"; sourceTree = "<group>"; };
+		E6A5652B178CADE600A06C7D /* Hop10.7-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Hop10.7-Info.plist"; sourceTree = "<group>"; };
 		E6D205E716AE9A4C0028E565 /* ic_hop114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ic_hop114.png; path = ../ic_hop114.png; sourceTree = "<group>"; };
 		E6F559C6172A670900E2C86B /* Hop.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = Hop.entitlements; path = Hop/Hop.entitlements; sourceTree = "<group>"; };
 		E6FEAED616F74EF40096F9E4 /* ic_hop.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = ic_hop.icns; path = ../ic_hop.icns; sourceTree = "<group>"; };
@@ -234,9 +234,9 @@
 		E62600B416767142009D4DF9 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				E68EDC21178C469E004677A5 /* Hop10.6-info.plist */,
-				E6A5652B178CADE600A06C7D /* Hop10.7-info.plist */,
-				E672709A178CAF33009F48D6 /* Hop10.8-info.plist */,
+				E68EDC21178C469E004677A5 /* Hop10.6-Info.plist */,
+				E6A5652B178CADE600A06C7D /* Hop10.7-Info.plist */,
+				E672709A178CAF33009F48D6 /* Hop10.8-Info.plist */,
 				E62600B516767142009D4DF9 /* Hop-Info.plist */,
 				E62600B616767142009D4DF9 /* InfoPlist.strings */,
 				E62600B916767142009D4DF9 /* main.m */,
@@ -364,9 +364,9 @@
 				E61AAB5B170476C5007A9625 /* ic_green_light.png in Resources */,
 				E61AAB5C170476C5007A9625 /* ic_red_light.png in Resources */,
 				E66B77531746283600D8E5D1 /* ic_menu_refresh.png in Resources */,
-				E68EDC22178C469E004677A5 /* Hop10.6-info.plist in Resources */,
-				E6A5652C178CADE600A06C7D /* Hop10.7-info.plist in Resources */,
-				E672709B178CAF33009F48D6 /* Hop10.8-info.plist in Resources */,
+				E68EDC22178C469E004677A5 /* Hop10.6-Info.plist in Resources */,
+				E6A5652C178CADE600A06C7D /* Hop10.7-Info.plist in Resources */,
+				E672709B178CAF33009F48D6 /* Hop10.8-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -602,7 +602,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
@@ -617,7 +617,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.6-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
@@ -632,7 +632,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
@@ -648,7 +648,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.7-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
@@ -664,7 +664,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
@@ -680,7 +680,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Hop/Hop-Prefix.pch";
-				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Hop/Hop10.8-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_DEFINITION_PLIST = Hop;
 				PRODUCT_NAME = Hop;
