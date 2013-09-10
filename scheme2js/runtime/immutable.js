@@ -312,7 +312,7 @@ function sc_stringCIContains(s1,s2,start) {
            (arity -2))
 */
 function sc_substring(s, start, end) {
-   return s.substring(start, (!end || end < 0) ? s.length : end);
+   return s.substring(start, (end == undefined || end < 0) ? s.length : end);
 }
 
 //           (peephole (hole 2 s ".substring(" start ", " s ".length )")))
@@ -324,7 +324,6 @@ function sc_isSubstring_at(str1, str2, i, len) {
     else if (str2.length < len) return false;
     if (str1.length < len + i) return false;
     return str2.substring(0, len) == str1.substring(i, i+len);
-    return s2 == s1.substring(i, i+ s2.length);
 }
 
 /*** META ((export substring=?) (arity #t))
@@ -340,6 +339,12 @@ function sc_isSubstring(s1, s2, len) {
            (peephole (infix 0 #f "+" "''")))
 */
 function sc_stringAppend() {
+#if HOP_RTS_DEBUG
+    for (var i = 0; i < arguments.length; i++) {
+       if (typeof arguments[i] != "string")
+	  return sc_typeError("string-append", "string", arguments[i]);
+    }
+#endif
     return "".concat.apply("", arguments);
 }
 
@@ -434,8 +439,9 @@ function sc_stringIndex(s, cset, start) {
       return res >= 0 ? res : false;
    } else {
       for (var i = start; i < s.length; i++ ) {
-	 if (cset.indexOf(s.charAt(i)))
+	 if (cset.indexOf(s.charAt(i)) >= 0) {
 	    return i;
+	 }
       }
 
       return false;
@@ -456,12 +462,38 @@ function sc_stringIndexRight(s, cset, start) {
       return res >= 0 ? res : false;
    } else {
       for (var i = start; i >= 0; i-- ) {
-	 if (cset.indexOf(s.charAt(i)))
+	 if (cset.indexOf(s.charAt(i)) >= 0)
 	    return i;
       }
 
       return false;
    }
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkip(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i < s.length; i++ ) {
+      if( set.indexOf( s.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkipRight(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i >= 0; i-- ) {
+      if( set.indexOf( s.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
 }
 
 /*** META ((export #t) (arity 1)) */

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-tree.js                 */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Mar 12 08:29:57 2012 (serrano)                */
-/*    Copyright   :  2005-12 Manuel Serrano                            */
+/*    Last change :  Fri Jul 26 08:45:08 2013 (serrano)                */
+/*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -143,7 +143,7 @@ function hop_tree_populate( tree ) {
    
    var failure = function( exc, xhr ) {
       if( exc instanceof Error ) {
-	 hop_report_exception( exc );
+	 hop_callback_handler( exc, "tree" );
       } else {
 	 try {
 	    var proc = eval( xhr.responseText );
@@ -522,11 +522,9 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
-   try {
-      td3.innerHTML = decodeURIComponent( title );
-   } catch( e ) {
-      sc_error( "tree", "Illegal leaf title", title );
-   }
+
+   /* let decodeURIComponent error an error, if any */
+   td3.innerHTML = decodeURIComponent( title );
    
    row.appendChild( td3 );
    row.value = value;
@@ -703,11 +701,8 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
 
-   try {
-      td3.innerHTML= decodeURIComponent( content );
-   } catch( e ) {
-      sc_error( "tree", "Illegal leaf content", content );
-   }
+   /* let decodeURIComponent error an error, if any */
+   td3.innerHTML= decodeURIComponent( content );
    
    row.appendChild( td3 );
 

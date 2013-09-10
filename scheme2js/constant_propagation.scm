@@ -1,16 +1,19 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    .../project/hop/2.5.x/scheme2js/constant_propagation.scm         */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Wed Sep  4 11:52:23 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Constant propagation                                             */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module constant-propagation
+   
    (import config
 	   nodes
 	   export-desc
@@ -19,8 +22,12 @@
 	   side
 	   use-count
 	   verbose)
+   
    (export (constant-propagation! tree::Module)))
 
+;*---------------------------------------------------------------------*/
+;*    constant-propagation! ...                                        */
+;*---------------------------------------------------------------------*/
 (define (constant-propagation! tree)
    (if (config 'constant-propagation)
        (unless (config 'call/cc)
@@ -28,10 +35,15 @@
 	  (side-effect tree)
 	  (propagate! tree #f))))
 
+;*---------------------------------------------------------------------*/
+;*    propagate! ::Node ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.propagate!)
    (default-walk! this))
 
-
+;*---------------------------------------------------------------------*/
+;*    transitive-value ...                                             */
+;*---------------------------------------------------------------------*/
 (define (transitive-value var-ref::Ref)
    (if (runtime-ref? var-ref)
        var-ref
@@ -60,6 +72,9 @@
 		 (transitive-value value))
 		(else var-ref))))))
 
+;*---------------------------------------------------------------------*/
+;*    propagate! ::Ref ...                                             */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Ref.propagate!)
    (let* ((target (transitive-value this)))
       (cond
@@ -71,6 +86,9 @@
 	     (var-reference var :location target)))
 	 (else this))))
 
+;*---------------------------------------------------------------------*/
+;*    propagate! ::Set! ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Set!.propagate!)
    ;; don't visit lvalue
    (with-access::Set! this (val)

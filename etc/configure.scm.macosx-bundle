@@ -36,7 +36,6 @@
            (inline hop-weblets-directory)
            (inline hop-library-path)
            (inline hop-mime-types-file)
-	   (inline hop-configure-javascript-mime-type)
 	   (inline hop-configure-css-mime-type)
 	   (inline hop-runtime-system::pair)
 	   (inline hop-runtime-system-files::pair)
@@ -59,7 +58,6 @@
            (export hop-weblets-directory)
            (export hop-library-path)
            (export hop-mime-types-file)
-	   (export hop-configure-javascript-mime-type)
 	   (export hop-configure-css-mime-type)
            (export hop-runtime-system)
            (export hop-runtime-system-files)
@@ -108,8 +106,6 @@
        (print (hop-library-path)))
       ((--mimetypes)
        (print (hop-mime-types-file)))
-      ((--javascript-mime-type)
-       (print (hop-configure-javascript-mime-type)))
       ((--css-mime-type)
        (print (hop-configure-css-mime-type)))
       ((--url)
@@ -186,7 +182,6 @@
 ;*    Misc ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (hop-mime-types-file) "@MIMETYPES@")
-(define-inline (hop-configure-javascript-mime-type) "@JSMIMETYPE@")
 (define-inline (hop-configure-css-mime-type) "@CSSMIMETYPE@")
 
 ;*---------------------------------------------------------------------*/

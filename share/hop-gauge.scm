@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/share/hop-gauge.scm               */
+;*    serrano/prgm/project/hop/2.5.x/share/hop-gauge.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Sun Sep 30 08:20:54 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Tue Aug 13 07:37:11 2013 (serrano)                */
+;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
 ;*=====================================================================*/
@@ -13,6 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop-gauge
+   
    (export (hop_create_gauge attrs body)
 	   (gauge-init! id fid tid value min max text listener)
 	   (gauge-value el)
@@ -23,8 +24,10 @@
 	   (gauge-min-set! el value)
 	   (gauge-text el)
 	   (gauge-text-set! el text))
+   
    (JS     hop_add_native_event_listener
 	   HopEvent)
+   
    (scheme2js-pragma
            (hop_create_gauge (JS hop_create_gauge) (arity 2))))
 

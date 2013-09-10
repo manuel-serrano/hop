@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.4.x/hopscheme/hopscheme_config.scm        */
+;*    .../prgm/project/hop/2.5.x/hopscheme/hopscheme_config.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
-;*    Last change :  Sun Mar 31 07:37:47 2013 (serrano)                */
+;*    Last change :  Fri Aug 23 07:16:22 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
@@ -21,10 +21,26 @@
    
    (export (hopscheme-config compile-file?)
 	   (get-file-cached-config)
-	   (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
+	   (init-hopscheme! #!key reader share path verbose eval hop-compile
+	      hop-register features expanders hop-library-path
+	      (javascript-version "1.5") (tmp-dir (os-tmp))
+	      (source-map #f)
+	      (arity-check #f)
+	      (type-check #f)
+	      (meta #f)
+	      (debug #f)
+	      (inlining #t)
+	      (compress (=fx (bigloo-debug) 0))
+	      (module-use-strict (<=fx (bigloo-debug) 2))
+	      (function-use-strict (<=fx (bigloo-debug) 2)))
 	   *hop-reader*
 	   *hop-share-directory*
 	   *hop-eval*))
+
+;*---------------------------------------------------------------------*/
+;*    *hopscheme-config-mutex* ...                                     */
+;*---------------------------------------------------------------------*/
+(define *hopscheme-config-mutex* (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    Global constants                                                 */
@@ -53,8 +69,41 @@
 (define *hop-library-path*
    '())
 
-(define *hopscheme-config-mutex*
-   (make-mutex))
+;*---------------------------------------------------------------------*/
+;*    Scheme2js configuration                                          */
+;*---------------------------------------------------------------------*/
+;; tmp directory
+(define *scheme2js-tmp-dir* (os-tmp))
+
+;; generate let (for frames)
+(define *scheme2js-javascript-let* #f)
+
+;; add "use strict" declarations
+(define *scheme2js-module-use-strict* (<=fx (bigloo-debug) 2))
+
+;; add "use strict" declarations
+(define *scheme2js-function-use-strict* (<=fx (bigloo-debug) 2))
+
+;; generate source map
+(define *scheme2js-source-map* #f)
+
+;; generate arity check
+(define *scheme2js-arity-check* #f)
+
+;; generate type check
+(define *scheme2js-type-check* #f)
+
+;; generate meta annotation
+(define *scheme2js-meta* #f)
+
+;; generate debugging code
+(define *scheme2js-debug* #f)
+
+;; inline function calls
+(define *scheme2js-inlining* #t)
+
+;; compress the generated JS file
+(define *scheme2js-compress* (=fx (bigloo-debug) 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-cached-config ...                                            */
@@ -78,7 +127,7 @@
 	      ;; we are no longer using scheme2js-modules
 	      (bigloo-modules . #t)
 	      ;; compress the output
-	      (compress . #t)
+	      (compress . ,*scheme2js-compress*)
 	      ;; allow $(import xyz) ...
 	      (module-preprocessor . ,(dollar-modules-adder))
 	      ;; hop-compile compiles HOP values.
@@ -89,8 +138,25 @@
 	      (library-path . ,*hop-library-path*)
 	      ;; runtime resolver
 	      (module-resolver . ,hopscheme-runtime-resolver)
-	      ;; pp in debug mode
-	      (pp . ,(>=fx (bigloo-debug) 3))))))
+	      ;; strict mode
+	      (use-strict/function . ,*scheme2js-function-use-strict*)
+	      ;; strict mode
+	      (use-strict/module . ,*scheme2js-module-use-strict*)
+	      ;; source map generation
+	      (source-map . ,*scheme2js-source-map*)
+	      ;; javascript1.7 let construct
+	      (javascript-let . ,*scheme2js-javascript-let*)
+	      ;; tmp-dir
+	      (tmp-dir . ,*scheme2js-tmp-dir*)
+	      ;; inlining
+	      (do-inlining . ,*scheme2js-inlining*)
+	      ;; arity-check
+	      (arity-check . ,*scheme2js-arity-check*)
+	      ;; type-check
+	      (type-check . ,*scheme2js-type-check*)
+	      ;; meta
+	      (meta . ,*scheme2js-meta*)
+	      ))))
    *cached-config*)
 
 ;*---------------------------------------------------------------------*/
@@ -127,7 +193,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-config ...                                             */
 ;*    -------------------------------------------------------------    */
-;*    do not reuse hopscheme-configs!                                  */
+;*    do not reuse scheme2js-configs!                                  */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme-config compile-file?)
 
@@ -166,7 +232,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-hopscheme! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (init-hopscheme! #!key reader share path verbose eval hop-compile hop-register features expanders hop-library-path)
+(define (init-hopscheme! #!key reader share path verbose eval hop-compile
+	   hop-register features expanders hop-library-path
+	   (javascript-version "1.5") (tmp-dir (os-tmp))
+	   (source-map #f)
+	   (arity-check #f)
+	   (type-check #f)
+	   (meta #f)
+	   (debug #f)
+	   (inlining #t)
+	   (compress (=fx (bigloo-debug) 0))
+	   (module-use-strict (<=fx (bigloo-debug) 2))
+	   (function-use-strict (<=fx (bigloo-debug) 2)))
    (set! *hop-reader* reader)
    (set! *hop-share-directory* share)
    (set! *hop-verbose* verbose)
@@ -174,9 +251,22 @@
    (set! *hop-compile* hop-compile)
    (set! *hop-register* hop-register)
    (set! *hop-library-path* hop-library-path)
+   (set! *scheme2js-javascript-let*
+      (>= (string-natural-compare3 javascript-version "1.7") 0))
+   (set! *scheme2js-tmp-dir* tmp-dir)
+   (set! *scheme2js-source-map* source-map)
+   (set! *scheme2js-debug* debug)
+   (set! *scheme2js-arity-check* arity-check)
+   (set! *scheme2js-type-check* type-check)
+   (set! *scheme2js-meta* meta)
+   (set! *scheme2js-inlining* inlining)
+   (set! *scheme2js-compress* compress)
+   (set! *scheme2js-module-use-strict* module-use-strict)
+   (set! *scheme2js-function-use-strict* function-use-strict)
    (for-each srfi0-declare! features)
    (for-each (lambda (expd)
 		(if (pair? expd)
 		    (install-expander! (car expd) (cdr expd))
 		    (install-expander! expd once-expander)))
       expanders))
+

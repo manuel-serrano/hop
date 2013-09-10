@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Jul 10 08:05:09 2013 (serrano)                */
+;*    Last change :  Sat Aug 10 06:31:13 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -46,7 +46,7 @@
 		      (menv #f)
 		      location)
 	    (hop-load ::bstring #!key
-		      (env (interaction-environment))
+		      (env (default-environment))
 		      (menv #f)
 		      (mode 'load)
 		      (charset (hop-locale))
@@ -55,7 +55,7 @@
 
 	    (hop-load-once ::bstring
 			   #!key
-			   (env (interaction-environment))
+			   (env (default-environment))
 			   (menv #f)
 			   (mode 'load)
 			   (charset (hop-locale))
@@ -63,7 +63,7 @@
 			   (afile #t))
 	    (hop-load-modified ::bstring
 			       #!key
-			       (env (interaction-environment))
+			       (env (default-environment))
 			       (menv #f)
 			       (mode 'load)
 			       (charset (hop-locale))
@@ -892,7 +892,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load file-name
 		  #!key
-		  (env (interaction-environment))
+		  (env (default-environment))
 		  (menv #f)
 		  (mode 'load)
 		  (charset (hop-locale))
@@ -1110,7 +1110,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-once file
 		       #!key
-		       (env (interaction-environment))
+		       (env (default-environment))
 		       (menv #f)
 		       (charset (hop-locale))
 		       (mode 'load)
@@ -1123,7 +1123,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-modified file
 			   #!key
-			   (env (interaction-environment))
+			   (env (default-environment))
 			   (menv #f)
 			   (charset (hop-locale))
 			   (mode 'load)

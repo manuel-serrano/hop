@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/zeroconf_avahi.sch        */
+;*    serrano/prgm/project/hop/2.5.x/runtime/zeroconf_avahi.sch        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Tue Sep 10 06:38:13 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 08:21:38 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */

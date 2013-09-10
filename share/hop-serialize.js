@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Aug  3 06:21:04 2013 (serrano)                */
+/*    Last change :  Mon Aug 19 06:49:58 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -148,7 +148,7 @@ function hop_bigloo_serialize_object() {
    item.hop_serialize_context_key = hop_serialize_context.key;
    item.hop_serialize_context_def = hop_serialize_context.def++;
 
-   for( p in item ) {
+   for( var p in item ) {
       if( p !== "hop_bigloo_serialize" &&
 	  p !== "hop_classname" &&
 	  p !== "hop_circle_forced" &&
@@ -553,7 +553,7 @@ function hop_serialize_html( item ) {
 function hop_bigloo_serialize_alist( item ) {
    var alist = null;
    
-   for( p in item ) {
+   for( var p in item ) {
       var k = sc_jsstring2keyword( p );
       alist = sc_cons( sc_cons( k, sc_cons( item[ p ] ) ), alist );
    }
@@ -650,10 +650,10 @@ function hop_url_encoded_to_obj( s ) {
    /* create the temporary byte array */
    var a = hop_config.uint8array ? new Uint8Array( len ) : new Array( len );
 
-   for( var i = 0, j = 0, len = s.length; i < len; ++i ) {
+   for( var i = 0, j = 0, len = s.length; i < len; ++i, ++j ) {
       if( s.charCodeAt( i ) == 0x25 ) {
-	 var n1 = hex_to_dec( s.charCodeAt( i++ ) );
-	 var n2 = hex_to_dec( s.charCodeAt( i++ ) );
+	 var n1 = hex_to_dec( s.charCodeAt( ++i ) );
+	 var n2 = hex_to_dec( s.charCodeAt( ++i ) );
 
 	 a[ j ] = (n1 << 4) + n2;
       } else {
@@ -813,13 +813,13 @@ function hop_bytearray_to_obj( s ) {
 	 defining = -1;
       }
 
-      for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
-	 hd.car = read_item();
-	 hd.cdr = sc_cons( null, null );
+      for( var i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr ) {
+	 hd.__hop_car = read_item();
+	 hd.__hop_cdr = sc_cons( null, null );
       }
 
-      hd.car = read_item();
-      hd.cdr = read_item();
+      hd.__hop_car = read_item();
+      hd.__hop_cdr = read_item();
 
       return res;
    }
@@ -833,17 +833,17 @@ function hop_bytearray_to_obj( s ) {
 	 defining = -1;
       }
 
-      for( var i = 0; i < (sz - 2); i++, hd = hd.cdr ) {
-	 hd.car = read_item();
+      for( var i = 0; i < (sz - 2); i++, hd = hd.__hop_cdr ) {
+	 hd.__hop_car = read_item();
 	 // skip the cer
 	 read_item();
-	 hd.cdr = sc_cons( null, null );
+	 hd.__hop_cdr = sc_cons( null, null );
       }
 
-      hd.car = read_item();
+      hd.__hop_car = read_item();
       // skip the cer
       read_item();
-      hd.cdr = read_item();
+      hd.__hop_cdr = read_item();
 
       return res;
    }

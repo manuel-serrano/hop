@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/2.5.x/runtime/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Apr 19 08:04:47 2013 (serrano)                */
+;*    Last change :  Fri Jul 19 08:41:24 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -48,7 +48,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-debug ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (websocket-debug) (>= (bigloo-debug) 1))
+(define (websocket-debug)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    *connect-host-table* ...                                         */

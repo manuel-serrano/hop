@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/xml_expd.sch              */
+;*    serrano/prgm/project/hop/2.5.x/runtime/xml_expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Sun Mar 17 19:22:28 2013 (serrano)                */
+;*    Last change :  Sat Sep  7 11:32:47 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
@@ -223,7 +223,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    define-tag ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (define-tag m el bindings body)
+(define (define-tag m el bindings body loc)
    
    (define (predicate type id)
       (if (memq type '(int long string bstring bool char symbol keword double
@@ -245,7 +245,13 @@
 		(string->symbol (substring string 0 walker)))
 	       (else
 		(loop (+fx walker 1)))))))
-      
+
+   (define (attach-loc new old loc)
+      (let ((loc (or (get-source-location old) loc)))
+	 (if loc
+	    (econs (car new) (cdr new) loc)
+	    new)))
+   
    (let ((args (gensym 'args))
 	 (loop (gensym 'loop))
 	 (name (symbol->string m)))
@@ -253,12 +259,12 @@
 	  (let ,(map (lambda (b)
 			(match-case b
 			   (((and ?i (? symbol?)) ?init . ?-)
-			    `(,i ,init))
+			    (attach-loc `(,i ,init) b loc))
 			   (((and ?i (? symbol?)))
-			    `(,i '()))
+			    (attach-loc `(,i '()) b loc))
 			   (else
 			    (if (symbol? b)
-				`(,b '())
+				(attach-loc `(,b '()) b loc)
 				(error name "Illegal binding" b)))))
 		     bindings)
 	     (let ,loop ((,args ,args))
@@ -272,10 +278,17 @@
 							 `(not ,id)
 							 `(eq? ,id #unspecified))
 						    ,(predicate type id))
-					   (bigloo-type-error
-					      ,(symbol->string m)
-					      (symbol->string ',type)
-					      ,id))))
+					   ,(match-case (get-source-location b)
+					       ((at ?fname ?pos)
+						`(bigloo-type-error/location
+						    ,(symbol->string m)
+						    (symbol->string ',type)
+						    ,id ,fname ,pos))
+					       (else
+						`(bigloo-type-error
+						    ,(symbol->string m)
+						    (symbol->string ',type)
+						    ,id))))))
 				   (((and ?id (? symbol?)))
 				    (let ((id (untyped-ident id)))
 				       `(set! ,id (reverse! ,id))))
@@ -326,7 +339,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-compound ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (expand-define-xml-compound id bindings body)
+(define (expand-define-xml-compound id bindings body loc)
    (let ((s (symbol->string id)))
       (if (and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
@@ -339,8 +352,8 @@
 		    (set! body (remq! (car css) body))
 		    `(begin
 			(hop-hss-type! ,(symbol->string el) ,new)
-			,(define-tag id el bindings body)))
-		 (define-tag id el bindings body)))
+			,(define-tag id el bindings body loc)))
+		 (define-tag id el bindings body loc)))
 	  (error "define-xml-compound" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
@@ -349,7 +362,7 @@
 (define (hop-define-xml-cpd-expander x e)
    (match-case x
       ((?- ?id ?bindings . ?body)
-       (e (evepairify (expand-define-xml-compound id bindings body) x) e))
+       (e (evepairify (expand-define-xml-compound id bindings body (get-source-location x)) x) e))
       (else
        (error "define-xml-compound" "Illegal form" x))))
 
@@ -360,7 +373,7 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (let* ((id2 (symbol-append '< id '>))
-	      (nf (expand-define-xml-compound id bindings body))
+	      (nf (expand-define-xml-compound id bindings body (get-source-location x)))
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))
@@ -373,13 +386,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-tag ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (expand-define-tag id bindings body)
+(define (expand-define-tag id bindings body loc)
    (let ((s (symbol->string id)))
       (if (and (>fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\<)
 	       (char=? (string-ref s (-fx (string-length s) 1)) #\>))
 	  (let ((el (string->symbol (substring s 1 (-fx (string-length s) 1)))))
-	     (define-tag id el bindings body))
+	     (define-tag id el bindings body loc))
 	  (error "define-tag" "Illegal identifier" id))))
 
 ;*---------------------------------------------------------------------*/
@@ -388,7 +401,7 @@
 (define (hop-server-define-tag x e)
    (match-case x
       ((?- ?id ?bindings . ?body)
-       (e (evepairify (expand-define-tag id bindings body) x) e))
+       (e (evepairify (expand-define-tag id bindings body (get-source-location x)) x) e))
       (else
        (error "define-tag" "Illegal form" x))))
 
@@ -399,7 +412,7 @@
    (match-case x
       ((?- ?id ?bindings . ?body)
        (let* ((id2 (symbol-append '< id '>))
-	      (nf (expand-define-tag id2 bindings body))
+	      (nf (expand-define-tag id2 bindings body (get-source-location x)))
 	      (nm `(define-macro (,id . args)
 		      (list 'quasiquote
 			    (,id2 ,(list 'unquote-splicing 'args)))))

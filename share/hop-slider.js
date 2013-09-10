@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Jun 27 15:40:01 2013 (serrano)                */
+/*    Last change :  Wed Jul 24 11:05:30 2013 (serrano)                */
 /*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -259,13 +259,13 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 			      if( value != undefined ) {
 				 if( value < min ) value = min;
 				 if( value > max ) value = max;
-				 after( 10, function() {
+				 sc_after( 10, function() {
 				    if( slider.value == min - 1 ) {
 				       hop_slider_value_set( slider, value );
 				    }
 				 } );
 			      } else {
-				 after( 10, function() {
+				 sc_after( 10, function() {
 				    if( slider.value == min - 1 ) {
 				       hop_slider_value_set( slider, min );
 				    }

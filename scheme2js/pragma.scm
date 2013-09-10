@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -45,6 +45,7 @@
    (let ((bindings (hashtable-map ht
 				  (lambda (pragmaa var)
 				     (instantiate::Set!
+					(location -20)
 					(lvalue (var-reference var))
 					(val pragmaa))))))
       (if (pair? bindings)

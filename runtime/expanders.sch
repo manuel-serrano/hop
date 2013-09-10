@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/expanders.sch             */
+;*    serrano/prgm/project/hop/2.5.x/runtime/expanders.sch             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun Jun 17 17:19:54 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Mon Jul 22 08:01:39 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop expanders installer                                          */
 ;*=====================================================================*/

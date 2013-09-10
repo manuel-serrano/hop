@@ -1,11 +1,11 @@
 ;; Generated file, don't edit
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/share/hop-password.scm            */
+;*    serrano/prgm/project/hop/2.2.x/runtime/password.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 29 10:14:56 2010                          */
-;*    Last change :  Wed Feb 27 14:33:55 2013 (serrano)                */
-;*    Copyright   :  2010-13 Manuel Serrano                            */
+;*    Last change :  Mon Apr 11 16:22:18 2011 (serrano)                */
+;*    Copyright   :  2010-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Password encryption (shared by client and server code).          */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
 ;*    authentication-encrypt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (authentication-encrypt #!key
-				(schema 'digest) 
+				(schema 'digest)
 				(algo 'ho0)
 				session
 				name

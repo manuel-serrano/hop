@@ -1,20 +1,27 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/error.scm               */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-11                                           */
+;*    Last change :  Sun Jul 21 08:45:42 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme2js error handling                                         */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module error
+   
    (import export-desc nodes)
+   
    (export (scheme2js-error proc msg obj loc)
 	   (scheme2js-error-location loc)))
 
+;*---------------------------------------------------------------------*/
+;*    scheme2js-error-location ...                                     */
+;*---------------------------------------------------------------------*/
 (define (scheme2js-error-location loc)
    (cond
       ((isa? loc Node)
@@ -24,7 +31,10 @@
        (cer loc))
       (else
        loc)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    scheme2js-error ...                                              */
+;*---------------------------------------------------------------------*/
 (define (scheme2js-error proc msg obj loc)
    (let ((loc (scheme2js-error-location loc)))
       (match-case loc

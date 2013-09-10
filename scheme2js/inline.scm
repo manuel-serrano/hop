@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -220,6 +220,7 @@
 				     vaarg?))
 		    (assigs (map (lambda (p)
 				    (instantiate::Set!
+				       (location -10)
 				       (lvalue (car p))
 				       (val (cdr p))))
 				 assigs-mapping))

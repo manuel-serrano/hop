@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Jul 31 07:24:04 2013 (serrano)                */
+;*    Last change :  Sat Jul 27 06:37:03 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -76,8 +76,7 @@
 	       ((and (pair? iv) (memq :client iv))
 		=>
 		(lambda (x)
-		   (when (pair? (cdr x))
-		      (register (cadr x)))))
+		   (when (pair? (cdr x)) (register (cadr x)))))
 	       (else
 		(let ((gv (class-field-accessor f)))
 		   (register (gv o)))))))))

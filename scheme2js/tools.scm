@@ -1,15 +1,17 @@
 ;*=====================================================================*/
-;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/tools.scm               */
 ;*    -------------------------------------------------------------    */
-;*    This file is part of Scheme2Js.                                  */
-;*                                                                     */
-;*   Scheme2Js is distributed in the hope that it will be useful,      */
-;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
-;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
-;*   LICENSE file for more details.                                    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Aug  2 09:59:42 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme2js misc tools                                             */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module tools
    (export (inline make-eq-hashtable #!optional (size #unspecified))
 	   (eq-hashtable-clone ht)
@@ -22,34 +24,55 @@
 	   (id-of-id::symbol ::symbol)
 	   (parse-ident ::symbol)))
 
+;*---------------------------------------------------------------------*/
+;*    make-eq-hashtable ...                                            */
+;*---------------------------------------------------------------------*/
 (define-inline (make-eq-hashtable #!optional (size #unspecified))
    (make-hashtable size #unspecified eq?))
 
+;*---------------------------------------------------------------------*/
+;*    eq-hashtable-clone ...                                           */
+;*---------------------------------------------------------------------*/
 (define (eq-hashtable-clone ht)
    (let ((cloned-ht (make-eq-hashtable)))
       (hashtable-for-each ht
-			  (lambda (key val)
-			     (hashtable-put! cloned-ht key val)))
+	 (lambda (key val)
+	    (hashtable-put! cloned-ht key val)))
       cloned-ht))
 
+;*---------------------------------------------------------------------*/
+;*    hashtable-append! ...                                            */
+;*---------------------------------------------------------------------*/
 (define (hashtable-append! ht1 ht2)
    (hashtable-for-each ht2
-		       (lambda (key val)
-			  (hashtable-put! ht1 key val))))
+      (lambda (key val)
+	 (hashtable-put! ht1 key val))))
 
+;*---------------------------------------------------------------------*/
+;*    begin0                                                           */
+;*---------------------------------------------------------------------*/
 (define-macro (begin0 . L)
    (let ((fst (gensym 'fst)))
       `(let ((,fst ,(car L)))
 	  ,@(cdr L)
 	  ,fst)))
 
+;*---------------------------------------------------------------------*/
+;*    cons-set! ...                                                    */
+;*---------------------------------------------------------------------*/
 (define-macro (cons-set! lvalue val)
    `(set! ,lvalue (cons ,val (or ,lvalue '()))))
 
+;*---------------------------------------------------------------------*/
+;*    cp-filter ...                                                    */
+;*---------------------------------------------------------------------*/
 (define-macro (cp-filter . L)
    `(map (lambda (x) x)
 	 (filter ,@L)))
 
+;*---------------------------------------------------------------------*/
+;*    for ...                                                          */
+;*---------------------------------------------------------------------*/
 (define-macro (for i from to . Lbody)
    (let ((loop (gensym 'loop))
 	 (to-tmp (gensym 'to)))

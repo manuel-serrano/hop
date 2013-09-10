@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-audio.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-audio.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sat Jan 28 18:51:35 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Sun Aug 11 15:31:41 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
 /*=====================================================================*/
@@ -216,7 +216,7 @@ HopAudioServerBackend.prototype.update = function() {
    // ask the current service
    with_hop( hop_apply_url( backend.url, [ Sstatus, 0 ] ),
 	     function( val ) {
-		if( val.car === Splay )
+		if( val.__hop_car === Splay )
 		   hop_audio_server_event_listener( {value: val}, backend );
 	     },
 	     backend.err,
@@ -341,17 +341,17 @@ if( hop_config.html5_audio ) {
 	    return false;
 	 }
 	 while( sc_isPair( o ) ) {
-	    var e = o.car;
+	    var e = o.__hop_car;
 
 	    if( typeof e === "string" ) {
 	       return e;
 	    }
-	    if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
-	       if( backend.canPlayType( e.car ) !== "" ) {
-		  return e.cdr.car;
+	    if( sc_isPair( e ) && sc_isPair( e.__hop_cdr ) ) {
+	       if( backend.canPlayType( e.__hop_car ) !== "" ) {
+		  return e.__hop_cdr.__hop_car;
 	       }
 	    }
-	    o = o.cdr;
+	    o = o.__hop_cdr;
 	 }
 	 return false;
       }
@@ -440,7 +440,7 @@ function hop_report_audio_exception( e ) {
    exc.message = e.value;
    exc.scObject = e.audio.backend.src;
 
-   hop_report_exception( exc );
+   hop_callback_handler( exc, "audio" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -622,8 +622,8 @@ function hop_audio_server_init( backend ) {
 	    with_hop( hop_apply_url( backend.url, [ Spoll, stamp ] ),
 		      function( l ) {
 			 while( sc_isPair( l ) ) {
-			    var v = l.car.car;
-			    var s = l.car.cdr;
+			    var v = l.__hop_car.__hop_car;
+			    var s = l.__hop_car.__hop_cdr;
 
 			    if( s > stamp ) {
 			       // only consider events not yet processed
@@ -631,7 +631,7 @@ function hop_audio_server_init( backend ) {
 
 			       hop_audio_server_event_listener( {value: v}, backend );
 			    }
-			    l = l.cdr;
+			    l = l.__hop_cdr;
 			 }
 			 backend.interval = setInterval( poll, period );
 		      },
@@ -644,8 +644,8 @@ function hop_audio_server_init( backend ) {
 		function( l ) {
 		   // flush out the events
 		   while( sc_isPair( l ) ) {
-		      stamp = l.car.cdr;
-		      l = l.cdr;
+		      stamp = l.__hop_car.__hop_cdr;
+		      l = l.__hop_cdr;
 		   }
 
 		   // start polling
@@ -680,16 +680,16 @@ function hop_audio_flash_init( backend ) {
 	 return false;
       }
       while( sc_isPair( o ) ) {
-	 var e = o.car;
+	 var e = o.__hop_car;
 	 if( typeof e === "string" ) {
 	    return e;
 	 }
-	 if( sc_isPair( e ) && sc_isPair( e.cdr ) ) {
-	    if( e.car === "audio/mpeg" ) {
-	       return e.cdr.car;
+	 if( sc_isPair( e ) && sc_isPair( e.__hop_cdr ) ) {
+	    if( e.__hop_car === "audio/mpeg" ) {
+	       return e.__hop_cdr.__hop_car;
 	    }
 	 }
-	 o = o.cdr;
+	 o = o.__hop_cdr;
       }
       return false;
    }
@@ -824,36 +824,36 @@ function hop_audio_flash_onerror_callback( id, src, msg ) {
 /*---------------------------------------------------------------------*/
 function hop_audio_server_event_listener( e, backend ) {
    if( sc_isPair( e.value ) ) {
-      var k = e.value.car;
-      var rest = e.value.cdr;
+      var k = e.value.__hop_car;
+      var rest = e.value.__hop_cdr;
       
       if( (k === Splay) || (k === Sstart) ) {
-	 var li = rest.cdr.cdr.cdr.car;
+	 var li = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
 	 // play
-	 backend.current_duration = rest.car;
-	 backend.current_position = rest.cdr.car;
+	 backend.current_duration = rest.__hop_car;
+	 backend.current_position = rest.__hop_cdr.__hop_car;
 
-	 if( backend.current_volume != rest.cdr.cdr.car ) {
-	    backend.current_volume = rest.cdr.cdr.car;
+	 if( backend.current_volume != rest.__hop_cdr.__hop_cdr.__hop_car ) {
+	    backend.current_volume = rest.__hop_cdr.__hop_cdr.__hop_car;
 	    hop_audio_invoke_listeners( backend.audio, "volume" );
 	 }
 	 if( backend.state != Splay
 	     || backend.playlistindex != li
-	     || !sc_equal( backend.playlist, rest.cdr.cdr.cdr.cdr.car ) ) {
-	    backend.playlist = rest.cdr.cdr.cdr.cdr.car;
+	     || !sc_equal( backend.playlist, rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car ) ) {
+	    backend.playlist = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
 	    backend.state = Splay;
 	    backend.playlistindex = li;
 	    hop_audio_invoke_listeners( backend.audio, "play" );
 	 }
       } else if( k === Spause ) {
 	 // pause
-	 backend.current_duration = rest.car;
-	 backend.current_position = rest.cdr.car;
-	 backend.playlistindex = rest.cdr.cdr.cdr.car;
-	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
+	 backend.current_duration = rest.__hop_car;
+	 backend.current_position = rest.__hop_cdr.__hop_car;
+	 backend.playlistindex = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
+	 backend.playlist = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
 	    
-	 if( backend.current_volume != rest.cdr.cdr.car ) {
-	    backend.current_volume = rest.cdr.cdr.car;
+	 if( backend.current_volume != rest.__hop_cdr.__hop_cdr.__hop_car ) {
+	    backend.current_volume = rest.__hop_cdr.__hop_cdr.__hop_car;
 	    hop_audio_invoke_listeners( backend.audio, "volume" );
 	 }
 	 if( backend.state != Spause ) {
@@ -862,13 +862,13 @@ function hop_audio_server_event_listener( e, backend ) {
 	 }
       } if( k === Sstop ) {
 	 // stop
-	 backend.current_duration = rest.car;
-	 backend.current_position = rest.cdr.car;
-	 backend.playlistindex = rest.cdr.cdr.cdr.car;
-	 backend.playlist = rest.cdr.cdr.cdr.cdr.car;
+	 backend.current_duration = rest.__hop_car;
+	 backend.current_position = rest.__hop_cdr.__hop_car;
+	 backend.playlistindex = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
+	 backend.playlist = rest.__hop_cdr.__hop_cdr.__hop_cdr.__hop_cdr.__hop_car;
 	 
-	 if( backend.current_volume != rest.cdr.cdr.car ) {
-	    backend.current_volume = rest.cdr.cdr.car;
+	 if( backend.current_volume != rest.__hop_cdr.__hop_cdr.__hop_car ) {
+	    backend.current_volume = rest.__hop_cdr.__hop_cdr.__hop_car;
 	    hop_audio_invoke_listeners( backend.audio, "volume" );
 	 }
 	 if( backend.state != Sstop ) {
@@ -876,7 +876,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	    hop_audio_invoke_listeners( backend.audio, "stop" );
 	 }
       } else if( k === Svolume ) {
-	 backend.current_volume = rest.car;
+	 backend.current_volume = rest.__hop_car;
 	    
 	 hop_audio_invoke_listeners( backend.audio, "volume" );
       } else if( k === Sinit ) {
@@ -888,17 +888,17 @@ function hop_audio_server_event_listener( e, backend ) {
       } else if( k === Serror ) {
 	 // error
 	 alert( "ERROR(hop-audio.js) " + e.value );
-	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
+	 hop_audio_invoke_listeners( backend.audio, "error", rest.__hop_car );
       } else if( k === Sabort ) {
 	 // abort
 	 hop_audio_close( backend.audio );
-	 hop_audio_invoke_listeners( backend.audio, "error", rest.car );
+	 hop_audio_invoke_listeners( backend.audio, "error", rest.__hop_car );
       } else if( k === Sclose ) {
 	 // close
 	 hop_audio_invoke_listeners( backend.audio, "close", false );
       } else if( k === Smeta ) {
 	 // meta
-	 var val = rest.car;
+	 var val = rest.__hop_car;
 
 	 if( typeof val === "string" ) {
 	    backend.current_metadata = {
@@ -928,18 +928,18 @@ function hop_audio_server_event_listener( e, backend ) {
 	       hop_audio_invoke_listeners( audio, "stop" );
 	    } else if( k === Scmdplay ) {
 	       backend.state = Splay;
-	       hop_audio_playlist_play( audio, rest.car );
+	       hop_audio_playlist_play( audio, rest.__hop_car );
 	       hop_audio_invoke_listeners( audio, "play" );
 	    } else if( k === Scmdseek ) {
 	       backend.state = Splay;
-	       if( rest.car.cdr )
-		  hop_audio_playlist_play( audio, rest.car.cdr );
-	       hop_audio_seek( audio, rest.car.car );
+	       if( rest.__hop_car.__hop_cdr )
+		  hop_audio_playlist_play( audio, rest.__hop_car.__hop_cdr );
+	       hop_audio_seek( audio, rest.__hop_car.__hop_car );
 	       hop_audio_invoke_listeners( audio, "play" );
 	    } else if( k === Scmdplaylistclear ) {
 	       hop_audio_playlist_set( audio, null, false );
 	    } else if( k === Scmdplaylistset ) {
-	       hop_audio_playlist_set( audio, rest.car, false );
+	       hop_audio_playlist_set( audio, rest.__hop_car, false );
 	       backend.playlist = audio.browserbackend.playlist;
 	    } else if( k === Scmdplaylistadd ) {
 	       var opl = hop_audio_playlist_get( audio );
@@ -948,7 +948,7 @@ function hop_audio_server_event_listener( e, backend ) {
 	    } else if( k === Scmdplaylistget ) {
 	       var opl = hop_audio_playlist_get( audio );
 	    } else if( k === Scmdvolume ) {
-	       var opl = hop_audio_volume_set( audio, rest.car );
+	       var opl = hop_audio_volume_set( audio, rest.__hop_car );
 	       hop_audio_invoke_listeners( audio, "volume" );
 	    }
 	 } finally {

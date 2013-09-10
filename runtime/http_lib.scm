@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_lib.scm              */
+;*    serrano/prgm/project/hop/2.5.x/runtime/http_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 09:04:30 2004                          */
-;*    Last change :  Thu Aug 16 09:07:37 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Wed Jul 24 15:20:40 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple HTTP lib                                                  */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
    
    (export  (http-parse-error-message ::obj ::input-port)
 	    (http-header-field ::pair-nil ::keyword)
+	    (http-header-field-set! ::pair-nil ::keyword ::obj)
 	    (http-header-field-values::pair-nil ::bstring)
 	    (http-cookie-get ::http-request ::bstring #!optional path domain)
 	    (http-basic-authentication? ::http-request ::bstring ::bstring)
@@ -66,6 +67,22 @@
 	  (loop (cdr hs)))
 	 ((eq? (caar hs) kwd)
 	  (cdar hs))
+	 (else
+	  (loop (cdr hs))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-header-field-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (http-header-field-set! header kwd val)
+   (let loop ((hs header))
+      (cond
+	 ((null? hs)
+	  (cons (cons kwd val) header))
+	 ((not (pair? (car hs)))
+	  (loop (cdr hs)))
+	 ((eq? (caar hs) kwd)
+	  (set-cdr! (car hs) val)
+	  header)
 	 (else
 	  (loop (cdr hs))))))
 

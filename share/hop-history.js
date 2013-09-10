@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/share/hop-history.js              */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-history.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Thu Jan 19 11:02:42 2012 (serrano)                */
-/*    Copyright   :  2007-12 Manuel Serrano                            */
+/*    Last change :  Sat Aug 17 19:43:38 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -40,7 +40,7 @@ function _hop_state_entry( op, val ) {
 function hop_state_history_to_location( state ) {
    var loc = undefined;
    
-   for( p in state ) {
+   for( var p in state ) {
       if( state[ p ] instanceof _hop_state_entry ) {
 	 if( loc == undefined ) {
 	    loc = "#" + p + "=" + state[ p ].op + ":" + state[ p ].val;

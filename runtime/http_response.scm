@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/2.5.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Sep  9 16:23:19 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 08:21:14 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
