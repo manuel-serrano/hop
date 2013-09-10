@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Sep  4 07:42:18 2013 (serrano)                */
+/*    Last change :  Tue Sep 10 15:08:19 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -417,12 +417,12 @@ function start_servevt_websocket_proxy( key, host, port ) {
 	 
 	 reconnect_debug = 0;
       }
+      
       ws.onerror = function( e ) {
-	 hop_tprint( "hop-event.js", "websocket", sc_list( "WS on error...", e ) );
+	 throw e;
       }
 	 
       ws.onclose = function( e ) {
-	 hop_tprint( "hop-event.js", "websocket", sc_list( "WS on close...", e ) );
 	 hop_server.state = 3;
 	 hop_serverready_triggered = false
 	 hop_servevt_onclose();
