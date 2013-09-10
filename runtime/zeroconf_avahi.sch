@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/zeroconf_avahi.sch        */
+;*    serrano/prgm/project/hop/2.5.x/runtime/zeroconf_avahi.sch        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Apr 11 16:59:13 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 06:37:59 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -196,8 +196,8 @@
       (with-handler
 	 (lambda (e)
 	    (exception-notify e)
-	    #f))
-      (proc arg))
+	    #f)
+	 (proc arg)))
 
    (define (avahi-protocol proto)
       (case proto
