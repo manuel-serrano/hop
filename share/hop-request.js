@@ -541,11 +541,16 @@ function hop_send_request_xdomain( e, origin ) {
 /*---------------------------------------------------------------------*/
 function hop_xdomain_onmessage( event, svc, succ, fail ) {
    var xhr = new Object();
-   var m = event.data.match( "([0-9]*) ([^ ]*) ([^ ]*) (.*)$");
+   var m = event.data.match( "([0-9]+) ([^ ]+) ([^ ]+)( *)" );
+
    xhr.status = parseInt( m[ 1 ], 10 );
    xhr.content_type = m[ 2 ];
    xhr.hop_serialize = m[ 3 ];
-   xhr.responseText = m[ 4 ];
+   xhr.responseText = event.data.substring( m[ 0 ].length );
+
+   // Install a fake 'getResponseHeader' procedure to please
+   // 'xhr_hop_failure_callback'.
+   xhr.getResponseHeader = function(h) { return null; }
    
    hop_request_onready( xhr, svc, succ, fail );
 }
