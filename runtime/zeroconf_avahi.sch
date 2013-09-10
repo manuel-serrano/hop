@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:04:07 2011                          */
-;*    Last change :  Thu Apr 11 16:59:13 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 06:38:13 2013 (serrano)                */
 ;*    Copyright   :  2011-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Avahi support for Hop                                            */
@@ -191,13 +191,13 @@
 ;*    service-browser ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-browser o::avahi type proc)
-
+   
    (define (apply-safe proc arg)
       (with-handler
 	 (lambda (e)
 	    (exception-notify e)
 	    #f)
-         (proc arg)))
+	 (proc arg)))
 
    (define (avahi-protocol proto)
       (case proto
