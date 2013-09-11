@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Aug 19 06:54:26 2013 (serrano)                */
+#*    Last change :  Wed Sep 11 18:59:45 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -157,7 +157,7 @@ install:
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/.afile && \
 	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
-        for p in hop_u.js hop_s.js hop-autoconf.js $(RTSCONFIG); do \
+        for p in hop_u.js hop_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p && \
 	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null && \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Sep 10 18:03:19 2013 (serrano)                */
+;*    Last change :  Tue Sep 10 19:46:34 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
@@ -764,7 +764,7 @@
 	    (stmt?
 	     (template-display p
 		(?@ (and debug? toplevel?)
-		   "var sc_ctx=hop_callback_html_context( \"~a\", \"~a\", ~a ); hop_current_stack_context=sc_ctx; try { ~@ } catch( e ) { hop_callback_handler(e, sc_ctx); }"
+		   "sc_context=hop_callback_html_context( \"~a\", \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
 		   (match-case location
 		      ((at ?fname ?-) fname)
 		      (else "toplevel"))
@@ -1029,7 +1029,7 @@
 	    ((not (lambda-call? this))
 	     (template-display p
 		(?@ toplevel?
-		   "var sc_ctx=hop_callback_html_context( false, \"~a\", ~a ); hop_current_stack_context=sc_ctx; try { ~@ } catch( e ) { hop_callback_handler(e, sc_ctx); }"
+		   "sc_context=hop_callback_html_context( false, \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
 		   (begin "Call") 1)
 		(?@ stmt? "~@;\n")
 		;;  was (not stmt?). now always. even for stmt.
