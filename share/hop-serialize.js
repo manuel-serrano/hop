@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Aug 19 06:49:58 2013 (serrano)                */
+/*    Last change :  Thu Sep 12 20:55:10 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -12,11 +12,12 @@
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_context ...                                        */
 /*---------------------------------------------------------------------*/
-var hop_serialize_context = new Object();
-hop_serialize_context.def = 0;
-hop_serialize_context.ref = 0;
-hop_serialize_context.active = false;
-hop_serialize_context.key = 1;
+var hop_serialize_context = {
+   def: 0,
+   ref: 0,
+   active: false,
+   key: 1
+ }
 
 /*---------------------------------------------------------------------*/
 /*    object serialization                                             */
@@ -48,7 +49,7 @@ function hop_bigloo_serialize( item ) {
       var str = hop_bigloo_serialize_context( item );
 
       hop_serialize_context.active = false;
-      
+
       return "c" + hop_serialize_number( hop_serialize_context.def ) + str;
    }
 }
@@ -600,8 +601,13 @@ function safe_decode_uri( s ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
-   var s = hop_bigloo_serialize_context( item );
+   hop_serialize_context.active = false;
+   hop_serialize_context.ref = 0;
+   hop_serialize_context.def = 0;
+   hop_serialize_context.key++;
    
+   var s = hop_bigloo_serialize_context( item );
+
    return safe_decode_uri( s );
 }
 

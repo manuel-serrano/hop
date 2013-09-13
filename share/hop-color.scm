@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/share/hop-color.scm               */
+;*    serrano/prgm/project/hop/2.5.x/share/hop-color.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 11:31:04 2009                          */
-;*    Last change :  Thu Jan 27 12:32:18 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Fri Sep 13 05:57:17 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client side support for color selectors.                         */
 ;*=====================================================================*/
@@ -814,8 +814,9 @@
       ((procedure? cc.oncolorselect)
        (cc.oncolorselect))
       ((string? (cc.getAttribute "oncolorselect"))
-       (set! cc.oncolorselect (lambda (event)
-				 (eval (cc.getAttribute "oncolorselect"))))
+       (set! cc.oncolorselect 
+	  (eval (format "(function (event) { ~a })"
+		   (cc.getAttribute "oncolorselect"))))
        (hop-colorchooser-onselect cc))))
 
 ;*---------------------------------------------------------------------*/

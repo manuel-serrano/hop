@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat Sep  7 13:09:22 2013 (serrano)                */
+;*    Last change :  Thu Sep 12 18:40:30 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -50,7 +50,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-stack-context ...                                    */
 ;*---------------------------------------------------------------------*/
-(define hop-current-stack-context #f)
+(define hop-current-stack-context '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-extend-stack-context ...                                     */

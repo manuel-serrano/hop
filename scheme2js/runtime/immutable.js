@@ -84,7 +84,40 @@ function sc_isEqual(o1, o2) {
 	    (sc_isPair(o1) && sc_isPair(o2)
 	     && sc_isPairEqual(o1, o2, sc_isEqual)) ||
 	    (sc_isVector(o1) && sc_isVector(o2)
-	     && sc_isVectorEqual(o1, o2, sc_isEqual)));
+	     && sc_isVectorEqual(o1, o2, sc_isEqual)) ||
+	    (sc_objectEqual(o1, o2)));
+}
+
+function sc_objectEqual(x, y) {
+  if (!(x instanceof Object) || !(y instanceof Object)) return false;
+    // if they are not strictly equal, they both need to be Objects
+
+  if (x.constructor !== y.constructor) return false;
+    // they must have the exact same prototype chain, the closest we can do is
+    // test there constructor.
+
+   for (var p in x) {
+      if (!x.hasOwnProperty(p)) continue;
+      // other properties were tested using x.constructor === y.constructor
+
+      if (!y.hasOwnProperty(p)) return false;
+      // allows to compare x[ p ] and y[ p ] when set to undefined
+
+      if (x[p] === y[p]) continue;
+      // if they have the same strict value or identity then they are equal
+
+      if (typeof(x[p]) !== "object") return false;
+      // Numbers, Strings, Functions, Booleans must be strictly equal
+
+      if ( !sc_isEqual(x[p],y[p])) return false;
+      // Objects and Arrays must be tested recursively
+   }
+
+   for (var p in y) {
+      if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) return false;
+      // allows x[ p ] to be set to undefined
+   }
+   return true;
 }
 
 /*** META ((export number->symbol integer->symbol) (arity -2)) */

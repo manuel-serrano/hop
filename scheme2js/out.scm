@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Sep 10 19:46:34 2013 (serrano)                */
+;*    Last change :  Thu Sep 12 19:10:17 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
@@ -623,15 +623,14 @@
 		      ;; lambda expressions
 		      (template-display p
 			 (?@ stmt? "~@;\n")
-			 (?@ (or debug? stmt?) "(~@)")
 			 (?@ debug?
-			    "~@,~a.displayName=\"~a\",~a.sc_arity=~a,~a"
+			    "(~a = ~@,~a.displayName=\"~a\",~a.sc_arity=~a,~a)"
+			    js-id
 			    js-id
 			    (debug-name lvalue location)
 			    js-id (debug-arity this)
 			    js-id)
-			 (?@ #t "~a = function (~e) { ~@ }"
-			    js-id
+			 (?@ #t "function (~e) { ~@ }"
 			    (separated ","
 			       (lambda (e) "~e" (walk e p #f #f))
 			       formals-w/o-vaarg))
@@ -862,11 +861,20 @@
 	    (cond
 	       ((and (isa? val Frame-alloc) (not (config 'frame-push)))
 		(compile val env p stmt? #f))
-	       ((and toplevel? (cnst-function? var val))
-		(let ((nval (widen!::Out-Lambda val
-			       (lvalue-is-cnst #t)
-			       (lvalue lvalue))))
-		   (compile nval env p stmt? #t)))
+	       ((cnst-function? var val)
+		;; strict impose top level functions only
+		(if toplevel?
+		    (let ((nval (widen!::Out-Lambda val
+				   (lvalue-is-cnst #t)
+				   (lvalue lvalue))))
+		       (compile nval env p #f #t))
+		    (let ((nval (widen!::Out-Lambda val
+				   (lvalue-is-cnst #t)
+				   (lvalue lvalue))))
+		       (when debug?
+			  (with-access::Named-Var var (js-id)
+			     (fprintf p "var ~a;" js-id)))
+		       (compile nval env p #t #f))))
 	       (else
 		(when source-map?
 		   (set! dstposition (output-port-position p)))

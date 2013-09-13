@@ -865,7 +865,7 @@ try {
 if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
-         var f = hop_callback( proc, obj + "<-" + event );
+         var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
          var i = "on" + event + "hdl";
 
          if( !(i in obj ) ) obj[ i ] = [];
@@ -908,7 +908,7 @@ if( hop_has_event20 ) {
    var hop_event_counter = 0;
    
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var f = hop_callback( proc, obj + "<-" + event );
+      var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
       var procid = "on" + event + hop_event_counter++;
       obj[ procid ] = f;
       var p = function( e ) { return obj[ procid ]( window.event ); };
