@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Thu Jun 27 15:40:01 2013 (serrano)                */
+/*    Last change :  Sat Sep 14 18:22:40 2013 (serrano)                */
 /*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
@@ -291,23 +291,24 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 	 var t = touches[ touches.length - 1];
 	 var bbox = hop_bounding_box( slider, 0 );
 
+	 slidertouch.moved = false;
+
 	 if( bbox ) {
 	    var w = parseInt( node_computed_style_get( slidertouch, "width" ) );
 
 	    if( w == 0 ) w = 96;
 	    
 	    node_style_set( slidertouch, "left", (bbox.left + (bbox.width/2) - w/2) + "px" );
-	    if( bbox.top > 48 ) {
-	       node_style_set( slidertouch, "top", (bbox.top - 48) + "px" );
+	    if( bbox.top > 64 ) {
+	       node_style_set( slidertouch, "top", (bbox.top - 54) + "px" );
 	    } else {
-	       node_style_set( slidertouch, "top", (bbox.bottom + 16) + "px" );
+	       node_style_set( slidertouch, "top", (bbox.top + bbox.height + 32) + "px" );
 	    }
 	 } else {
 	    node_style_set( slidertouch, "left", (hop_event_mouse_x( t ) - 32) + "px" );
 	    node_style_set( slidertouch, "top", (hop_event_mouse_y( t ) - 48) + "px" );
 	 }
 
-	 node_style_set( slidertouch, "display", "block" );
 	 slidertouch.innerHTML = slider.value + "";
       },
       false );
@@ -315,14 +316,21 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.addEventListener(
       "touchend", 
       function( evt ) {
+	 if( !slidertouch.moved ) {
+	    var touches = evt.changedTouches;
+	    hop_slider_mousemove( touches[ touches.length - 1], slider );
+	 } else {
+	    node_style_set( slidertouch, "display", "none" );
+	 }
 	 evt.preventDefault();
-	 node_style_set( slidertouch, "display", "none" );
       },
       false );
    
    slider.addEventListener(
       "touchmove",
       function( evt ) {
+	 slidertouch.moved = true;
+	 node_style_set( slidertouch, "display", "block" );
 	 evt.preventDefault();
 	 var touches = evt.changedTouches;
 	 hop_slider_mousemove( touches[ touches.length - 1], slider );
@@ -330,9 +338,6 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
       },
       false );
 
-/*    hop_tprint( "hop-slider.js", 0,                                  */
-/* 	       sc_cons( "<<< hop_make_slider",                         */
-/* 			sc_cons( id, null ) ) );                       */
    return slider;
 }
 
