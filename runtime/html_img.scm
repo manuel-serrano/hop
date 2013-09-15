@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sun Mar 17 19:27:34 2013 (serrano)                */
+;*    Last change :  Sun Sep 15 06:42:17 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -173,20 +173,22 @@
 	  (attributes `(:src ,src :alt ,alt ,@attributes))
 	  (body '())))
       ((string? src)
-       (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
-	  (cond
-	     ((and (pair? body) (string? (car body)) (null? (cdr body)))
-	      (let ((req (current-request)))
-		 (if (or (not req) (authorized-path? (current-request) src))
-		     (inline-img src cssrc (inline-base64 src (car body)))
-		     (plain-img src cssrc))))
-	     (inline
-	      (let ((req (current-request)))
-		 (if (or (not req) (authorized-path? (current-request) src))
-		     (inline-img src cssrc (inline-image src))
-		     (plain-img src cssrc))))
-	     (else
-	      (plain-img src cssrc)))))
+       (if (string-prefix? "data:" src)
+	   (inline-img src src src)
+	   (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
+	      (cond
+		 ((and (pair? body) (string? (car body)) (null? (cdr body)))
+		  (let ((req (current-request)))
+		     (if (or (not req) (authorized-path? (current-request) src))
+			 (inline-img src cssrc (inline-base64 src (car body)))
+			 (plain-img src cssrc))))
+		 (inline
+		  (let ((req (current-request)))
+		     (if (or (not req) (authorized-path? (current-request) src))
+			 (inline-img src cssrc (inline-image src))
+			 (plain-img src cssrc))))
+		 (else
+		  (plain-img src cssrc))))))
       ((eq? src #unspecified)
        (empty-img))
       (else
