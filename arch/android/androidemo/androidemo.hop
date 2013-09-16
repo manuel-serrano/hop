@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Mon Jan  7 14:36:55 2013 (serrano)                */
+;*    Last change :  Sun Sep 15 16:34:39 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
@@ -109,7 +109,13 @@ END:VCARD"))
 	    "To better understand the purpose of these
 demonstrations it is adviced to run them from a PC, although they can be
 executed by the Web browsers running on the Android device.")
-
+	 
+	 (<H2> "Version")
+	 (with-access::androidphone (instantiate::androidphone) (sdk model product)
+	    (<TABLE>
+	       (<TR> (<TH> "sdk") (<TD> sdk))
+	       (<TR> (<TH> "model") (<TD> model))
+	       (<TR> (<TH> "product") (<TD> product))))
 	 (<H2> "Phone")
 	 (<DIV> :class "short-note"
 	    "This shows how to access the phone dynamic configuration")
@@ -117,7 +123,7 @@ executed by the Web browsers running on the Android device.")
 	 
 	 (<H2> "Telephony")
 	 (<ANDROIDEMO:TELEPHONY>)
-
+	 
 	 (<H2> "Hardware")
 	 (<DIV> :class "short-note"
 	    "This small demonstrations illustrate the ability of the server
@@ -125,7 +131,7 @@ side to use the hardware sensors and activators of the phone. Each time a
 button of this web interface is clicked, the corresponding order is send
 to the server to directly controls the phone.")
 	 (<ANDROIDEMO:HARDWARE>)
-
+	 
 ;* 	 (<H2> "Contact")                                              */
 ;* 	 (<DIV> :class "short-note"                                    */
 ;* 	    "This illustrates the ability of the Hop to use the on-device */
@@ -137,7 +143,7 @@ to the server to directly controls the phone.")
 	    "This shows the Android ability to synthesizes speech from
 text for immediate playback or to create a sound file.")
 	 (<ANDROIDEMO:SPEECH>)
-
+	 
 	 (<H2> "Multimedia")
 	 (<DIV> :class "short-note"
 	    "This shows that the server side can control the multimedia
@@ -146,7 +152,7 @@ are clicked (for instance the play button below), the corresponding order
 is sent to the server that directly controls the multimedia player of the
 Android phone. This demonstration does not use any HTML5 facility.")
 	 (<ANDROIDEMO:MULTIMEDIA>)
-
+	 
 	 )))
 
 ;*---------------------------------------------------------------------*/
