@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.0.x/etc/configure.scm.macosx-bundle       */
+;*    .../prgm/project/hop/2.4.x/etc/configure.scm.macosx-bundle       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon May  4 17:17:25 2009 (serrano)                */
+;*    Last change :  Mon Sep 16 17:06:35 2013 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration (tuned for MacOSX bundle)                      */
 ;*=====================================================================*/
@@ -205,7 +205,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-configure-rc-directory) "Library/Preferences/hop")
+;* (define (hop-configure-rc-directory) "Library/Preferences/hop")     */
+(define (hop-configure-rc-directory)
+   (let* ((host (hostname))
+	  (home (or (getenv "HOME") "/"))
+	  (conf (or (getenv "XDG_CONFIG_HOME") (make-file-name home ".config")))
+	  (pref "hop"))
+      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+	 (if (string? host)
+	     (let ((conf/h (make-file-name conf (string-append pref "." host))))
+		(if (and (file-exists? conf/h) (directory? conf/h))
+		    conf/h
+		    (if (string=? (suffix host) "")
+			(make-file-name conf pref)
+			(loop (prefix host)))))
+	     (make-file-name conf pref)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */
