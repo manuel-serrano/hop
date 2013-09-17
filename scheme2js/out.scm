@@ -630,7 +630,8 @@
 			    (debug-name lvalue location)
 			    js-id (debug-arity this)
 			    js-id)
-			 (?@ #t "function (~e) { ~@ }"
+			 (?@ #t "~a = function (~e) { ~@ }"
+                            js-id
 			    (separated ","
 			       (lambda (e) "~e" (walk e p #f #f))
 			       formals-w/o-vaarg))
