@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Aug 22 07:05:47 2013 (serrano)                */
+;*    Last change :  Sat Sep 14 18:21:26 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -302,7 +302,6 @@
    (let* ((spage (if (string? spage) (dom-get-element-by-id spage) spage))
 	  (tab (if (string? tab) (dom-get-element-by-id tab) tab))
 	  (spviewport spage.spviewport)
-	  (tbody (if (string? tbody) (dom-get-element-by-id tbody) tbody))
 	  (otab (car spage.tabs)))
       ;; adjust the size of the viewport
       (spage-resize spage)
@@ -322,12 +321,13 @@
 	     :width (format "~apx" spage.spbodywidth))
       (node-style-set! tbody
 	 :width (format "~apx" spage.spbodywidth))
+      ;; sptab event listener
+      (sptab-invoke-onselect-listener! tab tbody "select")
       ;; add the new tab
       (dom-append-child! spviewport tbody)
       ;; the event listeners
       (spage-invoke-onchange-listener! spage tbody "push")
-      (when tbody.tab
-	 (sptab-invoke-onselect-listener! tbody.tab tbody "push"))
+      (sptab-invoke-onselect-listener! tab tbody "push")
       ;; show the new tbody
       (case (spage-transition-style spage)
 	 ((move)

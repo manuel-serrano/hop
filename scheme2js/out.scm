@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Thu Sep 12 19:10:17 2013 (serrano)                */
+;*    Last change :  Mon Sep 16 17:17:05 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
@@ -66,7 +66,8 @@
 	   
 	   (wide-class Out-Lambda::Lambda
 	      (lvalue-is-cnst::bool (default #f))
-	      (lvalue read-only)))
+	      (id read-only)
+	      (js-id read-only)))
    
    (export (compile-value ::obj ::output-port ::procedure ::procedure ::obj)
 	   (out tree::Module source-file p)))
@@ -507,12 +508,8 @@
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.compile p stmt? toplevel?)
    (widen!::Out-Lambda this
-      (lvalue (instantiate::Ref
-		 (id (string->symbol *tmp-var*))
-		 (var (instantiate::Named-Var
-			 (kind 'local)
-			 (id (string->symbol *tmp-var*))
-			 (js-id *tmp-var*))))))
+      (id #f)
+      (js-id #f))
    (walk this p stmt? #f))
 
 ;*---------------------------------------------------------------------*/
@@ -552,18 +549,12 @@
 		(values (reverse! (cdr rev))
 		   (car rev))))))
    
-   (define (debug-name lvalue location)
+   (define (debug-name id location)
       (cond
-	 ((isa? lvalue Ref)
-	  (with-access::Ref lvalue (var)
-	     (with-access::Var var (id kind)
-		(if (and (eq? kind 'local) location)
-		    (format "~a, ~a:~a" id (cadr location) (caddr location))
-		    id))))
-	 (lvalue
-	  (let ((op (open-output-string)))
-	     (walk lvalue op #f #f)
-	     (close-output-port op)))
+	 ((string? id)
+	  id)
+	 ((pair? location)
+	  (format "lambda, ~a:~a" (cadr location) (caddr location)))
 	 (else
 	  "lambda")))
    
@@ -573,90 +564,93 @@
 	 (if vaarg? (negfx (length formals)) (length formals))))
    
    (with-access::Out-Env env (debug? meta? use-strict?)
-      (with-access::Out-Lambda this (lvalue lvalue-is-cnst
+      (with-access::Out-Lambda this (lvalue-is-cnst id js-id
 				       declared-vars body vaarg? formals
 				       call/cc? contains-trampoline-call?
 				       location dstposition)
 	 ;; update the output location for source-map
 	 (set! dstposition (output-port-position p))
 	 ;; generate the function definition
-	 (with-access::Ref lvalue (var)
-	    (with-access::Named-Var var (id js-id)
-	       (multiple-value-bind (formals-w/o-vaarg vaarg)
-		  (split-formals/vaarg)
-		  (if (and toplevel? lvalue-is-cnst)
-		      ;; top-level constrants
-		      (template-display p
-			 (?@ debug? "~@;~a.displayName=\"~a\";~a.sc_arity=~a;"
-			    js-id
-			    (debug-name lvalue location)
-			    js-id (debug-arity this))
-			 (?? meta? "\n/*** META ((export ~a)) */" id)
-			 (?@ #t "\nfunction ~a(~e) { ~@ }\n"
-			    js-id
-			    (separated ","
-			       (lambda (e) "~e" (walk e p #f #f))
-			       formals-w/o-vaarg))
-			 (?? use-strict? "\n\"use strict\";\n")
-			 (?@ vaarg? "~e ~@"
-			    (with-access::Ref vaarg (var)
-			       (vaarg-code var (- (length formals) 1))))
-			 (?? (or call/cc? contains-trampoline-call?)
-			    "~e" (scm2js-globals-init p))
-			 (?? contains-trampoline-call? "~e" (trampoline-start-code))
-			 (?@ call/cc?
-			    "try {\n"
-			    "  ~e"  (cond-expand
-				       (enable-callcc (call/cc-start-code p))
-				       (else #f))
-			    "  ~@"   ;; body
-			    "} ~e\n" (cond-expand
-					(enable-callcc (call/cc-end-code p))
-					(else #f)))
-			 "  ~e" ;; declared-vars
-			 "  ~e" ;; body
-			 (each (lambda (var)
-				  "var ~a;\n"
-				  (with-access::Named-Var var (js-id) js-id))
-			    declared-vars)
-			 (walk body p #t #f))
-		      ;; lambda expressions
-		      (template-display p
-			 (?@ stmt? "~@;\n")
-			 (?@ debug?
-			    "(~a = ~@,~a.displayName=\"~a\",~a.sc_arity=~a,~a)"
-			    js-id
-			    js-id
-			    (debug-name lvalue location)
-			    js-id (debug-arity this)
-			    js-id)
-			 (?@ #t "function (~e) { ~@ }"
-			    (separated ","
-			       (lambda (e) "~e" (walk e p #f #f))
-			       formals-w/o-vaarg))
-			 (?? use-strict? "\n\"use strict\";\n")
-			 (?@ vaarg? "~e ~@"
-			    (with-access::Ref vaarg (var)
-			       (vaarg-code var (- (length formals) 1))))
-			 (?? (or call/cc? contains-trampoline-call?)
-			    "~e" (scm2js-globals-init p))
-			 (?? contains-trampoline-call? "~e" (trampoline-start-code))
-			 (?@ call/cc?
-			    "try {\n"
-			    "  ~e"  (cond-expand
-				       (enable-callcc (call/cc-start-code p))
-				       (else #f))
-			    "  ~@"   ;; body
-			    "} ~e\n" (cond-expand
-					(enable-callcc (call/cc-end-code p))
-					(else #f)))
-			 "  ~e" ;; declared-vars
-			 "  ~e" ;; body
-			 (each (lambda (var)
-				  "var ~a;\n"
-				  (with-access::Named-Var var (js-id) js-id))
-			    declared-vars)
-			 (walk body p #t #f)))))))))
+	 (multiple-value-bind (formals-w/o-vaarg vaarg)
+	    (split-formals/vaarg)
+	    (if (and toplevel? lvalue-is-cnst)
+		;; top-level constrants
+		(template-display p
+		   (?@ debug? "~@;~a.displayName=\"~a\";~a.sc_arity=~a;"
+		      js-id
+		      (debug-name id location)
+		      js-id (debug-arity this))
+		   (?? meta? "\n\n/*** META ((export ~a)) */" id)
+		   (?? (and debug? (not meta?)) "\n\n/* ~a */" id)
+		   (?@ #t "\nfunction ~a(~e) { ~@ }\n"
+		      js-id
+		      (separated ","
+			 (lambda (e) "~e" (walk e p #f #f))
+			 formals-w/o-vaarg))
+		   (?? use-strict? "\n\"use strict\";\n")
+		   (?@ vaarg? "~e ~@"
+		      (with-access::Ref vaarg (var)
+			 (vaarg-code var (- (length formals) 1))))
+		   (?? (or call/cc? contains-trampoline-call?)
+		      "~e" (scm2js-globals-init p))
+		   (?? contains-trampoline-call? "~e" (trampoline-start-code))
+		   (?@ call/cc?
+		      "try {\n"
+		      "  ~e"  (cond-expand
+				 (enable-callcc (call/cc-start-code p))
+				 (else #f))
+		      "  ~@"   ;; body
+		      "} ~e\n" (cond-expand
+				  (enable-callcc (call/cc-end-code p))
+				  (else #f)))
+		   "  ~e" ;; declared-vars
+		   "  ~e" ;; body
+		   (each (lambda (var)
+			    "var ~a;\n"
+			    (with-access::Named-Var var (js-id) js-id))
+		      declared-vars)
+		   (walk body p #t #f))
+		(let ((dbg-id (or js-id *tmp-var*)))
+		   ;; lambda expressions
+		   (template-display p
+		      (?@ stmt? "~@;\n")
+		      (?@ debug?
+			 "(~a = ~@,~a.displayName=\"~a\",~a.sc_arity=~a,~a)"
+			 dbg-id
+			 dbg-id
+			 (debug-name id location)
+			 dbg-id (debug-arity this)
+			 dbg-id)
+		      (?@ (and (not debug?) js-id)
+			 "~a = ~@"
+			 js-id)
+		      (?@ #t "function (~e) { ~@ }"
+			 (separated ","
+			    (lambda (e) "~e" (walk e p #f #f))
+			    formals-w/o-vaarg))
+		      (?? use-strict? "\n\"use strict\";\n")
+		      (?@ vaarg? "~e ~@"
+			 (with-access::Ref vaarg (var)
+			    (vaarg-code var (- (length formals) 1))))
+		      (?? (or call/cc? contains-trampoline-call?)
+			 "~e" (scm2js-globals-init p))
+		      (?? contains-trampoline-call? "~e" (trampoline-start-code))
+		      (?@ call/cc?
+			 "try {\n"
+			 "  ~e"  (cond-expand
+				    (enable-callcc (call/cc-start-code p))
+				    (else #f))
+			 "  ~@"   ;; body
+			 "} ~e\n" (cond-expand
+				     (enable-callcc (call/cc-end-code p))
+				     (else #f)))
+		      "  ~e" ;; declared-vars
+		      "  ~e" ;; body
+		      (each (lambda (var)
+			       "var ~a;\n"
+			       (with-access::Named-Var var (js-id) js-id))
+			 declared-vars)
+		      (walk body p #t #f))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Frame-alloc ...                                        */
@@ -857,29 +851,32 @@
    [assert (stmt?) stmt?]
    (with-access::Set! this (lvalue val dstposition)
       (with-access::Ref lvalue (var)
-	 (with-access::Out-Env env (source-map? debug?)
-	    (cond
-	       ((and (isa? val Frame-alloc) (not (config 'frame-push)))
-		(compile val env p stmt? #f))
-	       ((cnst-function? var val)
-		;; strict impose top level functions only
-		(if toplevel?
-		    (let ((nval (widen!::Out-Lambda val
-				   (lvalue-is-cnst #t)
-				   (lvalue lvalue))))
-		       (compile nval env p #f #t))
-		    (let ((nval (widen!::Out-Lambda val
-				   (lvalue-is-cnst #t)
-				   (lvalue lvalue))))
-		       (when debug?
-			  (with-access::Named-Var var (js-id)
-			     (fprintf p "var ~a;" js-id)))
-		       (compile nval env p #t #f))))
-	       (else
-		(when source-map?
-		   (set! dstposition (output-port-position p)))
-		(template-display p
-		   "var ~e;\n" (compile-unoptimized-set! p walk this))))))))
+	 (with-access::Named-Var var (id js-id)
+	    (with-access::Out-Env env (source-map? debug?)
+	       (cond
+		  ((and (isa? val Frame-alloc) (not (config 'frame-push)))
+		   (compile val env p stmt? #f))
+		  ((cnst-function? var val)
+		   ;; strict impose top level functions only
+		   (if toplevel?
+		       (let ((nval (widen!::Out-Lambda val
+				      (lvalue-is-cnst #t)
+				      (js-id js-id)
+				      (id id))))
+			  (compile nval env p #f #t))
+		       (let ((nval (widen!::Out-Lambda val
+				      (lvalue-is-cnst #t)
+				      (js-id js-id)
+				      (id id))))
+			  (if debug?
+			      (fprintf p "var ~a;" js-id)
+			      (fprintf p "var "))
+			  (compile nval env p #t #f))))
+		  (else
+		   (when source-map?
+		      (set! dstposition (output-port-position p)))
+		   (template-display p
+		      "var ~e;\n" (compile-unoptimized-set! p walk this)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Set! ...                                               */
@@ -887,19 +884,21 @@
 (define-nmethod (Set!.compile p stmt? toplevel?)
    (with-access::Set! this (lvalue val)
       (with-access::Ref lvalue (var)
-	 (cond
-	    ((isa? val Lambda)
-	     (widen!::Out-Lambda val
-		(lvalue-is-cnst (cnst-function? var val))
-		(lvalue lvalue))
-	     (walk val p stmt? toplevel?))
-	    ((and (isa? val Frame-alloc) (not (config 'frame-push)))
-	     (walk val p stmt? #f))
-	    (else
-	     (template-display p
-		(?@ stmt? "~@;\n")
-		(?@ (not stmt?) "(~@)") ;; for now...
-		"~e" (compile-set! p walk this)))))))
+	 (with-access::Named-Var var (id js-id)
+	    (cond
+	       ((isa? val Lambda)
+		(widen!::Out-Lambda val
+		   (lvalue-is-cnst (cnst-function? var val))
+		   (id id)
+		   (js-id js-id))
+		(walk val p stmt? toplevel?))
+	       ((and (isa? val Frame-alloc) (not (config 'frame-push)))
+		(walk val p stmt? #f))
+	       (else
+		(template-display p
+		   (?@ stmt? "~@;\n")
+		   (?@ (not stmt?) "(~@)") ;; for now...
+		   "~e" (compile-set! p walk this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Begin ...                                              */

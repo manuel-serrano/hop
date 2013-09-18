@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Thu Sep 12 18:22:46 2013 (serrano)                */
+;*    Last change :  Mon Sep 16 17:23:09 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -148,7 +148,7 @@
 	 (pass 'node-elim4     (node-elimination! tree))
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
-;* 	 (scheme2js-dump-temporary tree "last")                        */
+	 (scheme2js-dump-temporary tree "last")
 	 (cond-expand
 	    (enable-callcc
 	     (pass 'call/cc-late (call/cc-late! tree))))

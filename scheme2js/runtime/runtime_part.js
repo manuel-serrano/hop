@@ -2156,15 +2156,64 @@ function sc_isVector(v) {
    }
 }
 
-/*** META ((export f32vector?) (arity #t)
-           (type bool))
+/*** META ((export vector array)
+           (arity -1)
+           (peephole (vector)))
 */
-function sc_isF32Vector(v) {
-   if ("Float32Array" in window) {
-      return (v instanceof Float32Array);
-   } else {
-      return (v instanceof sc_Vector);
+function sc_vector() {
+    var a = new sc_Vector();
+    for (var i = 0; i < arguments.length; i++)
+	a.push(arguments[i]);
+    return a;
+}
+
+/*** META ((export vector-length array-length) (arity #t)
+           (peephole (postfix ".length")))
+*/
+function sc_vectorLength(v) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector) ) {
+      sc_typeError( "vector-length", "vector", v, 3 );
    }
+#endif   
+   return v.length;
+}
+
+/*** META ((export vector-ref array-ref) (arity #t)
+           (peephole (hole 2 v "[" pos "]")))
+*/
+function sc_vectorRef(v, pos) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector)) {
+      sc_typeError( "vector-ref", "vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "vector-ref", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "vector-ref", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    return v[pos];
+}
+
+
+/*** META ((export vector-set! array-set!) (arity #t)
+           (peephole (hole 3 v "[" pos "] = " val)))
+*/
+function sc_vectorSetBang(v, pos, val) {
+#if HOP_RTS_DEBUG
+   if (!(v instanceof sc_Vector)) {
+      sc_typeError( "vector-set!", "vector", v, 3 );
+   }
+   if (typeof pos !== "number") {
+      sc_typeError( "vector-set!", "number", pos, 3 );
+   }
+   if( pos >= v.length || pos < 0 ) {
+      sc_error( "vector-set!", "index out of bounds [0.." + v.length + "]", pos );
+   }
+#endif   
+    v[pos] = val;
 }
 
 // only applies to vectors
@@ -2181,6 +2230,17 @@ function sc_isVectorEqual(v1, v2, comp) {
     for (var i = 0; i < v1.length; i++)
 	if (!comp(v1[i], v2[i])) return false;
     return true;
+}
+
+/*** META ((export f32vector?) (arity #t)
+           (type bool))
+*/
+function sc_isF32Vector(v) {
+   if ("Float32Array" in window) {
+      return (v instanceof Float32Array);
+   } else {
+      return (v instanceof sc_Vector);
+   }
 }
 
 /*** META ((export make-vector make-array)
@@ -2234,65 +2294,6 @@ function sc_F32vector() {
    }
    
    return a;
-}
-
-/*** META ((export vector array)
-           (arity -1)
-           (peephole (vector)))
-*/
-function sc_vector() {
-    var a = new sc_Vector();
-    for (var i = 0; i < arguments.length; i++)
-	a.push(arguments[i]);
-    return a;
-}
-
-/*** META ((export vector-length array-length) (arity #t)
-           (peephole (postfix ".length")))
-*/
-function sc_vectorLength(v) {
-#if HOP_RTS_DEBUG
-   if (!(v instanceof sc_Vector) ) {
-      sc_typeError( "vector-length", "vector", v, 3 );
-   }
-#endif   
-   return v.length;
-}
-
-/*** META ((export vector-ref array-ref) (arity #t)
-           (peephole (hole 2 v "[" pos "]")))
-*/
-function sc_vectorRef(v, pos) {
-#if HOP_RTS_DEBUG
-   if (!(v instanceof sc_Vector) ) {
-      sc_typeError( "vector-ref", "vector", v, 3 );
-   }
-   if (typeof pos !== "number") {
-      sc_typeError( "vector-ref", "number", pos, 3 );
-   }
-   if( pos >= v.length || pos < 0 ) {
-      sc_error( "vector-ref", "index out of bounds [0.." + v.length + "]", pos );
-   }
-#endif   
-    return v[pos];
-}
-
-/*** META ((export vector-set! array-set!) (arity #t)
-           (peephole (hole 3 v "[" pos "] = " val)))
-*/
-function sc_vectorSetBang(v, pos, val) {
-#if HOP_RTS_DEBUG
-   if (!(v instanceof sc_Vector) ) {
-      sc_typeError( "vector-set!", "vector", v, 3 );
-   }
-   if (typeof pos !== "number") {
-      sc_typeError( "vector-set!", "number", pos, 3 );
-   }
-   if( pos >= v.length || pos < 0 ) {
-      sc_error( "vector-set!", "index out of bounds [0.." + v.length + "]", pos );
-   }
-#endif   
-    v[pos] = val;
 }
 
 /*** META ((export u8vector-length) (arity #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Apr 19 10:56:04 2013 (serrano)                */
+;*    Last change :  Sun Sep 15 16:37:24 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -342,3 +342,33 @@
       (with-access::musicstatus %status (volume)
 	 (set! volume vol))
       (android-send-command phone music-plugin #\v vol vol)))
+
+;*---------------------------------------------------------------------*/
+;*    music-can-play-type? ::music ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (music-can-play-type? m::androidmusic mimetype::bstring)
+   ;; If some knows a method to do this programmatically, let him speaks!
+   ;; For know, I don't know any better method than using the static
+   ;; official Google table available at:
+   ;;   http://developer.android.com/guide/appendix/media-formats.html
+   (cond
+      ((member mimetype '("audio/mpeg" "audio/ogg" "audio/aac"))
+       ;; all android
+       #t)
+      ((member mimetype '("audio/flac" "application/x-flac" "audio/x-flac"))
+       ;; android >= 3.1
+       (with-access::androidmusic m (phone)
+	  (with-access::androidphone phone (sdk)
+	     (>= (string-natural-compare3 sdk "3.1") 0))))
+      ((member mimetype '("audio/wav" "audio/x-wav" "audio/x-pn-windows-acm"))
+       ;; android >= 4.1
+       (with-access::androidmusic m (phone)
+	  (with-access::androidphone phone (sdk)
+	     (>= (string-natural-compare3 sdk "4.1") 0))))
+      ((member mimetype '("audio/mp4"))
+       ;; android >= 4.1
+       (with-access::androidmusic m (phone)
+	  (with-access::androidphone phone (sdk)
+	     (>= (string-natural-compare3 sdk "4.1") 0))))
+      (else
+       #f)))

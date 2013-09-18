@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Sep 12 19:02:10 2013 (serrano)                */
+/*    Last change :  Sat Sep 14 07:14:05 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -392,11 +392,11 @@ function sc_after( timeout, proc ) {
    
    if( hop_debug() > 0 ) {
       if( !sc_isNumber( timeout ) ) {
-	 sc_typeError( "after", "integer", timeout, 1 );
+	 sc_typeError( "after", "integer", timeout, 2 );
       }
    
-      if( !("apply" in proc) ) {
-	 sc_typeError( "after", "procedure", proc, 1 );
+      if( !proc || !("apply" in proc) ) {
+	 sc_typeError( "after", "procedure", proc, 2 );
       }
    
       try {
@@ -432,11 +432,11 @@ function sc_timeout( tm, proc ) {
 #if HOP_RTS_DEBUG
    if( hop_debug() > 0 ) {
       if( !sc_isNumber( tm ) ) {
-	 sc_typeError( "timeout", "integer", tm, 1 );
+	 sc_typeError( "timeout", "integer", tm, 2 );
       }
    
-      if( !("apply" in proc) ) {
-	 sc_typeError( "timeout", "procedure", proc, 1 );
+      if( !proc || !("apply" in proc) ) {
+	 sc_typeError( "timeout", "procedure", proc, 2 );
       }
    
       try {
