@@ -1,14 +1,49 @@
+== Description ==
+
+The makefile arch/macosx/Makefile.bundle builds a dmg that contains hop files.
+This dmg can contain or not the graphical user interface (GUI). 
+
+
+== Requirements ==
+
+  * Bigloo compiler (version 4.0b or higher)
+  * Additionally, for creating a dmg with GUI, Xcode (version 4.6 or higher) must to be installed.
+  (To check the version: xcodebuild -version).
+  * If you want to specify a target Mac OS X version (10.7 or 10.8), check the available SDK versions.
+  (To check SDK versions: xcodebuild -showsdks)
+
+
 == Building ==
 
-To build a macosx dmg with the graphical user interface, in the root directory:
+To build a macosx dmg without GUI, execute in the root directory:
 
-    % make -f arch/macosx/Makefile.bundle all
+  $make -f arch/macosx/Makefile.bundle single
 
-(don't use -j option).
 
-In another case:
+Otherwise, to build a macosx dmg with GUI, execute in the root directory:
 
-    % make -f arch/macosx/Makefile.bundle single
+  $make -f arch/macosx/Makefile.bundle all
+
+(-j option untested).
+
+
+== Options ==
+
+Use OSX option to specify a sdk version.
+
+  * For 10.7:
+
+   $make -f arch/macosx/Makefile.bundle all OSX=10.7
+
+   * For 10.8:
+
+   $make -f arch/macosx/Makefile.bundle all OSX=10.8
+
+
+== Cleaning ==
+
+  $make -f arch/macosx/Makefile.bundle clean
+
 
 == Testing ==
 
