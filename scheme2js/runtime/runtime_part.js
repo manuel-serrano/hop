@@ -393,10 +393,12 @@ function sc_isInexact(n) {
            (arity -3))
 */
 function sc_equal(x) {
-    for (var i = 1; i < arguments.length; i++)
-	if (x !== arguments[i])
-	    return false;
-    return true;
+   // This is not the implementation of equal? which is defined in immutable.js
+   // and mutable.js
+   for (var i = 1; i < arguments.length; i++)
+      if (x !== arguments[i])
+	 return false;
+   return true;
 }
 
 /*---------------------------------------------------------------------*/

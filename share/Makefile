@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Sep 11 18:59:45 2013 (serrano)                */
+#*    Last change :  Mon Sep 23 15:13:03 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -247,15 +247,11 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(R
 	echo >> $@
 	echo "\"use strict\";" >> $@
 	echo >> $@
-	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
-                 | sed -e "s|//[^\"]*$$||g" \
-                 | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) \
-                 >> $@; \
-        else \
-	  cat $^ >> $@; \
-        fi
+	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+               | sed -e "s|//[^\"]*$$||g" \
+               | sed -e "/^[ \t]*$$/D" \
+               | $(BGLCPP) \
+               >> $@
 
 hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
@@ -271,7 +267,11 @@ hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop
                  | $(BGLCPP) -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
-	  cat $^ >> $@; \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) \
+                 >> $@; \
         fi
 
 #*---------------------------------------------------------------------*/

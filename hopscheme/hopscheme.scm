@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/2.6.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Sat Sep  7 13:19:40 2013 (serrano)                */
+;*    Last change :  Mon Sep 23 18:17:45 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -204,15 +204,21 @@
 ;*---------------------------------------------------------------------*/
 (define (compile-expression e env menv postproc)
    
-   (define (quasiquote-map dollar-map)
+   (define (quasiquote-map-old dollar-map)
       `(,(begin 'quasiquote)
 	,(map (lambda (p)
 		 `(,(car p) ,(list 'unquote (cadr p))))
 	    dollar-map)))
    
+   (define (quasiquote-map dollar-map)
+      `(,(begin 'quasiquote)
+	,(map (lambda (p)
+		 `(,(car p) ,(list 'unquote (car p))))
+	    dollar-map)))
+   
    (let ((s-port (open-output-string))
 	 (assig-var (gensym 'result)))
-      (receive (expr dollar-map)
+      (multiple-value-bind (expr dollar-map)
 	 (dollar-extraction! e)
 	 (unwind-protect
 	    (let* ((exported '())

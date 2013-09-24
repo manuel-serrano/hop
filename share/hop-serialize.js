@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Sep 12 20:55:10 2013 (serrano)                */
+/*    Last change :  Tue Sep 24 09:16:30 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -183,8 +183,21 @@ function hop_bigloo_serialize_sc_object() {
    var fields = sc_class_all_fields( clazz );
    var len = 1 + fields.length;
 
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: false
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   }
 
    for( var i = 0; i < fields.length; i++ ) {
       args += hop_bigloo_serialize_context( fields[ i ].sc_getter( item ) );
@@ -394,8 +407,21 @@ function hop_serialize_array( item ) {
    var ra = '[' + hop_serialize_word( l );
    var i = 0;
 
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: false
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   } 
 
    for( i = 0; i < l; i++ ) {
       ra += hop_bigloo_serialize_context( item[ i ] );
@@ -412,8 +438,21 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: false
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   }
 
    for( i = 0; i < l; i++ ) {
       ra += hop_serialize_word_size( item[ i ], size );
@@ -430,8 +469,21 @@ function hop_bigloo_serialize_fvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: false
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   }
 
    for( i = 0; i < l; i++ ) {
       var s = item[ i ].toString();
