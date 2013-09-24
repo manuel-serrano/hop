@@ -579,7 +579,8 @@ table.download span.old {
   color: #ff8010;
 }
 
-nptab-body#download pre {
+nptab-body#download pre,
+nptab-body#community pre {
   font-size: 75%;
 }
 
@@ -589,7 +590,8 @@ nptab-body#download pre {
   margin-left: 2em;
 }
 
-#download pre {
+#download pre,
+#community pre {
   max-width: 50em;
 }
 

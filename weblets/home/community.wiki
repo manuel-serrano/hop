@@ -3,6 +3,11 @@
 The HOP source code may be browsed on-line from our Mercurial
 ,(<A> :href (home-source-url) "repository").
 
+~~ The Mercurial repository can be cloned with:
+
+  hg clone http://hop.inria.fr:4000 hop
+
+
 ~~ Want to find out what we have been doing lately? Check the video!
 
 ,(<DIV> :style "margin-left: 4em"
