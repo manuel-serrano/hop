@@ -46,7 +46,7 @@
 
 ~~ In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.8c** or higher is required to
+first to be installed. Bigloo version **4.0a** or higher is required to
 compile HOP.
 
 ~~ Bigloo versions may be downloaded
