@@ -112,7 +112,7 @@ add the following to the ++/etc/apt.conf/sources.list++ file:
        (<TR>
 	  (<TD> :class "download-source"
 	     (<DOWNLOAD> :class "download-stable"
-		:legend "MacOS 10.6 x86/64"
+		:legend "MacOS 10.7 x86/64"
 		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
 		:name dmg
 		:url url)))))

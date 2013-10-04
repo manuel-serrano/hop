@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -269,18 +269,15 @@
 	  (reverse! rev-res))
 	 ((epair? L)
 	  (loop (cdr L)
-		(econs (f (car L))
-		       rev-res
-		       (cer L))))
+	     (econs (f (car L))
+		rev-res
+		(cer L))))
 	 ((pair? L)
 	  (loop (cdr L)
-		(cons (f (car L))
-		      rev-res)))
+	     (cons (f (car L))
+		rev-res)))
 	 (else
-	  (scheme2js-error "expander"
-			   "not a list"
-			   orig-L
-			   orig-L)))))
+	  (scheme2js-error "emap1" "not a list" orig-L orig-L)))))
 
 (define-macro (loc-attach LL . attachments)
    (let ((kvote (car LL)))

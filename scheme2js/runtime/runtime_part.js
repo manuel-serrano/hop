@@ -665,6 +665,7 @@ var sc_min = Math.min;
 /*    isNaN is used.                                                   */
 /*---------------------------------------------------------------------*/
 #define HOP_RTS_DEBUG_NUMERIC_TYPE 1
+//#define HOP_RTS_DEBUG_NUMERIC_ISNAN 1
 
 /*---------------------------------------------------------------------*/
 /*    sc_checkNumericTypes ...                                         */
@@ -705,7 +706,11 @@ function sc_plus() {
 
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else      
+   if( res !== res ) {
+#endif      
       return sc_checkNumericTypes("+",res,arguments);
    }
 #endif
@@ -732,7 +737,11 @@ function sc_plus2(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "+", res, x, y );
    }
 #endif
@@ -771,7 +780,11 @@ function sc_minus(x) {
 
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
-      if( isNaN( res ) ) {
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
+   if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
 	 return sc_checkNumericTypes("-",res,arguments);
       }
 #endif
@@ -801,7 +814,11 @@ function sc_minus2( x, y ) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "-", res, x, y );
    }
 #endif
@@ -831,7 +848,11 @@ function sc_multi() {
     }
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes("+",res,arguments);
    }
 #endif
@@ -858,7 +879,11 @@ function sc_multi2( x, y ) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "*", res, x, y );
    }
 #endif
@@ -909,7 +934,11 @@ function sc_div2(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "/", res, x, y );
    }
 #endif
@@ -947,7 +976,11 @@ function sc_quotient(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "/fx", res, x, y );
    }
 #endif
@@ -978,7 +1011,11 @@ function sc_remainder(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "remainder", res, x, y );
    }
 #endif
@@ -1008,7 +1045,11 @@ function sc_modulo(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( remainder ) ) {
+#else
+   if( remainder !== remainder ) {
+#endif
       return sc_checkNumericTypes( "modulo", remainder, x, y );
    }
 #endif
@@ -3013,7 +3054,11 @@ function sc_bitNot(x) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-not", res, x );
    }
 #endif
@@ -3043,7 +3088,11 @@ function sc_bitAnd(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-and", res, x, y );
    }
 #endif
@@ -3073,7 +3122,11 @@ function sc_bitOr(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-or", res, x, y );
    }
 #endif
@@ -3103,7 +3156,11 @@ function sc_bitXor(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-xor", res, x, y );
    }
 #endif
@@ -3133,7 +3190,11 @@ function sc_bitLsh(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-lsh", res, x, y );
    }
 #endif
@@ -3163,7 +3224,11 @@ function sc_bitRsh(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-rsh", res, x, y );
    }
 #endif
@@ -3193,7 +3258,11 @@ function sc_bitUrsh(x, y) {
    
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
    if( isNaN( res ) ) {
+#else
+   if( res !== res ) {
+#endif
       return sc_checkNumericTypes( "bit-ursh", res, x, y );
    }
 #endif
