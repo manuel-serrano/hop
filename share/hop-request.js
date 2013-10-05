@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Sep 10 14:24:10 2013 (serrano)                */
+/*    Last change :  Sat Oct  5 06:49:34 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -497,20 +497,24 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 /*    In this function SUCCESS and FAILURE are *always* bound to       */
 /*    functions.                                                       */
 /*---------------------------------------------------------------------*/
-function hop_send_request_xdomain( e, origin ) {
+function hop_send_request_xdomain( e ) {
    var xhr = hop_make_xml_http_request();
-   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*)" );
-   var svc = m[ 1 ];
-   var henv = m[ 2 ];
-   var auth = m[ 3 ];
+   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)" );
+   var key = m[ 1 ];
+   var svc = m[ 2 ];
+   var henv = m[ 3 ];
+   var auth = m[ 4 ];
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
 	 var ctype = hop_header_content_type( xhr );
 	 var serialize = hop_header_hop_serialize( xhr );
-	 
+
 	 e.source.postMessage(
-	    xhr.status + " " + ctype + " " + serialize + " " + xhr.responseText,
+	    xhr.status
+	       + " " + key + " " + ctype
+	       + " " + serialize 
+	       + " " + xhr.responseText,
 	    e.origin );
       }
    }
@@ -537,64 +541,82 @@ function hop_send_request_xdomain( e, origin ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_xdomain_onmessage ...                                        */
+/*    hop_xdomain_key ...                                              */
 /*---------------------------------------------------------------------*/
-function hop_xdomain_onmessage( event, svc, succ, fail ) {
-   var xhr = new Object();
-   var m = event.data.match( "([0-9]+) ([^ ]+) ([^ ]+)( *)" );
-
-   xhr.status = parseInt( m[ 1 ], 10 );
-   xhr.content_type = m[ 2 ];
-   xhr.hop_serialize = m[ 3 ];
-   xhr.responseText = event.data.substring( m[ 0 ].length );
-
-   // Install a fake 'getResponseHeader' procedure to please
-   // 'xhr_hop_failure_callback'.
-   xhr.getResponseHeader = function(h) { return null; }
-   
-   hop_request_onready( xhr, svc, succ, fail );
-}
+var hop_xdomain_key =  0;
+var hop_xdomain_msg = {};
 
 /*---------------------------------------------------------------------*/
 /*    with_hop_xdomain ...                                             */
 /*---------------------------------------------------------------------*/
 function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x ) {
    if( !port ) port = 80;
-   
+
    if( sync ) {
       sc_error( svc,
 		"cross domain with-hop must be asynchronous",
 		host + ":" + port, 2 );
    } else {
+      var key = hop_xdomain_key++;
       var id = "__xdomain:" + host + ":" + port;
       var el = document.getElementById( id );
-      var origin = "http://" + host + ":" + port + "/hop/admin/xdomain"
-      var msg = svc + " " + hop_serialize_request_env() +
+      var origin = "http://" + host + ":" + port;
+      var src = origin + "/hop/public/xdomain"
+      var msg = key + " " + svc + " " + hop_serialize_request_env() +
 	 " " + (auth ? auth : "");
-      
+
+      hop_xdomain_msg[ key ] = { success: success, failure: failure, svc: svc };
+
       if( !el ) {
 	 el = document.createElement( "iframe" );
-
-	 el.src = origin;
+	 el.src = src;
 	 el.id = id;
 
 	 hop_add_event_listener( el, "load", function() {
 	    el.contentWindow.postMessage( msg, origin );
 	 }, true );
+
+
+	 hop_add_event_listener( window, "message", function( event ) {
+	    if( event.origin === origin ) {
+	       hop_xdomain_onmessage( event, key );
+	    }
+	 }, false );
 	 
 	 node_style_set( el, "display", "none" );
 	 document.body.appendChild( el );
-	 
-	 hop_add_event_listener(
-	    window, "message",
-	    function( event ) {
-	       hop_xdomain_onmessage( event, svc, success, failure );
-	    }, false );
       } else {
-	 el.contentWindow.postMessage( msg, origin )
+	 hop_add_event_listener( el, "load", function() {
+	    el.contentWindow.postMessage( msg, origin );
+	 }, true );
       }
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_xdomain_onmessage ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_xdomain_onmessage( event ) {
+   var xhr = new Object();
+   var m = event.data.match( "([0-9]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+)( *)" );
+
+   xhr.status = parseInt( m[ 1 ] );
+   xhr.content_type = m[ 3 ];
+   xhr.hop_serialize = m[ 4 ];
+   xhr.responseText = event.data.substring( m[ 0 ].length );
+   
+   var key = m[ 2 ];
+   
+   // Install a fake 'getResponseHeader' procedure to please
+   // 'xhr_hop_failure_callback'.
+   xhr.getResponseHeader = function(h) { return null; }
+
+   hop_request_onready( xhr,
+			hop_xdomain_msg[ key ].svc,
+			hop_xdomain_msg[ key ].success,
+			hop_xdomain_msg[ key ].failure );
+}
+
 
 /*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
