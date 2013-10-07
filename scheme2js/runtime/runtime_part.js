@@ -1627,7 +1627,7 @@ function sc_length(l) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_remq(o, l) {
-    var dummy = { cdr : null };
+    var dummy = { __hop_cdr : null };
     var tail = dummy;
     while (l !== null) {
 	if (l.__hop_car !== o) {
@@ -1641,7 +1641,7 @@ function sc_remq(o, l) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_remqBang(o, l) {
-    var dummy = { cdr : null };
+    var dummy = { __hop_cdr : null };
     var tail = dummy;
     var needsAssig = true;
     while (l !== null) {
@@ -1662,7 +1662,7 @@ function sc_remqBang(o, l) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_delete(o, l) {
-    var dummy = { cdr : null };
+    var dummy = { __hop_cdr : null };
     var tail = dummy;
     while (l !== null) {
 	if (!sc_isEqual(l.__hop_car, o)) {
@@ -1676,7 +1676,7 @@ function sc_delete(o, l) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_deleteBang(o, l) {
-    var dummy = { cdr : null };
+    var dummy = { __hop_cdr : null };
     var tail = dummy;
     var needsAssig = true;
     while (l !== null) {
@@ -2765,7 +2765,7 @@ function sc_forEach(proc, l1) {
 
 /*** META ((export #t) (arity #t)) */
 function sc_filter(proc, l1) {
-    var dummy = { cdr : null };
+    var dummy = { __hop_cdr : null };
     var tail = dummy;
     while (l1 !== null) {
 	if (proc(l1.__hop_car) !== false) {
