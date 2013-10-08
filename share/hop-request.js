@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Oct  5 06:49:34 2013 (serrano)                */
+/*    Last change :  Tue Oct  8 07:04:48 2013 (serrano)                */
 /*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -511,8 +511,9 @@ function hop_send_request_xdomain( e ) {
 	 var serialize = hop_header_hop_serialize( xhr );
 
 	 e.source.postMessage(
-	    xhr.status
-	       + " " + key + " " + ctype
+	    key
+	       + " " + xhr.status
+	       + " " + ctype
 	       + " " + serialize 
 	       + " " + xhr.responseText,
 	    e.origin );
@@ -598,18 +599,17 @@ function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, 
 /*---------------------------------------------------------------------*/
 function hop_xdomain_onmessage( event ) {
    var xhr = new Object();
-   var m = event.data.match( "([0-9]+) ([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+)( *)" );
-
-   xhr.status = parseInt( m[ 1 ] );
+   var m = event.data.match( "([^ ]+) ([0-9]+) ([^ ]+) ([^ ]+)( *)" );
+   var key = m[ 1 ];
+   
+   xhr.status = parseInt( m[ 2 ] );
    xhr.content_type = m[ 3 ];
    xhr.hop_serialize = m[ 4 ];
    xhr.responseText = event.data.substring( m[ 0 ].length );
    
-   var key = m[ 2 ];
-   
    // Install a fake 'getResponseHeader' procedure to please
    // 'xhr_hop_failure_callback'.
-   xhr.getResponseHeader = function(h) { return null; }
+   xhr.getResponseHeader = function(h) { return null; };
 
    hop_request_onready( xhr,
 			hop_xdomain_msg[ key ].svc,
