@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/2.5.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Dec 28 11:44:06 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Thu Nov  7 09:58:33 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -27,7 +27,8 @@
 	    __hop_user
 	    __hop_misc
 	    __hop_charset
-	    __hop_websocket)
+	    __hop_websocket
+	    __hop_event)
    
    (export  (http-parse-request::http-request ::socket ::int ::int)))
 

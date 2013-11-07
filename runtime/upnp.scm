@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/upnp.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/upnp.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Fri Jun 14 11:00:32 2013 (serrano)                */
+;*    Last change :  Thu Nov  7 10:00:49 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
@@ -66,17 +66,6 @@
 	 cache)))
 
 ;*---------------------------------------------------------------------*/
-;*    apply-listeners ...                                              */
-;*---------------------------------------------------------------------*/
-(define (apply-listeners listeners::obj e::event u::upnp)
-   (let loop ((l listeners))
-      (when (pair? l)
-	 ((car l) e)
-	 (with-access::event e (stopped)
-	    (unless stopped
-	       (loop (cdr l)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    upnp-onmessage ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (upnp-onmessage e::ssdp-message upnp))
@@ -103,7 +92,7 @@
 				  (name "ssdp-notify")
 				  (target upnp)
 				  (value e))))
-			(apply-listeners listeners he upnp)))))))))
+			(apply-listeners listeners he)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    upnp-onmessage ::ssdp-response ...                               */
@@ -127,7 +116,7 @@
 				  (name "ssdp-response")
 				  (target upnp)
 				  (value e))))
-			(apply-listeners listeners he upnp)))))))))
+			(apply-listeners listeners he)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    upnp-onmessage ::ssdp-m-search ...                               */
@@ -179,7 +168,7 @@
       ;; notify on past events
       (synchronize mutex
 	 (set! cache (update-cache! cache))
-	 (for-each (lambda (e) (apply-listeners (list proc) e u))
+	 (for-each (lambda (e) (apply-listeners (list proc) e))
 	    (filter (lambda (e::ssdp-message)
 		       (cond
 			  ((isa? e ssdp-notify)

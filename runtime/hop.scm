@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Sep 10 08:20:56 2013 (serrano)                */
+;*    Last change :  Fri Nov  1 07:01:12 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -238,49 +238,68 @@
    (lambda (p status header clength tenc)
       (when (and (input-port? p) (>elong clength #e0))
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
-      (case status
-	 ((200)
-	  ;; see hop-json-mime-type and hop-bigloo-mime-type
-	  (let ((obj (case (header-content-type header)
-			((application/x-hop)
-			 (string->obj (read-chars clength p)))
-			((application/x-url-hop)
-			 (string->obj (url-decode (read-chars clength p))))
-			((application/x-json-hop)
-			 (string->obj
-			    (byte-array->string 
-			       (javascript->obj (read-chars clength p)))))
-			((application/json)
-			 (json->obj p))
-			((application/x-javascript)
-			 (javascript->obj p))
-			(else
-			 (read-string p)))))
-	     (success obj)))
-	 ((201 204 304)
-	  ;; no message body
-	  (success (instantiate::xml-http-request
-		      (status status)
-		      (header header)
-		      (input-port p))))
-	 ((401 407)
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise (user-access-denied req))))
-	 (else
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise
-		 (instantiate::&error
-		    (proc proc)
-		    (msg (format "Illegal status `~a'" status))
-		    (obj (when (input-port? p) (read-string p))))))))))
+      (tprint "/tmp/HOPDAC.log to be removed...")
+      (let ((pd (open-output-file "/tmp/HOPDAC.log")))
+	 (with-access::http-request req (scheme host port path)
+	    (fprintf pd "request: ~a://~a:~a~a\n\n" scheme host port path))
+	 (fprintf pd "status: ~a\n" status)
+	 (fprintf pd "content-type: ~a\n" (header-content-type header))
+	 (unwind-protect
+	    (case status
+	       ((200)
+		;; see hop-json-mime-type and hop-bigloo-mime-type
+		(let ((obj (case (header-content-type header)
+			      ((application/x-hop)
+			       (string->obj (read-chars clength p)))
+			      ((application/x-url-hop)
+			       (string->obj (url-decode (read-chars clength p))))
+			      ((application/x-json-hop)
+			       (string->obj
+				  (byte-array->string 
+				     (javascript->obj (read-chars clength p)))))
+			      ((application/json)
+			       (json->obj p))
+			      ((application/x-javascript)
+			       (javascript->obj p))
+			      (else
+			       (read-string p)))))
+		   (newline pd)
+		   (if (pair? obj)
+		       (begin
+			  (display "(\n" pd)
+			  (for-each (lambda (o)
+				       (write-circle o pd)
+				       (newline pd))
+			     obj)
+			  (display "\n)" pd))
+		       (write-circle obj pd))
+		   (newline pd)
+		   (success obj)))
+	       ((201 204 304)
+		;; no message body
+		(success (instantiate::xml-http-request
+			    (status status)
+			    (header header)
+			    (input-port p))))
+	       ((401 407)
+		(if (procedure? fail)
+		    (fail (instantiate::xml-http-request
+			     (status status)
+			     (header header)
+			     (input-port p)))
+		    (raise (user-access-denied req))))
+	       (else
+		(if (procedure? fail)
+		    (fail (instantiate::xml-http-request
+			     (status status)
+			     (header header)
+			     (input-port p)))
+		    (raise
+		       (instantiate::&error
+			  (proc proc)
+			  (msg (format "Illegal status `~a'" status))
+			  (obj (when (input-port? p) (read-string p))))))))
+	    (close-output-port pd)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */

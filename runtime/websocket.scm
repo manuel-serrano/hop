@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Jul 19 08:41:24 2013 (serrano)                */
+;*    Last change :  Thu Nov  7 15:05:31 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -13,13 +13,14 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_websocket
-
+   
    (include "http_lib.sch"
+	    "service.sch"
             "verbose.sch"
 	    "thread.sch")
-
+   
    (library web)
-
+   
    (import  __hop_configure
 	    __hop_thread
 	    __hop_param
@@ -37,19 +38,43 @@
 	    __hop_read
 	    __hop_service
 	    __hop_http-response
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_event)
    
-   (export (websocket-proxy-request? ::pair-nil)
+   (export (class websocket
+	      (%mutex read-only (default (make-mutex)))
+	      (%socket (default #f))
+	      (url::bstring read-only)
+	      (onopens::pair-nil (default '()))
+	      (onerrors::pair-nil (default '()))
+	      (oncloses::pair-nil (default '()))
+	      (onmessages::pair-nil (default '()))
+	      (authorization (default #f))
+	      (state::symbol (default 'connecting)))
+
+	   (class ws-server
+	      (ws-server-init!)
+	      (%mutex read-only (default (make-mutex)))
+	      (%websocket (default #f))
+	      (%key (default #f))
+	      (host::bstring read-only (default "localhost"))
+	      (port::int read-only (default 80))
+	      (authorization (default #f))
+	      (onmessages::pair-nil (default '())))
+
+	   (websocket-proxy-request? ::pair-nil)
 	   (websocket-proxy-connect! ::bstring ::int)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
 	   (websocket-server-response header req)
-	   (websocket-debug)))
+	   (websocket-debug)
+
+	   (websocket-connect! ::websocket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-debug ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (websocket-debug)
-   #f)
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    *connect-host-table* ...                                         */
@@ -110,7 +135,18 @@
 	 (request req)
 	 (remote-timeout (hop-read-timeout))
 	 (connection-timeout (hop-connection-timeout)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    websocket-hybi-accept ...                                        */
+;*---------------------------------------------------------------------*/
+(define (websocket-hybi-accept key)
+   (let* ((i (string-index key #\space))
+	  (pkey (if i (car (string-split key #\space)) key))
+	  (guid "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+	  (akey (string-append pkey guid))
+	  (skey (sha1sum-string akey)))
+      (base64-encode (string-hex-intern! skey))))
+
 ;*---------------------------------------------------------------------*/
 ;*    websocket-server-response ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -193,18 +229,13 @@
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
       (when (websocket-debug)
 	 (tprint "websocket-hybi-protocol-08, header: " header))
-      (let* ((key (get-header header sec-websocket-key: #f))
-	     (i (string-index key #\space))
-	     (pkey (if i (car (string-split key #\space)) key))
-	     (guid "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
-	     (akey (string-append pkey guid))
-	     (skey (sha1sum-string akey)))
+      (let ((key (get-header header sec-websocket-key: #f)))
 	 (instantiate::http-response-websocket
 	    (request req)
 	    (start-line "HTTP/1.1 101 Switching Protocols")
 	    (connection 'Upgrade)
 	    (protocol (get-header header WebSocket-Protocol: #f))
-	    (accept (base64-encode (string-hex-intern! skey))))))
+	    (accept (websocket-hybi-accept key)))))
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
@@ -212,7 +243,12 @@
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
 	 (when (websocket-debug)
-	    (tprint "websocket-register, protocol-version: " version))
+	    (tprint "websocket-register, version: "
+	       version)
+	    (tprint "                    origin: "
+	       (get-header header origin: "localhost"))
+	    (tprint "                    WebSocket-Protocolo: "
+	       (get-header header WebSocket-Protocolo: #f)))
 	 (let ((v (string->integer version)))
 	    (cond
 	       ((and (>=fx v 7) (<=fx v 25))
@@ -318,4 +354,279 @@
 			 (flush-output-port op)
 			 (loop)))))))))
 	 
-	    
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ::websocket ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (add-event-listener! ws::websocket evt proc . capture)
+   (with-access::websocket ws (%mutex state)
+      (synchronize %mutex
+	 (cond
+	    ((string=? evt "open")
+	     (with-access::websocket ws (onopens)
+		(when (eq? state 'open)
+		   (let ((e (instantiate::websocket-event
+			       (name "open")
+			       (target ws)
+			       (value ws))))
+		      (proc e)))
+		(set! onopens (cons proc onopens))))
+	    ((string=? evt "message")
+	     (with-access::websocket ws (onmessages)
+		(set! onmessages (cons proc onmessages))))
+	    ((string=? evt "close")
+	     (with-access::websocket ws (oncloses)
+		(set! oncloses (cons proc oncloses))))
+	    ((string=? evt "error")
+	     (with-access::websocket ws (onerrors)
+		(set! onerrors (cons proc onerrors))))))))
+
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (add-event-listener! ws::ws-server evt proc . capture)
+   (with-access::ws-server ws (%mutex onmessages host port authorization %key %websocket)
+      (unless (string=? evt "ready")
+	  (with-hop ((hop-event-register-service) :event evt
+		       :key %key :mode "websocket")
+	     :host host :port port :authorization authorization
+	     #f))
+      (synchronize %mutex
+	 (let ((old (assoc evt onmessages)))
+	    (if (pair? old)
+		(set-cdr! old (cons proc (cdr old)))
+		(set! onmessages (cons (cons evt (list proc)) onmessages)))))
+      (when (and (string=? evt "ready") %websocket)
+	 (websocket-trigger-server-ready ws))))
+   
+;*---------------------------------------------------------------------*/
+;*    ws-server-init! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (ws-server-init! ws::ws-server)
+   (with-access::ws-server ws (host port authorization %key %websocket)
+      (with-hop ((hop-event-info-service))
+	 :host host :port port
+	 :sync #t
+	 :authorization authorization
+	 (lambda (v)
+	    (if (vector? v)
+		(let* ((key (vector-ref v 2))
+		       (path (format "/~a/public/server-event/websocket?key=~a"
+				(hop-initial-weblet) key))
+		       (url (format "ws://~a:~a~a"
+			       (vector-ref v 0)
+			       (vector-ref v 1)
+			       path))
+		       (onmessage (lambda (e::event)
+				     (websocket-envelope-parse ws e)))
+		       (onopen (lambda (e::event)
+				  (websocket-trigger-event ws "ready" ws)))
+		       (onclose (lambda (e::event)
+				   (websocket-trigger-event ws "down" ws)))
+		       (webs (instantiate::websocket
+				(url url)
+				(authorization authorization)
+				(oncloses (list onclose))
+				(onopens (list onopen))
+				(onmessages (list onmessage)))))
+		   (set! %key key)
+		   (set! %websocket webs)
+		   (websocket-connect! webs))
+		(raise
+		   (instantiate::&io-error
+		      (proc "websocket-hop-url")
+		      (msg "illegal server info")
+		      (obj v))))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-connected? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (websocket-connected? ws::websocket)
+   (with-access::websocket ws (%socket)
+      (socket? %socket)))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-connect! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (websocket-connect! ws::websocket)
+   
+   (define (read-int16 in)
+      (let ((bh (read-byte in))
+	    (bl (read-byte in)))
+	 (bit-or (bit-lsh bh 8) bl)))
+   
+   (define (read-int32 in)
+      (let ((wh (read-int16 in))
+	    (wl (read-int16 in)))
+	 (bit-or (bit-lsh wh 16) wl)))
+   
+   (define (close)
+      (with-access::websocket ws (%mutex %socket oncloses state)
+	 (synchronize %mutex
+	    (when (pair? oncloses)
+	       (set! state 'closing)
+	       (let ((se (instantiate::websocket-event
+			    (name "close")
+			    (target ws)
+			    (value ws))))
+		  (apply-listeners oncloses se)))
+	    (set! state 'closed)
+	    (socket-close %socket)
+	    (set! %socket #f))))
+
+   (define (abort)
+      (with-access::websocket ws (%mutex %socket onerrors)
+	 (synchronize %mutex
+	    (when (pair? onerrors)
+	       (let ((se (instantiate::websocket-event
+			    (name "close")
+			    (target ws)
+			    (value ws))))
+		  (apply-listeners onerrors se))))
+	 (close)))
+
+   (define (message val)
+      (with-access::websocket ws (onmessages)
+	 (let ((se (instantiate::websocket-event
+		      (name "message")
+		      (target ws)
+		      (value val))))
+	    (apply-listeners onmessages se))))
+
+   (define (read-check-byte in val)
+      (unless (=fx (read-byte in) val)
+	 (abort)))
+
+   (define (read-messages)
+      (with-access::websocket ws (%socket)
+	 (let ((in (socket-input %socket)))
+	    (let loop ()
+	       (read-check-byte in #x81)
+	       (let ((s (read-byte in)))
+		  (cond
+		     ((<=fx s 125)
+		      (message (read-chars s in)))
+		     ((=fx s 126)
+		      (message (read-chars (read-int16 in) in)))
+		     ((=fx s 127)
+		      (read-check-byte in 0)
+		      (read-check-byte in 0)
+		      (read-check-byte in 0)
+		      (read-check-byte in 0)
+		      (message (read-chars (read-int32 in) in)))
+		     (else
+		      (abort))))
+	       (loop)))))
+   
+   (with-access::websocket ws (%mutex %socket url authorization state onopens)
+      (synchronize %mutex
+	 (unless (websocket-connected? ws)
+	    (multiple-value-bind (scheme userinfo host port path)
+	       (url-parse url)
+	       (let* ((sock (make-client-socket/timeout host port -1 0 #f))
+		      (in (socket-input sock))
+		      (out (socket-output sock)))
+		  (set! %socket sock)
+		  (let* ((uagent (format "Hop ~a" (hop-version)))
+			 (origin (format "http://~a:~a" host port))
+			 (sec-ws-key (base64-encode
+					(format "ws~a"
+					   (hop-login-cookie-crypt-key)))))
+		     (http :in in :out out
+			:protocol "http"
+			:method 'GET
+			:http-version 'HTTP/1.1
+			:host (format "~a:~a" host port)
+			:path path
+			:authorization authorization
+			:header `((upgrade: . websocket)
+				  (connection: . upgrade)
+				  (origin: . ,origin)
+				  (sec-websocket-key: . ,sec-ws-key)
+				  (sec-websocket-version: . 13)
+				  (user-agent: . ,uagent)))
+		     (multiple-value-bind (http status line)
+			(http-parse-status-line in)
+			(when (=fx status 101)
+			   (multiple-value-bind (header host port clen tenc auth pauth connection)
+			      (http-parse-header in out)
+			      (let ((accept (assq sec-websocket-accept: header)))
+				 (when (and (pair? accept)
+					    (string=?
+					       (websocket-hybi-accept sec-ws-key)
+					       (cdr accept)))
+				    (set! state 'open)
+				    (when (pair? onopens)
+				       (let ((se (instantiate::websocket-event
+						    (name "open")
+						    (target ws)
+						    (value ws))))
+					  (apply-listeners onopens se)))
+				    (thread-start!
+				       (instantiate::pthread
+					  (body (lambda ()
+						   (unwind-protect
+						      (with-handler
+							 (lambda (e)
+							    #f)
+							 (read-messages))
+						      (close))))))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-envelope-parse ...                                     */
+;*---------------------------------------------------------------------*/
+(define (websocket-envelope-parse ws::ws-server e::websocket-event)
+   (with-access::websocket-event e (value)
+      (let ((m (pregexp-match "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" value)))
+	 (if m
+	     (let ((k (cadr m))
+		   (id (caddr m))
+		   (text (cadddr m)))
+		(case (string-ref k 0)
+		   ((#\i)
+		    (websocket-trigger-event ws id (string->integer text)))
+		   ((#\f)
+		    (websocket-trigger-event ws id (string->real text)))
+		   ((#\x)
+		    (tprint "WEBSOCKET TODO: " text))
+		   ((#\j)
+		    (let ((t (pregexp-match "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" text)))
+		       (if t
+			   (websocket-trigger-event ws id (javascript->obj (cadr t)))
+			   (raise
+			      (instantiate::&io-parse-error
+				 (proc "websocket")
+				 (msg "Illegal value")
+				 (obj text))))))
+		   ((#\r)
+		    (websocket-trigger-server-ready ws))
+		   (else
+		    (raise
+		       (instantiate::&io-parse-error
+			  (proc "websocket")
+			  (msg "Illegal message type")
+			  (obj id))))))
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "websocket")
+		   (msg "Illegal message")
+		   (obj value)))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-trigger-event ...                                      */
+;*---------------------------------------------------------------------*/
+(define (websocket-trigger-event ws::ws-server id::bstring val::obj)
+   (with-access::ws-server ws (onmessages)
+      (let ((onmsg (assoc id onmessages)))
+	 (when (and (pair? onmsg) (pair? (cdr onmsg)))
+	    (let ((e (instantiate::event
+			(name id)
+			(target ws)
+			(value val))))
+	       (apply-listeners (cdr onmsg) e))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-trigger-server-ready ...                               */
+;*---------------------------------------------------------------------*/
+(define (websocket-trigger-server-ready ws::ws-server)
+   (with-access::ws-server ws (onreadys)
+      (websocket-trigger-event ws "ready" ws)))

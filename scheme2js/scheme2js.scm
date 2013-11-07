@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Mon Sep 16 17:23:09 2013 (serrano)                */
+;*    Last change :  Tue Nov  5 16:21:18 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -132,7 +132,9 @@
 	    (enable-callcc
 	     (pass 'call/cc-early (call/cc-early! tree))))
 	 (pass 'trampoline     (trampoline tree))
+;* 	 (scheme2js-dump-temporary tree "bscope")                      */
 	 (pass 'scope          (scope-resolution! tree))
+;* 	 (scheme2js-dump-temporary tree "ascope")                      */
 	 (pass 'constants      (constants! tree))
 	 (pass 'tail-rec       (tail-rec! tree))
 	 (pass 'while          (tail-rec->while! tree))
@@ -148,7 +150,7 @@
 	 (pass 'node-elim4     (node-elimination! tree))
 	 (pass 'rm-breaks      (rm-tail-breaks! tree))
 	 (pass 'node-elim5     (node-elimination! tree))
-	 (scheme2js-dump-temporary tree "last")
+;* 	 (scheme2js-dump-temporary tree "last")                        */
 	 (cond-expand
 	    (enable-callcc
 	     (pass 'call/cc-late (call/cc-late! tree))))

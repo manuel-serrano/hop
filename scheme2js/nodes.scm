@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Sat Aug 10 09:51:15 2013 (serrano)                */
+;*    Last change :  Tue Nov  5 15:37:44 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js AST definition                                         */
@@ -101,7 +101,8 @@
 	 ;; a-list (index rev-hoisted ...)
 	 (call/cc-hoisted::pair-nil (default '())) 
 	 (call/cc-contained-scopes::pair-nil (default '()))
-	 (contains-trampoline-call?::bool (default #f)))
+	 (contains-trampoline-call?::bool (default #f))
+	 (isloop?::bool (default #f)))
       
       (final-class If::Node
 	 test::Node

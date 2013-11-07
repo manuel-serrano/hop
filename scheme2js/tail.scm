@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Mon Aug 19 08:32:05 2013 (serrano)                */
+;*    Last change :  Tue Nov  5 16:10:43 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    tail property                                                    */
@@ -53,7 +53,8 @@
 ;*    tail ::Lambda ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.tail tail?)
-   (default-walk this #t))
+   (with-access::Lambda this (body)
+      (tail body this #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tail ::If ...                                                    */
@@ -115,6 +116,13 @@
 (define-nmethod (Call.tail tail?)
    (cond
       (tail?
+       (with-access::Call this (operator)
+	  (when (isa? operator Ref)
+	     (with-access::Ref operator (var)
+		(with-access::Var var (constant? value)
+		   (when (and constant? (isa? value Lambda) (eq? value env))
+		      (with-access::Lambda value (isloop?)
+			 (set! isloop? #t)))))))
        (widen!::Tail-Call this))
       ((isa? this Tail-Call)
        (shrink! this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Mon Aug 19 08:31:48 2013 (serrano)                */
+;*    Last change :  Tue Nov  5 15:31:46 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Tail-rec optimization                                            */
@@ -45,8 +45,8 @@
 ;*    is transformed into:                                             */
 ;*                                                                     */
 ;*    (define (foo x_ y_ z_)                                           */
-;*       (tail-rec (x y z)                                             */
-;*                 (x_ y_ z_))                                         */
+;*       (tail-rec ((x y z)                                            */
+;*                  (x_ y_ z_))                                        */
 ;*          bar                                                        */
 ;*          (tail-rec-call (x_up y_up z_up))))                         */
 ;*                                                                     */
@@ -90,6 +90,8 @@
 							    vaarg?))
 			  (updates (map! cdr assig-mapping)))
 		      (unless (isa? current-fun Tail-Lambda)
+			 (with-access::Lambda current-fun (isloop?)
+			    (set! isloop? #t))
 			 (widen!::Tail-Lambda current-fun
 			    (label (instantiate::Label
 				      (id (gensym 'continue))))))

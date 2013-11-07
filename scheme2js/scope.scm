@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Mon Aug 19 08:10:21 2013 (serrano)                */
+;*    Last change :  Tue Nov  5 16:19:16 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript scopes                                                */
@@ -120,13 +120,13 @@
 		(else
 		 ;; more than one scope-var
 		 ;; more than one binding.
-		 ;; each scope-var might only appear in one binding. (otherwise it
-		 ;; would not be a 'let'.
+		 ;; each scope-var might only appear in one binding.
+		 ;; (otherwise it would not be a 'let'.
 		 ;; search the first binding for a scope-var
 		 ;; if none is found -> begin
 		 ;; otherwise split the binding with the corresponding var.
-		 (let*((binding (car bindings))
-		       (binding-var (search-binding-var binding scope-vars)))
+		 (let* ((binding (car bindings))
+			(binding-var (search-binding-var binding scope-vars)))
 		    (set! bindings (cdr bindings))
 		    (if binding-var
 			(begin
@@ -256,20 +256,33 @@
 	 (error "scope" "Internal Error: not scope-var: " (node->list this)))))
 
 
-;; adds inside-loop?-flag.
+;*---------------------------------------------------------------------*/
+;*    scope-inside-loop? ...                                           */
+;*    -------------------------------------------------------------    */
+;*    adds inside-loop?-flag.                                          */
+;*---------------------------------------------------------------------*/
 (define (scope-inside-loop? tree)
    (verbose "  inside loop?")
    (inside tree #f #f))
 
+;*---------------------------------------------------------------------*/
+;*    inside ::Node ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Node.inside inside-loop?::bool)
    (default-walk this inside-loop?))
 
+;*---------------------------------------------------------------------*/
+;*    inside ::Execution-Unit ...                                      */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Execution-Unit.inside inside-loop?)
    ;; by default all variables.inside-loop? are set to #f. no need to do
    ;; anything here.
    ;; clear inside-loop?-flag for contained nodes.
    (default-walk this #f))
 
+;*---------------------------------------------------------------------*/
+;*    inside ::Scope ...                                               */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Scope.inside loop?)
    (with-access::Scope this (scope-vars)
       (for-each (lambda (var)
@@ -278,6 +291,16 @@
 		scope-vars))
    (default-walk this loop?))
 
+;*---------------------------------------------------------------------*/
+;*    inside ::Lambda ...                                              */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Lambda.inside loop?)
+   (with-access::Lambda this (isloop? body)
+      (default-walk body isloop?)))
+      
+;*---------------------------------------------------------------------*/
+;*    inside ::Tail-rec ...                                            */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Tail-rec.inside inside-loop?)
    (with-access::Tail-rec this (scope-vars inits body)
       (for-each (lambda (var)
@@ -470,20 +493,27 @@
 			     (loop (cdr scopes) last-loop))))))))))))
 
 
-;; assigns the predicates for each variable
+;*---------------------------------------------------------------------*/
+;*    main-predicates ...                                              */
+;*    -------------------------------------------------------------    */
+;*    assigns the predicates for each variable                         */
+;*---------------------------------------------------------------------*/
 (define (main-predicates tree)
    (main tree (instantiate::Main-Env
 		 (suspend/resume? (config 'suspend/resume)))))
 
-(define-nmethod (Node.main)
-   (default-walk this))
-
+;*---------------------------------------------------------------------*/
+;*    boxed? ...                                                       */
+;*---------------------------------------------------------------------*/
 (define (boxed? var)
    ;; TODO: only true, when using 'with' or boxes. not when using anonymous
    ;; functions!
    (with-access::Scope-Var var (needs-boxing? needs-frame? needs-uniquization?)
       (or needs-boxing? needs-frame? needs-uniquization?)))
 
+;*---------------------------------------------------------------------*/
+;*    compute-predicates ...                                           */
+;*---------------------------------------------------------------------*/
 (define (compute-predicates var::Var suspend-resume?)
    (with-access::Scope-Var var (constant? escapes? captured? inside-loop?
 					  call/cc-when-alive?
@@ -491,12 +521,12 @@
 					  mutated-outside-local?
 					  needs-boxing? needs-frame?
 					  needs-uniquization? needs-update?
-					  value)
-;       (tprint (Var-id var)
-; 	      " constant?: " constant?
-; 	      " escapes?: " escapes?
-; 	      " captured?: " captured?
-; 	      " inside-loop?: " inside-loop?
+					  value id)
+;*        (tprint id                                                   */
+;* 	  " constant?: " constant?                                     */
+;* 	  " escapes?: " escapes?                                       */
+;* 	  " captured?: " captured?                                     */
+;* 	  " inside-loop?: " inside-loop?)                              */
 ; 	      " call/cc-when-alive?: " call/cc-when-alive?
 ; 	      " modified-after-call/cc?: " modified-after-call/cc?
 ; 	      " mutated-outside-local?: " mutated-outside-local?)
@@ -521,6 +551,15 @@
       (set! needs-update? (and (not (boxed? var))
 			       modified-after-call/cc?))))
 
+;*---------------------------------------------------------------------*/
+;*    main ::Node ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Node.main)
+   (default-walk this))
+
+;*---------------------------------------------------------------------*/
+;*    main ::Module ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Module.main)
    (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Module this (scope-vars runtime-vars imported-vars this-var)
@@ -530,6 +569,9 @@
 	 (compute-predicates this-var sr?)))
    (default-walk this))
 
+;*---------------------------------------------------------------------*/
+;*    main ::Lambda ...                                                */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Lambda.main)
    (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Lambda this (scope-vars this-var)
@@ -537,12 +579,14 @@
 	 (compute-predicates this-var sr?)))
    (default-walk this))
    
+;*---------------------------------------------------------------------*/
+;*    main ::Scope ...                                                 */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Scope.main)
    (with-access::Main-Env env ((sr? suspend/resume?))
       (with-access::Scope this (scope-vars)
 	 (for-each (lambda (v) (compute-predicates v sr?)) scope-vars)))
    (default-walk this))
-
 
 ;; introduce temporary variables for formals and loop-variables.
 ;; - formals are not allowed to be boxed.
@@ -897,20 +941,31 @@
 ;*    frame-alloc! ::Let ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Let.frame-alloc!)
-   (with-access::Let this (scope-vars body location bindings)
-      (let ((frame-vars (reverse
-			   (filter (lambda (var)
-				      (with-access::Var var (needs-frame?
-							       needs-boxing?
-							       needs-uniquization?)
-					 (or needs-frame?
-					     needs-boxing?
-					     needs-uniquization?)))
-			      scope-vars))))
+   (with-access::Let this (scope-vars body location bindings kind)
+      (let ((frame-vars '())
+	    (other-vars '()))
+	 (for-each (lambda (var)
+		      (with-access::Var var (needs-frame?
+					       needs-boxing?
+					       needs-uniquization?)
+			 (if (or needs-frame?
+				 needs-boxing?
+				 needs-uniquization?)
+			     (set! frame-vars (cons var frame-vars))
+			     (set! other-vars (cons var other-vars)))))
+	    scope-vars)
+	 (set! frame-vars (reverse! frame-vars))
+	 (set! other-vars (reverse! other-vars))
+;* 	 (tprint "LET: frame-vars=" (map node->list frame-vars) "\n"   */
+;* 	    "  other-vars=" (map node->list other-vars) "\n"           */
+;* 	    "  scope-vars=" (map node->list scope-vars) "\n"           */
+;* 	    "  bindings=" (map node->list bindings) "\n"               */
+;* 	    "  body=" (node->list this))                               */
 	 (cond
 	    ((null? frame-vars)
 	     (default-walk! this))
 	    ((and (not (config 'frame-push)) (not (config 'javascript-let)))
+;* 	     (tprint "GLOP: " (map node->list frame-vars))             */
 	     ;; apply an anonymous function
 	     (let* ((formals (map (lambda (b)
 				     (with-access::Set! b (lvalue)
@@ -926,17 +981,25 @@
 				    (location location)
 				    (storage-var (with-access::Ref storage-decl (var) var))
 				    (vars frame-vars)))
-		    (body (instantiate::Frame-push
+		    (body (if (pair? other-vars)
+			      (instantiate::Let
+				 (location location)
+				 (scope-vars other-vars)
+				 (bindings '())
+				 (kind kind)
+				 (body body))
+			      body))
+		    (push (instantiate::Frame-push
 			     (location location)
 			     (frame-alloc frame-alloc)
-			     (body body)))
+			     (body (default-walk! body))))
 		    (fun (instantiate::Lambda
 			    (location location)
 			    (scope-vars scope-vars)
 			    (formals formals)
 			    (body (instantiate::Return
 				     (location location)
-				     (val body)))
+				     (val push)))
 			    (vaarg? #f)
 			    (arity (length formals))
 			    (closure? #f)))

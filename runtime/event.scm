@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Apr 29 15:01:45 2013 (serrano)                */
+;*    Last change :  Thu Nov  7 10:05:48 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -77,18 +77,25 @@
 	       (stopped::bool (default #f))
 	       (value::obj (default #unspecified)))
 
+	    (class websocket-event::event)
+
 	    (class server-event::event)
 	    
 	    (generic add-event-listener! ::obj ::obj ::procedure . l)
 	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
 	    (generic stop-event-propagation ::event ::bool)
 
+	    (apply-listeners ::obj ::event)
+	    
 	    (hop-event-init!)
 	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)
-	    (hop-event-policy-file ::http-request)))
+	    (hop-event-policy-file ::http-request)
+	    (hop-event-info-service::procedure)
+	    (hop-event-register-service::procedure)
+	    (hop-event-unregister-service::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug ...                                                        */
@@ -1501,15 +1508,12 @@
       (parse-authenticated-host event)
       (let ((hs (synchronize *listener-mutex*
 		   (hashtable-get *server-listeners* event))))
-	 (tprint "ADD-SERVER-LISTENER obj=" obj " event=" event
-	    " -> hopsocket=" hs)
 	 (if (isa? hs hopsocket)
 	     (register-event! host port auth hs)
 	     (with-hop (*port-service*)
 		:host host :port port
 		:authorization auth
 		(lambda (v)
-		   (tprint "port-service -> " v)
 		   (let ((key (vector-ref v 2)))
 		      (synchronize *listener-mutex*
 			 (let ((hs (hashtable-get *server-listeners* event)))
@@ -1544,3 +1548,36 @@
 	 (set! p padding)
 	 (set! content-type "application/x-javascript")))
    rep)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-info-service ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-event-info-service)
+   (hop-event-init!)
+   *port-service*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-register-service ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-event-register-service)
+   (hop-event-init!)
+   *register-service*)
+   
+;*---------------------------------------------------------------------*/
+;*    hop-event-unregister-service ...                                 */
+;*---------------------------------------------------------------------*/
+(define (hop-event-unregister-service)
+   (hop-event-init!)
+   *unregister-service*)
+   
+;*---------------------------------------------------------------------*/
+;*    apply-listeners ...                                              */
+;*---------------------------------------------------------------------*/
+(define (apply-listeners listeners::obj e::event)
+   (let loop ((l listeners))
+      (when (pair? l)
+	 ((car l) e)
+	 (with-access::event e (stopped)
+	    (unless stopped
+	       (loop (cdr l)))))))
+
