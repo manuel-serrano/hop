@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Sep 10 14:24:15 2013 (serrano)                */
+;*    Last change :  Thu Nov  7 15:36:57 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -387,13 +387,17 @@
 			  (http-invalidated-service-error req))
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
-			  (if (>fx ttl 0)
+			  (cond
+			     ((eq? method 'HEAD)
+			      (instantiate::http-response-string))
+			     ((>fx ttl 0)
 			      (unwind-protect
 				 (scheme->response (service-handler svc req) req)
 				 (if (=fx ttl 1)
 				     (unregister-service! svc)
-				     (set! ttl (-fx ttl 1))))
-			      (scheme->response (service-handler svc req) req)))
+				     (set! ttl (-fx ttl 1)))))
+			     (else
+			      (scheme->response (service-handler svc req) req))))
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
