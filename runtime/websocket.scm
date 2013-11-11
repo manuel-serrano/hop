@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Nov  7 15:05:31 2013 (serrano)                */
+;*    Last change :  Fri Nov  8 11:35:12 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -74,7 +74,7 @@
 ;*    websocket-debug ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (websocket-debug)
-   #t)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    *connect-host-table* ...                                         */

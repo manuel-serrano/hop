@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Nov  7 09:36:52 2013 (serrano)                */
+;*    Last change :  Fri Nov  8 11:13:31 2013 (serrano)                */
 ;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -97,6 +97,7 @@
 	   (class http-response-hop)
 	   (class http-response-authentication)
 	   (class http-response-cgi)
+	   (class http-response-abort)
 	   (class http-response-persistent)
 	   (class http-response-put)
 	   

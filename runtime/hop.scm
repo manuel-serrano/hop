@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Nov  1 07:01:12 2013 (serrano)                */
+;*    Last change :  Fri Nov  8 18:36:55 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -238,7 +238,6 @@
    (lambda (p status header clength tenc)
       (when (and (input-port? p) (>elong clength #e0))
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
-      (tprint "/tmp/HOPDAC.log to be removed...")
       (let ((pd (open-output-file "/tmp/HOPDAC.log")))
 	 (with-access::http-request req (scheme host port path)
 	    (fprintf pd "request: ~a://~a:~a~a\n\n" scheme host port path))
