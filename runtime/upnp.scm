@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 10 16:49:31 2013                          */
-;*    Last change :  Thu Nov  7 10:00:49 2013 (serrano)                */
+;*    Last change :  Mon Nov 11 17:23:57 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    UPNP Hop support                                                 */
@@ -181,9 +181,15 @@
       ;; ping
       (upnp-discover u "ssdp:all")
       proc))
-
+)
 
 ;*---------------------------------------------------------------------*/
 ;*    conditional compilation                                          */
 ;*---------------------------------------------------------------------*/
-))
+(else
+ (define (upnp-backend)
+    #f)
+ 
+ (define (upnp-discover o target)
+    #f))
+)

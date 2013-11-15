@@ -2640,9 +2640,12 @@ function sc_vectorMapRes(res, proc, args) {
    if (!(res instanceof sc_Vector) ) {
       sc_typeError( "vector-map", "vector", res, 3 );
    }
-   for (var i = 1; i <= len; i++) {
+   for (var i = 1; i <= nbApplyArgs; i++) {
       if (!(args[i] instanceof sc_Vector) ) {
 	 sc_typeError( "vector-map", "vector", args[i], 3 );
+      }
+      if (args[i].length != res.length) {
+	 sc_error( "vector-map", "wrong vector argument legnth", args[i] );
       }
    }
 #endif

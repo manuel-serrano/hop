@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Mon Aug 19 06:59:41 2013 (serrano)                */
+/*    Last change :  Fri Nov 15 12:32:06 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -17,6 +17,13 @@
 /*** META ((export hop_create_lflabel) (JS hop_create_lflabel)) */
 /*** META ((export Image) (JS Image)) */
 /*** META ((export getElementById) (JS getElementById)) */
+
+/*---------------------------------------------------------------------*/
+/*    hop_tilde ...                                                    */
+/*---------------------------------------------------------------------*/
+function hop_tilde( fun ) {
+   this.fun = fun;
+}
 
 /*---------------------------------------------------------------------*/
 /*    dom_add_child ...                                                */
@@ -47,6 +54,16 @@ function dom_add_child( id, e ) {
 	     (typeof e === "string") ||
 	     (typeof e === "number") ) {
 	    node.appendChild( document.createTextNode( e ) );
+	 } else if( e instanceof hop_tilde ) {
+	    var sc = document.createElement( "script" );
+	    var src = "(" + e.fun + ")()";
+	    sc.type = "text/javascript";
+	    if( "text" in sc ) {
+	       sc.text = src;
+	    } else {
+	       sc.appendChild( src );
+	    }
+	    node.appendChild( sc );
 	 } else {
 	    if( sc_isPair( e ) ) {
 	       sc_forEach( add, e );
@@ -229,13 +246,15 @@ function hop_dom_create_msie_radio( name, _ ) {
 		    (loop (cdr args) attrs (cons (car args) body) listeners))
 		   ((string-prefix? "on" (keyword->string (car args)))
 		    (let ((s (keyword->string (car args)))
-		          (tmp (gensym)))
+		          (tmp (gensym))
+			  (tilde (gensym)))
 		       (loop (cddr args)
 			     attrs
 			     body
 			     (cons (list (substring s 2 (string-length s))
 					 `(lambda (event)
-					     (let ((,tmp ,(cadr args)))
+					     (let* ((,tilde ,(cadr args))
+					            (,tmp ((js-ref ,tilde "fun"))))
 					        (unless ,tmp
 						   (stop-event-propagation event #f))
 					       ,tmp)))
@@ -265,12 +284,14 @@ function hop_dom_create_msie_radio( name, _ ) {
 		    (loop (cdr args) (cons (car args) attrs) listeners))
 		   ((string-prefix? "on" (keyword->string (car args)))
 		    (let ((s (keyword->string (car args)))
-   		          (tmp (gensym)))
+   		          (tmp (gensym))
+			  (tilde (gensym)))
 		       (loop (cddr args)
 			     attrs
 			     (cons (list (substring s 2 (string-length s))
 					 `(lambda (event)
-					    (let ((,tmp ,(cadr args)))
+					    (let* ((,tilde ,(cadr args))
+					           (,tmp ((js-ref ,tilde "fun"))))
 					        (unless ,tmp
 						   (stop-event-propagation event #f))
 						   ,tmp)))
@@ -312,6 +333,44 @@ function hop_create_lflabel( attrs, body ) {
    var ct = dom_create( "span", body );
    return dom_create( "div", hc, "hop-lflabel", ct );
 }
+
+/*---------------------------------------------------------------------*/
+/*    <TILDE> ...                                                      */
+/*---------------------------------------------------------------------*/
+/*** META (define-macro (<TILDE> arg)
+	     ;; see the file hopscheme/tilde.scm the two expansions
+	     ;; must be compatible
+	     (match-case arg
+		((let* ?bindings (vector (quote ?expr) ?var ?- ?- (string-append . ?jstr) . ?-))
+		 `(let* ,bindings
+		     ,(let ((holes (map (lambda (x)
+					   (match-case x
+					      ((? string?)
+					       x)
+					      ((call-with-output-string
+						  (lambda (op) (obj->javascript-attr ?var op)))
+					       var)))
+				      jstr)))
+			 `(pragma
+			     ,(format "new hop_tilde( function() { ~a; return ~a; } )"
+				 (apply string-append
+				    (map (lambda (x i)
+					    (match-case x
+					       ((? string?)
+						x)
+					       (else
+						(format "$~a" i))))
+				       jstr (iota (length holes) 1)))
+				 (symbol->string (cadr var)))
+			     ,@holes))))
+		((let* () (vector (quote ?expr) ?var ?- ?- (and (? string?) ?jstr) . ?-))
+		 `(pragma
+		     ,(format "new hop_tilde( function() { ~a; return ~a; } )"
+			 jstr
+			 (symbol->string (cadr var)))))
+		(else
+		 (error "hop" "Illegal tilde format" `(<TILDE> ,arg)))))
+*/
 
 /*---------------------------------------------------------------------*/
 /*    DOM creator interface ...                                        */
