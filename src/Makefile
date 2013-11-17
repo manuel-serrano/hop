@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/2.5.x/src/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Feb 10 17:52:32 2013 (serrano)                */
+#*    Last change :  Sun Nov 17 10:56:37 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -240,6 +240,8 @@ clean:
 	$(RM) -f META-INF/MANIFEST.MF
 
 devclean: clean
+
+distclean: clean
 
 cleanall: devclean
 
