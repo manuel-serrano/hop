@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Nov  8 18:36:55 2013 (serrano)                */
+;*    Last change :  Sun Nov 17 13:45:26 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -235,6 +235,54 @@
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback proc::symbol req success fail)
+   (lambda (p status header clength tenc)
+      (when (and (input-port? p) (>elong clength #e0))
+	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
+      (case status
+	 ((200)
+	  ;; see hop-json-mime-type and hop-bigloo-mime-type
+	  (let ((obj (case (header-content-type header)
+			((application/x-hop)
+			 (string->obj (read-chars clength p)))
+			((application/x-url-hop)
+			 (string->obj (url-decode (read-chars clength p))))
+			((application/x-json-hop)
+			 (string->obj
+			    (byte-array->string 
+			       (javascript->obj (read-chars clength p)))))
+			((application/json)
+			 (json->obj p))
+			((application/x-javascript)
+			 (javascript->obj p))
+			(else
+			 (read-string p)))))
+	     (success obj)))
+	 ((201 204 304)
+	  ;; no message body
+	  (success (instantiate::xml-http-request
+		      (status status)
+		      (header header)
+		      (input-port p))))
+	 ((401 407)
+	  (if (procedure? fail)
+	      (fail (instantiate::xml-http-request
+		       (status status)
+		       (header header)
+		       (input-port p)))
+	      (raise (user-access-denied req))))
+	 (else
+	  (if (procedure? fail)
+	      (fail (instantiate::xml-http-request
+		       (status status)
+		       (header header)
+		       (input-port p)))
+	      (raise
+		 (instantiate::&error
+		    (proc proc)
+		    (msg (format "Illegal status `~a'" status))
+		    (obj (when (input-port? p) (read-string p))))))))))
+
+(define (make-http-callback-debug proc::symbol req success fail)
    (lambda (p status header clength tenc)
       (when (and (input-port? p) (>elong clength #e0))
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
