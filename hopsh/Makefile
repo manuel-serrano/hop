@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/hopsh/Makefile                    */
+#*    serrano/prgm/project/hop/2.5.x/hopsh/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Apr  9 10:40:50 2012 (serrano)                */
+#*    Last change :  Sun Nov 17 11:09:23 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -187,6 +187,8 @@ clean:
 	$(RM) -rf META-INF
 
 devclean: clean
+
+distclean: clean
 
 cleanall: devclean
 

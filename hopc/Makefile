@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/2.5.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Apr 10 09:08:04 2012 (serrano)                */
+#*    Last change :  Sun Nov 17 11:09:16 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -189,6 +189,8 @@ clean:
 	$(RM) -rf META-INF
 
 devclean: clean
+
+distclean: clean
 
 cleanall: devclean
 

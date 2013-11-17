@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/hophz/Makefile                    */
+#*    serrano/prgm/project/hop/2.5.x/hophz/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Jul  2 09:03:27 2012 (serrano)                */
+#*    Last change :  Sun Nov 17 11:09:32 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -232,6 +232,8 @@ clean:
 	$(RM) -rf META-INF
 
 devclean: clean
+
+distclean: clean 
 
 cleanall: devclean
 

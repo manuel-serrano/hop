@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/hopreplay/Makefile                */
+#*    serrano/prgm/project/hop/2.5.x/hopreplay/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Apr  9 10:41:41 2012 (serrano)                */
+#*    Last change :  Sun Nov 17 11:09:48 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopReplay                               */
 #*=====================================================================*/
@@ -187,6 +187,8 @@ clean:
 	$(RM) -rf META-INF
 
 devclean: clean
+
+distclean: clean
 
 cleanall: devclean
 
