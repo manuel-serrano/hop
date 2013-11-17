@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Sep 23 15:13:03 2013 (serrano)                */
+#*    Last change :  Sun Nov 17 10:19:01 2013 (serrano)                */
 #*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -351,9 +351,10 @@ predistrib-clean:
 .PHONY: clean predistrib-clean devclean
 
 clean:
-	$(RM) hop_u.js hop_s.js hop-exception.js hop-debug.js 
+	$(RM) hop_u.js hop_s.js 
 	$(RM) hop-runtime.sch 
 
 devclean:
+	$(RM) hop-exception.js hop-debug.js 
 
 distclean: clean
