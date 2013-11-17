@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Aug  9 13:44:19 2013 (serrano)                */
+#*    Last change :  Sun Nov 17 10:34:35 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -236,7 +236,15 @@ devclean:
 	$(MAKE) -C widget devclean
 	$(MAKE) -C share devclean
 
-distclean: clean devclean
+distclean: clean 
+	$(MAKE) -C runtime distclean
+	$(MAKE) -C src distclean
+	$(MAKE) -C hopc distclean
+	$(MAKE) -C hopsh distclean
+	$(MAKE) -C hophz distclean
+	$(MAKE) -C hopreplay distclean
+	$(MAKE) -C widget distclean
+	$(MAKE) -C share distclean
 	$(RM) -f etc/Makefile.hopconfig
 	$(RM) -f etc/hop.man
 	$(RM) -f etc/hopsh.man
