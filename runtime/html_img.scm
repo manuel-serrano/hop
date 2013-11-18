@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sun Sep 15 06:41:48 2013 (serrano)                */
+;*    Last change :  Mon Nov 18 10:04:01 2013 (serrano)                */
 ;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -133,7 +133,7 @@
 	 (body '())))
    
    (define (onerror-img attributes src)
-      (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, ~s) }" src))
+      (let* ((val (format "if( !this.onhoperror ) { this.onhoperror = true; hop_deinline_image(this, \"~a\") }" src))
 	     (onerror (plist-assq :onerror attributes))
 	     (oval (when onerror (cadr onerror))))
 	 (cond
