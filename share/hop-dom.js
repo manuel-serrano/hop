@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Nov 15 12:32:06 2013 (serrano)                */
+/*    Last change :  Wed Nov 20 18:07:58 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -26,10 +26,9 @@ function hop_tilde( fun ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    dom_add_child ...                                                */
+/*    hop_add ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export dom-append-child!) (arity #t)) */
-function dom_add_child( id, e ) {
+function hop_add( id, e, insert ) {
    var node;
    
    if( (id instanceof String) || (typeof id == "string") ) {
@@ -48,12 +47,12 @@ function dom_add_child( id, e ) {
 	 /* in the document because the server side implementation    */
 	 /* of dom-add-child checks if the node is already in the     */
 	 /* same tree and if it is, it removes it first               */
-	 node.appendChild( e );
+	 insert( node, e );
       } else {
 	 if( (e instanceof String) ||
 	     (typeof e === "string") ||
 	     (typeof e === "number") ) {
-	    node.appendChild( document.createTextNode( e ) );
+	    insert( node, document.createTextNode( e ) );
 	 } else if( e instanceof hop_tilde ) {
 	    var sc = document.createElement( "script" );
 	    var src = "(" + e.fun + ")()";
@@ -63,7 +62,7 @@ function dom_add_child( id, e ) {
 	    } else {
 	       sc.appendChild( src );
 	    }
-	    node.appendChild( sc );
+	    insert( node, sc );
 	 } else {
 	    if( sc_isPair( e ) ) {
 	       sc_forEach( add, e );
@@ -79,6 +78,14 @@ function dom_add_child( id, e ) {
    }
 
    return add( e );
+}
+
+/*---------------------------------------------------------------------*/
+/*    dom_add_child ...                                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export dom-append-child!) (arity #t)) */
+function dom_add_child( id, e ) {
+   return hop_add( id, e, function( node, e ) { return node.appendChild( e ); } );
 }
 
 /*---------------------------------------------------------------------*/
@@ -891,20 +898,21 @@ function dom_remove_child( node, n ) {
 function dom_clone_node( node, b ) {
    return node.cloneNode( b );
 }
+
 /*** META ((export dom-insert-before!)
-           (arity #t)
-           (peephole (hole 3 node ".insertBefore(" n ", " r ")")))
+           (arity #t))
 */
-function dom_insert_before( node, n, r ) {
-   return node.insertBefore( n, r );
+function dom_insert_before( id, n, r ) {
+   return hop_add( id, n, function( node, e ) { return node.insertBefore( e, r ); } );
 }
+
 /*** META ((export dom-replace-child!)
-           (arity #t)
-           (peephole (hole 3 node ".replaceChild(" n ", " r ")")))
+           (arity #t))
 */
-function dom_replace_child( node, n, r ) {
-   return node.replaceChild( n, r );
+function dom_replace_child( id, n, r ) {
+   return hop_add( id, n, function( node, e ) { return node.replaceChild( e, r ); } );
 }
+
 /*** META ((export #t) (arity -2)) */
 function dom_get_element_by_id( doc, id ) {
    if( (doc instanceof String) || (typeof doc === "string") ) {

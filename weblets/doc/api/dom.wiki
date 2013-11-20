@@ -514,8 +514,8 @@ Clones ++node++. If the argument ++deep++ is ++#t++ the cloning is deep
 </arguments>
 
 Inserts a ++new++ node in the children list of ++node++, just after the
-element ++ref++. If the element ++ref++ is not the children list, the
-behavior is unspecified.
+element ++ref++ or append it if ++ref++ is ++()++. If the element ++ref++
+is neither ++()++ nor in the children list, the behavior is unspecified.
 </procedure>
 </procedure>
 </function>
@@ -573,7 +573,7 @@ two or more elements with the same identifier.
 | name             |  string      | the seeked elements tag name.           |
 </arguments>
 
-Search all the elements in ++node++ whose tag name is ++id++. The
+Search all the elements in ++node++ whose tag name is ++name++. The
 tag name is the name of the markup that has been used to build the
 elements. The function ++string=?++ that compare characters by
 characters is used to compare identifiers.  

@@ -258,7 +258,7 @@ client according to the [[http://www.shoutcast.com/|shoutcast]] protocol.
 <fields>
 ^  fields              ^   access  ^       type        ^  default value        ^  short description                          ^
 | ...                  |    ...    |        ...        |     ...               | fields from ::%http-response-local          |
-| string               |    r      |       string      |      _                | the body.                                   |
+| body                 |    r      |       string      |      _                | the body.                                   |
 </fields>
 
 </class>

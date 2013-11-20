@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Tue Nov  5 16:21:18 2013 (serrano)                */
+;*    Last change :  Wed Nov 20 08:24:16 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
@@ -285,7 +285,7 @@
    (for-each (lambda (f)
 		(fprintf p "hop_source_mapping_url( ~s, \"~a\" );\n" f srcmap))
       files)
-   (fprintf p "\n//@ sourceMappingURL=~a\n" srcmap))
+   (fprintf p "\n//# sourceMappingURL=~a\n" srcmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    *tmp-mutex* ...                                                  */

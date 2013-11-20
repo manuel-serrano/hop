@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Fri Jul 26 08:45:08 2013 (serrano)                */
+/*    Last change :  Wed Nov 20 09:15:53 2013 (serrano)                */
 /*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
@@ -55,7 +55,7 @@ function hop_tree_root( tree ) {
    var aux = tree;
    var root = tree;
 
-   while( aux && aux.treeType === "hop-tree" ) {
+   while( aux && ("treeType" in aux) && aux.treeType === "hop-tree" ) {
       root = aux;
       aux = root.parent;
    }
@@ -477,6 +477,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    row.className = "hop-tree-row-unselected";
    row.id = id + "-trrow";
+   row.treeType = "hop-tree-row";
    
    /* build the left vertical lines */
    hop_push_vlines( parent, row, level );
