@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Nov 27 08:17:16 2013 (serrano)                */
+/*    Last change :  Wed Nov 27 10:01:23 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -319,7 +319,7 @@ var hop_servevt_envelope_cdata_re =
 /*    hop_servevt_envelope_parse_error ...                             */
 /*---------------------------------------------------------------------*/
 function hop_servevt_envelope_parse_error( xhr ) {
-   exc = new Error( "bad server event envelope" );
+   var exc = new Error( "bad server event envelope" );
    
    exc.name = "HopServerError";
    exc.scObject = xhr;
