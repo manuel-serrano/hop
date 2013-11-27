@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Nov 27 10:57:14 2013 (serrano)                */
+;*    Last change :  Wed Nov 27 11:14:58 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -377,9 +377,9 @@
 	      (set! hop-current-exception #f)
 	      (hop-report-exception exc
 		 (append hop-current-exception-stack
-		    (list (document.location.toString)))))
+		    (list document.location.href))))
 	   (hop-report-exception (js-new (@ Error js) msg url line)
-	      (list (document.location.toString))))))
+	      (list document.location.href)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-get-exception-stack ...                                      */
@@ -481,4 +481,5 @@
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
 (when (>= (hop-debug) 1)
+   (hop-extend-stack-context (list document.location.href))
    (set! window.onerror hop-onerror-handler))
