@@ -1,4 +1,4 @@
 #!/bin/sh
 major=2.5.0
 state=pre
-minor=3
+minor=4
