@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Nov 20 18:07:58 2013 (serrano)                */
+/*    Last change :  Wed Nov 27 09:11:24 2013 (serrano)                */
 /*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -261,7 +261,7 @@ function hop_dom_create_msie_radio( name, _ ) {
 			     (cons (list (substring s 2 (string-length s))
 					 `(lambda (event)
 					     (let* ((,tilde ,(cadr args))
-					            (,tmp ((js-ref ,tilde "fun"))))
+					            (,tmp (js-call this (js-ref ,tilde "fun"))))
 					        (unless ,tmp
 						   (stop-event-propagation event #f))
 					       ,tmp)))
@@ -298,7 +298,7 @@ function hop_dom_create_msie_radio( name, _ ) {
 			     (cons (list (substring s 2 (string-length s))
 					 `(lambda (event)
 					    (let* ((,tilde ,(cadr args))
-					           (,tmp ((js-ref ,tilde "fun"))))
+					           (,tmp (js-call this (js-ref ,tilde "fun"))))
 					        (unless ,tmp
 						   (stop-event-propagation event #f))
 						   ,tmp)))
@@ -348,33 +348,11 @@ function hop_create_lflabel( attrs, body ) {
 	     ;; see the file hopscheme/tilde.scm the two expansions
 	     ;; must be compatible
 	     (match-case arg
-		((let* ?bindings (vector (quote ?expr) ?var ?- ?- (string-append . ?jstr) . ?-))
-		 `(let* ,bindings
-		     ,(let ((holes (map (lambda (x)
-					   (match-case x
-					      ((? string?)
-					       x)
-					      ((call-with-output-string
-						  (lambda (op) (obj->javascript-attr ?var op)))
-					       var)))
-				      jstr)))
-			 `(pragma
-			     ,(format "new hop_tilde( function() { ~a; return ~a; } )"
-				 (apply string-append
-				    (map (lambda (x i)
-					    (match-case x
-					       ((? string?)
-						x)
-					       (else
-						(format "$~a" i))))
-				       jstr (iota (length holes) 1)))
-				 (symbol->string (cadr var)))
-			     ,@holes))))
-		((let* () (vector (quote ?expr) ?var ?- ?- (and (? string?) ?jstr) . ?-))
-		 `(pragma
-		     ,(format "new hop_tilde( function() { ~a; return ~a; } )"
-			 jstr
-			 (symbol->string (cadr var)))))
+		((let* ?bindings (vector (quote ?expr) . ?-))
+		 `(let* ,(map (lambda (b)
+				 (cons (symbol-append '$ (car b)) (cdr b)))
+			    bindings)
+		     (js-new (@ hop_tilde js) (lambda () ,expr))))
 		(else
 		 (error "hop" "Illegal tilde format" `(<TILDE> ,arg)))))
 */

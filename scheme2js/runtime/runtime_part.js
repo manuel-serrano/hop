@@ -3504,7 +3504,7 @@ function sc_hashtableSize(ht) {
    }
 #endif       
     var count = 0
-    for (hash in ht) {
+    for (var hash in ht) {
 	if (ht[hash] instanceof sc_HashtableElement)
 	    count++;
     }
@@ -3607,7 +3607,7 @@ function sc_hashtableKeyList(ht) {
 }
 
 /*** META ((export #t) (arity #t)) */
-function sc_hashtable2List(ht) {
+function sc_hashtable2list(ht) {
 #if HOP_RTS_DEBUG
    if (!(ht instanceof sc_Hashtable)) {
       sc_typeError( "hashtable->list", "hashtable", ht, 3 );
@@ -3624,6 +3624,25 @@ function sc_hashtable2List(ht) {
    }
 
    return hd.__hop_cdr;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_hashtable2vector(ht) {
+#if HOP_RTS_DEBUG
+   if (!(ht instanceof sc_Hashtable)) {
+      sc_typeError( "hashtable->list", "hashtable", ht, 3 );
+   }
+#endif
+   var res = sc_vector(sc_hashtableSize(ht));
+   var i = 0;
+   
+   for (var v in ht) {
+      if (ht[v] instanceof sc_HashtableElement) {
+	 res[i++]=ht[v].val;
+      }
+   }
+
+   return res;
 }
 
 /*** META ((export hashtable-contains?)

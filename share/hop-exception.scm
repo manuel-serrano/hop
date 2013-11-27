@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Mon Sep 16 17:17:53 2013 (serrano)                */
+;*    Last change :  Wed Nov 27 09:34:30 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -304,18 +304,18 @@
 	 ((= s 0)
 	  (<DIV> :data-hss-class "hop-exception-stack"
 	     (<BUTTON> "Show JavaScript frames"
-		:onclick (let* ((p this.parentNode)
-				(c (p.getAttribute "data-debug-mode")))
-			    (if (equal? c "all")
-				(begin
-				   (innerHTML-set! this "Show JavaScript frames")
-				   (p.setAttribute "data-debug-mode" "hop"))
-				(begin
-				   (innerHTML-set! this "Hide JavaScript frames")
-				   (p.setAttribute "data-debug-mode" "all")))
-			    (stop-event-propagation event)))
+		:onclick ~(let* ((p this.parentNode)
+				 (c (p.getAttribute "data-debug-mode")))
+			     (if (equal? c "all")
+				 (begin
+				    (innerHTML-set! this "Show JavaScript frames")
+				    (p.setAttribute "data-debug-mode" "hop"))
+				 (begin
+				    (innerHTML-set! this "Hide JavaScript frames")
+				    (p.setAttribute "data-debug-mode" "all")))
+			     (stop-event-propagation event)))
 	     (<TABLE> :data-hss-class "hop-exception-stack"
-		:onclick (stop-event-propagation event)
+		:onclick ~(stop-event-propagation event)
 		(<TR> (<TH> "Execution stack:"))
 		(pp-stack l))))
 	 (else
@@ -326,7 +326,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION> exc stack)
    (<DIV> :data-hss-class "hop-exception-frame"
-      :onclick (dom-remove-child! (dom-parent-node this) this)
+      :onclick ~(dom-remove-child! (dom-parent-node this) this)
       (<DIV> :data-hss-class "hop-exception-background")
       (<DIV> :data-hss-class "hop-exception" :class "client"
 	 (<SPAN> :data-hss-class "hop-exception-img")

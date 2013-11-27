@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 15 09:11:37 2013                          */
-;*    Last change :  Fri Nov 15 09:25:52 2013 (serrano)                */
+;*    Last change :  Wed Nov 27 09:01:43 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parse the dollar expressions                                     */

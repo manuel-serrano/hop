@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 15 09:22:54 2013                          */
-;*    Last change :  Fri Nov 15 12:34:28 2013 (serrano)                */
+;*    Last change :  Wed Nov 27 09:36:57 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compile the inner tilde into javascript expressions              */
@@ -19,6 +19,19 @@
 ;*    tilde->javascript ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (tilde->javascript js)
+   (match-case js
+      ((let* ?bindings (vector (quote ?expr) . ?-))
+       (match-case js
+	  ((let* ?bindings (vector (quote ?expr) . ?-))
+	   `(let* ,(map (lambda (b)
+			   (cons (symbol-append '$ (car b)) (cdr b)))
+		      bindings)
+	       (js-new (@ hop_tilde js) (lambda () ,expr))))
+	  (else
+	   (error "hop" "Illegal tilde format" `(<TILDE> ,js)))))))
+
+(define (tilde->javascript-old js)
+   (tprint "tilde->javascript js=" (format "~s" js))
    (match-case js
       ((let* ?bindings (vector (quote ?expr) ?var ?- ?- (string-append ?jstr) . ?rest))
        `(let* ,bindings

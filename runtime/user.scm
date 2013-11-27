@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed May 15 14:10:58 2013 (serrano)                */
+;*    Last change :  Mon Nov 25 09:10:35 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -593,7 +593,7 @@
    (with-access::http-request req (host port path)
       (hop-verb 1 (hop-color req req " ACCESS DENIED")
 	 ": "
-	 host ":" port ":" path " " 
+	 host ":" port path " " 
 	 (if (string? message) message "")))
    (instantiate::http-response-authentication
       (header (authenticate-header req))
