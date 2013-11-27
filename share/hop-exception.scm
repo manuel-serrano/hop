@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Nov 27 09:34:30 2013 (serrano)                */
+;*    Last change :  Wed Nov 27 10:57:14 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -375,8 +375,11 @@
        (if hop-current-exception
 	   (let ((exc hop-current-exception))
 	      (set! hop-current-exception #f)
-	      (hop-report-exception exc hop-current-exception-stack))
-	   (hop-report-exception (js-new (@ Error js) msg url line) '()))))
+	      (hop-report-exception exc
+		 (append hop-current-exception-stack
+		    (list (document.location.toString)))))
+	   (hop-report-exception (js-new (@ Error js) msg url line)
+	      (list (document.location.toString))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-get-exception-stack ...                                      */
@@ -410,22 +413,24 @@
 	     msg)))
 
    (define (demangle-string msg)
-      (let ((len (string-length msg)))
-	 (let loop ((i 0))
-	    (if (>=fx i len)
-		""
-		(let ((j (string-index msg " \t\n\"';" i)))
-		   (if (not j)
-		       (hop-demangle (substring msg i len))
-		       (let ((k (string-skip msg " \t\n\"';" j)))
-			  (if k
-			      (string-append
-				 (hop-demangle (substring msg i j))
-				 (substring msg j k)
-				 (loop k))
-			      (string-append
-				 (hop-demangle (substring msg i j))
-				 (substring msg j len))))))))))
+      (if (not (string? msg))
+	  msg
+	  (let ((len (string-length msg)))
+	     (let loop ((i 0))
+		(if (>=fx i len)
+		    ""
+		    (let ((j (string-index msg " \t\n\"';" i)))
+		       (if (not j)
+			   (hop-demangle (substring msg i len))
+			   (let ((k (string-skip msg " \t\n\"';" j)))
+			      (if k
+				  (string-append
+				     (hop-demangle (substring msg i j))
+				     (substring msg j k)
+				     (loop k))
+				  (string-append
+				     (hop-demangle (substring msg i j))
+				     (substring msg j len)))))))))))
 	       
    (cond
       ((isa? e (@ ReferenceError js)) (reference-error e.message))
