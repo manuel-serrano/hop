@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Oct  7 16:12:06 2013 (serrano)                */
+;*    Last change :  Fri Nov 29 08:11:22 2013 (serrano)                */
 ;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -232,7 +232,7 @@
 ;*    response-error-handler ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (response-error-handler e scd req)
-   ;; notify the erro
+   ;; notify the error
    (hop-verb 1 (hop-color req req " ERROR"))
    (hop-verb 2 (scheduler-stat scd))
    (hop-verb 1 ": " (trace-color 1 e) "\n")
@@ -373,7 +373,28 @@
       (unless (isa? e &io-sigpipe-error)
 	 ;; signal the error, when this is an error
 	 (hop-verb 2 (hop-color req req " INTERRUPTED"))
-	 (hop-verb 2 ": " (with-access::&error e (obj) obj) "\n")
+	 (hop-verb 2 ": " req "\n")
 	 ;; abort the request
-	 (raise e))))
+	 (if (and (>=fx (bigloo-debug) 1) (isa? e &exception))
+	     (with-handler
+		(lambda (e2)
+		   (raise e))
+		(begin
+		   (exception-notify e)
+		   (with-access::http-request req (header)
+		      (let ((stk (http-header-field header hop-debug-stack:)))
+			 (when (string? stk)
+			    (with-handler
+			       (lambda (e) #f)
+			       (let ((stk (hop-debug-exception-stack
+					     (string->obj (url-decode stk)))))
+				  (when (pair? stk)
+				     (display-trace-stack stk
+					(current-error-port)
+					(if (isa? e &exception)
+					    (with-access::&exception e (stack)
+					       (+fx 1 (length stack)))
+					    1))))))))
+		   #f))
+	     (raise e)))))
 
