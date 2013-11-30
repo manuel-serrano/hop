@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Nov  7 10:05:48 2013 (serrano)                */
+;*    Last change :  Sat Nov 30 12:55:31 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -405,26 +405,24 @@
 	 (if (pair? c)
 	     (cdr c)
 	     default)))
-
+   
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
 	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (when (websocket-debug)
-	    (tprint "websocket-register-new-connection, protocol-version: " version))
-	 (let ((resp (websocket-server-response req key)))
-	    ;; register the websocket
-	    (synchronize *event-mutex*
-	       (set! *websocket-response-list*
-		  (cons (cons (string->symbol key) resp)
-		     *websocket-response-list*))
-	       (when (websocket-debug)
-		  (tprint "websocket-register-new-connection, key=" key
-		     " socket=" socket 
-		     " connected clients: "
-		     *websocket-response-list*)))
-	    resp))))
+	 (with-trace (+ 1 (websocket-debug-level)) "ws-register-new-connection"
+	    (trace-item "protocol-version=" version)
+	    (let ((resp (websocket-server-response req key)))
+	       ;; register the websocket
+	       (synchronize *event-mutex*
+		  (set! *websocket-response-list*
+		     (cons (cons (string->symbol key) resp)
+			*websocket-response-list*))
+		  (trace-item "key=" key)
+		  (trace-item "socket=" socket )
+		  (trace-item "connected clients=" *websocket-response-list*))
+	       resp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
@@ -444,13 +442,13 @@
 	       :id server-event
 	       :timeout 0
 	       (#!key key)
-	       (when (websocket-debug)
-		  (tprint "!!! start websocket service key=" key))
-	       (let ((req (current-request)))
-		  (with-access::http-request req (header)
-		     (if (websocket-proxy-request? header)
-			 (websocket-proxy-response req)
-			 (websocket-register-new-connection! req key))))))
+	       (with-trace (websocket-debug-level) "start websocket service"
+		  (trace-item "key=" key)
+		  (let ((req (current-request)))
+		     (with-access::http-request req (header)
+			(if (websocket-proxy-request? header)
+			    (websocket-proxy-response req)
+			    (websocket-register-new-connection! req key)))))))
 	 
 	 (set! *port-service*
 	    (service :name "public/server-event/info"
@@ -711,10 +709,11 @@
 				    content))))))))
    
    (define (websocket-register-event! req key name)
-      (with-trace 3 "websocket-register-event!"
+      (with-trace 3 "ws-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
-	    (when (websocket-debug)
-	       (tprint "websocket-register-event key=" key " name=" name " c=" c))
+	    (trace-item "key=" key)
+	    (trace-item "name=" name)
+	    (trace-item "c=" c)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
@@ -726,15 +725,16 @@
 			 (request request))))
 		(error "server-event-register" "Illegal websocket entry" key)))))
 
-   (with-trace 2 "server-register-event!"
+   (with-trace 2 "ws-register-event!"
       (synchronize *event-mutex*
 	 (when (or debug-ajax (websocket-debug) debug-multipart debug-flash)
-	    (tprint ">>> server-event-register: event=[" event "] key="
-	       key " mode=" mode " padding=" padding))
+	    (trace-item "event=" event)
+	    (trace-item "key=" key)
+	    (trace-item "mode=" mode)
+	    (trace-item "padding=" padding))
 	 (if (<fx *clients-number* (hop-event-max-clients))
 	     (let ((req (current-request))
 		   (key (string->symbol key)))
-		(trace-item "event=" event " key=" key)
 		;; set an output timeout on the socket
 		(with-access::http-request req (socket) 
 		   (output-timeout-set!
@@ -867,8 +867,8 @@
       ;; close the socket
       (with-access::http-request req (socket)
 	 (socket-close socket)
-	 (when (websocket-debug)
-	    (tprint "!!! websocket-close-request! " socket)))
+	 (with-trace (websocket-debug-level) "ws-close-request!"
+	    (trace-item "socket=" socket)))
       ;; decrement the current number of connected clients
       (set! *clients-number* (-fx *clients-number* 1))
       ;; remove the request from the *websocket-response-list*
@@ -1059,25 +1059,23 @@
    
    (with-access::http-response-websocket resp ((req request))
       (with-access::http-request req (socket)
-	 (bind-exit (esc)
-	    (with-handler
-	       (lambda (e)
-		  (when (websocket-debug)
-		     (tprint "WEBSOCKET EVENT ERROR: " e
-			" socket=" socket
-			" thread=" (current-thread)
-			" req=" req 
-			" vlen=" (string-length vstr)))
+	 (with-handler
+	    (lambda (e)
+	       (with-trace (websocket-debug-level) "ws-signal-error"
+		  (trace-item "err=" e)
+		  (trace-item "socket=" socket)
+		  (trace-item "thread=" (current-thread))
+		  (trace-item "req=" req )
+		  (trace-item "vlen=" (string-length vstr))
 		  (if (isa? e &io-error)
 		      (begin
-			 (when (websocket-debug)
-			    (tprint ">>> WS CLOSE " socket))
-			 (websocket-close-request! resp)
-			 (when (websocket-debug)
-			    (tprint "<<< WS CLOSED " socket))
-			 (esc #f))
-		      (raise e)))
-	       (with-access::http-response-websocket resp (accept)
+			 (with-trace (websocket-debug-level) "ws-error-close"
+			    (websocket-close-request! resp))
+			 #f)
+		      (raise e))))
+	    (with-access::http-response-websocket resp (accept)
+	       (with-trace (websocket-debug-level) "ws-signal"
+		  (trace-item "resp=" resp)
 		  (if accept
 		      (hybi-signal-value vstr socket)
 		      (hixie-signal-value vstr socket))))))))
@@ -1277,24 +1275,30 @@
 		     l))))))
 
    (define (websocket-event-broadcast! name value)
-      (let ((val (websocket-value name value)))
-	 (for-each-socket
-	    *websocket-socket-table*
-	    name
-	    (lambda (l)
-	       (when (websocket-debug)
-		  (tprint "!!! websocket-event-broadcast \"" name "\" "
-		     (length l)
-		     " clients "
-		     (map (lambda (resp)
-			     (with-access::http-response-websocket resp (request)
-				(with-access::http-request request (socket)
-				   socket)))
-			l)))
-	       (when (pair? l)
-		  (for-each (lambda (resp)
-			       (websocket-signal resp val))
-		     l))))))
+      (with-trace (websocket-debug-level) "ws-event-broadcast!"
+	 (trace-item "name=" name)
+	 (trace-item "value="
+	    (if (or (string? value) (symbol? value) (number? value))
+		value
+		(typeof value)))
+	 (let ((val (websocket-value name value)))
+	    (for-each-socket
+	       *websocket-socket-table*
+	       name
+	       (lambda (l)
+		  (with-trace (websocket-debug-level) "ws-event-broadcast"
+		     (trace-item "name=" name)
+		     (trace-item "# clients=" (length l))
+		     (trace-item "cients="
+			(map (lambda (resp)
+				(with-access::http-response-websocket resp (request)
+				   (with-access::http-request request (socket)
+				      socket)))
+			   l))
+		     (when (pair? l)
+			(for-each (lambda (resp)
+				     (websocket-signal resp val))
+			   l))))))))
        
    (define (multipart-event-broadcast! name value)
       (let ((val (multipart-value name value)))
@@ -1361,18 +1365,15 @@
 
    (define (register-event! host port auth hs)
       (with-access::hopsocket hs (mutex key listeners key)
-	 (tprint ">>> REGISTER EVENT")
 	 (with-hop (*register-service* :event obj :key key :mode "websocket")
 	    :authorization auth
 	    :host host :port port
 	    (lambda (_)
-	       (tprint "<<< REGISTER EVENT")
 	       (synchronize mutex
 		  (set! listeners
 		     (cons (cons obj proc) listeners)))))))
 
    (define (get-hopsocket! host port auth key)
-      (tprint "get-hopsocket host=" host " port=" port " auth=" auth " key=" key)
       (let* ((sock (make-client-socket host port))
 	     (path (format "~a/public/server-event/websocket?key=~a"
 		      (hop-service-base)

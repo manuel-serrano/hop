@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Nov 27 11:11:51 2013 (serrano)                */
+/*    Last change :  Sat Nov 30 07:53:48 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -52,21 +52,6 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       p = hop_callback( proc, hop_callback_listener_context( msg ) );
    }
    
-   if( event === "server" ) {
-      alert( "deprecated (add-event-listener! \"" + obj + "\" \"server\"...)" );
-      return hop_add_server_listener( obj, p, capture );
-   }
-
-   if( event === "serverready" ) {
-      alert( "deprecated (add-event-listener! document \"serverready\"...)" );
-      return hop_add_serverready_listener( obj, p );
-   }
-
-   if( event === "serverclose" ) {
-      alert( "deprecated (add-event-listener! document \"serverclose\"...)" );
-      return hop_add_serverclose_listener( obj, p );
-   }
-
    if( event === "timeout" )
       return hop_add_timeout_listener( obj, p );
 
@@ -119,21 +104,6 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export remove-event-listener!) (arity -4)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
-   if( event === "server" ) {
-      alert( "deprecated (remove-event-listener! \"" + obj + "\" \"server\"...)" );
-      return hop_remove_server_listener( obj, proc );
-   }
-
-   if( event === "serverready" ) {
-      alert( "deprecated (remove-event-listener! document \"serverready\"...)" );
-      return hop_remove_serverready_listener( obj, proc );
-   }
-
-   if( event === "serverclose" ) {
-      alert( "deprecated (remove-event-listener! document \"serverclose\"...)" );
-      return hop_remove_serverclose_listener( obj, proc );
-   }
-
    if( event === "timeout" )
       return hop_remove_timeout_listener( proc );
 

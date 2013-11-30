@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Nov  7 10:06:16 2013 (serrano)                */
+;*    Last change :  Sat Nov 30 10:49:07 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -804,12 +804,6 @@
 	 (cond
 	    ((string=? rproto "file")
 	     (values #f #f #f rpath))
-;* 	    ((not (string? rhost))                                     */
-;* 	     (raise                                                    */
-;* 	      (instantiate::&io-malformed-url-error                    */
-;* 		 (proc "http-send-request")                            */
-;* 		 (msg "Illegal host")                                  */
-;* 		 (obj url))))                                          */
 	    (else
 	     (values rhost rport ruser rpath))))))
 
