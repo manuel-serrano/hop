@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Dec  9 08:47:27 2013 (serrano)                */
+;*    Last change :  Mon Dec  9 11:51:25 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -332,20 +332,20 @@
    (regular-grammar ((float       (or (: (* digit) "." (+ digit))
 				      (: (+ digit) "." (* digit))))
 		     (letter      (in ("azAZ") (#a128 #a255)))
-		     (kspecial    (in "!@%^&*></-_+\\=?"))
+		     (kspecial    (in "!@$%^&*></-_+\\=?"))
 		     (specialsans (or kspecial #\:))
 		     (special     (or specialsans #\.))
 		     (quote       (in "\",'`"))
 		     (paren       (in "()[]{}"))
 		     (id          (: (* digit)
-				     (or letter special #\$)
-				     (* (or letter special digit (in "'`$")))))
+				     (or letter special)
+				     (* (or letter special digit (in "'`")))))
 		     (idsans      (: (* digit)
 				     (or letter specialsans)
-				     (* (or letter specialsans digit (in ",'`$")))))
+				     (* (or letter specialsans digit (in ",'`")))))
 		     (field       (: idsans (+ (: "." idsans))))
 		     (letterid    (: (or letter special)
-				     (* (or letter special digit (in "'`$")))))
+				     (* (or letter special digit (in "'`")))))
 		     (kid         (or digit letter kspecial "."))
 		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
@@ -419,7 +419,7 @@
 	      (integer->char (string->integer (the-substring 2 5))))))
       ((: "#\\" (>= 3 digit))
        (integer->char (string->integer (the-substring 2 (the-length)) 8)))
-      ((: "#\\" (or letter digit special (in "~|#;$ " quote paren)))
+      ((: "#\\" (or letter digit special (in "~|#; " quote paren)))
        (string-ref (the-string) 2))
       ((: "#\\" (>= 2 letter))
        (let ((char-name (string->symbol
@@ -493,10 +493,18 @@
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
+	      (str (the-string))
+	      (char (string-ref str 0))
 	      (loc (list 'at name pos)))
-	  (econs '->
-	     (map! string->symbol (string-split (the-string) "."))
-	     loc)))
+	  (if (char=? char #\$)
+	      `(begin
+		  '$
+		  ,(econs '->
+		      (map! string->symbol (string-split str "."))
+		      loc))
+	      (econs '->
+		 (map! string->symbol (string-split str "."))
+		 loc))))
       ((or id "$")
        ;; this rule has to be placed after the rule matching the `.' char
        (the-symbol))
