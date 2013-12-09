@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.4.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/2.5.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Dec  8 23:29:57 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Sun Dec  8 06:21:43 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -206,8 +206,9 @@
 					       (webfilter-http-header-filter-set! val)
 					       (webfilter-preferences-save webfilter-prefs))
 					    this.checked))
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))
       (<TR>
 	 (let ((id "http-headers-table"))
@@ -234,9 +235,10 @@
 				(with-hop ($(service (val)
 					       (webfilter-blacklist-set! val)
 					       (webfilter-preferences-save webfilter-prefs))
-					    this.checked))
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+					     this.checked))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -266,8 +268,9 @@ Google, each containing a forward pointer to the actual URL.])))
 					       (webfilter-google-unbounce-set! val)
 					       (webfilter-preferences-save webfilter-prefs)))
 				   this.checked)
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -299,8 +302,9 @@ Google, each containing a forward pointer to the actual URL.])))
 					       (webfilter-flash-stop-set! val)
 					       (webfilter-preferences-save webfilter-prefs)))
 				   this.checked)
-				(set! $txt1.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt1 $txt1))
+				   (set! txt1.className
+				      (if this.checked "enable" "disable")))))
 	       txt1
 	       "&#160;&#160;"
 	       (<INPUT>
@@ -310,11 +314,12 @@ Google, each containing a forward pointer to the actual URL.])))
 		  :onchange ~(begin
 				(with-hop ($(service (val)
 					       (webfilter-flash-content-length-set!
-						(string->elong val))
+						  (string->elong val))
 					       (webfilter-preferences-save webfilter-prefs))
-					    this.checked))
-				(set! $txt2.className
-				      (if this.checked "enable" "disable"))))
+					     this.checked))
+				(let ((txt2 $txt2))
+				   (set! txt2.className
+				      (if this.checked "enable" "disable")))))
 	       txt2)))))
    
 ;*---------------------------------------------------------------------*/

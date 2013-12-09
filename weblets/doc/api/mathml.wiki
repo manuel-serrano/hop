@@ -102,10 +102,12 @@ so they are not described here.
 
 The markup ++<MATH:TEX>++ allows an HTML page to embed, inside a 
 ++<MATH>++ markup a mathematics formula expressed using the TeX syntax.
+The argument is either a string or a list of string.
 
 ~~ Example:
 
-  (<MATH> (<MATH:TEX> {\sqrt{\cos(x)}}))
+  (<MATH> (<MATH:TEX> "\\sqrt{\\cos(x)}"))
+  (<MATH> (<MATH:TEX> [\sqrt{\cos(x)}]))
 
 
 </markup>

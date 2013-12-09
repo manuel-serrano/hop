@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/mathml.scm                */
+;*    serrano/prgm/project/hop/2.5.x/runtime/mathml.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:24:08 2007                          */
-;*    Last change :  Thu Jan 12 09:31:42 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Mon Dec  2 14:56:44 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop MATHML support.                                              */
 ;*=====================================================================*/
@@ -47,7 +47,7 @@
 	   (<MATH:MTR> . ::obj)
 	   (<MATH:MTD> . ::obj)
 	   (<MATH:MPADDED> . ::obj)
-	   (<MATH:TEX> ::bstring)))
+	   (<MATH:TEX> ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-math ...                                         */
@@ -98,7 +98,16 @@
 ;*    Compile TeX formula representation into MathML                   */
 ;*---------------------------------------------------------------------*/
 (define (<MATH:TEX> formula)
-   (parse-tex-formula formula))
+   
+   (define (tostring f)
+      (cond
+	 ((string? f) f)
+	 ((number? f) (number->string f))
+	 ((pair? f) (string-append (car f) (tostring (cdr f))))
+	 ((null? f) "")
+	 (else (parse-tex-error "string, number, or list expected" f))))
+   
+   (parse-tex-formula (tostring formula)))
  
 ;*---------------------------------------------------------------------*/
 ;*    parse-tex-error ...                                              */

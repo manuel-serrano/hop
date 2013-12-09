@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 15 09:11:37 2013                          */
-;*    Last change :  Wed Nov 27 09:01:43 2013 (serrano)                */
+;*    Last change :  Sun Dec  8 06:32:18 2013 (serrano)                */
 ;*    Copyright   :  2013 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Parse the dollar expressions                                     */
@@ -108,7 +108,7 @@
        (set-car! expr (extract! (car expr) quasi-depth dollar-map))
        (set-cdr! expr (extract! (cdr expr) quasi-depth dollar-map))
        expr)
-      ((? symbol?) ;; symbol
+      ((? symbol?) 
        (cond
 	  ((>fx quasi-depth 0)
 	   expr)

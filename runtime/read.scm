@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Nov 15 09:10:54 2013 (serrano)                */
+;*    Last change :  Sun Dec  8 06:45:16 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -332,20 +332,20 @@
    (regular-grammar ((float       (or (: (* digit) "." (+ digit))
 				      (: (+ digit) "." (* digit))))
 		     (letter      (in ("azAZ") (#a128 #a255)))
-		     (kspecial    (in "!@$%^&*></-_+\\=?"))
+		     (kspecial    (in "!@%^&*></-_+\\=?"))
 		     (specialsans (or kspecial #\:))
 		     (special     (or specialsans #\.))
 		     (quote       (in "\",'`"))
 		     (paren       (in "()[]{}"))
 		     (id          (: (* digit)
-				     (or letter special)
-				     (* (or letter special digit (in "'`")))))
+				     (or letter special #\$)
+				     (* (or letter special digit (in "'`$")))))
 		     (idsans      (: (* digit)
 				     (or letter specialsans)
-				     (* (or letter specialsans digit (in ",'`")))))
+				     (* (or letter specialsans digit (in ",'`$")))))
 		     (field       (: idsans (+ (: "." idsans))))
 		     (letterid    (: (or letter special)
-				     (* (or letter special digit (in "'`")))))
+				     (* (or letter special digit (in "'`$")))))
 		     (kid         (or digit letter kspecial "."))
 		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
