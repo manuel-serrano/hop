@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 08:24:51 2010                          */
-;*    Last change :  Tue Aug 13 07:37:11 2013 (serrano)                */
+;*    Last change :  Tue Dec 10 19:00:37 2013 (serrano)                */
 ;*    Copyright   :  2010-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge client-side implementation                                 */
@@ -49,7 +49,7 @@
 	 (fid (symbol->string (gensym)))
 	 (tid (symbol->string (gensym))))
       (let ((format (let ((l (memq :format attrs)))
-		       (if (pair? l) (cadr l) (format "~~a/~a" max)))))
+		       (if (pair? l) (cadr l) "~a/~a"))))
 	 (<DIV> :data-hss-tag "hop-gauge" :id id
 	    "0"
 	    (<DIV> :data-hss-tag "hop-gauge-fill" :id fid)

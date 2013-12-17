@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hophz/parseargs.scm               */
+;*    serrano/prgm/project/hop/2.5.x/hophz/parseargs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 22 10:22:24 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Tue Dec 17 16:51:37 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -123,7 +123,8 @@
          (("-v?<level>" (help "Increase/set verbosity level (-v0 crystal silence)"))
           (if (string=? <level> "")
 	      (hophz-verbose-set! (+fx 1 (hophz-verbose)))
-	      (hophz-verbose-set! (string->integer <level>))))
+	      (hophz-verbose-set! (string->integer <level>)))
+	  (hop-verbose-set! (hophz-verbose)))
          (("-g?<level>" (help "Increase/set debug level"))
           (if (string=? <level> "")
 	      (begin
@@ -166,7 +167,15 @@
 		    (set! args (append args (list else))))))))
       
       ;; load rc
-      (when (and loadp (string? rc-file)) (hophz-load-rc rc-file))
+      (when (and loadp (string? rc-file))
+	 (hophz-load-rc rc-file))
+
+      ;; declare a dummy anonymous user is none is defined at this point
+      (with-handler
+	 (lambda (e)
+	    (add-user! "anonymous" :services '(public hophz)
+	       :directories (hop-path)))
+	 (anonymous-user))
       
       ;; evaluate command line expressions
       (when (pair? exprs) (eval exprs))

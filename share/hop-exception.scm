@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Nov 27 11:14:58 2013 (serrano)                */
+;*    Last change :  Wed Dec 11 07:07:02 2013 (serrano)                */
 ;*    Copyright   :  2009-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -445,7 +445,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
    ;; store the exception for the default handler to display it, don't
-   ;; dispplay it now, otherwise we would have to implement a complex
+   ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it
    (let ((stk (append (hop-get-exception-stack e) hop-current-stack-context)))
       (set! hop-current-exception e)

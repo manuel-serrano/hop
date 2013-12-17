@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/hophz/action.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/hophz/action.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
-;*    Last change :  Sat Mar 30 20:22:12 2013 (serrano)                */
+;*    Last change :  Tue Dec 17 16:41:27 2013 (serrano)                */
 ;*    Copyright   :  2012-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */

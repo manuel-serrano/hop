@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Jul 27 06:37:03 2013 (serrano)                */
+;*    Last change :  Tue Dec 10 21:31:24 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -143,9 +143,9 @@
       (display-seq fields op
 	 (lambda (f op)
 	    (let ((iv (class-field-info f)))
-	       (display "'" op)
+	       (display "\"" op)
 	       (display (class-field-name f) op)
-	       (display "': " op)
+	       (display "\": " op)
 	       (cond
 		  ((and (pair? iv) (memq :client iv))
 		   =>

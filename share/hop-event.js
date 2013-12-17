@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sat Nov 30 07:53:48 2013 (serrano)                */
+/*    Last change :  Wed Dec 11 07:20:48 2013 (serrano)                */
 /*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -310,24 +310,30 @@ function hop_servevt_envelope_parse( val, xhr ) {
       var id = m[ 2 ];
       var text = m[ 3 ];
 
-      if( k === "i" ) {
-	 hop_trigger_servevt( id, text, parseInt( text ), false );
-      } else if( k == "f" ) {
-	 hop_trigger_servevt( id, text, parseFloat( text ), false );
-      } else if( k == "s" ) {
-	 hop_trigger_servevt( id, text, unescape( text ), false );
-      } else if( k == "x" ) {
-	 hop_trigger_servevt( id, text, hop_create_element( text ), false );
-      } else if( k == "j" ) {
-	 var t = text.match( hop_servevt_envelope_cdata_re );
-	 if( t ) {
-	    hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+      try {
+	 if( k === "i" ) {
+	    hop_trigger_servevt( id, text, parseInt( text ), false );
+	 } else if( k == "f" ) {
+	    hop_trigger_servevt( id, text, parseFloat( text ), false );
+	 } else if( k == "s" ) {
+	    hop_trigger_servevt( id, text, unescape( text ), false );
+	 } else if( k == "x" ) {
+	    hop_trigger_servevt( id, text, hop_create_element( text ), false );
+	 } else if( k == "j" ) {
+	    var t = text.match( hop_servevt_envelope_cdata_re );
+	    if( t ) {
+	       hop_trigger_servevt( id, t[ 1 ], t[ 1 ], true );
+	    }
+	 } else if( k == "r" ) {
+	    // register, first event listener added to the server
+	    hop_trigger_serverready_event();
+	 } else {
+	    hop_servevt_envelope_parse_error( xhr );
 	 }
-      } else if( k == "r" ) {
-	 // register, first event listener added to the server
-	 hop_trigger_serverready_event();
-      } else {
-	 hop_servevt_envelope_parse_error( xhr );
+      } catch( e ) {
+	 var ctx = hop_callback_listener_context( "server<-" + id );
+	    
+	 hop_callback_handler( e, ctx );
       }
    } else {
       hop_servevt_envelope_parse_error( xhr );
