@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue Nov  5 15:56:42 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Mon Jan  6 21:18:33 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -1036,8 +1036,16 @@
 	    ((not (lambda-call? this))
 	     (template-display p
 		(?@ toplevel?
-		   "sc_context=hop_callback_html_context( false, \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
-		   (begin "Call") 1)
+		   "sc_context=hop_callback_html_context( \"~a\", \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
+		   (match-case location
+		      ((at ?fname ?-) fname)
+		      (else "toplevel"))
+		   (match-case location
+		      ((at ?fname ?-) fname)
+		      (else "???"))
+		   (match-case location
+		      ((at ?- ?point) point)
+		      (else 1)))
 		(?@ stmt? "~@;\n")
 		;;  was (not stmt?). now always. even for stmt.
 		(?@ #t "(~@)")

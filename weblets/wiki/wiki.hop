@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/2.5.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Jan 11 15:24:38 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Jan 10 14:08:29 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
 ;*=====================================================================*/
@@ -35,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki #!key path (xml "xhtml"))
+(define-service (wiki #!key path (xml "html5"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki/compile #!optional path (xml "xhtml"))
+(define-service (wiki/compile #!optional path (xml "html5"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -154,11 +154,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI:BODY> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <WIKI:BODY> ((prefs #f)
-				  (compiled #f)
-				  (path #f)
-				  (class "wiki")
-				  body)
+(define-tag <WIKI:BODY> ((prefs #f)
+			 (compiled #f)
+			 (path #f)
+			 (class "wiki")
+			 body)
    (<BODY> :class class :wikimode (if compiled "compiled" "plain")
       (<DIV> :align 'center :class "wiki-body"
 	 (if compiled
@@ -292,7 +292,7 @@
       ((not (file-exists? path))
        (http-file-not-found path))
       (else
-       (let ((doc (hop-load path :env wiki-env)))
+       (let loop ((doc (hop-load path :env wiki-env)))
 	  (if (isa? doc wiki-document)
 	      (with-access::wiki-document doc (head toc body)
 		 (let ((head (if head
@@ -303,9 +303,8 @@
 		    (<WIKI:HTML> :compiled compiled :prefs prefs :file file
 		       :req req
 		       head toc body)))
-	      (http-service-error req
-		 'wiki
-		 (format "Loading path \"~a\" should have produced a DOCUMENT" path)))))))
+	      (loop
+		 (<WIKI> (format "<include>~a</include>\n" file))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-wiki-head ...                                               */
@@ -329,12 +328,12 @@
 ;*      - cadr: toc (optional, #f if not included)                     */
 ;*      - cddr: actual body                                            */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <WIKI:HTML> ((compiled #f boolean)
-				  (prefs #f)
-				  (file #unspecified string)
-				  (req #f)
-				  (attributes)
-				  body)
+(define-tag <WIKI:HTML> ((compiled #f boolean)
+			 (prefs #f)
+			 (file #unspecified string)
+			 (req #f)
+			 (attributes)
+			 body)
    (<HTML>
       ;; the head
       (car body)
@@ -347,18 +346,18 @@
 	       (when (authorized-service? req 'wiki/edit)
 		  (<TABLE> :class 'edit :width "100%"
 		     (<TR> (<TD> file)
-			   (<TD> :class 'edit
-			      (if (isa? req http-server-request)
-				  (<EDIT:EMACS> file)
-				  (<EDIT:EDIT> file))))))))
+			(<TD> :class 'edit
+			   (if (isa? req http-server-request)
+			       (<EDIT:EMACS> file)
+			       (<EDIT:EDIT> file))))))))
 	 (<DIV> :class "wiki-head" :id "wiki-head")
 	 ;; toc
 	 (when (cadr body)
 	    (list
-	     (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
-	     (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
-		:onclick ~(wiki-hide-toc-popup this)
-		(cadr body))))
+	       (<DIV> :class "wiki-toc" :id "wiki-toc" (cadr body))
+	       (<DIV> :class "wiki-toc wiki-toc-popup" :id "wiki-toc-popup"
+		  :onclick ~(wiki-hide-toc-popup this)
+		  (cadr body))))
 	 ;; actual body
 	 (<DIV> :class "wiki-body" :id "wiki-body" (cddr body))
 	 (<DIV> :class "wiki-foot" :id "wiki-foot"))))
@@ -392,9 +391,9 @@
 ;*---------------------------------------------------------------------*/
 (define (<EDIT:EDIT> file)
    (list "[ "
-	 (<SPAN> :class "edit"
-	    :onclick ~(window.open $(wiki/edit file)) "edit")
-	 " ]"))
+      (<SPAN> :class "edit"
+	 :onclick ~(window.open $(wiki/edit file)) "edit")
+      " ]"))
    
 ;*---------------------------------------------------------------------*/
 ;*    <EDIT:EMACS> ...                                                 */
@@ -402,11 +401,11 @@
 (define (<EDIT:EMACS> file)
    (let ((editor (preference-get 'wiki-editor :default "emacs")))
       (list "[ "
-	    (<SPAN> :class "edit"
-	       :onclick ~(window.open $(wiki/edit file)) "edit")
-	    " | "
-	    (<SPAN>
-	       :class "edit"
-	       :onclick ~(with-hop $(wiki/edit/editor file editor))
-	       (basename editor))
-	    " ]")))
+	 (<SPAN> :class "edit"
+	    :onclick ~(window.open $(wiki/edit file)) "edit")
+	 " | "
+	 (<SPAN>
+	    :class "edit"
+	    :onclick ~(with-hop $(wiki/edit/editor file editor))
+	    (basename editor))
+	 " ]")))

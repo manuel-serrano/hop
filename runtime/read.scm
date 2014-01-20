@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Dec  9 11:51:25 2013 (serrano)                */
+;*    Last change :  Fri Dec 27 18:44:34 2013 (serrano)                */
 ;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -68,8 +68,9 @@
 			       (mode 'load)
 			       (charset (hop-locale))
 			       (abase #t)
-			       (afile #t))
-	    (hop-load-once-unmark! ::bstring)
+			       (afile #t)
+			       (module #f))
+	    (hop-unload! ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -1028,73 +1029,130 @@
 		    (obj fname))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *load-once-table* ...                                            */
+;*    *load-table* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *load-once-table* (make-hashtable))
+(define *load-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
-;*    *load-once-mutex* ...                                            */
+;*    *load-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *load-once-mutex* (make-mutex "load-once"))
+(define *load-mutex* (make-mutex "load-once"))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-once ...                                               */
+;*    *dependency-table* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *dependency-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    %hop-load ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    This function loads a file in ENV. If the parameter MODIFIEDP    */
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env menv charset modifiedp abase mode afile)
+(define (%hop-load file env menv charset modifiedp abase mode afile module)
    
    (define (load-file f::bstring cv::condvar)
       ;; the file has to be loaded
       (trace-item "load")
+      ;; save the module dependency
+      (when (evmodule? module)
+	 (synchronize *load-mutex*
+	    (let ((mpath (evmodule-path module)))
+	       (when (string? mpath)
+		  (let ((c (hashtable-get *dependency-table* mpath)))
+		     (cond
+			((not (pair? c))
+			 (let* ((ftime (file-modification-time file))
+				(entry (cons file ftime)))
+			    (hashtable-put! *dependency-table* mpath (list entry))))
+			((not (assoc file c))
+			 (let* ((ftime (file-modification-time file))
+				(entry (cons file ftime)))
+			    (set-cdr! (last-pair c) (list entry))))))))))
       (with-handler
 	 (lambda (e)
-	    (synchronize *load-once-mutex*
-	       (hashtable-put! *load-once-table* f '(error))
+	    (synchronize *load-mutex*
+	       (hashtable-put! *load-table* f
+		  (cons 'error (file-modification-time f)))
 	       (condition-variable-signal! cv))
 	    (raise e))
-	 (hop-load f :mode mode :env env :menv menv
-	    :charset charset :abase abase :afile afile))
-      (synchronize *load-once-mutex*
-	 (hashtable-put! *load-once-table* f
-	    (cons 'loaded (file-modification-time f)))
-	 (condition-variable-signal! cv)))
+	 (begin
+	    (synchronize *load-mutex*
+	       (hashtable-put! *load-table* f
+		  (cons 'loaded (file-modification-time f))))
+	    (when modifiedp
+	       (reload-dependencies file '()))
+	    (hop-load f :mode mode :env env :menv menv
+	       :charset charset :abase abase :afile afile)
+	    (synchronize *load-mutex*
+	       (condition-variable-signal! cv)))))
 
+   (define (reload-dependencies file stack)
+      (unless (member file stack)
+	 (let ((deps (synchronize *load-mutex*
+			(hashtable-get *dependency-table* file))))
+	    (when (pair? deps)
+	       (for-each (lambda (entry)
+			    (hop-load-modified (car entry) :env env :menv menv
+			       :mode mode :charset charset :abase abase
+			       :afile afile)
+			    (reload-dependencies (car entry) (cons file stack)))
+		  deps)))))
+   
+   (define (dependencies-modified file stack)
+      (unless (member file stack)
+	 (let ((deps (synchronize *load-mutex*
+		       (hashtable-get *dependency-table* file))))
+	    (when (pair? deps)
+	       (any (lambda (entry)
+		       (or (>elong (file-modification-time (car entry))
+			      (cdr entry))
+			   (dependencies-modified (car entry)
+			      (cons (car entry) stack))))
+		  deps)))))
 
    (define (get-file-info::pair f::bstring)
-      (synchronize *load-once-mutex*
-	 (let ((info (hashtable-get *load-once-table* f))
+      (synchronize *load-mutex*
+	 (let ((info (hashtable-get *load-table* f))
 	       (t (file-modification-time f)))
 	    (cond
 	       ((not (pair? info))
 		;; the file has to be loaded
 		(let* ((cv (make-condition-variable "load"))
 		       (ninfo (cons 'loading cv)))
-		   (hashtable-put! *load-once-table* f ninfo)
+		   (hashtable-put! *load-table* f ninfo)
 		   ninfo))
 	       ((eq? (car info) 'error)
 		;; the file failed to be loaded
 		(trace-item "error")
-		info)
+		(if (and modifiedp
+			 (or (not (=elong t (cdr info)))
+			     (dependencies-modified f '())))
+		    (begin
+		       (hashtable-remove! *load-table* f)
+		       (cons 'force-reload t))
+		    info))
 	       ((eq? (car info) 'loaded)
 		;; the file is already loaded
 		(trace-item "already loaded")
+		;; re-load the dependency recursively
 		;; re-load if modified
-		(if (and modifiedp (not (=elong t (cdr info))))
+		(if (and modifiedp
+			 (or (not (=elong t (cdr info)))
+			     (dependencies-modified f '())))
 		    (begin
-		       (hashtable-remove! *load-once-table* f)
+		       (hashtable-remove! *load-table* f)
 		       (cons 'force-reload t))
 		    info))
 	       ((eq? (car info) 'loading)
 		(trace-item "loading")
-		(condition-variable-wait! (cdr info) *load-once-mutex*)
+		(condition-variable-wait! (cdr info) *load-mutex*)
 		(cons 'loop t))
 	       (else
-		(cons 'error #f))))))
+		(cons 'error t))))))
    
-   (with-trace 2 "%hop-load-once"
+   (with-trace 2 "%hop-load"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)
@@ -1107,6 +1165,7 @@
 		  ((force-reload loop)
 		   (loop))
 		  ((error)
+		   (hop-unload! f)
 		   #f)
 		  ((loaded)
 		   #unspecified)
@@ -1124,7 +1183,7 @@
 		       (mode 'load)
 		       (abase #t)
 		       (afile #t))
-   (%hop-load-once file env menv charset #f abase mode afile))
+   (%hop-load file env menv charset #f abase mode afile #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -1136,17 +1195,18 @@
 			   (charset (hop-locale))
 			   (mode 'load)
 			   (abase #t)
-			   (afile #t))
-   (%hop-load-once file env menv charset #t abase mode afile))
+			   (afile #t)
+			   (module #f))
+   (%hop-load file env menv charset #t abase mode afile module))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-load-once-unmark! ...                                        */
+;*    hop-unload! ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    Remove a file name from the load-once table                      */
+;*    Remove a file name from the load table, makes it as unload       */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-once-unmark! file)
-   (synchronize *load-once-mutex*
-      (when (hashtable? *load-once-table*)
-	 (hashtable-remove! *load-once-table*
+(define (hop-unload! file)
+   (synchronize *load-mutex*
+      (when (hashtable? *load-table*)
+	 (hashtable-remove! *load-table*
 	    (file-name-unix-canonicalize file)))))
    

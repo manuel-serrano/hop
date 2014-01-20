@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Aug 21 13:48:47 2007                          */
-/*    Last change :  Sun Aug 11 15:31:41 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Tue Jan  7 07:50:24 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP client-side audio support.                                   */
 /*=====================================================================*/
@@ -440,7 +440,7 @@ function hop_report_audio_exception( e ) {
    exc.message = e.value;
    exc.scObject = e.audio.backend.src;
 
-   hop_callback_handler( exc, "audio" );
+   hop_callback_handler( exc, hop_callback_listener_context( "audio." + e.audio.id ) );
 }
 
 /*---------------------------------------------------------------------*/

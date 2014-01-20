@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Dec 11 07:07:02 2013 (serrano)                */
-;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 09:41:55 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -447,7 +447,8 @@
    ;; store the exception for the default handler to display it, don't
    ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it
-   (let ((stk (append (hop-get-exception-stack e) hop-current-stack-context)))
+   (let ((stk (append (hop-get-exception-stack e)
+		 (or ctx hop-current-stack-context))))
       (set! hop-current-exception e)
       (set! hop-current-exception-stack (hop-debug-exception-stack stk)))
    ;; notify the server of the exception and re-throw it

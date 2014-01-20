@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Aug  2 09:13:08 2013 (serrano)                */
+;*    Last change :  Fri Dec 27 18:10:55 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -64,8 +64,8 @@
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set!
-      (lambda (f)
-	 (hop-load-modified f :abase #t :afile #f)))
+      (lambda (f mod)
+	 (hop-load-modified f :abase #t :afile #f :module mod)))
    ;; setup the hop module resolvers
    (bigloo-module-extension-handler-set!
       hop-module-extension-handler)

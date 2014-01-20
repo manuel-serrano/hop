@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Sep 14 07:14:05 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Wed Jan  8 12:05:33 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -40,7 +40,6 @@ function hop_callback( proc, ctx, id ) {
 
    var applyCallback = function() {
       try {
-	 hop_current_stack_context = ctx;
 	 return proc.apply( this, arguments );
       } catch( e ) {
 	 hop_callback_handler( e, ctx );
@@ -361,10 +360,14 @@ function hop_typeof( obj ) {
 	 if( obj instanceof RegExp ) {
 	    return "regexp";
 	 } else {
-	    if( typeof obj.hop_typeof == "function" ) 
-	       return obj.hop_typeof();
-	    else
-	       return "object";
+	    if( obj instanceof Function ) {
+	       return "function";
+	    } else {
+	       if( typeof obj.hop_typeof == "function" ) 
+		  return obj.hop_typeof();
+	       else
+		  return "object";
+	    }
 	 }
       }
    } else {

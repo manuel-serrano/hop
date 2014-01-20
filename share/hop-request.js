@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Oct  8 07:04:48 2013 (serrano)                */
-/*    Copyright   :  2004-13 Manuel Serrano                            */
+/*    Last change :  Tue Jan  7 09:38:32 2014 (serrano)                */
+/*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -299,10 +299,21 @@ function hop_request_onready( xhr, svc, succ, fail ) {
    try {
       switch( xhr.status ) {
         case 200: {
+	   var o;
+	   
 	   if( hop_debug() > 0 ) {
 	      succ = xhr_hop_success_callback( succ );
+	      
+	      try {
+		 o = hop_request_unserialize( xhr, svc );
+	      } catch( e ) {
+		 hop_callback_handler( e, xhr.precontext );
+	      }
+	   } else {
+	      o = hop_request_unserialize( xhr, svc );
 	   }
-	   return succ( hop_request_unserialize( xhr, svc ), xhr );
+
+	   return succ( o, xhr );
 	}
 	 
         case 204:
@@ -731,50 +742,6 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 	    (else
              (error 'with-hop "Illegal argument" rest))))))
 */
-
-/*---------------------------------------------------------------------*/
-/*    with_hop_callcc ...                                              */
-/*---------------------------------------------------------------------*/
-/* function with_hop_callcc( service ) {                               */
-/*    var sc_storage = sc_CALLCC_STORAGE;                              */
-/*    if (sc_storage.doRestore) {                                      */
-/*       var res = sc_callcc();                                        */
-/*       if (res.failure)                                              */
-/* 	 throw res.value; // TODO                                      */
-/*       else                                                          */
-/* 	 return res.value;                                             */
-/*    } else {                                                         */
-/*       sc_callcc(function(k) {                                       */
-/* 	 function success(val) {                                       */
-/* 	    k({value: val});                                           */
-/* 	 };                                                            */
-/* 	 function failure(val) {                                       */
-/* 	    k({failure: true, value: val});                            */
-/* 	 };                                                            */
-/* 	 hop( service,                                                 */
-/* 	      function( http ) {                                       */
-/* 		 switch( http.status ) {                               */
-/* 		 case 200:                                             */
-/* 		    if( hop_is_http_json( http ) ) {                   */
-/* 		       success( eval( http.responseText ) );           */
-/* 		    } else {                                           */
-/* 		       success( http.responseText );                   */
-/* 		    }                                                  */
-/* 		    return;                                            */
-/* 		 case 202:                                             */
-/* 		    success( hop_request_unserialize( http, http.responseText ) );   */
-/* 		    return;                                            */
-/* 		 default:                                              */
-/* 		    success( http );                                   */
-/* 		    return;                                            */
-/* 		 }                                                     */
-/* 	      },                                                       */
-/* 	      failure );                                               */
-/* 	 sc_EMPTY_CALLCC(); // abort execution here.                   */
-/*       });                                                           */
-/*    }                                                                */
-/*    return undefined; // for FF2.0                                   */
-/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop_request_env ...                                              */

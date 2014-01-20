@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -120,7 +120,7 @@ function sc_typeError( proc, type, obj ) {
    var msg = "Type \"" + type + "\" expected, "
       + "\"" + sc_typeof( obj ) + "\" provided";
 
-   return sc_error( proc, msg, obj, arguments.length >= 4 ? arguments[ 3 ] : 3 );
+   return sc_error( proc, msg, obj, arguments.length >= 4 ? arguments[ 3 ] : 2 );
 }
 
 /*---------------------------------------------------------------------*/
@@ -780,7 +780,7 @@ function sc_minus(x) {
 
 #if HOP_RTS_DEBUG
 #if !HOP_RTS_DEBUG_NUMERIC_TYPE
-#if HOP_RTS_DEBUG_NUMERIC_ISNAN   
+#if HOP_RTS_DEBUG_NUMERIC_ISNAN
    if( isNaN( res ) ) {
 #else
    if( res !== res ) {
@@ -817,7 +817,7 @@ function sc_minus2( x, y ) {
 #if HOP_RTS_DEBUG_NUMERIC_ISNAN
    if( isNaN( res ) ) {
 #else
-   if( res !== res ) {
+      if( res !== res ) {
 #endif
       return sc_checkNumericTypes( "-", res, x, y );
    }
@@ -1296,14 +1296,14 @@ if( dynamic_type_check ) {
       set: function( v ) { sc_typeError( "set-car!", "pair", this, 4 ); }
    } );
 
-   Object.defineProperty( sc_Pair.prototype, "__hop_car", {
-      get: function() { return this.__safe_hop_car; },
-      set: function( v ) { this.__safe_hop_car = v; }
-   } );
-
    Object.defineProperty( Object.prototype, "__hop_cdr", {
       get: function() { sc_typeError( "cdr", "pair", this, 4 ); },
       set: function( v ) { sc_typeError( "set-cdr!", "pair", this, 4 ); }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "__hop_car", {
+      get: function() { return this.__safe_hop_car; },
+      set: function( v ) { this.__safe_hop_car = v; }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "__hop_cdr", {

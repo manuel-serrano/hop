@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Dec 11 07:20:48 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Mon Jan  6 18:27:35 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -296,7 +296,7 @@ function hop_servevt_envelope_parse_error( xhr ) {
    exc.message = xhr.responseText === "" ? "Empty envelope" : xhr.responseText;
    exc.scOffset = 2;
 
-   hop_callback_handler( exc, false );
+   hop_callback_handler( exc, xhr.precontext );
 }
 
 /*---------------------------------------------------------------------*/
@@ -496,7 +496,7 @@ function start_servevt_xhr_multipart_proxy( key ) {
 	    var failure = function( xhr ) {
 	       if( xhr.exception ) {
 		  if( typeof hop_callback_handler === "function" ) {
-		     hop_callback_handler( xhr.exception, "multipart" );
+		     hop_callback_handler( xhr.exception, xhr.precontext );
 		  }
 	       }
 	    

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Nov 27 10:26:41 2013 (serrano)                */
-/*    Copyright   :  2006-13 Manuel Serrano                            */
+/*    Last change :  Wed Jan  8 18:20:41 2014 (serrano)                */
+/*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -994,40 +994,31 @@ function hop_load_jscript( url ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_class( doc, name ) {
-   var res = new Array();
-   var n = 0;
-   var all, re;
-   
-   if( (doc instanceof String) || (typeof doc == "string") ) {
-      all = document.getElementsByTagName( "*" );
-      re = new RegExp( doc + " |" + doc + "$", "g" );
+   if( ("getElementsByClassName" in document) &&
+       ( (doc instanceof String) || (typeof doc == "string") ) ) {
+      return sc_vector2list( document.getElementsByClassName( doc ) );
    } else {
-      all = doc.getElementsByTagName( "*" );
-      re = new RegExp( name + " |" + name + "$", "g" );
-   }
-
-   for( var i = 0; i < all.length; i++ ) {
-      if( re.exec( all[ i ].className ) ) {
-	 res[ n++ ] = all[ i ];
-      }
-   }
+      var res = new Array();
+      var n = 0;
+      var all, re;
    
-   return sc_vector2list( res );
-}
-
-document.getElementsByClass = function( className ) {
-   var all = document.getElementsByTagName( "*" );
-   var res = new Array();
-   var n = 0;
-   var re = new RegExp( name + " |" + name + "$", "g" );
-    
-   for( var i = 0; i < all.length; i++ ) {
-      if( re.exec( all[ i ].className ) ) {
-	 res[ n++ ] = all[ i ];
+      if( (doc instanceof String) || (typeof doc == "string") ) {
+	 all = document.getElementsByTagName( "*" );
+	 re = new RegExp( doc + " |" + doc + "$", "g" );
+      } else {
+	 all = doc.getElementsByTagName( "*" );
+	 re = new RegExp( name + " |" + name + "$", "g" );
       }
+
+      for( var i = 0; i < all.length; i++ ) {
+	 if( re.exec( all[ i ].className ) ) {
+	    alert( "got one: " + all[i].id );
+	    res[ n++ ] = all[ i ];
+	 }
+      }
+      
+      return sc_vector2list( res );
    }
-   
-   return res;
 }
 
 /*---------------------------------------------------------------------*/

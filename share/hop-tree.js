@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Nov 20 09:15:53 2013 (serrano)                */
-/*    Copyright   :  2005-13 Manuel Serrano                            */
+/*    Last change :  Mon Jan  6 18:28:01 2014 (serrano)                */
+/*    Copyright   :  2005-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -143,7 +143,7 @@ function hop_tree_populate( tree ) {
    
    var failure = function( exc, xhr ) {
       if( exc instanceof Error ) {
-	 hop_callback_handler( exc, "tree" );
+	 hop_callback_handler( exc, xhr.precontext );
       } else {
 	 try {
 	    var proc = eval( xhr.responseText );

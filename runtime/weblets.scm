@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Thu Jun 20 17:04:15 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Wed Jan  1 08:18:54 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -220,7 +220,7 @@
 			(weblet-features-error-msg winfo)
 			name))
 		(else
-		 (hop-load path)
+		 (hop-load-once path)
 		 (install-weblet-dashboard! name dir winfo url))))
 	  (error "hop-load-weblet" "Cannot find HOP source" path))))
 
@@ -250,7 +250,7 @@
 				     (svc (string-append url "/dashboard")))
 				 (add-dashboard-applet! name i svc)))
 			     (else
-			      (warning 'autoload-weblets
+			      (warning "autoload-weblets"
 				       "bad dashboard declaration"
 				       d))))
 		       (cdr dashboard))
@@ -297,7 +297,11 @@
 		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
 		;; zeroconf
-		(when (pair? zc) (weblet-zeroconf-add! name (cdr zc)))
+		(when (pair? zc)
+		   (hop-verb 2 "zeroconf publish " name " "
+		      (hop-color 3 "" path)
+		      "\n")
+		   (weblet-zeroconf-add! name (cdr zc)))
 		;; autoload per say
 		(cond
 		   ((string? opath)
@@ -315,9 +319,9 @@
 		   (else
 		    (hashtable-put! *weblet-table* name svc)
 		    (install-autoload-prefix path url))))
-	     (warning 'autoload-weblets
-		      "Illegal weblet etc/weblet.info file"
-		      x))))
+	     (warning "autoload-weblets"
+		"Illegal weblet etc/weblet.info file"
+		x))))
    
    ;; since autoload are likely to be installed before the scheduler
    ;; starts, the lock above is unlikely to be useful.
@@ -487,22 +491,34 @@
 ;*    weblet-zeroconf-add! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (weblet-zeroconf-add! name zc)
-   (with-handler
-      (lambda (e)
-	 (exception-notify e))
-      (for-each (lambda (z)
-		   (match-case z
-		      (((and (? string?) ?type))
-		       (set! *weblets-zeroconf*
-			  (cons `(:name ,name :type ,type :port ,(hop-port))
-			     *weblets-zeroconf*)))
-		      (((and (? string?) ?type) ?port . ?rest)
-		       (set! *weblets-zeroconf*
-			  (cons `(:name ,name :type ,type
-				    :port ,(if (integer? port) port (hop-port))
-				    ,@rest)
-			     *weblets-zeroconf*)))))
-	 zc)))
+
+   (define (already? name zsvc)
+      (find (lambda (s)
+	       (string=? (cadr s) name))
+	 *weblets-zeroconf*))
+
+   (if (already? name *weblets-zeroconf*)
+       (when (>= (bigloo-warning) 1)
+	  (warning "zeroconf" 
+	     (format
+		"\"~a\" already published (-v3 for extra info)"
+		name)))
+       (with-handler
+	  (lambda (e)
+	     (exception-notify e))
+	  (for-each (lambda (z)
+		       (match-case z
+			  (((and (? string?) ?type))
+			   (set! *weblets-zeroconf*
+			      (cons `(:name ,name :type ,type :port ,(hop-port))
+				 *weblets-zeroconf*)))
+			  (((and (? string?) ?type) ?port . ?rest)
+			   (set! *weblets-zeroconf*
+			      (cons `(:name ,name :type ,type
+					:port ,(if (integer? port) port (hop-port))
+					,@rest)
+				 *weblets-zeroconf*)))))
+	     zc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblets-zeroconf ...                                         */
