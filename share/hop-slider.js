@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Sat Sep 14 09:30:01 2013 (serrano)                */
-/*    Copyright   :  2005-13 Manuel Serrano                            */
+/*    Last change :  Thu Jan 23 18:28:59 2014 (serrano)                */
+/*    Copyright   :  2005-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -114,7 +114,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 /* 			sc_cons( id, null ) ) );                       */
    if( !parent ) { sc_error( '<SLIDER>', "Illegal parent node", parent ); }
    
-   var parent = parent.parentNode;
+   parent = parent.parentNode;
 
    // the slider
    slider = document.createElement( "table" );

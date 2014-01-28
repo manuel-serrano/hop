@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Tue Dec 10 21:31:24 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Mon Jan 27 17:18:11 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -121,7 +121,9 @@
 	      "Illegal procedure in JavaScript conversion"
 	      obj)))
       (else
-       (error "hop->javascript" "Cannot compile value" obj))))
+       (error "hop->javascript"
+	  (format "Cannot compile value \"~a\"" (typeof obj))
+	  obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::object ...                                     */

@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Sep 10 08:34:05 2013 (serrano)                */
-#*    Copyright   :  2004-13 Manuel Serrano                            */
+#*    Last change :  Tue Jan 28 05:30:04 2014 (serrano)                */
+#*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -62,7 +62,7 @@ bglcloselibs="web multimedia"
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="2.5.0"
-devel=pre
+devel=rc
 
 hopc=$PWD/bin/hopc
 bglcpp=$PWD/scheme2js/runtime/bglcpp

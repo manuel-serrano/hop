@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jan  7 09:48:56 2014 (serrano)                */
+;*    Last change :  Thu Jan 23 19:03:01 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -121,7 +121,7 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-			     
+		      
 ;* 		      (call-with-output-file (format "/tmp/FOO.~a"     */
 ;* 						(current-seconds))     */
 ;* 				(lambda (p)                            */
@@ -166,8 +166,9 @@
 			  (obj->json value p)))
 		     (else
 		      (error "http-response"
-			 "Unsupported serialization method"
-			 content-type))))
+			 (format "Unsupported serialization method \"~a\""
+			    content-type)
+			 request))))
 	       (flush-output-port p)
 	       conn)))))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/wiki_parser.scm           */
+;*    serrano/prgm/project/hop/2.5.x/runtime/wiki_parser.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Fri Feb  1 10:14:31 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Wed Jan 22 12:20:08 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -1113,7 +1113,7 @@
 			  (not (string-index s #\:))))
 		 (values (string-append "#" s) s))
 		(else
-		 (values s s))))
+		 (values (html-string-encode s) s))))
 	  (add-expr!
 	   (if (not i)
 	       (multiple-value-bind (h n)

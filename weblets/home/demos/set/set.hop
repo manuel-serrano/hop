@@ -45,9 +45,10 @@
 				  :id "join-game-form"
 				  :action home/demos/set/join-game
 				  :onsubmit ~(return!
-					      (begin
-						 (set! $join-login.value
-						       $login-field.value)
+					      (let ((join-login $join-login)
+						    (login-field $login-field))
+						 (set! join-login.value
+						       login-field.value)
 						 #t))
 				  join-login
 				  (<TABLE>
@@ -67,9 +68,10 @@
 			      :id "new-game-form"
 			      :action home/demos/set/new-game
 			      :onsubmit ~(return!
-					  (begin
-					     (set! $new-login.value
-						   $login-field.value)
+					  (let ((new-login $new-login)
+						(login-field $login-field))
+					     (set! new-login.value
+						   login-field.value)
 					     #t))
 			      new-login
 			      (<TABLE>
