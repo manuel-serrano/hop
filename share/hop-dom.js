@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jan  8 18:20:41 2014 (serrano)                */
+/*    Last change :  Tue Jan 28 11:04:29 2014 (serrano)                */
 /*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -66,6 +66,8 @@ function hop_add( id, e, insert ) {
 	 } else {
 	    if( sc_isPair( e ) ) {
 	       sc_forEach( add, e );
+	    } else if( sc_isVector( e ) ) {
+	       e.forEach( add );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {

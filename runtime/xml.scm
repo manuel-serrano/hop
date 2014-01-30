@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Aug  7 13:51:44 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Thu Jan 30 19:47:30 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -910,15 +910,35 @@
 
    (define (js-catch-callback/location stmt parent file point)
       ;; this is an inlined version of hop_callback (hop-lib.js)
-      (format "var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a );
-hop_current_stack_context=ctx;
-try { ~a } catch( e ) { hop_callback_handler(e, ctx); }"
-         (string-replace (xml-attribute-encode (parent-context parent))
+      (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\", \"~a\", ~a ) ).call( this )"
+	 stmt
+	 (string-replace (xml-attribute-encode (parent-context parent))
             #\Newline #\Space)
-         file point stmt))
+         file point))
+
+   (define (js-catch-callback stmt parent)
+      ;; this is an inlined version of hop_callback (hop-lib.js)
+      (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\" ) ).call( this )"
+	 stmt
+	 (string-replace (xml-attribute-encode (parent-context parent))
+            #\Newline #\Space)))
    
-   (define (js-catch-callback stmt)
-      (format "try { ~a } catch( e ) { hop_callback_handler( e ); }" stmt))
+;*    (define (js-catch-callback/location-old stmt parent file point)  */
+;*       ;; this is an inlined version of hop_callback (hop-lib.js)    */
+;*       (format "(function () { var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a ); */
+;* hop_curent_stack_context = ctx;                                     */
+;* try { ~a } catch( e ) { hop_callback_handler(e, ctx); } } )()"      */
+;*          (string-replace (xml-attribute-encode (parent-context parent)) */
+;*             #\Newline #\Space)                                      */
+;*          file point stmt))                                          */
+;*                                                                     */
+;*    (define (js-catch-callback-old stmt parent)                      */
+;*       (format "(function () { var ctx=hop_callback_listener_context( \"~a\", \"~a\", ~a ); */
+;* hop_curent_stack_context = ctx;                                     */
+;* try { ~a } catch( e ) { hop_callback_handler(e, ctx); } } )()"      */
+;*          (string-replace (xml-attribute-encode (parent-context parent)) */
+;*             #\Newline #\Space)                                      */
+;*          stmt))                                                     */
    
    (with-access::xml-tilde obj (%js-statement body loc parent)
       (when (not (string? %js-statement))
@@ -931,7 +951,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ctx); }"
 			  (js-catch-callback/location stmt parent file point)))
 		      (else
 		       (set! %js-statement
-			  (js-catch-callback stmt))))
+			  (js-catch-callback stmt parent))))
 		   (set! %js-statement stmt)))))
       %js-statement))
 
