@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Jan 30 15:55:33 2014 (serrano)                */
+/*    Last change :  Mon Feb  3 11:01:57 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
