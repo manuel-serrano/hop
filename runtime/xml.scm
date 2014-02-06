@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jan 31 10:42:33 2014 (serrano)                */
+;*    Last change :  Thu Feb  6 17:38:20 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -908,7 +908,7 @@
 	 (else
 	  "")))
 
-   (define (js-catch-callback/location stmt parent file point)
+   (define (js-catch-callback/location-new stmt parent file point)
       ;; this is an inlined version of hop_callback (hop-lib.js)
       (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\", \"~a\", ~a ) ).call( this );"
 	 stmt
@@ -916,29 +916,36 @@
             #\Newline #\Space)
          file point))
 
-   (define (js-catch-callback stmt parent)
+   (define (js-catch-callback-old stmt parent)
       ;; this is an inlined version of hop_callback (hop-lib.js)
       (format "hop_callback( function() { ~a }, hop_callback_html_context( \"~a\" ) ).call( this );"
 	 stmt
 	 (string-replace (xml-attribute-encode (parent-context parent))
             #\Newline #\Space)))
    
-;*    (define (js-catch-callback/location-old stmt parent file point)  */
-;*       ;; this is an inlined version of hop_callback (hop-lib.js)    */
-;*       (format "(function () { var ctx=hop_callback_html_context( \"~a\", \"~a\", ~a ); */
-;* hop_curent_stack_context = ctx;                                     */
-;* try { ~a } catch( e ) { hop_callback_handler(e, ctx); } } )()"      */
-;*          (string-replace (xml-attribute-encode (parent-context parent)) */
-;*             #\Newline #\Space)                                      */
-;*          file point stmt))                                          */
-;*                                                                     */
-;*    (define (js-catch-callback-old stmt parent)                      */
-;*       (format "(function () { var ctx=hop_callback_listener_context( \"~a\", \"~a\", ~a ); */
-;* hop_curent_stack_context = ctx;                                     */
-;* try { ~a } catch( e ) { hop_callback_handler(e, ctx); } } )()"      */
-;*          (string-replace (xml-attribute-encode (parent-context parent)) */
-;*             #\Newline #\Space)                                      */
-;*          stmt))                                                     */
+   (define (js-catch-callback/location stmt parent file point)
+      ;; this is an inlined version of hop_callback (hop-lib.js)
+      (let ((ctx (gensym 'ctx)))
+	 (format "var ~a=hop_callback_html_context( \"~a\", \"~a\", ~a );
+hop_curent_stack_context = ~a;
+try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
+	    ctx
+	    (string-replace (xml-attribute-encode (parent-context parent))
+	       #\Newline #\Space)
+	    file point ctx stmt
+	    ctx)))
+
+   (define (js-catch-callback stmt parent)
+      (let ((ctx (gensym 'ctx)))
+	 (format "var ~a=hop_callback_listener_context( \"~a\", \"~a\", ~a );
+hop_curent_stack_context = ~a;
+try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
+	    ctx
+	    (string-replace (xml-attribute-encode (parent-context parent))
+	       #\Newline #\Space)
+	    ctx
+	    stmt
+	    ctx)))
    
    (with-access::xml-tilde obj (%js-statement body loc parent)
       (when (not (string? %js-statement))
