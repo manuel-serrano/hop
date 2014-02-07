@@ -315,17 +315,17 @@
 	    (thread-start!
 	       (instantiate::hopthread
 		  (body
-		     (lambda () (websocket-tunel r socket)))))
+		     (lambda () (websocket-tunnel r socket)))))
 	    'persistent)
 	 (else
 	  (error "http-response"
-	     "websocket tunel requires thread support"
+	     "websocket tunnel requires thread support"
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    websocket-tunel ...                                              */
+;*    websocket-tunnel ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (websocket-tunel resp socket)
+(define (websocket-tunnel resp socket)
    (with-access::http-response-proxy-websocket resp (request remote-timeout)
       (with-access::http-request request (header connection-timeout path timeout)
 	 (let* ((host (get-header header host: "localhost"))
@@ -336,7 +336,7 @@
 		(rop (socket-output rsocket))
 		(rip (socket-input rsocket))
 		(op (socket-output socket)))
-	    (tprint ">>> starting webosocket-tunel..." name ":" port " " path)
+	    (tprint ">>> starting webosocket-tunnel..." name ":" port " " path)
 	    (http-write-line rop (format "GET ~a HTTP/1.1" path))
 	    (http-write-header rop (cons
 				      "connection: Upgrade"
@@ -347,7 +347,7 @@
 	       (let ((c (read-char rip)))
 		  (if (eof-object? c)
 		      (begin
-			 (tprint ">>> closing tunel..." name ":" port " " path)
+			 (tprint ">>> closing tunnel..." name ":" port " " path)
 			 (socket-close socket))
 		      (begin
 			 (display c op)
