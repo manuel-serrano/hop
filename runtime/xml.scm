@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Feb  6 17:38:20 2014 (serrano)                */
+;*    Last change :  Sun Feb  9 09:24:30 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -937,7 +937,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 
    (define (js-catch-callback stmt parent)
       (let ((ctx (gensym 'ctx)))
-	 (format "var ~a=hop_callback_listener_context( \"~a\", \"~a\", ~a );
+	 (format "var ~a=hop_callback_listener_context( \"~a\" );
 hop_curent_stack_context = ~a;
 try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    ctx
