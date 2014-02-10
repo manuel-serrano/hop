@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Sat Nov 30 12:56:33 2013 (serrano)                */
-;*    Copyright   :  2012-13 Manuel Serrano                            */
+;*    Last change :  Mon Feb 10 11:15:15 2014 (serrano)                */
+;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -50,7 +50,8 @@
 	      (oncloses::pair-nil (default '()))
 	      (onmessages::pair-nil (default '()))
 	      (authorization (default #f))
-	      (state::symbol (default 'connecting)))
+	      (state::symbol (default 'connecting))
+	      (version read-only (default 'hybi)))
 
 	   (class ws-server
 	      (ws-server-init!)

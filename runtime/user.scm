@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Mon Nov 25 09:10:35 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Mon Feb 10 13:47:28 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -444,6 +444,7 @@
 ;*---------------------------------------------------------------------*/
 (define hopaccess-cache
    (instantiate::cache-memory
+      (max-file-size #e0)
       (max-entries 256)))
 
 ;*---------------------------------------------------------------------*/
@@ -452,11 +453,13 @@
 (define (find-hopaccess path)
    (let loop ((p path))
       (let ((ce (cache-get hopaccess-cache p)))
+	 (tprint "FIND-HOPACCESS: " p " ce=" ce)
 	 (cond
 	    ((isa? ce cache-entry)
 	     (with-access::cache-entry ce (value)
 		(when (string? value) value)))
 	    ((string=? p "/")
+	     (tprint "FIND-HOPACCESS, CACHE-PUT: " path " " #t)
 	     (cache-put! hopaccess-cache path #t)
 	     #f)
 	    ((string=? p ".")
@@ -465,6 +468,7 @@
 	     (let ((hopaccess (make-file-name p (hop-hopaccess))))
 		(if (file-exists? hopaccess)
 		    (begin
+		       (tprint "FIND-HOPACCESS, CACHE-PUT: " path " " hopaccess)
 		       (cache-put! hopaccess-cache path hopaccess)
 		       hopaccess)
 		    (loop (dirname p)))))))))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Sun Nov 18 15:40:34 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Mon Feb 10 13:54:33 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -173,7 +173,7 @@
 ;*    cache-get ::cache ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (cache-get c::cache path::bstring)
-   (with-access::cache c (%table %head %tail %mutex validity)
+   (with-access::cache c (%table %head %tail %mutex validity current-entries)
       (synchronize %mutex
 	 (let ((ce (hashtable-get %table path)))
 	    (cond
@@ -199,6 +199,7 @@
 		   ce))
 	       ((isa? ce cache-entry)
 		(hashtable-remove! %table path)
+		(set! current-entries (-fx current-entries 1))
 		(with-access::cache-entry ce (%prev %next)
 		   (if %prev
 		       (with-access::cache-entry %prev ((next %next))
@@ -243,6 +244,7 @@
 		   ce))
 	       ((isa? ce cache-entry)
 		(hashtable-remove! %table path)
+		(set! current-entries (-fx current-entries 1))
 		(with-access::cache-entry ce (value %prev %next)
 		   (if (file-exists? value) (delete-file value))
 		   (if %prev
