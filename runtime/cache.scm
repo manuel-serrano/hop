@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Mon Feb 10 13:54:33 2014 (serrano)                */
+;*    Last change :  Mon Feb 10 13:57:21 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
@@ -217,7 +217,7 @@
 ;*    cache-get ::cache-disk ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-get c::cache-disk path::bstring)
-   (with-access::cache-disk c (%table %head %tail validity %mutex)
+   (with-access::cache-disk c (%table %head %tail validity %mutex current-entries)
       (synchronize %mutex
 	 (let ((ce (hashtable-get %table path)))
 	    (cond
