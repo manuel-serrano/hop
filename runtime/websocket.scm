@@ -323,17 +323,17 @@
 	    (thread-start!
 	       (instantiate::hopthread
 		  (body
-		     (lambda () (websocket-tunel r socket)))))
+		     (lambda () (websocket-tunnel r socket)))))
 	    'persistent)
 	 (else
 	  (error "http-response"
-	     "websocket tunel requires thread support"
+	     "websocket tunnel requires thread support"
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
-;*    websocket-tunel ...                                              */
+;*    websocket-tunnel ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (websocket-tunel resp socket)
+(define (websocket-tunnel resp socket)
    (with-trace (websocket-debug-level) "ws-tuner"
       (with-access::http-response-proxy-websocket resp (request remote-timeout)
 	 (with-access::http-request request (header connection-timeout path timeout)
