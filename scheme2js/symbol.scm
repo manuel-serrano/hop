@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Sat Aug 10 06:11:48 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue Feb 11 18:03:06 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js symbol resolution                                      */
 ;*=====================================================================*/
@@ -438,9 +438,10 @@
    (with-access::Runtime-Ref this (id var)
       (let ((v (symbol-var (with-access::Symbol-Env env (runtime-scope) runtime-scope) id)))
 	 ;; error should never happen (programming error)
-	 (when (not v) (error "Runtime-Var-Ref.resolve!"
-			  "Internal Error: Runtime-variable not found"
-			  id))
+	 (unless v
+	    (error "Runtime-Var-Ref.resolve!"
+	       "Internal Error: Runtime-variable not found"
+	       id))
 	 (set! var v)))
    (shrink! this)
    this)

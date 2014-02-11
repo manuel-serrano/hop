@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jan 28 05:30:04 2014 (serrano)                */
+#*    Last change :  Tue Feb 11 19:28:19 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -465,6 +465,23 @@ if [ "$ccflags " = " " ]; then
   fi
   ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
 fi
+
+#*---------------------------------------------------------------------*/
+#*    Check that Bigloo compiles and binary runs                       */
+#*---------------------------------------------------------------------*/
+tmp=`$bigloo -eval '(begin (print (os-tmp)) (exit 0))'`
+cat > $tmp/bigloo-test-hop.scm <<EOF
+(module test (main main))
+
+(define (main args)
+  (exit (-fx 1 (string->integer (cadr args)))))
+EOF
+
+$bigloo $tmp/bigloo-test-hop.scm -o $tmp/bigloo-test-hop || exit 1
+
+$tmp/bigloo-test-hop 1 || exit 1
+
+rm -f $tmp/bigloo-test-hop $tmp/bigloo-test-hop.scm $tmp/bigloo-test-hop.o
 
 #*---------------------------------------------------------------------*/
 #*    Check the Bigloo required libraries                              */
