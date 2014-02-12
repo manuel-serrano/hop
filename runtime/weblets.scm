@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Jan  1 08:18:54 2014 (serrano)                */
+;*    Last change :  Wed Feb 12 08:11:33 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -371,13 +371,26 @@
 (define (autoload file pred . hooks)
    (synchronize *autoload-mutex*
       (let ((qfile (find-file/path file (hop-path))))
-	 (if (not (and (string? qfile) (file-exists? qfile)))
-	     (error "autoload-add!" "Can't find autoload file" file)
+	 (cond
+	    ((not (and (string? qfile) (file-exists? qfile)))
+	     (error "autoload-add!" "Can't find autoload file" file))
+	    ((find (lambda (a::%autoload)
+		      (with-access::%autoload a (path)
+			 (string=? path qfile)))
+		*autoloads*)
+	     =>
+	     (lambda (a::%autoload)
+		(when (isa? a %autoload-file)
+		   (with-access::%autoload-file a ((apred pred) (ahooks hooks))
+		      (unless (and (equal? apred pred) (equal? ahooks hooks))
+			 (error "autoload-add!"
+			    "Autoload already registered" file))))))
+	    (else
 	     (let ((al (instantiate::%autoload-file
 			  (path qfile)
 			  (pred pred)
 			  (hooks hooks))))
-		(set! *autoloads* (cons al *autoloads*)))))))
+		(set! *autoloads* (cons al *autoloads*))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-incompatible ...                                        */
