@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/phone.scm       */
+;*    .../prgm/project/hop/2.5.x/arch/android/hopdroid/phone.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Apr  1 17:39:34 2013 (serrano)                */
-;*    Copyright   :  2010-13 Manuel Serrano                            */
+;*    Last change :  Tue Feb 18 15:04:55 2014 (serrano)                */
+;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -17,7 +17,7 @@
    (library phone mail hop)
 
    (import __hopdroid-tts)
-   
+
    (export (class androidphone::phone
 	      (sdk::bstring read-only (get get-android-sdk))
 	      (model::bstring read-only (get get-android-model))
@@ -616,20 +616,32 @@
 	 (send-char #a127 op)
 	 (flush-output-port op))))
 
+(define *count* 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (android-send-command p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex)
+      (set! *count* (+fx 1 *count*))
+      (tprint ">>> android-send-command plugin=" plugin " cmd=" (car args)
+	 " count=" *count*)
       (synchronize *android-mutex*
-	 (android-send p plugin args))))
+	 (android-send p plugin args))
+      (tprint "<<< android-send-command plugin=" plugin " cmd=" (car args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command/result ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex)
-      (synchronize *android-mutex*
-	 (android-send p plugin args)
-	 (let ((ip (socket-input sock-plugin)))
-	    (read ip)))))
+      (set! *count* (+fx 1 *count*))
+      (tprint ">>> android-send-command/result plugin=" plugin
+	 " cmd=" (car args) " count=" *count*)
+      (let ((result (synchronize *android-mutex*
+		       (android-send p plugin args)
+		       (let ((ip (socket-input sock-plugin)))
+			  (read ip)))))
+	 (tprint "<<< android-send-command/result plugin=" plugin
+	    " cmd=" (car args))
+	 result)))

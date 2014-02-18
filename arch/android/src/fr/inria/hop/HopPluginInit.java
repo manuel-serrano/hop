@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Fri Nov  2 08:44:48 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:19:20 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
 /*=====================================================================*/
@@ -72,35 +72,36 @@ public class HopPluginInit extends HopPlugin {
 	    Log.v( "HopPluginInit", "plugin " + p.name + " registered..." );
 	 } catch( ClassNotFoundException e ) {
 	    Log.e( "HopPlugInit", "Class Not Found: " + cname );
-	    op.write( "-2".getBytes() );
+	    op.write( "-2 ".getBytes() );
 	    return;
 	 } catch( NoSuchMethodException e ) {
 	    Log.e( "HopPlugInit", "No such method: " + cname );
-	    op.write( "-3".getBytes() );
+	    op.write( "-3 ".getBytes() );
 	    return;
 	 } catch( SecurityException e ) {
 	    Log.e( "HopPlugInit", "Security exception: " + cname );
-	    op.write( "-4".getBytes() );
+	    op.write( "-4 ".getBytes() );
 	    return;
 	 } catch( InstantiationException e ) {
 	    Log.e( "HopPlugInit", "Instantiate exception: " + cname );
-	    op.write( "-5".getBytes() );
+	    op.write( "-5 ".getBytes() );
 	    return;
 	 } catch( IllegalAccessException e ) {
 	    Log.e( "HopPlugInit", "Illegal access: " + cname );
-	    op.write( "-6".getBytes() );
+	    op.write( "-6 ".getBytes() );
 	    return;
 	 } catch( IllegalArgumentException e ) {
 	    Log.e( "HopPlugInit", "Illegal argument: " + cname );
-	    op.write( "-7".getBytes() );
+	    op.write( "-7 ".getBytes() );
 	    return;
 	 } catch( InvocationTargetException e ) {
 	    Log.e( "HopPlugInit", "Invocation target exception: " + cname );
-	    op.write( "-8".getBytes() );
+	    op.write( "-8 ".getBytes() );
 	    return;
 	 }
       }
 
       op.write( Integer.toString( id ).getBytes() );
+      op.write( " ".getBytes() );
    }
 }

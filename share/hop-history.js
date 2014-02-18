@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Sat Aug 17 19:43:38 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Mon Feb 17 09:05:52 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -167,7 +167,7 @@ function hop_with_history( proc ) {
 function hop_state_history_reset() {
    if( hop_current_state_history != undefined ) {
       /* there is a state, we reset all the entries */
-      for( p in hop_current_state_history ) {
+      for( var p in hop_current_state_history ) {
 	 if( hop_current_state_history[ p ] instanceof _hop_state_entry ) {
 	    var op = hop_current_state_history[ p ].op;
 	    var handler =  hop_state_history_handler[ op ];
@@ -215,7 +215,7 @@ function hop_state_history_update( olds, news ) {
    } else {
       /* reset all the entries that used to be in old    */
       /* state that are no longer present in the new one */
-      for( p in olds ) {
+      for( var p in olds ) {
 	 if( (olds[ p ] instanceof _hop_state_entry) &&
 	     !(news[ p ] instanceof _hop_state_entry) ) {
 	    var op = olds[ p ].op;
@@ -229,7 +229,7 @@ function hop_state_history_update( olds, news ) {
 
       /* update all the entries that are not */
       /* present and equal in old state      */
-      for( p in news ) {
+      for( var p in news ) {
 	 var state = news[ p ];
 	 if( state instanceof _hop_state_entry ) {
 	    if( !(olds[ p ] instanceof _hop_state_entry) ||

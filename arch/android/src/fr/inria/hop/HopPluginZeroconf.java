@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Wed Feb  6 11:03:12 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:28:28 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
 /*=====================================================================*/
@@ -67,7 +67,9 @@ public class HopPluginZeroconf extends HopPlugin {
    
    // server
    void server( InputStream ip, OutputStream op ) throws IOException {
-      switch( HopDroid.read_int( ip ) ) {
+      int n = HopDroid.read_int( ip );
+      Log.d( "HopPluginZeroconf", "n=" + n );
+      switch( n ) {
 	 // version
 	 case (byte)'v':
 	    op.write( "\"".getBytes() );
@@ -79,14 +81,14 @@ public class HopPluginZeroconf extends HopPlugin {
 	 case (byte)'s':
 	    zeroconf.start( HopDroid.read_string( ip ) );
 	    
-	    op.write( "#t".getBytes() );
+	    op.write( "#t ".getBytes() );
 	    return;
 	    
 	 // end
 	 case (byte)'e':
 	    zeroconf.stop();
 	    
-	    op.write( "#f".getBytes() );
+	    op.write( "#f ".getBytes() );
 	    return;
 
 	 // publish

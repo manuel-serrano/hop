@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Wed Apr  3 09:20:44 2013 (serrano)                */
-/*    Copyright   :  2012-13 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 08:15:56 2014 (serrano)                */
+/*    Copyright   :  2012-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
 /*=====================================================================*/
@@ -84,10 +84,13 @@ public class HopNsdManager extends HopZeroconf {
 	 dlisteners.put( type, l );
 	 events.put( "." + type, event );
 
-	 Log.d( "HopNsdManager", "addServiceTypeListener type=" + type
+	 Log.d( "HopNsdManager", ">>> addServiceTypeListener type=" + type
 		+ " event=" + event );
       
 	 nsd.discoverServices( type, NsdManager.PROTOCOL_DNS_SD, l );
+	 
+	 Log.d( "HopNsdManager", "<<< addServiceTypeListener type=" + type
+		+ " event=" + event );
       }
    }
 
@@ -96,7 +99,9 @@ public class HopNsdManager extends HopZeroconf {
    }
    
    public void addTypeListener( final String type ) {
+      Log.d( "HopNsdManager", ">>> addTypeListener type=" + type );
       addServiceTypeListener( type, "zeroconf-add-service-" + type );
+      Log.d( "HopNsdManager", "<<< addTypeListener type=" + type );
    }
    
    public InetAddress getLocalIpAddress() throws Exception {

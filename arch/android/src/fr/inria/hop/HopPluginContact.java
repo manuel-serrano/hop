@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Jun 27 19:11:02 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:24:46 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
 /*=====================================================================*/
@@ -397,7 +397,7 @@ public class HopPluginContact extends HopPlugin {
 	 Uri.withAppendedPath( ContactsContract.Contacts.CONTENT_URI, id ),
 	 null, null );
 
-      op.write( "#t".getBytes() );
+      op.write( "#t ".getBytes() );
       return;
    }
 	 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Mon Jan  7 08:00:14 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:27:59 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
 /*=====================================================================*/
@@ -172,32 +172,32 @@ public class HopPluginTts extends HopPlugin
 	    if( tts != null ) {
 	       switch( tts.isLanguageAvailable( HopPluginLocale.read_locale( ip ) ) ) {
 		  case TextToSpeech.LANG_AVAILABLE:
-		     op.write( "lang".getBytes() );
+		     op.write( "lang ".getBytes() );
 		     return;
 
 		  case TextToSpeech.LANG_COUNTRY_AVAILABLE:
-		     op.write( "lang-country".getBytes() );
+		     op.write( "lang-country ".getBytes() );
 		     return;
 
 		  case TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE:
-		     op.write( "lang-country-var".getBytes() );
+		     op.write( "lang-country-var ".getBytes() );
 		     return;
 
 		  case TextToSpeech.LANG_MISSING_DATA:
-		     op.write( "missing-data".getBytes() );
+		     op.write( "missing-data ".getBytes() );
 		     return;
 		     
 		  case TextToSpeech.LANG_NOT_SUPPORTED:
-		     op.write( "lang-not-supported".getBytes() );
+		     op.write( "lang-not-supported ".getBytes() );
 		     return;
 		     
 		  default:
-		     op.write( "error".getBytes() );
+		     op.write( "error ".getBytes() );
 		     return;
 	       }
 	    } else {
 	       HopPluginLocale.read_locale( ip );
-	       op.write( "error".getBytes() );
+	       op.write( "error ".getBytes() );
 	       return;
 	    }
 
@@ -285,9 +285,9 @@ public class HopPluginTts extends HopPlugin
 	 case (byte)'?':
 	    // is speaking
 	    if( tts != null && tts.isSpeaking() ) {
-	       op.write( "#t".getBytes() );
+	       op.write( "#t ".getBytes() );
 	    } else {
-	       op.write( "#f".getBytes() );
+	       op.write( "#f ".getBytes() );
 	    }
 	    return;
 	    

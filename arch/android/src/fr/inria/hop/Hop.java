@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/2.4.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/2.5.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Tue Apr 23 09:01:15 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Mon Feb 17 11:34:24 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -142,6 +142,7 @@ public class Hop extends Thread {
 		  } else {
 		     // the process has stopped unexpectidly
 		     if( !inkill && service.handler != null ) {
+			Log.d( "Hop", "hop stopped unexpectidly" );
 			service.handler.sendMessage(
 			   android.os.Message.obtain(
 			      service.handler, HopLauncher.MSG_HOP_FAILED, result ) );
@@ -154,11 +155,13 @@ public class Hop extends Thread {
 
       Thread logger = new Thread( new Runnable() {
 	    FileInputStream fin = new FileInputStream( HopFd );
-
+	    
 	    public void run() {
 	       byte[] buffer = new byte[ 255 ];
 	       int l;
 
+	       Log.d( "Hop", "Starting Hop logger on fd=" + HopFd );
+		   
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     if( service.handler != null ) {
@@ -169,6 +172,7 @@ public class Hop extends Thread {
 		     }
 		  }
 	       } catch( Throwable e ) {
+		  Log.e( "Hop", "Error in the thread logger: " + e );
 		  if( !inkill ) {
 		     synchronized( currentpid ) {
 			if( currentpid[ 0 ] != 0 ) {

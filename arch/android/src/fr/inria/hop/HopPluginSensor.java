@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginSensor.java     */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginSensor.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Wed Jun 27 10:11:40 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:26:29 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
 /*=====================================================================*/
@@ -297,14 +297,15 @@ public class HopPluginSensor extends HopPlugin {
 		  synchronized( op ) {
 		     if( values[ type ] != null ) {
 			op.write( values_to_sexp( (float [])values[ type ] ).getBytes() );
+			op.write( " ".getBytes() );
 		     } else {
-			op.write( "#f".getBytes() );
+			op.write( "#f ".getBytes() );
 		     }
 		  }
 	       }
 	    } else {
 	       synchronized( op ) {
-		  op.write( "#unspecified".getBytes() );
+		  op.write( "#unspecified ".getBytes() );
 	       }
 	    }
 

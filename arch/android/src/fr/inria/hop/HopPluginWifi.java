@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Jul  6 12:01:54 2012 (serrano)                */
-/*    Copyright   :  2011-12 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:28:18 2014 (serrano)                */
+/*    Copyright   :  2011-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
 /*=====================================================================*/
@@ -97,9 +97,9 @@ public class HopPluginWifi extends HopPlugin {
 	    
 	 case (byte)'s':
 	    if( mclock != null && mclock.isHeld() ) {
-	       op.write( "#t".getBytes() );
+	       op.write( "#t ".getBytes() );
 	    } else {
-	       op.write( "#f".getBytes() );
+	       op.write( "#f ".getBytes() );
 	    }
 	    return;
 	    
@@ -115,9 +115,9 @@ public class HopPluginWifi extends HopPlugin {
 	    
 	 case (byte)'t':
 	    if( wlock != null && wlock.isHeld() ) {
-	       op.write( "#t".getBytes() );
+	       op.write( "#t ".getBytes() );
 	    } else {
-	       op.write( "#f".getBytes() );
+	       op.write( "#f ".getBytes() );
 	    }
 	    return;
 

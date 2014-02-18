@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
+/*    .../hop/2.5.x/arch/android/src/fr/inria/hop/HopUiUtils.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Sat Mar 30 12:44:43 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Mon Feb 17 08:55:54 2014 (serrano)                */
+/*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
 /*=====================================================================*/
@@ -63,7 +63,7 @@ public class HopUiUtils {
 	 Log.e( task, m );
 	 alert( activity, m, "ok", true );
       } else {
-	 alert( activity, o.toString(), "ok", true );
+	 alert( activity, "Hop Fail Exit: " + o.toString(), "ok", true );
       }
    }
 }

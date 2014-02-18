@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
+/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Mon Feb 18 09:01:25 2013 (serrano)                */
-/*    Copyright   :  2012-13 Manuel Serrano                            */
+/*    Last change :  Tue Feb 18 15:27:17 2014 (serrano)                */
+/*    Copyright   :  2012-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
 /*=====================================================================*/
@@ -67,20 +67,20 @@ public class HopPluginSystem extends HopPlugin {
       try {
 	 switch( Settings.System.getInt( cr, Settings.System.WIFI_SLEEP_POLICY ) ) {
 	    case Settings.System.WIFI_SLEEP_POLICY_NEVER:
-	       op.write( "never".getBytes() );
+	       op.write( "never ".getBytes() );
 	       return;
 	    case Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED:
-	       op.write( "never-while-plugged".getBytes() );
+	       op.write( "never-while-plugged ".getBytes() );
 	       return;
 	    case Settings.System.WIFI_SLEEP_POLICY_DEFAULT:
-	       op.write( "default".getBytes() );
+	       op.write( "default ".getBytes() );
 	       return;
 	    default:
-	       op.write( "unknown".getBytes() );
+	       op.write( "unknown ".getBytes() );
 	       return;
 	 }
       } catch( android.provider.Settings.SettingNotFoundException _ ) {
-	 op.write( "unknown".getBytes() );
+	 op.write( "unknown ".getBytes() );
 	 return;
       }
    }
@@ -88,28 +88,28 @@ public class HopPluginSystem extends HopPlugin {
    void setWifiPolicy( OutputStream op, String policy ) throws IOException {
       if( policy.equals( "never" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER );
-	 op.write( "#t".getBytes() );
+	 op.write( "#t ".getBytes() );
 	 return;
       }
 
       if( policy.equals( "never-while-plugged" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_NEVER_WHILE_PLUGGED );
-	 op.write( "#t".getBytes() );
+	 op.write( "#t ".getBytes() );
 	 return;
       }
 
       if( policy.equals( "default" ) ) {
 	 setWifiPolicy( Settings.System.WIFI_SLEEP_POLICY_DEFAULT );
-	 op.write( "#t".getBytes() );
+	 op.write( "#t ".getBytes() );
 	 return;
       }
 
       if( policy.equals( "unknown" ) ) {
-	 op.write( "#t".getBytes() );
+	 op.write( "#t ".getBytes() );
 	 return;
       }
 
-      op.write( "#f".getBytes() );
+      op.write( "#f ".getBytes() );
    }
    
    private void setWifiPolicy( int policy ) throws IOException {
@@ -124,12 +124,12 @@ public class HopPluginSystem extends HopPlugin {
 
       try {
 	 if( Settings.System.getInt( cr, Settings.System.ACCELEROMETER_ROTATION ) == 1 ) {
-	    op.write( "#t".getBytes() );
+	    op.write( "#t ".getBytes() );
 	 } else {
-	    op.write( "#f".getBytes() );
+	    op.write( "#f ".getBytes() );
 	 }
       } catch( android.provider.Settings.SettingNotFoundException _ ) {
-	 op.write( "#t".getBytes() );
+	 op.write( "#t ".getBytes() );
 	 return;
       }
    }
