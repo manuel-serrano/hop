@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Feb 11 19:42:57 2014 (serrano)                */
+;*    Last change :  Thu Feb 20 13:45:39 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -569,7 +569,7 @@
 						    (value ws))))
 					  (apply-listeners onopens se)))
 				    (thread-start!
-				       (instantiate::pthread
+				       (instantiate::hopthread
 					  (body (lambda ()
 						   (unwind-protect
 						      (with-handler
