@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Feb 21 13:49:51 2014 (serrano)                */
+#*    Last change :  Fri Feb 21 17:11:17 2014 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -69,6 +69,7 @@ INCLUDES = mapping.sch
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
+             $(_BGL_CALLCC_OBJECTS:%=%.scm) \
              runtime/exporter.scm \
              runtime/bglcpp.scm \
              runtime/runtime_callcc.js runtime/dsssl.js runtime/dsssl.scm \
