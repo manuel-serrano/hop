@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/2.6.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Sep 10 08:20:31 2013 (serrano)                */
+;*    Last change :  Thu Dec 19 10:31:43 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopc
 
-   (library scheme2js hopscheme hop)
+   (library scheme2js hopscheme js2scheme hop)
 
    (import  hopc_parseargs
 	    hopc_param)
@@ -130,12 +130,12 @@
 ;*    compile-sources ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (compile-sources::int)
-
+   
    (define (compile-javascript p)
       (hopscheme-compile-file p
 	 (if (string? (hopc-destination)) (hopc-destination) "-")
 	 '()))
-
+   
    (define (compile-module exp)
       (match-case exp
 	 ((module ?id . ?clauses)
@@ -146,14 +146,14 @@
 				     (match-case c
 					((<TILDE> . ?-) #f)
 					(else #t)))
-				  clauses)))
+			     clauses)))
 	     `(module ,id ,@nclauses)))
 	 (else
 	  (error "hopc" "Illegal module" exp))))
+   
+   (define (generate-bigloo::int in lang)
       
-   (define (generate-bigloo::int in)
-      
-      (define (generate out)
+      (define (generate-hop out::output-port)
 	 (let loop ()
 	    (let ((exp (hopc-read in)))
 	       (unless (eof-object? exp)
@@ -164,55 +164,115 @@
 		      (pp exp out)))
 		  (loop)))))
       
+      (define (generate-hopscript out::output-port)
+	 (for-each (lambda (exp) (pp exp out))
+	    (j2s-compile in
+	       :driver (cond
+			  ((>=fx (hopc-optim-level) 1)
+			   (j2s-optim-driver))
+			  (else
+			   (j2s-plain-driver))))))
+
+      (define (generate out::output-port lang::symbol)
+	 (case lang
+	    ((hop) (generate-hop out))
+	    ((hopscript) (generate-hopscript out))))
+      
       (if (string? (hopc-destination))
-	  (call-with-output-file (hopc-destination) generate)
-	  (generate (current-output-port)))
+	  (call-with-output-file (hopc-destination)
+	     (lambda (out) (generate out lang)))
+	  (generate (current-output-port) lang))
       0)
-   
-   (define (compile-bigloo::int in)
+
+   (define (compile-bigloo::int in lang)
+
+      (define (compile in opts comp file)
+	 (let* ((opts (if (string? file)
+			  (cons* "-fread-internal-src"
+			     "-fread-internal-src-file-name" file
+			     "-srfi" "hopc" opts)
+			  (cons* "-fread-internal-src" "-srfi" "hopc" opts)))
+		(proc (apply run-process (hopc-bigloo)
+			 input: pipe: "-" 
+			 opts))
+		(cmd (format "~a - ~l" (hopc-bigloo) opts))
+		(out (process-input-port proc)))
+	    (hop-verb 1 cmd "\n")
+	    (unwind-protect
+	       (comp out)
+	       (close-output-port out))
+	    (process-wait proc)
+	    (process-exit-status proc)))
+      
+      (define (compile-hop in opts file)
+	 (compile in
+	    (append '("-library" "hop"
+		      "-library" "hopscheme"
+		      "-library" "hopwidget")
+	       opts)
+	    (lambda (out)
+	       (let loop ()
+		  (let ((exp (hopc-read in)))
+		     (unless (eof-object? exp)
+			(match-case exp
+			   ((module . ?-)
+			    (write (obj->string (compile-module exp)) out))
+			   (else
+			    (write (obj->string exp) out)))
+			(loop)))))
+	    file))
+      
+      (define (compile-hopscript in opts file)
+	 (compile in
+	    (append '("-library" "hopscript"
+		      "-library" "nodejs"
+		      "-library" "web")
+	       opts)
+	    (lambda (out)
+	       (map (lambda (e) (write (obj->string e) out))
+		  (j2s-compile in
+		     :driver (if (>=fx (hopc-optim-level) 1)
+				 (j2s-optim-driver)
+				 (j2s-plain-driver)))))
+	    file))
+      
       (let* ((opts (hopc-bigloo-options))
+	     (file (when (and (pair? (hopc-sources))
+			      (string? (car (hopc-sources))))
+		      (car (hopc-sources))))
 	     (opts (cond
 		      ((string? (hopc-destination))
 		       (when (file-exists? (hopc-destination))
 			  (delete-file (hopc-destination)))
-		       (cons* "-o" (hopc-destination) opts))
+		       (if (eq? (hopc-pass) 'object)
+			   (cons* "-c" "-o" (hopc-destination) opts)
+			   (cons* "-o" (hopc-destination) opts)))
 		      ((and (pair? (hopc-sources))
 			    (string? (car (hopc-sources))))
-		       (let ((d (string-append
-				 (prefix (car (hopc-sources))) ".o")))
-			  (cons* "-o" d opts)))
+		       (if (eq? (hopc-pass) 'object)
+			   (let* ((base (prefix (car (hopc-sources))))
+				  (dest (string-append base ".o")))
+			      (cons* "-c" "-o" dest opts))
+			   (cons* "-o" "a.out" opts)))
 		      (else
-		       (cons "--to-stdout" opts))))
-	     (proc (apply run-process (hopc-bigloo)
-		      input: pipe:
-		      "-"
-		      "-srfi" "hopc"
-		      "-library" "hop"
-		      "-library" "hopscheme"
-		      "-library" "hopwidget"
-		      "-fread-internal-src" opts))
-	     (cmd (format "~a - ~l -library hop -library hopscheme -fread-internal-src" (hopc-bigloo) opts))
-	     (out (process-input-port proc)))
-	 (hop-verb 1 cmd "\n")
-	 (unwind-protect
-	    (let loop ()
-	       (let ((exp (hopc-read in)))
-		  (unless (eof-object? exp)
-		     (match-case exp
-			((module . ?-)
-			 (write (obj->string (compile-module exp)) out))
-			(else
-			 (write (obj->string exp) out)))
-		     (loop))))
-	    (close-output-port out))
-	 (process-wait proc)
-	 (process-exit-status proc)))
+		       (cons "--to-stdout" opts)))))
+	 (case lang
+	    ((hop) (compile-hop in opts file))
+	    ((hopscript) (compile-hopscript in opts file)))))
    
-   (define (compile::int in)
+   (define (compile::int in lang::symbol)
       (if (eq? (hopc-pass) 'bigloo)
-	  (generate-bigloo in)
-	  (compile-bigloo in)))
+	  (generate-bigloo in lang)
+	  (compile-bigloo in lang)))
 
+   (define (language src)
+      (if (eq? (hopc-source-language) 'auto)
+	  (case (string->symbol (suffix src))
+	     ((hop) 'hop)
+	     ((js) 'hopscript)
+	     (else (error "hopc" "Unknown language source" src)))
+	  (hopc-source-language)))
+   
    (cond
       ((eq? (hopc-pass) 'client-js)
        (for-each compile-javascript (hopc-sources))
@@ -221,12 +281,16 @@
        (let loop ((srcs (hopc-sources)))
 	  (if (null? srcs)
 	      0
-	      (let ((r (call-with-input-file (car srcs) compile)))
+	      (let ((r (call-with-input-file (car srcs)
+			  (lambda (in) (compile in (language (car srcs)))))))
 		 (if (=fx r 0)
 		     (loop (cdr srcs))
 		     r)))))
       (else
-       (compile (current-input-port)))))
+       (compile (current-input-port)
+	  (if (eq? (hopc-source-language) 'auto)
+	      'hop
+	      (hopc-source-language))))))
 				 
 ;*---------------------------------------------------------------------*/
 ;*    jsheap ...                                                       */

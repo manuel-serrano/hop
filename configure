@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/configure                         */
+#*    serrano/prgm/project/hop/3.0.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Feb 11 19:28:19 2014 (serrano)                */
+#*    Last change :  Fri Feb 21 16:18:41 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -55,14 +55,14 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs"
 bglcloselibs="web multimedia"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.5.0"
-devel=rc
+version="3.0.0"
+devel=pre
 
 hopc=$PWD/bin/hopc
 bglcpp=$PWD/scheme2js/runtime/bglcpp
@@ -662,7 +662,7 @@ if [ "$webletsdir " = " " ]; then
 fi
 
 # Hop librairies
-for p in scheme2js hopscheme hop hopwidget; do
+for p in scheme2js hopscheme hop hopwidget js2scheme hopscript nodejs; do
   elib="$buildlibdir/$p"_es-$version.zip;
   slib="$buildlibdir/$p"_s-$version.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
@@ -839,6 +839,68 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
       >> $configure
 done
 
+# nodejs/configure.scm
+for p in nodejs.sch; do
+  configure=nodejs/$p
+  rm -f $configure 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $configure
+  cat etc/$p.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPZEROCONF@|$zeroconf|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $configure
+done
+
+# hopscript/configure.scm
+for p in hopscript.sch; do
+  configure=hopscript/$p
+  rm -f $configure 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $configure
+  cat etc/$p.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPZEROCONF@|$zeroconf|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $configure
+done
+
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
@@ -965,6 +1027,51 @@ if [ "$arch " = "android " ]; then
   chmod a-w $init
 fi
   
+# lib/js2scheme.init
+init=lib/js2scheme.init
+mkdir -p lib
+mkdir -p js2scheme/o
+
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/js2scheme.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+    >> $init
+echo "" >> $init
+chmod a-w $init
+
+# lib/hopscript.init
+init=lib/hopscript.init
+mkdir -p lib
+mkdir -p hopscript/o
+
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hopscript.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+    >> $init
+echo "" >> $init
+chmod a-w $init
+
+# lib/nodejs.init
+init=lib/nodejs.init
+mkdir -p lib
+mkdir -p nodejs/o
+
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/nodejs.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+    >> $init
+echo "" >> $init
+chmod a-w $init
+
 # share/hop-autoconf.js
 init=share/hop-autoconf.js
 mkdir -p share

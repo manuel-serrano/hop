@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.6.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jan  7 09:38:32 2014 (serrano)                */
-/*    Copyright   :  2004-14 Manuel Serrano                            */
+/*    Last change :  Thu Oct  3 17:55:22 2013 (serrano)                */
+/*    Copyright   :  2004-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -76,6 +76,21 @@ function hop_apply_url( service, args ) {
 	    + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
       }
    }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_object_to_dsssl_args ...                                     */
+/*    -------------------------------------------------------------    */
+/*    Used by node.js                                                  */
+/*---------------------------------------------------------------------*/
+function hop_object_to_dsssl_args( obj ) {
+   var res = null;
+
+   for( var p in obj ) {
+      res = sc_cons( obj[ p ], sc_cons( sc_jsstring2keyword( p ), res ) );
+   }
+
+   return sc_reverseBang( res );
 }
 
 /*---------------------------------------------------------------------*/
@@ -359,7 +374,16 @@ function hop_request_onready( xhr, svc, succ, fail ) {
       
    return false;
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    Hop ...                                                          */
+/*---------------------------------------------------------------------*/
+function Hop( svc, success, failure ) {
+   return hop_send_request( svc, false, success, failure, false,
+			    hop_serialize_request_env(),
+			    false, false );
+}
+			    
 /*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */

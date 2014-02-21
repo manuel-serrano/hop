@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec 25 08:00:34 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:26:23 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -224,7 +224,9 @@
 	 (("--eval" ?string (help "Evaluate STRING"))
 	  (set! exprs (cons string exprs)))
 	 (("--repl" (help "Start a repl"))
-	  (hop-enable-repl-set! #t))
+	  (hop-enable-repl-set! 'scm))
+	 (("--repljs" (help "Start a JS repl"))
+	  (hop-enable-repl-set! 'js))
 	 (("--jobs" (help "Enable jobs management"))
 	  (hop-enable-jobs-set! #t))
 	 (("--no-jobs" (help "Disable jobs management"))

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../project/hop/2.5.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/2.6.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Feb 17 11:34:24 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:27:40 2014 (serrano)                */
 /*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -160,8 +160,6 @@ public class Hop extends Thread {
 	       byte[] buffer = new byte[ 255 ];
 	       int l;
 
-	       Log.d( "Hop", "Starting Hop logger on fd=" + HopFd );
-		   
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     if( service.handler != null ) {

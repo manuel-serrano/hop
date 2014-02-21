@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.5.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
+/*    .../2.6.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Tue Feb 18 08:15:56 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:28:49 2014 (serrano)                */
 /*    Copyright   :  2012-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/2.6.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 27 16:13:53 2013 (serrano)                */
+;*    Last change :  Thu Oct 10 07:38:25 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -57,13 +57,21 @@
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
+	    (("-O?level" (help "Optimization level"))
+	     (if (string=? level "")
+		 (hopc-optim-level-set! 1)
+		 (hopc-optim-level-set! (string->integer level)))
+	     (hopc-bigloo-options-set!
+		(cons (format "-O~a" level) (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)
 	     (hopc-clientc-type-check-set! #t)
 	     (if (string=? level "")
 		 (bigloo-debug-set! (+fx 1 (bigloo-debug)))
-		 (bigloo-debug-set! (string->integer level))))
+		 (bigloo-debug-set! (string->integer level)))
+	     (hopc-bigloo-options-set!
+		(cons (format "-g~a" level) (hopc-bigloo-options))))
 	    (("-w?level" (help "Increase or set warning level (-w0 no warning)"))
 	     (if (string=? level "")
 		 (bigloo-warning-set! (+fx 1 (bigloo-warning)))
@@ -82,6 +90,8 @@
 		(append (hopc-bigloo-options) (list "-c"))))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
+	    (("--reset-bigloo-options" ?options (help "Reset all Bigloo options"))
+	     (hopc-bigloo-options-set! '()))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
 	     (hopc-pass-set! 'client-js))
 	    ((("-a" "--afile") ?file (help "Set access file"))
@@ -108,6 +118,10 @@
 	     (hopc-clientc-meta-set! #t))
 	    (("--no-meta" (help "Disable meta annotation"))
 	     (hopc-clientc-type-check-set! #f))
+	    ((("-l" "--language") ?lang (help "Set the source language (\"auto\", \"hop\", or \"hopscript\")"))
+	     (unless (member lang '("hop" "hopscript"))
+		(error "hopc" "Unknown language, see -help" lang))
+	     (hopc-source-language-set! (string->symbol lang)))
 	    (else
 	     (if (string=? else "--")
 		 (begin

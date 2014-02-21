@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.5.x/arch/android/hopdroid/music.scm       */
+;*    .../prgm/project/hop/2.6.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Tue Feb 18 09:05:32 2014 (serrano)                */
+;*    Last change :  Fri Feb 21 13:25:02 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
@@ -85,7 +85,6 @@
    (define (onvolume e)
       (with-access::androidevent e (value)
 	 (for-each (lambda (o)
-		      (tprint "hopdroid onvolume value=" value)
 		      (with-access::androidmusic o (onvolume %status)
 			 (with-access::musicstatus %status (volume)
 			    (set! volume value)

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/2.6.x/etc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri May 25 18:44:41 2012 (serrano)                */
-#*    Copyright   :  2006-12 Manuel Serrano                            */
+#*    Last change :  Thu Sep 19 16:10:14 2013 (serrano)                */
+#*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -24,8 +24,10 @@ POPULATION	= Makefile Makefile.weblet \
                   configure.scm.in libraries.sch.in \
                   configure_noarch.sch.in configure_macosx.sch.in \
                   configure_android.sch.in \
+                  nodejs.sch.in \
                   hoprc.hop.in hopshrc.hop.in hophzrc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
+                  js2scheme.init.in hopscript.init.in nodejs.init.in \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
                   hopc.sh.in hopwidget.init.in hglog.scm

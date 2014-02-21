@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/Makefile                          */
+#*    serrano/prgm/project/hop/2.6.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Nov 17 10:34:35 2013 (serrano)                */
+#*    Last change :  Fri Feb 21 13:23:35 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -23,18 +23,19 @@ do: build
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
                   configure .hoprelease .hgignore
-POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay hophz \
+POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
+                  src hopc hopsh hopreplay hophz \
                   etc share arch \
-                  weblets widget
+                  weblets widget nodejs
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
-  share-afile scheme2js \
+  share-afile scheme2js hopscript js2scheme nodejs \
   android
 
-build: bindir libdir lib weblets widget $(BUILDSPECIFIC) bin share
+build: bindir libdir lib weblets widget nodejs $(BUILDSPECIFIC) bin share
 
 bindir:
 	mkdir -p bin
@@ -47,7 +48,7 @@ bin: bindir hopc-bin src-bin hopsh-bin hopreplay-bin hophz-bin
 hopc-bin: lib
 	$(MAKE) -C hopc build
 
-src-bin: lib widget $(BUILDSPECIFIC) 
+src-bin: lib widget $(BUILDSPECIFIC) nodejs
 	$(MAKE) -C src build
 
 hopsh-bin: lib
@@ -59,12 +60,17 @@ hopreplay-bin: lib
 hophz-bin: lib hopc-bin widget
 	$(MAKE) -C hophz build
 
-lib: libdir scheme2js
+lib: libdir scheme2js js2scheme hopscript
 	$(MAKE) -C hopscheme build
 	$(MAKE) -C runtime build
+	$(MAKE) -C js2scheme build
+	$(MAKE) -C hopscript build
 
 widget: libdir hopc-bin share-afile
 	$(MAKE) -C widget build
+
+nodejs: libdir hopc-bin share-afile
+	$(MAKE) -C nodejs build
 
 share-afile: scheme2js
 	$(MAKE) -C share .afile
@@ -88,6 +94,9 @@ dep:
 	$(MAKE) -C scheme2js dep
 	$(MAKE) -C hopscheme dep
 	$(MAKE) -C runtime dep
+	$(MAKE) -C js2scheme dep
+	$(MAKE) -C hopscript dep
+	$(MAKE) -C nodejs dep
 	$(MAKE) -C src dep
 	$(MAKE) -C hopsh dep
 	$(MAKE) -C hopreplay dep
@@ -99,6 +108,9 @@ ude:
 	$(MAKE) -C scheme2js ude
 	$(MAKE) -C hopscheme ude
 	$(MAKE) -C runtime ude
+	$(MAKE) -C js2scheme ude
+	$(MAKE) -C hopscript ude
+	$(MAKE) -C nodejs ude
 	$(MAKE) -C src ude
 	$(MAKE) -C hopsh ude
 	$(MAKE) -C hopreplay ude
@@ -127,6 +139,9 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
 	$(MAKE) -C hopscheme install && \
+	$(MAKE) -C js2scheme install && \
+	$(MAKE) -C hopscript install && \
+	$(MAKE) -C nodejs install && \
 	$(MAKE) -C src install && \
 	$(MAKE) -C hopsh install && \
 	$(MAKE) -C hopc install && \
@@ -142,6 +157,12 @@ install-init: hop-dirs
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/scheme2js.init;
 	$(INSTALL) $(BUILDLIBDIR)/hopscheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscheme.init;
+	$(INSTALL) $(BUILDLIBDIR)/js2scheme.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/js2scheme.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/js2scheme.init;
+	$(INSTALL) $(BUILDLIBDIR)/hopscript.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init;
+	$(INSTALL) $(BUILDLIBDIR)/nodejs.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init;
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
@@ -194,6 +215,9 @@ uninstall:
 	$(MAKE) -C widget uninstall
 	$(MAKE) -C scheme2js uninstall
 	$(MAKE) -C hopscheme uninstall
+	$(MAKE) -C js2scheme uninstall
+	$(MAKE) -C hopscript uninstall
+	$(MAKE) -C nodejs uninstall
 	if [ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then \
 	  $(RM) -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
@@ -216,6 +240,9 @@ clean:
 	$(MAKE) -C runtime clean
 	$(MAKE) -C scheme2js clean
 	$(MAKE) -C hopscheme clean
+	$(MAKE) -C js2scheme clean
+	$(MAKE) -C hopscript clean
+	$(MAKE) -C nodejs clean
 	$(MAKE) -C src clean
 	$(MAKE) -C hopsh clean
 	$(MAKE) -C hophz clean
@@ -245,6 +272,7 @@ distclean: clean
 	$(MAKE) -C hopreplay distclean
 	$(MAKE) -C widget distclean
 	$(MAKE) -C share distclean
+	$(MAKE) -C nodejs distclean
 	$(RM) -f etc/Makefile.hopconfig
 	$(RM) -f etc/hop.man
 	$(RM) -f etc/hopsh.man
@@ -253,6 +281,9 @@ distclean: clean
 	$(RM) -f lib/hop.init
 	$(RM) -f lib/scheme2js.init
 	$(RM) -f lib/hopscheme.init
+	$(RM) -f lib/js2scheme.init
+	$(RM) -f lib/nodejs.init
+	$(RM) -f lib/hopscript.init
 	$(RM) -f runtime/configure_android.sch
 	$(RM) -f runtime/configure_macosx.sch
 	$(RM) -f runtime/configure_noarch.sch

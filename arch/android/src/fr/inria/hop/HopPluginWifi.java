@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
+/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Tue Feb 18 15:28:18 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:31:13 2014 (serrano)                */
 /*    Copyright   :  2011-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */

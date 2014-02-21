@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/etc/hop.init.in                   */
+;*    serrano/prgm/project/hop/2.3.x/etc/hop.init.in                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Thu Sep 19 11:19:49 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Fri Dec  2 07:15:02 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
 ;*=====================================================================*/

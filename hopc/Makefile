@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/2.3.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Nov 17 11:09:16 2013 (serrano)                */
+#*    Last change :  Tue Apr 10 09:08:04 2012 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -174,23 +174,21 @@ install-jvm:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	$(RM) -f .afile
-	$(RM) -f $(OBJECTS)
-	$(RM) -f $(MODULES:%=%.c)
-	$(RM) -rf o
-	$(RM) -f $(BUILDBINDIR)/$(EXEC)
-	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
-	$(RM) -rf META-INF
+	/bin/rm -f .afile
+	/bin/rm -f $(OBJECTS)
+	/bin/rm -f $(MODULES:%=%.c)
+	/bin/rm -rf o
+	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
+	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
+	/bin/rm -rf META-INF
 
 devclean: clean
-
-distclean: clean
 
 cleanall: devclean
 

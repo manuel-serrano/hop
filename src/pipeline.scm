@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Nov 29 08:11:22 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:27:04 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -144,7 +144,7 @@
 (define (stage-request-error-handler e id sock mode)
 
    ;; is the error raised of a timeout in a keep-alive connection?
-   (define (keep-alive-elapsed-error? e)
+   (define (keep-alive-ellapsed-error? e)
       (and (eq? mode 'keep-alive)
 	   (or (isa? e &io-timeout-error)
 	       (isa? e &io-connection-error)
@@ -152,12 +152,12 @@
 		    (with-access::&io-parse-error e (obj)
 		       (eof-object? obj))))))
 
-   (if (keep-alive-elapsed-error? e)
+   (if (keep-alive-ellapsed-error? e)
        ;; this is not a true error, just log
        (hop-verb 3 (hop-color id id " SHUTDOWN")
 	  (cond
 	     ((isa? e &io-timeout-error)
-	      " (keep-alive, timeout elapsed)")
+	      " (keep-alive, timeout ellapsed)")
 	     ((and (isa? e &io-parse-error)
 		   (with-access::&io-parse-error e (obj)
 		      (eof-object? obj)))

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/2.6.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jan 28 11:04:29 2014 (serrano)                */
+/*    Last change :  Tue Jan 28 11:04:03 2014 (serrano)                */
 /*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */

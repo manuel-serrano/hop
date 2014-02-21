@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Mon Jan  6 18:28:01 2014 (serrano)                */
-/*    Copyright   :  2005-14 Manuel Serrano                            */
+/*    Last change :  Fri Jul 26 08:45:08 2013 (serrano)                */
+/*    Copyright   :  2005-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/

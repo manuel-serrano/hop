@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/2.6.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov  4 19:22:18 2013 (serrano)                */
+;*    Last change :  Mon Nov  4 19:22:46 2013 (serrano)                */
 ;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -62,11 +62,14 @@
 	    (hopc-clientc-pp::bool)
 	    (hopc-clientc-pp-set! ::bool)
 	    
-	    (hopc-clientc-compress::bool)
-	    (hopc-clientc-compress-set! ::bool)
-	    
 	    (hopc-clientc-inlining::bool)
-	    (hopc-clientc-inlining-set! ::bool))
+	    (hopc-clientc-inlining-set! ::bool)
+
+	    (hopc-source-language::symbol)
+	    (hopc-source-language-set! ::symbol)
+
+	    (hopc-optim-level::int)
+	    (hopc-optim-level-set! ::int))
 	    
    (eval    (export-exports)))
 
@@ -86,13 +89,14 @@
 ;*    hopc-bigloo-options ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-options
-   '("-fidentifier-syntax" "bigloo"))
+   `("-lib-dir" ,(make-file-path (hop-lib-directory) "hop" (hop-version))
+       "-fidentifier-syntax" "bigloo"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-pass
-   'object)
+   'link)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-sources ...                                                 */
@@ -167,14 +171,19 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    hopc-clientc-compress ...                                        */
-;*---------------------------------------------------------------------*/
-(define-parameter hopc-clientc-compress
-   #f)
-
-;*---------------------------------------------------------------------*/
 ;*    hopc-clientc-inlining ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-clientc-inlining
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    hopc-source-language ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-language
+   'auto)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-optim-level ...                                             */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-optim-level
+   1)

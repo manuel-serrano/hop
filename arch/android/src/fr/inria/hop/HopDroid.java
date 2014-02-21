@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hop/2.5.x/arch/android/src/fr/inria/hop/HopDroid.java        */
+/*    .../hop/2.6.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Feb 18 15:13:33 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:28:28 2014 (serrano)                */
 /*    Copyright   :  2010-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -342,15 +342,9 @@ public class HopDroid extends Thread {
       Log.i( "HopDroid", "serverPlugin connected sock=" + pluginclient );
 
       try {
-	 int count = 0;
-	 
 	 while( true ) {
-	    Log.d( "HopDroid", "~~~ server waiting connection...(" + ++count + ")" );
-	    
 	    final int version = ip.read();
 
-	    Log.d( "HopDroid", "!!! version=" + version + " (" + count + ")" );
-	    
 	    if( version != protocol ) {
 	       if( version != -1 ) {
 		  Log.e( "HopDroid", "serverPlugin protocol error: incompatible version " +
@@ -362,31 +356,20 @@ public class HopDroid extends Thread {
 	    }
 
 	    final int id = read_int32( ip );
-	    Log.d( "HopDroid", ">>> plugin=" + id + "... getting plugin"
-		   + " (" + count + ")");
 	       
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 		  
-	       Log.d( "HopDroid", "!!! plugin=" + id +
-		      "... plugin found: " + p.name
-		      + " (" + count + ")" );
 	       p.server( ip, op );
 /* 	       op.write( " ".getBytes() );                             */
 
-	       Log.d( "HopDroid",
-		      "??? plugin=" + id + "... reading sentinel"
-		      + " (" + count + ")");
 	       final int m = ip.read();
 		  
 	       if( m != 127 ) {
 		  Log.e( "HopDroid", "protocol error: illegal " 
-			 + p.name + " mark: " + m
-			 + " (" + count + ")");
+			 + p.name + " mark: " + m );
 	       }
 	       op.flush();
-	       Log.d( "HopDroid", "<<< plugin=" + id
-		      + " (" + count + ")");
 	    } catch( ArrayIndexOutOfBoundsException _ ) {
 	       Log.e( "HopDroid", "plugin not found: " + id );
 	       // we got an eof, escape from here
@@ -649,8 +632,8 @@ public class HopDroid extends Thread {
       synchronized( eventtable ) {
 	 Integer i = (Integer)eventtable.get( event );
 
-	 Log.i( ">>> HopDroid", "pushEvent event=[" + event + "] value=["
-		+ value + "] i=" + i );
+	 Log.i( "HopDroid", "pushEvent event=[" + event + "] value=["
+		+ value + "]" );
 	 if( (i != null) && (i > 0) ) {
 	    try {
 	       final OutputStream op = eventclient.getOutputStream();
@@ -668,8 +651,6 @@ public class HopDroid extends Thread {
 	       e.printStackTrace();
 	    }
 	 }
-	 Log.i( "<<< HopDroid", "pushEvent event=[" + event + "] value=["
-		+ value + "] i=" + i );
       }
    }
 

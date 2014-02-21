@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/2.6.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Dec 26 06:58:23 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 13:45:32 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -39,31 +39,69 @@
 	    __hop_hop)
    
    (export  (init-hop-services!)
-	    (inline service?::bool ::obj)
+	    (generic service?::bool ::obj)
+	    (generic service-resource::bstring ::obj #!optional file)
+	    (generic service-path::bstring ::obj)
+	    (generic service-proc::procedure ::obj)
+	    (generic service-base-url::bstring ::obj ::http-request)
 	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
 	    (hop-service-path? ::bstring)
 	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-url::bstring ::bstring ::pair-nil)
+	    (hop-apply-service-url::bstring ::hop-service ::pair-nil)
 	    (service-funcall-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
+	    (unregister-service! ::hop-service)
 	    (expired-service-path?::bool ::bstring)
-	    (service-resource::bstring ::procedure #!optional file)
-	    (service-path::bstring ::procedure)
-	    (service-proc::procedure ::procedure)
-	    (service-base-url::bstring ::procedure ::http-request)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-inline (service? obj)
+(define-generic (service? obj)
    (and (procedure? obj) (isa? (procedure-attr obj) hop-service)))
+
+;*---------------------------------------------------------------------*/
+;*    service-resource ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (service-resource svc #!optional file)
+   (with-access::hop-service (procedure-attr svc) (resource)
+      (if (string? file)
+	  (string-append resource "/" file)
+	  resource)))
+
+;*---------------------------------------------------------------------*/
+;*    service-path ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (service-path svc)
+   (with-access::hop-service (procedure-attr svc) (path)
+      path))
+   
+;*---------------------------------------------------------------------*/
+;*    service-proc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (service-proc svc)
+   (with-access::hop-service (procedure-attr svc) (proc)
+      proc))
+   
+;*---------------------------------------------------------------------*/
+;*    service-base-url ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (service-base-url svc req)
+   (with-access::http-request req (scheme host port)
+      (let ((path (service-resource svc)))
+	 (format (if (and (>fx (string-length path) 0)
+			  (not (char=? (string-ref path 0) #\/)))
+		     "~a://~a:~a/~a/"
+		     "~a://~a:~a~a/")
+		 (if (eq? scheme '*) "http" scheme) host port
+		 path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
@@ -84,6 +122,12 @@
 ;*---------------------------------------------------------------------*/
 (define *service-table*
    (make-hashtable #unspecified #unspecified equal-path? hash-path))
+
+;*---------------------------------------------------------------------*/
+;*    *service-source-table* ...                                       */
+;*---------------------------------------------------------------------*/
+(define *service-source-table*
+   (make-hashtable 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-all-services ...                                             */
@@ -188,6 +232,13 @@
       (string-append base
 		     "?hop-encoding=hop"
 		     "&vals=" (url-path-encode (obj->string o)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-apply-service-url ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-apply-service-url svc url)
+   (with-access::hop-service svc (path)
+      (hop-apply-url path url)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-funcall-url ...                                          */
@@ -525,42 +576,6 @@
    (synchronize *expiration-mutex*
       (hashtable-put! *expiration-table* path #t)
       #f))
-
-;*---------------------------------------------------------------------*/
-;*    service-resource ...                                             */
-;*---------------------------------------------------------------------*/
-(define (service-resource svc #!optional file)
-   (with-access::hop-service (procedure-attr svc) (resource)
-      (if (string? file)
-	  (string-append resource "/" file)
-	  resource)))
-
-;*---------------------------------------------------------------------*/
-;*    service-path ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (service-path svc)
-   (with-access::hop-service (procedure-attr svc) (path)
-      path))
-   
-;*---------------------------------------------------------------------*/
-;*    service-proc ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (service-proc svc)
-   (with-access::hop-service (procedure-attr svc) (proc)
-      proc))
-   
-;*---------------------------------------------------------------------*/
-;*    service-base-url ...                                             */
-;*---------------------------------------------------------------------*/
-(define (service-base-url svc req)
-   (with-access::http-request req (scheme host port)
-      (let ((path (service-resource svc)))
-	 (format (if (and (>fx (string-length path) 0)
-			  (not (char=? (string-ref path 0) #\/)))
-		     "~a://~a:~a/~a/"
-		     "~a://~a:~a~a/")
-		 (if (eq? scheme '*) "http" scheme) host port
-		 path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *etc-table*                                                      */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/2.6.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Feb  9 09:24:30 2014 (serrano)                */
+;*    Last change :  Fri Feb 21 13:49:13 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -50,7 +50,8 @@
 
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
-	    
+
+	    (generic xml-body ::obj)
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
@@ -305,6 +306,12 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-event-handler-attribute? keyword)
    (substring-at? (keyword->string! keyword) "on" 0))
+
+;*---------------------------------------------------------------------*/
+;*    xml-body ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-body obj)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

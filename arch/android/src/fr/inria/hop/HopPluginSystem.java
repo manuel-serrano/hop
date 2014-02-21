@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../2.5.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
+/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Tue Feb 18 15:27:17 2014 (serrano)                */
+/*    Last change :  Fri Feb 21 13:30:40 2014 (serrano)                */
 /*    Copyright   :  2012-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */

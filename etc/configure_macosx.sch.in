@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/etc/configure_macosx.sch.in       */
+;*    serrano/prgm/project/hop/2.2.x/etc/configure_macosx.sch.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon Sep 16 17:06:24 2013 (serrano)                */
+;*    Last change :  Sun Nov  7 08:59:35 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration (tuned for MacOSX bundle)                      */
 ;*=====================================================================*/
@@ -13,7 +13,7 @@
 ;*---------------------------------------------------------------------*/
 (directives
 
-   (extern (include "common/macosx_bundle.h")
+   (extern (include "macosx_bundle.h")
 	   (macro resource-dir-fill!::int (::string ::int) "resourceDirFill"))
    
    (export %etc-directory
@@ -76,22 +76,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
-;* (define (hop-configure-rc-directory)                                */
-;*    (make-file-path (or (getenv "HOME") "/") "Library/Preferences/hop")) */
 (define (hop-configure-rc-directory)
-   (let* ((host (hostname))
-	  (home (or (getenv "HOME") "/"))
-	  (conf (or (getenv "XDG_CONFIG_HOME") (make-file-name home ".config")))
-	  (pref "hop"))
-      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
-	 (if (string? host)
-	     (let ((conf/h (make-file-name conf (string-append pref "." host))))
-		(if (and (file-exists? conf/h) (directory? conf/h))
-		    conf/h
-		    (if (string=? (suffix host) "")
-			(make-file-name conf pref)
-			(loop (prefix host)))))
-	     (make-file-name conf pref)))))
+   (make-file-path (or (getenv "HOME") "/") "Library/Preferences/hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-var-directory ...                                  */

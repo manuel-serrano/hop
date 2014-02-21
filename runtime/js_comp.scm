@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/2.6.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Jan 27 17:18:11 2014 (serrano)                */
+;*    Last change :  Fri Feb 21 13:40:51 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -115,11 +115,24 @@
 (define-generic (hop->javascript obj op::output-port compile isexpr)
    (cond
       ((procedure? obj)
-       (if (service? obj)
-	   (compile (procedure-attr obj) op)
-	   (error "hop->javascript"
-	      "Illegal procedure in JavaScript conversion"
-	      obj)))
+       (let ((attr (procedure-attr obj)))
+	  (cond
+	     ((service? obj)
+	      (compile attr op))
+	     (attr
+	      (hop->javascript attr op compile isexpr))
+	     (else
+	      (error "hop->javascript"
+		 "Illegal procedure in JavaScript conversion"
+		 obj)))))
+      ((number? obj)
+       (display obj op))
+      ((string? obj)
+       (display "\"" op)
+       (display obj op)
+       (display "\"" op))
+      ((boolean? obj)
+       (display (if obj "true" "false") op))
       (else
        (error "hop->javascript"
 	  (format "Cannot compile value \"~a\"" (typeof obj))
@@ -208,8 +221,8 @@
 ;*    hop->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript obj::hop-service op compile isexpr)
-   (with-access::hop-service obj (javascript)
-      (display javascript op)))
+   (with-access::hop-service obj (javascript path)
+      (display (format javascript path) op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */

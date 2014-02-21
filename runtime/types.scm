@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/2.6.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Aug 19 06:27:46 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Wed Oct  2 19:04:44 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -172,7 +172,7 @@
 	      ;; the JS code calling that service
 	      (javascript::bstring read-only)
 	      ;; a time stamp
-	      (creation::elong read-only)
+	      (creation::elong read-only (default (date->seconds (current-date))))
 	      ;; a timeout in second
 	      (timeout::long read-only (default -1))
 	      ;; the number of times the service might be called

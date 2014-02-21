@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jul 22 14:31:25 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:21:48 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -68,8 +68,8 @@
 	    (hop-enable-fast-server-event::bool)
 	    (hop-enable-fast-server-event-set! ::bool)
 	    
-	    (hop-enable-repl::bool)
-	    (hop-enable-repl-set! ::bool)
+	    (hop-enable-repl::symbol)
+	    (hop-enable-repl-set! ::symbol)
 	    
 	    (hop-enable-jobs::bool)
 	    (hop-enable-jobs-set! ::bool)
@@ -275,7 +275,7 @@
 ;*    hop-enable-repl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-enable-repl
-   #f)
+   'none)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-jobs ...                                              */

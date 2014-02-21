@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/3.0.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Dec 27 18:10:55 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:23:06 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -109,8 +109,9 @@
 	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
 	    ;; when needed, start the HOP repl
-	    (when (hop-enable-repl)
-	       (hop-repl (hop-scheduler)))
+	    (case (hop-enable-repl)
+	       ((scm) (hop-repl (hop-scheduler)))
+	       ((js) (hopscript-repl (hop-scheduler))))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -118,7 +119,7 @@
 	       (if (file-exists? (hop-script-file))
 		   (hop-load (hop-script-file))
 		   (hop-load-rc (hop-script-file))))
-	    ;; preload the files of the command lines
+	    ;; preload the files of the command line
 	    (when (pair? files)
 	       (let ((req (instantiate::http-server-request
 			     (host "localhost")
@@ -200,6 +201,8 @@
 	  ;; load a directory
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
+	 ((string-suffix? ".js" path)
+	  (nodejs-load path))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
@@ -214,16 +217,30 @@
 	      (error "hop-repl"
 		 "HOP REPL cannot be spawned without multi-threading"
 		 scd)
-	      (spawn0 scd stage-repl)))
+	      (spawn0 scd (stage-repl repl))))
+       (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-repl ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hopscript-repl scd)
+   (if (>fx (hop-max-threads) 1)
+       (with-access::scheduler scd (size)
+	  (if (<=fx size 1)
+	      (error "hop-repl"
+		 "HOP REPL cannot be spawned without multi-threading"
+		 scd)
+	      (spawn0 scd (stage-repl repljs))))
        (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (stage-repl scd thread)
-   (debug-thread-info-set! thread "stage-repl")
-   (hop-verb 1 "Entering repl...\n")
-   (begin (repl) (exit 0)))
+(define (stage-repl repl)
+   (lambda (scd thread)
+      (debug-thread-info-set! thread "stage-repl")
+      (hop-verb 1 "Entering repl...\n")
+      (begin (repl) (exit 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-server ...                                             */

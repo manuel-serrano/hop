@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/2.6.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Sun Nov 17 10:35:14 2013 (serrano)                */
-#*    Copyright   :  2006-13 Manuel Serrano                            */
+#*    Last change :  Thu Feb 13 08:28:33 2014 (serrano)                */
+#*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -26,7 +26,7 @@ LIBVERSION	= $(HOPRELEASE)
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .hop
+.SUFFIXES: .scm .class .java .o .hop .js
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
@@ -40,6 +40,9 @@ o/%.o: %.hop
 %.scm: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
+o/%.o: %.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
+
 $(CLASS_DIR)/%.class: %.scm
 	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
@@ -50,6 +53,12 @@ $(CLASS_DIR)/%.class: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.hop
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
+
+$(CLASS_DIR)/%.class: %.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
+
+$(CLASS_EDIR)/%.class: %.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
@@ -236,6 +245,8 @@ stdclean:
 udeclean:
 	$(RM) -f .afile .etags .jfile
 
+devclean: cleanall
+
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
@@ -243,8 +254,6 @@ clean: stdclean
 	$(RM) -rf o
 
 cleanall: stdclean udeclean
-
-devclean: cleanall
 
 distclean: cleanall
 
