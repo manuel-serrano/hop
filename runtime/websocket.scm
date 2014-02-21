@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Feb 21 13:48:12 2014 (serrano)                */
+;*    Last change :  Fri Feb 21 17:25:36 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -13,8 +13,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_websocket
-
+   
    (include "http_lib.sch"
+	    "service.sch"
             "verbose.sch"
 	    "thread.sch")
 
