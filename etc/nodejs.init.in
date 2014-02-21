@@ -1,0 +1,30 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/1.9.x/etc/nodejs.init.in                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
+;*    Last change :  Mon Apr 21 08:50:03 2008 (serrano)                */
+;*    Copyright   :  2008 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    NODEJS init file.                                                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Library                                                          */
+;*---------------------------------------------------------------------*/
+(declare-library! 'nodejs
+		  :version "@VERSION@"
+		  :module-init '__nodejs
+		  :module-eval '__nodejs_makelib
+		  :class-eval "bigloo.nodejs.make_lib")
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    (set! *additional-bigloo-libraries*
+	  (cons 'hopscript *additional-bigloo-libraries*)))
+   (bigloo-eval
+    (library-load 'hopscript)
+    #unspecified))

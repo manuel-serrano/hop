@@ -1,0 +1,331 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.6.x/hopscript/arguments.scm           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
+;*    Last change :  Tue Feb  4 11:23:38 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Native Bigloo support of JavaScript arguments objects            */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(module __hopscript_arguments
+
+   (import __hopscript_types
+	   __hopscript_object
+	   __hopscript_function
+	   __hopscript_property
+	   __hopscript_error
+	   __hopscript_private
+	   __hopscript_public)
+
+   (export (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
+	   (js-arguments ::vector)
+	   (js-strict-arguments ::pair-nil)
+	   (js-arguments->list ::JsArguments)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments-define-own-property ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-define-own-property arguments indx prop)
+   (with-access::JsArguments arguments (vec)
+      (vector-set! vec indx prop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-property ::JsArguments ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-property o::JsArguments p)
+   (let ((index (js-toindex p)))
+      (if index
+	  (with-access::JsArguments o (vec)
+	     (let ((len (vector-length vec))
+		   (index (->fixnum index)))
+		(if (<=fx len index)
+		    (call-next-method)
+		    #t)))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property ::JsArguments ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property o::JsArguments p)
+   (let ((index (js-toindex p)))
+      (if index
+	  (with-access::JsArguments o (vec)
+	     (let ((len (vector-length vec))
+		   (index (->fixnum index)))
+		(if (or (<=fx len index)
+			(eq? (vector-ref-ur vec index) (js-absent)))
+		    (call-next-method)
+		    (vector-ref-ur vec index))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::JsArguments ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsArguments p)
+   (with-access::JsArguments o (vec properties)
+      (let ((i (js-toindex p)))
+	 (cond
+	    ((not i)
+	     (call-next-method))
+	    ((< i (vector-length vec))
+	     (let ((desc (vector-ref vec (->fixnum i))))
+		(if (eq? desc (js-absent))
+		    (call-next-method)
+		    (js-property-value o desc))))
+	    (else
+	     (call-next-method))))))
+       
+;*---------------------------------------------------------------------*/
+;*    js-put! ::JsArguments ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::JsArguments p v throw)
+   (with-access::JsArguments o (vec)
+      (let ((i (js-toindex p)))
+	 (cond
+	    ((not i)
+	     (call-next-method))
+	    ((< i (vector-length vec))
+	     (let ((desc (vector-ref vec (->fixnum i))))
+		(cond
+		   ((eq? desc (js-absent))
+		    (call-next-method))
+		   ((isa? desc JsAccessorDescriptor)
+		    (with-access::JsAccessorDescriptor desc (set)
+		       (js-call1 set o v)))
+		   ((isa? desc JsValueDescriptor)
+		    (with-access::JsValueDescriptor desc (value writable)
+		       (if writable
+			   (begin
+			      (set! value v)
+			      v)
+			   (js-undefined))))
+		   (else
+		    (js-undefined)))))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-delete! ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define-method (js-delete! o::JsArguments p throw)
+   (with-access::JsArguments o (vec properties)
+      (let ((i (js-toindex p)))
+	 (cond
+	    ((not i)
+	     (call-next-method))
+	    ((< i (vector-length vec))
+	     (let ((i (->fixnum i)))
+		(with-access::JsPropertyDescriptor (vector-ref vec i)
+		      (configurable)
+		   (if configurable
+		       (begin
+			  (vector-set! vec i (js-absent))
+			  #t)
+		       #f))))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-replace-own-property! ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-replace-own-property! o::JsArguments old new)
+   (with-access::JsPropertyDescriptor old ((p name))
+      (with-access::JsArguments o (vec)
+	 (let ((i (js-toindex p)))
+	    (cond
+	       ((not i)
+		(call-next-method))
+	       ((and (< i (vector-length vec))
+		     (not (eq? (vector-ref vec (->fixnum i)) (js-absent))))
+		(vector-set! vec (->fixnum i) new))
+	       (else
+		(call-next-method)))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-mapped-property ...                                          */
+;*---------------------------------------------------------------------*/
+(define (get-mapped-property o::JsArguments p)
+   (with-access::JsArguments o (vec)
+      (let ((i (js-toindex p)))
+	 (when (and i (< i (vector-length vec))
+		    (not (eq? (vector-ref vec (->fixnum i)) (js-absent))))
+	    (vector-ref vec (->fixnum i))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-define-own-property ...                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define-method (js-define-own-property::bool o::JsArguments p desc throw)
+   ;; step 2
+   (let* ((ismapped (get-mapped-property o p))
+	  (allowed (js-define-own-property% o (js-toname p) desc #f)))
+      ;; 3
+      (if (not allowed)
+	  ;; 4
+	  (js-raise-type-error "Illegal arguments property override ~s"
+	     (with-access::JsPropertyDescriptor desc (name) name))
+	  (begin
+	     (when ismapped
+		;; 5
+		(if (isa? desc JsAccessorDescriptor)
+		    ;; 5.a (don't need to delete as define-own-property%
+		    ;; has replace the property) but we need to propagate
+		    ;; the set attribute of the new desc
+		    (with-access::JsAccessorDescriptor desc ((dset set))
+		       (when (isa? ismapped JsAccessorDescriptor)
+			  (with-access::JsAccessorDescriptor ismapped (set)
+			     (set! set
+				(if (isa? dset JsFunction)
+				    dset
+				    (js-undefined))))))
+		    (begin
+		       ;; 5.b
+		       (when (isa? desc JsValueDescriptor)
+			  ;; 5.b.i
+			  (with-access::JsValueDescriptor desc (value)
+			     (cond
+				((isa? ismapped JsAccessorDescriptor)
+				 (with-access::JsAccessorDescriptor ismapped
+				       (set)
+				    (when (isa? set JsFunction)
+				       (js-call1 set o value))))
+				((isa? ismapped JsValueDescriptor)
+				 (with-access::JsValueDescriptor ismapped
+				       ((avalue value) writable)
+				    (when writable
+				       (set! avalue value)))))))
+		       (when (isa? desc JsDataDescriptor)
+			  (with-access::JsDataDescriptor desc (writable)
+			     (when (eq? writable #f)
+				;; 5.b.ii (don't need to delete as
+				;; define-own-property%
+				;; has replace the property)
+				#unspecified))))))
+	     #t))))
+
+;*---------------------------------------------------------------------*/
+;*    js-property-names ::JsArray ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-property-names obj::JsArguments enump)
+   (with-access::JsArguments obj (vec)
+      (let ((len (max 0 (js-touint32 (js-get obj 'length)))))
+	 (vector-append
+	    (apply vector (map! integer->string (iota (->fixnum len))))
+	    (call-next-method))	 )))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property o::JsArguments p)
+   (or (get-mapped-property o p) (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define (js-arguments vec::vector)
+   (let ((obj (instantiate::JsArguments
+		 (vec vec)
+		 (cmap (instantiate::JsConstructMap))
+		 (elements (make-vector 1))
+		 (__proto__ js-object-prototype))))
+      (js-bind! obj 'length
+	 :value (vector-length vec)
+	 :enumerable #f :configurable #t :writable #t)
+      (js-bind! obj 'callee
+	 :value (js-undefined)
+	 :enumerable #f :configurable #t :writable #t)
+      obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-strict-arguments ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-strict-arguments lst::pair-nil)
+   
+   (define (value->descriptor v i)
+      (instantiate::JsValueDescriptor
+	 (name (string->symbol (integer->string i)))
+	 (value v)
+	 (writable #t)
+	 (configurable #t)
+	 (enumerable #t)))
+   
+   (let* ((len (length lst))
+	  (vec (make-vector len)))
+      ;; initialize the vector of descriptor
+      (let loop ((i 0)
+		 (lst lst))
+	 (when (pair? lst)
+	    (vector-set! vec i (value->descriptor (car lst) i))
+	    (loop (+fx i 1) (cdr lst))))
+      ;; build the arguments object
+      (let ((obj (instantiate::JsArguments
+		    (vec vec)
+		    (elements (make-vector 1))
+		    (__proto__ js-object-prototype))))
+	 (js-bind! obj 'length
+	    :value len
+	    :enumerable #f :configurable #t :writable #t)
+	 (js-bind! obj 'caller
+	    :get thrower-get
+	    :set thrower-set
+	    :enumerable #f :configurable #f)
+	 (js-bind! obj 'callee
+	    :get thrower-get
+	    :set thrower-set
+	    :enumerable #f :configurable #f)
+	 obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments->list ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-arguments->list obj::JsArguments)
+   (with-access::JsArguments obj (vec)
+      (map! (lambda (d) (js-property-value obj d)) (vector->list vec))))
+
+;*---------------------------------------------------------------------*/
+;*    js-freeze ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-freeze o::JsArguments obj)
+   (with-access::JsArguments o (vec)
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (when (>=fx i 0)
+	    (let ((desc (vector-ref vec i)))
+	       (unless (eq? desc (js-absent))
+		  (js-freeze-property! desc)))
+	    (loop (-fx i 1))))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-in ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-in o::JsArguments proc)
+   (with-access::JsArguments o (vec)
+      (if (>fx (vector-length vec) 0)
+	  (let ((len (minfx (vector-length vec)
+			(->fixnum (js-touint32 (js-get o 'length))))))
+	     (let loop ((i 0))
+		(if (<fx i len)
+		    (begin
+		       (proc (integer->string i))
+		       (loop (+fx i 1)))
+		    (call-next-method))))
+	  (call-next-method))))
+  

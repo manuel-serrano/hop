@@ -1,0 +1,53 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.6.x/hopscript/make_lib.scm            */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
+;*    Last change :  Tue Nov  5 09:20:05 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    THe module used to build the hopscript heap file.                */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hopscript_makelib
+
+   (library hop)
+   
+   (import __hopscript_types
+	   __hopscript_property
+	   __hopscript_public
+	   __hopscript_lib
+	   __hopscript_object
+	   __hopscript_arguments
+	   __hopscript_function
+	   __hopscript_service
+	   __hopscript_array
+	   __hopscript_string
+	   __hopscript_number 
+	   __hopscript_math
+	   __hopscript_boolean
+	   __hopscript_date
+	   __hopscript_regexp
+	   __hopscript_error
+	   __hopscript_json)
+   
+   (eval   (export-all)
+
+           (class JsObject)
+	   (class JsFunction)
+	   (class JsService)
+	   (class JsArray)
+	   (class JsString)
+	   (class JsNumber)
+	   (class JsRegExp)
+	   (class JsBoolean)
+	   (class JsDate)
+	   (class JsError)
+
+	   (class JsPropertyCache)
+	   
+	   (class JsValueDescriptor)
+	   (class JsAccessorDescriptor)))
