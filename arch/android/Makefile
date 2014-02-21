@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/3.0.x/arch/android/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Mar 27 12:06:59 2013 (serrano)                */
-#*    Copyright   :  2010-13 Manuel Serrano                            */
+#*    Last change :  Fri Feb 21 17:03:24 2014 (serrano)                */
+#*    Copyright   :  2010-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*=====================================================================*/
@@ -62,9 +62,15 @@ ANDROID_RES = res/drawable/logo.png \
   res/layout/main.xml \
   res/layout/about.xml \
   res/layout/info.xml \
+  res/layout-sw720dp/info.xml \
+  res/layout-sw720dp/main.xml \
+  res/layout-sw720dp/about.xml \
   res/layout-sw600dp/info.xml \
   res/layout-sw600dp/main.xml \
   res/layout-sw600dp/about.xml \
+  res/layout-sw480dp/info.xml \
+  res/layout-sw480dp/main.xml \
+  res/layout-sw480dp/about.xml \
   res/xml/preferences.xml.in \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
   res/menu/hop_menu.xml

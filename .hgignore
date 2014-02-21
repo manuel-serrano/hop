@@ -55,3 +55,13 @@ config.status
 ^runtime/configure_android.sch$
 ^runtime/configure_macosx.sch$
 ^runtime/configure_noarch.sch$
+^nodejs/nodejs.sch$
+^hopscript/hopscript.sch$
+^arch/debian/makedeb.sh$
+^share/hop-debug.js.map$
+^share/hop-exception.js.map$
+^widget/colorchooser.scm$
+^widget/gauge.scm$
+^widget/spage.scm$
+^widget/spinbutton.scm$
+
