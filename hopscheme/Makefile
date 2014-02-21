@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/hopscheme/Makefile                */
+#*    serrano/prgm/project/hop/3.0.x/hopscheme/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Thu Apr 11 11:29:54 2013 (serrano)                */
-#*    Copyright   :  2006-13 Manuel Serrano                            */
+#*    Last change :  Fri Feb 21 16:58:37 2014 (serrano)                */
+#*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -34,7 +34,7 @@ BLIBFLAGS = $(BSCM2JSFLAGS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = hopscheme dollar_escape \
+_BGL_OBJECTS = hopscheme dollar_escape tilde \
 	       hopscheme_config hop_runtime \
 	       dollar_scheme2js_module precompilation
 
