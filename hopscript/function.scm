@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/function.scm            */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/function.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Feb 12 17:18:33 2014 (serrano)                */
+;*    Last change :  Fri Mar  7 10:17:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -254,20 +254,21 @@
 		    (map! (lambda (d) (js-property-value argarray d))
 		       (filter (lambda (d)
 				  (with-access::JsPropertyDescriptor d (name)
-				     (js-toindex name)))
+				     (js-isindex? (js-toindex name))))
 			  properties)))))))
       (else
        ;; slow path
-       (let ((len (js-get argarray 'length)))
+       (let ((len (uint32->fixnum (js-touint32 (js-get argarray 'length)))))
+	  ;; assumes here a fixnum length as an iteration over the range
+	  ;; 1..2^32-1 is not computable with 2014 computer's performance
 	  (with-access::JsArray argarray (vec)
 	     (let loop ((i 0)
 			(acc '()))
-		(if (= i len)
+		(if (=fx i len)
 		    ;; fast path
 		    (js-apply this thisarg (reverse! acc))
 		    ;; slow path
-		    (loop (+ i 1)
-		       (cons (js-get argarray i) acc)))))))))
+		    (loop (+fx i 1) (cons (js-get argarray i) acc)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-call ...                                   */

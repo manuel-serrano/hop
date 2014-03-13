@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/3.0.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Dec 19 10:31:43 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Wed Feb 26 17:53:26 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -206,9 +206,10 @@
       
       (define (compile-hop in opts file)
 	 (compile in
-	    (append '("-library" "hop"
+	    (append `("-library" "hop"
 		      "-library" "hopscheme"
-		      "-library" "hopwidget")
+		      "-library" "hopwidget"
+		      "-rpath" ,(hop-lib-directory))
 	       opts)
 	    (lambda (out)
 	       (let loop ()
@@ -224,9 +225,10 @@
       
       (define (compile-hopscript in opts file)
 	 (compile in
-	    (append '("-library" "hopscript"
+	    (append `("-library" "hopscript"
 		      "-library" "nodejs"
-		      "-library" "web")
+		      "-library" "web"
+		      "-rpath" ,(hop-lib-directory))
 	       opts)
 	    (lambda (out)
 	       (map (lambda (e) (write (obj->string e) out))

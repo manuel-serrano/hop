@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.2.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    .../prgm/project/hop/2.5.x/weblets/hzbuilder/hzbuilder.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Nov 16 17:03:26 2011 (serrano)                */
-;*    Copyright   :  2005-11 Manuel Serrano                            */
+;*    Last change :  Wed Mar  5 16:59:57 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
 ;*=====================================================================*/
@@ -90,8 +90,7 @@
 				(let ((log (dom-get-element-by-id
 					      "hzb-log")))
 				   (innerHTML-set! log h)
-				   (node-style-set!
-					 log
+				   (node-style-set! log
 				      :display "block"))))))))
 	       
 	       ~(define (test-weblet)
@@ -295,9 +294,9 @@
 							  (lambda (h)
 							     (innerHTML-set! preview h))))
 					  :oncancel (window-close "hzb-filebrowser")
-					  :onopen (begin
-						     (set! $img.src this.value)
-						     (set! $img.title this.value)
+					  :onopen (let ((img $img))
+						     (set! img.src this.value)
+						     (set! img.title this.value)
 						     (window-close "hzb-filebrowser"))
 					  (<DIV> :id "hzb-preview"
 					     :onclick ~(window-open :src this.value)
@@ -413,8 +412,7 @@
 		     :id "hzb-dash"
 		     :default #f
 		     :onclick ~(let ((el (dom-get-element-by-id "hzb-dashicon")))
-				  (node-style-set!
-					el
+				  (node-style-set! el
 				     :display (if this.checked "block" "none")))
 		     "dashboard"))
 	    (<TD> (<DIV> :id "hzb-dashicon" :style "display: none"

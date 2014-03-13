@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 12 17:11:01 2014 (serrano)                */
+;*    Last change :  Wed Mar 12 08:50:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -87,13 +87,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    property-flags ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (property-flags writable enumerable configurable get)
-   (let ((flags 0))
-      (when writable (set! flags (bit-or flags 1)))
-      (when enumerable (set! flags (bit-or flags 2)))
-      (when configurable (set! flags (bit-or flags 4)))
-      (when get (set! flags (bit-or flags 8)))
-      flags))
+(define-macro (property-flags writable enumerable configurable get)
+   `(bit-or (if ,writable 1 0)
+       (bit-or (if ,enumerable 2 0)
+	  (bit-or (if ,configurable 4 0)
+	     (if ,get 8 0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-transition ...                                              */
@@ -133,9 +131,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    cmap-same-transition? ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (cmap-same-transition? cmap::JsConstructMap t2)
+(define (cmap-same-transition? cmap::JsConstructMap name::symbol flags::int)
    (with-access::JsConstructMap cmap ((t1 transition))
-      (and (eq? (car t1) (car t2)) (=fx (cdr t1) (cdr t2)))))
+      (and (eq? (car t1) name) (=fx (cdr t1) flags))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property-index-vector ...                                        */
@@ -159,10 +157,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toname p)
    (cond
-      ((string? p) (string->symbol p))
-      ((symbol? p) p)
-      ((fixnum? p) (fixnum->pname p))
-      (else (js-toname (js-tostring p)))))
+      ((string? p)
+       (string->symbol p))
+      ((symbol? p)
+       p)
+      ((fixnum? p)
+       (fixnum->pname p))
+      ((uint32? p)
+       (cond-expand
+	  (bint30
+	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
+	       (fixnum->pname (uint32->fixnum p))
+	       (string->symbol (llong->string (uint32->llong p)))))
+	  (bint32
+	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
+	       (fixnum->pname (uint32->fixnum p))
+	       (string->symbol (llong->string (uint32->llong p)))))
+	  (else
+	   (fixnum->pname (uint32->fixnum p)))))
+      (else
+       (js-toname (js-tostring p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-map-find ...                                            */
@@ -739,9 +753,6 @@
 	  (js-raise-type-error (format "[[PUT]], ~a ~~s" msg) (js-toname p))
 	  value))
 
-   (define (get-transition name::symbol)
-      (cmap-transition name (property-flags #t #t #t #f)))
-
    (define (update-accessor-descriptor! obj value desc)
       ;; 8.12.5
       (with-access::JsAccessorDescriptor desc (set)
@@ -787,9 +798,9 @@
       (with-access::JsObject o (elements cmap)
 	 (with-access::JsConstructMap cmap (nextmap names descriptors)
 	    (let* ((name (js-toname p))
-		   (trans (get-transition name))
+		   (flags (property-flags #t #t #t #f))
 		   (index (vector-length names)))
-	       (if (cmap-same-transition? cmap trans)
+	       (if (cmap-same-transition? cmap name flags)
 		   ;; follow the next map 
 		   (with-access::JsConstructMap nextmap (names)
 		      (set! cmap nextmap))
@@ -801,7 +812,8 @@
 				      (writable #t)
 				      (enumerable #t)
 				      (configurable #t)))
-			  (nextmap (extend-cmap cmap name newdesc)))
+			  (nextmap (extend-cmap cmap name newdesc))
+			  (trans (cmap-transition name flags)))
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)))
 	       ;; store in the obj
@@ -899,9 +911,6 @@
 	   (enumerable #t)
 	   (configurable #t))
    
-   (define (get-transition name::symbol)
-      (cmap-transition name (property-flags writable enumerable configurable get)))
-
    (define (update-mapped-object! obj i)
       (with-access::JsObject obj (cmap)
 	 (with-access::JsConstructMap cmap (descriptors transition nextmap)
@@ -925,10 +934,10 @@
       ;; 8.12.5, step 6
       (with-access::JsObject o (elements cmap)
 	 (with-access::JsConstructMap cmap (nextmap names descriptors)
-	    (let ((trans (get-transition name))
+	    (let ((flags (property-flags writable enumerable configurable get))
 		  (index (vector-length names)))
 	       (cond
-		  ((cmap-same-transition? cmap trans)
+		  ((cmap-same-transition? cmap name flags)
 		   ;; follow the next map 
 		   (with-access::JsConstructMap nextmap (names)
 		      (set! cmap nextmap)
@@ -944,7 +953,8 @@
 				      (set set)
 				      (enumerable enumerable)
 				      (configurable configurable)))
-			  (nextmap (extend-cmap cmap name newdesc)))
+			  (nextmap (extend-cmap cmap name newdesc))
+			  (trans (cmap-transition name flags)))
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory
@@ -960,7 +970,8 @@
 				      (writable writable)
 				      (enumerable enumerable)
 				      (configurable configurable)))
-			  (nextmap (extend-cmap cmap name newdesc)))
+			  (nextmap (extend-cmap cmap name newdesc))
+			  (trans (cmap-transition name flags)))
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; store in the obj
@@ -1221,9 +1232,10 @@
 
    (define (same-value v1 v2)
       (if (flonum? v1)
-	  (and (flonum? v2)
-	       (or (and (=fl v1 v2) (=fx (signbitfl v1) (signbitfl v2)))
-		   (and (nanfl? v1) (nanfl? v2))))
+	  (or (and (flonum? v2)
+		   (or (and (=fl v1 v2) (=fx (signbitfl v1) (signbitfl v2)))
+		       (and (nanfl? v1) (nanfl? v2))))
+	      (and (fixnum? v2) (=fl v1 (fixnum->flonum v2))))
 	  (equal? v1 v2)))
 
    (define (same-property-descriptor? current::JsPropertyDescriptor desc::JsPropertyDescriptor)

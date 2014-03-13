@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/scheme.scm              */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Feb 14 11:43:26 2014 (serrano)                */
+;*    Last change :  Mon Mar 10 07:53:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -392,6 +392,28 @@
 (define-method (j2s-scheme this::J2SLiteralValue mode return)
    (with-access::J2SLiteralValue this (val)
       val))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SNumber ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SNumber mode return)
+   (with-access::J2SNumber this (val)
+      (cond
+	 ((elong? val)
+	  (elong->flonum val))
+	 ((llong? val)
+	  (llong->flonum val))
+	 ((bignum? val)
+	  (bignum->flonum val))
+	 ((fixnum? val)
+	  (cond-expand
+	     (bint30
+	      val)
+	     (else
+	      (if (or (>=fx val (bit-lsh 1 30)) (<fx val (negfx (bit-lsh 1 30))))
+		  (fixnum->flonum val)
+		  val))))
+	 (else val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SString ...                                       */

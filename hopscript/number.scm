@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/number.scm              */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/number.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb  7 08:47:29 2014 (serrano)                */
+;*    Last change :  Wed Mar 12 12:47:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -29,16 +29,16 @@
 	   js-number-prototype
 	   (js-init-number! ::JsObject)
 	   
-	   (inline js+ left right)
+	   (js+ left right)
 	   (js-slow+ left right)
-	   (inline js- left right)
+	   (js- left right)
 	   (js-neg expr)
-	   (inline js* left right)
+	   (js* left right)
 	   (js/ left right)
 	   (js% left right)
-	   (js-bitlsh::elong left right)
-	   (js-bitrsh::elong left right)
-	   (js-bitursh::llong left right)
+	   (js-bitlsh::obj left right)
+	   (js-bitrsh::obj left right)
+	   (js-bitursh::obj left right)
 	   (js<::bool left right)
 	   (js>::bool left right)
 	   (js<=::bool left right)
@@ -324,10 +324,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js+ left right)
-   (if (and (number? left) (number? right))
-       (+ left right)
-       (js-slow+ left right)))
+(define (js+ left right)
+   (cond
+      ((and (fixnum? left) (fixnum? right))
+       (let ((r (+fx left right)))
+	  (if (or (>=fx r (bit-lsh 1 29)) (<fx r (negfx (bit-lsh 1 29))))
+	      (fixnum->flonum r)
+	      r)))
+      ((and (number? left) (number? right))
+       (+ left right))
+      (else
+       (js-slow+ left right))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
@@ -348,7 +355,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js- left right)
+(define (js- left right)
    (if (and (number? left) (number? right))
        (- left right)
        (let* ((lnum (js-tonumber left))
@@ -375,12 +382,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js* left right)
-   (if (and (number? left) (number? right))
-       (* left right)
-       (let* ((lnum (js-tonumber left))
-	      (rnum (js-tonumber right)))
-	  (* lnum rnum))))
+(define (js* left right)
+   (let ((r (if (and (number? left) (number? right))
+		(* left right)
+		(let* ((lnum (js-tonumber left))
+		       (rnum (js-tonumber right)))
+		   (* lnum rnum)))))
+      (if (bignum? r)
+	  (bignum->flonum r)
+	  r)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */
@@ -455,33 +465,33 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.1       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitlsh::elong left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-touint32 right))
-	  (shiftcount (llong->elong (bit-andllong rnum #l31))))
-      (js-toint32 (bit-lshelong lnum shiftcount))))
+(define (js-bitlsh left right)
+   (let* ((lnum (int32->elong (js-toint32 left)))
+	  (rnum (int32->elong (js-touint32 right)))
+	  (shiftcount (bit-andelong rnum #e31)))
+      (int32->integer (elong->int32 (bit-lshelong lnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitrsh ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.2       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitrsh::elong left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-touint32 right))
-	  (shiftcount (llong->elong (bit-andllong rnum #l31))))
-      (js-toint32 (bit-rshelong lnum shiftcount))))
+(define (js-bitrsh left right)
+   (let* ((lnum (int32->elong (js-toint32 left)))
+	  (rnum (uint32->elong (js-touint32 right)))
+	  (shiftcount (bit-andelong rnum #e31)))
+      (int32->integer (elong->int32 (bit-rshelong lnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitursh ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitursh::llong left right)
-   (let* ((lnum (js-touint32 left))
-	  (rnum (js-touint32 right))
-	  (shiftcount (llong->elong (bit-andllong rnum #l31))))
-      (js-touint32 (bit-urshllong lnum shiftcount))))
+(define (js-bitursh left right)
+   (let* ((lnum (int32->elong (js-touint32 left)))
+	  (rnum (uint32->elong (js-touint32 right)))
+	  (shiftcount (bit-andelong rnum #e31)))
+      (int32->integer (elong->int32 (bit-urshelong lnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js<                                                              */
@@ -553,9 +563,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (js-bitand left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-toint32 right)))
-      (bit-andelong lnum rnum)))
+   (let* ((lnum (int32->elong (js-toint32 left)))
+	  (rnum (int32->elong (js-toint32 right))))
+      (int32->integer (elong->int32 (bit-andelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitor ...                                                     */
@@ -563,9 +573,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (js-bitor left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-toint32 right)))
-      (bit-orelong lnum rnum)))
+   (let* ((lnum (int32->elong (js-toint32 left)))
+	  (rnum (int32->elong (js-toint32 right))))
+      (int32->integer (elong->int32 (bit-orelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitxor ...                                                    */
@@ -573,9 +583,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (js-bitxor left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-toint32 right)))
-      (bit-xorelong lnum rnum)))
+   (let* ((lnum (int32->elong (js-toint32 left)))
+	  (rnum (int32->elong (js-toint32 right))))
+      (int32->integer (elong->int32 (bit-xorelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitnot ...                                                    */
@@ -583,6 +593,5 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
 ;*---------------------------------------------------------------------*/
 (define (js-bitnot expr)
-   (let ((num (js-toint32 expr)))
-      (tprint expr " num=" num)
-      (bit-notelong num)))
+   (let ((num (int32->elong (js-toint32 expr))))
+      (int32->integer (elong->int32 (bit-notelong num)))))

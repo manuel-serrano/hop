@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.3.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/3.0.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Apr 10 09:08:04 2012 (serrano)                */
+#*    Last change :  Fri Mar  7 07:43:35 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -62,7 +62,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call link,$(BIGLOO),$(BCFLAGS),,$(OBJECTS),-o,$@)
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BLDFLAGS),$(OBJECTS),-o,$@)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	$(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
@@ -191,6 +191,8 @@ clean:
 devclean: clean
 
 cleanall: devclean
+
+distclean: devclean
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

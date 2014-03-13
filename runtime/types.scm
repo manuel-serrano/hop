@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Oct  2 19:04:44 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Tue Mar 11 07:49:39 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
 	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
 	      (scheme::symbol (default 'http))
-	      (port::bint (default 80))
+	      (port::int (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
@@ -86,7 +86,7 @@
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
 	      (scheme::symbol read-only (default 'http))
- 	      (port::bint read-only (default 80))
+ 	      (port::int read-only (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))

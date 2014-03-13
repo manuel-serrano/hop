@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/hophz/Makefile                    */
+#*    serrano/prgm/project/hop/3.0.x/hophz/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Nov 17 11:09:32 2013 (serrano)                */
+#*    Last change :  Wed Feb 26 17:46:55 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -17,7 +17,7 @@ do: build
 -include ../etc/Makefile.version
 
 BLFLAGS		= 
-BLINKFLAGS 	= -suffix hop
+BLINKFLAGS 	= -suffix hop $(BLDFLAGS)
 
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */

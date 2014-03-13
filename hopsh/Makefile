@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/hopsh/Makefile                    */
+#*    serrano/prgm/project/hop/3.0.x/hopsh/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Nov 17 11:09:23 2013 (serrano)                */
+#*    Last change :  Wed Feb 26 17:47:09 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -60,7 +60,7 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$@)
+	@ $(call link,$(BIGLOO),$(BCFLAGS) $(BLDFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$@)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .

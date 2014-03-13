@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Feb 21 16:18:41 2014 (serrano)                */
+#*    Last change :  Tue Mar  4 10:16:28 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -35,6 +35,7 @@ devmode=product
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+bldflags="-rpath \$(HOPLIBDIR)"
 bhflags=
 btflags="-gtrace"
 
@@ -89,7 +90,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.1a
+bigloorequired=4.2a
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -206,6 +207,9 @@ while : ; do
 
     --bcflags=*)
       bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --bldflags=*)
+      bldflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --extra-bcflags=*)
       bcflags="$bcflags $(echo $1 | sed 's/^[-a-z]*=//')";;
@@ -339,6 +343,7 @@ while : ; do
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
+      echo "   --bldflags=args....... The Bigloo C link options" >&2;
       echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
@@ -768,6 +773,7 @@ cat $mkmf.in \
           -e "s|@JAR@|$jar|" \
           -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BLDFLAGS@|$bldflags|" \
           -e "s|@BHFLAGS@|$bhflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
@@ -1193,6 +1199,7 @@ echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
 echo "  bigloo compilation flags.............. $bcflags"
+echo "  bigloo link flags..................... $bldflags"
 echo "  runtime compilation flags............. $bcflagsrts"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"

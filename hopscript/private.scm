@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/private.scm             */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/private.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Feb 14 10:54:50 2014 (serrano)                */
+;*    Last change :  Thu Mar 13 09:04:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -29,6 +29,8 @@
 	   (js-raise-type-error/loc ::obj ::bstring ::obj)
 
 	   (->fixnum::long ::obj)
+	   (->uint32::uint32 ::obj)
+	   (->int32::int32 ::obj)
 	   
 	   (inline js-cast-object obj ::bstring)
 	   (expander js-toprimitive)
@@ -36,9 +38,22 @@
 
 	   (trim-whitespaces+ ::bstring #!key (left #t) (right #f) (plus #f))
 	   
+	   (=uint32 ::uint32 ::obj)
+	   (<uint32 ::uint32 ::obj)
+	   (<=uint32 ::uint32 ::obj)
+	   (>=uint32 ::uint32 ::obj)
+	   (>uint32 ::uint32 ::obj)
 	   
-
+	   (=int32 ::int32 ::obj)
+	   (<int32 ::int32 ::obj)
+	   (>=int32 ::int32 ::obj)
 	   
+	   (uint32->integer::obj ::uint32)
+	   (int32->integer::obj ::int32)
+	   
+	   (inline u32vref ::vector ::uint32)
+	   (inline u32vset! ::vector ::uint32 ::obj)
+	   (inline u32vlen::uint32 ::vector)
 	   
 	   (js-freeze-property! desc::JsPropertyDescriptor)
 
@@ -46,14 +61,15 @@
 
 	   (js-properties-clone ::pair-nil)
 	   
-	   (js-toindex ::obj)
+	   (js-toindex::uint32 ::obj)
+	   (js-isindex?::bool ::uint32)
 	   
 	   (generic js-valueof ::obj)
 	   
 	   
 	   (generic js-tointeger ::obj)
 	   
-	   
+	   (js-string->number ::bstring)
 	   (js-number->string obj)
 	   (js-parseint ::bstring ::obj ::bool)
 	   (js-parsefloat ::bstring ::bool)
@@ -104,10 +120,30 @@
 (define (->fixnum r)
    (cond
       ((fixnum? r) r)
+      ((flonum? r) (flonum->fixnum r))
       ((elong? r) (elong->fixnum r))
       ((llong? r) (llong->fixnum r))
-      ((bignum? r) (bignum->fixnum r))
-      (else (flonum->fixnum r))))
+      (else (error "->fixnum" (format "Illegal number (~a)" (typeof r)) r))))
+
+;*---------------------------------------------------------------------*/
+;*    ->uint32 ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Assumes a positive number                                        */
+;*---------------------------------------------------------------------*/
+(define (->uint32 r)
+   (cond
+      ((fixnum? r) (fixnum->uint32 r))
+      ((flonum? r) (flonum->uint32 r))
+      (else (error "->uint32" (format "Illegal number (~a)" (typeof r)) r))))
+
+;*---------------------------------------------------------------------*/
+;*    ->int32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (->int32 r)
+   (cond
+      ((fixnum? r) (fixnum->int32 r))
+      ((flonum? r) (flonum->int32 r))
+      (else (error "->int32" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-object ...                                               */
@@ -191,21 +227,66 @@
 ;*    js-toindex ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4         */
+;*    -------------------------------------------------------------    */
+;*    Performance demands this function not to returned a boxed        */
+;*    result. So, false is here denoted 1^32-1, as an uint32.          */
 ;*---------------------------------------------------------------------*/
 (define (js-toindex p)
+   
+   (define false (-u32 #u32:0 #u32:1))
+   
+   (define (string->index p::bstring)
+      (let ((num (string->number p)))
+	 (if (bignum? num)
+	     (if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
+		 (llong->uint32 (bignum->llong num))
+		 false)
+	     (js-toindex num))))
+   
    (cond
-      ((integer? p)
-       (when (and (>= p 0) (< p 4294967295)) p))
+      ((uint32? p)
+       p)
+      ((fixnum? p)
+       (cond-expand
+	  (bint30
+	   (if (>=fx p 0)
+	       (fixnum->uint32 p)
+	       false))
+	  (bint32
+	   (let ((e (fixnum->elong p)))
+	      (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 30)))
+		  (elong->uint32 e)
+		  false)))
+	  (else
+	   (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 31) 1)))
+	       (fixnum->uint32 p)
+	       false))))
+      ((flonum? p)
+       (if (and (>=fl p 0.) (<fl p (exptfl 2. 31.)) (=fl (roundfl p) p))
+	   (cond-expand
+	      (bint30
+	       (if (<fl p (exptfl 2. 32.))
+		   (flonum->uint32 p)
+		   (llong->uint32 (flonum->llong p))))
+	      (else
+	       (fixnum->uint32 (flonum->fixnum p))))
+	   false))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
       ((string? p)
-       (js-toindex (string->number p)))
+       (string->index p))
       ((symbol? p)
-       (js-toindex (string->number (symbol->string! p))))
+       (string->index (symbol->string! p)))
       ((isa? p JsString)
-       (with-access::JsString p (val) (js-toindex (string->number val))))
+       (with-access::JsString p (val) (string->index val)))
       (else
-       #f)))
+       false)))
+
+;*---------------------------------------------------------------------*/
+;*    js-isindex? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-isindex? u32::uint32)
+   (<u32 u32 (-u32 (fixnum->uint32 0) (fixnum->uint32 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::obj ...                                             */
@@ -222,30 +303,29 @@
    (cond
       ((fixnum? obj)
        obj)
-      ((integer? obj)
-       (if (flonum? obj)
-	   (if (or (=fl obj +inf.0) (=fl obj -inf.0))
-	       obj
-	       (inexact->exact obj))
-	   obj))
       ((flonum? obj)
        (cond
-	  ((=fl obj +inf.0) obj)
-	  ((=fl obj -inf.0) obj)
 	  ((nanfl? obj) 0)
-	  ((<fl obj 0.) (flonum->llong (*fl -1. (floor (abs obj)))))
-	  (else (flonum->llong (floor obj)))))
+	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
+	   obj)
+	  ((<fl obj 0.)
+	   (*fl -1. (floor (abs obj))))
+	  (else
+	   (floor obj))))
       ((or (string? obj) (symbol? obj))
-       (let ((v (js-tonumber obj)))
-	  (if (inexact? v)
-	      (cond
-		 ((nanfl? v) 0)
-		 ((or (=fl v +inf.0) (=fl v -inf.0)) v)
-		 (else (inexact->exact v)))
-	      v)))
+       (js-tointeger (js-tonumber obj)))
       ((eq? obj #t)
        1)
       (else 0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string->number ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-string->number s)
+   (let ((n (string->number s)))
+      (if (bignum? n)
+	  (bignum->flonum n)
+	  n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->string ...                                            */
@@ -297,19 +377,38 @@
 				     (number->string (abs (- n 1))))))))
 			(liip (+ k 1) (*bx t #z10))))))))
 
+   (define (match->bignum::bignum m::pair)
+      (let ((exp (string->integer (cadddr m)))) 
+	 (+bx
+	    (*bx (string->bignum (cadr m))
+	       (exptbx #z10 (fixnum->bignum exp)))
+	    (*bx (string->bignum (caddr m))
+	       (exptbx #z10
+		  (fixnum->bignum (-fx exp (string-length (caddr m)))))))))
+   
    (define (js-real->string m)
       (if (=fl m 0.0)
 	  "0"
-	  (let* ((s (real->string m))
-		 (m (pregexp-match "([-]?[0-9]+)[eE]([0-9]+)" s)))
-	     (if (pair? m)
-		 (js-bignum->string
-		    (*bx (string->bignum (cadr m))
-		       (exptbx #z10 (string->bignum (caddr m)))))
-		 (let ((m (pregexp-match "([0-9]+)[.]0+$" s)))
-		    (if (pair? m)
-			(cadr m)
-			s))))))
+	  (let ((s (real->string m)))
+	     (cond
+		((pregexp-match "^([-]?[0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m)
+		    (js-bignum->string
+		       (*bx (string->bignum (cadr m))
+			  (exptbx #z10 (string->bignum (caddr m)))))))
+		((pregexp-match "^([0-9]+).([0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m) (js-bignum->string (match->bignum m))))
+		((pregexp-match "^-([0-9]+).([0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m)
+		    (js-bignum->string (negbx (match->bignum m)))))
+		((pregexp-match "^([-]?[.0-9]+)[.]0+$" s)
+		 =>
+		 cadr)
+		(else
+		 s)))))
 
    (cond
       ((not (= obj obj)) "NaN")
@@ -340,7 +439,10 @@
 	  v))
    
    (define (shrink n)
-      (+ n 0))
+      (let ((r (+ n 0)))
+	 (if (fixnum? r)
+	     r
+	     (bignum->flonum r))))
 
    (define radix-charset
       '#(unspecified
@@ -399,15 +501,15 @@
       (if strict-syntax
 	  (or (string->number s r) +nan.0)
 	  (string->integer s r)))
-   
-   (let ((r (js-toint32 radix))
+
+   (let ((r::int32 (js-toint32 radix))
 	 (l (string-length s)))
       (cond
-	 ((not (integer? r))
+	 ((and (not (zeros32? r))
+	       (or (<s32 r (fixnum->int32 2))
+		   (>s32 r (fixnum->int32 36))))
 	  +nan.0)
-	 ((and (not (= r 0)) (or (< r 2) (> r 36)))
-	  +nan.0)
-	 ((and (or (= r 0) (= r 16))
+	 ((and (or (zeros32? r) (=s32 r (fixnum->int32 16)))
 	       (>=fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\0)
 	       (or (char=? (string-ref s 1) #\x)
@@ -416,12 +518,12 @@
 	     (if (<=fx l 9)
 		 (integer (str->integer s 16) s 16)
 		 (integer (string->bignum-safe s 16) s 16))))
-	 ((= r 0)
+	 ((zeros32? r)
 	  (if (<=fx l 10)
 	      (integer (str->integer s 10) s 10)
 	      (integer (string->bignum-safe s 10) s 10)))
 	 (else
-	  (let ((r (->fixnum r)))
+	  (let ((r (int32->fixnum r)))
 	     (if (<=fx l (if (<=fx r 10) 8 (if (<=fx r 16) 7 5)))
 		 (integer (str->integer s r) s 10)
 		 (integer (string->bignum-safe s r) s r)))))))
@@ -615,6 +717,162 @@
    (let* ((i (if left (trim-left s) 0))
 	  (j (if right (trim-right s i) (-fx (string-length s) 1))))
       (substring s i (+fx j 1))))
+
+;*---------------------------------------------------------------------*/
+;*    =uint32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (=uint32 u::uint32 obj::obj)
+   (cond
+      ((uint32? obj)
+       (=u32 u obj))
+      ((negative? obj)
+       #f)
+      ((flonum? obj)
+       (cond
+	  ((nanfl? obj) #f)
+	  ((or (=fl obj +inf.0) (=fl obj -inf.0)) #f)
+	  (else (=fl (uint32->flonum u) obj))))
+      (else (=u32 u (->uint32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    <uint32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<uint32 u::uint32 obj::obj)
+   (cond
+      ((uint32? obj) (<u32 u obj))
+      ((negative? obj) #f)
+      (else (<u32 u (->uint32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    <=uint32 ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (<=uint32 u::uint32 obj::obj)
+   (cond
+      ((uint32? obj)
+       (<u32 u obj))
+      ((negative? obj)
+       #f)
+      ((flonum? obj)
+       (cond
+	  ((=fl obj +inf.0) #t)
+	  (else (<fl (uint32->flonum u) obj))))
+      (else
+       (<=u32 u (->uint32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    >=uint32 ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (>=uint32 u::uint32 obj::obj)
+   (cond
+      ((uint32? obj)
+       (>=u32 u obj))
+      ((negative? obj)
+       #t)
+      ((flonum? obj)
+       (cond
+	  ((=fl obj +inf.0) #f)
+	  (else (>=fl (uint32->flonum u) obj))))
+      (else
+       (>=u32 u (->uint32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    >uint32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (>uint32 u::uint32 obj::obj)
+   (cond
+      ((uint32? obj)
+       (>=u32 u obj))
+      ((negative? obj)
+       #t)
+      ((flonum? obj)
+       (cond
+	  ((=fl obj +inf.0) #f)
+	  (else (>=fl (uint32->flonum u) obj))))
+      (else
+       (>=u32 u (->uint32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    =int32 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (=int32 s::int32 obj::obj)
+   (cond
+      ((int32? obj)
+       (=s32 s obj))
+      ((negative? obj)
+       #f)
+      ((flonum? obj)
+       (cond
+	  ((nanfl? obj) #f)
+	  ((or (=fl obj +inf.0) (=fl obj -inf.0)) #f)
+	  (else (=s32 s (fixnum->int32 (flonum->fixnum obj))))))
+      (else
+       (=s32 s (->int32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    <int32 ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (<int32 s::int32 obj::obj)
+   (cond
+      ((int32? obj) (<s32 s obj))
+      ((negative? obj) #f)
+      (else (<s32 s (->int32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    >=int32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (>=int32 s::int32 obj::obj)
+   (cond
+      ((int32? obj) (>=s32 s obj))
+      ((negative? obj) #f)
+      (else (>=s32 s (->int32 obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    uint32->integer ...                                              */
+;*---------------------------------------------------------------------*/
+(define (uint32->integer u::uint32)
+   (cond-expand
+      (bint30
+       (if (<u32 u (fixnum->uint32 (bit-lsh 1 29)))
+	   (uint32->fixnum u)
+	   (uint32->flonum u)))
+      (else
+       (uint32->fixnum u))))
+
+;*---------------------------------------------------------------------*/
+;*    int32->integer ...                                               */
+;*---------------------------------------------------------------------*/
+(define (int32->integer i::int32)
+   (cond-expand
+      (bint30
+       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
+		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 28)))))
+	   (int32->fixnum i)
+	   (elong->flonum (uint32->elong i))))
+      (bint32
+       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 30)))
+		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 30)))))
+	   (int32->fixnum i)
+	   (elong->flonum (uint32->elong i))))
+      (else
+       (int32->fixnum i))))
+
+;*---------------------------------------------------------------------*/
+;*    u32vref ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (u32vref v::vector i::uint32)
+   (vector-ref-ur v (uint32->fixnum i)))
+
+;*---------------------------------------------------------------------*/
+;*    u32vset! ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (u32vset! v::vector i::uint32 o)
+   (vector-set-ur! v (uint32->fixnum i) o))
+
+;*---------------------------------------------------------------------*/
+;*    u32vlen ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (u32vlen v::vector)
+   (fixnum->uint32 (vector-length v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    lib-hopscript-path ...                                           */

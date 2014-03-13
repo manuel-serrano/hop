@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.6.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/3.0.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Feb 13 08:30:38 2014 (serrano)                */
+#*    Last change :  Wed Feb 26 17:44:12 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -51,6 +51,7 @@ INSTALL		= @INSTALL@
 DEBUG		= @DEBUG@
 CCOMP		= @CC@
 BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi hop-$(LINK) $(EFLAGS)
+BLDFLAGS	= @BLDFLAGS@
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@

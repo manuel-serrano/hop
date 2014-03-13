@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_proxy.scm            */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_proxy.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu May  2 07:17:25 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Fri Mar  7 17:33:21 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
 ;*=====================================================================*/
@@ -56,8 +56,6 @@
 	     (format "~a ~a ~a" method p http))
 	    ((not hostname)
 	     (format "~a ~a://~a ~a" method scheme p http))
-	    ((not port)
-	     (format "~a ~a://~a~a ~a" method scheme host p http))
 	    (else
 	     (format "~a ~a://~a:~a~a ~a" method scheme host port p http))))))
 

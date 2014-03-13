@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/arguments.scm           */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/arguments.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Feb  4 11:23:38 2014 (serrano)                */
+;*    Last change :  Tue Mar 11 11:53:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -43,11 +43,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::JsArguments p)
    (let ((index (js-toindex p)))
-      (if index
+      (if (js-isindex? index)
 	  (with-access::JsArguments o (vec)
-	     (let ((len (vector-length vec))
-		   (index (->fixnum index)))
-		(if (<=fx len index)
+	     (let ((len (vector-length vec)))
+		(if (<=u32 (fixnum->uint32 len) index)
 		    (call-next-method)
 		    #t)))
 	  (call-next-method))))
@@ -56,15 +55,16 @@
 ;*    js-get-property ::JsArguments ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property o::JsArguments p)
-   (let ((index (js-toindex p)))
-      (if index
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
 	  (with-access::JsArguments o (vec)
-	     (let ((len (vector-length vec))
-		   (index (->fixnum index)))
-		(if (or (<=fx len index)
-			(eq? (vector-ref-ur vec index) (js-absent)))
+	     (let ((len (vector-length vec)))
+		(if (<=u32 (fixnum->uint32 len) index)
 		    (call-next-method)
-		    (vector-ref-ur vec index))))
+		    (let ((o (u32vref vec index)))
+		       (if (eq? o (js-absent))
+			   (call-next-method)
+			   o)))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -74,12 +74,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArguments p)
    (with-access::JsArguments o (vec properties)
-      (let ((i (js-toindex p)))
+      (let ((i::uint32 (js-toindex p)))
 	 (cond
-	    ((not i)
+	    ((not (js-isindex? i))
 	     (call-next-method))
-	    ((< i (vector-length vec))
-	     (let ((desc (vector-ref vec (->fixnum i))))
+	    ((<uint32 i (vector-length vec))
+	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))
 		    (call-next-method)
 		    (js-property-value o desc))))
@@ -93,12 +93,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsArguments p v throw)
    (with-access::JsArguments o (vec)
-      (let ((i (js-toindex p)))
+      (let ((i::uint32 (js-toindex p)))
 	 (cond
-	    ((not i)
+	    ((not (js-isindex? i))
 	     (call-next-method))
-	    ((< i (vector-length vec))
-	     (let ((desc (vector-ref vec (->fixnum i))))
+	    ((<uint32 i (vector-length vec))
+	     (let ((desc (u32vref vec i)))
 		(cond
 		   ((eq? desc (js-absent))
 		    (call-next-method))
@@ -124,19 +124,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-delete! o::JsArguments p throw)
    (with-access::JsArguments o (vec properties)
-      (let ((i (js-toindex p)))
+      (let ((i::uint32 (js-toindex p)))
 	 (cond
-	    ((not i)
+	    ((not (js-isindex? i))
 	     (call-next-method))
-	    ((< i (vector-length vec))
-	     (let ((i (->fixnum i)))
-		(with-access::JsPropertyDescriptor (vector-ref vec i)
-		      (configurable)
-		   (if configurable
-		       (begin
-			  (vector-set! vec i (js-absent))
-			  #t)
-		       #f))))
+	    ((<uint32 i (vector-length vec))
+	     (with-access::JsPropertyDescriptor (u32vref vec i) (configurable)
+		(if configurable
+		    (begin
+		       (u32vset! vec i (js-absent))
+		       #t)
+		    #f)))
 	    (else
 	     (call-next-method))))))
 
@@ -146,13 +144,13 @@
 (define-method (js-replace-own-property! o::JsArguments old new)
    (with-access::JsPropertyDescriptor old ((p name))
       (with-access::JsArguments o (vec)
-	 (let ((i (js-toindex p)))
+	 (let ((i::uint32 (js-toindex p)))
 	    (cond
-	       ((not i)
+	       ((not (js-isindex? i))
 		(call-next-method))
-	       ((and (< i (vector-length vec))
-		     (not (eq? (vector-ref vec (->fixnum i)) (js-absent))))
-		(vector-set! vec (->fixnum i) new))
+	       ((and (<uint32 i (vector-length vec))
+		     (not (eq? (u32vref vec i) (js-absent))))
+		(u32vset! vec i new))
 	       (else
 		(call-next-method)))))))
 
@@ -161,10 +159,11 @@
 ;*---------------------------------------------------------------------*/
 (define (get-mapped-property o::JsArguments p)
    (with-access::JsArguments o (vec)
-      (let ((i (js-toindex p)))
-	 (when (and i (< i (vector-length vec))
-		    (not (eq? (vector-ref vec (->fixnum i)) (js-absent))))
-	    (vector-ref vec (->fixnum i))))))
+      (let ((i::uint32 (js-toindex p)))
+	 (when (and (js-isindex? i) (<uint32 i (vector-length vec)))
+	    (let ((o (u32vref vec i)))
+	       (unless (eq? o (js-absent))
+		  o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define-own-property ...                                       */
@@ -224,9 +223,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-property-names obj::JsArguments enump)
    (with-access::JsArguments obj (vec)
-      (let ((len (max 0 (js-touint32 (js-get obj 'length)))))
+      (let ((len::uint32 (js-touint32 (js-get obj 'length))))
 	 (vector-append
-	    (apply vector (map! integer->string (iota (->fixnum len))))
+	    (apply vector (map! integer->string (iota (uint32->fixnum len))))
 	    (call-next-method))	 )))
 
 ;*---------------------------------------------------------------------*/
@@ -320,7 +319,7 @@
    (with-access::JsArguments o (vec)
       (if (>fx (vector-length vec) 0)
 	  (let ((len (minfx (vector-length vec)
-			(->fixnum (js-touint32 (js-get o 'length))))))
+			(uint32->fixnum (js-touint32 (js-get o 'length))))))
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin

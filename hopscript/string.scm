@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/string.scm              */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/string.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb 11 17:50:46 2014 (serrano)                */
+;*    Last change :  Thu Mar 13 09:03:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -280,10 +280,10 @@
    (let ((desc (call-next-method)))
       (if (eq? desc (js-undefined))
 	  (let ((index (js-toindex p)))
-	     (if index
+	     (if (js-isindex? index)
 		 (with-access::JsString o (val)
 		    (let ((len (utf8-string-length val))
-			  (index (->fixnum index)))
+			  (index (uint32->fixnum index)))
 		       (if (<=fx len index)
 			   (js-undefined)
 			   (instantiate::JsValueDescriptor
@@ -302,10 +302,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::JsString p)
    (let ((index (js-toindex p)))
-      (if index
+      (if (js-isindex? index)
 	  (with-access::JsString o (val)
 	     (let ((len (utf8-string-length val))
-		   (index (->fixnum index)))
+		   (index (uint32->fixnum index)))
 		(if (<=fx len index)
 		    (call-next-method)
 		    #t)))
@@ -316,10 +316,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property o::JsString p)
    (let ((index (js-toindex p)))
-      (if index
+      (if (js-isindex? index)
 	  (with-access::JsString o (val)
 	     (let ((len (utf8-string-length val))
-		   (index (->fixnum index)))
+		   (index (uint32->fixnum index)))
 		(if (<=fx len index)
 		    (call-next-method)
 		    (instantiate::JsValueDescriptor
@@ -336,10 +336,10 @@
 (define-method (js-get o::JsString p)
    (with-access::JsString o (val)
       (let ((i (js-toindex p)))
-	 (if (not i)
+	 (if (not (js-isindex? i))
 	     (call-next-method)
 	     (let ((len (utf8-string-length val))
-		   (index (->fixnum i)))
+		   (index (uint32->fixnum i)))
 		(if (<=fx len index)
 		    (call-next-method)
 		    (utf8-string-ref val index)))))))
@@ -349,10 +349,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get/base o::JsString base p)
    (let ((i (js-toindex p)))
-      (if (not i)
+      (if (not (js-isindex? i))
 	  (call-next-method)
 	  (let ((len (utf8-string-length base))
-		(index (->fixnum i)))
+		(index (uint32->fixnum i)))
 	     (if (<=fx len index)
 		 (call-next-method)
 		 (utf8-string-ref base index))))))
@@ -736,6 +736,9 @@
 ;*---------------------------------------------------------------------*/
 (define (string-prototype-split this::obj separator limit)
 
+   (define (minelong2::elong n1::elong n2::elong)
+      (if (<elong n1 n2) n1 n2))
+   
    (define (split-match S q R)
       (if (isa? R JsRegExp)
 	  (with-access::JsRegExp R (rx)
@@ -754,9 +757,10 @@
 	  (A (js-new js-array 0))
 	  (lim (if (eq? limit (js-undefined))
 		   (+fx (string-length S) 1)
-		   (llong->fixnum
-		      (minllong (js-touint32 limit)
-			 (fixnum->llong (+fx 1 (string-length S)))))))
+		   (elong->fixnum
+		      (minelong2
+			 (uint32->elong (js-touint32 limit))
+			 (fixnum->elong (+fx 1 (string-length S)))))))
 	  (s (utf8-string-length S))
 	  (p 0)
 	  (R (if (isa? separator JsRegExp) separator (js-tostring separator))))

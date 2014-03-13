@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/math.scm                */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/math.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 26 16:06:12 2014 (serrano)                */
+;*    Last change :  Wed Mar 12 12:49:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -301,6 +301,12 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.13    */
 ;*---------------------------------------------------------------------*/
 (define (js-math-pow this x y)
+
+   (define (bignum->js-number o)
+      (if (bignum? o)
+	  (bignum->flonum o)
+	  o))
+   
    (let ((n1 (js-tonumber x))
 	 (n2 (js-tonumber y)))
       (cond
@@ -321,8 +327,8 @@
 		     (y n2))
 	     (cond
 		((= y 0) 1)
-		((even? y) (loop (* x x) (quotient y 2)))
-		(else (* x (loop x (- y 1))))))))))
+		((even? y) (bignum->js-number (loop (* x x) (quotient y 2))))
+		(else (bignum->js-number (* x (loop x (- y 1)))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-math-random ...                                               */

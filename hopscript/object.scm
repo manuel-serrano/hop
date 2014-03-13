@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/object.scm              */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/object.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Feb 12 18:28:29 2014 (serrano)                */
+;*    Last change :  Tue Mar 11 14:35:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -477,7 +477,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-hasownproperty this v)
    (let* ((p (js-tostring v))
-	  (desc (js-get-own-property this p)))
+	  (o (js-toobject this))
+	  (desc (js-get-own-property o p)))
       (not (eq? desc (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
@@ -500,7 +501,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-propertyisenumerable this v)
    (let* ((p (js-tostring v))
-	  (desc (js-get-own-property this p)))
+	  (o (js-toobject this))
+	  (desc (js-get-own-property o p)))
       (if (eq? desc (js-undefined))
 	  #f
 	  (with-access::JsPropertyDescriptor desc (enumerable) enumerable))))
