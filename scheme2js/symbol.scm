@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/symbol.scm              */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Sat Aug 10 06:11:48 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue Mar 18 08:22:55 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme2js symbol resolution                                      */
 ;*=====================================================================*/
@@ -38,7 +38,7 @@
 	      ;; following entries will be set in Module-resolve
 	      (runtime-scope (default #f))
 	      (allow-unresolved?::procedure (default (lambda (id loc) #f)))
-	      (unbound-add!::procedure (default (lambda (id) #f))))))
+	      (unbound-add!::procedure (default (lambda (id location) #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *scheme2js-compilation-runtime-vars* ...                         */
@@ -266,7 +266,7 @@
 			(config 'allow-unresolved)))))
 	 (set! unbound-add!
 	    (let ((unresolved-declare! (config 'unresolved-declare)))
-	       (lambda (id)
+	       (lambda (id location)
 		  (when (pair? id) ;; qualified
 		     (scheme2js-error "symbol-resolution"
 			"could not resolve qualified variable"
@@ -274,7 +274,7 @@
 			id))
 		  (let ((js-str (mangle-JS-sym id)))
 		     (if unresolved-declare!
-			 (unresolved-declare! id js-str)
+			 (unresolved-declare! id js-str location)
 			 (verbose "Unresolved symbol '"
 			    id "' assumed to be a JS-var"))
 		     (js-symbol-add! imported-scope
@@ -422,7 +422,7 @@
 	    (cond
 	       (v (set! var v))
 	       ((allow-unresolved? id this)
-		(unbound-add! id)
+		(unbound-add! id location)
 		(ncall resolve! this symbol-table)) ;; try again.
 	       (else
 		(scheme2js-error "scheme2js" "Unresolved symbol" id this))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Mar 12 13:04:23 2014 (serrano)                */
+;*    Last change :  Fri Mar 14 10:47:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -66,7 +66,7 @@
 	   (inline js-totest::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (generic js-tonumber ::obj)
-	   (js-touint16::int ::obj)
+	   (js-touint16::uint16 ::obj)
 	   (js-touint32::uint32 ::obj)
 	   (js-toint32::int32 ::obj)
 	   (js-tostring::bstring obj)
@@ -497,51 +497,32 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.7          */
 ;*---------------------------------------------------------------------*/
-(define (js-touint16::int obj)
+(define (js-touint16::uint16 obj)
    
-   (define (int64->int16::int32 obj::int64)
-      (cond-expand
-	 ((or bint30 bint32)
-	  (let* ((i::llong (int64->llong obj))
-		 (^15 (fixnum->llong (bit-lsh 1 15)))
-		 (^16 (fixnum->llong (bit-lsh 1 16)))
-		 (posint (if (<llong i #l0) (+llong ^16 i) i))
-		 (int16bit (modulollong posint ^16))
-		 (n (if (>=llong int16bit ^15)
-			(-llong int16bit ^16)
-			int16bit)))
-	     (llong->fixnum n)))
-	 (else
-	  (let* ((i::elong (int64->elong obj))
-		 (^15 (fixnum->elong (bit-lsh 1 15)))
-		 (^16 (fixnum->elong (bit-lsh 1 16)))
-		 (posint (if (<elong i #e0) (+elong ^16 i) i))
-		 (int16bit (moduloelong posint ^16))
-		 (n (if (>=elong int16bit ^15)
-			(-elong int16bit ^16)
-			int16bit)))
-	     (elong->fixnum n)))))
+   (define 2^16 (exptfl 2. 16.))
    
-   (let loop ((v (js-tointeger obj)))
+   (define (uint32->uint16 o)
+      (fixnum->uint16 (uint32->fixnum o)))
+   
+   (define (positive-double->uint16::uint16 obj::double)
+      (uint32->uint16
+	 (if (<fl obj 2^16)
+	     (flonum->uint32 obj)
+	     (flonum->uint32 (remainderfl obj 2^16)))))
+   
+   (define (double->uint16::uint16 obj::double)
       (cond
-	 ((fixnum? v)
-	  (modulofx v (bit-lsh 1 16)))
-	 ((flonum? v)
-	  (cond
-	     ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
-	      0)
-	     ((<fl obj 0.)
-	      (let ((i (*fl -1. (floor (abs obj)))))
-		 (if (>=fl i (negfl (exptfl 2. 31.)))
-		     (js-touint16 (flonum->fixnum i))
-		     (int64->int16 (flonum->int64 i)))))
-	     (else
-	      (let ((i (floor obj)))
-		 (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		     (js-touint16 (flonum->fixnum i))
-		     (int64->int16 (flonum->int64 i)))))))
+	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
+	  #u16:0)
+	 ((<fl obj 0.)
+	  (positive-double->uint16 (+fl 2^16 (*fl -1. (floor (abs obj))))))
 	 (else
-	  0))))
+	  (positive-double->uint16 obj))))
+   
+   (cond
+      ((fixnum? obj) (modulofx obj (bit-lsh 1 16)))
+      ((flonum? obj) (double->uint16 obj))
+      (else (js-touint16 (js-tointeger obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-touint32 ::obj ...                                            */
@@ -588,41 +569,8 @@
       ((flonum? obj)
        (double->uint32 obj))
       (else
-       (tprint "TOUING " obj " js=" (js-tointeger obj))
        (js-touint32 (js-tointeger obj)))))
 		  
-(define (js-touint32-old obj)
-   (cond
-      ((fixnum? obj)
-       (cond
-          ((or (>=fx obj (bit-lsh 1 28)) (<fx obj 0))
-           (js-touint32 (fixnum->llong obj)))
-          (else
-           (fixnum->llong obj))))
-      ((elong? obj)
-       (js-touint32 (elong->llong obj)))
-      ((llong? obj)
-       (let* ((^31 (*llong #l8 (fixnum->llong (bit-lsh 1 28))))
-              (^32 (*llong #l2 ^31))
-              (posint (if (<llong obj #l0) (+llong ^32 obj) obj))
-              (int32bit (modulollong posint ^32)))
-          int32bit))
-      ((real? obj)
-       (cond
-          ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
-           #l0)
-          ((<fl obj 0.)
-           (js-touint32 (flonum->llong (*fl -1. (floor (abs obj))))))
-          (else
-           (js-touint32 (flonum->llong (floor obj))))))
-      ((bignum? obj)
-       (let* ((^32 (exptbx #z2 #z32))
-              (posint (if (<bx obj #z0) (+bx ^32 obj) obj))
-              (int32bit (modulobx posint ^32)))
-          (bignum->llong int32bit)))
-      (else
-       (js-touint32 (js-tointeger obj)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/service_expd.sch          */
+;*    serrano/prgm/project/hop/3.0.x/runtime/service_expd.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri Feb 21 13:46:21 2014 (serrano)                */
+;*    Last change :  Sun Mar 16 07:42:35 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -15,14 +15,14 @@
 ;*---------------------------------------------------------------------*/
 (define (jscript-funcall path args)
    (if (=fx (bigloo-debug) 0)
-       `(format "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
+       `((@ format  __r4_output_6_10_3) "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
        (let loop ((args (dsssl-formals->scheme-formals args error))
 		  (arity 0))
 	  (cond
 	     ((null? args)
-	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
+	      `((@ format  __r4_output_6_10_3) "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
 	     ((not (pair? args))
-	      `(format "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
+	      `((@ format  __r4_output_6_10_3) "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
 	     (else
 	      (loop (cdr args) (+fx arity 1)))))))
 

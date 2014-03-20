@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/parser.scm              */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 11 17:55:07 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:50:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1095,7 +1095,7 @@
 	 (case (peek-token-type)
 	    ((RBRACE)
 	     (consume-any!)
-	     (instantiate::J2SBlock
+	     (instantiate::J2SSeq
 		(loc (token-loc token))
 		(nodes (reverse! rev-stats))))
 	    (else
@@ -1439,10 +1439,10 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    javascript-mode ::J2SBlock ...                                   */
+;*    javascript-mode ::J2SSeq ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (javascript-mode node::J2SBlock)
-   (with-access::J2SBlock node (nodes)
+(define-method (javascript-mode node::J2SSeq)
+   (with-access::J2SSeq node (nodes)
       (javascript-mode-nodes nodes)))
 
 ;*---------------------------------------------------------------------*/

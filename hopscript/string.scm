@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Mar 13 09:03:01 2014 (serrano)                */
+;*    Last change :  Fri Mar 14 10:44:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -366,7 +366,7 @@
    (ucs2-string->utf8-string
       (apply ucs2-string
 	 (map (lambda (c)
-		 (integer->ucs2 (js-touint16 c)))
+		 (integer->ucs2 (uint16->fixnum (js-touint16 c))))
 	    l))))
 
 ;*---------------------------------------------------------------------*/

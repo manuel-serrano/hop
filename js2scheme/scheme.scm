@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Mar 10 07:53:03 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:50:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1039,12 +1039,12 @@
    (return this))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SBlock ...                                        */
+;*    j2s-scheme ::J2SSeq ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.1         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SBlock mode return)
-   (with-access::J2SBlock this (loc nodes)
+(define-method (j2s-scheme this::J2SSeq mode return)
+   (with-access::J2SSeq this (loc nodes)
       (let ((nodes nodes))
 	 (cond
 	    ((null? nodes)

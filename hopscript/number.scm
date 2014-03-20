@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Mar 12 12:47:53 2014 (serrano)                */
+;*    Last change :  Fri Mar 14 09:42:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -466,10 +466,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.1       */
 ;*---------------------------------------------------------------------*/
 (define (js-bitlsh left right)
-   (let* ((lnum (int32->elong (js-toint32 left)))
-	  (rnum (int32->elong (js-touint32 right)))
-	  (shiftcount (bit-andelong rnum #e31)))
-      (int32->integer (elong->int32 (bit-lshelong lnum shiftcount)))))
+   (let* ((lnum (js-toint32 left))
+	  (rnum (js-touint32 right))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (int32->integer (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitrsh ...                                                    */
@@ -477,10 +477,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-bitrsh left right)
-   (let* ((lnum (int32->elong (js-toint32 left)))
-	  (rnum (uint32->elong (js-touint32 right)))
-	  (shiftcount (bit-andelong rnum #e31)))
-      (int32->integer (elong->int32 (bit-rshelong lnum shiftcount)))))
+   (let* ((lnum (js-toint32 left))
+	  (rnum (js-touint32 right))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (int32->integer (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitursh ...                                                   */
@@ -488,10 +488,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3       */
 ;*---------------------------------------------------------------------*/
 (define (js-bitursh left right)
-   (let* ((lnum (int32->elong (js-touint32 left)))
-	  (rnum (uint32->elong (js-touint32 right)))
-	  (shiftcount (bit-andelong rnum #e31)))
-      (int32->integer (elong->int32 (bit-urshelong lnum shiftcount)))))
+   (let* ((lnum (js-touint32 left))
+	  (rnum (js-touint32 right))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (uint32->integer (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js<                                                              */

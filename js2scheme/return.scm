@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/return.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jan 11 08:29:37 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:50:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -64,10 +64,10 @@
    (default-walk! this target tail?))
 
 ;*---------------------------------------------------------------------*/
-;*    unreturn! ::J2SBlock ...                                         */
+;*    unreturn! ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SBlock target tail?)
-   (with-access::J2SBlock this (nodes loc)
+(define-walk-method (unreturn! this::J2SSeq target tail?)
+   (with-access::J2SSeq this (nodes loc)
       (let loop ((n nodes))
 	 (when (pair? n)
 	    (let ((t? (and tail? (null? (cdr n)))))
@@ -241,10 +241,10 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
-;*    return? ::J2SBlock ...                                           */
+;*    return? ::J2SSeq ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (return? this::J2SBlock)
-   (with-access::J2SBlock this (nodes)
+(define-walk-method (return? this::J2SSeq)
+   (with-access::J2SSeq this (nodes)
       (when (pair? nodes)
 	 (return? (car (last-pair nodes))))))
 

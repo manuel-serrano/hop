@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Feb 21 13:38:33 2014 (serrano)                */
+;*    Last change :  Wed Mar 19 09:55:26 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -799,7 +799,7 @@
 				  event
 				  (lambda (l) (delete! resp l))
 				  '())
-	       ;; Ping the client to check it still exists. If the client
+	       ;; Ping the client to check if it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (websocket-signal resp

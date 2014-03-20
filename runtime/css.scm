@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/2.5.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Mar 31 07:55:12 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed Mar 19 08:40:39 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -712,7 +712,9 @@
 	    (nexpr (compile expr penv)))
 	 (if comp
 	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))
-		(hss-parse-function fun (apply comp args)))
+		(if (correct-arity? comp (length args))
+		    (hss-parse-function fun (apply comp args))
+		    (error fun "wrong number of arguments" expr)))
 	     (duplicate::css-function o
 		(expr nexpr))))))
 

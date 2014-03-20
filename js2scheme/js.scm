@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/js.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/js.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Jan 28 07:54:07 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 21:01:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -40,6 +40,13 @@
 		    (list end)
 		    (cons sep (loop (cdr nodes)))))))))
 				
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SSeq ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SSeq tildec dollarc mode evalp)
+   (with-access::J2SSeq this (nodes)
+      (j2s-js* "" "" ";" nodes tildec dollarc mode evalp)))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBlock ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -271,12 +278,12 @@
 			 (with-access::J2SDataPropertyInit p (name val)
 			    (with-access::J2SString name ((s val))
 			       (cons*
-				  (format "sc_jsstring2keyword(~s)," s)
+				  (format ",sc_jsstring2keyword(~s)," s)
 				  (append
 				     (j2s-js val j2s-js-attribute-tilde dollarc mode evalp)
 				     (if (null? (cdr attrs))
 					 '()
-					 (cons "," (loop (cdr attrs)))))))))))
+					 (loop (cdr attrs))))))))))
 	       ;; body
 	       (cond
 		  ((isa? body J2SBool)

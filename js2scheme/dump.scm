@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Jan 20 11:16:49 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:49:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -51,10 +51,10 @@
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SBlock ...                                         */
+;*    j2s->list ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBlock)
-   (with-access::J2SBlock this (nodes)
+(define-method (j2s->list this::J2SSeq)
+   (with-access::J2SSeq this (nodes)
       `(,@(call-next-method) ,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/

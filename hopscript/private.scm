@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Mar 13 09:04:01 2014 (serrano)                */
+;*    Last change :  Mon Mar 17 09:22:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -242,7 +242,7 @@
 		 (llong->uint32 (bignum->llong num))
 		 false)
 	     (js-toindex num))))
-   
+
    (cond
       ((uint32? p)
        p)
@@ -254,11 +254,11 @@
 	       false))
 	  (bint32
 	   (let ((e (fixnum->elong p)))
-	      (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 30)))
+	      (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 31)))
 		  (elong->uint32 e)
 		  false)))
 	  (else
-	   (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 31) 1)))
+	   (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 32) 1)))
 	       (fixnum->uint32 p)
 	       false))))
       ((flonum? p)
@@ -269,7 +269,7 @@
 		   (flonum->uint32 p)
 		   (llong->uint32 (flonum->llong p))))
 	      (else
-	       (fixnum->uint32 (flonum->fixnum p))))
+	       (flonum->uint32 p)))
 	   false))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/loopexit.scm            */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/loopexit.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Feb 11 14:39:50 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:49:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -188,10 +188,10 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    mark-exit! ::J2SBlock ...                                        */
+;*    mark-exit! ::J2SSeq ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (mark-exit! this::J2SBlock targets label)
-   (with-access::J2SBlock this (nodes)
+(define-walk-method (mark-exit! this::J2SSeq targets label)
+   (with-access::J2SSeq this (nodes)
       (let loop ((nodes nodes)
 		 (label label))
 	 (if (null? nodes)

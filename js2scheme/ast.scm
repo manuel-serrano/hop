@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Feb 14 09:50:34 2014 (serrano)                */
+;*    Last change :  Thu Mar 20 20:48:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -18,9 +18,11 @@
 	      (loc::pair read-only))
 
 	   (abstract-class J2SStmt::J2SNode)
-	   
-	   (class J2SBlock::J2SStmt
+
+	   (class J2SSeq::J2SStmt
 	      nodes::pair-nil)
+	   
+	   (class J2SBlock::J2SSeq)
 
 	   (final-class J2SProgram::J2SBlock
 	      (module read-only)
@@ -80,7 +82,7 @@
 
 	   (class J2SCase::J2SStmt
 	      expr::J2SExpr
-	      body::J2SBlock)
+	      body::J2SSeq)
 
 	   (final-class J2SDefault::J2SCase)
 
@@ -586,7 +588,7 @@
 ;*    default walk                                                     */
 ;*---------------------------------------------------------------------*/
 (gen-walks J2SNode)
-(gen-walks J2SBlock (nodes))
+(gen-walks J2SSeq (nodes))
 (gen-walks J2SReturn expr)
 (gen-walks J2SWith obj block)
 (gen-walks J2SThrow expr)
