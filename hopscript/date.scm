@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/date.scm                */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/date.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb  4 13:49:41 2014 (serrano)                */
+;*    Last change :  Tue Apr  1 11:21:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -707,11 +707,18 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9     */
 ;*---------------------------------------------------------------------*/
 (define (date-prototype-gettime this::JsDate)
+   
+   (define (date->milliseconds date::date)
+      (let ((seconds (*llong #l1000 (elong->llong (date->seconds date)))))
+         (+llong seconds
+            (quotientllong (elong->llong (date-nanosecond date))
+               #l1000000))))
+   
    (with-access::JsDate this (val)
       (if (date? val)
-	  (*llong #l1000 (elong->llong (date->seconds val)))
-	  +nan.0)))
-	 
+	  (date->milliseconds val)
+ 	  +nan.0)))
+ 	 
 ;*---------------------------------------------------------------------*/
 ;*    date-prototype-getfullyear ...                                   */
 ;*    -------------------------------------------------------------    */
