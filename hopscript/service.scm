@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/service.scm             */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/service.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jan 29 10:05:36 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 16:19:33 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -46,16 +46,20 @@
 			(value 0))
 		     (instantiate::JsAccessorDescriptor
 			(name 'path)
-			(get (lambda (o)
-				(with-access::JsService o (svc)
-				   (with-access::hop-service svc (path)
-				      path))))
-			(set (lambda (o v)
-				(with-access::JsService o (svc)
-				   (unregister-service! svc)
-				   (with-access::hop-service svc (path)
-				      (set! path (js-tostring v))
-				      (register-service! svc))))))))
+			(get (js-make-function
+				(lambda (o)
+				   (with-access::JsService o (svc)
+				      (with-access::hop-service svc (path)
+					 path)))
+				1 "path"))
+			(set (js-make-function
+				(lambda (o v)
+				   (with-access::JsService o (svc)
+				      (unregister-service! svc)
+				      (with-access::hop-service svc (path)
+					 (set! path (js-tostring v))
+					 (register-service! svc))))
+				2 "path")))))
       
       (svc svc)))
 

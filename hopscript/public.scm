@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 14 10:47:22 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 16:25:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -662,6 +662,8 @@
        "null")
       ((number? obj)
        (js-number->string obj))
+      ((symbol? obj)
+       (symbol->string! obj)) 
       (else
        (typeof obj))))
 

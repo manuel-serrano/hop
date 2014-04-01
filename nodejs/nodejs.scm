@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/nodejs/nodejs.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/nodejs/nodejs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Fri Feb 14 12:06:50 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 15:04:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -52,4 +52,5 @@
 	 (__nodejs_http "| echo \"(module __nodejs_http)\"")
 	 (__nodejs_https "| echo \"(module __nodejs_https)\"")
 	 (__nodejs_zlib "| echo \"(module __nodejs_zlib)\"")
+	 (__nodejs_hop "| echo \"(module __nodejs_hop)\"")
 	 ))

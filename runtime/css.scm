@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Mar 19 08:40:39 2014 (serrano)                */
+;*    Last change :  Wed Mar 26 09:47:23 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -818,6 +818,16 @@
   display: -o-box ~a;"
 	       p p p p p)
        (format "display: ~l ~a;" v p)))
+
+;; transform-origin
+(define-hss-property (transform-origin v p)
+   (match-case v
+      ((?h ?v)
+   (format "transform-origin: ~a ~a;
+-webkit-transform-origin: ~a ~a;"
+      h v h v))
+      (else
+       (format "transform-origin: ~l;" v))))
 
 ;; border-radius
 (define-hss-property (border-radius v p)

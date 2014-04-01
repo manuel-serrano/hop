@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Mar 12 08:50:04 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 16:33:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1499,4 +1499,14 @@
 	     (for-each in-property properties))
 	 (when (isa? __proto__ JsObject)
 	    (loop __proto__)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-in ::Object ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-in obj::object proc)
+   (let ((fields (class-all-fields (object-class obj))))
+      (let loop ((i 0))
+	 (when (<fx i (vector-length fields))
+	    (proc (class-field-name (vector-ref-ur fields i)))
+	    (loop (+fx i 1))))))
 

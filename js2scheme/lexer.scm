@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/lexer.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Feb 11 15:01:10 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 15:15:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -164,9 +164,13 @@
 
       ;; Bigloo module declaration
       ((: "//" (* (in " \t")) "(module " (* all))
-       (token 'MODULE
-	  (call-with-input-string (the-substring 3 (the-length)) read)
-	  3))
+       (let ((module-string (the-substring 3 (the-length))))
+	  (with-handler
+	     (lambda (e)
+		(token 'ERROR module-string 0))
+	     (token 'MODULE
+		(call-with-input-string module-string read)
+		3))))
       
       ;; linecomment
       ((:"//" (* (or (out "\n\xe2\r")

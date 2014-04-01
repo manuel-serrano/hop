@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Mar 20 20:50:19 2014 (serrano)                */
+;*    Last change :  Sat Mar 22 14:42:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1052,7 +1052,7 @@
 		   (body (instantiate::J2SBool (loc loc) (val #f)))))
 	     (let loop ((inits '()))
 		(case (peek-token-type)
-		   ((ID STRING)
+		   ((ID STRING RESERVED)
 		    (let ((token (consume-any!)))
 		       (if (eq? (peek-token-type) ':)
 			   ;; an init
