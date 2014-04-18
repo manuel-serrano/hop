@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/this.scm                */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/this.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Feb 11 14:48:20 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:40:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -21,7 +21,7 @@
 	   __js2scheme_utils)
 
    (export j2s-this-stage
-	   (generic j2s-this ::obj)))
+	   (generic j2s-this ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this-stage ...                                               */
@@ -36,13 +36,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-this this)
+(define-generic (j2s-this this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-this this::J2SProgram)
+(define-method (j2s-this this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o) (this! o)) nodes))
    this)
@@ -71,7 +71,7 @@
 						    (eq? this (js-null)))
 						(set! this %this))
 					       ((not (isa? this JsObject))
-						(set! this (js-toobject this))))))
+						(set! this (js-toobject %this this))))))
 			       nbody))))))))
    this)
 

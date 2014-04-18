@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Mar 22 15:03:52 2014 (serrano)                */
+#*    Last change :  Fri Apr 18 07:15:51 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -24,20 +24,22 @@ do: build
 # the library name
 TARGETNAME = nodejs
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) 
+  -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
+  -lhop_s-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -ljs2scheme_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE) 
+  -ljs2scheme_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE) \
+  -lhop_u-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) \
-  -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) 
+  -lnodejs_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = $(BGLCLOSELIBS_EU) \
-  -ljs2scheme_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE) 
+  -lnodejs_u-$(HOPRELEASE)
 
 BLIBFLAGS = $(BCFLAGSRTS)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = nodejs require process repl
+_OBJECTS = nodejs require process repl _hop
 _JS_OBJECTS = console constants util sys path stream events fs \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \
@@ -87,7 +89,7 @@ jvm: heap-jvm lib-jvm
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
 o/js/%.scm: %.js $(HEAP_FILE)
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(HEFLAGS),-s,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(HEFLAGS),-s --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
 $(_JS_OBJECTS:%=o/%.o): $(HEAP_FILE)
 

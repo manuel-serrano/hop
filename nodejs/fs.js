@@ -1,5 +1,3 @@
-// (module __nodejs_fs (library hopscript))
-
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -341,7 +339,6 @@ fs.readFileSync = function(path, options) {
   return buffer;
 };
 
-
 // Used by binding.open and friends
 function stringToFlags(flag) {
   // Only mess with strings
@@ -386,7 +383,6 @@ Object.defineProperty(exports, '_stringToFlags', {
   enumerable: false,
   value: stringToFlags
 });
-
 
 // Yes, the follow could be easily DRYed up but I provide the explicit
 // list to make the arguments clear.
@@ -808,7 +804,6 @@ if (constants.hasOwnProperty('O_SYMLINK')) {
     return ret;
   };
 }
-
 
 fs.chmod = function(path, mode, callback) {
   callback = makeCallback(callback);

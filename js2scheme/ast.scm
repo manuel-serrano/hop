@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Mar 20 20:48:15 2014 (serrano)                */
+;*    Last change :  Wed Apr 16 09:39:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -24,10 +24,13 @@
 	   
 	   (class J2SBlock::J2SSeq)
 
-	   (final-class J2SProgram::J2SBlock
-	      (module read-only)
+	   (class J2SProgram::J2SBlock
 	      (mode::symbol read-only (default 'normal))
-	      (path::bstring read-only))
+	      (path::bstring read-only)
+	      (pcache-size::int (default 0))
+	      (name read-only (default #f))
+	      (main read-only (default #f))
+	      (module read-only (default #f)))
 
 	   (final-class J2SStmtExpr::J2SStmt
 	      expr::J2SExpr)

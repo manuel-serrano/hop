@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/nodejs/process.scm                */
+;*    serrano/prgm/project/hop/3.0.x/nodejs/process.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Feb 14 12:10:33 2014 (serrano)                */
+;*    Last change :  Fri Apr 18 09:23:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -14,74 +14,82 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_process
    
-   (library hopscript)
+   (option (set! *warning-overriden-variables* #f))
+   
+   (library hopscript hop)
 
    (include "nodejs.sch")
+
+   (import __nodejs__hop)
    
-   (export (%nodejs-process)))
+   (export (%nodejs-process %this::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-process ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (%nodejs-process)
-   (let ((proc (js-new js-object)))
-      (js-put! proc 'title (hop-name) #f)
-      (js-put! proc 'version (hop-version) #f)
-      (js-put! proc 'exit
-	 (js-make-function
-	    (lambda (this status)
-	       (exit status))
-	    2 "exit")
-	 #f)
-      (js-put! proc 'platform (os-name) #f)
-      (js-put! proc 'binding
-	 (js-make-function
-	    (lambda (this module)
-	       (cond
-		  ((string=? module "constants")
-		   (process-constants))
-		  ((string=? module "fs")
-		   (process-fs))
-		  ((string=? module "buffer")
-		   (process-buffer))
-		  ((string=? module "udp_wrap")
-		   (process-udp-wrap))
-		  ((string=? module "evals")
-		   (process-evals))
-		  ((string=? module "cares_wrap")
-		   (process-cares-wrap))
-		  ((string=? module "timer_wrap")
-		   (process-timer-wrap))
-		  ((string=? module "process_wrap")
-		   (process-process-wrap))
-		  ((string=? module "crypto")
-		   (process-crypto))
-		  ((string=? module "http_parser")
-		   (process-http-parser))
-		  ((string=? module "zlib")
-		   (process-zlib))
-		  (else
-		   (warning "%nodejs-process"
-		      "binding not implemented: " module)
-		   (js-new js-object))))
-	    2 "binding")
-	 #f)
-      (js-put! proc 'stdout
-	 (alist->jsobject
-	    `((write . ,(lambda (this o) (display o)))))
-	 #f)
-      (js-put! proc 'stderr
-	 (alist->jsobject
-	    `((write . ,(lambda (this o) (display o)))))
-	 #f)
-      (js-put! proc 'env
-	 (alist->jsobject
-	    `((NODE_DEBUG . ,(getenv "NODE_DEBUG"))))
-	 #f)
-      (js-put! proc '_usingDomains
-	 (js-make-function (lambda (this) (js-undefined)) 0 "_usingDomains")
-	 #f)
-      proc))
+(define (%nodejs-process %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((proc (js-new %this js-object)))
+	 (js-put! proc 'title (hop-name) #f %this)
+	 (js-put! proc 'version (hop-version) #f %this)
+	 (js-put! proc 'exit
+	    (js-make-function %this
+	       (lambda (this status)
+		  (exit status))
+	       2 "exit")
+	    #f %this)
+	 (js-put! proc 'platform (os-name) #f %this)
+	 (js-put! proc 'binding
+	    (js-make-function %this
+	       (lambda (this module)
+		  (cond
+		     ((string=? module "constants")
+		      (process-constants %this))
+		     ((string=? module "fs")
+		      (process-fs %this))
+		     ((string=? module "buffer")
+		      (process-buffer %this))
+		     ((string=? module "udp_wrap")
+		      (process-udp-wrap %this))
+		     ((string=? module "evals")
+		      (process-evals %this))
+		     ((string=? module "cares_wrap")
+		      (process-cares-wrap %this))
+		     ((string=? module "timer_wrap")
+		      (process-timer-wrap %this))
+		     ((string=? module "process_wrap")
+		      (process-process-wrap %this))
+		     ((string=? module "crypto")
+		      (process-crypto %this))
+		     ((string=? module "http_parser")
+		      (process-http-parser %this))
+		     ((string=? module "zlib")
+		      (process-zlib %this))
+		     ((string=? module "hop")
+		      (process-hop %this))
+		     (else
+		      (warning "%nodejs-process"
+			 "binding not implemented: " module)
+		      (js-new %this js-object))))
+	       2 "binding")
+	    #f %this)
+	 (js-put! proc 'stdout
+	    (alist->jsobject
+	       `((write . ,(lambda (this o) (display o)))))
+	    #f %this)
+	 (js-put! proc 'stderr
+	    (alist->jsobject
+	       `((write . ,(lambda (this o) (display o)))))
+	    #f %this)
+	 (js-put! proc 'env
+	    (alist->jsobject
+	       `((NODE_DEBUG . ,(getenv "NODE_DEBUG"))))
+	    #f %this)
+	 (js-put! proc '_usingDomains
+	    (js-make-function %this
+	       (lambda (this) (js-undefined)) 0 "_usingDomains")
+	    #f %this)
+	 proc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    constants ...                                                    */
@@ -92,7 +100,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-constants ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (process-constants)
+(define (process-constants %this)
    (alist->jsobject
       `((O_RDONLY . 0)
 	(O_WRONLY . 1)
@@ -109,34 +117,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-process-fs-stats ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (get-process-fs-stats)
-   (unless process-fs-stats (set! process-fs-stats (js-new js-object)))
-   process-fs-stats)
+(define (get-process-fs-stats %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (unless process-fs-stats (set! process-fs-stats (js-new %this js-object)))
+      process-fs-stats))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-fs ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (process-fs)
+(define (process-fs %this)
+   
+   (define (readdir this path)
+      (js-vector->jsarray (list->vector (directory->path-list path))  %this))
+
+   (define (lstat this path)
+      (let ((obj (alist->jsobject
+		    `((mode . ,(if (directory? path) (S_IFDIR) (S_IFREG)))))))
+	 (with-access::JsObject obj (__proto__)
+	    (set! __proto__ (get-process-fs-stats %this))
+	    obj)))
+   
    (alist->jsobject
-      `((readdir . ,(js-make-function readdir 1 "readdir"))
-	(Stats . ,(alist->jsobject `((prototype . ,(get-process-fs-stats)))))
-	(lstat . ,(js-make-function lstat 1 "lstat")))))
-
-;*---------------------------------------------------------------------*/
-;*    readdir ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (readdir this path)
-   (js-vector->jsarray (list->vector (directory->path-list path))))
-
-;*---------------------------------------------------------------------*/
-;*    lstat ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (lstat this path)
-   (let ((obj (alist->jsobject
-		 `((mode . ,(if (directory? path) (S_IFDIR) (S_IFREG)))))))
-      (with-access::JsObject obj (__proto__)
-	 (set! __proto__ (get-process-fs-stats))
-	 obj)))
+      `((readdir . ,(js-make-function %this readdir 1 "readdir"))
+	(Stats . ,(alist->jsobject `((prototype . ,(get-process-fs-stats %this)))))
+	(lstat . ,(js-make-function %this lstat 1 "lstat")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slowbuffer ...                                                   */
@@ -147,77 +151,132 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-buffer ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (process-buffer)
-   (let ((SlowBuffer (js-make-function slowbuffer 1 "SlowBuffer"
-			:alloc js-object-alloc
-			:construct slowbuffer
-			:prototype (js-new js-object))))
-      (js-put! SlowBuffer 'byteLength
-	 (js-make-function (lambda (this) 0) 0 "ByteLength")
-	 #t)
-      (js-put! SlowBuffer 'makeFastBuffer
-	 (js-make-function (lambda (this a b c d) '#()) 4 "makeFastBuffer")
-	 #t)
-      (alist->jsobject
-	 `((SlowBuffer . ,SlowBuffer)))))
+(define (process-buffer %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((SlowBuffer (js-make-function %this slowbuffer 1 "SlowBuffer"
+			   :alloc (lambda (o) (js-object-alloc o %this))
+			   :construct slowbuffer
+			   :prototype (js-new %this js-object))))
+	 (js-put! SlowBuffer 'byteLength
+	    (js-make-function %this
+	       (lambda (this) 0) 0 "ByteLength")
+	    #t %this)
+	 (js-put! SlowBuffer 'makeFastBuffer
+	    (js-make-function %this
+	       (lambda (this a b c d) '#()) 4 "makeFastBuffer")
+	    #t %this)
+	 (alist->jsobject
+	    `((SlowBuffer . ,SlowBuffer))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-udp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-udp-wrap)
-   (alist->jsobject
-      `((UDP . ,(js-new js-object)))))
+(define (process-udp-wrap %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((UDP . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-evals ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (process-evals)
-   (alist->jsobject
-      `((NodeScript . ,(js-new js-object)))))
+(define (process-evals %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((NodeScript . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-cares-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (process-cares-wrap)
-   (alist->jsobject
-      `((isIP . ,(js-new js-object)))))
+(define (process-cares-wrap %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((isIP . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-timer-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (process-timer-wrap)
-   (alist->jsobject
-      `((Timer . ,(js-new js-object)))))
+(define (process-timer-wrap %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((Timer . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-process-wrap ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (process-process-wrap)
-   (alist->jsobject
-      `((Process . ,(js-new js-object)))))
+(define (process-process-wrap %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((Process . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (process-crypto)
-   (alist->jsobject
-      `((SecureContext . ,(js-new js-object))
-	(randomBytes . ,(js-new js-object))
-	(pseudoRandomBytes . ,(js-new js-object))
-	(getCiphers . ,(js-new js-object))
-	(getHashes . ,(js-new js-object)))))
+(define (process-crypto %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((SecureContext . ,(js-new %this js-object))
+	   (randomBytes . ,(js-new %this js-object))
+	   (pseudoRandomBytes . ,(js-new %this js-object))
+	   (getCiphers . ,(js-new %this js-object))
+	   (getHashes . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-http-parser ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (process-http-parser)
+(define (process-http-parser %this)
    (alist->jsobject
-      `((HTTPParser . ,(js-make-function (lambda (this) (js-undefined)) 0
+      `((HTTPParser . ,(js-make-function %this
+			  (lambda (this) (js-undefined)) 0
 			  "HTTPParser")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-zlib ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (process-zlib)
+(define (process-zlib %this)
    (alist->jsobject
       `()))
+
+;*---------------------------------------------------------------------*/
+;*    process-hop ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (process-hop %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 `((currentRequest . ,(js-make-function %this
+				 (lambda (this) (current-request))
+				 0 "currentRequest"))
+	   (withURL . ,(js-make-function %this
+			  (lambda (this url success opt)
+			     (nodejs-with-url url success opt %this))
+			  3 "withURL"))
+	   (withHOP . ,(js-make-function %this
+			  (lambda (this svc success opt)
+			     (nodejs-with-hop svc success opt %this))
+			  3 "withHOP"))
+	   (charsetConvert . ,(js-make-function %this
+				 (lambda (this text from to)
+				    (nodejs-charset-convert
+				       this text from to %this))
+				 3 "charsetConvert"))
+	   (charset . ,(js-make-function %this
+			  (lambda (this) (hop-charset))
+			  0 "charset"))
+	   (charsetSet . ,(js-make-function %this
+			     (lambda (this v) (hop-charset-set! v))
+			     1 "charset"))
+	   (HTTPResponseFile . ,(js-make-function %this
+				   (lambda (this v)
+				      (instantiate::http-response-file
+					 (request (current-request))
+					 (file (js-tostring v %this))))
+				   1 "HTTPResponseFile"))
+	   (HTTPResponseAuthentication . ,(js-make-function %this
+					     (lambda (this v)
+						(user-access-denied (current-request)
+						   (js-tostring v %this)))
+					     1 "HTTPResponseAuthentication"))))))
+	   	   
+
+
+
+   

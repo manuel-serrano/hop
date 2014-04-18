@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sat Mar 22 15:08:18 2014 (serrano)                */
+;*    Last change :  Wed Apr 16 14:07:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -23,8 +23,8 @@
 
    (export j2s-hopscript-header-stage
 	   j2s-nodejs-header-stage
-	   (j2s-hopscript-header::J2SProgram ::J2SProgram)
-	   (j2s-nodejs-header::J2SProgram ::J2SProgram)))
+	   (generic j2s-hopscript-header::J2SProgram ::J2SProgram ::obj)
+	   (generic j2s-nodejs-header::J2SProgram ::J2SProgram ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hopscript-header-stage ...                                   */
@@ -47,21 +47,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hopscript-header ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hopscript-header::J2SProgram ast::J2SProgram)
-   (with-access::J2SProgram ast (nodes module path loc mode path)
-      (unless (pair? module)
-	 (set! module '(module __node_module
-			(library hop hopscript nodejs js2scheme)
-			(eval (export %this) (export this)))))
-      (set! nodes
-	 (append (hopscript-header mode path (program-file-name ast) loc)
-	    nodes)))
+(define-generic (j2s-hopscript-header::J2SProgram ast::J2SProgram args)
+   (when (args-get args :hopscript-header #t)
+      (with-access::J2SProgram ast (nodes path loc mode)
+	 (let* ((id (basename path))
+		(path (or (args-get args :module-path #f) path)))
+	    (set! nodes (append (hopscript-header mode id path loc) nodes)))))
    ast)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-header ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-header mode path filename loc)
+(define (hopscript-header mode id path loc)
    
    (define (js-def-import-primitive js scm)
       (list (instantiate::J2SDeclExtern
@@ -81,9 +78,8 @@
 			   (expr scm))))
 	     (instantiate::J2SPragma
 		(loc loc)
-		(expr `(js-bind! %this ',js
-			  :get (js-make-function
-				  (lambda (o) ,scm)
+		(expr `(js-bind! %this %this ',js
+			  :get (js-make-function %this (lambda (o) ,scm)
 				  1
 				  js)))))
 	  (list (instantiate::J2SDeclExtern
@@ -97,7 +93,7 @@
    (define (js-def-import-clone js scm)
       (let ((pragm (instantiate::J2SPragma
 		      (loc loc)
-		      (expr `(js-bind! %this ',js
+		      (expr `(js-bind! %this %this ',js
 				:get (lambda (o) ,js)))))
 	    (decl (instantiate::J2SDeclInit
 		     (loc loc)
@@ -120,7 +116,7 @@
 	 (list decl
 	    (instantiate::J2SPragma
 	       (loc loc)
-	       (expr `(js-bind! %this ',js
+	       (expr `(js-bind! %this %this ',js
 			 :value ,name
 			 :writable ,writable
 			 :configurable ,configurable
@@ -133,9 +129,10 @@
       (js-def-import-pragma js name scm #t #t #f))
    
    `(;;; global-object
-     ,@(js-def-import-primitive '%this '(js-clone (js-init-global-object!)))
-     ,@(js-def-import-primitive 'this '%this)
-     ,@(js-def-import-primitive '%module `(%nodejs-module ,path ,filename))
+     ,@(js-def-import-primitive 'this
+	  '%this)
+     ,@(js-def-import-primitive '%module
+	  `(%nodejs-module ,id ,path %this))
      ;; Global object properties
      ,(instantiate::J2SPragma
          (loc loc)
@@ -144,39 +141,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-nodejs-header ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-nodejs-header::J2SProgram ast::J2SProgram)
-   (with-access::J2SProgram ast (nodes module path loc)
-      (let ((filename (program-file-name ast)))
-	 (call-with-input-string (nodejs-header path filename)
+(define-generic (j2s-nodejs-header::J2SProgram ast::J2SProgram args)
+   (when (args-get args :nodejs-header #t)
+      (with-access::J2SProgram ast (nodes module path loc)
+	 (call-with-input-string (nodejs-header path)
 	    (lambda (in)
-	       (let ((prog (j2s-parser in)))
+	       (let ((prog (j2s-parser in '())))
 		  (with-access::J2SProgram prog ((anodes nodes))
-		     (set! nodes (append anodes nodes)))
-		  ast))))))
+		     (set! nodes
+			(append
+			   anodes
+			   nodes
+			   (list (instantiate::J2SUnresolvedRef
+				    (loc loc)
+				    (id 'module)))))))))))
+   ast)
 
-;*---------------------------------------------------------------------*/
-;*    program-file-name ...                                            */
-;*---------------------------------------------------------------------*/
-(define (program-file-name ast::J2SProgram)
-   (with-access::J2SProgram ast (nodes module path loc)
-      (let ((imod (when (pair? module)
-		     (let ((s (symbol->string (cadr module))))
-			(when (string-prefix? "__nodejs_" s)
-			   (substring s 9))))))
-	 (or imod
-	     (if (file-exists? path)
-		 (file-name-canonicalize!
-		    (make-file-name (pwd) path))
-		 (pwd))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-header ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-header path filename)
+(define (nodejs-header path)
    (format "var module = #:%module;
 var exports = module.exports;
-var process = #:%nodejs-process();
-function require( name ) { return #:%nodejs-require( name, #:%module ); }
+var process = #:%nodejs-process( #:%this );
+function require( name ) { return #:nodejs-require( name.toString(), #:%this ); }
 var console = require( 'console' );
-" path filename))
+" path))
    

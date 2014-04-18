@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Feb 21 16:26:23 2014 (serrano)                */
+;*    Last change :  Sat Apr  5 11:57:59 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-args args)
 
-   ;; 'defaults'
+   ;; defaults
    (let ((loadp #t)
 	 (mimep #t)
 	 (autoloadp #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Mar 22 14:42:01 2014 (serrano)                */
+;*    Last change :  Wed Apr 16 10:03:07 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -16,23 +16,24 @@
 
    (import __js2scheme_lexer
 	   __js2scheme_ast
-	   __js2scheme_dump)
+	   __js2scheme_dump
+	   __js2scheme_utils)
 
-   (export (j2s-parser ::input-port #!key start module)))
+   (export (j2s-parser ::input-port args::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-parser input-port #!key start module)
+(define (j2s-parser input-port args::pair-nil)
 
    (define (current-loc)
       `(at ,(input-port-name input-port) ,(input-port-position input-port)))
 
    (define (token-loc token)
       (cer token))
-      
+
    (define (parse-token-error msg token::pair)
       (let ((l (read-line input-port)))
 	 (match-case (token-loc token)
@@ -159,19 +160,6 @@
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
    
-   (define (program)
-      (when (eq? (peek-token-type) 'MODULE)
-	 (let ((token (consume-any!)))
-	    (set! module (cdr token))))
-      (with-access::J2SBlock (source-elements) (loc nodes)
-	 (let ((mode (when (pair? nodes) (javascript-mode-nodes nodes))))
-	    (instantiate::J2SProgram
-	       (loc loc)
-	       (path (input-port-name input-port))
-	       (module module)
-	       (mode (if (symbol? mode) mode 'normal))
-	       (nodes nodes)))))
-   
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '()))
 	 (if (eof?)
@@ -194,16 +182,9 @@
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
 
-   (define (repl)
-      (let ((el (repl-element)))
-	 (if (isa? el J2SNode)
-	     (with-access::J2SNode el (loc)
-		(instantiate::J2SProgram
-		   (loc loc)
-		   (path (input-port-name input-port))
-		   (module #f)
-		   (nodes (list el))))
-	     el)))
+   (define (absolute-file-name? path)
+      (and (>fx (string-length path) 0)
+	   (char=? (string-ref path 0) (file-separator))))
    
    (define (repl-element)
       (case (peek-token-type)
@@ -1381,17 +1362,62 @@
 		 (begin
 		    (consume! 'COMMA)
 		    ;; MS: I'm not sure this is demanded by the official
-		    ;; JS syntax tome test case uses it
-		    ;; (15.2.3.6-4-293-3.js)
+		    ;; JS syntax test case uses it (15.2.3.6-4-293-3.js)
 		    (if (eq? (peek-token-type) 'RBRACE)
 			(loop rev-props)
 			(loop (cons (property-init) rev-props))))))))
+
+   (define (abspath)
+      (let ((path (input-port-name input-port)))
+	 (if (absolute-file-name? path)
+	     path
+	     (file-name-canonicalize! (make-file-name (pwd) path)))))
+
+   (define (nodes-mode nodes)
+      (let ((mode (when (pair? nodes) (javascript-mode-nodes nodes))))
+	 (if (symbol? mode) mode 'normal)))
    
+   (define (program)
+      (let ((module (when (eq? (peek-token-type) 'MODULE)
+		       (let ((token (consume-any!)))
+			  (cdr token)))))
+	 (with-access::J2SBlock (source-elements) (loc nodes name)
+	    (instantiate::J2SProgram
+	       (loc loc)
+	       (path (abspath))
+	       (module module)
+	       (main (args-get args :module-main #f))
+	       (name (args-get args :module-name #f))
+	       (mode (nodes-mode nodes))
+	       (nodes nodes)))))
+   
+   (define (eval)
+      (with-access::J2SBlock (source-elements) (loc nodes)
+	 (instantiate::J2SProgram
+	    (loc loc)
+	    (path (abspath))
+	    (name (args-get args :module-name #f))
+	    (mode (nodes-mode nodes))
+	    (nodes nodes))))
+
+   (define (repl)
+      (let ((el (repl-element)))
+	 (if (isa? el J2SNode)
+	     (with-access::J2SNode el (loc)
+		(instantiate::J2SProgram
+		   (loc loc)
+		   (main (args-get args :module-main #f))
+		   (name (args-get args :module-name #f))
+		   (path (abspath))
+		   (nodes (list el))))
+	     el)))
+
    ;; procedure entry point.
    ;; ----------------------
-   (case start
-      ((program) (program))
+   (case (args-get args :parser #f)
+      ((module) (program))
       ((repl) (repl))
+      ((eval) (eval))
       (else (program))))
 
 ;*---------------------------------------------------------------------*/

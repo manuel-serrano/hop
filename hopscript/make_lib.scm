@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/make_lib.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Nov  5 09:20:05 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Mon Apr 14 13:58:20 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -32,11 +32,13 @@
 	   __hopscript_date
 	   __hopscript_regexp
 	   __hopscript_error
-	   __hopscript_json)
+	   __hopscript_json
+	   __hopscript_worker)
    
    (eval   (export-all)
 
            (class JsObject)
+	   (class JsGlobalObject)
 	   (class JsFunction)
 	   (class JsService)
 	   (class JsArray)
@@ -46,8 +48,12 @@
 	   (class JsBoolean)
 	   (class JsDate)
 	   (class JsError)
+	   (class JsWorker)
 
 	   (class JsPropertyCache)
 	   
 	   (class JsValueDescriptor)
-	   (class JsAccessorDescriptor)))
+	   (class JsAccessorDescriptor)
+
+	   (class MessageEvent)
+	   (class WorkerHopThread)))

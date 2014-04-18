@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/3.0.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Nov  4 19:22:46 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Wed Apr 16 13:05:23 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -69,7 +69,22 @@
 	    (hopc-source-language-set! ::symbol)
 
 	    (hopc-optim-level::int)
-	    (hopc-optim-level-set! ::int))
+	    (hopc-optim-level-set! ::int)
+
+	    (hopc-js-worker::bool)
+	    (hopc-js-worker-set! ::bool)
+
+	    (hopc-js-module-name::obj)
+	    (hopc-js-module-name-set! ::obj)
+	    
+	    (hopc-js-module-path::obj)
+	    (hopc-js-module-path-set! ::obj)
+	    
+	    (hopc-js-module-main::obj)
+	    (hopc-js-module-main-set! ::obj)
+	    
+	    (hopc-js-header::obj)
+	    (hopc-js-header-set! ::obj))
 	    
    (eval    (export-exports)))
 
@@ -187,3 +202,33 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-optim-level
    1)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-worker ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-worker
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-name ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-name
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-path ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-path
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-module-main ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-module-main
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-header ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-header
+   #t)

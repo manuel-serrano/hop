@@ -1,7 +1,3 @@
-// (module __nodejs_util (library hopscript))
-
-// Copyright Joyent, Inc. and other Node contributors.
-//
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
 // "Software"), to deal in the Software without restriction, including
@@ -555,6 +551,7 @@ exports.pump = exports.deprecate(pump,
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
 exports.inherits = function(ctor, superCtor) {
+//   #:tprint( "util.inherits ctor=", ctor, " super=", superCtor );
   ctor.super_ = superCtor;
   ctor.prototype = Object.create(superCtor.prototype, {
     constructor: {

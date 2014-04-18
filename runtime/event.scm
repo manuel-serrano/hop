@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Mar 19 09:55:26 2014 (serrano)                */
+;*    Last change :  Sat Apr  5 16:35:56 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -115,12 +115,14 @@
 (define-generic (add-event-listener! obj::obj event proc . capture)
    (if (and (string? event) (string? obj))
        (add-server-listener! obj event proc capture)
-       (error "add-event-listener!" "Illegal listener" obj)))
+       (error "add-event-listener!"
+	  (format "Illegal ~s listener" event) obj)))
 
 (define-generic (remove-event-listener! obj::obj event proc . capture)
    (if (and (string? event) (string? obj))
        (remove-server-listener! obj event proc capture)
-       (error "remove-event-listener!" "Illegal listener" obj)))
+       (error "remove-event-listener!"
+	  (format "Illegal ~s listener" event) obj)))
 
 (define-generic (stop-event-propagation event::event default::bool)
    (with-access::event event (stopped)

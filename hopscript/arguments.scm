@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Mar 11 11:53:59 2014 (serrano)                */
+;*    Last change :  Tue Apr 15 09:17:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -16,18 +16,21 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_arguments
 
+   (library hop)
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
 	   __hopscript_error
 	   __hopscript_private
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_worker)
 
    (export (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
-	   (js-arguments ::vector)
-	   (js-strict-arguments ::pair-nil)
-	   (js-arguments->list ::JsArguments)))
+	   (js-arguments ::JsGlobalObject ::vector)
+	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
+	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-define-own-property ...                             */
@@ -54,7 +57,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property ::JsArguments ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property o::JsArguments p)
+(define-method (js-get-property o::JsArguments p %this)
    (let ((index::uint32 (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsArguments o (vec)
@@ -72,7 +75,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get o::JsArguments p)
+(define-method (js-get o::JsArguments p %this)
    (with-access::JsArguments o (vec properties)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -82,7 +85,7 @@
 	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))
 		    (call-next-method)
-		    (js-property-value o desc))))
+		    (js-property-value o desc %this))))
 	    (else
 	     (call-next-method))))))
        
@@ -91,7 +94,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::JsArguments p v throw)
+(define-method (js-put! o::JsArguments p v throw %this)
    (with-access::JsArguments o (vec)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -104,7 +107,7 @@
 		    (call-next-method))
 		   ((isa? desc JsAccessorDescriptor)
 		    (with-access::JsAccessorDescriptor desc (set)
-		       (js-call1 set o v)))
+		       (js-call1 %this set o v)))
 		   ((isa? desc JsValueDescriptor)
 		    (with-access::JsValueDescriptor desc (value writable)
 		       (if writable
@@ -122,7 +125,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-delete! o::JsArguments p throw)
+(define-method (js-delete! o::JsArguments p throw %this)
    (with-access::JsArguments o (vec properties)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -170,14 +173,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-define-own-property::bool o::JsArguments p desc throw)
+(define-method (js-define-own-property::bool o::JsArguments p desc throw %this)
    ;; step 2
    (let* ((ismapped (get-mapped-property o p))
-	  (allowed (js-define-own-property% o (js-toname p) desc #f)))
+	  (allowed (js-define-own-property% o (js-toname p %this) desc #f %this)))
       ;; 3
       (if (not allowed)
 	  ;; 4
-	  (js-raise-type-error "Illegal arguments property override ~s"
+	  (js-raise-type-error %this "Illegal arguments property override ~s"
 	     (with-access::JsPropertyDescriptor desc (name) name))
 	  (begin
 	     (when ismapped
@@ -203,7 +206,7 @@
 				 (with-access::JsAccessorDescriptor ismapped
 				       (set)
 				    (when (isa? set JsFunction)
-				       (js-call1 set o value))))
+				       (js-call1 %this set o value))))
 				((isa? ismapped JsValueDescriptor)
 				 (with-access::JsValueDescriptor ismapped
 				       ((avalue value) writable)
@@ -221,9 +224,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-property-names ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-property-names obj::JsArguments enump)
+(define-method (js-property-names obj::JsArguments enump %this)
    (with-access::JsArguments obj (vec)
-      (let ((len::uint32 (js-touint32 (js-get obj 'length))))
+      (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (vector-append
 	    (apply vector (map! integer->string (iota (uint32->fixnum len))))
 	    (call-next-method))	 )))
@@ -231,7 +234,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-own-property o::JsArguments p)
+(define-method (js-get-own-property o::JsArguments p %this)
    (or (get-mapped-property o p) (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -239,24 +242,25 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments vec::vector)
-   (let ((obj (instantiate::JsArguments
-		 (vec vec)
-		 (cmap (instantiate::JsConstructMap))
-		 (elements (make-vector 1))
-		 (__proto__ js-object-prototype))))
-      (js-bind! obj 'length
-	 :value (vector-length vec)
-	 :enumerable #f :configurable #t :writable #t)
-      (js-bind! obj 'callee
-	 :value (js-undefined)
-	 :enumerable #f :configurable #t :writable #t)
-      obj))
+(define (js-arguments %this::JsGlobalObject vec::vector)
+   (with-access::JsObject %this (__proto__)
+      (let ((obj (instantiate::JsArguments
+		    (vec vec)
+		    (cmap (instantiate::JsConstructMap))
+		    (elements (make-vector 1))
+		    (__proto__ __proto__))))
+	 (js-bind! %this obj 'length
+	    :value (vector-length vec)
+	    :enumerable #f :configurable #t :writable #t)
+	 (js-bind! %this obj 'callee
+	    :value (js-undefined)
+	    :enumerable #f :configurable #t :writable #t)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-strict-arguments lst::pair-nil)
+(define (js-strict-arguments %this::JsGlobalObject lst::pair-nil)
    
    (define (value->descriptor v i)
       (instantiate::JsValueDescriptor
@@ -275,29 +279,30 @@
 	    (vector-set! vec i (value->descriptor (car lst) i))
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
-      (let ((obj (instantiate::JsArguments
-		    (vec vec)
-		    (elements (make-vector 1))
-		    (__proto__ js-object-prototype))))
-	 (js-bind! obj 'length
-	    :value len
-	    :enumerable #f :configurable #t :writable #t)
-	 (js-bind! obj 'caller
-	    :get thrower-get
-	    :set thrower-set
-	    :enumerable #f :configurable #f)
-	 (js-bind! obj 'callee
-	    :get thrower-get
-	    :set thrower-set
-	    :enumerable #f :configurable #f)
-	 obj)))
+      (with-access::JsObject %this (__proto__)
+	 (let ((obj (instantiate::JsArguments
+		       (vec vec)
+		       (elements (make-vector 1))
+		       (__proto__ __proto__))))
+	    (js-bind! %this obj 'length
+	       :value len
+	       :enumerable #f :configurable #t :writable #t)
+	    (js-bind! %this obj 'caller
+	       :get thrower-get
+	       :set thrower-set
+	       :enumerable #f :configurable #f)
+	    (js-bind! %this obj 'callee
+	       :get thrower-get
+	       :set thrower-set
+	       :enumerable #f :configurable #f)
+	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->list ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-arguments->list obj::JsArguments)
+(define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (map! (lambda (d) (js-property-value obj d)) (vector->list vec))))
+      (map! (lambda (d) (js-property-value obj d %this)) (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsArguments ...                                      */
@@ -315,11 +320,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsArguments ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-for-in o::JsArguments proc)
+(define-method (js-for-in o::JsArguments proc %this)
    (with-access::JsArguments o (vec)
       (if (>fx (vector-length vec) 0)
 	  (let ((len (minfx (vector-length vec)
-			(uint32->fixnum (js-touint32 (js-get o 'length))))))
+			(uint32->fixnum (js-touint32 (js-get o 'length %this) %this)))))
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin

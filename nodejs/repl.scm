@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/nodejs/repl.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/nodejs/repl.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Mon Jan 13 16:24:19 2014 (serrano)                */
+;*    Last change :  Wed Apr 16 10:20:00 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -18,7 +18,7 @@
 
    (import __nodejs_require)
    
-   (export (repljs)))
+   (export (repljs ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    prompt ...                                                       */
@@ -30,10 +30,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    repljs ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (repljs)
+(define (repljs %this)
    (let ((old-intrhdl (get-signal-handler sigint))
 	 (mod (eval-module))
-	 (console (nodejs-require "console")))
+	 (console (nodejs-require "console" %this)))
       ;; preload the hopscript header
       (call-with-input-string ""
 	 (lambda (in)
@@ -60,7 +60,7 @@
 		     (lambda (e)
 			(cond
 			   ((isa? e JsError)
-			    ((js-get console 'log) console e))
+			    ((js-get console 'log %this) console e))
 			   ((isa? e &error)
 			    (error-notify e)
 			    (with-access::&error e (obj)
@@ -74,7 +74,7 @@
 			   (if (null? exp)
 			       (quit)
 			       (let ((v (jseval exp)))
-				  (jsprint v console)
+				  (jsprint v console %this)
 				  (liip))))))))
 	    (loop))
 	 (if (procedure? old-intrhdl)
@@ -84,15 +84,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsprint ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (jsprint exp console)
-   (js-call1 (js-get console 'log) console exp))
+(define (jsprint exp console %this)
+   (js-call1 %this (js-get console 'log %this) console exp))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsread ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (jsread)
    (j2s-compile (current-input-port)
-      :parser (lambda (in) (j2s-parser in :start 'repl))
+      :parser 'repl
       :driver (j2s-eval-driver)))
 
 ;*---------------------------------------------------------------------*/

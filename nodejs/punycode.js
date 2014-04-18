@@ -1,5 +1,3 @@
-// (module __nodejs_punycode (library hopscript))
-
 /*! http://mths.be/punycode v1.2.0 by @mathias */
 ;(function(root) {
 

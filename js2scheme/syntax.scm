@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/syntax.scm              */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/syntax.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Jan 14 17:47:16 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:38:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -24,7 +24,7 @@
 	   __js2scheme_stage)
 
    (export j2s-syntax-stage
-	   (generic j2s-syntax ::obj)
+	   (generic j2s-syntax ::obj ::obj)
 	   (syntax-error ::J2SNode ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -39,13 +39,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-syntax ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-syntax this)
+(define-generic (j2s-syntax this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-syntax ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-syntax this::J2SProgram)
+(define-method (j2s-syntax this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o) (syntax o #f #f)) nodes))
    this)

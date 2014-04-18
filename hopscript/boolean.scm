@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/boolean.scm             */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/boolean.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jan 31 18:58:15 2014 (serrano)                */
+;*    Last change :  Wed Apr  9 17:27:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -27,8 +27,7 @@
 	   __hopscript_regexp
 	   __hopscript_error)
 
-   (export js-boolean
-	   (js-init-boolean! ::JsObject)))
+   (export (js-init-boolean! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */
@@ -41,34 +40,35 @@
       (display (if val "new Boolean(true)" "new Boolean(false)") op)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-boolean ...                                                   */
-;*---------------------------------------------------------------------*/
-(define js-boolean #f)
-(define js-boolean-prototype #f)
-   
-;*---------------------------------------------------------------------*/
 ;*    js-init-boolean! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-init-boolean! %this)
-   ;; first, bind the builtin string prototype
-   (set! js-boolean-prototype
-      (instantiate::JsBoolean
-	 (val #f)
-	 (__proto__ js-object-prototype)
-	 (extensible #t)))
-   ;; then, Create a HopScript string object
-   (let ((obj (js-make-function %js-boolean 1 "JsBoolean"
-		 :__proto__ js-function-prototype
-		 :prototype js-boolean-prototype
-		 :alloc js-boolean-alloc
-		 :construct js-boolean-construct)))
-      (set! js-boolean obj)
-      ;; now the boolean constructor is fully built,
-      ;; initialize the prototype properties
-      (init-builtin-boolean-prototype! js-boolean-prototype)
-      ;; bind Boolean in the global object
-      (js-bind! %this 'Boolean :configurable #f :enumerable #f :value js-boolean)
-      js-boolean))
+(define (js-init-boolean! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (__proto__ js-boolean js-function)
+      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+	 
+	 (define js-boolean-prototype
+	    (instantiate::JsBoolean
+	       (val #f)
+	       (__proto__ __proto__)
+	       (extensible #t)))
+	 
+	 (define (js-boolean-alloc constructor::JsFunction)
+	    (instantiate::JsBoolean
+	       (__proto__ (js-get constructor 'prototype %this))))
+
+	 ;; then, Create a HopScript string object
+	 (set! js-boolean (js-make-function %this %js-boolean 1 "JsBoolean"
+			     :__proto__ js-function-prototype
+			     :prototype js-boolean-prototype
+			     :alloc js-boolean-alloc
+			     :construct js-boolean-construct))
+	 ;; now the boolean constructor is fully built,
+	 ;; initialize the prototype properties
+	 (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)
+	 ;; bind Boolean in the global object
+	 (js-bind! %this %this 'Boolean
+	    :configurable #f :enumerable #f :value js-boolean)
+	 js-boolean)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-boolean ...                                                  */
@@ -77,13 +77,6 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-boolean this value)
    (js-toboolean value))
-
-;*---------------------------------------------------------------------*/
-;*    js-boolean-alloc ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-boolean-alloc constructor::JsFunction)
-   (instantiate::JsBoolean
-      (__proto__ (js-get constructor 'prototype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-boolean-construct ...                                         */
@@ -98,7 +91,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsBoolean ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-valueof this::JsBoolean)
+(define-method (js-valueof this::JsBoolean %this)
    (with-access::JsBoolean this (val)
       val))
    
@@ -107,29 +100,31 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.3.1     */
 ;*---------------------------------------------------------------------*/
-(define (init-builtin-boolean-prototype! obj)
+(define (init-builtin-boolean-prototype! %this::JsGlobalObject js-boolean obj)
    ;; prototype fields
-   (js-bind! obj 'constructor
+   (js-bind! %this obj 'constructor
       :value js-boolean
       :enumerable #f)
    ;; toString
-   (js-bind! obj 'toString
-      :value (js-make-function
+   (js-bind! %this obj 'toString
+      :value (js-make-function %this
 		(lambda (this)
 		   (if (isa? this JsBoolean)
 		       (with-access::JsBoolean this (val)
 			  (if val "true" "false"))
-		       (js-raise-type-error "not a boolean" (typeof this))))
+		       (js-raise-type-error %this "not a boolean"
+			  (typeof this))))
 		0
 		"toString")
       :enumerable #f)
    ;; valueOf
-   (js-bind! obj 'valueOf
-      :value (js-make-function
+   (js-bind! %this obj 'valueOf
+      :value (js-make-function %this
 		(lambda (this)
 		   (if (isa? this JsBoolean)
 		       (with-access::JsBoolean this (val) val)
-		       (js-raise-type-error "not a boolean" (typeof this))))
+		       (js-raise-type-error %this "not a boolean"
+			  (typeof this))))
 		0 "valueOf")
       :enumerable #f))
       

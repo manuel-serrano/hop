@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Mar 17 09:22:14 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 07:55:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -14,27 +14,31 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_private
 
-   (include "hopscript.sch")
-   
-   (library js2scheme)
+   (library hop js2scheme)
    
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_public
-	   __hopscript_property)
+	   __hopscript_property
+	   __hopscript_worker)
 
-   (export (js-raise-type-error ::bstring ::obj)
-	   (js-raise-type-error/loc ::obj ::bstring ::obj)
+   (export (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
+	   (js-raise-range-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-uri-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-syntax-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
 
 	   (->fixnum::long ::obj)
 	   (->uint32::uint32 ::obj)
 	   (->int32::int32 ::obj)
 	   
-	   (inline js-cast-object obj ::bstring)
+	   (js-cast-object ::JsGlobalObject obj ::bstring)
 	   (expander js-toprimitive)
-	   (generic js-toprimitive ::obj ::symbol)
+	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 
 	   (trim-whitespaces+ ::bstring #!key (left #t) (right #f) (plus #f))
 	   
@@ -57,24 +61,19 @@
 	   
 	   (js-freeze-property! desc::JsPropertyDescriptor)
 
-	   (js-construct-get-prototype ::JsFunction)
-
 	   (js-properties-clone ::pair-nil)
 	   
 	   (js-toindex::uint32 ::obj)
 	   (js-isindex?::bool ::uint32)
 	   
-	   (generic js-valueof ::obj)
-	   
-	   
-	   (generic js-tointeger ::obj)
+	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
 	   (js-string->number ::bstring)
 	   (js-number->string obj)
-	   (js-parseint ::bstring ::obj ::bool)
-	   (js-parsefloat ::bstring ::bool)
+	   (js-parseint ::bstring ::obj ::bool ::JsGlobalObject)
+	   (js-parsefloat ::bstring ::bool ::JsGlobalObject)
 
-	   (%js-eval ::bstring)
+	   (%js-eval ::bstring ::JsGlobalObject)
 	   
 	   
 	   
@@ -83,36 +82,73 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-raise-type-error fmt::bstring obj)
-   (js-raise
-      (js-new js-type-error
-	 (format fmt
-	    (if (isa? obj JsObject)
-		(with-handler
-		   (lambda (e)
-		      (js-typeof obj))
-		   (js-call0 (js-get obj 'toString) obj))
-		obj)))))
+(define (js-raise-type-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-type-error)
+      (js-raise
+	 (js-new %this js-type-error
+	    (format fmt
+	       (if (isa? obj JsObject)
+		   (with-handler
+		      (lambda (e)
+			 (js-typeof obj))
+		      (js-call0 %this (js-get obj 'toString %this) obj))
+		   obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error/loc ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-raise-type-error/loc loc fmt::bstring obj)
+(define (js-raise-type-error/loc %this::JsGlobalObject loc fmt::bstring obj)
    (match-case loc
       ((at ?fname ?loc)
-       (js-raise
-	  (js-new js-type-error
-	     (format fmt
-		(if (isa? obj JsObject)
-		    (with-handler
-		       (lambda (e)
-			  (js-typeof obj))
-		       (js-call0 (js-get obj 'toString) obj))
-		    obj))
-	     fname
-	     loc)))
+       (with-access::JsGlobalObject %this (js-type-error)
+	  (js-raise
+	     (js-new %this js-type-error
+		(format fmt
+		   (if (isa? obj JsObject)
+		       (with-handler
+			  (lambda (e)
+			     (js-typeof obj))
+			  (js-call0 %this (js-get obj 'toString %this) obj))
+		       obj))
+		fname
+		loc))))
       (else
-       (js-raise-type-error fmt obj))))
+       (js-raise-type-error %this fmt obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-range-error ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-raise-range-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-range-error)
+      (js-raise (js-new %this js-range-error (format fmt obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-uri-error ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-raise-uri-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-uri-error)
+      (js-raise (js-new %this js-uri-error (format fmt obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-syntax-error ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-raise-syntax-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-syntax-error)
+      (js-raise (apply js-new %this js-syntax-error (format fmt obj) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-reference-error ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-raise-reference-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-reference-error)
+      (js-raise (apply js-new %this js-reference-error (format fmt obj) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-error ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-raise-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-error)
+      (js-raise (apply js-new %this js-error (format fmt obj) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ->fixnum ...                                                     */
@@ -146,12 +182,12 @@
       (else (error "->int32" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-cast-object ...                                               */
+;*    js-cast-object/%this ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-cast-object obj name)
+(define (js-cast-object %this::JsGlobalObject obj name)
    (if (isa? obj JsObject)
        obj
-       (js-raise-type-error "cast: not an object ~a" name)))
+       (js-raise-type-error %this "cast: not an object ~a" name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */
@@ -163,21 +199,21 @@
    (lambda (x e)
       (let ((tmp (gensym)))
 	 (match-case x
-	    ((?- ?val 'number)
+	    ((?- ?val 'number ?this)
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(number? ,tmp) e)
 		     ,tmp
-		     (js-toprimitive ,tmp 'number))))
-	    ((?- ?val 'string)
+		     (js-toprimitive ,tmp 'number ,this))))
+	    ((?- ?val 'string ?this)
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(string? ,tmp) e)
 		     ,tmp
-		     (js-toprimitive ,tmp 'string))))
-	    ((?- ?val 'any)
+		     (js-toprimitive ,tmp 'string ,this))))
+	    ((?- ?val 'any ?this)
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(number? ,tmp) e)
 		     ,tmp
-		     (js-toprimitive ,tmp 'any))))
+		     (js-toprimitive ,tmp 'any ,this))))
 	    (else
 	     (error "js-toprimitive" "illegal call" x))))))
 
@@ -186,7 +222,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-toprimitive obj preferredtype)
+(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -198,17 +234,6 @@
 	 (with-access::JsValueDescriptor desc (writable)
 	    (when (eq? writable #t) (set! writable #f))))
       (when (eq? configurable #t) (set! configurable #f))))
-
-;*---------------------------------------------------------------------*/
-;*    js-construct-get-prototype ...                                   */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-13.2.2       */
-;*---------------------------------------------------------------------*/
-(define (js-construct-get-prototype constructor::JsFunction)
-   (let ((prototype (js-get constructor 'prototype)))
-      (if (eq? prototype (js-undefined))
-	  js-object-prototype
-	  prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-clone ...                                          */
@@ -291,32 +316,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::obj ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-valueof obj::obj)
-   (js-toobject obj))
-
-;*---------------------------------------------------------------------*/
-;*    js-tointeger ::obj ...                                           */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.4          */
-;*---------------------------------------------------------------------*/
-(define-generic (js-tointeger obj)
-   (cond
-      ((fixnum? obj)
-       obj)
-      ((flonum? obj)
-       (cond
-	  ((nanfl? obj) 0)
-	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
-	   obj)
-	  ((<fl obj 0.)
-	   (*fl -1. (floor (abs obj))))
-	  (else
-	   (floor obj))))
-      ((or (string? obj) (symbol? obj))
-       (js-tointeger (js-tonumber obj)))
-      ((eq? obj #t)
-       1)
-      (else 0)))
+(define-generic (js-valueof obj::obj %this::JsGlobalObject)
+   (js-toobject %this obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->number ...                                            */
@@ -424,7 +425,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint s::bstring radix strict-syntax::bool)
+(define (js-parseint s::bstring radix strict-syntax::bool %this)
    
    (define (integer v s r)
       (if (and (fixnum? v) (=fx v 0))
@@ -502,7 +503,7 @@
 	  (or (string->number s r) +nan.0)
 	  (string->integer s r)))
 
-   (let ((r::int32 (js-toint32 radix))
+   (let ((r::int32 (js-toint32 radix %this))
 	 (l (string-length s)))
       (cond
 	 ((and (not (zeros32? r))
@@ -533,7 +534,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
 ;*---------------------------------------------------------------------*/
-(define (js-parsefloat s::bstring strict::bool)
+(define (js-parsefloat s::bstring strict::bool %this)
    (let ((l (string-length s)))
       (cond
 	 ((=fx l 0)
@@ -878,58 +879,52 @@
 ;*    lib-hopscript-path ...                                           */
 ;*---------------------------------------------------------------------*/
 (define lib-hopscript-path
-   (make-file-path (hop-lib-dir) "hop" (hop-version)))
+   (make-file-path (hop-lib-directory) "hop" (hop-version)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (%js-eval string)
+(define (%js-eval string %this::JsGlobalObject)
    (library-load 'hopscript lib-hopscript-path)
-   (let ((r (js-undefined)))
-      (with-trace 1 '%js-eval
-	 (trace-item "string=" string)
-	 (call-with-input-string string
-	    (lambda (in)
-	       (for-each (lambda (e)
-			    (with-trace 2 '%js-eval-inner
-			       (trace-item "e=" e)
-			       (set! r (eval e))
-			       (trace-item "r=" r)))
-		  (with-handler
-		     (lambda (e)
-			(exception-notify e)
-			(cond
-			   ((isa? e &io-parse-error)
-			    (with-access::&io-parse-error e (proc msg obj
-							       fname location)
-			       (js-raise
-				  (js-new js-syntax-error
-				     (format "~a: ~a -- ~a" proc msg obj)
-				     fname location))))
-			   ((isa? e &io-error)
-			    (with-access::&io-error e (proc msg obj
-							 fname location)
-			       (js-raise
-				  (js-new js-error
-				     (format "~a: ~a -- ~a" proc msg obj)
-				     fname location))))
-			   ((isa? e &error)
-			    (with-access::&error e (proc msg obj
-						      fname location)
-			       (cond
-				  ((string=? proc "assignment")
-				   (js-raise
-				      (js-new js-reference-error
-					 (format "~a -- ~a" msg obj)
-					 fname location)))
-				  (else
-				   (js-raise
-				      (js-new js-error
-					 (format "~a: ~a -- ~a" proc msg obj)
-					 fname location))))))
-			   (else
-			    (raise e))))
-		     (j2s-compile in :driver (j2s-eval-driver))))
-	       (trace-item "r=" r)
-	       r)))))
+   ;; bind the global object
+   (with-trace 1 '%js-eval
+      (trace-item "string=" string)
+      (call-with-input-string string
+	 (lambda (in)
+	    (with-handler
+	       (lambda (e)
+		  (exception-notify e)
+		  (cond
+		     ((isa? e &io-parse-error)
+		      (with-access::&io-parse-error e (proc msg obj fname location)
+			 (js-raise-syntax-error %this
+			    (format "~a: ~a -- ~a" proc msg obj)
+			    fname location)))
+		     ((isa? e &io-error)
+		      (with-access::&io-error e (proc msg obj fname location)
+			 (js-raise-error %this
+			    (format "~a: ~a -- ~a" proc msg obj)
+			    fname location)))
+		     ((isa? e &error)
+		      (with-access::&error e (proc msg obj fname location)
+			 (cond
+			    ((string=? proc "assignment")
+			     (js-raise-reference-error %this
+				(format "~a -- ~a" msg obj)
+				fname location))
+			    (else
+			     (js-raise-error %this
+				(format "~a: ~a -- ~a" proc msg obj)
+				fname location)))))
+		     (else
+		      (raise e))))
+	       (let ((e (j2s-compile in
+			   :driver (j2s-eval-driver)
+			   :parser 'eval)))
+		  (with-trace 2 '%js-eval-inner
+		     (trace-item "e=" e)
+		     (let ((r (eval! `(,e ,%this))))
+			(trace-item "r=" r)
+			r))))))))
+
 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.6.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Oct  3 17:55:22 2013 (serrano)                */
-/*    Copyright   :  2004-13 Manuel Serrano                            */
+/*    Last change :  Fri Apr 18 08:45:58 2014 (serrano)                */
+/*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -379,7 +379,24 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 /*    Hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function Hop( svc, success, failure ) {
-   return hop_send_request( svc, false, success, failure, false,
+   return withHop( svc, success, { fail: failure } );
+}
+			    
+/*---------------------------------------------------------------------*/
+/*    withHOP ...                                                      */
+/*---------------------------------------------------------------------*/
+function withHOP( svc, success, opt ) {
+   var sync = false;
+   var fail = false;
+   var anim = true;
+   
+   if( opt != undefined ) {
+      sync = opt.sync;
+      fail = opt.fail;
+      anim = opt.anim;
+   }
+
+   return hop_send_request( svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
 			    false, false );
 }

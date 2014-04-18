@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Feb 11 18:57:14 2014 (serrano)                */
+;*    Last change :  Wed Apr 16 08:57:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -33,9 +33,9 @@
 
    (export (j2s-compile in::input-port
 	      #!key
-	      (parser j2s-parser)
 	      (driver (j2s-optim-driver))
-	      tmp)
+	      tmp
+	      #!rest args)
 	   
 	   (j2s-optim-driver)
 	   (j2s-plain-driver)
@@ -93,18 +93,17 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-compile in::input-port
 	   #!key
-	   (parser j2s-parser)
 	   (driver (j2s-optim-driver))
-	   tmp)
+	   tmp
+	   #!rest
+	   args)
    (unless (and (list? driver) (every (lambda (s) (isa? s J2SStage))))
       (bigloo-type-error "j2s-compile" "driver list" driver))
-   (unless (procedure? parser)
-      (error "j2s-compile" "procedure" parser))
    (let ((tmp (or tmp
 		  (make-file-path (os-tmp) "J2S"
 		     (basename (input-port-name in))))))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
-      (let ((ast (parser in)))
+      (let ((ast (j2s-parser in args)))
 	 (if (eof-object? ast)
 	     '()
 	     (let loop ((ast ast)
@@ -112,6 +111,6 @@
 			(count 0))
 		(if (null? driver)
 		    ast
-		    (loop (stage-exec (car driver) ast  tmp count)
+		    (loop (stage-exec (car driver) ast  tmp count args)
 		       (cdr driver)
 		       (+fx 1 count))))))))

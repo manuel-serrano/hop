@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Mar 22 16:25:14 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 07:55:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -14,9 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_public
    
-   (include "hopscript.sch")
-   
-   (library js2scheme)
+   (library hop js2scheme)
    
    (import __hopscript_types
 	   __hopscript_object
@@ -26,61 +24,63 @@
 	   __hopscript_boolean
 	   __hopscript_number
 	   __hopscript_property
-	   __hopscript_private)
+	   __hopscript_private
+	   __hopscript_worker)
    
-   (export (js-new f . args)
-	   (js-new0 f)
-	   (js-new1 f a0)
-	   (js-new2 f a0 a1)
-	   (js-new3 f a0 a1 a2)
-	   (js-new4 f a0 a1 a2 a3)
+   (export (js-new ::JsGlobalObject f . args)
+	   (js-new0 ::JsGlobalObject f)
+	   (js-new1 ::JsGlobalObject f a0)
+	   (js-new2 ::JsGlobalObject f a0 a1)
+	   (js-new3 ::JsGlobalObject f a0 a1 a2)
+	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
 
-	   (js-object-alloc ::JsFunction)
+	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 
-	   (js-apply fun::obj this args)
+	   (js-apply ::JsGlobalObject fun::obj this args)
 	   
-	   (js-call0 fun::obj this)
-	   (js-call1 fun::obj this a0)
-	   (js-call2 fun::obj this a0 a1)
-	   (js-call3 fun::obj this a0 a1 a2)
-	   (js-call4 fun::obj this a0 a1 a2 a3)
-	   (js-call5 fun::obj this a0 a1 a2 a3 a4)
-	   (js-call6 fun::obj this a0 a1 a2 a3 a4 a5)
-	   (js-call7 fun::obj this a0 a1 a2 a3 a4 a5 a6)
-	   (js-call8 fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (js-calln fun::obj this . args)
+	   (js-call0 ::JsGlobalObject fun::obj this)
+	   (js-call1 ::JsGlobalObject fun::obj this a0)
+	   (js-call2 ::JsGlobalObject fun::obj this a0 a1)
+	   (js-call3 ::JsGlobalObject fun::obj this a0 a1 a2)
+	   (js-call4 ::JsGlobalObject fun::obj this a0 a1 a2 a3)
+	   (js-call5 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4)
+	   (js-call6 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5)
+	   (js-call7 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-calln ::JsGlobalObject fun::obj this . args)
 
-	   (js-call0/debug loc fun::obj this)
-	   (js-call1/debug loc fun::obj this a0)
-	   (js-call2/debug loc fun::obj this a0 a1)
-	   (js-call3/debug loc fun::obj this a0 a1 a2)
-	   (js-call4/debug loc fun::obj this a0 a1 a2 a3)
-	   (js-call5/debug loc fun::obj this a0 a1 a2 a3 a4)
-	   (js-call6/debug loc fun::obj this a0 a1 a2 a3 a4 a5)
-	   (js-call7/debug loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
-	   (js-call8/debug loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (js-calln/debug loc fun::obj this . args)
+	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
+	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
+	   (js-call2/debug ::JsGlobalObject loc fun::obj this a0 a1)
+	   (js-call3/debug ::JsGlobalObject loc fun::obj this a0 a1 a2)
+	   (js-call4/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3)
+	   (js-call5/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4)
+	   (js-call6/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5)
+	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
 
-	   (js-instanceof?::bool v f)
-	   (js-in?::bool f obj)
+	   (js-instanceof?::bool v f ::JsGlobalObject)
+	   (js-in?::bool f obj ::JsGlobalObject)
 	   (inline js-totest::bool ::obj)
 	   (js-toboolean::bool ::obj)
-	   (generic js-tonumber ::obj)
-	   (js-touint16::uint16 ::obj)
-	   (js-touint32::uint32 ::obj)
-	   (js-toint32::int32 ::obj)
-	   (js-tostring::bstring obj)
-	   (js-toobject::JsObject ::obj)
+	   (generic js-tonumber ::obj ::JsGlobalObject)
+	   (generic js-tointeger ::obj ::JsGlobalObject)
+	   (js-touint16::uint16 ::obj ::JsGlobalObject)
+	   (js-touint32::uint32 ::obj ::JsGlobalObject)
+	   (js-toint32::int32 ::obj ::JsGlobalObject)
+	   (js-tostring::bstring ::obj ::JsGlobalObject)
+	   (js-toobject::JsObject ::JsGlobalObject ::obj)
 
-	   (inline js-equal? ::obj ::obj)
-	   (js-equality? ::obj ::obj)
+	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
+	   (js-equality? ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal? ::obj ::obj)
 	   (js-eq? ::obj ::obj)
 
 	   (make-pcache ::int)
 	   (inline pcache-ref ::vector ::int)
 
-	   (%js-eval-strict ::bstring)
+	   (%js-eval-strict ::bstring ::JsGlobalObject)
 	   (js-raise ::JsError)))
 
 ;*---------------------------------------------------------------------*/
@@ -88,14 +88,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
-(define (js-new f . args)
+(define (js-new %this f . args)
    (if (isa? f JsFunction)
        (with-access::JsFunction f (construct alloc)
 	  (let ((o (alloc f)))
 	     (let ((r (js-apply% construct (procedure-arity construct)
 			 o args)))
 		(if (isa? r JsObject) r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
+       (js-raise-type-error %this
+	  "new: object is not a function ~s" f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
@@ -115,68 +116,69 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-new0 ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-new0 f)
+(define (js-new0 %this f)
    (if (isa? f JsFunction)
        (with-access::JsFunction f (construct alloc name constrsize)
 	  (let ((o (alloc f)))
-	     (let ((r (js-call0% construct (procedure-arity construct)
-			 o)))
+	     (let ((r (js-call0% %this construct (procedure-arity construct) o)))
 		(js-new-return f r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
+       (js-raise-type-error %this "new: object is not a function ~s" f)))
 
-(define (js-new1 f a0)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc)
-	  (let ((o (alloc f)))
-	     (let ((r (js-call1% construct (procedure-arity construct)
-			 o a0)))
-		(js-new-return f r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
-
-(define (js-new2 f a0 a1)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc)
-	  (let ((o (alloc f)))
-	     (let ((r (js-call2% construct (procedure-arity construct)
-			 o a0 a1)))
-		(js-new-return f r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
-
-(define (js-new3 f a0 a1 a2)
+(define (js-new1 %this f a0)
    (if (isa? f JsFunction)
        (with-access::JsFunction f (construct alloc name)
 	  (let ((o (alloc f)))
-	     (let ((r (js-call3% construct (procedure-arity construct)
-			 o a0 a1 a2)))
+	     (let ((r (js-call1% %this construct (procedure-arity construct) o a0)))
 		(js-new-return f r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
+       (js-raise-type-error %this "new: object is not a function ~s" f)))
 
-(define (js-new4 f a0 a1 a2 a3)
+(define (js-new2 %this f a0 a1)
    (if (isa? f JsFunction)
        (with-access::JsFunction f (construct alloc)
 	  (let ((o (alloc f)))
-	     (let ((r (js-call4% construct (procedure-arity construct)
+	     (let ((r (js-call2% %this construct (procedure-arity construct)
+			 o a0 a1)))
+		(js-new-return f r o))))
+       (js-raise-type-error %this "new: object is not a function ~s" f)))
+
+(define (js-new3 %this f a0 a1 a2)
+   (if (isa? f JsFunction)
+       (with-access::JsFunction f (construct alloc name)
+	  (let ((o (alloc f)))
+	     (let ((r (js-call3% %this construct (procedure-arity construct)
+			 o a0 a1 a2)))
+		(js-new-return f r o))))
+       (js-raise-type-error %this "new: object is not a function ~s" f)))
+
+(define (js-new4 %this f a0 a1 a2 a3)
+   (if (isa? f JsFunction)
+       (with-access::JsFunction f (construct alloc)
+	  (let ((o (alloc f)))
+	     (let ((r (js-call4% %this construct (procedure-arity construct)
 			 o a0 a1 a2 a3)))
 		(js-new-return f r o))))
-       (js-raise-type-error "new: object is not a function ~s" f)))
+       (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-object-alloc constructor::JsFunction)
+(define (js-object-alloc constructor::JsFunction %this::JsGlobalObject)
    (with-access::JsFunction constructor (constrsize constrmap)
-      (let ((cproto (js-get constructor 'prototype)))
+      (let ((cproto (js-get constructor 'prototype %this)))
 	 (instantiate::JsObject
 	    (cmap constrmap)
 	    (elements (make-vector constrsize (js-undefined)))
-	    (__proto__ (if (isa? cproto JsObject) cproto js-object-prototype))))))
+	    (__proto__ (if (isa? cproto JsObject)
+			   cproto
+			   (with-access::JsGlobalObject %this (__proto__)
+			      __proto__)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-apply fun obj args)
+(define (js-apply %this fun obj args)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error"apply: argument not a function ~s" fun)
+       (js-raise-type-error %this "apply: argument not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-apply% procedure (procedure-arity procedure) obj args))))
 
@@ -231,83 +233,92 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-calln ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-call0% proc::procedure arity::int this)
+(define (js-call0% %this proc::procedure arity::int this)
    (gen-calln))
-(define (js-call1% proc::procedure arity::int this a0)
+(define (js-call1% %this proc::procedure arity::int this a0)
    (gen-calln a0))
-(define (js-call2% proc::procedure arity::int this a0 a1)
+(define (js-call2% %this proc::procedure arity::int this a0 a1)
    (gen-calln a0 a1))
-(define (js-call3% proc::procedure arity::int this a0 a1 a2)
+(define (js-call3% %this proc::procedure arity::int this a0 a1 a2)
    (gen-calln a0 a1 a2))
-(define (js-call4% proc::procedure arity::int this a0 a1 a2 a3)
+(define (js-call4% %this proc::procedure arity::int this a0 a1 a2 a3)
    (gen-calln a0 a1 a2 a3))
-(define (js-call5% proc::procedure arity::int this a0 a1 a2 a3 a4)
+(define (js-call5% %this proc::procedure arity::int this a0 a1 a2 a3 a4)
    (gen-calln a0 a1 a2 a3 a4))
-(define (js-call6% proc::procedure arity::int this a0 a1 a2 a3 a4 a5)
+(define (js-call6% %this proc::procedure arity::int this a0 a1 a2 a3 a4 a5)
    (gen-calln a0 a1 a2 a3 a4 a5))
-(define (js-call7% proc::procedure arity::int this a0 a1 a2 a3 a4 a5 a6)
+(define (js-call7% %this proc::procedure arity::int this a0 a1 a2 a3 a4 a5 a6)
    (gen-calln a0 a1 a2 a3 a4 a5 a6))
-(define (js-call8% proc::procedure arity::int this a0 a1 a2 a3 a4 a5 a6 a7)
+(define (js-call8% %this proc::procedure arity::int this a0 a1 a2 a3 a4 a5 a6 a7)
    (gen-calln a0 a1 a2 a3 a4 a5 a6 a7))
 
-(define (js-call0 fun this)
+(define (js-call0 %this fun this)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call0% procedure (procedure-arity procedure)
+	  (js-call0% %this procedure (procedure-arity procedure)
 	     this))))
-(define (js-call1 fun this a0)
+(define (js-call1 %this fun this a0)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call1% procedure (procedure-arity procedure)
+	  (js-call1% %this procedure (procedure-arity procedure)
 	     this a0))))
-(define (js-call2 fun this a0 a1)
+(define (js-call2 %this fun this a0 a1)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call2% procedure (procedure-arity procedure)
+	  (js-call2% %this procedure (procedure-arity procedure)
 	     this a0 a1))))
-(define (js-call3 fun this a0 a1 a2)
+(define (js-call3 %this fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call3% procedure (procedure-arity procedure)
+	  (js-call3% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2))))
-(define (js-call4 fun this a0 a1 a2 a3)
+(define (js-call4 %this fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call4% procedure (procedure-arity procedure)
+	  (js-call4% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3))))
-(define (js-call5 fun this a0 a1 a2 a3 a4)
+(define (js-call5 %this fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call5% procedure (procedure-arity procedure)
+	  (js-call5% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4))))
-(define (js-call6 fun this a0 a1 a2 a3 a4 a5)
+(define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call6% procedure (procedure-arity procedure)
+	  (js-call6% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5))))
-(define (js-call7 fun this a0 a1 a2 a3 a4 a5 a6)
+(define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call7% procedure (procedure-arity procedure)
+	  (js-call7% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6))))
-(define (js-call8 fun this a0 a1 a2 a3 a4 a5 a6 a7)
+(define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this
+	  "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  (js-call8% procedure (procedure-arity procedure)
+	  (js-call8% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6 a7))))
 
-(define (js-calln fun this . args)
+(define (js-calln %this fun this . args)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (let ((arity (procedure-arity procedure)))
 	     (if (<fx arity 0)
@@ -324,64 +335,73 @@
 			      (make-list (-fx arity len))
 			      (js-undefined)))))))))))
 
-(define (js-call0/debug loc fun this)
+(define (js-call0/debug %this loc fun this)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call0% procedure (procedure-arity procedure)
+	  (js-call0% %this procedure (procedure-arity procedure)
 	     this))))
-(define (js-call1/debug loc fun this a0)
+(define (js-call1/debug %this loc fun this a0)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call1% procedure (procedure-arity procedure)
+	  (js-call1% %this procedure (procedure-arity procedure)
 	     this a0))))
-(define (js-call2/debug loc fun this a0 a1)
+(define (js-call2/debug %this loc fun this a0 a1)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call2% procedure (procedure-arity procedure)
+	  (js-call2% %this procedure (procedure-arity procedure)
 	     this a0 a1))))
-(define (js-call3/debug loc fun this a0 a1 a2)
+(define (js-call3/debug %this loc fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call3% procedure (procedure-arity procedure)
+	  (js-call3% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2))))
-(define (js-call4/debug loc fun this a0 a1 a2 a3)
+(define (js-call4/debug %this loc fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call4% procedure (procedure-arity procedure)
+	  (js-call4% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3))))
-(define (js-call5/debug loc fun this a0 a1 a2 a3 a4)
+(define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call5% procedure (procedure-arity procedure)
+	  (js-call5% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4))))
-(define (js-call6/debug loc fun this a0 a1 a2 a3 a4 a5)
+(define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call6% procedure (procedure-arity procedure)
+	  (js-call6% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5))))
-(define (js-call7/debug loc fun this a0 a1 a2 a3 a4 a5 a6)
+(define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
-	  (js-call7% procedure (procedure-arity procedure)
+	  (js-call7% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6))))
-(define (js-call8/debug loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
+(define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  (js-call8% procedure (procedure-arity procedure)
+	  (js-call8% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6 a7))))
-
-(define (js-calln/debug loc fun this . args)
+(define (js-calln/debug %this loc fun this . args)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this
+	  loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (let ((arity (procedure-arity procedure)))
 	     (if (<fx arity 0)
@@ -405,13 +425,15 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5.3   */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.5.3     */
 ;*---------------------------------------------------------------------*/
-(define (js-instanceof? v f)
+(define (js-instanceof? v f %this)
    (if (not (isa? f JsFunction))
-       (js-raise-type-error "instanceof: not a function ~s" f)
+       (js-raise-type-error %this
+	  "instanceof: not a function ~s" f)
        (when (isa? v JsObject)
-	  (let ((o (js-getvalue f f 'prototype #f)))
+	  (let ((o (js-getvalue f f 'prototype #f %this)))
 	     (if (not (isa? o JsObject))
-		 (js-raise-type-error "instanceof: no prototype ~s" v)
+		 (js-raise-type-error %this
+		    "instanceof: no prototype ~s" v)
 		 (let loop ((v v))
 		    (with-access::JsObject v ((v __proto__))
 		       (cond
@@ -424,10 +446,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
 ;*---------------------------------------------------------------------*/
-(define (js-in? field obj)
+(define (js-in? field obj %this)
    (if (not (isa? obj JsObject))
-       (js-raise-type-error "in: not a object ~s" obj)
-       (js-has-property obj (js-toname field))))
+       (js-raise-type-error %this "in: not a object ~s" obj)
+       (js-has-property obj (js-toname field %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-totest ...                                                    */
@@ -456,48 +478,73 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-tonumber obj)
+(define-generic (js-tonumber obj %this::JsGlobalObject)
+   (let loop ((obj obj))
+      (cond
+	 ((number? obj)
+	  obj)
+	 ((eq? obj (js-undefined))
+	  +nan.0)
+	 ((eq? obj (js-null))
+	  0)
+	 ((eq? obj #t)
+	  1)
+	 ((eq? obj #f)
+	  0)
+	 ((string? obj)
+	  (let ((str (trim-whitespaces+ obj :left #t :right #t :plus #t)))
+	     (cond
+		((string=? str "Infinity")
+		 +inf.0)
+		((string=? str "+Infinity")
+		 +inf.0)
+		((string=? str "-Infinity")
+		 -inf.0)
+		((string=? str "NaN")
+		 +nan.0)
+		((string-null? str)
+		 0)
+		((or (string-prefix? "0x" str) (string-prefix? "0X" str))
+		 (js-parseint str 16 #t %this))
+		((string-index str "eE.")
+		 (js-parsefloat str #t %this))
+		(else
+		 (js-parseint str 10 #t %this)))))
+	 ((symbol? obj)
+	  (loop (symbol->string! obj)))
+	 (else
+	  (bigloo-type-error "toNumber" "JsObject" obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tointeger ::obj ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.4          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-tointeger obj %this::JsGlobalObject)
    (cond
-      ((number? obj)
+      ((fixnum? obj)
        obj)
-      ((eq? obj (js-undefined))
-       +nan.0)
-      ((eq? obj (js-null))
-       0)
+      ((flonum? obj)
+       (cond
+	  ((nanfl? obj) 0)
+	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
+	   obj)
+	  ((<fl obj 0.)
+	   (*fl -1. (floor (abs obj))))
+	  (else
+	   (floor obj))))
+      ((or (string? obj) (symbol? obj))
+       (js-tointeger (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
-      ((eq? obj #f)
-       0)
-      ((string? obj)
-       (let ((str (trim-whitespaces+ obj :left #t :right #t :plus #t)))
-	  (cond
-	     ((string=? str "Infinity")
-	      +inf.0)
-	     ((string=? str "+Infinity")
-	      +inf.0)
-	     ((string=? str "-Infinity")
-	      -inf.0)
-	     ((string=? str "NaN")
-	      +nan.0)
-	     ((string-null? str)
-	      0)
-	     ((or (string-prefix? "0x" str) (string-prefix? "0X" str))
-	      (js-parseint str 16 #t))
-	     ((string-index str "eE.")
-	      (js-parsefloat str #t))
-	     (else
-	      (js-parseint str 10 #t)))))
-      ((symbol? obj)
-       (js-tonumber (symbol->string! obj)))
-      (else
-       (bigloo-type-error "toNumber" "JsObject" obj))))
-   
+      (else 0)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-touint16 ::obj ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.7          */
 ;*---------------------------------------------------------------------*/
-(define (js-touint16::uint16 obj)
+(define (js-touint16::uint16 obj %this)
    
    (define 2^16 (exptfl 2. 16.))
    
@@ -522,14 +569,14 @@
    (cond
       ((fixnum? obj) (modulofx obj (bit-lsh 1 16)))
       ((flonum? obj) (double->uint16 obj))
-      (else (js-touint16 (js-tointeger obj)))))
+      (else (js-touint16 (js-tointeger obj %this) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-touint32 ::obj ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
 ;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj)
+(define (js-touint32::uint32 obj %this)
    
    (define 2^32 (exptfl 2. 32.))
    
@@ -569,14 +616,14 @@
       ((flonum? obj)
        (double->uint32 obj))
       (else
-       (js-touint32 (js-tointeger obj)))))
+       (js-touint32 (js-tointeger obj %this) %this))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj)
+(define (js-toint32::int32 obj %this)
 
    (define (int64->int32::int32 obj::int64)
       (cond-expand
@@ -639,17 +686,17 @@
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))))
       (else
-       (js-toint32 (js-tonumber obj)))))
+       (js-toint32 (js-tonumber obj %this) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8          */
 ;*---------------------------------------------------------------------*/
-(define (js-tostring obj)
+(define (js-tostring obj %this::JsGlobalObject)
    (cond
       ((isa? obj JsObject)
-       (js-tostring (js-toprimitive obj 'string)))
+       (js-tostring (js-toprimitive obj 'string %this) %this))
       ((string? obj)
        obj)
       ((eq? obj (js-undefined))
@@ -672,83 +719,88 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.9          */
 ;*---------------------------------------------------------------------*/
-(define (js-toobject o)
+(define (js-toobject %this::JsGlobalObject o)
    (cond
+      ((string? o)
+       (with-access::JsGlobalObject %this (js-string)
+	  (js-new1 %this js-string o)))
+      ((number? o)
+       (with-access::JsGlobalObject %this (js-number)
+	  (js-new1 %this js-number o)))
+      ((boolean? o)
+       (with-access::JsGlobalObject %this (js-boolean)
+	  (js-new1 %this js-boolean o)))
       ((isa? o JsObject)
        o)
-      ((string? o)
-       (js-new1 js-string o))
-      ((number? o)
-       (js-new1 js-number o))
-      ((boolean? o)
-       (js-new1 js-boolean o))
       (else
-       (js-raise-type-error "toObject: cannot convert ~s" o))))
+       (js-raise-type-error %this "toObject: cannot convert ~s" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-equal? o1 o2)
-   (or (and (not (flonum? o1)) (eq? o1 o2)) (js-equality? o1 o2)))
+(define-inline (js-equal? o1 o2 %this::JsGlobalObject)
+   (or (and (not (flonum? o1)) (eq? o1 o2)) (js-equality? o1 o2 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.3       */
 ;*---------------------------------------------------------------------*/
-(define (js-equality? x y)
-   (cond
-      ((eq? x y)
-       (not (and (flonum? x) (nanfl? x))))
-      ((eq? x (js-null))
-       (eq? y (js-undefined)))
-      ((eq? x (js-undefined))
-       (eq? y (js-null)))
-      ((number? x)
-       (cond
-	  ((number? y)
-	   (= x y))
-	  ((string? y)
-	   (if (= x 0)
-	       (or (string-null? y) (js-equality? x (js-tonumber y)))
-	       (js-equality? x (js-tonumber y))))
-	  ((isa? y JsObject)
-	   (js-equality? x (js-toprimitive y 'any)))
-	  ((boolean? y)
-	   (js-equality? x (js-tonumber y)))
-	  (else #f)))
-      ((string? x)
-       (cond
-	  ((string? y)
-	   (string=? x y))
-	  ((number? y)
-	   (if (= y 0)
-	       (or (string-null? x) (js-equality? (js-tonumber x) y))
-	       (js-equality? (js-tonumber x) y)))
-	  ((isa? y JsObject)
-	   (js-equality? x (js-toprimitive y 'any)))
-	  ((eq? y #f)
-	   (string-null? x))
-	  ((boolean? y)
-	   (js-equality? x (js-tonumber y)))
-	  (else #f)))
-      ((boolean? x)
-       (cond
-	  ((boolean? y)
-	   #f)
-	  (else
-	   (js-equality? (js-tonumber x) y))))
-      ((boolean? y)
-       (js-equality? x (js-tonumber y)))
-      ((isa? x JsObject)
-       (cond
-	  ((string? y) (js-equality? (js-toprimitive x 'any) y))
-	  ((number? y) (js-equality? (js-toprimitive x 'any) y))
-	  (else #f)))
-      (else
-       #f)))
+(define (js-equality? x y %this::JsGlobalObject)
+   (let equality? ((x x)
+		   (y y))
+      (cond
+	 ((eq? x y)
+	  (not (and (flonum? x) (nanfl? x))))
+	 ((eq? x (js-null))
+	  (eq? y (js-undefined)))
+	 ((eq? x (js-undefined))
+	  (eq? y (js-null)))
+	 ((number? x)
+	  (cond
+	     ((number? y)
+	      (= x y))
+	     ((string? y)
+	      (if (= x 0)
+		  (or (string-null? y) (equality? x (js-tonumber y %this)))
+		  (equality? x (js-tonumber y %this))))
+	     ((isa? y JsObject)
+	      (equality? x (js-toprimitive y 'any %this)))
+	     ((boolean? y)
+	      (equality? x (js-tonumber y %this)))
+	     (else #f)))
+	 ((string? x)
+	  (cond
+	     ((string? y)
+	      (string=? x y))
+	     ((number? y)
+	      (if (= y 0)
+		  (or (string-null? x) (equality? (js-tonumber x %this) y))
+		  (equality? (js-tonumber x %this) y)))
+	     ((isa? y JsObject)
+	      (equality? x (js-toprimitive y 'any %this)))
+	     ((eq? y #f)
+	      (string-null? x))
+	     ((boolean? y)
+	      (equality? x (js-tonumber y %this)))
+	     (else #f)))
+	 ((boolean? x)
+	  (cond
+	     ((boolean? y)
+	      #f)
+	     (else
+	      (equality? (js-tonumber x %this) y))))
+	 ((boolean? y)
+	  (equality? x (js-tonumber y %this)))
+	 ((isa? x JsObject)
+	  (cond
+	     ((string? y) (equality? (js-toprimitive x 'any %this) y))
+	     ((number? y) (equality? (js-toprimitive x 'any %this) y))
+	     (else #f)))
+	 (else
+	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */
@@ -788,8 +840,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval-strict ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (%js-eval-strict string)
-   (%js-eval (string-append "\"use strict\";\n" string)))
+(define (%js-eval-strict string %this)
+   (%js-eval (string-append "\"use strict\";\n" string) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise ...                                                     */

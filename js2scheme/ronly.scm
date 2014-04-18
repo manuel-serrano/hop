@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/ronly.scm               */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/ronly.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Wed Oct 23 17:28:58 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Mon Apr 14 13:40:26 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
 	   __js2scheme_stage)
 
    (export j2s-ronly-stage
-	   (generic j2s-ronly ::obj)))
+	   (generic j2s-ronly ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ronly-stage ...                                              */
@@ -34,13 +34,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ronly ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-ronly this)
+(define-generic (j2s-ronly this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ronly ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-ronly this::J2SProgram)
+(define-method (j2s-ronly this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o) (ronly! o)) nodes))
    this)

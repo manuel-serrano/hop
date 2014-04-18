@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Oct 19 11:12:15 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Wed Apr 16 09:57:49 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -20,8 +20,18 @@
    (export (pass ::bstring)
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
-	   (append-after-header stmts nodes)))
-   
+	   (append-after-header stmts nodes)
+	   (args-get ::pair-nil ::keyword ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    args-get ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (args-get args k def)
+   (let ((l (memq k args)))
+      (if (pair? l)
+	  (cadr l)
+	  def)))
+
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
 ;*---------------------------------------------------------------------*/

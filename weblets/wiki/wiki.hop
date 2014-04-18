@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/weblets/wiki/wiki.hop             */
+;*    serrano/prgm/project/hop/3.0.x/weblets/wiki/wiki.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 10 14:08:29 2014 (serrano)                */
+;*    Last change :  Wed Apr  9 13:02:18 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    wiki ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-service (wiki/compile #!optional path (xml "html5"))
+(define-service (wiki/compile #!key path (xml "html5"))
    (let ((req (current-request)))
       (if (string? path)
 	  (if (authorized-path? req path)
@@ -210,7 +210,7 @@
 	    (<A> :title "Compile"
 	       :class "doc"
 	       :href "compile"
-	       :onclick ~(set! this.href ($wiki/compile $path))
+	       :onclick ~(set! this.href ($wiki/compile :path $path))
 	       :target "_blank"
 	       (<IMG> :class "doc"
 		  :inline #t

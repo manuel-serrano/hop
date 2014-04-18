@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar  4 10:16:28 2014 (serrano)                */
+#*    Last change :  Sat Apr  5 12:40:05 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -876,36 +876,36 @@ for p in nodejs.sch; do
       >> $configure
 done
 
-# hopscript/configure.scm
-for p in hopscript.sch; do
-  configure=hopscript/$p
-  rm -f $configure 2> /dev/null
-  echo ";* Automatically generated file (don't edit) */" > $configure
-  cat etc/$p.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BIGLOOVERSION@|$bglversion|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@MIMETYPES@|$mimetypes|" \
-            -e "s|@JSMIMETYPE@|$jsmimetype|" \
-            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
-            -e "s|@HOPJSFILES@|$hopjsfiles|" \
-            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@HOPZEROCONF@|$zeroconf|" \
-            -e "s|@HOPSRFIS@|$hopsrfis|" \
-            -e "s|@HOPARCH@|$arch|" \
-      >> $configure
-done
+#* # hopscript/configure.sch                                           */
+#* for p in hopscript.sch; do                                          */
+#*   configure=hopscript/$p                                            */
+#*   rm -f $configure 2> /dev/null                                     */
+#*   echo ";* Automatically generated file (don't edit) *}" > $configure */
+#*   cat etc/$p.in \                                                   */
+#*       | sed -e "s|@VERSION@|$version|" \                            */
+#*             -e "s|@BIGLOOVERSION@|$bglversion|" \                   */
+#*             -e "s|@BRANCH@|$branch|" \                              */
+#*             -e "s|@BACKEND@|$backend|" \                            */
+#*             -e "s|@LINK@|$link|" \                                  */
+#*             -e "s|@URL@|$url|" \                                    */
+#*             -e "s|@BINDIR@|$bindir|" \                              */
+#*             -e "s|@LIBDIR@|$libdir|" \                              */
+#*             -e "s|@LIBPATH@|$libdir/hop/$version|" \                */
+#*             -e "s|@SHAREDIR@|$sharedir|" \                          */
+#*             -e "s|@ETCDIR@|$etcdir|" \                              */
+#*             -e "s|@WEBLETSDIR@|$webletsdir|" \                      */
+#*             -e "s|@CONTRIBSDIR@|$contribsdir|" \                    */
+#*             -e "s|@MIMETYPES@|$mimetypes|" \                        */
+#*             -e "s|@JSMIMETYPE@|$jsmimetype|" \                      */
+#*             -e "s|@CSSMIMETYPE@|$cssmimetype|" \                    */
+#*             -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \            */
+#*             -e "s|@HOPJSFILES@|$hopjsfiles|" \                      */
+#*             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \              */
+#*             -e "s|@HOPZEROCONF@|$zeroconf|" \                       */
+#*             -e "s|@HOPSRFIS@|$hopsrfis|" \                          */
+#*             -e "s|@HOPARCH@|$arch|" \                               */
+#*       >> $configure                                                 */
+#* done                                                                */
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop

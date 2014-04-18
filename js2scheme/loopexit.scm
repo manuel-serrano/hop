@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Mar 20 20:49:28 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:39:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -26,7 +26,7 @@
 	   __js2scheme_syntax)
 
    (export j2s-loopexit-stage
-	   (generic j2s-loopexit ::obj)))
+	   (generic j2s-loopexit ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-loopexit-stage ...                                           */
@@ -41,13 +41,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-loopexit ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-loopexit this)
+(define-generic (j2s-loopexit this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-loopexit ::J2SProgram ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-loopexit this::J2SProgram)
+(define-method (j2s-loopexit this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o) (mark-exit! o '() #f)) nodes))
    this)

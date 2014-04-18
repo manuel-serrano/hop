@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/3.0.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Oct 10 07:38:25 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Wed Apr 16 13:04:55 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -122,6 +122,20 @@
 	     (unless (member lang '("hop" "hopscript"))
 		(error "hopc" "Unknown language, see -help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
+	    (("--js-worker" (help "Enable JavaScript worker"))
+	     (hopc-js-worker-set! #t))
+	    (("--no-js-worker" (help "Disable JavaScript worker"))
+	     (hopc-js-worker-set! #f))
+	    (("--js-module-name" ?name (help "Set Bigloo module name"))
+	     (hopc-js-module-name-set! name))
+	    (("--js-module-path" ?path (help "Set Bigloo module path"))
+	     (hopc-js-module-path-set! path))
+	    (("--js-module-main" (help "Force generating a main clause"))
+	     (hopc-js-module-main-set! #t))
+	    (("--no-js-module-main" (help "Force not generating a main clause"))
+	     (hopc-js-module-main-set! #f))
+	    (("--no-js-header" (help "Don't generate hopscript header"))
+	     (hopc-js-header-set! #f))
 	    (else
 	     (if (string=? else "--")
 		 (begin

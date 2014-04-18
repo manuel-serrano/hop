@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/property.scm            */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Jan  5 06:00:25 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:40:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -21,7 +21,7 @@
 	   __js2scheme_utils)
 
    (export j2s-property-stage
-	   (generic j2s-property ::obj)))
+	   (generic j2s-property ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-property-stage ...                                           */
@@ -36,21 +36,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-property ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-property this)
+(define-generic (j2s-property this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-property ::J2SProgram ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-property this::J2SProgram)
-   (with-access::J2SProgram this (nodes loc)
+(define-method (j2s-property this::J2SProgram args)
+   (with-access::J2SProgram this (nodes loc pcache-size)
       (let* ((count (make-counter 0))
 	     (caches (append-map (lambda (s) (property* s count)) nodes)))
-	 (set! nodes
-	    (cons (instantiate::J2SPragma
-		     (loc loc)
-		     (expr `(define %PCACHE (make-pcache ,(get count)))))
-	       nodes))))
+	 (set! pcache-size (get count))))
    this)
 
 ;*---------------------------------------------------------------------*/

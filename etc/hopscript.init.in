@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/etc/hopscript.init.in             */
+;*    serrano/prgm/project/hop/3.0.x/etc/hopscript.init.in             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Sun Oct  6 15:34:16 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Mon Apr 14 10:52:48 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
 ;*=====================================================================*/
@@ -18,3 +18,15 @@
 		  :module-eval '__hopscript_makelib
 		  :class-eval "bigloo.hopscript.make_lib")
 
+;*---------------------------------------------------------------------*/
+;*    js-toobject ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.9          */
+;*---------------------------------------------------------------------*/
+(define-expander js-toobject
+   (lambda (x e)
+      (match-case x
+	 ((?- ?%this ?o)
+	  `(js-toobject ,(e `,%this e) ,(e `,o e)))
+	 (else
+	  (error "js-toobject" "wrong syntax" x)))))

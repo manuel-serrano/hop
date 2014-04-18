@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Mar 20 20:50:40 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:40:43 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -25,7 +25,7 @@
 	   __js2scheme_syntax)
 
    (export j2s-return-stage
-	   (generic j2s-return ::obj)))
+	   (generic j2s-return ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-return-stage ...                                             */
@@ -39,7 +39,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-return ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-return this)
+(define-generic (j2s-return this args)
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -51,7 +51,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-return ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-return this::J2SProgram)
+(define-method (j2s-return this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o) (unreturn! o #f #t)) nodes)
       (set! nodes (trim-nop nodes)))

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.6.x/hopscript/Makefile                */
+#*    serrano/prgm/project/hop/3.0.x/hopscript/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jan 29 14:43:31 2014 (serrano)                */
+#*    Last change :  Mon Apr 14 08:08:56 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -23,18 +23,21 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscript
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lscheme2js_u
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lscheme2js_u
-HOPCLOSELIBS_ES = -lhopscript_s-$(HOPRELEASE) -lscheme2js_u
-HOPCLOSELIBS_EU = -lhopscript_u-$(HOPRELEASE) -lscheme2js_u
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
+  -ljs2scheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
+  -ljs2scheme_u-$(HOPRELEASE) -lhop_u-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
+HOPCLOSELIBS_ES = -lhopscript_s-$(HOPRELEASE)
+HOPCLOSELIBS_EU = -lhopscript_u-$(HOPRELEASE)
 
 BLIBFLAGS = $(BCFLAGSRTS)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = types rts object function string number regexp boolean error \
-  array arguments date json math private public lib service property
+_OBJECTS = types rts object function string number regexp boolean \
+  error array arguments date json math worker private public lib service \
+  property
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

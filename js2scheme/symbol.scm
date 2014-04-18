@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/symbol.scm              */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Feb 14 09:50:30 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 11:12:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -27,7 +27,7 @@
    (static (class J2SDeclArguments::J2SDecl))
 
    (export j2s-symbol-stage
-	   (generic j2s-symbol ::obj)))
+	   (generic j2s-symbol ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol-stage                                                 */
@@ -41,13 +41,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-symbol this)
+(define-generic (j2s-symbol this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-symbol this::J2SProgram)
+(define-method (j2s-symbol this::J2SProgram args)
    (with-access::J2SProgram this (nodes loc mode header)
       (let ((env (append-map (lambda (s) (collect* s)) nodes)))
 	 (set! nodes
@@ -407,13 +407,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SCall env mode withs wenv)
    (when (eq? mode 'strict)
-      (with-access::J2SCall this (fun)
+      (with-access::J2SCall this (fun args)
 	 (if (isa? fun J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef fun (id loc)
 		(when (eq? id 'eval)
 		   (set! fun (instantiate::J2SHopRef
 				(id '%js-eval-strict)
-				(loc loc))))))))
+				(loc loc)))
+		   (set! args (append args
+				 (list
+				    (instantiate::J2SPragma
+				       (loc loc)
+				       (expr '%this))))))))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

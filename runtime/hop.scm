@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Feb 21 13:39:01 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 08:30:46 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -40,7 +40,13 @@
 	    (anonymous-request::http-request)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request ::obj)
-	    (with-url ::bstring ::obj #!key fail (header '()) (timeout 0))
+	    (with-url ::bstring ::obj
+		      #!key
+		      fail
+		      (header '())
+		      (timeout 0)
+		      (method "GET")
+		      parse-json)
 	    (with-hop-remote path success failure
 			     #!key
 			     (host "localhost")
@@ -49,7 +55,8 @@
 			     (user #f)
 			     (password #f)
 			     (authorization #f)
-			     (anim #f))
+			     (anim #f)
+			     parse-json)
 	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
 
@@ -234,7 +241,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback proc::symbol req success fail)
+(define (make-http-callback proc::symbol req success fail parse-json)
    (lambda (p status header clength tenc)
       (when (and (input-port? p) (>elong clength #e0))
 	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
@@ -251,7 +258,7 @@
 			    (byte-array->string 
 			       (javascript->obj (read-chars clength p)))))
 			((application/json)
-			 (json->obj p))
+			 ((or parse-json json->obj) p))
 			((application/x-javascript)
 			 (javascript->obj p))
 			(else
@@ -298,7 +305,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key fail (header '()) (timeout 0))
+(define (with-url url success #!key fail (header '()) (timeout 0) (method "GET")
+		  parse-json)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
@@ -337,7 +345,7 @@
 		(else
 		 (let* ((s (string->symbol scheme))
 			(r (instantiate::http-server-request
-			      (user (anonymous-user))
+			      (user (class-nil user))
 			      (scheme s)
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
@@ -348,11 +356,12 @@
 			      (timeout timeout)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback 'with-url r suc fail)))
+			(hdl (make-http-callback 'with-url r suc fail
+				parse-json)))
 		    (when (>fx (bigloo-debug) 2)
 		       (with-output-to-port (current-error-port)
 			  (lambda ()
-			     (print "GET " path " HTTP/1.1")
+			     (print method " " path " HTTP/1.1")
 			     (print "Host: " host)
 			     (print "Port: " port)
 			     (for-each (lambda (h)
@@ -375,7 +384,8 @@
 	   (user #f)
 	   (password #f)
 	   (authorization #f)
-	   (anim #f))
+	   (anim #f)
+	   parse-json)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
       ": " path "\n")
@@ -400,7 +410,7 @@
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
-		 (hdl (make-http-callback 'with-hop req suc fail)))
+		 (hdl (make-http-callback 'with-hop req suc fail parse-json)))
 	     (trace-item "remote path=" path)
 	     (http-send-request req hdl))))))
 

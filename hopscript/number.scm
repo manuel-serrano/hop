@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Mar 14 09:42:41 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 16:36:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_number
-
+   
    (library hop)
    
    (import __hopscript_types
@@ -24,29 +24,27 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public)
-
-   (export js-number
-	   js-number-prototype
-	   (js-init-number! ::JsObject)
+   
+   (export (js-init-number! ::JsGlobalObject)
 	   
-	   (js+ left right)
-	   (js-slow+ left right)
-	   (js- left right)
-	   (js-neg expr)
-	   (js* left right)
-	   (js/ left right)
-	   (js% left right)
-	   (js-bitlsh::obj left right)
-	   (js-bitrsh::obj left right)
-	   (js-bitursh::obj left right)
-	   (js<::bool left right)
-	   (js>::bool left right)
-	   (js<=::bool left right)
-	   (js>=::bool left right)
-	   (js-bitand left right)
-	   (js-bitor left right)
-	   (js-bitxor left right)
-	   (js-bitnot expr)))
+	   (js+ left right ::JsGlobalObject)
+	   (js-slow+ left right ::JsGlobalObject)
+	   (js- left right ::JsGlobalObject)
+	   (js-neg expr ::JsGlobalObject)
+	   (js* left right ::JsGlobalObject)
+	   (js/ left right ::JsGlobalObject)
+	   (js% left right ::JsGlobalObject)
+	   (js-bitlsh::obj left right ::JsGlobalObject)
+	   (js-bitrsh::obj left right ::JsGlobalObject)
+	   (js-bitursh::obj left right ::JsGlobalObject)
+	   (js<::bool left right ::JsGlobalObject)
+	   (js>::bool left right ::JsGlobalObject)
+	   (js<=::bool left right ::JsGlobalObject)
+	   (js>=::bool left right ::JsGlobalObject)
+	   (js-bitand left right ::JsGlobalObject)
+	   (js-bitor left right ::JsGlobalObject)
+	   (js-bitxor left right ::JsGlobalObject)
+	   (js-bitnot expr ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */
@@ -63,8 +61,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-number ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define js-number #f)
-(define js-number-prototype #f)
+;* (define js-number #f)                                               */
+;* (define js-number-prototype #f)                                     */
    
 ;*---------------------------------------------------------------------*/
 ;*    js-init-number! ...                                              */
@@ -72,91 +70,80 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
-   (set! js-number-prototype
-      (instantiate::JsNumber
-	 (val 0)
-	 (__proto__ js-object-prototype)
-	 (extensible #t)))
-   ;; Create a HopScript number object constructor
-   (let ((obj (js-make-function %js-number 1 "JsNumber"
-		 :__proto__ js-function-prototype
-		 :prototype js-number-prototype
-		 :alloc js-number-alloc
-		 :construct js-number-construct))
-	 (inf+ (instantiate::JsValueDescriptor
-		  (name 'POSITIVE_INFINITY)
-		  (writable #f)
-		  (enumerable #f)
-		  (configurable #f)
-		  (value +inf.0)))
-	 (inf- (instantiate::JsValueDescriptor
-		  (name 'NEGATIVE_INFINITY)
-		  (writable #f)
-		  (enumerable #f)
-		  (configurable #f)
-		  (value -inf.0)))
-	 (maxv (instantiate::JsValueDescriptor
-		  (name 'MAX_VALUE)
-		  (writable #f)
-		  (enumerable #f)
-		  (configurable #f)
-		  (value (*fl 1.7976931348623157 (exptfl 10. 308.)))))
-	 (minv (instantiate::JsValueDescriptor
-		  (name 'MIN_VALUE)
-		  (writable #f)
-		  (enumerable #f)
-		  (configurable #f)
-		  (value 5e-324)))
-	 (nan (instantiate::JsValueDescriptor
-		  (name 'NaN)
-		  (writable #f)
-		  (enumerable #f)
-		  (configurable #f)
-		  (value +nan.0))))
-      (with-access::JsObject obj (properties)
-	 (set! properties (cons* inf+ inf- maxv minv nan properties)))
-      (set! js-number obj)
-      ;; bind the builtin prototype properties
-      (init-builtin-number-prototype! js-number-prototype)
-      ;; bind Number in the global object
-      (js-bind! %this 'Number :configurable #f :enumerable #f :value js-number)
-      js-number))
+   (with-access::JsGlobalObject %this (__proto__ js-number js-function)
+      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+	 
+	 (define js-number-prototype
+	    (instantiate::JsNumber
+	       (val 0)
+	       (__proto__ __proto__)
+	       (extensible #t)))
 
-;*---------------------------------------------------------------------*/
-;*    %js-number ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1       */
-;*---------------------------------------------------------------------*/
-(define (%js-number this . arg)
-   (js-tonumber (if (pair? arg) (car arg) 0)))
+	 (define (js-number-construct this::JsNumber . arg)
+	    (with-access::JsNumber this (val)
+	       (set! val (if (pair? arg) (js-tonumber (car arg) %this) 0)))
+	    this)
 
-;*---------------------------------------------------------------------*/
-;*    js-number-alloc ...                                              */
-;*---------------------------------------------------------------------*/
-(define (js-number-alloc constructor::JsFunction)
-   (instantiate::JsNumber
-      (__proto__ (js-get constructor 'prototype))))
+	 (define (js-number-alloc constructor::JsFunction)
+	    (instantiate::JsNumber
+	       (__proto__ (js-get constructor 'prototype %this))))
 
-;*---------------------------------------------------------------------*/
-;*    js-number-construct ...                                          */
-;*---------------------------------------------------------------------*/
-(define (js-number-construct this::JsNumber . arg)
-   (with-access::JsNumber this (val)
-      (set! val (if (pair? arg) (js-tonumber (car arg)) 0)))
-   this)
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
+	 (define (%js-number this . arg)
+	    (js-tonumber (if (pair? arg) (car arg) 0) %this))
+
+	 ;; Create a HopScript number object constructor
+	 (set! js-number
+	    (js-make-function %this %js-number 1 "JsNumber"
+	       :__proto__ js-function-prototype
+	       :prototype js-number-prototype
+	       :alloc js-number-alloc
+	       :construct js-number-construct))
+	 ;; other properties of the Number constructor
+	 (js-bind! %this js-number 'POSITIVE_INFINITY
+	    :value +inf.0
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f)
+	 (js-bind! %this js-number 'NEGATIVE_INFINITY
+	    :value -inf.0
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f)
+	 (js-bind! %this js-number 'MAX_VALUE
+	    :value (*fl 1.7976931348623157 (exptfl 10. 308.))
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f)
+	 (js-bind! %this js-number 'MIN_VALUE
+	    :value 5e-324
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f)
+	 (js-bind! %this js-number 'NaN
+	    :value +nan.0
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f)
+	 ;; bind the builtin prototype properties
+	 (init-builtin-number-prototype! %this js-number js-number-prototype)
+	 ;; bind Number in the global object
+	 (js-bind! %this %this 'Number
+	    :configurable #f :enumerable #f :value js-number)
+	 js-number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsNumber ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (js-valueof this::JsNumber)
-   (js-tonumber this))
+(define-method (js-valueof this::JsNumber %this::JsGlobalObject)
+   (js-tonumber this %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-tonumber this::JsNumber)
+(define-method (js-tonumber this::JsNumber %this::JsGlobalObject)
    (with-access::JsNumber this (val)
       val))
 
@@ -165,7 +152,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-tointeger this::JsNumber)
+(define-method (js-tointeger this::JsNumber %this::JsGlobalObject)
    (with-access::JsNumber this (val)
       (cond
 	 ((fixnum? val)
@@ -184,147 +171,144 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4       */
 ;*---------------------------------------------------------------------*/
-(define (init-builtin-number-prototype! obj)
-   ;; prototype fields
-   (js-bind! obj 'constructor
+(define (init-builtin-number-prototype! %this::JsGlobalObject js-number obj)
+   
+   ;; constructor
+   (js-bind! %this obj 'constructor
       :value js-number
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'toString
-      :value (js-make-function js-number-to-string 2 "toString")
+
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2
+   (define (js-number-to-string this #!optional (radix (js-undefined)))
+      (if (not (isa? this JsNumber))
+	  (js-raise-type-error %this "Not a number ~s" (typeof this))
+	  (with-access::JsNumber this (val)
+	     (let ((r (if (eq? radix (js-undefined))
+			  10
+			  (js-tointeger radix %this))))
+		(cond
+		   ((or (< r 2) (> r 36))
+		    (js-raise-range-error %this "Radix out of range: ~a" r))
+		   ((and (flonum? val) (nanfl? val))
+		    "NaN")
+		   ((= val +inf.0)
+		    "Infinity")
+		   ((= val -inf.0)
+		    "-Infinity")
+		   ((or (= r 10) (= r 0))
+		    (js-tostring val %this))
+		   (else
+		    (number->string val r)))))))
+
+   (js-bind! %this obj 'toString
+      :value (js-make-function %this js-number-to-string 2 "toString")
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'toLocaleString
-      :value (js-make-function js-number-to-localestring 2 "toLocaleString")
+
+   ;; toLocaleString
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.3
+   (define (js-number-to-localestring this #!optional (radix (js-undefined)))
+      (js-number-to-string this radix))
+
+   (js-bind! %this obj 'toLocaleString
+      :value (js-make-function %this js-number-to-localestring 2 "toLocaleString")
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'valueOf
-      :value (js-make-function js-number-valueof 0 "valueOf")
+
+   ;; valueOf
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4
+   (define (js-number-valueof this)
+      (if (not (isa? this JsNumber))
+	  (js-raise-type-error %this
+	     "Not a number ~s" (js-tostring this %this))
+	  (with-access::JsNumber this (val)
+	     val)))
+
+   (js-bind! %this obj 'valueOf
+      :value (js-make-function %this js-number-valueof 0 "valueOf")
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'toFixed
-      :value (js-make-function js-number-tofixed 1 "toFixed")
+
+   ;; toFixed
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5
+   (define (js-number-tofixed this fractiondigits)
+      
+      (define (signed val s)
+	 (if (>= val 0)
+	     s
+	     (string-append "-" s)))
+      
+      (if (not (isa? this JsNumber))
+	  (js-raise-type-error %this
+	     "Not a number ~s" (js-tostring this %this))
+	  (let ((f (if (eq? fractiondigits (js-undefined))
+		       0
+		       (js-tointeger fractiondigits %this))))
+	     (if (or (< f 0) (> f 20))
+		 (js-raise-range-error %this
+		    "Fraction digits out of range: ~a" f)
+		 (with-access::JsNumber this (val)
+		    (if (and (flonum? val) (nanfl? val))
+			"NaN"
+			(let ((x (abs val))
+			      (f (->fixnum f)))
+			   (if (>= x (exptfl 10. 21.))
+			       (signed val (js-tostring x %this))
+			       (let ((n (round x)))
+				  (cond
+				     ((= n 0)
+				      (signed val
+					 (if (= f 0)
+					     "0"
+					     (string-append "0."
+						(make-string f #\0)))))
+				     ((= f 0)
+				      (signed val (number->string n)))
+				     (else
+				      (let* ((m (inexact->exact
+						   (round (* x (expt 10 f)))))
+					     (s (integer->string m))
+					     (l (string-length s)))
+					 (signed val
+					    (string-append (substring s 0 (-fx l f))
+					       "."
+					       (substring s (-fx l f))))))))))))))))
+
+   (js-bind! %this obj 'toFixed
+      :value (js-make-function %this js-number-tofixed 1 "toFixed")
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'toExponential
-      :value (js-make-function (lambda l (error "not" "implemented" "yet")) 1 "toExponential")
+
+   ;; toExponential
+   (js-bind! %this obj 'toExponential
+      :value (js-make-function %this
+		(lambda l (error "not" "implemented" "yet"))
+		1 "toExponential")
       :writable #t
       :configurable #t
       :enumerable #f)
-   (js-bind! obj 'toPrecision
-      :value (js-make-function (lambda l (error "not" "implemented" "yet")) 1 "toPrecision")
+
+   ;; toPrecision
+   (js-bind! %this obj 'toPrecision
+      :value (js-make-function %this
+		(lambda l (error "not" "implemented" "yet"))
+		1 "toPrecision")
       :writable #t
       :configurable #t
       :enumerable #f))
-
-;*---------------------------------------------------------------------*/
-;*    js-number-to-string ...                                          */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2     */
-;*---------------------------------------------------------------------*/
-(define (js-number-to-string this #!optional (radix (js-undefined)))
-   (if (not (isa? this JsNumber))
-       (js-raise-type-error "Not a number ~s" (typeof this))
-       (with-access::JsNumber this (val)
-	  (let ((r (if (eq? radix (js-undefined)) 10 (js-tointeger radix))))
-	     (cond
-		((or (< r 2) (> r 36))
-		 (js-raise
-		    (js-new js-range-error
-		       (format "Radix out of range: ~a" r))))
-		((and (flonum? val) (nanfl? val))
-		 "NaN")
-		((= val +inf.0)
-		 "Infinity")
-		((= val -inf.0)
-		 "-Infinity")
-		((or (= r 10) (= r 0))
-		 (js-tostring val))
-		(else
-		 (number->string val r)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-number-to-localestring ...                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.3     */
-;*---------------------------------------------------------------------*/
-(define (js-number-to-localestring this #!optional (radix (js-undefined)))
-   (js-number-to-string this radix))
-
-;*---------------------------------------------------------------------*/
-;*    js-number-valueof ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4     */
-;*---------------------------------------------------------------------*/
-(define (js-number-valueof this)
-   (if (not (isa? this JsNumber))
-       (js-raise
-	  (js-new js-type-error
-	     (format "Not a number ~s" (js-tostring this))))
-       (with-access::JsNumber this (val)
-	  val)))
-	  
-;*---------------------------------------------------------------------*/
-;*    js-number-tofixed ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5     */
-;*---------------------------------------------------------------------*/
-(define (js-number-tofixed this fractiondigits)
-
-   (define (signed val s)
-      (if (>= val 0)
-	  s
-	  (string-append "-" s)))
-   
-   (if (not (isa? this JsNumber))
-       (js-raise
-	  (js-new js-type-error
-	     (format "Not a number ~s" (js-tostring this))))
-       (let ((f (if (eq? fractiondigits (js-undefined))
-		    0
-		    (js-tointeger fractiondigits))))
-	  (if (or (< f 0) (> f 20))
-	      (js-raise
-		 (js-new js-range-error
-		    (format "Fraction digits out of range: ~a" f)))
-	      (with-access::JsNumber this (val)
-		 (if (and (flonum? val) (nanfl? val))
-		     "NaN"
-		     (let ((x (abs val))
-			   (f (->fixnum f)))
-			(if (>= x (exptfl 10. 21.))
-			    (signed val (js-tostring x))
-			    (let ((n (round x)))
-			       (cond
-				  ((= n 0)
-				   (signed val
-				      (if (= f 0)
-					  "0"
-					  (string-append "0."
-					     (make-string f #\0)))))
-				  ((= f 0)
-				   (signed val (number->string n)))
-				  (else
-				   (let* ((m (inexact->exact
-						(round (* x (expt 10 f)))))
-					  (s (integer->string m))
-					  (l (string-length s)))
-				      (signed val
-					 (string-append (substring s 0 (-fx l f))
-					    "."
-					    (substring s (-fx l f))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
-(define (js+ left right)
+(define (js+ left right %this::JsGlobalObject)
    (cond
       ((and (fixnum? left) (fixnum? right))
        (let ((r (+fx left right)))
@@ -334,18 +318,20 @@
       ((and (number? left) (number? right))
        (+ left right))
       (else
-       (js-slow+ left right))))
+       (js-slow+ left right %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-slow+ left right)
-   (let ((left (js-toprimitive left 'any))
-	 (right (js-toprimitive right 'any)))
+(define (js-slow+ left right %this)
+   (let ((left (js-toprimitive left 'any %this))
+	 (right (js-toprimitive right 'any %this)))
       (if (or (string? left) (string? right))
-	  (js-string-append (js-tostring left) (js-tostring right))
-	  (let* ((left (js-tonumber left))
-		 (right (js-tonumber right)))
+	  (js-string-append
+	     (js-tostring left %this)
+	     (js-tostring right %this))
+	  (let* ((left (js-tonumber left %this))
+		 (right (js-tonumber right %this)))
 	     (if (or (not (= left left)) (not (= right right)))
 		 +nan.0
 		 (+ left right))))))
@@ -355,17 +341,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
-(define (js- left right)
+(define (js- left right %this)
    (if (and (number? left) (number? right))
        (- left right)
-       (let* ((lnum (js-tonumber left))
-	      (rnum (js-tonumber right)))
+       (let* ((lnum (js-tonumber left %this))
+	      (rnum (js-tonumber right %this)))
 	  (- lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-neg ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-neg expr)
+(define (js-neg expr %this)
    (let loop ((expr expr))
       (cond
 	 ((and (number? expr) (= expr 0))
@@ -375,18 +361,18 @@
 	 ((number? expr)
 	  (- expr))
 	 (else
-	  (loop (js-tonumber expr))))))
+	  (loop (js-tonumber expr %this))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    js* ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
-(define (js* left right)
+(define (js* left right %this)
    (let ((r (if (and (number? left) (number? right))
 		(* left right)
-		(let* ((lnum (js-tonumber left))
-		       (rnum (js-tonumber right)))
+		(let* ((lnum (js-tonumber left %this))
+		       (rnum (js-tonumber right %this)))
 		   (* lnum rnum)))))
       (if (bignum? r)
 	  (bignum->flonum r)
@@ -397,9 +383,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
-(define (js/ left right)
-   (let* ((lnum (js-tonumber left))
-	  (rnum (js-tonumber right)))
+(define (js/ left right %this)
+   (let* ((lnum (js-tonumber left %this))
+	  (rnum (js-tonumber right %this)))
       (if (= rnum 0)
 	  (if (flonum? rnum)
 	      (cond
@@ -427,9 +413,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.3       */
 ;*---------------------------------------------------------------------*/
-(define (js% left right)
-   (let* ((lnum (js-tonumber left))
-	  (rnum (js-tonumber right)))
+(define (js% left right %this)
+   (let* ((lnum (js-tonumber left %this))
+	  (rnum (js-tonumber right %this)))
       (cond
 	 ((= rnum 0)
 	  +nan.0)
@@ -465,9 +451,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.1       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitlsh left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-touint32 right))
+(define (js-bitlsh left right %this)
+   (let* ((lnum (js-toint32 left %this))
+	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
       (int32->integer (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
 
@@ -476,9 +462,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.2       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitrsh left right)
-   (let* ((lnum (js-toint32 left))
-	  (rnum (js-touint32 right))
+(define (js-bitrsh left right %this)
+   (let* ((lnum (js-toint32 left %this))
+	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
       (int32->integer (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
 
@@ -487,9 +473,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitursh left right)
-   (let* ((lnum (js-touint32 left))
-	  (rnum (js-touint32 right))
+(define (js-bitursh left right %this)
+   (let* ((lnum (js-touint32 left %this))
+	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
       (uint32->integer (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
 
@@ -498,15 +484,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
 ;*---------------------------------------------------------------------*/
-(define (js< left right)
+(define (js< left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (< left right)
-       (let* ((px (js-toprimitive left 'number))
-	      (py (js-toprimitive right 'number)))
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
 	  (if (and (string? px) (string? py))
 	      (string<? px py)
-	      (let ((nx (js-tonumber px))
-		    (ny (js-tonumber py)))
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
 		 (< nx ny))))))
 
 ;*---------------------------------------------------------------------*/
@@ -514,15 +500,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
 ;*---------------------------------------------------------------------*/
-(define (js> left right)
+(define (js> left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (> left right)
-       (let* ((px (js-toprimitive left 'number))
-	      (py (js-toprimitive right 'number)))
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
 	  (if (and (string? px) (string? py))
 	      (string>? px py)
-	      (let ((nx (js-tonumber px))
-		    (ny (js-tonumber py)))
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
 		 (> nx ny))))))
 
 ;*---------------------------------------------------------------------*/
@@ -530,15 +516,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
 ;*---------------------------------------------------------------------*/
-(define (js<= left right)
+(define (js<= left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (<= left right)
-       (let* ((px (js-toprimitive left 'number))
-	      (py (js-toprimitive right 'number)))
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
 	  (if (and (string? px) (string? py))
 	      (string<=? px py)
-	      (let ((nx (js-tonumber px))
-		    (ny (js-tonumber py)))
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
 		 (<= nx ny))))))
 
 ;*---------------------------------------------------------------------*/
@@ -546,15 +532,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
 ;*---------------------------------------------------------------------*/
-(define (js>= left right)
+(define (js>= left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (>= left right)
-       (let* ((px (js-toprimitive left 'number))
-	      (py (js-toprimitive right 'number)))
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
 	  (if (and (string? px) (string? py))
 	      (string>=? px py)
-	      (let ((nx (js-tonumber px))
-		    (ny (js-tonumber py)))
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
 
 ;*---------------------------------------------------------------------*/
@@ -562,9 +548,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
-(define (js-bitand left right)
-   (let* ((lnum (int32->elong (js-toint32 left)))
-	  (rnum (int32->elong (js-toint32 right))))
+(define (js-bitand left right %this)
+   (let* ((lnum (int32->elong (js-toint32 left %this)))
+	  (rnum (int32->elong (js-toint32 right %this))))
       (int32->integer (elong->int32 (bit-andelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
@@ -572,9 +558,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
-(define (js-bitor left right)
-   (let* ((lnum (int32->elong (js-toint32 left)))
-	  (rnum (int32->elong (js-toint32 right))))
+(define (js-bitor left right %this)
+   (let* ((lnum (int32->elong (js-toint32 left %this)))
+	  (rnum (int32->elong (js-toint32 right %this))))
       (int32->integer (elong->int32 (bit-orelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
@@ -582,9 +568,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
-(define (js-bitxor left right)
-   (let* ((lnum (int32->elong (js-toint32 left)))
-	  (rnum (int32->elong (js-toint32 right))))
+(define (js-bitxor left right %this)
+   (let* ((lnum (int32->elong (js-toint32 left %this)))
+	  (rnum (int32->elong (js-toint32 right %this))))
       (int32->integer (elong->int32 (bit-xorelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
@@ -592,6 +578,6 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
 ;*---------------------------------------------------------------------*/
-(define (js-bitnot expr)
-   (let ((num (int32->elong (js-toint32 expr))))
+(define (js-bitnot expr %this)
+   (let ((num (int32->elong (js-toint32 expr %this))))
       (int32->integer (elong->int32 (bit-notelong num)))))

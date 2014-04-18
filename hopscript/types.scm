@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Feb  4 07:17:26 2014 (serrano)                */
+;*    Last change :  Fri Apr 18 07:09:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -15,6 +15,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_types
+
+   (library hop)
    
    (use __hopscript_object
 	__hopscript_string
@@ -59,7 +61,30 @@
 	      (cmap (default #f))
 	      (elements::vector (default '#())))
 	   
-	   (class JsGlobalObject::JsObject)
+	   (class JsGlobalObject::JsObject
+	      (js-object::JsFunction (default (class-nil JsFunction)))
+	      (js-array::JsFunction (default (class-nil JsFunction)))
+	      (js-array-prototype::JsArray (default (class-nil JsArray)))
+	      (js-boolean::JsFunction (default (class-nil JsFunction)))
+	      (js-string::JsFunction (default (class-nil JsFunction)))
+	      (js-number::JsFunction (default (class-nil JsFunction)))
+	      (js-function::JsFunction (default (class-nil JsFunction)))
+	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
+	      (js-math::JsMath (default (class-nil JsMath)))
+	      (js-regexp::JsFunction (default (class-nil JsFunction)))
+	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
+	      (js-date::JsFunction (default (class-nil JsFunction)))
+	      (js-json::JsJSON (default (class-nil JsJSON)))
+	      (js-service-prototype::JsService (default (class-nil JsService)))
+	      (js-error::JsFunction (default (class-nil JsFunction)))
+	      (js-syntax-error::JsFunction (default (class-nil JsFunction)))
+	      (js-type-error::JsFunction (default (class-nil JsFunction)))
+	      (js-uri-error::JsFunction (default (class-nil JsFunction)))
+	      (js-eval-error::JsFunction (default (class-nil JsFunction)))
+	      (js-range-error::JsFunction (default (class-nil JsFunction)))
+	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
+	      (js-worker::JsFunction (default (class-nil JsFunction)))
+	      (js-worker-prototype::JsWorker (default (class-nil JsWorker))))
 	   
 	   (class JsArray::JsObject
 	      (sealed::bool (default #f))
@@ -106,6 +131,9 @@
 	      (val read-only (default #f)))
 
 	   (class JsJSON::JsObject)
+
+	   (class JsWorker::JsObject
+	      (thread::obj (default #unspecified)))
 	   
 	   (generic js-clone::obj ::obj)
 	   

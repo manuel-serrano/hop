@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Feb 11 17:51:03 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 10:49:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -25,9 +25,7 @@
 	   __hopscript_public
 	   __hopscript_error)
 
-   (export js-regexp
-	   js-regexp-prototype
-	   (js-init-regexp! ::JsObject)))
+   (export (js-init-regexp! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */
@@ -36,62 +34,65 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsRegExp op compile isexpr)
-   (display "/" op)
-   (display (js-tostring (js-get o 'source)) op)p
-   (display "/" op)
-   (when (js-totest (js-get o 'global)) (display "g" op))
-   (when (js-totest (js-get o 'multiline)) (display "m" op))
-   (when (js-totest (js-get o 'ignoreCase)) (display "i" op)))
-
-;*---------------------------------------------------------------------*/
-;*    js-regexp ...                                                    */
-;*---------------------------------------------------------------------*/
-(define js-regexp #f)
-(define js-regexp-prototype #f)
+   (let ((%this (js-initial-global-object)))
+      (display "/" op)
+      (display (js-tostring (js-get o 'source %this) %this) op)
+      (display "/" op)
+      (when (js-totest (js-get o 'global %this)) (display "g" op))
+      (when (js-totest (js-get o 'multiline %this)) (display "m" op))
+      (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10        */
 ;*---------------------------------------------------------------------*/
-(define (js-init-regexp! %this)
+(define (js-init-regexp! %this::JsGlobalObject)
    ;; first, create the builtin prototype
-   (set! js-regexp-prototype
-      (instantiate::JsRegExp
-	 (rx (pregexp ""))
-	 (__proto__ js-object-prototype)
-	 (extensible #t)))
-   ; then, Create a HopScript regexp object constructor
-   (let ((obj (js-make-function %js-regexp 2 "JsRegExp"
-		 :__proto__ js-function-prototype
-		 :prototype js-regexp-prototype
-		 :construct js-regexp-construct)))
-      (set! js-regexp obj)
-      (init-builtin-regexp-prototype! js-regexp-prototype)
-      ;; bind Regexp in the global object
-      (js-bind! %this 'RegExp :configurable #f :enumerable #f :value js-regexp)
-      js-regexp))
+   (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
+					 js-regexp-prototype)
+      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+	 
+	 (set! js-regexp-prototype
+	    (instantiate::JsRegExp
+	       (rx (pregexp ""))
+	       (__proto__ __proto__)
+	       (extensible #t)))
+	 
+	 ;; create a HopScript regexp object constructor
+	 (set! js-regexp
+	    (js-make-function %this
+	       (%js-regexp %this) 2 "JsRegExp"
+	       :__proto__ js-function-prototype
+	       :prototype js-regexp-prototype
+	       :construct (js-regexp-construct %this)))
+	 (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
+	 ;; bind Regexp in the global object
+	 (js-bind! %this %this 'RegExp
+	    :configurable #f :enumerable #f :value js-regexp)
+	 js-regexp)))
    
 ;*---------------------------------------------------------------------*/
 ;*    %js-regexp ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.3.1    */
 ;*---------------------------------------------------------------------*/
-(define (%js-regexp this pattern flags)
-   (if (and (isa? pattern JsRegExp) (eq? flags (js-undefined)))
-       pattern
-       (js-new js-regexp pattern flags)))
+(define (%js-regexp %this::JsGlobalObject)
+   (lambda (this pattern flags)
+      (with-access::JsGlobalObject %this (js-regexp)
+	 (if (and (isa? pattern JsRegExp) (eq? flags (js-undefined)))
+	     pattern
+	     (js-new %this js-regexp pattern flags)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-pattern ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.8.5        */
 ;*---------------------------------------------------------------------*/
-(define (make-js-regexp-pattern str)
+(define (make-js-regexp-pattern %this str)
    
    (define (err fmt str)
-      (js-raise
-	 (js-new js-syntax-error (format fmt str))))
+      (js-raise-syntax-error %this fmt str))
    
    (define (char-alpha c)
       (cond
@@ -172,132 +173,140 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.4.1    */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-construct _ . l)
-   (let ((pattern (if (null? l) "" (car l)))
-	 (flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
-	 (i #f)
-	 (m #f)
-	 (g #f))
-      (cond
-	 ((isa? pattern JsRegExp)
-	  (if (eq? flags (js-undefined))
-	      (begin
-		 (when (js-totest (js-get pattern 'global)) (set! g -1))
-		 (when (js-totest (js-get pattern 'ignoreCase)) (set! i -1))
-		 (when (js-totest (js-get pattern 'multiline)) (set! m -1)))
-	      (js-raise-type-error "wrong regexp flags ~s" flags))
-	  (set! pattern (js-tostring (js-get pattern 'source))))
-	 (else
-	  (if (eq? pattern (js-undefined))
-	     (set! pattern "")
-	     (set! pattern (js-tostring pattern)))
-	  (unless (eq? flags (js-undefined))
-	     (let ((f (js-tostring flags)))
-		(set! i (string-index f #\i))
-		(set! m (string-index f #\m))
-		(set! g (string-index f #\g))
-		(when (or (string-skip f "igm")
-			  (and (integer? i) (string-index f #\i (+fx 1 i)))
-			  (and (integer? m) (string-index f #\m (+fx 1 m)))
-			  (and (integer? g) (string-index f #\g (+fx 1 g))))
-		   (js-raise
-		      (js-new js-syntax-error "Illegal flags")))))))
-      (let ((lastindex (instantiate::JsValueDescriptor
-			  (name 'lastIndex)
-			  (writable #t)
-			  (value 0)))
-	    (global (instantiate::JsValueDescriptor
-		       (name 'global)
-		       (value (fixnum? g))))
-	    (icase (instantiate::JsValueDescriptor
-		      (name 'ignoreCase)
-		      (value (fixnum? i))))
-	    (mline (instantiate::JsValueDescriptor
-		      (name 'multiline)
-		      (value (fixnum? m))))
-	    (source (instantiate::JsValueDescriptor
-		       (name 'source)
-		       (value pattern))))
-	 (with-handler
-	    (lambda (e)
-	       (if (isa? e &io-parse-error)
-		   (with-access::&io-parse-error e (msg)
-		      (js-raise (js-new js-syntax-error msg)))
-		   (raise e)))
-	    (instantiate::JsRegExp
-	       (extensible #t)
-	       (__proto__ js-regexp-prototype)
-	       (rx (pregexp (make-js-regexp-pattern pattern)
-		      (when (fixnum? i) 'CASELESS)
-		      'JAVASCRIPT_COMPAT
-		      'UTF8
-		      (when (fixnum? m) 'MULTILINE)))
-	       (properties (list lastindex global icase mline source)))))))
+(define (js-regexp-construct %this::JsGlobalObject)
+   (lambda (_ . l)
+      (let ((pattern (if (null? l) "" (car l)))
+	    (flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
+	    (i #f)
+	    (m #f)
+	    (g #f))
+	 (cond
+	    ((isa? pattern JsRegExp)
+	     (if (eq? flags (js-undefined))
+		 (begin
+		    (when (js-totest (js-get pattern 'global %this))
+		       (set! g -1))
+		    (when (js-totest (js-get pattern 'ignoreCase %this))
+		       (set! i -1))
+		    (when (js-totest (js-get pattern 'multiline %this))
+		       (set! m -1)))
+		 (js-raise-type-error %this "wrong regexp flags ~s" flags))
+	     (set! pattern (js-tostring (js-get pattern 'source %this) %this)))
+	    (else
+	     (if (eq? pattern (js-undefined))
+		 (set! pattern "")
+		 (set! pattern (js-tostring pattern %this)))
+	     (unless (eq? flags (js-undefined))
+		(let ((f (js-tostring flags %this)))
+		   (set! i (string-index f #\i))
+		   (set! m (string-index f #\m))
+		   (set! g (string-index f #\g))
+		   (when (or (string-skip f "igm")
+			     (and (integer? i) (string-index f #\i (+fx 1 i)))
+			     (and (integer? m) (string-index f #\m (+fx 1 m)))
+			     (and (integer? g) (string-index f #\g (+fx 1 g))))
+		      (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
+	 (let ((lastindex (instantiate::JsValueDescriptor
+			     (name 'lastIndex)
+			     (writable #t)
+			     (value 0)))
+	       (global (instantiate::JsValueDescriptor
+			  (name 'global)
+			  (value (fixnum? g))))
+	       (icase (instantiate::JsValueDescriptor
+			 (name 'ignoreCase)
+			 (value (fixnum? i))))
+	       (mline (instantiate::JsValueDescriptor
+			 (name 'multiline)
+			 (value (fixnum? m))))
+	       (source (instantiate::JsValueDescriptor
+			  (name 'source)
+			  (value pattern))))
+	    (with-handler
+	       (lambda (e)
+		  (if (isa? e &io-parse-error)
+		      (with-access::&io-parse-error e (msg)
+			 (js-raise-syntax-error %this msg ""))
+		      (raise e)))
+	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
+		  (instantiate::JsRegExp
+		     (extensible #t)
+		     (__proto__ js-regexp-prototype)
+		     (rx (pregexp (make-js-regexp-pattern %this pattern)
+			    (when (fixnum? i) 'CASELESS)
+			    'JAVASCRIPT_COMPAT
+			    'UTF8
+			    (when (fixnum? m) 'MULTILINE)))
+		     (properties (list lastindex global icase mline source)))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6      */
 ;*---------------------------------------------------------------------*/
-(define (init-builtin-regexp-prototype! obj)
+(define (init-builtin-regexp-prototype! %this::JsGlobalObject js-regexp obj)
    ;; prototype fields
-   (js-bind! obj 'constructor
+   (js-bind! %this obj 'constructor
       :value js-regexp
       :enumerable #f)
    ;; toString
-   (js-bind! obj 'toString
-      :value (js-make-function
+   (js-bind! %this obj 'toString
+      :value (js-make-function %this
 		(lambda (this)
-		   (string-append "/" (js-tostring (js-get this 'source)) "/"))
+		   (string-append "/"
+		      (js-tostring (js-get this 'source %this) %this) "/"))
 		0 "toString")
       :writable #t
       :configurable #t
       :enumerable #f)
    ;; exec
-   (js-bind! obj 'exec
-      :value (js-make-function regexp-prototype-exec 1 "exec")
+   (js-bind! %this obj 'exec
+      :value (js-make-function %this
+		(lambda (this string::obj)
+		   (regexp-prototype-exec %this this string))
+		1 "exec")
       :writable #t
       :configurable #t
       :enumerable #f)
    ;; test
-   (js-bind! obj 'test
-      :value (js-make-function regexp-prototype-test 1 "test")
+   (js-bind! %this obj 'test
+      :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test")
       :writable #t
       :configurable #t
       :enumerable #f)
    ;; source
-   (js-bind! obj 'source
+   (js-bind! %this obj 'source
       :value ""
       :writable #f
       :configurable #f
       :enumerable #f)
    ;; global
-   (js-bind! obj 'global
+   (js-bind! %this obj 'global
       :value #f
       :writable #f
       :configurable #f
       :enumerable #f)
    ;; ignoreCase
-   (js-bind! obj 'ignoreCase
+   (js-bind! %this obj 'ignoreCase
       :value #f
       :writable #f
       :configurable #f
       :enumerable #f)
    ;; multiline
-   (js-bind! obj 'multiline
+   (js-bind! %this obj 'multiline
       :value #f
       :writable #f
       :configurable #f
       :enumerable #f)
    ;; lastindex
-   (js-bind! obj 'lastIndex
+   (js-bind! %this obj 'lastIndex
       :value 0
       :writable #t
       :configurable #f
       :enumerable #f)
    ;; compile
-   (js-bind! obj 'compile
-      :value (js-make-function regexp-prototype-compile 1 "compile")
+   (js-bind! %this obj 'compile
+      :value (js-make-function %this regexp-prototype-compile 1 "compile")
       :writable #t
       :configurable #t
       :enumerable #f))
@@ -307,20 +316,20 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
-(define (regexp-prototype-exec this string::obj)
+(define (regexp-prototype-exec %this::JsGlobalObject this string::obj)
    (if (not (isa? this JsRegExp))
-       (js-raise-type-error "Not a RegExp ~s" this)
+       (js-raise-type-error %this "Not a RegExp ~s" this)
        (with-access::JsRegExp this (rx)
-	  (let* ((s (js-tostring string))
+	  (let* ((s (js-tostring string %this))
 		 (len (string-length s))
-		 (lastindex (js-get this 'lastIndex))
-		 (i (js-tointeger lastindex)) 
-		 (global (js-get this 'global)))
+		 (lastindex (js-get this 'lastIndex %this))
+		 (i (js-tointeger lastindex %this)) 
+		 (global (js-get this 'global %this)))
 	     (unless global (set! i 0))
 	     (let loop ()
 		(cond
 		   ((or (<fx i 0) (>fx i len))
-		    (js-put! this 'lastIndex 0 #f)
+		    (js-put! this 'lastIndex 0 #f %this)
 		    (js-null))
 		   ((pregexp-match-positions rx s i)
 		    =>
@@ -328,9 +337,10 @@
 		       ;; 10
 		       (let ((e (cdar r)))
 			  ;; 11
-			  (when global (js-put! this 'lastIndex e #f))
+			  (when global (js-put! this 'lastIndex e #f %this))
 			  (let* ((n (length r))
-				 (a (js-new js-array n))
+				 (a (with-access::JsGlobalObject %this (js-array)
+				       (js-new %this js-array n)))
 				 (matchindex (caar r)))
 			     ;; 15
 			     (js-define-own-property a 'index
@@ -340,7 +350,7 @@
 				   (writable #t)
 				   (enumerable #t)
 				   (configurable #t))
-				#t)
+				#t %this)
 			     ;; 16
 			     (js-define-own-property a 'input
 				(instantiate::JsValueDescriptor
@@ -349,7 +359,7 @@
 				   (writable #t)
 				   (enumerable #t)
 				   (configurable #t))
-				#t)
+				#t %this)
 			     ;; 17
 			     (js-define-own-property a 'length
 				(instantiate::JsValueDescriptor
@@ -358,16 +368,16 @@
 				   (writable #t)
 				   (enumerable #f)
 				   (configurable #f))
-				#t)
+				#t %this)
 			     ;; 19
 			     (js-define-own-property a 0
 				(instantiate::JsValueDescriptor
-				   (name (js-toname 0))
+				   (name (js-toname 0 %this))
 				   (value (substring s (caar r) (cdar r)))
 				   (writable #f)
 				   (enumerable #t)
 				   (configurable #t))
-				#t)
+				#t %this)
 			     ;; 20
 			     (let loop ((c (cdr r))
 					(i 1))
@@ -378,12 +388,12 @@
 						 (js-undefined))))
 				      (js-define-own-property a i
 					 (instantiate::JsValueDescriptor
-					    (name (js-toname i))
+					    (name (js-toname i %this))
 					    (value v)
 					    (writable #f)
 					    (enumerable #t)
 					    (configurable #t))
-					 #t))
+					 #t %this))
 				   (loop (cdr c) (+fx i 1))))
 			     a))))
 		   (else
@@ -391,12 +401,13 @@
 		    (loop))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    regexp-prototype-test ...                                        */
+;*    make-regexp-prototype-test ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
 ;*---------------------------------------------------------------------*/
-(define (regexp-prototype-test this string::obj)
-   (not (eq? (regexp-prototype-exec this string) (js-null))))
+(define (make-regexp-prototype-test %this::JsGlobalObject)
+   (lambda (this string::obj)
+      (not (eq? (regexp-prototype-exec %this this string) (js-null)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-compile ...                                     */

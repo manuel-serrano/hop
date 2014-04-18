@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Mar 22 16:33:12 2014 (serrano)                */
+;*    Last change :  Thu Apr 17 08:04:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -14,66 +14,71 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
-   
+
+   (library hop)
+	    
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_error
 	   __hopscript_private
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_worker)
    
-   (export (js-toname::symbol ::obj)
-	   (js-property-value ::obj ::JsPropertyDescriptor)
-	   (generic js-property-names::vector ::JsObject ::bool)
+   (export (js-toname::symbol ::obj ::JsGlobalObject)
+	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
+	   (generic js-property-names::vector ::JsObject ::bool ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
 	   (generic js-has-property::bool ::JsObject ::symbol)
 
-	   (js-from-property-descriptor desc)
-	   (js-to-property-descriptor desc ::symbol)
+	   (js-from-property-descriptor ::JsGlobalObject desc)
+	   (js-to-property-descriptor ::JsGlobalObject desc ::symbol)
 
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
 	   (inline js-is-generic-descriptor?::bool obj)
 	   
-	   (generic js-get-own-property ::JsObject ::obj)
-	   (generic js-get-property ::JsObject ::symbol)
+	   (generic js-get-own-property ::JsObject ::obj ::JsGlobalObject)
+	   (generic js-get-property ::JsObject ::symbol ::JsGlobalObject)
 	   
-	   (generic js-get ::obj ::obj)
-	   (generic js-get/base ::obj ::obj ::obj)
-	   (js-getvalue ::JsObject ::obj ::symbol ::obj)
+	   (generic js-get ::obj ::obj ::JsGlobalObject)
+	   (generic js-get/base ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-getvalue ::JsObject ::obj ::symbol ::obj ::JsGlobalObject)
 	   
-	   (js-get/cache ::obj ::obj ::JsPropertyCache)
-	   (inline js-get-name/cache ::obj ::symbol ::JsPropertyCache)
-	   (js-get-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj)
+	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
+	   (inline js-get-name/cache ::obj ::symbol ::JsPropertyCache ::JsGlobalObject)
+	   (js-get-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
 	   
-	   (js-can-put o::JsObject ::symbol)
-	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool)
-	   (generic js-put! ::obj ::obj ::obj ::bool)
-	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache)
-	   (inline js-put-name/cache! ::obj ::symbol ::obj ::bool ::JsPropertyCache)
-	   (js-put-name/cache-miss! ::JsObject ::symbol ::obj ::bool ::JsPropertyCache)
+	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
+	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
+	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
+	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (inline js-put-name/cache! ::obj ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (js-put-name/cache-miss! ::JsObject ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 
-	   (generic js-delete! ::obj ::obj ::bool)
+	   (generic js-delete! ::obj ::obj ::bool ::JsGlobalObject)
 	   
 	   (generic js-replace-own-property! ::JsObject
 	      old::JsPropertyDescriptor
 	      new::JsPropertyDescriptor)
 	   
 	   (js-define-own-property%::bool o::JsObject
-	      name::symbol desc::JsPropertyDescriptor throw::bool)
+	      name::symbol desc::JsPropertyDescriptor throw::bool
+	      ::JsGlobalObject)
 	   
 	   (generic js-define-own-property::bool o::JsObject p
-	      desc::JsPropertyDescriptor throw::bool)
+	      desc::JsPropertyDescriptor throw::bool
+	      ::JsGlobalObject)
 	   
 	   (generic js-seal ::JsObject ::obj)
 	   (generic js-freeze ::JsObject ::obj)
 
-	   (generic js-for-in ::obj proc::procedure)
+	   (generic js-for-in ::obj proc::procedure ::JsGlobalObject)
 
-	   (js-bind! ::JsObject name::symbol #!key
+	   (js-bind! ::JsGlobalObject ::JsObject name::symbol #!key
 	      (value #f)
 	      (get #f)
-	      (set (lambda (o v) #f))
+	      (set #f)
 	      (writable #t)
 	      (enumerable #t)
 	      (configurable #t))))
@@ -155,28 +160,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-toname p)
-   (cond
-      ((string? p)
-       (string->symbol p))
-      ((symbol? p)
-       p)
-      ((fixnum? p)
-       (fixnum->pname p))
-      ((uint32? p)
-       (cond-expand
-	  (bint30
-	   (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-	       (fixnum->pname (uint32->fixnum p))
-	       (string->symbol (llong->string (uint32->llong p)))))
-	  (bint32
-	   (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
-	       (fixnum->pname (uint32->fixnum p))
-	       (string->symbol (llong->string (uint32->llong p)))))
-	  (else
-	   (fixnum->pname (uint32->fixnum p)))))
-      (else
-       (js-toname (js-tostring p)))))
+(define (js-toname p %this)
+   (let loop ((p p))
+      (cond
+	 ((string? p)
+	  (string->symbol p))
+	 ((symbol? p)
+	  p)
+	 ((fixnum? p)
+	  (fixnum->pname p))
+	 ((uint32? p)
+	  (cond-expand
+	     (bint30
+	      (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
+		  (fixnum->pname (uint32->fixnum p))
+		  (string->symbol (llong->string (uint32->llong p)))))
+	     (bint32
+	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
+		  (fixnum->pname (uint32->fixnum p))
+		  (string->symbol (llong->string (uint32->llong p)))))
+	     (else
+	      (fixnum->pname (uint32->fixnum p)))))
+	 (else
+	  (loop (js-tostring p %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-map-find ...                                            */
@@ -238,7 +244,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Returns a vector of the property names.                          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-property-names obj::JsObject enump)
+(define-generic (js-property-names obj::JsObject enump %this::JsGlobalObject)
    (with-access::JsObject obj (cmap properties)
       (apply vector
 	 (filter-map (lambda (p)
@@ -253,7 +259,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-property-value ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-property-value obj desc)
+(define (js-property-value obj desc %this)
    (cond
       ((isa? desc JsIndexDescriptor)
        (with-access::JsIndexDescriptor desc (index owner)
@@ -265,7 +271,7 @@
       ((isa? desc JsAccessorDescriptor)
        (with-access::JsAccessorDescriptor desc (get)
 	  (if (isa? get JsFunction)
-	      (js-call0 get obj)
+	      (js-call0 %this get obj)
 	      (js-undefined))))
       (else
        (js-undefined))))
@@ -345,60 +351,62 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.4       */
 ;*---------------------------------------------------------------------*/
-(define (js-from-property-descriptor desc)
+(define (js-from-property-descriptor %this::JsGlobalObject desc)
    (if (eq? desc (js-undefined))
        desc
-       (let ((obj (js-new js-object)))
-	  (cond
-	     ((isa? desc JsIndexDescriptor)
-	      (with-access::JsIndexDescriptor desc (writable index owner)
-		 (with-access::JsObject owner (elements)
+       (with-access::JsGlobalObject %this (js-object)
+	  (let ((obj (js-new %this js-object)))
+	     (cond
+		((isa? desc JsIndexDescriptor)
+		 (with-access::JsIndexDescriptor desc (writable index owner)
+		    (with-access::JsObject owner (elements)
+		       ;; 3
+		       (js-put! obj 'value (vector-ref-ur elements index) #f %this)
+		       (js-put! obj 'writable writable #f %this))))
+		((isa? desc JsValueDescriptor)
+		 (with-access::JsValueDescriptor desc (writable value)
 		    ;; 3
-		    (js-put! obj 'value (vector-ref-ur elements index) #f)
-		    (js-put! obj 'writable writable #f))))
-	     ((isa? desc JsValueDescriptor)
-	      (with-access::JsValueDescriptor desc (writable value)
-		 ;; 3
-		 (js-put! obj 'value value #f)
-		 (js-put! obj 'writable writable #f)))
-	     ((isa? desc JsAccessorDescriptor)
-	      ;; 4
-	      (with-access::JsAccessorDescriptor desc (get set)
-		 (js-put! obj 'get get #f)
-		 (js-put! obj 'set set #f))))
-	  (with-access::JsPropertyDescriptor desc (enumerable configurable)
-	     ;; 5
-	     (js-put! obj 'enumerable enumerable #f)
-	     ;; 6
-	     (js-put! obj 'configurable configurable #f))
-	  obj)))
+		    (js-put! obj 'value value #f %this)
+		    (js-put! obj 'writable writable #f %this)))
+		((isa? desc JsAccessorDescriptor)
+		 ;; 4
+		 (with-access::JsAccessorDescriptor desc (get set)
+		    (js-put! obj 'get get #f %this)
+		    (js-put! obj 'set set #f %this))))
+	     (with-access::JsPropertyDescriptor desc (enumerable configurable)
+		;; 5
+		(js-put! obj 'enumerable enumerable #f %this)
+		;; 6
+		(js-put! obj 'configurable configurable #f %this))
+	     obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-to-property-descriptor ...                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.5       */
 ;*---------------------------------------------------------------------*/
-(define (js-to-property-descriptor obj name::symbol)
-   (let* ((obj (js-cast-object obj "[[ToPropertyDescriptor]]"))
+(define (js-to-property-descriptor %this::JsGlobalObject obj name::symbol)
+   (let* ((obj (js-cast-object %this obj "[[ToPropertyDescriptor]]"))
 	  (enumerable (if (js-has-property obj 'enumerable)
-			  (js-toboolean (js-get obj 'enumerable))
+			  (js-toboolean (js-get obj 'enumerable %this))
 			  (js-undefined)))
 	  (configurable (if (js-has-property obj 'configurable)
-			    (js-toboolean (js-get obj 'configurable))
+			    (js-toboolean (js-get obj 'configurable %this))
 			    (js-undefined)))
 	  (hasget (js-has-property obj 'get))
 	  (hasset (js-has-property obj 'set)))
       (cond
 	 ((or hasget hasset)
-	  (let ((get (js-get obj 'get))
-		(set (js-get obj 'set)))
+	  (let ((get (js-get obj 'get %this))
+		(set (js-get obj 'set %this)))
 	     (if (or (js-has-property obj 'writable)
 		     (js-has-property obj 'value)
 		     (and (not (isa? get JsFunction))
 			  (not (eq? get (js-undefined))))
 		     (and (not (isa? set JsFunction))
 			  (not (eq? set (js-undefined)))))
-		 (js-raise-type-error "Illegal property descriptor ~s" obj)
+		 (js-raise-type-error %this
+		    "Illegal property descriptor ~s" obj)
 		 (instantiate::JsAccessorDescriptor
 		    (name name)
 		    (get (when hasget get))
@@ -407,18 +415,18 @@
 		    (configurable configurable)))))
 	 ((js-has-property obj 'value)
 	  (let ((writable (if (js-has-property obj 'writable)
-			      (js-toboolean (js-get obj 'writable))
+			      (js-toboolean (js-get obj 'writable %this))
 			      (js-undefined))))
 	     (instantiate::JsValueDescriptor
 		(name name)
-		(value (js-get obj 'value))
+		(value (js-get obj 'value %this))
 		(writable writable)
 		(enumerable enumerable)
 		(configurable configurable))))
 	 ((js-has-property obj 'writable)
 	  (instantiate::JsDataDescriptor
 	     (name name)
-	     (writable (js-toboolean (js-get obj 'writable)))
+	     (writable (js-toboolean (js-get obj 'writable %this)))
 	     (enumerable enumerable)
 	     (configurable configurable)))
 	 (else
@@ -432,8 +440,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.1       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-own-property o::JsObject p::obj)
-   (let ((name (js-toname p)))
+(define-generic (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
+   (let ((name (js-toname p %this)))
       (with-access::JsObject o (cmap)
 	 (if cmap
 	     (jsobject-map-find o name
@@ -451,7 +459,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-property o::JsObject name::symbol)
+(define-generic (js-get-property o::JsObject name::symbol %this::JsGlobalObject)
    (with-access::JsObject o (cmap __proto__)
       (if cmap
 	  (jsobject-map-find o name
@@ -461,13 +469,13 @@
 		      (vector-ref-ur descriptors i))))
 	     (lambda ()
 		(if (isa? __proto__ JsObject)
-		    (js-get-property __proto__ name)
+		    (js-get-property __proto__ name %this)
 		    (js-undefined))))
 	  (jsobject-properties-find o name
 	     (lambda (o d) d)
 	     (lambda ()
 		(if (isa? __proto__ JsObject)
-		    (js-get-property __proto__ name)
+		    (js-get-property __proto__ name %this)
 		    (js-undefined)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -476,60 +484,54 @@
 ;*    ECMA-262, Section 8.12.3                                         */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get _o prop)
-   (let ((o (js-toobject _o)))
+(define-generic (js-get _o prop %this::JsGlobalObject)
+   (let ((o (js-toobject %this _o)))
       (if o
-	  (js-get/base o _o prop)
-	  (js-raise-type-error "[[GET]]: not an object ~s" _o))))
+	  (js-get/base o _o prop %this)
+	  (js-raise-type-error %this "[[GET]]: not an object ~s" _o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::Object ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Accessing Bigloo objects from hopscript                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get o::object prop)
-   (let* ((name (js-toname prop))
+(define-method (js-get o::object prop %this)
+   (let* ((name (js-toname prop %this))
 	  (clazz (object-class o))
 	  (field (find-class-field clazz name)))
       (if (not field)
-	  (js-raise-type-error (format "no such field \"~a\" ~~a" name) o)
+	  (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o)
 	  ((class-field-accessor field) o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-notfound ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-get-notfound name throw)
+(define (js-get-notfound name throw %this)
    (cond
       ((not throw)
        (js-undefined))
       ((pair? throw)
        (match-case throw
 	  ((at ?fname ?point)
-	   (js-raise
-	      (js-new js-reference-error
-		 (format "variable unbound \"~a\"" name)
-		 fname point)))
+	   (js-raise-reference-error %this "variable unbound \"~a\"" name
+	      fname point))
 	  (else
-	   (js-raise
-	      (js-new js-reference-error
-		 (format "variable unbound \"~a\"" name))))))
+	   (js-raise-reference-error %this "variable unbound \"~a\"" name))))
       (else
-       (js-raise
-	  (js-new js-reference-error
-	     (format "variable unbound \"~a\"" name))))))
+       (js-raise-reference-error %this "variable unbound \"~a\"" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/base :: ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get/base o base prop)
-   (js-getvalue o base (js-toname prop) #f))
+(define-generic (js-get/base o base prop %this)
+   (js-getvalue o base (js-toname prop %this) #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-getvalue ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1        */
 ;*---------------------------------------------------------------------*/
-(define (js-getvalue obj::JsObject base name::symbol throw)
+(define (js-getvalue obj::JsObject base name::symbol throw %this)
    (jsobject-find obj name
       (lambda (o i)
 	 ;; found in a map
@@ -537,13 +539,13 @@
 	    (with-access::JsConstructMap cmap (descriptors)
 	       (let ((descr (vector-ref-ur descriptors i)))
 		  (if (isa? descr JsAccessorDescriptor)
-		      (js-property-value base descr)
+		      (js-property-value base descr %this)
 		      (vector-ref-ur elements i))))))
       (lambda (o d)
-	 (js-property-value base d))
+	 (js-property-value base d %this))
       (lambda ()
 	 ;; not found
-	 (js-get-notfound name throw))))
+	 (js-get-notfound name throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */
@@ -551,16 +553,17 @@
 ;*    Use a per site cache for the [[GET]] operation. The property     */
 ;*    name is not know statically.                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-get/cache obj prop::obj cache::JsPropertyCache)
+(define (js-get/cache obj
+	   prop::obj cache::JsPropertyCache %this::JsGlobalObject)
    (if (or (not (string? prop)) (not (isa? obj JsObject)))
-       (js-get obj prop)
-       (let ((pname (js-toname prop)))
+       (js-get obj prop %this)
+       (let ((pname (js-toname prop %this)))
 	  (with-access::JsPropertyCache cache (name)
 	     (if (eq? name pname)
-		 (js-get-name/cache obj name cache)
+		 (js-get-name/cache obj name cache %this)
 		 (if (not (isa? obj JsObject))
-		     (js-get-lookup obj name cache #f)
-		     (js-get obj prop)))))))
+		     (js-get-lookup obj name cache #f %this)
+		     (js-get obj prop %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -569,14 +572,15 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-get-name/cache obj name::symbol cache::JsPropertyCache)
+(define-inline (js-get-name/cache obj
+		  name::symbol cache::JsPropertyCache %this::JsGlobalObject)
    (if (not (isa? obj JsObject))
-       (js-get obj name)
+       (js-get obj name %this)
        (with-access::JsObject obj ((omap cmap) elements __proto__)
 	  (with-access::JsPropertyCache cache (cmap index)
 	     (if (eq? cmap omap)
 		 (vector-ref-ur elements index)
-		 (js-get-name/cache-miss obj name cache #f))))))
+		 (js-get-name/cache-miss obj name cache #f %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    construct-map-descriptors ...                                    */
@@ -593,7 +597,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw)
+(define (js-get-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw %this)
    (let loop ((o obj))
       (with-access::JsObject o ((omap cmap) elements __proto__)
 	 (with-access::JsPropertyCache cache (cmap index)
@@ -603,17 +607,17 @@
 		(vector-ref-ur elements index))
 	       ((eq? cmap (construct-map-descriptors omap))
 		;; check if we are accessing a prop via a cached accessor
-		(js-property-value obj (vector-ref-ur cmap index)))
+		(js-property-value obj (vector-ref-ur cmap index) %this))
 	       ((not omap)
 		(jsobject-properties-find o name
-		   js-property-value
+		   (lambda (o v) (js-property-value o v %this))
 		   (lambda ()
 		      ;; not found
 		      (if (isa? __proto__ JsObject)
 			  (loop __proto__)
-			  (js-get-lookup obj name cache throw)))))
+			  (js-get-lookup obj name cache throw %this)))))
 	       (else
-		(js-get-lookup obj name cache throw)))))))
+		(js-get-lookup obj name cache throw %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lookup ...                                                */
@@ -621,7 +625,7 @@
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw)
+(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw %this)
    (jsobject-find obj name
       (lambda (o i)
 	 ;; found in a map
@@ -633,23 +637,23 @@
 			 (begin
 			    (set! cmap descriptors)
 			    (set! index (negfx i))
-			    (js-property-value obj descr))
+			    (js-property-value obj descr %this))
 			 (begin
 			    (set! cmap omap)
 			    (set! index i)
 			    (vector-ref-ur elements i))))))))
       (lambda (o v)
-	 (js-property-value obj v))
+	 (js-property-value obj v %this))
       (lambda ()
 	 ;; not found
-	 (js-get-notfound name throw))))
+	 (js-get-notfound name throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-can-put ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4       */
 ;*---------------------------------------------------------------------*/
-(define (js-can-put o::JsObject p::symbol)
+(define (js-can-put o::JsObject p::symbol %this::JsGlobalObject)
 
    (define (js-get-inherited-property o::JsObject name::symbol)
       (jsobject-find o name
@@ -657,7 +661,7 @@
 	 (lambda (o d) d)
 	 (lambda () #f)))
 
-   (let ((desc (js-get-own-property o p)))
+   (let ((desc (js-get-own-property o p %this)))
       ;; 1
       (cond
 	 ((fixnum? desc)
@@ -699,34 +703,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-unresolved-put! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-unresolved-put! o::JsObject p value throw::bool)
-   (js-put-jsobject! o p value throw #f))
+(define (js-unresolved-put! o::JsObject p value throw::bool %this::JsGlobalObject)
+   (js-put-jsobject! o p value throw #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ...                                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.5       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-put! _o prop v::obj throw::bool)
-   (let ((o (js-toobject _o)))
+(define-generic (js-put! _o prop v::obj throw::bool %this::JsGlobalObject)
+   (let ((o (js-toobject %this _o)))
       (if o
-	  (js-put! o prop v throw)
-	  (js-raise-type-error "[[PUT]]: not an object ~s" _o))))
+	  (js-put! o prop v throw %this)
+	  (js-raise-type-error %this "[[PUT]]: not an object ~s" _o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::Object ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    Mutating Bigloo objects from hopscript                           */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::object prop v::obj throw::bool)
-   (let* ((name (js-toname prop))
+(define-method (js-put! o::object prop v::obj throw::bool %this::JsGlobalObject)
+   (let* ((name (js-toname prop %this))
 	  (clazz (object-class o))
 	  (field (find-class-field clazz name)))
       (cond
 	 ((not field)
-	  (js-raise-type-error (format "no such field \"~\" ~~a" name) o))
+	  (js-raise-type-error %this (format "no such field \"~\" ~~a" name) o))
 	 ((not (class-field-mutable? field))
-	  (js-raise-type-error (format "field \"~\" read-only ~~a" name) o))
+	  (js-raise-type-error %this (format "field \"~\" read-only ~~a" name) o))
 	 (else
 	  ((class-field-mutator field) o v)))))
 
@@ -740,17 +744,18 @@
 ;*    [[DefineOwnProperty]]                                            */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::JsObject p value throw)
-   (js-put-jsobject! o p value throw #t))
+(define-method (js-put! o::JsObject p value throw %this)
+   (js-put-jsobject! o p value throw #t %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-put-jsobject! o p  value throw extend::bool)
+(define (js-put-jsobject! o p value throw extend::bool %this)
    
    (define (reject msg)
       (if throw
-	  (js-raise-type-error (format "[[PUT]], ~a ~~s" msg) (js-toname p))
+	  (js-raise-type-error %this
+	     (format "[[PUT]], ~a ~~s" msg) (js-toname p %this))
 	  value))
 
    (define (update-accessor-descriptor! obj value desc)
@@ -758,7 +763,7 @@
       (with-access::JsAccessorDescriptor desc (set)
 	 (if (isa? set JsFunction)
 	     ;; 8.12.5, step 5
-	     (begin (js-call1 set obj value) value)
+	     (begin (js-call1 %this set obj value) value)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
 
@@ -797,7 +802,7 @@
       ;; 8.12.5, step 6
       (with-access::JsObject o (elements cmap)
 	 (with-access::JsConstructMap cmap (nextmap names descriptors)
-	    (let* ((name (js-toname p))
+	    (let* ((name (js-toname p %this))
 		   (flags (property-flags #t #t #t #f))
 		   (index (vector-length names)))
 	       (if (cmap-same-transition? cmap name flags)
@@ -855,14 +860,14 @@
    
    (define (extend-properties-object!)
       (with-access::JsObject o (properties)
-	 (let* ((name (js-toname p))
+	 (let* ((name (js-toname p %this))
 		(newdesc (instantiate::JsValueDescriptor
 			    (name name)
 			    (value value)
 			    (writable #t)
 			    (enumerable #t)
 			    (configurable #t))))
-	    (js-define-own-property o name newdesc throw))))
+	    (js-define-own-property o name newdesc throw %this))))
    
    (define (extend-object!)
       (with-access::JsObject o (cmap properties extensible)
@@ -872,9 +877,8 @@
 	     (reject "Sealed objet"))
 	    ((not extend)
 	     ;; 11.13.1
-	     (js-raise
-		(js-new js-reference-error
-		   (format "[[PUT]], \"~a\" is not defined" p))))
+	     (js-raise-reference-error %this
+		"[[PUT]], \"~a\" is not defined" p))
 	    (cmap
 	     ;; 8.12.5, step 6
 	     (extend-mapped-object!))
@@ -882,7 +886,7 @@
 	     ;; 8.12.5, step 6
 	     (extend-properties-object!)))))
 
-   (jsobject-find o (js-toname p)
+   (jsobject-find o (js-toname p %this)
       update-mapped-object!
       update-properties-object!
       extend-object!))
@@ -902,11 +906,11 @@
 ;*    [[DefineOwnProperty]]                                            */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
-(define (js-bind! o::JsObject name::symbol
+(define (js-bind! %this::JsGlobalObject o::JsObject name::symbol
 	   #!key
 	   (value #f)
 	   (get #f)
-	   (set (lambda (o v) #f))
+	   (set #f)
 	   (writable #t)
 	   (enumerable #t)
 	   (configurable #t))
@@ -927,8 +931,7 @@
 		      (js-undefined)))
 		  (else
 		   ;; rebind the descriptor
-		   ;; raise the
-		   (js-put! o name value #f)))))))
+		   (js-put! o name value #f %this)))))))
 
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
@@ -988,9 +991,9 @@
 			    (set set)
 			    (enumerable enumerable)
 			    (configurable configurable))))
-	     (js-define-own-property o name newdesc #f)
+	     (js-define-own-property o name newdesc #f %this)
 	     (js-undefined))
-	  (js-put! o name value #f)))
+	  (js-put! o name value #f %this)))
    
    (define (extend-properties-object!)
       (with-access::JsObject o (properties)
@@ -1001,7 +1004,7 @@
 			       (set set)
 			       (enumerable enumerable)
 			       (configurable configurable))))
-		(js-define-own-property o name newdesc #f)
+		(js-define-own-property o name newdesc #f %this)
 		(js-undefined))
 	     (let ((newdesc (instantiate::JsValueDescriptor
 			       (name name)
@@ -1009,8 +1012,9 @@
 			       (writable writable)
 			       (enumerable enumerable)
 			       (configurable configurable))))
-		(js-define-own-property o name newdesc #f)
+		(js-define-own-property o name newdesc #f %this)
 		value))))
+
 
    (with-access::JsObject o (cmap)
       (if cmap
@@ -1035,25 +1039,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put/cache! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-put/cache! o prop v::obj throw::bool cache::JsPropertyCache)
+(define (js-put/cache! o prop v::obj throw::bool cache::JsPropertyCache %this)
    (if (or (not (string? prop)) (not (isa? o JsObject)))
-       (js-put! o prop v throw)
-       (let ((pname (js-toname prop)))
-	  (js-put! o pname v throw))))
+       (js-put! o prop v throw %this)
+       (let ((pname (js-toname prop %this)))
+	  (js-put! o pname v throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-put-name/cache! o prop::symbol v::obj throw::bool cache::JsPropertyCache)
+(define-inline (js-put-name/cache! o prop::symbol v::obj throw::bool cache::JsPropertyCache %this)
    (if (not (isa? o JsObject))
-       (js-put! o prop v throw)
-       (js-put-name/cache-miss! o prop v throw cache)))
+       (js-put! o prop v throw %this)
+       (js-put-name/cache-miss! o prop v throw cache %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache-miss! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-put-name/cache-miss! o::JsObject prop::symbol v::obj throw::bool cache::JsPropertyCache)
-   (js-put! o prop v throw))
+(define (js-put-name/cache-miss! o::JsObject prop::symbol v::obj throw::bool cache::JsPropertyCache %this)
+   (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */
@@ -1079,7 +1083,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-delete! _o p throw)
+(define-generic (js-delete! _o p throw %this)
    
    (define (delete-configurable o d proc)
       (with-access::JsPropertyDescriptor d (configurable)
@@ -1088,15 +1092,15 @@
 	     (proc o d)
 	     #t)
 	    (throw 
-	     (js-raise-type-error
+	     (js-raise-type-error %this
 		(string-append "delete: cannot delete ~s."
-		   (symbol->string! (js-toname p)))
+		   (symbol->string! (js-toname p %this)))
 		o))
 	    (else
 	     #f))))
    
-   (let ((n (js-toname p))
-	 (o (js-toobject _o)))
+   (let ((n (js-toname p %this))
+	 (o (js-toobject %this _o)))
       (cond
 	 ((isa? o JsObject)
 	  (with-access::JsObject o (cmap)
@@ -1128,30 +1132,30 @@
 				(set! properties (remq! d properties))))))
 		    (lambda () #t)))))
 	 (else
-	  (js-raise-type-error "delete: not an object ~s" _o)))))
+	  (js-raise-type-error %this
+	     "delete: not an object ~s" _o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define-own-property ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-define-own-property::bool o::JsObject p desc throw)
-   (js-define-own-property% o (js-toname p) desc throw))
+(define-generic (js-define-own-property::bool o::JsObject p desc throw %this)
+   (js-define-own-property% o (js-toname p %this) desc throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define-own-property% ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9       */
 ;*---------------------------------------------------------------------*/
-(define (js-define-own-property%::bool o::JsObject name::symbol desc::JsPropertyDescriptor throw)
+(define (js-define-own-property%::bool o::JsObject name::symbol desc::JsPropertyDescriptor throw %this::JsGlobalObject)
 
    (define rejected #f)
    
    (define (reject msg)
       (set! rejected #t)
       (when throw
-	 (js-raise
-	    (js-new js-type-error (format "defineOwnProperty: ~a" msg)))))
+	 (js-raise-type-error %this "defineOwnProperty: ~a" msg)))
    
    (define (configurable desc)
       (with-access::JsPropertyDescriptor desc (configurable)
@@ -1281,7 +1285,7 @@
 
    ;; MS CARE, to be improved
    (js-object-unmap! o)
-   (let ((current (js-get-own-property o name)))
+   (let ((current (js-get-own-property o name %this)))
       ;; 1
       (with-access::JsObject o (extensible properties)
 	 ;; 2
@@ -1290,7 +1294,7 @@
 	     (cond
 		((not extensible)
 		 ;; 3
-		 (reject (format "~a not extensible" (js-tostring o))))
+		 (reject (format "~a not extensible" (js-tostring o %this))))
 		((eq? extensible #t)
 		 ;; 4
 		 (let ((ndesc (cond
@@ -1354,13 +1358,13 @@
 		    ;; 7.a
 		    (reject
 		       (format "~a.~a configurability mismatch"
-			  (js-tostring o) name)))
+			  (js-tostring o %this) name)))
 		   ((and (boolean? (enumerable desc))
 			 (not (eq? (enumerable current) (enumerable desc))))
 		    ;; 7.b
 		    (reject
 		       (format "~a.~a enumerability mismatch"
-			  (js-tostring o) name)))))
+			  (js-tostring o %this) name)))))
 	     (unless rejected
 		(cond
 		   ((js-is-generic-descriptor? desc)
@@ -1374,7 +1378,7 @@
 			;; 9.a
 			(reject
 			   (format "~a.~a configurability mismatch"
-			      (js-tostring o) name)))
+			      (js-tostring o %this) name)))
 		       ((isa? current JsDataDescriptor)
 			;; 9.b
 			(when (isa? desc JsAccessorDescriptor)
@@ -1399,14 +1403,14 @@
 			    ;; 10.a.i
 			    (reject
 			       (format "~a.~a read-only"
-				  (js-tostring o) name)))
+				  (js-tostring o %this) name)))
 			   ((eq? (writable current) #f)
 			    ;; 10.a.ii
 			    (if (and (isa? desc JsValueDescriptor)
 				     (not (same-value (value desc) (value current))))
 				(reject
 				   (format "~a.~a value mismatch"
-				      (js-tostring o) name))
+				      (js-tostring o %this) name))
 				#t))
 			   (else
 			    (propagate-data-descriptor! current desc)))
@@ -1419,12 +1423,12 @@
 			   ((and (set desc) (not (equal? (set current) (set desc))))
 			    (reject
 			       (format "~a.~a setter mismatch"
-				  (js-tostring o) name)))
+				  (js-tostring o %this) name)))
 			   ((and (get desc)
 				 (not (equal? (get current) (get desc))))
 			    (reject
 			       (format "~a.~a getter mismatch"
-				  (js-tostring o) name)))
+				  (js-tostring o %this) name)))
 			   (else
 			    (propagate-accessor-descriptor! current desc)))
 			(propagate-accessor-descriptor! current desc)))
@@ -1468,15 +1472,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.4       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-for-in obj proc)
+(define-generic (js-for-in obj proc %this)
    (if (or (eq? obj (js-undefined)) (eq? obj (js-null)))
        (js-undefined)
-       (js-for-in (js-cast-object obj "for") proc)))
+       (js-for-in (js-cast-object %this obj "for") proc %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsObject ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-for-in obj::JsObject proc)
+(define-method (js-for-in obj::JsObject proc %this)
    
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))
@@ -1503,7 +1507,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::Object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (js-for-in obj::object proc)
+(define-method (js-for-in obj::object proc %this)
    (let ((fields (class-all-fields (object-class obj))))
       (let loop ((i 0))
 	 (when (<fx i (vector-length fields))

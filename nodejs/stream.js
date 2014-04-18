@@ -1,8 +1,3 @@
-// (module __nodejs_%stream (library hopscript))
-
-#:set!( #:%module, #:%nodejs-module-get( "stream" ));
-#:set!( module, #:%module );
-
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -38,8 +33,6 @@ Stream.PassThrough = require('_stream_passthrough');
 
 // Backwards-compat with node 0.4.x
 Stream.Stream = Stream;
-
-
 
 // old-style streams.  Note that the pipe method (the only relevant
 // part of this class) is overridden in the Readable class.

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/bestpractice.scm        */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/bestpractice.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Feb 11 19:02:55 2014 (serrano)                */
+;*    Last change :  Mon Apr 14 13:39:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
@@ -21,7 +21,7 @@
 	   __js2scheme_utils)
 
    (export j2s-bestpractice-stage
-	   (generic j2s-bestpractice ::obj)))
+	   (generic j2s-bestpractice ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bestpractice-stage ...                                       */
@@ -36,13 +36,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bestpractice ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-bestpractice this)
+(define-generic (j2s-bestpractice this args)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bestpractice ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-bestpractice this::J2SProgram)
+(define-method (j2s-bestpractice this::J2SProgram args)
    (with-access::J2SProgram this (nodes mode)
       (for-each (lambda (n) (bestpractice n mode #f)) nodes))
    this)

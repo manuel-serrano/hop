@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.6.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/3.0.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Thu Feb 13 08:28:33 2014 (serrano)                */
+#*    Last change :  Wed Apr 16 13:04:39 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -41,7 +41,7 @@ o/%.o: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 o/%.o: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm
 	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)

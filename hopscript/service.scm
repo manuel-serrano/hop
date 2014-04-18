@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Mar 22 16:19:33 2014 (serrano)                */
+;*    Last change :  Fri Apr 18 07:15:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -23,45 +23,82 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_property
-	   __hopscript_function)
+	   __hopscript_function
+	   __hopscript_worker)
 
-   (export (js-make-service::JsService ::procedure ::obj ::hop-service)))
+   (export (js-init-service! ::JsGlobalObject)
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::hop-service)))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-service! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-init-service! %this::JsGlobalObject)
+   ;; first, create the builtin prototype
+   (with-access::JsGlobalObject %this (js-function js-service-prototype)
+      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+
+	 ;; create a HopScript regexp object constructor
+	 (set! js-service-prototype
+	    (instantiate::JsService
+	       (__proto__ js-function-prototype)
+	       (name "service")
+	       (alloc (lambda (_) #unspecified))
+	       (construct (lambda (constructor args)
+			     (js-raise-type-error %this "not a constructor ~s"
+				js-function-prototype)))
+	       (arity -1)
+	       (procedure list)
+	       (svc #f)
+	       (extensible #t)))
+	 ;; prototype properties
+	 (js-bind! %this js-function-prototype 'resource
+	    :value (js-make-function %this
+		      (lambda (this file)
+			 (service-resource this file))
+		      1 "resource")
+	    :writable #t
+	    :configurable #t
+	    :enumerable #f)
+	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service proc name svc)
-   (instantiate::JsService
-      (procedure proc)
-      (arity (procedure-arity proc))
-      (__proto__ js-function)
-      (name (or name proc))
-      (alloc (lambda (_)
-		(js-raise-type-error "service not a constructor" #f)))
-      (construct (lambda (_ arg)
-		    (js-raise-type-error "service not a constructor" arg)))
-      (properties (list
-		     (instantiate::JsValueDescriptor
-			(name 'length)
-			(value 0))
-		     (instantiate::JsAccessorDescriptor
-			(name 'path)
-			(get (js-make-function
-				(lambda (o)
-				   (with-access::JsService o (svc)
-				      (with-access::hop-service svc (path)
-					 path)))
-				1 "path"))
-			(set (js-make-function
-				(lambda (o v)
-				   (with-access::JsService o (svc)
-				      (unregister-service! svc)
-				      (with-access::hop-service svc (path)
-					 (set! path (js-tostring v))
-					 (register-service! svc))))
-				2 "path")))))
-      
-      (svc svc)))
+(define (js-make-service %this proc name svc)
+   (with-access::JsGlobalObject %this (js-service-prototype)
+      (instantiate::JsService
+	 (procedure proc)
+	 (arity (procedure-arity proc))
+	 (__proto__ js-service-prototype)
+	 (name (or name proc))
+	 (alloc (lambda (_)
+		   (js-raise-type-error %this
+		      "service not a constructor" #f)))
+	 (construct (lambda (_ arg)
+		       (js-raise-type-error %this
+			  "service not a constructor" arg)))
+	 (properties (list
+			(instantiate::JsValueDescriptor
+			   (name 'length)
+			   (value 0))
+			(instantiate::JsAccessorDescriptor
+			   (name 'path)
+			   (get (js-make-function %this
+				   (lambda (o)
+				      (with-access::JsService o (svc)
+					 (with-access::hop-service svc (path)
+					    path)))
+				   1 "path"))
+			   (set (js-make-function %this
+				   (lambda (o v)
+				      (with-access::JsService o (svc)
+					 (unregister-service! svc)
+					 (with-access::hop-service svc (path)
+					    (set! path (js-tostring v %this))
+					    (register-service! svc))))
+				   2 "path")))))
+	 
+	 (svc svc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ::JsService ...                                         */

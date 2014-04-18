@@ -1,5 +1,3 @@
-// (module __nodejs_child_process (library hopscript))
-
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
