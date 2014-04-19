@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Apr 18 09:39:48 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 08:49:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -407,14 +407,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SPrefix tildec dollarc mode evalp)
    (with-access::J2SPrefix this (lhs op)
-      (cons op (j2s-js lhs tildec dollarc mode evalp))))
+      (cons (symbol->string op) (j2s-js lhs tildec dollarc mode evalp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SPostfix ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SPostfix tildec dollarc mode evalp)
    (with-access::J2SPostfix this (lhs op)
-      (append (j2s-js lhs tildec dollarc mode evalp) (list op))))
+      (append (j2s-js lhs tildec dollarc mode evalp)
+	 (list (symbol->string op)))))
 
 
 

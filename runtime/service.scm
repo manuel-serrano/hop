@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/3.0.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Feb 21 13:45:32 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 12:15:47 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -230,8 +230,8 @@
 (define (hop-apply-url base vals)
    (let ((o (if (vector? vals) (vector->list vals) vals)))
       (string-append base
-		     "?hop-encoding=hop"
-		     "&vals=" (url-path-encode (obj->string o)))))
+	 "?hop-encoding=hop"
+	 "&vals=" (url-path-encode (obj->string o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-service-url ...                                        */
@@ -276,14 +276,14 @@
 		`(,id ,@vals))))))
    
    (let ((ca (http-request-cgi-args req)))
-      (with-access::hop-service svc (proc id)
+      (with-access::hop-service svc (proc id decoder)
 	 (cond
 	    ((null? (cdr ca))
 	     (invoke proc '()))
 	    ((equal? (cgi-arg "hop-encoding" ca) "hop")
 	     (with-access::http-request req (charset)
 		(set! charset 'UTF-8))
-	     (let ((vals (serialized-cgi-arg "vals" ca)))
+	     (let ((vals (serialized-cgi-arg "vals" ca decoder)))
 		(if (or (null? vals) (pair? vals))
 		    (invoke proc vals)
 		    (error id "Illegal arguments" vals))))

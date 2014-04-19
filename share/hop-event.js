@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Mar 19 10:37:16 2014 (serrano)                */
+/*    Last change :  Sat Apr 19 12:50:05 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -1127,7 +1127,7 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 p2 = p2.__hop_cdr;
       }
    } catch( exc ) {
-      if( "displayName" in proc ) {
+      if( proc && ("displayName" in proc) ) {
 	 var c = sc_assoc( "hop_trigger_servevt", hop_name_aliases );
 
 	 if( sc_isPair( c ) ) {

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.6.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Oct  3 17:26:32 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Sat Apr 19 08:03:05 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/

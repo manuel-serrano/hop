@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/3.0.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Feb 21 13:40:51 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 12:49:43 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -129,10 +129,14 @@
        (display obj op))
       ((string? obj)
        (display "\"" op)
-       (display obj op)
+       (display (string-replace obj #\" #\') op)
        (display "\"" op))
       ((boolean? obj)
        (display (if obj "true" "false") op))
+      ((eq? obj #unspecified)
+       (display "undefined" op))
+      ((eq? obj '())
+       (display "null" op))
       (else
        (error "hop->javascript"
 	  (format "Cannot compile value \"~a\"" (typeof obj))

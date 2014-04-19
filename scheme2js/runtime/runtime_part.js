@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -1292,21 +1292,25 @@ function sc_Pair(car, cdr) {
 
 if( dynamic_type_check ) {
    Object.defineProperty( Object.prototype, "__hop_car", {
+      enumerable: false,
       get: function() { sc_typeError( "car", "pair", this, 4 ); },
       set: function( v ) { sc_typeError( "set-car!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( Object.prototype, "__hop_cdr", {
+      enumerable: false,
       get: function() { sc_typeError( "cdr", "pair", this, 4 ); },
       set: function( v ) { sc_typeError( "set-cdr!", "pair", this, 4 ); }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "__hop_car", {
+      enumerable: false,
       get: function() { return this.__safe_hop_car; },
       set: function( v ) { this.__safe_hop_car = v; }
    } );
 
    Object.defineProperty( sc_Pair.prototype, "__hop_cdr", {
+      enumerable: false,
       get: function() { return this.__safe_hop_cdr; },
       set: function( v ) { this.__safe_hop_cdr = v; }
    } );

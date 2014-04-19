@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Apr 18 09:21:56 2014 (serrano)                */
+/*    Last change :  Sat Apr 19 07:42:06 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -31,4 +31,8 @@ Object.defineProperty(
       set: function( v ) { return hop.charsetSet( v ); }
    } );
 
+exports.signal = hop.signal;
+exports.broadcast = hop.broadcast;
 
+Object.seal( exports );
+Object.freeze( exports );

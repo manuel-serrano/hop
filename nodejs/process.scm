@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Apr 18 09:23:14 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 08:14:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -274,7 +274,15 @@
 					     (lambda (this v)
 						(user-access-denied (current-request)
 						   (js-tostring v %this)))
-					     1 "HTTPResponseAuthentication"))))))
+					     1 "HTTPResponseAuthentication"))
+	   (signal . ,(js-make-function %this
+			 (lambda (this name v)
+			    (hop-event-signal! (js-tostring name %this) v))
+			 2 "signal"))
+	   (broadcast . ,(js-make-function %this
+			    (lambda (this name v)
+			       (hop-event-broadcast! (js-tostring name %this) v))
+			    2 "broadcast"))))))
 	   	   
 
 

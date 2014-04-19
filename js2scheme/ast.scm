@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Apr 16 09:39:32 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 08:46:00 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -528,9 +528,10 @@
 		    (let ((fields (class-all-fields (object-class n))))
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (when (>=fx i 0)
-			     (let* ((f (vector-ref fields i))
-				    (v ((class-field-accessor f) n)))
-				(loop v)
+			     (let ((f (vector-ref fields i)))
+				(unless (eq? (class-field-name f) 'loc)
+				   (let ((v ((class-field-accessor f) n)))
+				      (loop v)))
 				(for (-fx i 1)))))))
 		   ((pair? n)
 		    (for-each loop n)))))))
@@ -550,9 +551,11 @@
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (if (=fx i -1)
 			      '()
-			      (let* ((f (vector-ref fields i))
-				     (v ((class-field-accessor f) n)))
-				 (append (loop v) (for (-fx i 1))))))))
+			      (let ((f (vector-ref fields i)))
+				 (if (eq? (class-field-name f) 'loc)
+				     (for (-fx i 1))
+				     (let ((v ((class-field-accessor f) n)))
+					(append (loop v) (for (-fx i 1))))))))))
 		   ((pair? n)
 		    (append-map loop n))
 		   (else
@@ -572,9 +575,10 @@
 		    (let ((fields (class-all-fields (object-class n))))
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (if (>=fx i 0)
-			      (let* ((f (vector-ref fields i))
-				     (v ((class-field-accessor f) n)))
-				 ((class-field-mutator f) n (loop v))
+			      (let ((f (vector-ref fields i)))
+				 (unless (eq? (class-field-name f) 'loc)
+				    (let ((v ((class-field-accessor f) n)))
+				       ((class-field-mutator f) n (loop v))))
 				 (for (-fx i 1)))
 			      n))))
 		   ((pair? n)
@@ -628,43 +632,3 @@
 (gen-walks J2SDollar expr)
 
 (gen-traverals J2STilde)
-
-;*---------------------------------------------------------------------*/
-;*    J2STilde                                                         */
-;*---------------------------------------------------------------------*/
-;* (define-method (walk0!::J2SNode n::J2STilde p::procedure)           */
-;*    (let loop ((o n))                                                */
-;*       (if (isa? o J2SNode)                                          */
-;* 	  (let ((fields (class-all-fields (object-class n))))          */
-;* 	     (let loop ((i (-fx (vector-length fields) 1)))            */
-;* 		(if (>=fx i 0)                                         */
-;* 		    (let* ((f (vector-ref fields i))                   */
-;* 			   (v ((class-field-accessor f) o)))           */
-;* 		       (if (isa? v J2SDollar)                          */
-;* 			   ((class-field-mutator f) o f (walk0! v p))  */
-;* 			   ((class-field-mutator f) o f (loop v)))     */
-;* 		       (loop (-fx i 1)))                               */
-;* 		    o)))                                               */
-;* 	  o)))                                                         */
-;*                                                                     */
-;* (define-method (walk1!::J2SNode n::J2STilde p::procedure a)         */
-;*    (let loop ((n n))                                                */
-;*       (cond                                                         */
-;* 	 ((isa? n J2SDollar)                                           */
-;* 	  (walk1! n p a))                                              */
-;* 	 ((isa? n J2SNode)                                             */
-;* 	  (let ((fields (class-all-fields (object-class n))))          */
-;* 	     (let for ((i (-fx (vector-length fields) 1)))             */
-;* 		(if (>=fx i 0)                                         */
-;* 		    (let* ((f (vector-ref fields i))                   */
-;* 			   (v ((class-field-accessor f) n)))           */
-;* 		       (if (isa? v J2SDollar)                          */
-;* 			   (begin                                      */
-;* 			      ((class-field-mutator f) n (walk1! v p a))) */
-;* 			   ((class-field-mutator f) n (loop v)))       */
-;* 		       (for (-fx i 1)))                                */
-;* 		    n))))                                              */
-;* 	 ((pair? n)                                                    */
-;* 	  (map! loop n))                                               */
-;* 	 (else                                                         */
-;* 	  n))))                                                        */

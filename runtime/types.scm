@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Mar 11 07:49:39 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 11:24:03 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -180,7 +180,9 @@
 	      ;; the resource directory (that contains the source file)
 	      (resource::obj (default #f))
 	      ;; the source file
-	      (source::obj read-only (default #f)))
+	      (source::obj read-only (default #f))
+	      ;; the argument decoder (currently only used for json encoding)
+	      (decoder::procedure read-only (default (lambda (enc args) #f))))
 
 	   (http-request-hook-add! ::http-request ::procedure)))
    

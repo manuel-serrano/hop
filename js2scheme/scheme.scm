@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 16 17:19:27 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 12:38:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -144,6 +144,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return)
 
+   (define (unserialize)
+      `(define (%unserialize alist)
+	  (with-access::JsGlobalObject %this (js-object)
+	     (let ((obj (js-new %this js-object)))
+		(for-each (lambda (e)
+			     (js-put! obj (keyword->symbol (car e))
+				(cadr e) #f %this))
+		   alist)
+		obj))))
+   
    (define (j2s-module module body)
       (with-access::J2SProgram this (nodes mode pcache-size)
 	 (list
@@ -151,6 +161,7 @@
 	    (when (>fx pcache-size 0)
 	       `(define %PCACHE (make-pcache ,pcache-size)))
 	    `(define (hopscript %this)
+		,(unserialize)
 		,@body))))
 
    (define (j2s-main-module name body)
@@ -167,6 +178,7 @@
 	       (when (>fx pcache-size 0)
 		  `(define %PCACHE (make-pcache ,pcache-size)))
 	       '(define %this (js-initial-global-object))
+	       (unserialize)
 	       `(define (main args)
 		   (let ((%worker (js-main-worker %this)))
 		      ,@body
@@ -183,6 +195,7 @@
 	    ((not name)
 	     ;; a mere expression
 	     `(lambda (%this)
+		 ,(unserialize)
 		 ,(when (>fx pcache-size 0)
 		     `(define %PCACHE (make-pcache ,pcache-size)))
 		 (js-undefined)
@@ -701,7 +714,8 @@
 		   (args ',args)
 		   (resource ,(let ((file (gensym 'file)))
 				 `(let ((,file (the-loading-file)))
-				     (and ,file (dirname ,file))))))))))
+				     (and ,file (dirname ,file)))))
+		   (decoder %unserialize))))))
 
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/cgi.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/cgi.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Sep  3 14:24:08 2013 (serrano)                */
-;*    Copyright   :  2003-13 Manuel Serrano                            */
+;*    Last change :  Sat Apr 19 12:15:37 2014 (serrano)                */
+;*    Copyright   :  2003-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -22,7 +22,7 @@
    
    (export  (http-request-cgi-args::pair-nil ::http-request)
 	    (cgi-arg::obj ::bstring ::pair-nil)
-	    (serialized-cgi-arg name args)))
+	    (serialized-cgi-arg ::bstring ::pair-nil ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */
@@ -113,8 +113,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    serialized-cgi-arg ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (serialized-cgi-arg name args)
+(define (serialized-cgi-arg name args extension)
    (let ((c (assoc name (cdr args))))
       (if (pair? c)
-	  (string->obj (cdr c))
+	  (string->obj (cdr c) extension)
 	  #f)))

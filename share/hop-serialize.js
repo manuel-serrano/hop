@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Aug 19 06:49:58 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Sat Apr 19 12:04:19 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -121,7 +121,7 @@ function hop_bigloo_serialize_context( item ) {
    if( sc_isClass( item ) )
       return hop_bigloo_serialize_sc_class( item );
       
-   return hop_bigloo_serialize_alist( item );
+   return "X" + hop_bigloo_serialize_alist( item );
 }
 
 /*---------------------------------------------------------------------*/

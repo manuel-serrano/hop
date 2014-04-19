@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/3.0.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jul 26 10:26:02 2013 (serrano)                */
-/*    Copyright   :  2006-13 Manuel Serrano                            */
+/*    Last change :  Sat Apr 19 08:15:07 2014 (serrano)                */
+/*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -59,6 +59,13 @@ function HopServer( host, ip ) {
 	    hop_servevt_proxy.reconnect( wait, max );
 	 }
       }
+   }
+
+   this.addEventListener = function( event, proc, capture ) {
+      return hop_add_event_listener( this, event, proc, capture );
+   }
+   this.removeEventListener = function( event, proc, capture ) {
+      return hop_remove_event_listener( this, event, proc, capture );
    }
 }
 

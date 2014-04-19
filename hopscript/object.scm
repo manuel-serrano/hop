@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr 18 07:12:10 2014 (serrano)                */
+;*    Last change :  Sat Apr 19 12:40:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -50,6 +50,28 @@
 ;*    %this ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define %this #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsBoolean ...                                  */
+;*    -------------------------------------------------------------    */
+;*    See runtime/js_comp.scm in the Hop library for the definition    */
+;*    of the generic.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsObject op compile isexpr)
+   (let ((%this (js-initial-global-object)))
+      (display "{" op)
+      (let ((sep ""))
+	 (js-for-in o
+	    (lambda (p)
+	       (display sep op)
+	       (display "\"" op)
+	       (display p op)
+	       (display "\":" op)
+	       (hop->javascript (js-get o (string->symbol p) %this)
+		  op compile isexpr)
+	       (set! sep ","))
+	    %this))
+      (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-initial-global-object ...                                     */
