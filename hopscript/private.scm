@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Apr 17 07:55:39 2014 (serrano)                */
+;*    Last change :  Sun Apr 20 08:13:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -73,7 +73,7 @@
 	   (js-parseint ::bstring ::obj ::bool ::JsGlobalObject)
 	   (js-parsefloat ::bstring ::bool ::JsGlobalObject)
 
-	   (%js-eval ::bstring ::JsGlobalObject)
+	   (%js-eval ::input-port ::symbol ::JsGlobalObject)
 	   
 	   
 	   
@@ -884,47 +884,45 @@
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (%js-eval string %this::JsGlobalObject)
+(define (%js-eval in::input-port parser::symbol %this::JsGlobalObject)
    (library-load 'hopscript lib-hopscript-path)
    ;; bind the global object
    (with-trace 1 '%js-eval
-      (trace-item "string=" string)
-      (call-with-input-string string
-	 (lambda (in)
-	    (with-handler
-	       (lambda (e)
-		  (exception-notify e)
-		  (cond
-		     ((isa? e &io-parse-error)
-		      (with-access::&io-parse-error e (proc msg obj fname location)
-			 (js-raise-syntax-error %this
-			    (format "~a: ~a -- ~a" proc msg obj)
-			    fname location)))
-		     ((isa? e &io-error)
-		      (with-access::&io-error e (proc msg obj fname location)
-			 (js-raise-error %this
-			    (format "~a: ~a -- ~a" proc msg obj)
-			    fname location)))
-		     ((isa? e &error)
-		      (with-access::&error e (proc msg obj fname location)
-			 (cond
-			    ((string=? proc "assignment")
-			     (js-raise-reference-error %this
-				(format "~a -- ~a" msg obj)
-				fname location))
-			    (else
-			     (js-raise-error %this
-				(format "~a: ~a -- ~a" proc msg obj)
-				fname location)))))
-		     (else
-		      (raise e))))
-	       (let ((e (j2s-compile in
-			   :driver (j2s-eval-driver)
-			   :parser 'eval)))
-		  (with-trace 2 '%js-eval-inner
-		     (trace-item "e=" e)
-		     (let ((r (eval! `(,e ,%this))))
-			(trace-item "r=" r)
-			r))))))))
+      (trace-item "in=" (input-port-name in))
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e)
+	    (cond
+	       ((isa? e &io-parse-error)
+		(with-access::&io-parse-error e (proc msg obj fname location)
+		   (js-raise-syntax-error %this
+		      (format "~a: ~a -- ~a" proc msg obj)
+		      fname location)))
+	       ((isa? e &io-error)
+		(with-access::&io-error e (proc msg obj fname location)
+		   (js-raise-error %this
+		      (format "~a: ~a -- ~a" proc msg obj)
+		      fname location)))
+	       ((isa? e &error)
+		(with-access::&error e (proc msg obj fname location)
+		   (cond
+		      ((string=? proc "assignment")
+		       (js-raise-reference-error %this
+			  (format "~a -- ~a" msg obj)
+			  fname location))
+		      (else
+		       (js-raise-error %this
+			  (format "~a: ~a -- ~a" proc msg obj)
+			  fname location)))))
+	       (else
+		(raise e))))
+	 (let ((e (j2s-compile in
+		     :driver (j2s-eval-driver)
+		     :parser parser)))
+	    (with-trace 2 '%js-eval-inner
+	       (trace-item "e=" e)
+	       (let ((r (eval! `(,e ,%this))))
+		  (trace-item "r=" r)
+		  r))))))
 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Apr 16 08:57:54 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 07:41:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -47,7 +47,7 @@
 (define (j2s-optim-driver)
    (list
       j2s-syntax-stage
-      j2s-nodejs-header-stage
+;*       j2s-nodejs-header-stage                                       */
       j2s-hopscript-header-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
@@ -64,7 +64,7 @@
 (define (j2s-plain-driver)
    (list
       j2s-syntax-stage
-      j2s-nodejs-header-stage
+;*       j2s-nodejs-header-stage                                       */
       j2s-hopscript-header-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage

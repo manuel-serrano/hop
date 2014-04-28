@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Fri Apr 18 08:10:20 2014 (serrano)                */
+;*    Last change :  Mon Apr 21 07:43:13 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -116,27 +116,26 @@
    (let loop ((mode 'connect)
 	      (timeout timeout)
 	      (num 1))
-      (with-stage-handler
-       stage-request-error-handler (id sock mode)
-       ;; debug trace
-       (debug-thread-info-set! thread "connection established with ~a")
-       (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
-	  ;; debug info
-	  (with-access::http-request req (method path)
-	     (debug-thread-info-set! thread
-		(format "request parsed for ~a, ~a ~a"
-		   (if (>=fx (hop-verbose) 2)
-		       (socket-hostname sock)
-		       (socket-host-address sock))
-		   method
-		   path)))
-	  (http-connect-verb scd id sock req mode num)
-	  ;; decrement the keep-alive number (we have a valid connection)
-	  (when (eq? mode 'keep-alive) (keep-alive--))
-	  ;; start compting the answer
-	  (let ((keep-alive-timeout (stage scd thread stage-response id req)))
-	     (when (fixnum? keep-alive-timeout)
-		(loop 'keep-alive keep-alive-timeout (+fx num 1))))))))
+      (with-stage-handler stage-request-error-handler (id sock mode)
+	 ;; debug trace
+	 (debug-thread-info-set! thread "connection established with ~a")
+	 (let ((req (with-time (http-parse-request sock id timeout) id "CONNECT")))
+	    ;; debug info
+	    (with-access::http-request req (method path)
+	       (debug-thread-info-set! thread
+		  (format "request parsed for ~a, ~a ~a"
+		     (if (>=fx (hop-verbose) 2)
+			 (socket-hostname sock)
+			 (socket-host-address sock))
+		     method
+		     path)))
+	    (http-connect-verb scd id sock req mode num)
+	    ;; decrement the keep-alive number (we have a valid connection)
+	    (when (eq? mode 'keep-alive) (keep-alive--))
+	    ;; start compting the answer
+	    (let ((keep-alive-timeout (stage scd thread stage-response id req)))
+	       (when (fixnum? keep-alive-timeout)
+		  (loop 'keep-alive keep-alive-timeout (+fx num 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-request-error-handler ...                                  */
@@ -215,8 +214,7 @@
 (define (stage-response scd thread id req)
    (current-request-set! thread req)
    (hop-verb 3 (hop-color id id " RESPONSE") (format " ~a" thread) "\n")
-   (with-stage-handler
-      response-error-handler (scd req)
+   (with-stage-handler response-error-handler (scd req)
       (let ((resp (with-time (request->response req thread) id "RESPONSE")))
 	 (with-access::http-request req (method scheme host port path)
 	    (debug-thread-info-set! thread
@@ -320,8 +318,7 @@
 	     (format " ~a" thread)
 	     ": " (typeof resp)
 	     " " (with-access::user user (name) name) "\n")))
-   (with-stage-handler
-      exec-error-handler (scd req)
+   (with-stage-handler exec-error-handler (scd req)
       (with-access::http-request req (socket method scheme port host path )
 	 (let ((connection (with-time (http-response resp socket) id "EXEC")))
 	    ;; debug

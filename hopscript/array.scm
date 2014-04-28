@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 17 08:04:34 2014 (serrano)                */
+;*    Last change :  Sun Apr 20 07:40:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -29,6 +29,19 @@
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::JsArray p backend)
+   (let ((%this (js-initial-global-object)))
+      (with-access::JsGlobalObject %this (js-array-prototype)
+	 (js-call1 %this
+	    (js-get js-array-prototype 'forEach %this)
+	    obj
+	    (js-make-function %this
+	       (lambda (this el) (xml-write el p backend))
+	       1 "")))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Apr 19 08:37:06 2014 (serrano)                */
+;*    Last change :  Fri Apr 25 10:51:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1198,7 +1198,17 @@
 	  (parse-token-error "unexpected token" (peek-token)))))
    
    (define (jspragma)
-      (error "jspragma" "Not implemented" #f))
+      (let* ((token (consume-token! 'PRAGMA))
+	     (LPAREN (consume-token! 'LPAREN))
+	     (str (consume-any!))
+	     (RPAREN (consume-token! 'RPAREN)))
+	 (if (memq (car str) '(STRING ESTRING OSTRING))
+	     (call-with-input-string (cdr str)
+		(lambda (ip)
+		   (instantiate::J2SPragma
+		      (loc (token-loc token))
+		      (expr (read ip)))))
+	     (parse-token-error "unexpected token" str))))
    
    (define (array-literal)
       (let ((token (consume-token! 'LBRACKET)))

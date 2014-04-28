@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/queue_scheduler.scm           */
+;*    serrano/prgm/project/hop/3.0.x/src/queue_scheduler.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 14:29:19 2008                          */
-;*    Last change :  Wed Jul 17 10:32:02 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Mon Apr 21 07:40:10 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    QUEUE scheduler                                                  */
 ;*=====================================================================*/
@@ -69,9 +69,11 @@
 			      (lambda (s t) (apply proc s t args))
 			      (let ((nproc (lambda (s t) (apply proc s t args))))
 				 (queue-pop-and-push! scd nproc)))
-			  ;; everybody is busy, we have to push our task in the queue...
+			  ;; everybody is busy, we have to push
+			  ;; our task in the queue...
 			  (begin
-			     (queue-push! scd (lambda (s t) (apply proc s t args)))
+			     (queue-push! scd
+				(lambda (s t) (apply proc s t args)))
 			     #f)))))
 	 (when proc
 	    (thread-spawn t scd proc)))))
@@ -87,7 +89,8 @@
 		      (if (isa? t thread)
 			  ;; there is an available thread, we use it...
 			  proc
-			  ;; everybody is busy, we have to push our task in the queue...
+			  ;; everybody is busy, we have to push
+			  ;; our task in the queue...
 			  (begin
 			     (queue-push! scd proc)
 			     #f)))))
@@ -105,7 +108,8 @@
 		      (if (isa? t thread)
 			  ;; there is an available thread, we use it...
 			  proc
-			  ;; everybody is busy, we have to push our task in the queue...
+			  ;; everybody is busy, we have to push
+			  ;; our task in the queue...
 			  (begin
 			     (queue-push! scd (lambda (s t) (proc s t a0)))
 			     #f)))))
@@ -123,7 +127,8 @@
 		      (if (isa? t thread)
 			  ;; there is an available thread, we use it...
 			  proc
-			  ;; everybody is busy, we have to push our task in the queue...
+			  ;; everybody is busy, we have to push
+			  ;; our task in the queue...
 			  (begin
 			     (queue-push! scd (lambda (s t) (proc s t a0 a1 a2 a3)))
 			     #f)))))

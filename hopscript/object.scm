@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Apr 19 12:40:13 2014 (serrano)                */
+;*    Last change :  Sun Apr 20 08:13:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -136,7 +136,9 @@
 	    (define (js-eval this string)
 	       (if (not (string? string))
 		   string
-		   (%js-eval string %this)))
+		   (call-with-input-string string
+		      (lambda (ip)
+			 (%js-eval ip 'eval %this)))))
 	    
 	    (js-bind! %this %this 'eval
 	       :value (js-make-function %this js-eval 1 "eval"

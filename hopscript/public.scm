@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Apr 17 07:55:38 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 11:51:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -33,9 +33,9 @@
 	   (js-new2 ::JsGlobalObject f a0 a1)
 	   (js-new3 ::JsGlobalObject f a0 a1 a2)
 	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
-
+	   
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
-
+	   
 	   (js-apply ::JsGlobalObject fun::obj this args)
 	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
@@ -48,7 +48,7 @@
 	   (js-call7 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln ::JsGlobalObject fun::obj this . args)
-
+	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
 	   (js-call2/debug ::JsGlobalObject loc fun::obj this a0 a1)
@@ -59,7 +59,7 @@
 	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
-
+	   
 	   (js-instanceof?::bool v f ::JsGlobalObject)
 	   (js-in?::bool f obj ::JsGlobalObject)
 	   (inline js-totest::bool ::obj)
@@ -71,16 +71,18 @@
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 	   (js-tostring::bstring ::obj ::JsGlobalObject)
 	   (js-toobject::JsObject ::JsGlobalObject ::obj)
-
+	   
 	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
 	   (js-equality? ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal? ::obj ::obj)
 	   (js-eq? ::obj ::obj)
-
+	   
 	   (make-pcache ::int)
 	   (inline pcache-ref ::vector ::int)
-
+	   
 	   (%js-eval-strict ::bstring ::JsGlobalObject)
+	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj)
+	   
 	   (js-raise ::JsError)))
 
 ;*---------------------------------------------------------------------*/
@@ -339,84 +341,136 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call0% %this procedure (procedure-arity procedure)
-	     this))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call0% %this procedure (procedure-arity procedure)
+			   this)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call1/debug %this loc fun this a0)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call1% %this procedure (procedure-arity procedure)
-	     this a0))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call1% %this procedure (procedure-arity procedure)
+			   this a0)))
+		($env-pop-trace env)
+		aux)))))
+
 (define (js-call2/debug %this loc fun this a0 a1)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call2% %this procedure (procedure-arity procedure)
-	     this a0 a1))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call2% %this procedure (procedure-arity procedure)
+			   this a0 a1)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call3/debug %this loc fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call3% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call3% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call4/debug %this loc fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call4% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2 a3))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call4% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2 a3)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call5% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2 a3 a4))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call5% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2 a3 a4)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call6% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2 a3 a4 a5))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call6% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2 a3 a4 a5)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call7% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2 a3 a4 a5 a6))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call7% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2 a3 a4 a5 a6)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure arity)
-	  (js-call8% %this procedure (procedure-arity procedure)
-	     this a0 a1 a2 a3 a4 a5 a6 a7))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call8% %this procedure (procedure-arity procedure)
+			   this a0 a1 a2 a3 a4 a5 a6 a7)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-calln/debug %this loc fun this . args)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this
 	  loc "call: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((arity (procedure-arity procedure)))
-	     (if (<fx arity 0)
-		 (apply procedure this args)
-		 (let ((len (length args)))
-		    (cond
-		       ((=fx arity len)
-			(apply procedure this args))
-		       ((<fx arity len)
-			(apply procedure this (take args (-fx arity len))))
-		       (else
-			(apply procedure this
-			   (append args
-			      (make-list (-fx arity len))
-			      (js-undefined)))))))))))
+       (with-access::JsFunction fun (procedure (fname name))
+	  (let ((env (current-dynamic-env))
+		(name fname)
+		(arity (procedure-arity procedure)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (if (<fx arity 0)
+			   (apply procedure this args)
+			   (let ((len (length args)))
+			      (cond
+				 ((=fx arity len)
+				  (apply procedure this args))
+				 ((<fx arity len)
+				  (apply procedure this
+				     (take args (-fx arity len))))
+				 (else
+				  (apply procedure this
+				     (append args
+					(make-list (-fx arity len))
+					(js-undefined)))))))))
+		($env-pop-trace env)
+		aux)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
@@ -841,7 +895,18 @@
 ;*    %js-eval-strict ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-strict string %this)
-   (%js-eval (string-append "\"use strict\";\n" string) %this))
+   (call-with-input-string (string-append "\"use strict\";\n" string)
+      (lambda (ip)
+	 (%js-eval ip 'eval %this))))
+
+;*---------------------------------------------------------------------*/
+;*    %js-hss ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (%js-eval-hss ip::input-port %this %worker)
+;*    (%js-eval ip 'repl %this))                                       */
+   (js-worker-exec %worker
+      (lambda ()
+	 (%js-eval ip 'repl %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise ...                                                     */
@@ -850,3 +915,4 @@
    (with-access::JsError err (stack)
       (set! stack (get-trace-stack))
       (raise err)))
+

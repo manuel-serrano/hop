@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/src/accept.scm                    */
+;*    serrano/prgm/project/hop/3.0.x/src/accept.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Fri Mar 29 10:50:53 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Mon Apr 21 07:42:06 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -98,16 +98,16 @@
 	 (let* ((in-buffers (allocate-vector acclen (make-string 512)))
 		(out-buffers (allocate-vector acclen (make-string 1024)))
 		(n (socket-accept-many serv socks
-				       :inbufs in-buffers
-				       :outbufs out-buffers)))
+		      :inbufs in-buffers
+		      :outbufs out-buffers)))
 	    (let liip ((i 0))
 	       (if (=fx i n)
 		   (loop (+fx id i))
 		   (let ((sock (vector-ref socks i))
 			 (nid (+fx id i)))
 		      (hop-verb 2 (hop-color nid nid " ACCEPT")
-				": " (socket-hostname sock)
-				" [" (current-date) "]\n")
+			 ": " (socket-hostname sock)
+			 " [" (current-date) "]\n")
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Apr 18 08:03:29 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 12:47:19 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -72,7 +72,9 @@
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
-   (let ((files (parse-args args)))
+   (let* ((files (parse-args args))
+	  (%this (js-new-global-object))
+	  (%worker (js-init-main-worker! %this)))
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
@@ -108,10 +110,17 @@
 	    ;; start the job (background taks, a la cron) scheduler
 	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
+	    ;; start the hopscript service worker thread
+	    (hop-hopscript-worker (hop-scheduler) %this %worker)
+	    ;; create the repl JS module
+	    (%nodejs-module "repl" (car args) %this)
+	    ;; hss extension
+	    (hop-hss-foreign-eval-set!
+	       (lambda (ip) (%js-eval-hss ip %this %worker)))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
 	       ((scm) (hop-repl (hop-scheduler)))
-	       ((js) (hopscript-repl (hop-scheduler))))
+	       ((js) (hopscript-repl (hop-scheduler) %this %worker)))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -128,7 +137,9 @@
 		  ;; set a dummy request
 		  (thread-request-set! #unspecified req)
 		  ;; preload the user files
-		  (for-each load-command-line-weblet files)
+		  (for-each (lambda (f)
+			       (load-command-line-weblet f %this))
+		     files)
 		  ;; unset the dummy request
 		  (thread-request-set! #unspecified #unspecified)))
 	    ;; preload all the forced services
@@ -184,7 +195,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (load-command-line-weblet f)
+(define (load-command-line-weblet f %this)
    (let ((path (cond
 		  ((string-index f ":")
 		   f)
@@ -202,7 +213,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (nodejs-load path (js-main-worker (js-initial-global-object))))
+	  (nodejs-load path (js-init-main-worker! %this)))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
@@ -218,20 +229,26 @@
 		 "HOP REPL cannot be spawned without multi-threading"
 		 scd)
 	      (spawn0 scd (stage-repl repl))))
-       (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
+       (error "hop-repl"
+	  "not enough threads to start a REPL (see --threads-max option)"
+	  (hop-max-threads))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-repl ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-repl scd)
+(define (hopscript-repl scd %this %worker)
    (if (>fx (hop-max-threads) 1)
        (with-access::scheduler scd (size)
 	  (if (<=fx size 1)
 	      (error "hop-repl"
 		 "HOP REPL cannot be spawned without multi-threading"
 		 scd)
-	      (spawn0 scd (stage-repl repljs))))
-       (error "hop-repl" "not enought threads to start a REPL (see --threads-max option)" (hop-max-threads))))
+	      (spawn0 scd
+		 (stage-repl
+		    (lambda () (repljs %this %worker))))))
+       (error "hop-repl"
+	  "not enough threads to start a REPL (see --threads-max option)"
+	  (hop-max-threads))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-repl ...                                                   */
@@ -253,3 +270,13 @@
       ;; run an event server socket in a separate thread
       (let ((serv (make-server-socket (hop-fast-server-event-port))))
 	 (scheduler-accept-loop scd serv #f))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hopscript-worker ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hop-hopscript-worker scd %this %worker)
+   (if (>fx (hop-max-threads) 1)
+       (thread-start! %worker)
+       (error "hop-repl"
+	  "not enough threads to start the main worker (see --threads-max option)"
+	  (hop-max-threads))))

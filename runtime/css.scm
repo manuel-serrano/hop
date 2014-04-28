@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Mar 26 09:47:23 2014 (serrano)                */
+;*    Last change :  Sun Apr 20 08:24:49 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -28,7 +28,6 @@
 	    __hop_types
 	    __hop_xml-types
 	    __hop_xml
-	    __hop_param
 	    __hop_mime
 	    __hop_misc
 	    __hop_user
@@ -764,29 +763,38 @@
 ;*    hss-extension ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hss-extension c ip)
+   
+   (define (ill-eof pos)
+      (read-error/location "Unexpected end-of-file" "Unclosed hss extension"
+	 (input-port-name ip) pos))
+   
    (when (char=? c #\$)
-      (let ((exp (hop-read ip))
-	    (pos (input-port-position ip)))
-	 (if (eof-object? exp)
-	     (read-error/location "Unexpected end-of-file"
-				  "Unclosed list"
-				  (input-port-name ip)
-				  pos)
-	     (with-handler
-		(lambda (e)
-		   (cond
-		      ((isa? e &eval-warning)
-		       (warning-notify e)
-		       #unspecified)
-		      ((and (isa? e &exception)
-			    (not (with-access::&exception e (location) location)))
-		       (with-access::&exception e (location fname)
-			  (set! location pos)
-			  (set! fname (input-port-name ip)))
-		       (raise e))
-		      (else
-		       (raise e))))
-		(eval exp))))))
+      (let ((follow (read-char ip)))
+	 (unread-char! follow ip)
+	 (cond
+	    ((eof-object? exp)
+	     (ill-eof (input-port-position ip)))
+	    ((char=? follow #\{)
+	     ;; a foreign extension
+	     ((hop-hss-foreign-eval) ip))
+	    (else
+	     (let ((exp (hop-read ip))
+		   (pos (input-port-position ip)))
+		(with-handler
+		   (lambda (e)
+		      (cond
+			 ((isa? e &eval-warning)
+			  (warning-notify e)
+			  #unspecified)
+			 ((and (isa? e &exception)
+			       (not (with-access::&exception e (location) location)))
+			  (with-access::&exception e (location fname)
+			     (set! location pos)
+			     (set! fname (input-port-name ip)))
+			  (raise e))
+			 (else
+			  (raise e))))
+		   (eval exp))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::css-hash-color ...                              */

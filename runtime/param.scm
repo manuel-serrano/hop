@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug 15 16:35:20 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Sun Apr 20 08:00:33 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -149,6 +149,9 @@
 
 	    (hop-hss-theme::bstring)
 	    (hop-hss-theme-set! ::bstring)
+
+	    (hop-hss-foreign-eval::procedure)
+	    (hop-hss-foreign-eval-set! ::procedure)
 
 	    (hop-enable-proxing::bool)
 	    (hop-enable-proxing-set! ::bool)
@@ -758,6 +761,19 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-hss-theme
    "hss")
+
+;*---------------------------------------------------------------------*/
+;*    hop-hss-foreign-eval ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-foreign-eval
+   (lambda (ip)
+      (raise
+	 (instantiate::&io-read-error
+	    (fname (input-port-name ip))
+	    (location (input-port-position ip))
+	    (proc "read")
+	    (msg "No foreign evaluator given")
+	    (obj "{")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-weblet-weblet-name ...                               */

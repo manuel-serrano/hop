@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/widget/notepad.scm                */
+;*    serrano/prgm/project/hop/3.0.x/widget/notepad.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Mon May 21 16:22:52 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Apr 25 11:20:40 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -42,6 +42,7 @@
 		       body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
+	 (body (append-map xml-body body))
 	 head)
       (if (and (pair? body) (isa? (car body) xml-nphead-element))
 	  (begin

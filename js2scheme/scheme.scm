@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr 19 12:38:20 2014 (serrano)                */
+;*    Last change :  Fri Apr 25 10:51:02 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -23,7 +23,8 @@
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
-	   (generic j2s-scheme ::obj ::symbol ::procedure)))
+	   (generic j2s-scheme ::obj ::symbol ::procedure)
+	   (j2s-scheme-id id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -162,7 +163,9 @@
 	       `(define %PCACHE (make-pcache ,pcache-size)))
 	    `(define (hopscript %this)
 		,(unserialize)
-		,@body))))
+		(define %worker (js-current-worker))
+		,@body
+		,(j2s-scheme-id 'module)))))
 
    (define (j2s-main-module name body)
       (let ((module `(module ,(string->symbol name)
@@ -180,10 +183,10 @@
 	       '(define %this (js-initial-global-object))
 	       (unserialize)
 	       `(define (main args)
-		   (let ((%worker (js-main-worker %this)))
-		      ,@body
-		      (js-worker-terminate! %worker)
-		      (thread-join! (thread-start-joinable! %worker))))))))
+		   (define %worker (js-init-main-worker! %this))
+		   ,@body
+		   (js-worker-terminate! %worker)
+		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
 
    (with-access::J2SProgram this (module main nodes mode name pcache-size)
@@ -198,6 +201,7 @@
 		 ,(unserialize)
 		 ,(when (>fx pcache-size 0)
 		     `(define %PCACHE (make-pcache ,pcache-size)))
+		 (define %worker (js-current-worker))
 		 (js-undefined)
 		 ,@body))
 	    (main
@@ -698,8 +702,11 @@
 				      (j2s-scheme body mode return))))
 			     (j2s-scheme body mode return)))
 		   (fun `(lambda ,args
-			    (let ((this (current-request)))
-			       ,(flatten-stmt body)))))
+			    (js-worker-exec %worker
+			       (lambda ()
+				  (let ((req (current-request)))
+				     (thread-request-set! (current-thread) req)
+				     ,(flatten-stmt body)))))))
 	       (epairify-deep loc fun))))
       
       (with-access::J2SSvc this (init)
@@ -1578,6 +1585,10 @@
 			(car withs) args)
 		     ,(loop (cdr withs)))))))
 
+   (define (call-pragma fun::J2SPragma args)
+      (with-access::J2SPragma fun (expr)
+	 `(,expr %this ,@(j2s-scheme args mode return))))
+
    (define (call-known-function fun::J2SDeclInit args)
       (with-access::J2SDeclInit fun (val id)
 	 (call-fun-function val (j2s-fast-id id) args)))
@@ -1609,6 +1620,8 @@
 	     (call-unknown-function fun '(js-undefined) args))
 	    ((isa? fun J2SWithRef)
 	     (call-with-function fun args))
+	    ((isa? fun J2SPragma)
+	     (call-pragma fun args))
 	    ((not (isa? fun J2SRef))
 	     (call-unknown-function fun '(js-undefined) args))
 	    ((read-only-function fun)

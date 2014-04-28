@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Apr 14 21:03:27 2014 (serrano)                */
+;*    Last change :  Sun Apr 20 08:13:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -121,7 +121,9 @@
 		 (fun (format "(function(~(,)) { ~a })"
 			 (map (lambda (o) (js-tostring o %this)) formals)
 			 (js-tostring body %this))))
-	     (%js-eval fun %this)))))
+	     (call-with-input-string fun
+		(lambda (ip)
+		   (%js-eval ip 'eval %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */

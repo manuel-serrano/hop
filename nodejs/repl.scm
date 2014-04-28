@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed Apr 16 10:20:00 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 11:54:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -18,7 +18,7 @@
 
    (import __nodejs_require)
    
-   (export (repljs ::JsGlobalObject)))
+   (export (repljs ::JsGlobalObject ::WorkerHopThread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    prompt ...                                                       */
@@ -30,15 +30,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    repljs ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (repljs %this)
+(define (repljs %this %worker)
    (let ((old-intrhdl (get-signal-handler sigint))
 	 (mod (eval-module))
-	 (console (nodejs-require "console" %this)))
-      ;; preload the hopscript header
-      (call-with-input-string ""
-	 (lambda (in)
-	    (for-each eval!
-	       (j2s-compile in :driver (j2s-plain-driver)))))
+	 (console (js-get %this 'console %this)))
       ;; enter the read-eval-print loop
       (unwind-protect
 	 (let loop ()
@@ -70,11 +65,13 @@
 			(luup))
 		     (let liip ()
 			(prompt)
-			(let ((exp (jsread)))
+			(let ((exp (jsread-and-compile)))
 			   (if (null? exp)
 			       (quit)
-			       (let ((v (jseval exp)))
-				  (jsprint v console %this)
+			       (let ((v (js-worker-exec %worker
+					   (lambda ()
+					      (let ((v ((eval! exp) %this)))
+						 (jsprint v console %this))))))
 				  (liip))))))))
 	    (loop))
 	 (if (procedure? old-intrhdl)
@@ -88,26 +85,10 @@
    (js-call1 %this (js-get console 'log %this) console exp))
 
 ;*---------------------------------------------------------------------*/
-;*    jsread ...                                                       */
+;*    jsread-and-compile ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (jsread)
+(define (jsread-and-compile)
    (j2s-compile (current-input-port)
       :parser 'repl
       :driver (j2s-eval-driver)))
-
-;*---------------------------------------------------------------------*/
-;*    jseval ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (jseval exprs)
-   (let ((m (eval-module)))
-      (unwind-protect
-	 ;; eval the compile module in the current environment
-	 (let loop ((last (js-undefined))
-		    (exprs exprs))
-	    (if (pair? exprs)
-		(loop (eval (car exprs)) (cdr exprs))
-		last))
-	 ;; restore the previous module
-	 (eval-module-set! m))))
-
    

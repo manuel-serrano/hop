@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Mar 22 15:15:51 2014 (serrano)                */
+;*    Last change :  Fri Apr 25 10:28:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -260,7 +260,9 @@
 	  (: (* digit)
 	     (or letter special)
 	     (* (or letter special digit (in "'`")))))
-       (token 'HOP (string->symbol (the-substring 2 (the-length))) (the-length)))
+       (let* ((len (the-length))
+	      (sym (string->symbol (the-substring 2 len))))
+	  (token (if (eq? sym 'pragma) 'PRAGMA 'HOP) sym len)))
       ("~{"
        (token 'TILDE (the-string) (the-length)))
       ("${"

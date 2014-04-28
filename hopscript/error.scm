@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 18 09:53:49 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 07:58:02 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -55,7 +55,6 @@
 			     ((string=? name "TypeError")
 			      stack)
 			     (else
-			      (tprint "PAS GLOP name=" name)
 			      stack))))
 		(display-trace-stack-source (list tstack) port)
 		(fprint port "*** " name ": "msg "\n")

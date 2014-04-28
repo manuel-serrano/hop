@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Apr 18 10:11:16 2014 (serrano)                */
+;*    Last change :  Tue Apr 22 12:48:40 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -45,11 +45,13 @@
 
 	   (js-current-worker::WorkerHopThread)
 	   (js-init-worker! ::JsGlobalObject)
-	   (js-main-worker::WorkerHopThread ::JsGlobalObject)
+	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject)
 
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
-	   
+
+	   (generic js-worker-thread-loop ::WorkerHopThread)
+	   (generic js-worker-exec ::WorkerHopThread ::procedure)
 	   (generic js-worker-push-thunk! ::WorkerHopThread ::procedure)
 	   (generic js-worker-terminate! ::WorkerHopThread)
 	   (generic js-worker-post-slave-message ::JsWorker ::obj)
@@ -70,17 +72,17 @@
 	  %main)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-main-worker ...                                               */
+;*    js-init-main-worker! ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-main-worker %this::JsGlobalObject)
+(define (js-init-main-worker! %this::JsGlobalObject)
    (unless %main
       (set! %main
 	 (instantiate::WorkerHopThread
 	    (name "main")
 	    (%this %this)
-	    (body (lambda () (worker-thread %main))))))
+	    (body (lambda () (js-worker-thread-loop %main))))))
    %main)
    
 ;*---------------------------------------------------------------------*/
@@ -108,7 +110,7 @@
 ;* 	 (js-bind! %this js-worker 'mainLoop                           */
 ;* 	    :value (js-make-function %this                             */
 ;* 		      (lambda (this)                                   */
-;* 			 (worker-thread (js-init-main-worker!)))       */
+;* 			 (js-worker-thread-loop (js-init-main-worker!)))       */
 ;* 		      0 "mainLoop")                                    */
 ;* 	    :writable #f                                               */
 ;* 	    :configurable #f                                           */
@@ -160,7 +162,7 @@
 			   (parent parent)
 			   (%this this)
 			   (tqueue (list thunk))
-			   (body (lambda () (worker-thread thread)))
+			   (body (lambda () (js-worker-thread-loop thread)))
 			   (cleanup (lambda (thread)
 				       (when (isa? parent WorkerHopThread)
 					  (remove-subworker! parent thread)))))))
@@ -269,18 +271,14 @@
       :configurable #f))
 
 ;*---------------------------------------------------------------------*/
-;*    worker-thread ...                                                */
+;*    js-worker-thread-loop ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-generic (worker-thread th::WorkerHopThread)
+(define-generic (js-worker-thread-loop th::WorkerHopThread)
    (with-access::WorkerHopThread th (mutex condv tqueue state subworkers name)
       ;; loop unless terminated
       (let loop ()
 	 (let ((thunk (synchronize mutex
 			 (let liip ()
-;* 			    (tprint "liip name=" name                  */
-;* 			       " state=" state                         */
-;* 			       " tqueue=" (length tqueue)              */
-;* 			       " subworkers=" (length subworkers))     */
 			    (cond
 			       ((pair? tqueue)
 				(let ((thunk (car tqueue)))
@@ -295,6 +293,24 @@
 	    (when (procedure? thunk)
 	       (thunk)
 	       (loop))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-exec th::WorkerHopThread thunk::procedure)
+   (if (isa? (current-thread) WorkerHopThread)
+       (thunk)
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th
+		(lambda ()
+		   (set! response (thunk))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     response))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-thunk! ::WorkerHopThread ...                      */
