@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 14 11:09:59 2014 (serrano)                */
+;*    Last change :  Thu May 15 18:20:57 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -115,7 +115,9 @@
 	    ;; start the hopscript service worker thread
 	    (hop-hopscript-worker (hop-scheduler) %this %worker)
 	    ;; create the repl JS module
-	    (%nodejs-module "repl" (car args) %this)
+	    (let ((path (file-name-canonicalize!
+			   (make-file-name (pwd) (car args)))))
+	       (%nodejs-module "repl" path %this))
 	    ;; hss extension
 	    (hop-hss-foreign-eval-set!
 	       (lambda (ip) (%js-eval-hss ip %this %worker)))

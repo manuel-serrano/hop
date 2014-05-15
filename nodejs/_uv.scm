@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:50:28 2014                          */
-;*    Last change :  Wed May 14 11:20:31 2014 (serrano)                */
+;*    Last change :  Thu May 15 16:42:36 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compatibility kit when libuv is not available.                   */
@@ -19,16 +19,16 @@
    (import __nodejs_uv)
    
    (cond-expand
-      ((not (library libuv))
+      ((not enable-libuv)
        (static (class %JsTimer
 		  (cb (default #unspecified))))))
 
    (cond-expand
-      ((not (library libuv))
+      ((not enable-libuv)
        (export (%nodejs-event-loop)))))
 
 (cond-expand
-   ((not (library libuv))
+   ((not enable-libuv)
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-event-loop ...                                           */

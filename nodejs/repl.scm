@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Tue May  6 08:45:12 2014 (serrano)                */
+;*    Last change :  Thu May 15 18:16:56 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -90,5 +90,5 @@
 (define (jsread-and-compile)
    (j2s-compile (current-input-port)
       :parser 'repl
-      :driver (j2s-eval-driver)))
-   
+      :driver (j2s-eval-driver)
+      :filename "repl.js"))   

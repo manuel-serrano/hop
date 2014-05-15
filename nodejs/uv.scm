@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed May 14 11:20:36 2014 (serrano)                */
+;*    Last change :  Thu May 15 16:43:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -17,7 +17,7 @@
    (library hop)
    
    (cond-expand
-      ((library libuv) (library libuv))
+      (enable-libuv (library libuv))
       (else (import __nodejs__uv)))
 
    (export (nodejs-event-loop)
@@ -38,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-event-loop)
    (cond-expand
-      ((library libuv)
+      (enable-libuv
        (let ((loop (uv-default-loop)))
 	  (set! uv-async
 	     (instantiate::UvAsync
@@ -56,7 +56,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-timer)
    (cond-expand
-      ((library libuv)
+      (enable-libuv
        (instantiate::UvTimer (loop (uv-default-loop))))
       (else
        (error "nodejs-make-timer" "not implemented yet" #f))))
@@ -66,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-timer-callback-set! timer proc)
    (cond-expand
-      ((library libuv)
+      (enable-libuv
        (with-access::UvTimer timer (cb)
 	  (set! cb proc)))
       (else
@@ -77,7 +77,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-timer-start timer start rep)
    (cond-expand
-      ((library libuv)
+      (enable-libuv
        (synchronize uv-mutex
 	  (set! uv-actions
 	     (cons (lambda () (uv-timer-start timer start rep))
@@ -91,7 +91,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-timer-close timer)
    (cond-expand
-      ((library libuv)
+      (enable-libuv
        (synchronize uv-mutex
 	  (set! uv-actions
 	     (cons (lambda () (uv-close timer))

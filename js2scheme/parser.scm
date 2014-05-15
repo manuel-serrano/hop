@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu May  1 07:45:23 2014 (serrano)                */
+;*    Last change :  Thu May 15 17:57:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1406,7 +1406,7 @@
       (with-access::J2SBlock (source-elements) (loc nodes)
 	 (instantiate::J2SProgram
 	    (loc loc)
-	    (path (abspath))
+	    (path (args-get args :filename (abspath)))
 	    (name (args-get args :module-name #f))
 	    (mode (nodes-mode nodes))
 	    (nodes nodes))))
@@ -1419,7 +1419,7 @@
 		   (loc loc)
 		   (main (args-get args :module-main #f))
 		   (name (args-get args :module-name #f))
-		   (path (abspath))
+		   (path (args-get args :filename (abspath)))
 		   (nodes (list el))))
 	     el)))
 
