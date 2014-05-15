@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Apr 17 08:04:40 2014 (serrano)                */
+;*    Last change :  Wed May 14 09:02:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -958,6 +958,9 @@
 				      (configurable configurable)))
 			  (nextmap (extend-cmap cmap name newdesc))
 			  (trans (cmap-transition name flags)))
+		      (unless (and (isa? get JsFunction)
+				   (or (not set) (isa? set JsFunction)))
+			 (error "js-bind!" "wrong accessor" name))
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Feb 21 17:25:36 2014 (serrano)                */
+;*    Last change :  Thu May 15 05:42:14 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -41,6 +41,11 @@
 	    __hop_http-error
 	    __hop_event)
    
+   (static (class websocket-frame
+              (final?::bool read-only (default #t))
+              (kind::symbol read-only (default 'text))
+              (payload read-only)))
+
    (export (class websocket
 	      (%mutex read-only (default (make-mutex)))
 	      (%socket (default #f))
@@ -52,7 +57,7 @@
 	      (authorization (default #f))
 	      (state::symbol (default 'connecting))
 	      (version read-only (default 'hybi)))
-
+	   
 	   (class ws-server
 	      (ws-server-init!)
 	      (%mutex read-only (default (make-mutex)))
@@ -62,15 +67,17 @@
 	      (port::int read-only (default 80))
 	      (authorization (default #f))
 	      (onmessages::pair-nil (default '())))
-
+	   
 	   (websocket-proxy-request? ::pair-nil)
 	   (websocket-proxy-connect! ::bstring ::int)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
 	   (websocket-server-response header req)
 	   (websocket-debug)
 	   (websocket-debug-level::int)
-
-	   (websocket-connect! ::websocket)))
+	   
+	   (websocket-connect! ::websocket)
+	   (websocket-send-text ::websocket ::bstring #!key mask (final #t))
+	   (websocket-send ::websocket ::obj #!key mask (final #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-debug ...                                              */
@@ -334,7 +341,7 @@
 ;*    websocket-tunnel ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (websocket-tunnel resp socket)
-   (with-trace (websocket-debug-level) "ws-tuner"
+   (with-trace (websocket-debug-level) "ws-tunel"
       (with-access::http-response-proxy-websocket resp (request remote-timeout)
 	 (with-access::http-request request (header connection-timeout path timeout)
 	    (let* ((host (get-header header host: "localhost"))
@@ -469,16 +476,17 @@
    (define (close)
       (with-access::websocket ws (%mutex %socket oncloses state)
 	 (synchronize %mutex
-	    (when (pair? oncloses)
-	       (set! state 'closing)
-	       (let ((se (instantiate::websocket-event
-			    (name "close")
-			    (target ws)
-			    (value ws))))
-		  (apply-listeners oncloses se)))
-	    (set! state 'closed)
-	    (socket-close %socket)
-	    (set! %socket #f))))
+	    (unless (memq state '(closed closing))
+	       (when (pair? oncloses)
+		  (set! state 'closing)
+		  (let ((se (instantiate::websocket-event
+			       (name "close")
+			       (target ws)
+			       (value ws))))
+		     (apply-listeners oncloses se)))
+	       (set! state 'closed)
+	       (socket-close %socket)
+	       (set! %socket #f)))))
 
    (define (abort)
       (with-access::websocket ws (%mutex %socket onerrors)
@@ -637,3 +645,140 @@
 (define (websocket-trigger-server-ready ws::ws-server)
    (with-access::ws-server ws (onreadys)
       (websocket-trigger-event ws "ready" ws)))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-send-frame ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
+;*    http://www.rfc-base.org/txt/rfc-6455.txt                         */
+;*---------------------------------------------------------------------*/
+(define (websocket-send-frame playload::bstring port::output-port
+	   #!key (opcode 0) (final #t) (mask #f))
+   ;; byte 0, FIN + opcode
+   (write-byte (if final (bit-or #x80 opcode) opcode) port)
+   ;; byte 1, Mask + playload len (7)
+   (let ((len (string-length playload)))
+      ;; the length
+      (cond
+	 ((<=fx len 125)
+	  ;; 1 byte length
+	  (write-byte (if mask (bit-or #x80 len) len) port))
+	 ((<=fx len 65535)
+	  ;; 2 bytes length
+	  (write-byte (if mask (bit-or #x80 126) 126) port)
+	  (write-byte (quotientfx len 256) port)
+	  (write-byte (remainderfx len 256) port))
+	 (else
+	  ;; 8 bytes length
+	  (let loop ((i 0)
+		     (len len))
+	     (if (=fx i 8)
+		 (write-byte len port)
+		 (begin
+		    (loop (+fx i 1) (quotientfx len 256))
+		    (write-byte (remainderfx len 256) port))))))
+      (if mask
+	  ;; masked playload data
+	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+	     (let loop ((i 0))
+		(when (<fx i len)
+		   (let ((stop (remainderfx (-fx len i) 4)))
+		      (let liip ((j 0))
+			 (if (<fx j stop)
+			     (let ((c (char->integer
+					 (string-ref-ur playload (+fx i j))))
+				   (k (vector-ref-ur key j)))
+				(write-byte (bit-xor c k) port)
+				(liip (+fx j 1)))
+			     (loop (+fx i 4))))))))
+	  ;; unmasked playload data
+	  (display-string playload port)))
+   (flush-output-port port))
+   
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    write-frame ...                                                  *} */
+;* {*    -------------------------------------------------------------    *} */
+;* {*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (write-frame frame::websocket-frame port::output-port)      */
+;*    (with-access::websocket-frame frame (kind final? payload)        */
+;*       (define (string->bytes str)                                   */
+;*          (map char->integer (string->list str)))                    */
+;*                                                                     */
+;*       (define (->int16 n)                                           */
+;*          ;; Return N as big endian.                                 */
+;*          (let ((m (modulo n 256)))                                  */
+;*             (list (quotient (- n m) 256) m)))                       */
+;*                                                                     */
+;*       (define (->int64 n)                                           */
+;*          ;; Return N as big endian.                                 */
+;*          (letrec-syntax ((decompose (syntax-rules ()                */
+;*                                        ((_ n m0 m ...)              */
+;*                                         (let* ((m0 (modulo n 256))  */
+;*                                                (r  (quotient (- n m0) 256))) */
+;*                                            (cons m0 (decompose r m ...)))) */
+;*                                        ((_ n)                       */
+;*                                         '()))))                     */
+;*             (reverse (decompose n m0 m1 m2 m3 m4 m5 m6 m7))))       */
+;*                                                                     */
+;*       (define (circular-list . args)                                */
+;*          ;; Work around interpreter bug:                            */
+;*          ;; <http://article.gmane.org/gmane.lisp.scheme.bigloo/6146>. */
+;*          (let ((lst (list-copy args)))                              */
+;*             (set-cdr! (last-pair lst) lst)                          */
+;*             lst))                                                   */
+;*                                                                     */
+;*       (define len                                                   */
+;*          (string-length payload))                                   */
+;*                                                                     */
+;*       (define key                                                   */
+;*          ;; The "masking key" (Section 5.3.)                        */
+;*          (list (random 256) (random 256) (random 256) (random 256))) */
+;*                                                                     */
+;*       (define bytes                                                 */
+;*          `(,(bit-or                                                 */
+;*                (if final? #x80 0)                                   */
+;*                (case kind                                           */
+;*                   ((text) 1)                                        */
+;*                   ((binary) 2)                                      */
+;*                   (else (error "invalid frame kind" 'write-frame frame)))) */
+;*                                                                     */
+;*            ,(bit-or                                                 */
+;*                #x80                               ; masking bit, must be 1 */
+;*                (cond ((< len 127) len)                              */
+;*                      ((< len 65536) #x7e)         ; encode length on 16 bits */
+;*                      (else #x7f)))                ; encode length on 63 bits */
+;*                                                                     */
+;*            ,@(cond ((< len 127) '())                                */
+;*                    ((< len 65536)                                   */
+;*                     (->int16 len))                ; frame-payload-length-16 */
+;*                    (else                                            */
+;*                     (->int64 len)))               ; frame-payload-length-63 */
+;*                                                                     */
+;*            ,@key                                  ; masking key (4 bytes) */
+;*                                                                     */
+;*            ,@(map bit-xor                                           */
+;*                 (string->bytes payload)                             */
+;*                 (apply circular-list key))))                        */
+;*                                                                     */
+;*       (display (list->string (map integer->char bytes)) port)       */
+;*       (flush-output-port port)))                                    */
+
+;*---------------------------------------------------------------------*/
+;*    websocket-send-text ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Send TEXT over WS.                                               */
+;*---------------------------------------------------------------------*/
+(define (websocket-send-text ws::websocket text::bstring #!key mask (final #t))
+   (with-access::websocket ws (%socket)
+      (websocket-send-frame text (socket-output %socket)
+	 :opcode 1 :final #t :mask #f)))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-send ...                                               */
+;*---------------------------------------------------------------------*/
+(define (websocket-send ws::websocket obj #!key mask (final #t))
+   (cond
+      ((string? obj)
+       (websocket-send-text ws obj :mask mask :final final))))

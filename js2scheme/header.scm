@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Apr 22 10:22:03 2014 (serrano)                */
+;*    Last change :  Tue May  6 09:15:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -23,9 +23,7 @@
 	   __js2scheme_scheme)
 
    (export j2s-hopscript-header-stage
-;* 	   j2s-nodejs-header-stage                                     */
 	   (generic j2s-hopscript-header::J2SProgram ::J2SProgram ::obj)))
-;* 	   (generic j2s-nodejs-header::J2SProgram ::J2SProgram ::obj))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hopscript-header-stage ...                                   */
@@ -35,15 +33,6 @@
       (name "hopscript-header")
       (comment "HopScript Header (global JS variables and module declaration)")
       (proc j2s-hopscript-header)))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-nodejs-header-stage ...                                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define j2s-nodejs-header-stage                                     */
-;*    (instantiate::J2SStage                                           */
-;*       (name "nodejs-header")                                        */
-;*       (comment "NodeJS pre-declarations")                           */
-;*       (proc j2s-nodejs-header)))                                    */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hopscript-header ...                                         */
@@ -130,42 +119,8 @@
       (js-def-import-pragma js name scm #t #t #f))
    
    `(;;; global-object
-     ,@(js-def-import-primitive 'this
-	  '%this)
-     ,@(js-def-import-special 'module
-	  `(%nodejs-module ,id ,path %this))
+     ,@(js-def-import-special 'module `(%nodejs-module ,id ,path %this))
      ;; Global object properties
      ,(instantiate::J2SPragma
          (loc loc)
          (expr "end-of-header"))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-nodejs-header ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-generic (j2s-nodejs-header::J2SProgram ast::J2SProgram args) */
-;*    (when (args-get args :nodejs-header #t)                          */
-;*       (with-access::J2SProgram ast (nodes module path loc)          */
-;* 	 (call-with-input-string (nodejs-header path)                  */
-;* 	    (lambda (in)                                               */
-;* 	       (let ((prog (j2s-parser in '())))                       */
-;* 		  (with-access::J2SProgram prog ((anodes nodes))       */
-;* 		     (set! nodes                                       */
-;* 			(append                                        */
-;* 			   anodes                                      */
-;* 			   nodes                                       */
-;* 			   (list (instantiate::J2SUnresolvedRef        */
-;* 				    (loc loc)                          */
-;* 				    (id 'module)))))))))))             */
-;*    ast)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-header ...                                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-header path)                                        */
-;*    (format "var module = #:%module;                                 */
-;* var exports = module.exports;                                       */
-;* var process = #:%nodejs-process( #:%this );                         */
-;* function require( name ) { return #:nodejs-require( name.toString(), #:%this ); } */
-;* var console = require( 'console' );                                 */
-;* " path))                                                            */
-   

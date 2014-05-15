@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Apr  5 12:40:05 2014 (serrano)                */
+#*    Last change :  Wed May 14 11:29:12 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -56,8 +56,8 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs"
-bglcloselibs="web multimedia"
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite libuv js2scheme hopscript nodejs"
+bglcloselibs="web multimedia libuv"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -113,6 +113,8 @@ zeroconfbe="no"
 avahi=""
 
 upnp=""
+
+uv=""
 
 hopsrfis=""
 
@@ -277,6 +279,9 @@ while : ; do
     --disable-upnp)
       upnp=no;;
 
+    --disable-libuv)
+      libuv=no;;
+
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -364,6 +369,7 @@ while : ; do
       echo "   --disable-avahi....... Disables AVAHI support" >&2;
       echo "   --enable-upnp......... Enables UPNP support (default)" >&2;
       echo "   --disable-upnp........ Disables UPNP support" >&2;
+      echo "   --disable-libuv....... Disables LIBUV support" >&2;
       echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
       echo "   --library=lib......... Add extra lib to Hop" >&2;
       echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
@@ -635,6 +641,35 @@ if [ "$upnp " = "yes " ]; then
   hopsrfis="$hopsrfis enable-upnp"
   libraries="$libraries upnp"
   bglcloselibs="$bglcloselibs upnp"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    uv                                                               */
+#*---------------------------------------------------------------------*/
+if [ "$uv " = " " ]; then
+  if [ -f $bigloolibdir/libuvi.heap ]; then
+    uv=yes
+  else
+    uv=no
+  fi
+fi
+
+if [ "$uv " = "no " ]; then
+  if [ ! -f $bigloolibdir/libuv.heap ]; then
+    echo "*** ERROR:configure:bigloo libuv. Aborting"
+    echo ""
+    echo "Bigloo LIBUV is not installed on your machine."
+    echo ""
+    echo "LIBUV is strongly recommended for better performance. It is then"
+    echo "advised to install LIBUV and re-install Bigloo before compiling Hop."
+    echo "However, if you want to give Hop a try without LIBUV, configure it"
+    echo "with the \"--disable-libuv\" option."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-libuv"
+  libraries="$libraries libuv"
+  bglcloselibs="$bglcloselibs libuv"
 fi
 
 #*---------------------------------------------------------------------*/

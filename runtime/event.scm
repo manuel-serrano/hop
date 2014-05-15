@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Apr  5 16:35:56 2014 (serrano)                */
+;*    Last change :  Thu May 15 08:55:31 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -374,7 +374,8 @@
 ;*    ajax-connection-remove-event! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-remove-event! conn name)
-   (tprint "!!! ajax-connection-remove-event name=" name)
+   (when debug-ajax
+      (tprint "!!! ajax-connection-remove-event name=" name))
    (with-access::ajax-connection conn (mutex buffers)
       (synchronize mutex
 	 (let ((cell (assoc name buffers)))

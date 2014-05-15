@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Feb 21 13:39:30 2014 (serrano)                */
+;*    Last change :  Sun May  4 07:40:54 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -59,8 +59,8 @@
 	     (hostaddr (socket-host-address sock))
 	     (localc (string=? localaddr hostaddr))
 	     (lanc (or localc
-			  (let ((i (string-index-right localaddr #\.)))
-			     (substring=? localaddr hostaddr i)))))
+		       (let ((i (string-index-right localaddr #\.)))
+			  (substring=? localaddr hostaddr i)))))
 	 (with-access::http-request req (socket localclientp lanclientp)
 	    (set! socket sock)
 	    (set! localclientp localc)

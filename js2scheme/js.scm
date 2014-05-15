@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Apr 19 08:49:59 2014 (serrano)                */
+;*    Last change :  Wed May 14 07:16:45 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -133,7 +133,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SWhile tildec dollarc mode evalp)
    (with-access::J2SWhile this (test body)
-      (cons* "while ("
+      (cons "while ("
 	 (append (j2s-js test tildec dollarc mode evalp)
 	    '(") ") (j2s-js body tildec dollarc mode evalp)))))
 
@@ -142,10 +142,36 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDo tildec dollarc mode evalp)
    (with-access::J2SWhile this (test body)
-      (cons* "do "
+      (cons "do "
 	 (append (j2s-js body tildec dollarc mode evalp)
-	    '("while( ") (j2s-js test tildec dollarc mode evalp)
+	    '("while (") (j2s-js test tildec dollarc mode evalp)
 	    '(")")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SFor ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SFor tildec dollarc mode evalp)
+   (with-access::J2SFor this (init test incr body)
+      (cons "for ( "
+         (append (j2s-js init tildec dollarc mode evalp)
+	    '(";")
+	    (j2s-js test tildec dollarc mode evalp)
+	    '(";")
+	    (j2s-js incr tildec dollarc mode evalp)
+	    '(") ")
+	    (j2s-js body tildec dollarc mode evalp)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SForIn ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SForIn tildec dollarc mode evalp)
+   (with-access::J2SForIn this (lhs obj body)
+      (cons "for ("
+         (append (j2s-js lhs tildec dollarc mode evalp)
+	    '(" in ")
+	    (j2s-js obj tildec dollarc mode evalp)
+	    '(") ")
+	    (j2s-js body tildec dollarc mode evalp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDecl ...                                             */
@@ -416,6 +442,9 @@
    (with-access::J2SPostfix this (lhs op)
       (append (j2s-js lhs tildec dollarc mode evalp)
 	 (list (symbol->string op)))))
+
+
+
 
 
 

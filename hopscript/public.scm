@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Apr 22 11:51:55 2014 (serrano)                */
+;*    Last change :  Wed May 14 10:08:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -361,7 +361,6 @@
 			   this a0)))
 		($env-pop-trace env)
 		aux)))))
-
 (define (js-call2/debug %this loc fun this a0 a1)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this

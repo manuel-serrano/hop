@@ -3,13 +3,17 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Apr 22 10:57:01 2014 (serrano)                */
+/*    Last change :  Thu May 15 05:49:11 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
-
 var hop = process.binding( "hop" );
+
+/*---------------------------------------------------------------------*/
+/*    exit                                                             */
+/*---------------------------------------------------------------------*/
+exports.exit = hop.exit;
 
 /*---------------------------------------------------------------------*/
 /*    withHOP                                                          */
@@ -24,7 +28,7 @@ exports.currentRequest = hop.currentRequest;
 /*---------------------------------------------------------------------*/
 exports.HTTPResponseFile = hop.HTTPResponseFile;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
-exports.HTTPResponsAsync = hop.HTTPResponseAsync;
+exports.HTTPResponseAsync = hop.HTTPResponseAsync;
 
 /*---------------------------------------------------------------------*/
 /*    Charset                                                          */
@@ -53,5 +57,12 @@ exports.broadcast = hop.broadcast;
 exports.parseWebColor = hop.parseWebColor;
 exports.makeWebColor = hop.makeWebColor;
 
+/*---------------------------------------------------------------------*/
+/*    WebSocket                                                        */
+/*---------------------------------------------------------------------*/
+exports.WebSocket = hop.WebSocket;
+exports.WebSocketServer = hop.WebSocketServer;
+
 Object.seal( exports );
 Object.freeze( exports );
+

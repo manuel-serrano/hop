@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 18 08:55:24 2014 (serrano)                */
+;*    Last change :  Wed May 14 13:24:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -215,7 +215,7 @@
 	 ;; now
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4
 	 (define (js-date-now this)
-	    (*fl 1000. (elong->flonum (current-seconds))))
+	    (llong->flonum (quotientllong (current-microseconds) #l1000)))
 	 
 	 (js-bind! %this js-date 'now
 	    :value (js-make-function %this js-date-now 0 "now")

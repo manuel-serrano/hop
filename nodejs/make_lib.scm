@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/nodejs/make_lib.scm               */
+;*    serrano/prgm/project/hop/3.0.x/nodejs/make_lib.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sun Oct  6 08:22:56 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Wed May 14 07:17:12 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
 ;*=====================================================================*/
@@ -19,6 +19,7 @@
    (import __nodejs
 	   __nodejs_require
 	   __nodejs_process
-	   __nodejs_repl)
+	   __nodejs_repl
+	   (nodejs-event-loop __nodejs_uv))
    
    (eval   (export-all)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Mon Apr 21 07:42:06 2014 (serrano)                */
+;*    Last change :  Tue May  6 08:21:37 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -123,7 +123,7 @@
    (define idmutex (make-mutex "pool-scheduler"))
    (define idcount 0)
    (define nbthreads
-      (with-access::pool-scheduler scd (free) (length free)))
+      (with-access::pool-scheduler scd (nfree) nfree))
    
    (define (get-next-id)
       (if (=fx (hop-verbose) 0)
@@ -185,8 +185,10 @@
 			    ;; go back to the accept stage
 			    (loop))))))))
       (connect-stage scd thread))
-   
-   (let loop ((i nbthreads))
+
+   (when (<fx nbthreads 6)
+      (error "hop" "scheduler-accept requires at least 6 threads" nbthreads))
+   (let loop ((i (if (>fx nbthreads 8) (- nbthreads 4) (/fx nbthreads 2))))
       (if (<=fx i 1)
 	  (let ((th (spawn scd connect-stage)))
 	     (when w (thread-join! th)))
@@ -202,15 +204,15 @@
    (define acclen (length (with-access::pool-scheduler scd (free) free)))
    (define dummybufs (make-vector acclen (make-string 10)))
    (define socks (make-vector acclen))
-
+   
    (define (stage-accept scd thread id sock timeout n)
       ;; a little bit of traces
       (hop-verb 2 (hop-color id id " ACCEPT")
-		(if (>=fx (hop-verbose) 3)
-		    (format " ~a, ~a accept" thread n)
-		    "")
-		": " (socket-hostname sock)
-		" [" (current-date) "]\n")
+	 (if (>=fx (hop-verbose) 3)
+	     (format " ~a, ~a accept" thread n)
+	     "")
+	 ": " (socket-hostname sock)
+	 " [" (current-date) "]\n")
       ;; tune the socket
       (tune-socket! sock)
       ;; prepare the socket buffers
@@ -221,18 +223,18 @@
 	    (output-port-buffer-set! (socket-output sock) outbuf)))
       ;; process the request
       (stage scd thread stage-request id sock timeout))
-
+   
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
-				   :inbufs dummybufs
-				   :outbufs dummybufs)))
+		  :inbufs dummybufs
+		  :outbufs dummybufs)))
 	 (let liip ((i 0))
 	    (if (=fx i n)
 		(loop (+fx id i))
 		(let ((sock (vector-ref socks i)))
 		   ;; process the request
 		   (spawn scd stage-accept (+fx id i)
-			  sock (hop-read-timeout) n)
+		      sock (hop-read-timeout) n)
 		   (liip (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/

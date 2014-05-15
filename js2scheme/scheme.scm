@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Apr 25 10:51:02 2014 (serrano)                */
+;*    Last change :  Tue May  6 09:14:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -164,6 +164,7 @@
 	    `(define (hopscript %this)
 		,(unserialize)
 		(define %worker (js-current-worker))
+		(define this %this)
 		,@body
 		,(j2s-scheme-id 'module)))))
 
@@ -181,6 +182,7 @@
 	       (when (>fx pcache-size 0)
 		  `(define %PCACHE (make-pcache ,pcache-size)))
 	       '(define %this (js-initial-global-object))
+	       '(define this %this)
 	       (unserialize)
 	       `(define (main args)
 		   (define %worker (js-init-main-worker! %this))
@@ -202,6 +204,7 @@
 		 ,(when (>fx pcache-size 0)
 		     `(define %PCACHE (make-pcache ,pcache-size)))
 		 (define %worker (js-current-worker))
+		 (define this %this)
 		 (js-undefined)
 		 ,@body))
 	    (main
@@ -430,7 +433,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved-put! obj field expr throw::bool mode::symbol)
    (if (eq? mode 'strict)
-       `(js-unresolved-put! ,obj ,field ,expr #t)
+       `(js-unresolved-put! ,obj ,field ,expr #t %this)
        `(js-put! ,obj ,field ,expr ,throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -702,9 +705,9 @@
 				      (j2s-scheme body mode return))))
 			     (j2s-scheme body mode return)))
 		   (fun `(lambda ,args
-			    (js-worker-exec %worker
-			       (lambda ()
-				  (let ((req (current-request)))
+			    (let ((req (current-request)))
+			       (js-worker-exec %worker
+				  (lambda ()
 				     (thread-request-set! (current-thread) req)
 				     ,(flatten-stmt body)))))))
 	       (epairify-deep loc fun))))
@@ -935,14 +938,16 @@
       (with-access::J2SUnary this (loc)
 	 (match-case loc
 	    ((at ?fname ?loc)
-	     `(js-raise
-		 (js-new %this js-syntax-error
-		    ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
-		    ,fname ,loc)))
+	     `(with-access::JsGlobalObject %this (js-syntax-error)
+		 (js-raise
+		    (js-new %this js-syntax-error
+		       ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+		       ,fname ,loc))))
 	    (else
-	     `(js-raise
-		 (js-new %this js-syntax-error
-		    ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)))))))
+	     `(with-access::JsGlobalObject %this (js-syntax-error)
+		 (js-raise
+		    (js-new %this js-syntax-error
+		       ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id))))))))
 
    (define (delete->scheme expr)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/make_lib.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Fri Feb 21 13:41:08 2014 (serrano)                */
+;*    Last change :  Sat May  3 08:47:59 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -99,6 +99,7 @@
 	   (class http-response-cgi)
 	   (class http-response-abort)
 	   (class http-response-persistent)
+	   (class http-response-async)
 	   (class http-response-put)
 	   
 	   (class hop-service)

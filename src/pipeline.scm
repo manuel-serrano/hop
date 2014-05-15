@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Apr 21 07:43:13 2014 (serrano)                */
+;*    Last change :  Tue May  6 08:18:32 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -221,9 +221,10 @@
 	       (format "~a ~a://~a:~a~a... -> ~a"
 		  method scheme host
 		  port path (typeof resp))))
-	 (let ((proc (if (http-response-static? resp)
-			 stage-static-answer
-			 stage-dynamic-answer)))
+	 (let ((proc (cond
+			((http-response-static? resp) stage-static-answer)
+			((isa? resp http-response-async) stage-async-answer)
+			(else stage-dynamic-answer))))
 	    (stage scd thread proc id req resp)))))
 
 ;*---------------------------------------------------------------------*/
@@ -286,6 +287,21 @@
    (stage-exec scd thread id req resp))
 
 ;*---------------------------------------------------------------------*/
+;*    stage-async-answer ...                                           */
+;*---------------------------------------------------------------------*/
+(define (stage-async-answer scd thread id req resp)
+   (current-request-set! thread req)
+   (with-stage-handler exec-error-handler (scd req)
+      (with-access::http-request req (socket method scheme port host path)
+	 (with-access::http-response-async resp (async)
+	    (async
+	       (lambda (resp)
+		  (let ((tmt (stage-exec scd thread id req resp)))
+		     (when (integer? tmt)
+			(spawn scd stage-request id socket tmt))))))
+	 #f)))
+	   
+;*---------------------------------------------------------------------*/
 ;*    stage-exec-verb ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (stage-exec-verb scd thread req resp connection mode)
@@ -319,7 +335,7 @@
 	     ": " (typeof resp)
 	     " " (with-access::user user (name) name) "\n")))
    (with-stage-handler exec-error-handler (scd req)
-      (with-access::http-request req (socket method scheme port host path )
+      (with-access::http-request req (socket method scheme port host path)
 	 (let ((connection (with-time (http-response resp socket) id "EXEC")))
 	    ;; debug
 	    (debug-thread-info-set! thread
@@ -327,11 +343,6 @@
 		  method scheme host port path
 		  (typeof resp) connection))
 	    (case connection
-	       ((persistent)
-		(when (>=fx (hop-verbose) 3)
-		   (stage-exec-verb scd thread req resp connection
-		      " PERSISTENT"))
-		#f)
 	       ((keep-alive)
 		(let ((load (scheduler-load scd)))
 		   (cond
@@ -354,6 +365,11 @@
 			     " KEEP-ALIVE"))
 		       (keep-alive++)
 		       (hop-keep-alive-timeout)))))
+	       ((persistent)
+		(when (>=fx (hop-verbose) 3)
+		   (stage-exec-verb scd thread req resp connection
+		      " PERSISTENT"))
+		#f)
 	       (else
 		(when (>=fx (hop-verbose) 3)
 		   (stage-exec-verb scd thread req resp connection " END"))

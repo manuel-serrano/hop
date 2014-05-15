@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Apr 20 08:13:44 2014 (serrano)                */
+;*    Last change :  Tue May  6 16:42:29 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -187,117 +187,116 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4       */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-function-prototype! %this::JsGlobalObject js-function obj)
-   (with-access::JsFunction obj (properties)
-      ;; length
-      (js-bind! %this obj 'length
-	 :value 0
-	 :enumerable #f :configurable #f :writable #f)
-      
-      ;; constructor
-      (js-bind! %this obj 'constructor
-	 :value js-function
-	 :enumerable #f :configurable #t :writable #t)
-      
-      ;; toString
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
-      (define (tostring this)
-	 (cond
-	    ((isa? this JsFunction)
-	     (with-access::JsFunction this (name)
-		(format "[JsFunction ~a]" name)))
-	    (else
-	     (js-raise-type-error %this "toString: not a function ~s"
-		(js-typeof this)))))
-      
-      (js-bind! %this obj 'toString
-	 :value (js-make-function %this tostring 0 "toString"
-		   :prototype (js-undefined))
-	 :enumerable #f :writable #t :configurable #t)
-      
-      ;; apply
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
-      (define (prototype-apply this::obj thisarg argarray)
-	 (cond
-	    ((not (isa? this JsFunction))
-	     (js-raise-type-error %this
-		"apply: argument not a function ~s" this))
-	    ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
-	     (js-call0 %this this thisarg))
-	    ((not (isa? argarray JsObject))
-	     (js-raise-type-error %this
-		"apply: argument not an object ~s" argarray))
-	    ((isa? argarray JsArray)
-	     (let ((len (js-get argarray 'length %this)))
-		(with-access::JsArray argarray (vec properties)
-		   (if (>fx (vector-length vec) 0)
+   ;; length
+   (js-bind! %this obj 'length
+      :value 0
+      :enumerable #f :configurable #f :writable #f)
+   
+   ;; constructor
+   (js-bind! %this obj 'constructor
+      :value js-function
+      :enumerable #f :configurable #t :writable #t)
+   
+   ;; toString
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
+   (define (tostring this)
+      (cond
+	 ((isa? this JsFunction)
+	  (with-access::JsFunction this (name)
+	     (format "[JsFunction ~a]" name)))
+	 (else
+	  (js-raise-type-error %this "toString: not a function ~s"
+	     (js-typeof this)))))
+   
+   (js-bind! %this obj 'toString
+      :value (js-make-function %this tostring 0 "toString"
+		:prototype (js-undefined))
+      :enumerable #f :writable #t :configurable #t)
+   
+   ;; apply
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
+   (define (prototype-apply this::obj thisarg argarray)
+      (cond
+	 ((not (isa? this JsFunction))
+	  (js-raise-type-error %this
+	     "apply: argument not a function ~s" this))
+	 ((or (eq? argarray (js-null)) (eq? argarray (js-undefined)))
+	  (js-call0 %this this thisarg))
+	 ((not (isa? argarray JsObject))
+	  (js-raise-type-error %this
+	     "apply: argument not an object ~s" argarray))
+	 ((isa? argarray JsArray)
+	  (let ((len (js-get argarray 'length %this)))
+	     (with-access::JsArray argarray (vec properties)
+		(if (>fx (vector-length vec) 0)
+		    ;; fast path
+		    (js-apply %this this thisarg
+		       (map (lambda (p)
+			       (if (eq? p (js-absent)) (js-undefined) p))
+			  (vector->list vec)))
+		    ;; slow path
+		    (js-apply %this this thisarg
+		       (map! (lambda (d) (js-property-value argarray d %this))
+			  (filter (lambda (d)
+				     (with-access::JsPropertyDescriptor d (name)
+					(js-isindex? (js-toindex name))))
+			     properties)))))))
+	 (else
+	  ;; slow path
+	  (let ((len (uint32->fixnum
+			(js-touint32
+			   (js-get argarray 'length %this)
+			   %this))))
+	     ;; assumes here a fixnum length as an iteration over the range
+	     ;; 1..2^32-1 is not computable with 2014 computer's performance
+	     (with-access::JsArray argarray (vec)
+		(let loop ((i 0)
+			   (acc '()))
+		   (if (=fx i len)
 		       ;; fast path
-		       (js-apply %this this thisarg
-			  (map (lambda (p)
-				  (if (eq? p (js-absent)) (js-undefined) p))
-			     (vector->list vec)))
+		       (js-apply %this this thisarg (reverse! acc))
 		       ;; slow path
-		       (js-apply %this this thisarg
-			  (map! (lambda (d) (js-property-value argarray d %this))
-			     (filter (lambda (d)
-					(with-access::JsPropertyDescriptor d (name)
-					   (js-isindex? (js-toindex name))))
-				properties)))))))
-	    (else
-	     ;; slow path
-	     (let ((len (uint32->fixnum
-			   (js-touint32
-			      (js-get argarray 'length %this)
-			      %this))))
-		;; assumes here a fixnum length as an iteration over the range
-		;; 1..2^32-1 is not computable with 2014 computer's performance
-		(with-access::JsArray argarray (vec)
-		   (let loop ((i 0)
-			      (acc '()))
-		      (if (=fx i len)
-			  ;; fast path
-			  (js-apply %this this thisarg (reverse! acc))
-			  ;; slow path
-			  (loop (+fx i 1)
-			     (cons (js-get argarray i %this) acc)))))))))
-      
-      (js-bind! %this obj 'apply
-	 :value (js-make-function %this prototype-apply 2 "apply"
-		   :prototype (js-undefined))
-	 :enumerable #f :writable #t :configurable #t)
-      
-      ;; call
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.4
-      (define (call this::obj thisarg . args)
-	 (js-apply %this this thisarg args))
-      
-      (js-bind! %this obj 'call
-	 :value (js-make-function %this call 1 "call" :prototype (js-undefined))
-	 :enumerable #f :writable #t :configurable #t)
-      
-      ;; bind
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5
-      (define (bind this::obj thisarg . args)
-	 (if (not (isa? this JsFunction))
-	     (js-raise-type-error %this "bind: this not a function ~s" this)
-	     (with-access::JsFunction this (name arity construct alloc procedure)
-		(let ((fun (lambda (_ . actuals)
-			      (js-apply %this this thisarg (append args actuals)))))
-		   (js-make-function
-		      %this
-		      fun
-		      (maxfx 0 (-fx arity (length args)))
-		      name
-		      :strict #t
-		      :alloc alloc
-		      :construct fun)))))
-      
-      (js-bind! %this obj 'bind
-	 :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
-	 :enumerable #f :writable #t :configurable #t)
-      
-      ;; hopscript does not support caller
-      (js-bind! %this obj 'caller
-	 :get thrower-get
-	 :set thrower-set
-	 :enumerable #f :configurable #f)))
+		       (loop (+fx i 1)
+			  (cons (js-get argarray i %this) acc)))))))))
+   
+   (js-bind! %this obj 'apply
+      :value (js-make-function %this prototype-apply 2 "apply"
+		:prototype (js-undefined))
+      :enumerable #f :writable #t :configurable #t)
+   
+   ;; call
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.4
+   (define (call this::obj thisarg . args)
+      (js-apply %this this thisarg args))
+   
+   (js-bind! %this obj 'call
+      :value (js-make-function %this call 1 "call" :prototype (js-undefined))
+      :enumerable #f :writable #t :configurable #t)
+   
+   ;; bind
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5
+   (define (bind this::obj thisarg . args)
+      (if (not (isa? this JsFunction))
+	  (js-raise-type-error %this "bind: this not a function ~s" this)
+	  (with-access::JsFunction this (name arity construct alloc procedure)
+	     (let ((fun (lambda (_ . actuals)
+			   (js-apply %this this thisarg (append args actuals)))))
+		(js-make-function
+		   %this
+		   fun
+		   (maxfx 0 (-fx arity (length args)))
+		   name
+		   :strict #t
+		   :alloc alloc
+		   :construct fun)))))
+   
+   (js-bind! %this obj 'bind
+      :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
+      :enumerable #f :writable #t :configurable #t)
+   
+   ;; hopscript does not support caller
+   (js-bind! %this obj 'caller
+      :get thrower-get
+      :set thrower-set
+      :enumerable #f :configurable #f))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Apr 22 10:56:30 2014 (serrano)                */
+;*    Last change :  Thu May 15 08:38:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -20,7 +20,8 @@
 
    (include "nodejs.sch")
 
-   (import __nodejs__hop)
+   (import __nodejs__hop
+	   __nodejs__timer)
    
    (export (%nodejs-process %this::JsGlobalObject)))
 
@@ -56,7 +57,7 @@
 		     ((string=? module "cares_wrap")
 		      (process-cares-wrap %this))
 		     ((string=? module "timer_wrap")
-		      (process-timer-wrap %this))
+		      (hopjs-process-timer %this))
 		     ((string=? module "process_wrap")
 		      (process-process-wrap %this))
 		     ((string=? module "crypto")
@@ -66,7 +67,7 @@
 		     ((string=? module "zlib")
 		      (process-zlib %this))
 		     ((string=? module "hop")
-		      (process-hop %this))
+		      (hopjs-process-hop %this))
 		     (else
 		      (warning "%nodejs-process"
 			 "binding not implemented: " module)
@@ -75,11 +76,15 @@
 	    #f %this)
 	 (js-put! proc 'stdout
 	    (alist->jsobject
-	       `((write . ,(lambda (this o) (display o)))))
+	       `((write . ,(js-make-function %this
+			      (lambda (this o) (display o))
+			      1 "write"))))
 	    #f %this)
 	 (js-put! proc 'stderr
 	    (alist->jsobject
-	       `((write . ,(lambda (this o) (display o)))))
+	       `((write . ,(js-make-function %this
+			      (lambda (this o) (display o (current-error-port)))
+			      1 "write"))))
 	    #f %this)
 	 (js-put! proc 'env
 	    (alist->jsobject
@@ -193,14 +198,6 @@
 	 `((isIP . ,(js-new %this js-object))))))
 
 ;*---------------------------------------------------------------------*/
-;*    process-timer-wrap ...                                           */
-;*---------------------------------------------------------------------*/
-(define (process-timer-wrap %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((Timer . ,(js-new %this js-object))))))
-
-;*---------------------------------------------------------------------*/
 ;*    process-process-wrap ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (process-process-wrap %this)
@@ -235,86 +232,6 @@
 (define (process-zlib %this)
    (alist->jsobject
       `()))
-
-;*---------------------------------------------------------------------*/
-;*    process-hop ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (process-hop %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((currentRequest . ,(js-make-function %this
-				 (lambda (this) (current-request))
-				 0 "currentRequest"))
-	   (withURL . ,(js-make-function %this
-			  (lambda (this url success opt)
-			     (nodejs-with-url url success opt %this))
-			  3 "withURL"))
-	   (withHOP . ,(js-make-function %this
-			  (lambda (this svc success opt)
-			     (nodejs-with-hop svc success opt %this))
-			  3 "withHOP"))
-	   ;; charset
-	   (charsetConvert . ,(js-make-function %this
-				 (lambda (this text from to)
-				    (nodejs-charset-convert
-				       this text from to %this))
-				 3 "charsetConvert"))
-	   (charset . ,(js-make-function %this
-			  (lambda (this) (hop-charset))
-			  0 "charset"))
-	   (charsetSet . ,(js-make-function %this
-			     (lambda (this v) (hop-charset-set! v))
-			     1 "charset"))
-	   ;; events
-	   (HTTPResponseFile . ,(js-make-function %this
-				   (lambda (this v)
-				      (instantiate::http-response-file
-					 (request (current-request))
-					 (file (js-tostring v %this))))
-				   1 "HTTPResponseFile"))
-	   (HTTPResponseAuthentication . ,(js-make-function %this
-					     (lambda (this v)
-						(user-access-denied (current-request)
-						   (js-tostring v %this)))
-					     1 "HTTPResponseAuthentication"))
-	   (HTTPResponseAsync . (js-make-function %this
-				   (lambda (this v)
-				      (let ((req (current-request)))
-					 (js-worker-exec (current-worker)
-					    (lambda ()
-					       (with-access::http-request req
-						     (socket)
-						  (http-response
-						     (scheme->requestion
-							(js-call1 %this v %this req)
-							req)
-						     socket)
-						  (socket-close socket))))))
-				   1 "HTTPResponseAsync"))
-	   ;; events
-	   (signal . ,(js-make-function %this
-			 (lambda (this name v)
-			    (hop-event-signal! (js-tostring name %this) v))
-			 2 "signal"))
-	   (broadcast . ,(js-make-function %this
-			    (lambda (this name v)
-			       (hop-event-broadcast! (js-tostring name %this) v))
-			    2 "broadcast"))
-	   ;; lib
-	   (parseWebColor . ,(js-make-function %this
-				(lambda (this v)
-				   (multiple-value-bind (r g b)
-				      (parse-web-color (js-tostring v %this))
-				      (let ((obj (js-new %this js-object)))
-					 (js-put! obj 'red r #f %this)
-					 (js-put! obj 'green g #f %this)
-					 (js-put! obj 'blue b #f %this)
-					 obj)))
-				1 "parseWebColor"))
-	   (makeWebColor . ,(js-make-function %this
-			       (lambda (this r g b)
-				  (make-hex-color r g b))
-			       3 "makeWebColor"))))))
 
 	   	   
 

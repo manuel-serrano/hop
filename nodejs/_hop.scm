@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Apr 18 10:07:33 2014 (serrano)                */
+;*    Last change :  Thu May 15 08:47:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -16,14 +16,97 @@
 
    (library hopscript hop)
 
-   (export (nodejs-with-url url success opt %this::JsGlobalObject)
-	   (nodejs-with-hop url success opt %this::JsGlobalObject)
-	   (nodejs-charset-convert this text from to %this::JsGlobalObject)))
+   (import __nodejs__hop-ws)
+   
+   (export (hopjs-process-hop ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-with-url ...                                              */
+;*    define-js ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-with-url url success opt %this)
+(define-macro (define-js name arity proc . opt)
+   `(cons ',name
+       (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
+		 
+;*---------------------------------------------------------------------*/
+;*    hopjs-process-hop ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hopjs-process-hop %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (alist->jsobject
+	 
+	 (list
+	    ;; misc
+	    (define-js exit 1
+	       (lambda (this code)
+		  (exit (js-tointeger code %this))))
+	    
+	    ;; requests
+	    (define-js currentRequest 0
+	       (lambda (this) (current-request)))
+	    
+	    (define-js withURL 3
+	       (lambda (this url success opt)
+		  (hopjs-with-url url success opt %this)))
+	    
+	    (define-js withHOP 3
+	       (lambda (this svc success opt)
+		  (hopjs-with-hop svc success opt %this)))
+	    
+	    ;; charset
+	    (define-js charsetConvert 3
+	       (lambda (this text from to)
+		  (hopjs-charset-convert this text from to %this)))
+	    
+	    (define-js charset 0
+	       (lambda (this) (hop-charset)))
+	    
+	    (define-js charsetSet 1
+	       (lambda (this cs)
+		  (hop-charset-set! (string->symbol (js-tostring cs %this)))))
+	    
+	    ;; responses
+	    (define-js HTTPResponseFile 2
+	       (lambda (this file req)
+		  (hopjs-response-file this file req %this)))
+	    
+	    (define-js HTTPResponseAuthentication 2
+	       (lambda (this msg req)
+		  (hopjs-response-authentication this msg req %this)))
+	    
+	    (define-js HTTPResponseAsync 1
+	       (lambda (this proc req)
+		  (hopjs-response-async this proc req %this)))
+	    
+	    ;; events
+	    (define-js signal 2
+	       (lambda (this name v)
+		  (hop-event-signal! (js-tostring name %this) v)))
+	    
+	    (define-js broadcast 2
+	       (lambda (this name v)
+		  (hop-event-broadcast! (js-tostring name %this) v)))
+	    
+	    ;; lib
+	    (define-js parseWebColor 1
+	       (lambda (this color)
+		  (hopjs-parse-web-color color %this)))
+	    
+	    (define-js makeWebColor 3 
+	       (lambda (this r g b)
+		  (make-hex-color r g b)))
+	    
+	    ;; websocket
+	    (define-js WebSocket 1
+	       (lambda (this) this)
+	       :construct (hopjs-websocket %this))
+	    (define-js WebSocketServer 1
+	       (lambda (this) this)
+	       :construct (hopjs-websocket-server %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-with-url ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hopjs-with-url url success opt %this)
    
    (define (parse-json in)
       (js-json-parser in (js-undefined) %this))
@@ -52,9 +135,9 @@
 	 :method method)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-with-hop ...                                              */
+;*    hopjs-with-hop ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-with-hop svc success opt %this)
+(define (hopjs-with-hop svc success opt %this)
    
    (define (parse-json in)
       (js-json-parser in (js-undefined) %this))
@@ -91,13 +174,65 @@
 	 fail
 	 :host host :port port 
 	 :user user :password password :authorization authorization)))
-			  
+
 ;*---------------------------------------------------------------------*/
-;*    nodejs-charset-convert ...                                       */
+;*    hopjs-response-file ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-charset-convert this text from to %this)
+(define (hopjs-response-file this file req %this)
+   (instantiate::http-response-file
+      (request (if (eq? req (js-undefined)) (current-request) req))
+      (file (js-tostring file %this))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-response-authentication ...                                */
+;*---------------------------------------------------------------------*/
+(define (hopjs-response-authentication this msg req %this)
+   (user-access-denied
+      (if (eq? req (js-undefined)) (current-request) req)
+      (js-tostring msg %this)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-response-async ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hopjs-response-async this proc req %this)
+   (let ((req (if (eq? req (js-undefined)) (current-request) req)))
+      (instantiate::http-response-async
+	 (request req)
+	 (async (lambda (k)
+		   (with-handler
+		      (lambda (e)
+			 (cond
+			    ((isa? e JsError)
+			     (exception-notify e))
+			    ((isa? e &error)
+			     (error-notify e)))
+			 #f)
+		      (js-call1 %this proc %this
+			 (js-make-function %this
+			    (lambda (this resp)
+			       (k (scheme->response resp req)))
+			    1 "reply"))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-parse-web-color ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hopjs-parse-web-color color %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (multiple-value-bind (r g b)
+	 (parse-web-color (js-tostring color %this))
+	 (let ((obj (js-new %this js-object)))
+	    (js-put! obj 'red r #f %this)
+	    (js-put! obj 'green g #f %this)
+	    (js-put! obj 'blue b #f %this)
+	    obj))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-charset-convert ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hopjs-charset-convert this text from to %this)
    (let ((from (js-tostring from %this))
-	 (to (js-tostring to %this)))
+         (to (js-tostring to %this)))
       (charset-convert text
-	 (if (string? from) (string->symbol from) (hop-locale))
-	 (if (string? to) (string->symbol to) (hop-charset)))))
+         (if (string? from) (string->symbol from) (hop-locale))
+         (if (string? to) (string->symbol to) (hop-charset)))))
+   

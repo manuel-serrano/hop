@@ -21,6 +21,7 @@
 
 var Timer = process.binding('timer_wrap').Timer;
 var L = require('_linklist');
+
 var assert = require('assert').ok;
 
 // Timeout values > TIMEOUT_MAX are set to 1.
@@ -30,9 +31,8 @@ var debug;
 if (process.env.NODE_DEBUG && /timer/.test(process.env.NODE_DEBUG)) {
   debug = function() { require('util').error.apply(this, arguments); };
 } else {
-  debug = function() { };
+  debug = function() {};
 }
-
 
 // IDLE TIMEOUTS
 //
@@ -113,9 +113,15 @@ function listOnTimeout() {
         threw = false;
       } finally {
         if (threw) {
+          // We need to continue processing after domain error handling
+          // is complete, but not by using whatever domain was left over
+          // when the timeout threw its exception.
+          var oldDomain = process.domain;
+          process.domain = null;
           process.nextTick(function() {
             list.ontimeout();
           });
+          process.domain = oldDomain;
         }
       }
     }

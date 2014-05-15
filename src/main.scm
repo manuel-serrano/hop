@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 22 12:47:19 2014 (serrano)                */
+;*    Last change :  Wed May 14 11:09:59 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -73,8 +73,10 @@
       (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
    (let* ((files (parse-args args))
-	  (%this (js-new-global-object))
+	  (%this (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %this)))
+      ;; complete the global object initialization
+      (nodejs-global-object-init! %this)
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
@@ -138,7 +140,7 @@
 		  (thread-request-set! #unspecified req)
 		  ;; preload the user files
 		  (for-each (lambda (f)
-			       (load-command-line-weblet f %this))
+			       (load-command-line-weblet f %worker))
 		     files)
 		  ;; unset the dummy request
 		  (thread-request-set! #unspecified #unspecified)))
@@ -195,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (load-command-line-weblet f %this)
+(define (load-command-line-weblet f %worker)
    (let ((path (cond
 		  ((string-index f ":")
 		   f)
@@ -213,7 +215,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (nodejs-load path (js-init-main-worker! %this)))
+	  (nodejs-load path %worker))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
@@ -275,8 +277,10 @@
 ;*    hop-hopscript-worker ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hop-hopscript-worker scd %this %worker)
-   (if (>fx (hop-max-threads) 1)
-       (thread-start! %worker)
+   (if (>fx (hop-max-threads) 2)
+       (begin
+	  (thread-start! %worker)
+	  (thread-start! (instantiate::hopthread (body nodejs-event-loop))))
        (error "hop-repl"
 	  "not enough threads to start the main worker (see --threads-max option)"
 	  (hop-max-threads))))

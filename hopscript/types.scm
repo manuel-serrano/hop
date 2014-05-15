@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr 18 07:09:01 2014 (serrano)                */
+;*    Last change :  Thu May 15 05:56:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -84,7 +84,8 @@
 	      (js-range-error::JsFunction (default (class-nil JsFunction)))
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
-	      (js-worker-prototype::JsWorker (default (class-nil JsWorker))))
+	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
+	      (js-others::pair-nil (default '())))
 	   
 	   (class JsArray::JsObject
 	      (sealed::bool (default #f))

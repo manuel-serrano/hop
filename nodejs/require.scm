@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Apr 25 11:33:30 2014 (serrano)                */
+;*    Last change :  Thu May 15 05:36:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,13 +21,15 @@
 
    (export (%nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
 	   (nodejs-require ::bstring ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread)))
+	   (nodejs-load ::bstring ::WorkerHopThread)
+	   (nodejs-new-global-object::JsGlobalObject)
+	   (nodejs-global-object-init! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-module ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (%nodejs-module::JsObject id filename %this::JsGlobalObject)
-
+   
    (define (nodejs-filename->paths::vector file::bstring)
       (if (char=? (string-ref file 0) #\/)
 	  (let loop ((dir (dirname file))
@@ -38,7 +40,7 @@
 		 (loop (dirname dir)
 		    (cons (make-file-name dir "node_modules") acc))))
 	  '#()))
-
+   
    (define (module-init! m exports)
       ;; id field
       (js-put! m 'id id #f %this)
@@ -52,38 +54,23 @@
       (js-put! m 'children '#() #f %this)
       ;; paths
       (js-put! m 'paths (nodejs-filename->paths filename) #f %this))
-
-   (define (global-object-init! m exports)
-
-      (define require
-	 (js-make-function %this
-	    (lambda (this name)
-	       (nodejs-require (js-tostring name %this) %this))
-	    1 "require"))
-      
-      ;; exports
-      (js-put! %this 'exports exports #f %this)
-      ;; process
-      (js-put! %this 'process (%nodejs-process %this) #f %this)
-      ;; require
-      (js-put! %this 'require require #f %this)
-      ;; console
-      (js-put! %this 'console (nodejs-require "console" %this) #f %this))
-
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((m (js-new %this js-object))
-	    (exports (alist->jsobject
-			`((prototype . ,(js-new %this js-object))))))
-	 ;; module properties
-	 (module-init! m exports)
-	 ;; reqgister the module in the current worker thread
-	 (nodejs-cache-module-put! filename (js-current-worker) m)
-	 ;; global object exports
-	 (global-object-init! m exports)
-	 ;; bind the module at once
-	 (js-put! %this 'module m #f %this)
-	 ;; return the newly allocated module
-	 m)))
+   
+   (with-trace 1 "%nodejs-module"
+      (trace-item "id=" id)
+      (trace-item "filename=" filename)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((m (js-new %this js-object))
+	       (exports (js-new %this js-object)))
+	    ;; module properties
+	    (module-init! m exports)
+	    ;; reqgister the module in the current worker thread
+	    (nodejs-cache-module-put! filename (js-current-worker) m)
+	    ;; global object exports
+	    (js-put! %this 'exports exports #f %this)
+	    ;; bind the module at once
+	    (js-put! %this 'module m #f %this)
+	    ;; return the newly allocated module
+	    m))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
@@ -106,6 +93,37 @@
 			     (format "Cannot find module ~s" name))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-new-global-object ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-new-global-object)
+   
+   (define this (js-new-global-object))
+   
+   (define require
+      (js-make-function this
+	 (lambda (_ name)
+	    (nodejs-require (js-tostring name this) this))
+	 1 "require"))
+   
+   ;; process
+   (js-put! this 'process (%nodejs-process this) #f this)
+   ;; require
+   (js-put! this 'require require #f this)
+   ;; the global object
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-global-object-init! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (nodejs-global-object-init! this)
+   ;; console
+   (js-put! this 'console (nodejs-require "console" this) #f this)
+   ;; timers
+   (nodejs-import! this (nodejs-require "timers" this))
+   ;; return the object
+   this)
+   
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread)
@@ -118,7 +136,7 @@
 			 (j2s-compile in
 			    :module-main #f
 			    :module-name (symbol->string mod)))))
-	     (this (js-new-global-object))
+	     (this (nodejs-global-object-init! (nodejs-new-global-object)))
 	     (evmod (eval-module)))
 	 ;; eval the compile module in the current environment
 	 (unwind-protect
@@ -135,6 +153,15 @@
 	 (synchronize module-mutex
 	    (or (hashtable-get module-table filename)
 		(load-module %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-env-path ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-env-path)
+   (let ((env (getenv "NODE_PATH")))
+      (if (string? env)
+	  (unix-path->list env)
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -180,7 +207,8 @@
 			    (let ((src (suffix path)))
 			       (when (file-exists? src)
 				  src)))))
-		(vector->list (js-get module 'paths %this))))))))
+		(append (vector->list (js-get module 'paths %this))
+		   (nodejs-env-path))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-cache-module ...                                          */
@@ -200,6 +228,19 @@
 	 module)))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-import ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Bind the exported binding into a global object.                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import! %this e)
+   ;; bind all the exported functions in the global object 
+   (js-for-in e
+      (lambda (p)
+	 (let ((k (string->symbol p)))
+	    (js-put! %this k (js-get e k %this) #f %this)))
+      %this))
+   
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load-core-module ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load-core-module name worker %this)
@@ -207,8 +248,13 @@
    (define (nodejs-init-core-module name %this)
       (with-trace 2 "nodejs-init-core-module"
 	 (trace-item "name=" name)
-	 (let ((c (assoc name (core-module-table))))
-	    ((cdr c) %this))))
+	 (let ((this (nodejs-new-global-object)))
+	    (let ((c (assoc name (core-module-table))))
+	       (let ((m ((cdr c) this)))
+		  ;; complete the global object initialization
+		  (nodejs-global-object-init! this)
+		  ;; return the module
+		  m)))))
 
    (with-trace 1 "nodejs-load-core-module"
       (trace-item "name=" name)

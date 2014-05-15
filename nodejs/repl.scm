@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Tue Apr 22 11:54:58 2014 (serrano)                */
+;*    Last change :  Tue May  6 08:45:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -55,7 +55,7 @@
 		     (lambda (e)
 			(cond
 			   ((isa? e JsError)
-			    ((js-get console 'log %this) console e))
+			    (exception-notify e))
 			   ((isa? e &error)
 			    (error-notify e)
 			    (with-access::&error e (obj)

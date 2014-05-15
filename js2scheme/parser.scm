@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Apr 25 10:51:27 2014 (serrano)                */
+;*    Last change :  Thu May  1 07:45:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1388,10 +1388,11 @@
 	 (if (symbol? mode) mode 'normal)))
    
    (define (program)
-      (let ((module (when (eq? (peek-token-type) 'MODULE)
-		       (let ((token (consume-any!)))
-			  (cdr token)))))
-	 (with-access::J2SBlock (source-elements) (loc nodes name)
+      (with-access::J2SBlock (source-elements) (loc nodes name)
+	 (let ((module (if (eq? (peek-token-type) 'MODULE)
+			   (let ((token (consume-any!)))
+			      (cdr token))
+			   (javascript-module-nodes nodes))))
 	    (instantiate::J2SProgram
 	       (loc loc)
 	       (path (abspath))
@@ -1490,7 +1491,38 @@
 	 (with-access::J2SString expr (val escape)
 	    (cond
 	       ((pair? escape) (memq 'octal escape))
-	       ((string=? val "use strict") 'strict)
-	       ((string=? val "use hopscript") 'hopscript)
+	       ((string=? "use strict" val) 'strict)
+	       ((string=? "use hopscript" val) 'hopscript)
 	       (else #t))))))
+   
+;*---------------------------------------------------------------------*/
+;*    javascript-module-nodes ...                                      */
+;*---------------------------------------------------------------------*/
+(define (javascript-module-nodes nnodes::pair-nil)
+   (let loop ((nodes nnodes))
+      (when (pair? nodes)
+	 (or (javascript-module (car nodes)) (loop (cdr nodes))))))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-module ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-module node::J2SNode)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-module ::J2SSeq ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-module node::J2SSeq)
+   (with-access::J2SSeq node (nodes)
+      (javascript-module-nodes nodes)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-module ::J2SStmtExpr ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-module node::J2SStmtExpr)
+   (with-access::J2SStmtExpr node (expr)
+      (when (isa? expr J2SString)
+	 (with-access::J2SString expr (val)
+	    (when (string-prefix? "(module " val)
+	       (call-with-input-string val read))))))
    

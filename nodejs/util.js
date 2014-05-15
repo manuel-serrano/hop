@@ -1,3 +1,5 @@
+// Copyright Joyent, Inc. and other Node contributors.
+//
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the
 // "Software"), to deal in the Software without restriction, including
@@ -16,10 +18,6 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-exports.exit = function(code) {
-   #:exit((code === undefined) ? 0 :code);
-}
 
 var formatRegExp = /%[sdj%]/g;
 exports.format = function(f) {
@@ -89,6 +87,7 @@ exports.print = function() {
   }
 };
 
+
 exports.puts = function() {
   for (var i = 0, len = arguments.length; i < len; ++i) {
     process.stdout.write(arguments[i] + '\n');
@@ -141,6 +140,7 @@ function inspect(obj, opts) {
   return formatValue(ctx, obj, ctx.depth);
 }
 exports.inspect = inspect;
+
 
 // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
 inspect.colors = {
@@ -452,7 +452,8 @@ exports.isDate = isDate;
 
 
 function isError(e) {
-  return typeof e === 'object' && objectToString(e) === '[object Error]';
+  return typeof e === 'object' &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
 }
 exports.isError = isError;
 
@@ -551,7 +552,6 @@ exports.pump = exports.deprecate(pump,
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
 exports.inherits = function(ctor, superCtor) {
-//   #:tprint( "util.inherits ctor=", ctor, " super=", superCtor );
   ctor.super_ = superCtor;
   ctor.prototype = Object.create(superCtor.prototype, {
     constructor: {
