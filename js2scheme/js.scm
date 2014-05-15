@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed May 14 07:16:45 2014 (serrano)                */
+;*    Last change :  Thu May 15 21:10:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -252,7 +252,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SString tildec dollarc mode evalp)
    (with-access::J2SString this (val)
-      (list (string-append "\"" (string-replace val #\" #\') "\""))))
+      (list (string-append "\"" (string-for-read val) "\""))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SRegExp ...                                           */

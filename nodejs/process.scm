@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May 15 08:38:26 2014 (serrano)                */
+;*    Last change :  Thu May 15 21:49:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -77,7 +77,8 @@
 	 (js-put! proc 'stdout
 	    (alist->jsobject
 	       `((write . ,(js-make-function %this
-			      (lambda (this o) (display o))
+			      (lambda (this o)
+				 (display o))
 			      1 "write"))))
 	    #f %this)
 	 (js-put! proc 'stderr

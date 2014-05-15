@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr 14 16:33:40 2014 (serrano)                */
+;*    Last change :  Thu May 15 22:02:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -744,7 +744,7 @@
 	     (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
 	 (if (<=fx r6 0)
 	     ""
-	     (utf8-substring r1 r5 r6))))
+	     (utf8-substring r1 r5 (+fx r5 r6)))))
    
    (js-bind! %this obj 'substr
       :value (js-make-function %this substr 2 "substr")

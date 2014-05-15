@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 15 05:36:34 2014 (serrano)                */
+;*    Last change :  Thu May 15 21:42:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -136,7 +136,8 @@
 			 (j2s-compile in
 			    :module-main #f
 			    :module-name (symbol->string mod)))))
-	     (this (nodejs-global-object-init! (nodejs-new-global-object)))
+	     (this (nodejs-global-object-init!
+		      (or %this (nodejs-new-global-object))))
 	     (evmod (eval-module)))
 	 ;; eval the compile module in the current environment
 	 (unwind-protect
