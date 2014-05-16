@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu May 15 18:26:23 2014 (serrano)                */
+;*    Last change :  Fri May 16 13:34:13 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */

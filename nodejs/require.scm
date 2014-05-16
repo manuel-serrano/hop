@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 16 09:17:09 2014 (serrano)                */
+;*    Last change :  Fri May 16 15:20:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -105,6 +105,8 @@
    (js-put! this 'console (nodejs-require-core "console" worker this) #f this)
    ;; timers
    (nodejs-import! this (nodejs-require-core "timers" worker this))
+   ;; buffer
+   (nodejs-import! this (nodejs-require-core "buffer" worker this))
    ;; return the object
    this)
 

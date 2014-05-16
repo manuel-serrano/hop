@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May 15 16:43:20 2014 (serrano)                */
+;*    Last change :  Fri May 16 10:00:33 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -24,14 +24,20 @@
 	   (nodejs-make-timer)
 	   (nodejs-timer-callback-set! ::obj ::procedure)
 	   (nodejs-timer-start ::obj ::long ::long)
-	   (nodejs-timer-close ::obj)))
+	   (nodejs-timer-close ::obj)
+	   (nodejs-timer-stop ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
 ;*---------------------------------------------------------------------*/
+(cond-expand
+   (enable-libuv
+    
 (define uv-mutex (make-mutex "uv-mutex"))
 (define uv-actions '())
 (define uv-async #f)
+
+))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-event-loop ...                                            */
@@ -49,7 +55,7 @@
 			  (set! uv-actions '()))))))
 	  (uv-run loop)))
       (else
-       (error "nodejs-event-loop" "not implemented yet" #f))))
+       (%nodejs-event-loop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-timer ...                                            */
@@ -59,7 +65,7 @@
       (enable-libuv
        (instantiate::UvTimer (loop (uv-default-loop))))
       (else
-       (error "nodejs-make-timer" "not implemented yet" #f))))
+       (%nodejs-make-timer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-callback-set! ...                                   */
@@ -70,7 +76,7 @@
        (with-access::UvTimer timer (cb)
 	  (set! cb proc)))
       (else
-       (error "nodejs-callback-set!" "not implemented yet" #f))))
+       (%nodejs-timer-callback-set! timer proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-start ...                                           */
@@ -84,7 +90,7 @@
 		uv-actions))
 	  (uv-async-send uv-async)))
       (else
-       (error "nodejs-timer-start" "not implemented yet" #f))))
+       (%nodejs-timer-start timer start rep))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-close ...                                           */
@@ -98,5 +104,19 @@
 		uv-actions))
 	  (uv-async-send uv-async)))
       (else
-       (error "nodejs-timer-close" "not implemented yet" #f))))
+       (%nodejs-timer-close timer))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-timer-stop ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-timer-stop timer)
+   (cond-expand
+      (enable-libuv
+       (synchronize uv-mutex
+	  (set! uv-actions
+	     (cons (lambda () (uv-timer-stop timer))
+		uv-actions))
+	  (uv-async-send uv-async)))
+      (else
+       (%nodejs-timer-stop timer))))
 

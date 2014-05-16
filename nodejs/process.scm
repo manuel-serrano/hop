@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May 15 21:49:05 2014 (serrano)                */
+;*    Last change :  Fri May 16 15:53:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -142,11 +142,51 @@
 	 (with-access::JsObject obj (__proto__)
 	    (set! __proto__ (get-process-fs-stats %this))
 	    obj)))
+
+   (define (stat this path)
+      (file-exists? path))
+
+   (define (close this fd)
+      (cond
+	 ((output-port? fd) (close-output-port fd))
+	 ((input-port? fd) (close-input-port fd))))
+
+   (define (open this path flags mode)
+      (case flags
+	 ((0)
+	  (open-input-file path))
+	 ((1)
+	  (open-output-file path))
+	 ((2)
+	  (append-output-file path))
+	 (else
+	  (error "open" "flags not implemented" flags))))
+
+   (define (read this fd buffer offset length position)
+      (unless (= position 0)
+	 (set-input-port-position! fd position))
+      (tprint "buffer=" (typeof buffer))
+      (read-fill-string! buffer offset length fd))
+
+   (define (write this fd buffer offset length position)
+      (unless (= position 0)
+	 (set-output-port-position! fd position))
+      (display-substring buffer offset (+ offset length) fd))
+
+   (define (fsync this fd)
+      (cond
+	 ((output-port? fd) (flush-output-port fd))))
    
    (alist->jsobject
       `((readdir . ,(js-make-function %this readdir 1 "readdir"))
 	(Stats . ,(alist->jsobject `((prototype . ,(get-process-fs-stats %this)))))
-	(lstat . ,(js-make-function %this lstat 1 "lstat")))))
+	(lstat . ,(js-make-function %this lstat 1 "lstat"))
+	(stat . ,(js-make-function %this stat 1 "stat"))
+	(close . ,(js-make-function %this close 1 "close"))
+	(open . ,(js-make-function %this open 3 "open"))
+	(read . ,(js-make-function %this read 5 "read"))
+	(write . ,(js-make-function %this write 5 "write"))
+	(fsync . ,(js-make-function %this fsync 0 "fsync")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slowbuffer ...                                                   */
@@ -169,7 +209,10 @@
 	    #t %this)
 	 (js-put! SlowBuffer 'makeFastBuffer
 	    (js-make-function %this
-	       (lambda (this a b c d) '#()) 4 "makeFastBuffer")
+	       (lambda (this a b c d)
+		  (tprint "makeFastBuffer a=" a " b=" b " c=" c " d=" d)
+		  '#())
+	       4 "makeFastBuffer")
 	    #t %this)
 	 (alist->jsobject
 	    `((SlowBuffer . ,SlowBuffer))))))

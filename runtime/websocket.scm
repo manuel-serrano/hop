@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu May 15 05:42:14 2014 (serrano)                */
+;*    Last change :  Fri May 16 14:41:03 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -71,13 +71,15 @@
 	   (websocket-proxy-request? ::pair-nil)
 	   (websocket-proxy-connect! ::bstring ::int)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
-	   (websocket-server-response header req)
+	   (websocket-server-response ::http-request key #!optional onconnect)
 	   (websocket-debug)
 	   (websocket-debug-level::int)
 	   
 	   (websocket-connect! ::websocket)
-	   (websocket-send-text ::websocket ::bstring #!key mask (final #t))
-	   (websocket-send ::websocket ::obj #!key mask (final #t))))
+	   (websocket-send-text ::socket ::bstring #!key mask (final #t))
+	   (websocket-send ::socket ::obj #!key mask (final #t))
+
+	   (websocket-read ::socket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-debug ...                                              */
@@ -164,7 +166,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-server-response ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (websocket-server-response req key)
+(define (websocket-server-response req key #!optional onconnect)
    
    (define (websocket-server-location host)
       (with-access::http-request req ((h host) (p port))
@@ -238,7 +240,8 @@
 	 (origin (get-header header origin: "localhost"))
 	 (protocol (get-header header WebSocket-Protocol: #f))
 	 (connection 'Upgrade)
-	 (sec (websocket-sec-challenge req header))))      
+	 (sec (websocket-sec-challenge req header))
+	 (onconnect onconnect)))
    
    (define (websocket-hybi-protocol header req)
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
@@ -250,7 +253,8 @@
 	       (start-line "HTTP/1.1 101 Switching Protocols")
 	       (connection 'Upgrade)
 	       (protocol (get-header header WebSocket-Protocol: #f))
-	       (accept (websocket-hybi-accept key))))))
+	       (accept (websocket-hybi-accept key))
+	       (onconnect onconnect)))))
    
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
@@ -289,7 +293,8 @@
 					       timeout
 					       protocol
 					       sec
-					       accept)
+					       accept
+					       onconnect)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
@@ -318,6 +323,8 @@
 	    ;; set the socket in non blocking mode to prevent
 	    ;; down connections to block all event broadcasts
 	    (output-timeout-set! p 5000)
+	    ;; run the onconnection listener
+	    (when (procedure? onconnect) (onconnect r))
 	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
@@ -513,24 +520,11 @@
 
    (define (read-messages)
       (with-access::websocket ws (%socket)
-	 (let ((in (socket-input %socket)))
-	    (let loop ()
-	       (read-check-byte in #x81)
-	       (let ((s (read-byte in)))
-		  (cond
-		     ((<=fx s 125)
-		      (message (read-chars s in)))
-		     ((=fx s 126)
-		      (message (read-chars (read-int16 in) in)))
-		     ((=fx s 127)
-		      (read-check-byte in 0)
-		      (read-check-byte in 0)
-		      (read-check-byte in 0)
-		      (read-check-byte in 0)
-		      (message (read-chars (read-int32 in) in)))
-		     (else
-		      (abort))))
-	       (loop)))))
+	 (let* ((in (socket-input %socket))
+		(msg (websocket-read %socket)))
+	    (if (string? msg)
+		(message msg)
+		(abort)))))
    
    (with-access::websocket ws (%mutex %socket url authorization state onopens)
       (synchronize %mutex
@@ -680,6 +674,12 @@
       (if mask
 	  ;; masked playload data
 	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+	     ;; key
+	     (write-byte (vector-ref-ur key 0) port)
+	     (write-byte (vector-ref-ur key 1) port)
+	     (write-byte (vector-ref-ur key 2) port)
+	     (write-byte (vector-ref-ur key 3) port)
+	     ;; playload
 	     (let loop ((i 0))
 		(when (<fx i len)
 		   (let ((stop (remainderfx (-fx len i) 4)))
@@ -770,15 +770,83 @@
 ;*    -------------------------------------------------------------    */
 ;*    Send TEXT over WS.                                               */
 ;*---------------------------------------------------------------------*/
-(define (websocket-send-text ws::websocket text::bstring #!key mask (final #t))
-   (with-access::websocket ws (%socket)
-      (websocket-send-frame text (socket-output %socket)
-	 :opcode 1 :final #t :mask #f)))
+(define (websocket-send-text sock::socket text::bstring #!key mask (final #t))
+   (websocket-send-frame text (socket-output sock)
+      :opcode 1 :final #t :mask #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-send ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (websocket-send ws::websocket obj #!key mask (final #t))
+(define (websocket-send sock::socket obj #!key mask (final #t))
    (cond
       ((string? obj)
-       (websocket-send-text ws obj :mask mask :final final))))
+       (websocket-send-text sock obj :mask mask :final final))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-read ...                                               */
+;*---------------------------------------------------------------------*/
+(define (websocket-read sock::socket)
+   
+   (define (read-int16 in)
+      (let ((bh (read-byte in))
+	    (bl (read-byte in)))
+	 (bit-or (bit-lsh bh 8) bl)))
+   
+   (define (read-int32 in)
+      (let ((wh (read-int16 in))
+	    (wl (read-int16 in)))
+	 (bit-or (bit-lsh wh 16) wl)))
+   
+   (define (read-check-byte in val)
+      (=fx (read-byte in) val))
+
+   (define (read-payload in l)
+      (cond
+	 ((<=fx l 125)
+	  (read-chars l in))
+	 ((=fx l 126)
+	  (read-chars (read-int16 in) in))
+	 ((=fx l 127)
+	  (when (and (read-check-byte in 0)
+		     (read-check-byte in 0)
+		     (read-check-byte in 0)
+		     (read-check-byte in 0))
+	     (read-chars (read-int32 in) in)))
+	 (else
+	  #f)))
+
+   (define (unmask playload key)
+      (let ((len (string-length playload)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (let ((stop (remainderfx (-fx len i) 4)))
+		  (let liip ((j 0))
+		     (if (<fx j stop)
+			 (let ((c (char->integer
+				     (string-ref-ur playload (+fx i j))))
+			       (k (vector-ref-ur key j)))
+			    (string-set-ur! playload (+fx i j)
+			       (integer->char (bit-xor c k) ))
+			    (liip (+fx j 1)))
+			 (loop (+fx i 4))))))))
+      playload)
+   
+   (let ((in (socket-input sock)))
+      ;; MS: to be complete, masked, binary, ping, etc. must be supported
+      (when (read-check-byte in #x81)
+	 (let* ((s (read-byte in))
+		(l (bit-and s #x7f))
+		(m (bit-and s #x80)))
+	    (if (=fx m 0)
+		;; unmasked payload
+		(read-payload in l)
+		;; masked playload
+		(let* ((key0 (read-byte in))
+		       (key1 (read-byte in))
+		       (key2 (read-byte in))
+		       (key3 (read-byte in))
+		       (key (vector key0 key1 key2 key3))
+		       (payload (read-payload in l)))
+		   (unmask payload key)))))))
+		   
+		   

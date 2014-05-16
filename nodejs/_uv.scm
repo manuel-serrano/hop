@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:50:28 2014                          */
-;*    Last change :  Thu May 15 16:42:36 2014 (serrano)                */
+;*    Last change :  Fri May 16 09:59:39 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compatibility kit when libuv is not available.                   */
@@ -59,15 +59,23 @@
 		  (sleep (* 1000 start))
 		  (let loop ()
 		     (with-access::%JsTimer timer (cb)
-			(when (procedure? cb) (cb timer 0))
-			(if rep
-			    (sleep (* 1000 rep))
-			    (loop)))))))))
+			(when (procedure? cb)
+			   (cb timer 0)
+			   (if rep
+			       (sleep (* 1000 rep))
+			       (loop))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-timer-close ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (%nodejs-timer-close timer)
+   (with-access::%JsTimer timer (cb)
+      (set! cb #unspecified)))
+			    
+;*---------------------------------------------------------------------*/
+;*    %nodejs-timer-stop ...                                           */
+;*---------------------------------------------------------------------*/
+(define (%nodejs-timer-stop timer)
    (with-access::%JsTimer timer (cb)
       (set! cb #unspecified)))
 			    

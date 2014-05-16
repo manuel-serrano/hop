@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Apr 20 07:40:34 2014 (serrano)                */
+;*    Last change :  Fri May 16 13:32:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -67,9 +67,9 @@
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-body ::JsArray ...                                           */
+;*    xml-body-element ::JsArray ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-body obj::JsArray)
+(define-method (xml-body-element obj::JsArray)
    (with-access::JsArray obj (vec)
       (vector->list vec)))
 

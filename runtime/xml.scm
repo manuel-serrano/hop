@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 18 13:05:32 2014 (serrano)                */
+;*    Last change :  Fri May 16 13:32:21 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -51,7 +51,8 @@
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
 
-	    (generic xml-body ::obj)
+	    (xml-body ::obj)
+	    (generic xml-body-element ::obj)
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
@@ -310,7 +311,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-body ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-body obj)
+(define (xml-body body)
+   (if (null? body)
+       body
+       (let ((el (xml-body-element (car body))))
+	  (if (pair? el)
+	      (append el (xml-body (cdr body)))
+	      (cons el (xml-body (cdr body)))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-body ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-body-element obj)
    obj)
 
 ;*---------------------------------------------------------------------*/

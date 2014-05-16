@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Wed May 14 10:15:33 2014 (serrano)                */
+;*    Last change :  Fri May 16 09:55:36 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -92,8 +92,14 @@
 		2 "start"))
    (js-bind! %this obj 'close
       :value (js-make-function %this
-		(lambda (this start rep)
+		(lambda (this)
 		   (with-access::JsTimer this (timer)
 		      (nodejs-timer-close timer)))
-		0 "close")))
+		0 "close"))
+   (js-bind! %this obj 'stop
+      :value (js-make-function %this
+		(lambda (this)
+		   (with-access::JsTimer this (timer)
+		      (nodejs-timer-stop timer)))
+		0 "stop")))
 					

@@ -229,6 +229,7 @@ function Buffer(subject, encoding, offset) {
     }
   }
 
+#:tprint( "SlowBuffer.makeFastBuffer..." );
   SlowBuffer.makeFastBuffer(this.parent, this, this.offset, this.length);
 }
 

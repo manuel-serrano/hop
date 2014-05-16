@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat May  3 08:47:23 2014 (serrano)                */
+;*    Last change :  Fri May 16 11:17:40 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -142,7 +142,8 @@
 	      (location::obj read-only (default #f))
 	      (protocol::obj read-only)
 	      (sec read-only (default #f))
-	      (accept read-only (default #f)))
+	      (accept read-only (default #f))
+	      (onconnect read-only (default #f)))
 
 	   (class http-response-error::http-response-string)
 
