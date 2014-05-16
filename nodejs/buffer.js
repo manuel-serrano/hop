@@ -65,6 +65,7 @@ SlowBuffer.prototype.toString = function(encoding, start, end) {
       return this.utf8Slice(start, end);
 
     case 'ascii':
+#:tprint( "asciiSlide.1.." );
       return this.asciiSlice(start, end);
 
     case 'binary':
@@ -229,7 +230,6 @@ function Buffer(subject, encoding, offset) {
     }
   }
 
-#:tprint( "SlowBuffer.makeFastBuffer..." );
   SlowBuffer.makeFastBuffer(this.parent, this, this.offset, this.length);
 }
 

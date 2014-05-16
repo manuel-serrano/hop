@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri May 16 15:53:40 2014 (serrano)                */
+;*    Last change :  Fri May 16 18:34:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -165,8 +165,8 @@
    (define (read this fd buffer offset length position)
       (unless (= position 0)
 	 (set-input-port-position! fd position))
-      (tprint "buffer=" (typeof buffer))
-      (read-fill-string! buffer offset length fd))
+      (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
+	 (read-fill-string! fast-buffer offset length fd)))
 
    (define (write this fd buffer offset length position)
       (unless (= position 0)
@@ -209,9 +209,14 @@
 	    #t %this)
 	 (js-put! SlowBuffer 'makeFastBuffer
 	    (js-make-function %this
-	       (lambda (this a b c d)
-		  (tprint "makeFastBuffer a=" a " b=" b " c=" c " d=" d)
-		  '#())
+	       (lambda (this sbuf buf c d)
+		  (js-put! sbuf 'asciiSlice
+		     (js-make-function %this
+			(lambda (this start end)
+			   (js-get buf '%fast-buffer %this))
+			3 "asciiSlice")
+		     #f %this)
+		  (js-put! buf '%fast-buffer (make-string d) #f %this))
 	       4 "makeFastBuffer")
 	    #t %this)
 	 (alist->jsobject
