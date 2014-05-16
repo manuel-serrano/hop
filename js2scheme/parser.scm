@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu May 15 17:57:22 2014 (serrano)                */
+;*    Last change :  Fri May 16 09:19:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1389,10 +1389,7 @@
    
    (define (program)
       (with-access::J2SBlock (source-elements) (loc nodes name)
-	 (let ((module (if (eq? (peek-token-type) 'MODULE)
-			   (let ((token (consume-any!)))
-			      (cdr token))
-			   (javascript-module-nodes nodes))))
+	 (let ((module (javascript-module-nodes nodes)))
 	    (instantiate::J2SProgram
 	       (loc loc)
 	       (path (abspath))

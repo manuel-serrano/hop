@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Apr 25 10:28:26 2014 (serrano)                */
+;*    Last change :  Fri May 16 09:19:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -162,16 +162,6 @@
       ((: (* blank_no_lt) lt (* blank))
        (token 'NEWLINE #\newline 1))
 
-      ;; Bigloo module declaration
-      ((: "//" (* (in " \t")) "(module " (* all))
-       (let ((module-string (the-substring 3 (the-length))))
-	  (with-handler
-	     (lambda (e)
-		(token 'ERROR module-string 0))
-	     (token 'MODULE
-		(call-with-input-string module-string read)
-		3))))
-      
       ;; linecomment
       ((:"//" (* (or (out "\n\xe2\r")
 		     (: "\xe2" (out "\x80"))

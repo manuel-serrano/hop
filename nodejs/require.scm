@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May 15 21:42:01 2014 (serrano)                */
+;*    Last change :  Fri May 16 09:17:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -20,10 +20,10 @@
 	   __nodejs_process)
 
    (export (%nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
-	   (nodejs-require ::bstring ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread)
+	   (nodejs-require ::bstring ::WorkerHopThread ::JsGlobalObject ::procedure)
+	   (nodejs-load ::bstring ::WorkerHopThread ::procedure)
 	   (nodejs-new-global-object::JsGlobalObject)
-	   (nodejs-global-object-init! ::JsGlobalObject)))
+	   (nodejs-auto-require! ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-module ...                                               */
@@ -73,87 +73,147 @@
 	    m))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-require ...                                               */
-;*    -------------------------------------------------------------    */
-;*    Require a nodejs module, load it if necessary or simply          */
-;*    reuse the previously loaded module structure.                    */
-;*---------------------------------------------------------------------*/
-(define (nodejs-require name %this)
-   (with-trace 1 "nodejs-require"
-      (trace-item "name=" name)
-      (let ((worker (js-current-worker)))
-	 (if (core-module? name)
-	     (js-get (nodejs-load-core-module name worker %this) 'exports %this)
-	     (let ((abspath (nodejs-resolve name %this)))
-		(if (and (string? abspath) (file-exists? abspath))
-		    (js-get (nodejs-load abspath worker) 'exports %this)
-		    (with-access::JsGlobalObject %this (js-uri-error)
-		       (js-raise
-			  (js-new %this js-uri-error
-			     (format "Cannot find module ~s" name))))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
-   
-   (define this (js-new-global-object))
+   (nodejs-init-global-object! (js-new-global-object)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-init-global-object! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (nodejs-init-global-object! this)
    
    (define require
       (js-make-function this
 	 (lambda (_ name)
-	    (nodejs-require (js-tostring name this) this))
+	    (nodejs-require (js-tostring name this) (js-current-worker) this
+	       nodejs-new-global-object))
 	 1 "require"))
-   
+
    ;; process
    (js-put! this 'process (%nodejs-process this) #f this)
    ;; require
    (js-put! this 'require require #f this)
    ;; the global object
    this)
-
+   
 ;*---------------------------------------------------------------------*/
-;*    nodejs-global-object-init! ...                                   */
+;*    nodejs-auto-require! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-global-object-init! this)
+(define (nodejs-auto-require! worker this)
    ;; console
-   (js-put! this 'console (nodejs-require "console" this) #f this)
+   (js-put! this 'console (nodejs-require-core "console" worker this) #f this)
    ;; timers
-   (nodejs-import! this (nodejs-require "timers" this))
+   (nodejs-import! this (nodejs-require-core "timers" worker this))
    ;; return the object
    this)
-   
+
+;*---------------------------------------------------------------------*/
+;*    compile-mutex ...                                                */
+;*---------------------------------------------------------------------*/
+(define compile-mutex (make-mutex))
+(define compile-table (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile ...                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile filename)
+   (synchronize compile-mutex
+      (or (hashtable-get compile-table filename)
+	  (let* ((mod (gensym))
+		 (expr (call-with-input-file filename
+			  (lambda (in)
+			     (j2s-compile in
+				:module-main #f
+				:module-name (symbol->string mod)))))
+		 (evmod (eval-module)))
+	     (unwind-protect
+		(begin
+		   (for-each eval! expr)
+		   (let ((mod (eval! 'hopscript)))
+		      (hashtable-put! compile-table filename mod)
+		      mod))
+		(eval-module-set! evmod))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread)
+(define (nodejs-load filename worker::WorkerHopThread new-global-object)
    
-   (define (load-module %this)
+   (define (load-module)
       (loading-file-set! filename)
-      (let* ((mod (gensym))
-	     (expr (call-with-input-file filename
-		      (lambda (in)
-			 (j2s-compile in
-			    :module-main #f
-			    :module-name (symbol->string mod)))))
-	     (this (nodejs-global-object-init!
-		      (or %this (nodejs-new-global-object))))
-	     (evmod (eval-module)))
-	 ;; eval the compile module in the current environment
-	 (unwind-protect
-	    (begin
-	       (for-each eval! expr)
-	       ((eval! 'hopscript) this)
-	       ;; return the newly created module
-	       (js-get this 'module this))
-	    (eval-module-set! evmod))))
+      (let ((hopscript (nodejs-compile filename))
+	    (this (nodejs-auto-require! worker (new-global-object))))
+	 ;; create the module
+	 (hopscript this)
+	 ;; return the newly created module
+	 (js-get this 'module this)))
 
    (with-trace 1 "nodejs-load"
       (trace-item "filename=" filename)
-      (with-access::WorkerHopThread worker (module-mutex module-table %this)
+      (with-access::WorkerHopThread worker (module-mutex module-table)
 	 (synchronize module-mutex
 	    (or (hashtable-get module-table filename)
-		(load-module %this))))))
+		(let ((mod (load-module)))
+		   (hashtable-put! module-table filename mod)
+		   mod))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-require ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require name worker %this new-global-object)
+   (with-trace 1 "nodejs-require"
+      (trace-item "name=" name)
+      (if (core-module? name)
+	  (nodejs-require-core name worker %this)
+	  (let ((abspath (nodejs-resolve name %this)))
+	     (if (and (string? abspath) (file-exists? abspath))
+		 (let ((mod (nodejs-load abspath worker new-global-object)))
+		    (js-get mod 'exports %this))
+		 (with-access::JsGlobalObject %this (js-uri-error)
+		    (js-raise
+		       (js-new %this js-uri-error
+			  (format "Cannot find module ~s" name)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    core-module? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (core-module? name)
+   (assoc name (core-module-table)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-require-core ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require-core name worker %this)
+   
+   (define (nodejs-load-core-module name worker)
+      
+      (define (nodejs-init-core-module name)
+	 (with-trace 2 "nodejs-init-core-module"
+	    (trace-item "name=" name)
+	    (let ((this (nodejs-new-global-object)))
+	       (let ((c (assoc name (core-module-table))))
+		  (let ((m ((cdr c) this)))
+		     ;; complete the global object initialization
+		     (nodejs-auto-require! worker this)
+		     ;; return the module
+		     m)))))
+      
+      (with-trace 1 "nodejs-load-core-module"
+	 (trace-item "name=" name)
+	 (trace-item "cache=" (nodejs-cache-module name worker))
+	 (or (nodejs-cache-module name worker)
+	     (nodejs-init-core-module name))))
+
+   (with-trace 1 "nodejs-require"
+      (trace-item "name=" name)
+      (js-get (nodejs-load-core-module name worker) 'exports %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */
@@ -242,35 +302,10 @@
       %this))
    
 ;*---------------------------------------------------------------------*/
-;*    nodejs-load-core-module ...                                      */
-;*---------------------------------------------------------------------*/
-(define (nodejs-load-core-module name worker %this)
-   
-   (define (nodejs-init-core-module name %this)
-      (with-trace 2 "nodejs-init-core-module"
-	 (trace-item "name=" name)
-	 (let ((this (nodejs-new-global-object)))
-	    (let ((c (assoc name (core-module-table))))
-	       (let ((m ((cdr c) this)))
-		  ;; complete the global object initialization
-		  (nodejs-global-object-init! this)
-		  ;; return the module
-		  m)))))
-
-   (with-trace 1 "nodejs-load-core-module"
-      (trace-item "name=" name)
-      (trace-item "cache=" (nodejs-cache-module name worker))
-      (or (nodejs-cache-module name worker)
-	  (nodejs-init-core-module name %this))))
-
-;*---------------------------------------------------------------------*/
-;*    core-module? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (core-module? name)
-   (assoc name (core-module-table)))
-
-;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require function                                 */
 ;*---------------------------------------------------------------------*/
-(js-worker-load-set! nodejs-require)
+(js-worker-load-set!
+   (lambda (name worker this)
+      (nodejs-require name worker this
+	 (lambda () (nodejs-init-global-object! this)))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu May 15 18:20:57 2014 (serrano)                */
+;*    Last change :  Fri May 16 08:38:03 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -76,7 +76,7 @@
 	  (%this (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %this)))
       ;; complete the global object initialization
-      (nodejs-global-object-init! %this)
+      (nodejs-auto-require! %worker %this)
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
@@ -174,23 +174,28 @@
 (define (set-scheduler!)
    (cond-expand
       (enable-threads
-	 (case (hop-scheduling)
-	    ((nothread)
-	     (hop-scheduler-set! (instantiate::nothread-scheduler)))
-	    ((queue)
-	     (hop-scheduler-set! (instantiate::queue-scheduler
-				    (size (hop-max-threads)))))
-	    ((one-to-one)
-	     (hop-scheduler-set! (instantiate::one-to-one-scheduler
-				    (size (hop-max-threads)))))
-	    ((pool)
-	     (hop-scheduler-set! (instantiate::pool-scheduler
-				    (size (hop-max-threads)))))
-	    ((accept-many)
-	     (hop-scheduler-set! (instantiate::accept-many-scheduler
-				    (size (hop-max-threads)))))
-	    (else
-	     (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
+       (case (hop-scheduling)
+	  ((nothread)
+	   (hop-scheduler-set!
+	      (instantiate::nothread-scheduler)))
+	  ((queue)
+	   (hop-scheduler-set!
+	      (instantiate::queue-scheduler
+		 (size (hop-max-threads)))))
+	  ((one-to-one)
+	   (hop-scheduler-set!
+	      (instantiate::one-to-one-scheduler
+		 (size (hop-max-threads)))))
+	  ((pool)
+	   (hop-scheduler-set!
+	      (instantiate::pool-scheduler
+		 (size (hop-max-threads)))))
+	  ((accept-many)
+	   (hop-scheduler-set!
+	      (instantiate::accept-many-scheduler
+		 (size (hop-max-threads)))))
+	  (else
+	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
       (else
        (unless (eq? (hop-scheduling) 'nothread)
 	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
@@ -217,7 +222,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (nodejs-load path %worker))
+	  (nodejs-load path %worker nodejs-new-global-object))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))

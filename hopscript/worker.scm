@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu May 15 21:44:22 2014 (serrano)                */
+;*    Last change :  Fri May 16 08:49:34 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -33,10 +33,10 @@
 	   (class WorkerHopThread::hopthread
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
-	      (%this read-only (default #f))
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
+	      (%this::JsGlobalObject read-only)
 	      (state::symbol (default 'init))
 	      (module-table::obj (default (make-hashtable)))
 	      (module-mutex::obj (default (make-mutex)))
@@ -81,6 +81,7 @@
       (set! %main
 	 (instantiate::WorkerHopThread
 	    (name "main")
+	    (%this %this)
 	    (body (lambda () (js-worker-thread-loop %main))))))
    %main)
    
@@ -153,14 +154,14 @@
    
    (lambda (_ src)
       (letrec* ((parent (js-current-worker))
-		(this (js-clone %this))
+		(this (js-new-global-object))
 		(source (js-tostring src %this))
 		(thunk (lambda ()
-			  ((js-worker-load) source this)))
+			  ((js-worker-load) source thread this)))
 		(thread (instantiate::WorkerHopThread
 			   (parent parent)
-			   (%this this)
 			   (tqueue (list thunk))
+			   (%this this)
 			   (body (lambda ()
 				    (js-worker-thread-loop thread)))
 			   (cleanup (lambda (thread)
@@ -392,7 +393,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    default-worker-load ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (default-worker-load filename %this::JsGlobalObject)
+(define (default-worker-load filename worker %this::JsGlobalObject)
    (loading-file-set! filename)
    (let ((exprs (call-with-input-file filename
 		   (lambda (in) (j2s-compile in :main #f :%this %this)))))
