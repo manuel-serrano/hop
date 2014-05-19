@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri May 16 18:34:27 2014 (serrano)                */
+;*    Last change :  Sat May 17 07:05:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -21,7 +21,8 @@
    (include "nodejs.sch")
 
    (import __nodejs__hop
-	   __nodejs__timer)
+	   __nodejs__timer
+	   __nodejs__fs)
    
    (export (%nodejs-process %this::JsGlobalObject)))
 
@@ -98,95 +99,25 @@
 	 proc)))
 
 ;*---------------------------------------------------------------------*/
-;*    constants ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (S_IFDIR) 4)
-(define (S_IFREG) 8)
-
-;*---------------------------------------------------------------------*/
 ;*    process-constants ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (process-constants %this)
    (alist->jsobject
-      `((O_RDONLY . 0)
-	(O_WRONLY . 1)
-	(O_RDWR . 2)
-	(S_IFMT . ,(bit-or (S_IFDIR) (S_IFREG)))
-	(S_IFDIR . ,(S_IFDIR))
-	(S_IFREG . ,(S_IFREG)))))
-
-;*---------------------------------------------------------------------*/
-;*    process-fs-stats ...                                             */
-;*---------------------------------------------------------------------*/
-(define process-fs-stats #f)
-
-;*---------------------------------------------------------------------*/
-;*    get-process-fs-stats ...                                         */
-;*---------------------------------------------------------------------*/
-(define (get-process-fs-stats %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (unless process-fs-stats (set! process-fs-stats (js-new %this js-object)))
-      process-fs-stats))
-
-;*---------------------------------------------------------------------*/
-;*    process-fs ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (process-fs %this)
-   
-   (define (readdir this path)
-      (js-vector->jsarray (list->vector (directory->path-list path))  %this))
-
-   (define (lstat this path)
-      (let ((obj (alist->jsobject
-		    `((mode . ,(if (directory? path) (S_IFDIR) (S_IFREG)))))))
-	 (with-access::JsObject obj (__proto__)
-	    (set! __proto__ (get-process-fs-stats %this))
-	    obj)))
-
-   (define (stat this path)
-      (file-exists? path))
-
-   (define (close this fd)
-      (cond
-	 ((output-port? fd) (close-output-port fd))
-	 ((input-port? fd) (close-input-port fd))))
-
-   (define (open this path flags mode)
-      (case flags
-	 ((0)
-	  (open-input-file path))
-	 ((1)
-	  (open-output-file path))
-	 ((2)
-	  (append-output-file path))
-	 (else
-	  (error "open" "flags not implemented" flags))))
-
-   (define (read this fd buffer offset length position)
-      (unless (= position 0)
-	 (set-input-port-position! fd position))
-      (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	 (read-fill-string! fast-buffer offset length fd)))
-
-   (define (write this fd buffer offset length position)
-      (unless (= position 0)
-	 (set-output-port-position! fd position))
-      (display-substring buffer offset (+ offset length) fd))
-
-   (define (fsync this fd)
-      (cond
-	 ((output-port? fd) (flush-output-port fd))))
-   
-   (alist->jsobject
-      `((readdir . ,(js-make-function %this readdir 1 "readdir"))
-	(Stats . ,(alist->jsobject `((prototype . ,(get-process-fs-stats %this)))))
-	(lstat . ,(js-make-function %this lstat 1 "lstat"))
-	(stat . ,(js-make-function %this stat 1 "stat"))
-	(close . ,(js-make-function %this close 1 "close"))
-	(open . ,(js-make-function %this open 3 "open"))
-	(read . ,(js-make-function %this read 5 "read"))
-	(write . ,(js-make-function %this write 5 "write"))
-	(fsync . ,(js-make-function %this fsync 0 "fsync")))))
+      `((O_RDONLY . ,O_RDONLY)
+	(O_WRONLY . ,O_WRONLY)
+	(O_RDWR . ,O_RDWR)
+	(O_CREAT . ,O_CREAT)
+	(O_EXCL . ,O_EXCL)
+	(O_TRUNC . ,O_TRUNC)
+	(O_NOCTTY . ,O_NOCTTY)
+	(O_APPEND . ,O_APPEND)
+	(O_DIRECTORY . ,O_DIRECTORY)
+	(O_SYNC . ,O_SYNC)
+	(O_NOFOLLOW . ,O_NOFOLLOW)
+	
+	(S_IFMT . ,S_IFMT)
+	(S_IFDIR . ,S_IFDIR)
+	(S_IFREG . ,S_IFREG))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slowbuffer ...                                                   */
