@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon May 19 15:55:41 2014 (serrano)                */
+;*    Last change :  Mon May 19 16:41:42 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -81,7 +81,8 @@
 (define (hopjs-websocket-prototype %this)
    (with-access::JsGlobalObject %this (js-object js-others)
       (let ((old (assq 'js-websocket-prototype js-others)))
-	 (or old
+	 (if old
+	     (cdr old)
 	     (let ((obj (js-new %this js-object)))
 		;; readyState
 		(js-bind! %this obj 'readyState
@@ -107,7 +108,7 @@
 				   (with-access::websocket ws (%socket)
 				      (websocket-send %socket value))))
 			     1 "send"))
-		;; addEventListner
+		;; addEventListener
 		(js-bind! %this obj 'addEventListener
 		   :value (js-make-function %this
 			     (lambda (this message proc)
@@ -175,7 +176,8 @@
 (define (hopjs-websocket-server-prototype %this)
    (with-access::JsGlobalObject %this (js-object js-others)
       (let ((old (assq 'js-websocket-server-prototype js-others)))
-	 (or old
+	 (if old
+	     (cdr old)
 	     (let ((obj (js-new %this js-object)))
 		;; addEventListner
 		(js-bind! %this obj 'addEventListener
@@ -224,7 +226,8 @@
 (define (hopjs-websocket-client-prototype %this)
    (with-access::JsGlobalObject %this (js-object js-others)
       (let ((old (assq 'js-websocket-client-prototype js-others)))
-	 (or old
+	 (if old
+	     (cdr old)
 	     (let ((obj (js-new %this js-object)))
 		;; client
 		(js-bind! %this obj 'socket

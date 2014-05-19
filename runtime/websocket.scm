@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon May 19 16:03:01 2014 (serrano)                */
+;*    Last change :  Mon May 19 17:03:00 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -470,16 +470,6 @@
 ;*---------------------------------------------------------------------*/
 (define (websocket-connect! ws::websocket)
    
-   (define (read-int16 in)
-      (let ((bh (read-byte in))
-	    (bl (read-byte in)))
-	 (bit-or (bit-lsh bh 8) bl)))
-   
-   (define (read-int32 in)
-      (let ((wh (read-int16 in))
-	    (wl (read-int16 in)))
-	 (bit-or (bit-lsh wh 16) wl)))
-   
    (define (close)
       (with-access::websocket ws (%mutex %socket oncloses state)
 	 (synchronize %mutex
@@ -520,11 +510,14 @@
 
    (define (read-messages)
       (with-access::websocket ws (%socket)
-	 (let* ((in (socket-input %socket))
-		(msg (websocket-read %socket)))
-	    (if (string? msg)
-		(message msg)
-		(abort)))))
+	 (let ((in (socket-input %socket)))
+	    (let loop ()
+	       (let ((msg (websocket-read %socket)))
+		  (if (string? msg)
+		      (begin
+			 (message msg)
+			 (loop))
+		      (abort)))))))
    
    (with-access::websocket ws (%mutex %socket url authorization state onopens)
       (synchronize %mutex
@@ -648,6 +641,22 @@
 ;*---------------------------------------------------------------------*/
 (define (websocket-send-frame payload::bstring port::output-port
 	   #!key (opcode 0) (final #t) (mask #t))
+;*    (call-with-output-file "/tmp/BAD"                                */
+;*       (lambda (out)                                                 */
+;* 	 (websocket-send-frame-new payload out                         */
+;* 	    :opcode opcode :final final :mask mask)))                  */
+;*    (call-with-output-file "/tmp/GOOD"                               */
+;*       (lambda (out)                                                 */
+;* 	 (write-frame (instantiate::websocket-frame                    */
+;* 			 (kind 'text)                                  */
+;* 			 (final? #t)                                   */
+;* 			 (payload payload))                            */
+;* 	    out)))                                                     */
+;*    (websocket-send-frame-new payload port                           */
+;*       :opcode opcode :final final :mask mask))                      */
+;*                                                                     */
+;* (define (websocket-send-frame-new payload::bstring port::output-port */
+;* 	   #!key (opcode 0) (final #t) (mask #t))                      */
    ;; byte 0, FIN + opcode
    (write-byte (if final (bit-or #x80 opcode) opcode) port)
    ;; byte 1, Mask + payload len (7)
@@ -674,7 +683,8 @@
 		    (write-byte (remainderfx len 256) port))))))
       (if mask
 	  ;; masked payload data
-	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+;* 	  (let ((key (vector (random 256) (random 256) (random 256) (random 256)))) */
+	  (let ((key (vector 1 2 3 4)))
 	     ;; key
 	     (write-byte (vector-ref-ur key 0) port)
 	     (write-byte (vector-ref-ur key 1) port)
@@ -684,7 +694,7 @@
 	     (let loop ((i 0))
 		(when (<fx i len)
 		   (let* ((end (-fx len i))
-			  (stop (if (>=fx end 4) 4 (remainderfx (-fx len i) 4))))
+			  (stop (if (>=fx end 4) 4 end)))
 		      (let liip ((j 0))
 			 (if (<fx j stop)
 			     (let ((c (char->integer
@@ -696,7 +706,6 @@
 	  ;; unmasked payload data
 	  (display-string payload port)))
    (flush-output-port port))
-   
 
 ;*---------------------------------------------------------------------*/
 ;*    write-frame ...                                                  */
@@ -736,7 +745,8 @@
 
       (define key
          ;; The "masking key" (Section 5.3.)
-         (list (random 256) (random 256) (random 256) (random 256)))
+         (list (random 256) (random 256) (random 256) (random 256))
+	 (list 1 2 3 4))
 
       (define bytes
          `(,(bit-or
@@ -817,24 +827,25 @@
 	 (else
 	  #f)))
 
-   (define (unmask playload key)
-      (let ((len (string-length playload)))
+   (define (unmask payload key)
+      (let ((len (string-length payload)))
 	 (let loop ((i 0))
 	    (when (<fx i len)
-	       (let ((stop (remainderfx (-fx len i) 4)))
+	       (let* ((end (-fx len i))
+		      (stop (if (>=fx end 4) 4 end)))
 		  (let liip ((j 0))
 		     (if (<fx j stop)
 			 (let ((c (char->integer
-				     (string-ref-ur playload (+fx i j))))
+				     (string-ref-ur payload (+fx i j))))
 			       (k (vector-ref-ur key j)))
-			    (string-set-ur! playload (+fx i j)
+			    (string-set-ur! payload (+fx i j)
 			       (integer->char (bit-xor c k) ))
 			    (liip (+fx j 1)))
 			 (loop (+fx i 4))))))))
-      playload)
+      payload)
    
    (let ((in (socket-input sock)))
-      ;; MS: to be complete, masked, binary, ping, etc. must be supported
+      ;; MS: to be complete, binary, ping, etc. must be supported
       (when (read-check-byte in #x81)
 	 (let* ((s (read-byte in))
 		(l (bit-and s #x7f))
@@ -842,7 +853,7 @@
 	    (if (=fx m 0)
 		;; unmasked payload
 		(read-payload in l)
-		;; masked playload
+		;; masked payload
 		(let* ((key0 (read-byte in))
 		       (key1 (read-byte in))
 		       (key2 (read-byte in))
