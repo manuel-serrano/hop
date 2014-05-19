@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon May 19 16:02:14 2014 (serrano)                */
+;*    Last change :  Mon May 19 16:03:01 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -674,8 +674,7 @@
 		    (write-byte (remainderfx len 256) port))))))
       (if mask
 	  ;; masked payload data
-;* 	  (let ((key (vector (random 256) (random 256) (random 256) (random 256)))) */
-	  (let ((key (vector 1 2 3 4)))
+	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
 	     ;; key
 	     (write-byte (vector-ref-ur key 0) port)
 	     (write-byte (vector-ref-ur key 1) port)
@@ -737,8 +736,7 @@
 
       (define key
          ;; The "masking key" (Section 5.3.)
-         (list (random 256) (random 256) (random 256) (random 256))
-         (list 1 2 3 4))
+         (list (random 256) (random 256) (random 256) (random 256)))
 
       (define bytes
          `(,(bit-or
