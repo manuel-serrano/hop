@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue May 20 17:52:21 2014 (serrano)                */
+;*    Last change :  Tue May 20 17:57:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -59,12 +59,12 @@
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
-	 (js-bind! %this js-function-prototype 'getURL
+	 (js-bind! %this js-function-prototype 'url
 	    :value (js-make-function %this
 		      (lambda (this . l)
 			 (with-access::JsService this (svc)
 			    (hop-apply-service-url svc l)))
-		      0 "getURL")
+		      0 "url")
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
