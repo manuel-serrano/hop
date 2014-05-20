@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Apr 18 07:15:14 2014 (serrano)                */
+;*    Last change :  Tue May 20 17:52:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -56,6 +56,15 @@
 		      (lambda (this file)
 			 (service-resource this file))
 		      1 "resource")
+	    :writable #t
+	    :configurable #t
+	    :enumerable #f)
+	 (js-bind! %this js-function-prototype 'getURL
+	    :value (js-make-function %this
+		      (lambda (this . l)
+			 (with-access::JsService this (svc)
+			    (hop-apply-service-url svc l)))
+		      0 "getURL")
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)

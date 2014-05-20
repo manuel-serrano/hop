@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Apr 14 16:51:14 2014 (serrano)                */
+;*    Last change :  Tue May 20 17:19:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -33,7 +33,11 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
 	    (for-each (lambda (e)
-			 (js-put! obj (car e) (cdr e) #f %this))
+			 (js-put! obj (car e)
+			    (if (keyword? (cdr e))
+				(keyword->symbol (cdr e))
+				(cdr e))
+			    #f %this))
 	       alist)
 	    obj))))
 
