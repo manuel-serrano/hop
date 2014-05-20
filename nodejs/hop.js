@@ -26,6 +26,7 @@ exports.currentRequest = hop.currentRequest;
 /*---------------------------------------------------------------------*/
 /*    Responses                                                        */
 /*---------------------------------------------------------------------*/
+exports.HTTPResponseHop = hop.HTTPResponseHop;
 exports.HTTPResponseFile = hop.HTTPResponseFile;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
 exports.HTTPResponseAsync = hop.HTTPResponseAsync;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 14 09:02:15 2014 (serrano)                */
+;*    Last change :  Tue May 20 12:16:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1514,6 +1514,6 @@
    (let ((fields (class-all-fields (object-class obj))))
       (let loop ((i 0))
 	 (when (<fx i (vector-length fields))
-	    (proc (class-field-name (vector-ref-ur fields i)))
+	    (proc (symbol->string (class-field-name (vector-ref-ur fields i))))
 	    (loop (+fx i 1))))))
 

@@ -172,7 +172,7 @@ inspect.styles = {
   'regexp': 'red'
 };
 
-
+ 
 function stylizeWithColor(str, styleType) {
   var style = inspect.styles[styleType];
 
