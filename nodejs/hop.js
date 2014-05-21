@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu May 15 05:49:11 2014 (serrano)                */
+/*    Last change :  Wed May 21 11:37:23 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -57,12 +57,6 @@ exports.broadcast = hop.broadcast;
 /*---------------------------------------------------------------------*/
 exports.parseWebColor = hop.parseWebColor;
 exports.makeWebColor = hop.makeWebColor;
-
-/*---------------------------------------------------------------------*/
-/*    WebSocket                                                        */
-/*---------------------------------------------------------------------*/
-exports.WebSocket = hop.WebSocket;
-exports.WebSocketServer = hop.WebSocketServer;
 
 Object.seal( exports );
 Object.freeze( exports );

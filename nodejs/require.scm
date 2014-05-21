@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 16 15:20:50 2014 (serrano)                */
+;*    Last change :  Wed May 21 10:31:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -143,7 +143,6 @@
 (define (nodejs-load filename worker::WorkerHopThread new-global-object)
    
    (define (load-module)
-      (loading-file-set! filename)
       (let ((hopscript (nodejs-compile filename))
 	    (this (nodejs-auto-require! worker (new-global-object))))
 	 ;; create the module
@@ -156,7 +155,7 @@
       (with-access::WorkerHopThread worker (module-mutex module-table)
 	 (synchronize module-mutex
 	    (or (hashtable-get module-table filename)
-		(let ((mod (load-module)))
+		(let ((mod (with-loading-file filename load-module)))
 		   (hashtable-put! module-table filename mod)
 		   mod))))))
 

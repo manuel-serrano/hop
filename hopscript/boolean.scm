@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr  9 17:27:36 2014 (serrano)                */
+;*    Last change :  Wed May 21 12:58:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -57,11 +57,12 @@
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; then, Create a HopScript string object
-	 (set! js-boolean (js-make-function %this %js-boolean 1 "JsBoolean"
-			     :__proto__ js-function-prototype
-			     :prototype js-boolean-prototype
-			     :alloc js-boolean-alloc
-			     :construct js-boolean-construct))
+	 (set! js-boolean
+	    (js-make-function %this %js-boolean 1 "JsBoolean"
+	       :__proto__ js-function-prototype
+	       :prototype js-boolean-prototype
+	       :alloc js-boolean-alloc
+	       :construct js-boolean-construct))
 	 ;; now the boolean constructor is fully built,
 	 ;; initialize the prototype properties
 	 (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)

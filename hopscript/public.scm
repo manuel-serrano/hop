@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed May 14 10:08:27 2014 (serrano)                */
+;*    Last change :  Wed May 21 08:28:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -59,6 +59,8 @@
 	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+
+	   (js-object->keyword-arguments ::JsObject ::JsGlobalObject)
 	   
 	   (js-instanceof?::bool v f ::JsGlobalObject)
 	   (js-in?::bool f obj ::JsGlobalObject)
@@ -470,6 +472,20 @@
 					(js-undefined)))))))))
 		($env-pop-trace env)
 		aux)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object->keyword-arguments ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-object->keyword-arguments obj %this)
+   (let ((acc '()))
+      (js-for-in obj
+	 (lambda (k)
+	    (set! acc
+	       (cons* (js-get obj k %this)
+		  (string->keyword k)
+		  acc)))
+	 %this)
+      (reverse! acc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */

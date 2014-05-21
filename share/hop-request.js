@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Apr 24 12:14:39 2014 (serrano)                */
+/*    Last change :  Wed May 21 10:43:18 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -68,12 +68,16 @@ function hop_apply_url( service, args ) {
 	 + "?hop-encoding=hop"
 	 + "&vals=" + hop_bigloo_serialize( args );
    } else {
-      if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
-	 return hop_apply_form_url( service, args );
+      if( !args ) {
+	 return service;
       } else {
-	 return service
-	    + "?hop-encoding=hop"
-	    + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
+         if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
+	    return hop_apply_form_url( service, args );
+         } else {
+	    return service
+	       + "?hop-encoding=hop"
+   	       + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
+         }
       }
    }
 }

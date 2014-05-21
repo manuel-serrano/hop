@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Mar 16 07:42:35 2014 (serrano)                */
+;*    Last change :  Wed May 21 11:28:18 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -13,16 +13,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    jscript-funcall ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (jscript-funcall path args)
+(define (jscript-funcall args)
    (if (=fx (bigloo-debug) 0)
-       `((@ format  __r4_output_6_10_3) "(function () { return hop_apply_url( ~s, arguments ); })" ,path)
+       "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); },
+         sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
+         sc_lambda)"
        (let loop ((args (dsssl-formals->scheme-formals args error))
 		  (arity 0))
 	  (cond
 	     ((null? args)
-	      `((@ format  __r4_output_6_10_3) "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,arity))
+	      (format "(sc_lambda=function () { return hop_apply_url( ~~s, arguments ); },
+               sc_lambda.resource = function( file ) { return ~~s + \"/\" + file; },
+               sc_lambda.arity=~a,
+               sc_lambda)" arity))
 	     ((not (pair? args))
-	      `((@ format  __r4_output_6_10_3) "(sc_lambda=function () { return hop_apply_url( ~s, arguments ); }, sc_lambda.arity=~a,sc_lambda)" ,path ,(-fx -1 arity)))
+	      (format "(sc_lambda=function () { return hop_apply_url( ~~s, arguments ); },
+                sc_lambda.resource = function( file ) { return ~~s + \"/\" + file; },
+                sc_lambda.arity=~a,
+                sc_lambda)" (-fx -1 arity)))
 	     (else
 	      (loop (cdr args) (+fx arity 1)))))))
 
@@ -143,7 +151,7 @@
 		       (path ,path)
 		       (args ',args)
 		       (proc ,proc)
-		       (javascript ,(jscript-funcall path args))
+		       (javascript ,(jscript-funcall args))
 		       (creation (date->seconds (current-date)))
 		       (timeout ,timeout)
 		       (ttl ,ttl)

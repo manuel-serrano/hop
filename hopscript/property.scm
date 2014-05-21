@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 20 12:16:28 2014 (serrano)                */
+;*    Last change :  Wed May 21 13:29:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -610,7 +610,7 @@
 		(js-property-value obj (vector-ref-ur cmap index) %this))
 	       ((not omap)
 		(jsobject-properties-find o name
-		   (lambda (o v) (js-property-value o v %this))
+		   (lambda (o v) (js-property-value obj v %this))
 		   (lambda ()
 		      ;; not found
 		      (if (isa? __proto__ JsObject)

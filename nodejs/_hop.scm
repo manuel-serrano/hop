@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue May 20 12:37:26 2014 (serrano)                */
+;*    Last change :  Wed May 21 12:19:09 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -16,7 +16,7 @@
 
    (library hopscript hop)
 
-   (import __nodejs__hop-ws)
+;*    (import __nodejs__hop-ws)                                        */
    
    (export (hopjs-process-hop ::JsGlobalObject)))
 
@@ -98,14 +98,15 @@
 	    (define-js makeWebColor 3 
 	       (lambda (this r g b)
 		  (make-hex-color r g b)))
-	    
-	    ;; websocket
-	    (define-js WebSocket 1
-	       (lambda (this) this)
-	       :construct (hopjs-websocket %this))
-	    (define-js WebSocketServer 1
-	       (lambda (this) this)
-	       :construct (hopjs-websocket-server %this))))))
+
+	    ))))
+;* 	    ;; websocket                                               */
+;* 	    (define-js WebSocket 1                                     */
+;* 	       (lambda (this) this)                                    */
+;* 	       :construct (hopjs-websocket %this))                     */
+;* 	    (define-js WebSocketServer 1                               */
+;* 	       (lambda (this) this)                                    */
+;* 	       :construct (hopjs-websocket-server %this))))))          */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-with-url ...                                               */

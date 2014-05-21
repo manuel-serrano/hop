@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Apr 20 08:13:55 2014 (serrano)                */
+;*    Last change :  Wed May 21 12:13:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -34,7 +34,8 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_websocket)
 
    (export (js-new-global-object::JsGlobalObject)
 	   (js-initial-global-object)
@@ -114,6 +115,7 @@
 	    (js-init-json! %this)
 	    (js-init-service! %this)
 	    (js-init-worker! %this)
+	    (js-init-websocket! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 	    

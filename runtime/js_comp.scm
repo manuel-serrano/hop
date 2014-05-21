@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Apr 19 12:49:43 2014 (serrano)                */
+;*    Last change :  Wed May 21 11:20:23 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -225,8 +225,8 @@
 ;*    hop->javascript ::hop-service ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript obj::hop-service op compile isexpr)
-   (with-access::hop-service obj (javascript path)
-      (display (format javascript path) op)))
+   (with-access::hop-service obj (javascript path resource id)
+      (display (format javascript path (or resource "/hop")) op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */

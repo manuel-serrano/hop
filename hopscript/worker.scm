@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri May 16 08:49:34 2014 (serrano)                */
+;*    Last change :  Wed May 21 11:32:44 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -105,16 +105,6 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-worker-prototype
 	       :construct (js-worker-construct %this)))
-
-;* 	 ;; mainLoop                                                   */
-;* 	 (js-bind! %this js-worker 'mainLoop                           */
-;* 	    :value (js-make-function %this                             */
-;* 		      (lambda (this)                                   */
-;* 			 (js-worker-thread-loop (js-init-main-worker!)))       */
-;* 		      0 "mainLoop")                                    */
-;* 	    :writable #f                                               */
-;* 	    :configurable #f                                           */
-;* 	    :enumerable #f)                                            */
 
 	 ;; prototype properties
 	 (init-builtin-worker-prototype! %this js-worker js-worker-prototype)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May  6 09:14:51 2014 (serrano)                */
+;*    Last change :  Wed May 21 12:24:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -161,6 +161,8 @@
 	    module
 	    (when (>fx pcache-size 0)
 	       `(define %PCACHE (make-pcache ,pcache-size)))
+	    '(define %source (or (the-loading-file) "/"))
+	    '(define %resource (dirname %source))
 	    `(define (hopscript %this)
 		,(unserialize)
 		(define %worker (js-current-worker))
@@ -181,11 +183,14 @@
 	       module
 	       (when (>fx pcache-size 0)
 		  `(define %PCACHE (make-pcache ,pcache-size)))
-	       '(define %this (js-initial-global-object))
+	       '(define %this (nodejs-new-global-object))
 	       '(define this %this)
+	       '(define %source (or (the-loading-file) "/"))
+	       '(define %resource (dirname %source))
 	       (unserialize)
 	       `(define (main args)
 		   (define %worker (js-init-main-worker! %this))
+		   (nodejs-auto-require! %worker %this)
 		   ,@body
 		   (js-worker-terminate! %worker)
 		   (thread-join! (thread-start-joinable! %worker)))))))
@@ -205,6 +210,8 @@
 		     `(define %PCACHE (make-pcache ,pcache-size)))
 		 (define %worker (js-current-worker))
 		 (define this %this)
+		 '(define %source (or (the-loading-file) "/"))
+		 '(define %resource (dirname %source))
 		 (js-undefined)
 		 ,@body))
 	    (main
@@ -693,8 +700,12 @@
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
 	 (if (isa? init J2SObjInit)
-	     "function ( argument ) { return hop_apply_url( ~s, hop_object_to_dsssl_args( argument ) ); }"
-	     "(function () { return hop_apply_url( ~s, arguments ); })"))
+	     "(sc_lambda = function ( argument ) { return hop_apply_url( ~s, hop_object_to_dsssl_args( argument ) ); },
+              sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
+              sc_lambda)"
+	     "(sc_lambda = function () { return hop_apply_url( ~s, arguments ); },
+              sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
+              sc_lambda)"))
       
       (define (service-proc->scheme this)
 	 (with-access::J2SSvc this (loc body need-bind-exit-return)
@@ -722,9 +733,8 @@
 		   (id ',id)
 		   (wid ',id)
 		   (args ',args)
-		   (resource ,(let ((file (gensym 'file)))
-				 `(let ((,file (the-loading-file)))
-				     (and ,file (dirname ,file)))))
+		   (resource %resource)
+		   (source %source)
 		   (decoder %unserialize))))))
 
    (define (init->formal init::J2SDataPropertyInit)
@@ -739,20 +749,25 @@
    
    (define (svc-proc-entry this params actuals)
       (with-access::J2SSvc this (loc)
-	 (let ((tmp (gensym 'service)))
-	    `(letrec ((,tmp (lambda (this ,@params)
-			       (hop-apply-service-url
-				  (with-access::JsService (procedure-attr ,tmp) (svc)
-				     svc)
-				  (list ,@actuals)))))
-		,(j2sscheme-service this tmp (or id tmp)
-		    (epairify loc
-		       `(make-hop-url-name
-			   ,(if (symbol? id)
-				(symbol->string id)
-				'(gen-service-url :public #t))))
-		    params
-		    mode return)))))
+	 (let ((tmpp (gensym 'servicep))
+	       (tmps (gensym 'services)))
+	    `(letrec* ((,tmpp (lambda (this ,@params #!rest rest)
+				 (with-access::JsService ,tmps (svc)
+				    (hop-apply-service-url svc 
+				       (if (and (pair? rest)
+						(isa? (car rest) JsObject))
+					   (js-object->keyword-arguments
+					      (car rest) %this)
+					   (list ,@actuals))))))
+		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
+				  (epairify loc
+				     `(make-hop-url-name
+					 ,(if (symbol? id)
+					      (symbol->string id)
+					      '(gen-service-url :public #t))))
+				  params
+				  mode return)))
+		,tmps))))
    
    (define (svc-fix-proc-entry this)
       (with-access::J2SSvc this (params)

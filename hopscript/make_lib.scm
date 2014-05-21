@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Thu May 15 18:49:09 2014 (serrano)                */
+;*    Last change :  Wed May 21 11:31:29 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -33,7 +33,8 @@
 	   __hopscript_regexp
 	   __hopscript_error
 	   __hopscript_json
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_websocket)
    
    (eval   (export-all)
 
@@ -49,11 +50,15 @@
 	   (class JsDate)
 	   (class JsError)
 	   (class JsWorker)
-
+	   (class JsWebSocket)
+	   (class JsWebSocketClient)
+	   (class JsWebSocketServer)
+	   
 	   (class JsPropertyCache)
 	   
 	   (class JsValueDescriptor)
 	   (class JsAccessorDescriptor)
 
 	   (class MessageEvent)
-	   (class WorkerHopThread)))
+	   (class WorkerHopThread)
+	   (class JsWebSocketEvent)))
