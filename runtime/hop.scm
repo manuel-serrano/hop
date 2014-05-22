@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu May 22 17:18:39 2014 (serrano)                */
+;*    Last change :  Thu May 22 18:11:21 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -263,7 +263,7 @@
 			((application/x-javascript)
 			 (javascript->obj p))
 			((text/html application/xhtml+xml)
-			 (parse-html p))
+			 (car (last-pair (parse-html p clength))))
 			(else
 			 (read-string p)))))
 	     (success obj)))

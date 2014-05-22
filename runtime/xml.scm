@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 22 17:17:10 2014 (serrano)                */
+;*    Last change :  Thu May 22 18:05:57 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -61,7 +61,7 @@
 
 	    (xml->string ::obj ::xml-backend)
 
-	    (parse-html ::input-port)
+	    (parse-html ::input-port ::long)
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
@@ -856,10 +856,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    parse-html ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (parse-html ip)
-   (html-parse
-      (current-input-port)
-      :content-length 0
+(define (parse-html ip clen)
+   (html-parse ip
+      :content-length clen
       :procedure (lambda (tag attributes body)
 		    (let ((constr (string->symbol
 				     (string-append
@@ -872,24 +871,23 @@
 ;*    string->html ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (string->html h)
-   (with-input-from-string h parse-html))
+   (call-with-input-string h (lambda (ip) (parse-html ip 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->xml ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (string->xml h)
-   (with-input-from-string h
-      (lambda ()
-	 (xml-parse
-	  (current-input-port)
-	  :content-length 0
-	  :procedure (lambda (tag attributes body)
-			(let ((constr (string->symbol
-				       (string-append
-					"<"
-					(string-upcase (symbol->string! tag))
-					">"))))
-			   (eval-markup constr attributes body)))))))
+   (call-with-input-string h
+      (lambda (in)
+	 (xml-parse in
+	    :content-length 0
+	    :procedure (lambda (tag attributes body)
+			  (let ((constr (string->symbol
+					   (string-append
+					      "<"
+					      (string-upcase (symbol->string! tag))
+					      ">"))))
+			     (eval-markup constr attributes body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-tilde->expression ...                                        */
