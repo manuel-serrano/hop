@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue May  6 08:18:32 2014 (serrano)                */
+;*    Last change :  Thu May 22 09:13:04 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -296,9 +296,12 @@
 	 (with-access::http-response-async resp (async)
 	    (async
 	       (lambda (resp)
-		  (let ((tmt (stage-exec scd thread id req resp)))
-		     (when (integer? tmt)
-			(spawn scd stage-request id socket tmt))))))
+		  (with-handler
+		     (lambda (e)
+			(exec-error-handler e scd req))
+		     (let ((tmt (stage-exec scd thread id req resp)))
+			(when (integer? tmt)
+			   (spawn scd stage-request id socket tmt)))))))
 	 #f)))
 	   
 ;*---------------------------------------------------------------------*/

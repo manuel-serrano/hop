@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed May 21 08:28:39 2014 (serrano)                */
+;*    Last change :  Thu May 22 08:52:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -85,7 +85,17 @@
 	   (%js-eval-strict ::bstring ::JsGlobalObject)
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj)
 	   
-	   (js-raise ::JsError)))
+	   (js-raise ::JsError)
+
+	   (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
+	   (js-raise-range-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-uri-error ::JsGlobalObject ::bstring ::obj)
+	   (js-raise-syntax-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
+
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new ...                                                       */
@@ -258,64 +268,55 @@
 
 (define (js-call0 %this fun this)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call0% %this procedure (procedure-arity procedure)
 	     this))))
 (define (js-call1 %this fun this a0)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call1% %this procedure (procedure-arity procedure)
 	     this a0))))
 (define (js-call2 %this fun this a0 a1)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call2% %this procedure (procedure-arity procedure)
 	     this a0 a1))))
 (define (js-call3 %this fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call3% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2))))
 (define (js-call4 %this fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call4% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3))))
 (define (js-call5 %this fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call5% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4))))
 (define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call6% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5))))
 (define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call7% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6))))
 (define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this
-	  "call: not a function ~s" fun)
+       (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
 	  (js-call8% %this procedure (procedure-arity procedure)
 	     this a0 a1 a2 a3 a4 a5 a6 a7))))
@@ -341,8 +342,7 @@
 
 (define (js-call0/debug %this loc fun this)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call0: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -353,8 +353,7 @@
 		aux)))))
 (define (js-call1/debug %this loc fun this a0)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call1: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -365,8 +364,7 @@
 		aux)))))
 (define (js-call2/debug %this loc fun this a0 a1)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call2: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -377,8 +375,7 @@
 		aux)))))
 (define (js-call3/debug %this loc fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call3: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -389,8 +386,7 @@
 		aux)))))
 (define (js-call4/debug %this loc fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call4: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -401,8 +397,7 @@
 		aux)))))
 (define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call5: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -413,8 +408,7 @@
 		aux)))))
 (define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call6: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -425,8 +419,7 @@
 		aux)))))
 (define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call7: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -437,8 +430,7 @@
 		aux)))))
 (define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call8: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname))
@@ -449,8 +441,7 @@
 		aux)))))
 (define (js-calln/debug %this loc fun this . args)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this
-	  loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name fname)
@@ -918,7 +909,6 @@
 ;*    %js-hss ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-hss ip::input-port %this %worker)
-;*    (%js-eval ip 'repl %this))                                       */
    (js-worker-exec %worker
       (lambda ()
 	 (%js-eval ip 'repl %this))))
@@ -930,4 +920,75 @@
    (with-access::JsError err (stack)
       (set! stack (get-trace-stack))
       (raise err)))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-type-error ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-raise-type-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-type-error)
+      (js-raise
+	 (js-new %this js-type-error
+	    (format fmt
+	       (if (isa? obj JsObject)
+		   (with-handler
+		      (lambda (e)
+			 (js-typeof obj))
+		      (js-call0 %this (js-get obj 'toString %this) obj))
+		   obj))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-type-error/loc ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-raise-type-error/loc %this::JsGlobalObject loc fmt::bstring obj)
+   (match-case loc
+      ((at ?fname ?loc)
+       (with-access::JsGlobalObject %this (js-type-error)
+	  (js-raise
+	     (js-new %this js-type-error
+		(format fmt
+		   (if (isa? obj JsObject)
+		       (with-handler
+			  (lambda (e)
+			     (js-typeof obj))
+			  (js-call0 %this (js-get obj 'toString %this) obj))
+		       obj))
+		fname
+		loc))))
+      (else
+       (js-raise-type-error %this fmt obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-range-error ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-raise-range-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-range-error)
+      (js-raise (js-new %this js-range-error (format fmt obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-uri-error ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-raise-uri-error %this::JsGlobalObject fmt::bstring obj)
+   (with-access::JsGlobalObject %this (js-uri-error)
+      (js-raise (js-new %this js-uri-error (format fmt obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-syntax-error ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-raise-syntax-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-syntax-error)
+      (js-raise (apply js-new %this js-syntax-error (format fmt obj) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-reference-error ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-raise-reference-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-reference-error)
+      (js-raise (apply js-new %this js-reference-error (format fmt obj) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-error ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-raise-error %this::JsGlobalObject fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-error)
+      (js-raise (apply js-new %this js-error (format fmt obj) args))))
 

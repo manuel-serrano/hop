@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Apr 20 08:13:20 2014 (serrano)                */
+;*    Last change :  Thu May 22 08:52:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -24,15 +24,7 @@
 	   __hopscript_property
 	   __hopscript_worker)
 
-   (export (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
-	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
-	   (js-raise-range-error ::JsGlobalObject ::bstring ::obj)
-	   (js-raise-uri-error ::JsGlobalObject ::bstring ::obj)
-	   (js-raise-syntax-error ::JsGlobalObject ::bstring ::obj . ::obj)
-	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
-	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
-
-	   (->fixnum::long ::obj)
+   (export (->fixnum::long ::obj)
 	   (->uint32::uint32 ::obj)
 	   (->int32::int32 ::obj)
 	   
@@ -78,77 +70,6 @@
 	   
 	   
 	   ))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-type-error ...                                          */
-;*---------------------------------------------------------------------*/
-(define (js-raise-type-error %this::JsGlobalObject fmt::bstring obj)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-raise
-	 (js-new %this js-type-error
-	    (format fmt
-	       (if (isa? obj JsObject)
-		   (with-handler
-		      (lambda (e)
-			 (js-typeof obj))
-		      (js-call0 %this (js-get obj 'toString %this) obj))
-		   obj))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-type-error/loc ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-raise-type-error/loc %this::JsGlobalObject loc fmt::bstring obj)
-   (match-case loc
-      ((at ?fname ?loc)
-       (with-access::JsGlobalObject %this (js-type-error)
-	  (js-raise
-	     (js-new %this js-type-error
-		(format fmt
-		   (if (isa? obj JsObject)
-		       (with-handler
-			  (lambda (e)
-			     (js-typeof obj))
-			  (js-call0 %this (js-get obj 'toString %this) obj))
-		       obj))
-		fname
-		loc))))
-      (else
-       (js-raise-type-error %this fmt obj))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-range-error ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-raise-range-error %this::JsGlobalObject fmt::bstring obj)
-   (with-access::JsGlobalObject %this (js-range-error)
-      (js-raise (js-new %this js-range-error (format fmt obj)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-uri-error ...                                           */
-;*---------------------------------------------------------------------*/
-(define (js-raise-uri-error %this::JsGlobalObject fmt::bstring obj)
-   (with-access::JsGlobalObject %this (js-uri-error)
-      (js-raise (js-new %this js-uri-error (format fmt obj)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-syntax-error ...                                        */
-;*---------------------------------------------------------------------*/
-(define (js-raise-syntax-error %this::JsGlobalObject fmt::bstring obj . args)
-   (with-access::JsGlobalObject %this (js-syntax-error)
-      (js-raise (apply js-new %this js-syntax-error (format fmt obj) args))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-reference-error ...                                     */
-;*---------------------------------------------------------------------*/
-(define (js-raise-reference-error %this::JsGlobalObject fmt::bstring obj . args)
-   (with-access::JsGlobalObject %this (js-reference-error)
-      (js-raise (apply js-new %this js-reference-error (format fmt obj) args))))
-
-;*---------------------------------------------------------------------*/
-;*    js-raise-error ...                                               */
-;*---------------------------------------------------------------------*/
-(define (js-raise-error %this::JsGlobalObject fmt::bstring obj . args)
-   (with-access::JsGlobalObject %this (js-error)
-      (js-raise (apply js-new %this js-error (format fmt obj) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ->fixnum ...                                                     */

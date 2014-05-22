@@ -32,6 +32,7 @@ if (process.env.NODE_DEBUG && /timer/.test(process.env.NODE_DEBUG)) {
   debug = function() { require('util').error.apply(this, arguments); };
 } else {
   debug = function() {};
+  debug = function() { require('util').error.apply(this, arguments); };
 }
 
 // IDLE TIMEOUTS
@@ -60,6 +61,7 @@ function insert(item, msecs) {
   if (lists[msecs]) {
     list = lists[msecs];
   } else {
+     #:tprint( "new Timer, insert" );
     list = new Timer();
     list.start(msecs, 0);
 
@@ -191,12 +193,12 @@ exports.active = function(item) {
 exports.setTimeout = function(callback, after) {
   var timer;
 
+   #:tprint( "setTimeout after=", after );
   after *= 1; // coalesce to number or NaN
 
   if (!(after >= 1 && after <= TIMEOUT_MAX)) {
     after = 1; // schedule on next tick, follows browser behaviour
   }
-
   timer = new Timeout(after);
 
   if (arguments.length <= 2) {
@@ -293,6 +295,7 @@ Timeout.prototype.unref = function() {
     var delay = this._idleStart + this._idleTimeout - now;
     if (delay < 0) delay = 0;
     exports.unenroll(this);
+     #:tprint( "new Timer, unref" );
     this._handle = new Timer();
     this._handle.ontimeout = this._onTimeout;
     this._handle.start(delay, 0);

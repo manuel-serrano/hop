@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri May  2 07:06:09 2014 (serrano)                */
+;*    Last change :  Thu May 22 10:22:54 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -121,11 +121,6 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-		      
-;* 		      (call-with-output-file (format "/tmp/FOO.~a"     */
-;* 						(current-seconds))     */
-;* 				(lambda (p)                            */
-;* 				   (obj->javascript-expr value p)))    */
 		      (if padding
 			  (begin
 			     (display padding p)

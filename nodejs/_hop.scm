@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed May 21 12:19:09 2014 (serrano)                */
+;*    Last change :  Thu May 22 10:37:23 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -72,6 +72,10 @@
 	    (define-js HTTPResponseFile 2
 	       (lambda (this file req)
 		  (hopjs-response-file this file req %this)))
+	    
+	    (define-js HTTPResponseString 2
+	       (lambda (this str req)
+		  (hopjs-response-string this str req %this)))
 	    
 	    (define-js HTTPResponseAuthentication 2
 	       (lambda (this msg req)
@@ -196,7 +200,7 @@
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
 	  (request (get/default req 'currentRequest %this (current-request)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contenttype %this #f))
+	  (content-type (get/default req 'contentType %this #f))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (value obj))
        (instantiate::http-response-hop
@@ -212,11 +216,25 @@
        (instantiate::http-response-file
 	  (request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
-	  (content-type (get/default req 'contenttype %this #f))
+	  (content-type (get/default req 'contentType %this #f))
 	  (file (js-tostring file %this)))
        (instantiate::http-response-file
 	  (request (if (eq? req (js-undefined)) (current-request) req))
 	  (file (js-tostring file %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-response-string ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hopjs-response-string this string req %this)
+   (if (isa? req JsObject)
+       (instantiate::http-response-string
+	  (request (get/default req 'currentRequest %this (current-request)))
+	  (charset (get/default req 'charset %this (hop-charset)))
+	  (content-type (get/default req 'contentType %this #f))
+	  (body (js-tostring string %this)))
+       (instantiate::http-response-string
+	  (request (if (eq? req (js-undefined)) (current-request) req))
+	  (body (js-tostring string %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-authentication ...                                */
@@ -235,6 +253,7 @@
       (lambda (k)
 	 (with-handler
 	    (lambda (e)
+	       (tprint "ERR: " e)
 	       (cond
 		  ((isa? e JsError) (exception-notify e))
 		  ((isa? e &error) (error-notify e)))
@@ -250,7 +269,7 @@
 	  (instantiate::http-response-async
 	     (request req)
 	     (charset (get/default req 'charset %this (hop-charset)))
-	     (content-type (get/default req 'contenttype %this #f))
+	     (content-type (get/default req 'contentType %this #f))
 	     (async (async-proc req))))
        (let ((req (if (eq? req (js-undefined)) (current-request) req)))
 	  (instantiate::http-response-async

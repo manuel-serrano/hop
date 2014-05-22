@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Fri May 16 09:55:36 2014 (serrano)                */
+;*    Last change :  Thu May 22 09:54:39 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -70,9 +70,13 @@
 	    :set (js-make-function %this
 		    (lambda (this p)
 		       (with-access::JsTimer this (timer proc worker)
+			  (unless (isa? p JsFunction)
+			     (js-raise-type-error %this
+				"ontimeout: not a function ~s" p))
 			  (set! proc p)
 			  (nodejs-timer-callback-set! timer
 			     (lambda (timer status)
+				(tprint "invoke timeout...")
 				(js-worker-push-thunk! worker
 				   (lambda ()
 				      (js-call0 %this p obj)))))))
@@ -101,5 +105,11 @@
 		(lambda (this)
 		   (with-access::JsTimer this (timer)
 		      (nodejs-timer-stop timer)))
-		0 "stop")))
+		0 "stop"))
+   (js-bind! %this obj 'unref
+      :value (js-make-function %this
+		(lambda (this)
+		   (with-access::JsTimer this (timer)
+		      (nodejs-timer-unref timer)))
+		0 "unref")))
 					

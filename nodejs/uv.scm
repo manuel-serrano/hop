@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri May 16 10:00:33 2014 (serrano)                */
+;*    Last change :  Thu May 22 09:55:21 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -25,7 +25,8 @@
 	   (nodejs-timer-callback-set! ::obj ::procedure)
 	   (nodejs-timer-start ::obj ::long ::long)
 	   (nodejs-timer-close ::obj)
-	   (nodejs-timer-stop ::obj)))
+	   (nodejs-timer-stop ::obj)
+	   (nodejs-timer-unref ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -119,4 +120,18 @@
 	  (uv-async-send uv-async)))
       (else
        (%nodejs-timer-stop timer))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-timer-unref ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-timer-unref timer)
+   (cond-expand
+      (enable-libuv
+       (synchronize uv-mutex
+	  (set! uv-actions
+	     (cons (lambda () (uv-unref timer))
+		uv-actions))
+	  (uv-async-send uv-async)))
+      (else
+       #unspecified)))
 
