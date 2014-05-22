@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Thu May 22 09:54:39 2014 (serrano)                */
+;*    Last change :  Thu May 22 17:44:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -76,7 +76,6 @@
 			  (set! proc p)
 			  (nodejs-timer-callback-set! timer
 			     (lambda (timer status)
-				(tprint "invoke timeout...")
 				(js-worker-push-thunk! worker
 				   (lambda ()
 				      (js-call0 %this p obj)))))))
@@ -92,7 +91,8 @@
       :value (js-make-function %this
 		(lambda (this start rep)
 		   (with-access::JsTimer this (timer)
-		      (nodejs-timer-start timer start rep)))
+		      (nodejs-timer-start timer
+			 (js-touint32 start %this) (js-touint32 rep %this))))
 		2 "start"))
    (js-bind! %this obj 'close
       :value (js-make-function %this

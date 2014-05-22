@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May 22 09:55:21 2014 (serrano)                */
+;*    Last change :  Thu May 22 17:43:54 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -23,7 +23,7 @@
    (export (nodejs-event-loop)
 	   (nodejs-make-timer)
 	   (nodejs-timer-callback-set! ::obj ::procedure)
-	   (nodejs-timer-start ::obj ::long ::long)
+	   (nodejs-timer-start ::obj ::uint32 ::uint32)
 	   (nodejs-timer-close ::obj)
 	   (nodejs-timer-stop ::obj)
 	   (nodejs-timer-unref ::obj)))
@@ -87,7 +87,10 @@
       (enable-libuv
        (synchronize uv-mutex
 	  (set! uv-actions
-	     (cons (lambda () (uv-timer-start timer start rep))
+	     (cons (lambda ()
+		      (uv-timer-start timer
+			 (llong->uint64 (uint32->llong start))
+			 (llong->uint64 (uint32->llong rep))))
 		uv-actions))
 	  (uv-async-send uv-async)))
       (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Apr 17 08:30:46 2014 (serrano)                */
+;*    Last change :  Thu May 22 17:18:39 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -29,7 +29,8 @@
 	    __hop_xml-types
 	    __hop_http-error
 	    __hop_http-lib
-	    __hop_weblets)
+	    __hop_weblets
+	    __hop_xml)
    
    (with    __hop_event)
    
@@ -261,6 +262,8 @@
 			 ((or parse-json json->obj) p))
 			((application/x-javascript)
 			 (javascript->obj p))
+			((text/html application/xhtml+xml)
+			 (parse-html p))
 			(else
 			 (read-string p)))))
 	     (success obj)))

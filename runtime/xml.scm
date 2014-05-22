@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri May 16 13:32:21 2014 (serrano)                */
+;*    Last change :  Thu May 22 17:17:10 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -60,7 +60,8 @@
 	    (xml-attribute-encode obj)
 
 	    (xml->string ::obj ::xml-backend)
-	    
+
+	    (parse-html ::input-port)
 	    (string->html ::bstring)
 	    (string->xml ::bstring)
 
@@ -853,21 +854,25 @@
 	      (error "string->xml" "Illegal markup" constr))))))
 
 ;*---------------------------------------------------------------------*/
-;*    string->html ...                                                 */
+;*    parse-html ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (string->html h)
-   (with-input-from-string h
-      (lambda ()
-	 (html-parse
-	  (current-input-port)
-	  :content-length 0
-	  :procedure (lambda (tag attributes body)
-			(let ((constr (string->symbol
-				       (string-append
+(define (parse-html ip)
+   (html-parse
+      (current-input-port)
+      :content-length 0
+      :procedure (lambda (tag attributes body)
+		    (let ((constr (string->symbol
+				     (string-append
 					"<"
 					(string-upcase (symbol->string! tag))
 					">"))))
-			   (eval-markup constr attributes body)))))))
+		       (eval-markup constr attributes body)))))
+
+;*---------------------------------------------------------------------*/
+;*    string->html ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (string->html h)
+   (with-input-from-string h parse-html))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->xml ...                                                  */
