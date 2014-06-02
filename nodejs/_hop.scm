@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu May 22 10:37:23 2014 (serrano)                */
+;*    Last change :  Sun May 25 05:55:39 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -103,6 +103,15 @@
 	       (lambda (this r g b)
 		  (make-hex-color r g b)))
 
+	    ;; Lists
+	    (define-js List -1
+	       (lambda (this . l)
+		  l))
+
+	    (define-js Cons 2
+	       (lambda (this car cdr)
+		  (cons car cdr)))
+	    
 	    ))))
 ;* 	    ;; websocket                                               */
 ;* 	    (define-js WebSocket 1                                     */

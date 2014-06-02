@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Mar 20 20:49:09 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:43:30 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -24,7 +24,7 @@
 ;*    j2s-dump-stage ...                                               */
 ;*---------------------------------------------------------------------*/
 (define j2s-dump-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "dump")
       (comment "Dump the AST for debug")
       (proc j2s-dump)

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Feb 21 17:01:13 2014 (serrano)                */
+#*    Last change :  Sun May 25 20:39:32 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -30,7 +30,7 @@ POPULATION	= Makefile Makefile.weblet \
                   js2scheme.init.in hopscript.init.in nodejs.init.in \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
-                  hopc.sh.in hopwidget.init.in hglog.scm
+                  hopc.sh.in hopwidget.init.in hglog.scm hopjs.el
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

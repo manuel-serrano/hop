@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue May  6 09:15:12 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -29,7 +29,7 @@
 ;*    j2s-hopscript-header-stage ...                                   */
 ;*---------------------------------------------------------------------*/
 (define j2s-hopscript-header-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "hopscript-header")
       (comment "HopScript Header (global JS variables and module declaration)")
       (proc j2s-hopscript-header)))

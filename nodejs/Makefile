@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed May 21 12:18:51 2014 (serrano)                */
+#*    Last change :  Sat May 24 06:47:58 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -77,7 +77,7 @@ build:
          export PATH; \
 	 $(MAKE) $(BACKEND))
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 #*---------------------------------------------------------------------*/

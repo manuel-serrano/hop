@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/out.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/out.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Sat Sep  7 13:37:01 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue May 27 15:34:49 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -261,9 +261,11 @@
 			(if (config 'use-strict/function)
 			    "\n\"use strict\";\n" "\n"))
 	       p)))
-      (compile-value-circle obj p host-compiler loc cache)
-      (when (pair? cache)
-	 (display ";})" p))))
+      (multiple-value-bind (res cyclic)
+	 (compile-value-circle obj p host-compiler loc cache)
+	 (when (pair? cache)
+	    (display ";}," p)
+	    (display (if cyclic "false)" "true)") p)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-value ...                                               */
@@ -446,7 +448,8 @@
 	 (else
 	  (compile-cyclic val p))))
    
-   (compile val p))
+   (let ((exp (compile val p)))
+      (values exp (>fx index -1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Const ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 22 08:52:05 2014 (serrano)                */
+;*    Last change :  Sun May 25 06:05:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -72,7 +72,7 @@
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 	   (js-tostring::bstring ::obj ::JsGlobalObject)
-	   (js-toobject::JsObject ::JsGlobalObject ::obj)
+	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   
 	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
 	   (js-equality? ::obj ::obj ::JsGlobalObject)
@@ -791,6 +791,8 @@
        (with-access::JsGlobalObject %this (js-boolean)
 	  (js-new1 %this js-boolean o)))
       ((isa? o JsObject)
+       o)
+      ((pair? o)
        o)
       (else
        (js-raise-type-error %this "toObject: cannot convert ~s" o))))

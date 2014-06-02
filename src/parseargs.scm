@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Apr  5 11:57:59 2014 (serrano)                */
+;*    Last change :  Wed May 28 18:17:48 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hop_parseargs
 
-   (library scheme2js hopscheme hop hopwidget web)
+   (include "libraries.sch")
 
    (import  hop_param
 	    hop_init)
@@ -398,7 +398,9 @@
 	 :precompiled->JS-statement hopscheme->JS-statement
 	 :precompiled->JS-return hopscheme->JS-return
 	 :precompiled-declared-variables hopscheme-declared
-	 :precompiled-free-variables hopscheme-free)
+	 :precompiled-free-variables hopscheme-free
+	 :filename-resolver hop-clientc-filename-resolver
+	 :jsc nodejs-compile-file)
       
       (init-hop-services!)
       (init-hop-widgets!)
@@ -614,3 +616,12 @@
 	  (path (make-file-name dir (key-filename port))))
       (when (file-exists? path) (delete-file path))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-clientc-filename-resolver ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-clientc-filename-resolver name path)
+   (cond
+      ((string-suffix? ".js" name)
+       (nodejs-resolve-filename name path))
+      (else
+       (find-file/path name path))))

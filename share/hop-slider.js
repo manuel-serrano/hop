@@ -25,14 +25,6 @@ function hop_slider_value_set( slider, value ) {
 
    value = Math.round( value / slider.step ) * slider.step;
 
-/*    if( (slider.id == "hopdac-controls-volume") ) {                  */
-/*       hop_tprint( "hop-slider.js", 1,                               */
-/* 		  sc_cons( "value_set: ",                              */
-/* 			   sc_cons( value + "",                        */
-/* 				    sc_cons( " cur_value=" ,           */
-/* 					     sc_cons( slider.value + "", null ))))); */
-/*    }                                                                */
-   
    if( slider.value != value ) {
       if( value < slider.min ) {
 	 value = slider.min;
@@ -47,17 +39,6 @@ function hop_slider_value_set( slider, value ) {
 
       slider.value = value;
 
-/*       if( (slider.id == "hopdac-controls-volume") ) {               */
-/* 	 hop_tprint( "hop-slider.js", 2,                               */
-/* 		  sc_cons( "cwidth: ",                                 */
-/* 			   sc_cons( slider.clientWidth + "",           */
-/* 				    sc_cons( "v=",                     */
-/* 					     sc_cons( v + "",          */
-/* 						      sc_cons( " w=" , */
-/* 							       sc_cons( w + "", */
-/* 									null ))))))); */
-/*       }                                                             */
-   
       if( slider.clientWidth > 0 ) {
 	 node_style_set( slider.line1, "width", Math.round(v * w) + "px" );
 	 node_style_set( slider.line2, "width", Math.round((1-v) * w) + "px");

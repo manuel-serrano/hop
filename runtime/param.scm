@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Apr 20 08:00:33 2014 (serrano)                */
+;*    Last change :  Wed May 28 18:28:29 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -719,7 +719,7 @@
 ;*    The suffixes of the client compilation urls                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-client-script-suffixes
-   '("hop" "scm"))
+   '("scm" "hop"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-suffixes ...                                          */
@@ -917,7 +917,7 @@
 ;*    disc into the charset specified by HOP-CHARSET.                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-locale
-   (case (string->symbol (os-charset))
+   (case (string->symbol (suffix (os-charset)))
       ((UTF-8) 'UTF-8)
       (else 'ISO-8859-1))
    (lambda (v)

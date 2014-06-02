@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 21 13:29:16 2014 (serrano)                */
+;*    Last change :  Sun May 25 06:01:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -22,7 +22,8 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_pair)
    
    (export (js-toname::symbol ::obj ::JsGlobalObject)
 	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
@@ -485,10 +486,12 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get _o prop %this::JsGlobalObject)
-   (let ((o (js-toobject %this _o)))
-      (if o
-	  (js-get/base o _o prop %this)
-	  (js-raise-type-error %this "[[GET]]: not an object ~s" _o))))
+   (if (pair? _o)
+       (js-get-pair _o prop %this)
+       (let ((o (js-toobject %this _o)))
+	  (if o
+	      (js-get/base o _o prop %this)
+	      (js-raise-type-error %this "[[GET]]: not an object ~s" _o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::Object ...                                              */

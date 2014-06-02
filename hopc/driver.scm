@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Apr 16 13:05:52 2014 (serrano)                */
+;*    Last change :  Mon May 26 08:46:25 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -97,6 +97,15 @@
       (hopscheme-compile-file p
 	 (if (string? (hopc-destination)) (hopc-destination) "-")
 	 '()))
+
+   (define (j2s-driver)
+      (cond
+	 ((string? (hopc-js-driver))
+	  (j2s-make-driver (string-split (hopc-js-driver) ",")))
+	 ((>=fx (hopc-optim-level) 1)
+	  (j2s-optim-driver))
+	 (else
+	  (j2s-plain-driver))))
    
    (define (compile-module exp)
       (match-case exp
@@ -129,11 +138,7 @@
       (define (generate-hopscript out::output-port)
 	 (for-each (lambda (exp) (pp exp out))
 	    (j2s-compile in
-	       :driver (cond
-			  ((>=fx (hopc-optim-level) 1)
-			   (j2s-optim-driver))
-			  (else
-			   (j2s-plain-driver)))
+	       :driver (j2s-driver)
 	       :worker (hopc-js-worker)
 	       :module-main (if (boolean? (hopc-js-module-main))
 				(hopc-js-module-main)
@@ -205,9 +210,7 @@
 	       ;; compile
 	       (map (lambda (e) (write (obj->string e) out))
 		  (j2s-compile in
-		     :driver (if (>=fx (hopc-optim-level) 1)
-				 (j2s-optim-driver)
-				 (j2s-plain-driver))
+		     :driver (j2s-driver)
 		     :worker (hopc-js-worker)
 		     :module-main (if (boolean? (hopc-js-module-main))
 				      (hopc-js-module-main)

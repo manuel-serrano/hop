@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/3.0.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat Aug 10 07:16:28 2013 (serrano)                */
+#*    Last change :  Sat May 24 06:48:04 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -83,7 +83,7 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 #*---------------------------------------------------------------------*/

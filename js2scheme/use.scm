@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/use.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct 23 09:36:07 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Sun May 25 18:45:00 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -27,7 +27,7 @@
 ;*    j2s-use-stage ...                                                */
 ;*---------------------------------------------------------------------*/
 (define j2s-use-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "use")
       (comment "Count the occurrence of all variables")
       (proc j2s-use!)

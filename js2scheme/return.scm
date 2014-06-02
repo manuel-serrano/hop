@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Apr 14 13:40:43 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -31,7 +31,7 @@
 ;*    j2s-return-stage ...                                             */
 ;*---------------------------------------------------------------------*/
 (define j2s-return-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "return")
       (comment "Mark functions that need a Bigloo bind-exit for return")
       (proc j2s-return)))

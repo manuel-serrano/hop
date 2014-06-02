@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Apr 14 13:39:01 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -32,7 +32,7 @@
 ;*    j2s-loopexit-stage ...                                           */
 ;*---------------------------------------------------------------------*/
 (define j2s-loopexit-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (optional #f)
       (name "loopexit")
       (comment "Bind loop labels and mark loops that don't need bind-exit")

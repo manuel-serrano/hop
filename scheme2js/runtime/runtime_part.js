@@ -217,11 +217,15 @@ function sc_withHandlerLambda(handler, body) {
  */
 var sc_circle_cache = new Array;
 
-function sc_circle( len, proc ) {
-   for( var i = 0; i < len; i++ ) {
-      sc_circle_cache[ i ] = false;
+function sc_circle( len, proc, flat ) {
+   if( flat ) {
+      return proc( undefined );
+   } else {
+      for( var i = 0; i < len; i++ ) {
+	 sc_circle_cache[ i ] = false;
+      }
+      return sc_circle_force( sc_circle_cache, proc( sc_circle_cache ) );
    }
-   return sc_circle_force( sc_circle_cache, proc( sc_circle_cache ) );
 }
 
 function sc_circle_delay( i ) {
@@ -1314,12 +1318,38 @@ if( dynamic_type_check ) {
       get: function() { return this.__safe_hop_cdr; },
       set: function( v ) { this.__safe_hop_cdr = v; }
    } );
+   
+   Object.defineProperty( sc_Pair.prototype, "car", {
+      enumerable: true,
+      get: function() { return this.__safe_hop_car; },
+      set: function( v ) { this.__safe_hop_car = v; }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "cdr", {
+      enumerable: true,
+      get: function() { return this.__safe_hop_cdr; },
+      set: function( v ) { this.__safe_hop_cdr = v; }
+   } );
 }
 #else
 function sc_Pair(car, cdr) {
    this.__hop_car = car;
    this.__hop_cdr = cdr;
 }
+
+   // MS TO BE FIXED, if pair are to be bound in JS, __hop_car/car
+   Object.defineProperty( sc_Pair.prototype, "car", {
+      enumerable: true,
+      get: function() { return this.__hop_car; },
+      set: function( v ) { this.__hop_car = v; }
+   } );
+
+   Object.defineProperty( sc_Pair.prototype, "cdr", {
+      enumerable: true,
+      get: function() { return this.__hop_cdr; },
+      set: function( v ) { this.__hop_cdr = v; }
+   } );
+   
 #endif
 
 sc_Pair.prototype.toString = function() {
@@ -1354,6 +1384,21 @@ sc_Pair.prototype.sc_toWriteString = function() {
 };
 // sc_Pair.prototype.sc_toWriteCircleString in IO.js
 
+sc_Pair.prototype.length = function(){
+   return sc_length(this);
+}
+sc_Pair.prototype.reverse = function() {
+   return sc_reverse(this);
+}
+sc_Pair.prototype.forEach = function(p) {
+   return sc_forEach(p,this);
+}
+sc_Pair.prototype.assoc = function(o) {
+   return sc_assoc(o,this);
+}
+sc_Pair.prototype.concat = function() {
+   return sc_dualAppend(this,sc_append.apply(this, arguments));
+}
 /*** META ((export #t) (arity #t)
            (type bool)
            (peephole (safe-postfix " instanceof sc_Pair")))

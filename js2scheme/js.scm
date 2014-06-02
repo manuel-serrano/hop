@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu May 15 21:10:19 2014 (serrano)                */
+;*    Last change :  Wed May 28 19:16:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -17,10 +17,21 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
-	   __js2scheme_scheme)
+	   __js2scheme_scheme
+	   __js2scheme_stage)
    
-   (export (generic j2s-js::pair-nil ::J2SNode tildec dollarc mode evalp)))
+   (export j2s-javascript-stage
+	   (generic j2s-js::pair-nil ::J2SNode tildec dollarc mode evalp)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-javascript-stage ...                                         */
+;*---------------------------------------------------------------------*/
+(define j2s-javascript-stage
+   (instantiate::J2SStageProc
+      (name "javascript")
+      (comment "JavaScript code generation")
+      (proc (lambda (ast args) (j2s-js ast #f #f 'normal (lambda (x) x))))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -213,6 +224,14 @@
 (define-method (j2s-js this::J2SSequence tildec dollarc mode evalp)
    (with-access::J2SSequence this (exprs)
       (j2s-js* "(" ")" "," exprs tildec dollarc mode evalp)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SRef ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SRef tildec dollarc mode evalp)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (id name global)
+	 (list (or name (j2s-scheme-id id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SUnresolvedRef ...                                    */
@@ -425,7 +444,7 @@
 (define-method (j2s-js this::J2SAssigOp tildec dollarc mode evalp)
    (with-access::J2SAssigOp this (op lhs rhs)
       (append (j2s-js lhs tildec dollarc mode evalp)
-	 (list op)
+	 (list op "=")
 	 (j2s-js rhs tildec dollarc mode evalp))))
 
 ;*---------------------------------------------------------------------*/

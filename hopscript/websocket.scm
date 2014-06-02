@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed May 21 13:29:45 2014 (serrano)                */
+;*    Last change :  Sat May 24 06:24:11 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -159,7 +159,9 @@
 	 (js-bind! %this %this 'WebSocket
 	    :configurable #f :enumerable #f :value js-websocket)
 	 (js-bind! %this %this 'WebSocketServer
-	    :configurable #f :enumerable #f :value js-websocket-server))))
+	    :configurable #f :enumerable #f :value js-websocket-server)
+
+	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-websocket-prototype! ...                            */

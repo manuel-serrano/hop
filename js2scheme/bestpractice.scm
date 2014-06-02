@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Apr 14 13:39:26 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:45:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
@@ -27,7 +27,7 @@
 ;*    j2s-bestpractice-stage ...                                       */
 ;*---------------------------------------------------------------------*/
 (define j2s-bestpractice-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "bestpractice")
       (comment "Enforce strict mode best practice rules")
       (proc j2s-bestpractice)

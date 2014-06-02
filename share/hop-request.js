@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed May 21 10:43:18 2014 (serrano)                */
+/*    Last change :  Sat May 24 08:15:11 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -385,7 +385,22 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 function Hop( svc, success, failure ) {
    return withHOP( svc, success, { fail: failure } );
 }
-			    
+
+/*---------------------------------------------------------------------*/
+/*    HopFrame ...                                                     */
+/*---------------------------------------------------------------------*/
+function HopFrame( url ) {
+   this.url = url;
+}
+
+HopFrame.prototype.toString = function() {
+   return this.url;
+}
+
+HopFrame.prototype.post = function post( success, opt ) {
+   return withHOP( this.url, success, opt );
+}
+   
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Feb 21 16:58:37 2014 (serrano)                */
+#*    Last change :  Sat May 24 08:58:26 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
@@ -64,7 +64,7 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 #*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Apr 19 08:31:53 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:43:07 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -31,7 +31,7 @@
 ;*    j2s-syntax-stage ...                                             */
 ;*---------------------------------------------------------------------*/
 (define j2s-syntax-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "syntax")
       (comment "Post parsing syntactic checks")
       (proc j2s-syntax)))

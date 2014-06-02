@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/make_lib.scm            */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/make_lib.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sun Oct  6 08:50:41 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Mon May 26 08:39:44 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
 ;*=====================================================================*/
@@ -26,6 +26,8 @@
 	   __js2scheme_stage)
    
    (eval   (class J2SStage)
+           (class J2SStageProc)
+           (class J2SStageUrl)
 
            (class J2SProgram)
       

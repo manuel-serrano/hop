@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 21 10:31:35 2014 (serrano)                */
+;*    Last change :  Wed May 28 19:31:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_require
 
-   (library hop hopscript js2scheme)
+   (library hop hopscript js2scheme web)
 
    (import __nodejs
 	   __nodejs_process)
@@ -22,8 +22,34 @@
    (export (%nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
 	   (nodejs-require ::bstring ::WorkerHopThread ::JsGlobalObject ::procedure)
 	   (nodejs-load ::bstring ::WorkerHopThread ::procedure)
+	   (nodejs-compile-file ::bstring ::bstring ::bstring)
+	   (nodejs-resolve-filename ::bstring ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
 	   (nodejs-auto-require! ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-file ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-file ifile name ofile)
+   (if (string=? ofile "-")
+       (module->javascript ifile (current-output-port) (basename ifile) #f #f)
+       (call-with-output-file ofile
+	  (lambda (op)
+	     (module->javascript ifile name op #f #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    module->javascript ...                                           */
+;*---------------------------------------------------------------------*/
+(define (module->javascript filename id op compile isexpr)
+   (fprintf op "hop_requires[ ~s ] = function() { " id)
+   (display "var exports = {}; " op)
+   (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports }\n" id filename)
+   (call-with-input-file filename
+      (lambda (in)
+	 (for-each (lambda (exp) (display exp op))
+	    (j2s-compile in
+	       :driver (j2s-javascript-driver)))))
+   (display "return exports;}\n" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-module ...                                               */
@@ -226,21 +252,24 @@
 	  '())))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-resolve ...                                               */
-;*    -------------------------------------------------------------    */
-;*    Resolve the path name according to the current module path.      */
+;*    nodejs-resolve-filename ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject)
+(define (nodejs-resolve-filename name::bstring path)
    
    (define (nodejs-resolve-package path)
       (let ((pkg (make-file-name path "package.json")))
 	 (when (file-exists? pkg)
 	    (call-with-input-file pkg
-	       (lambda (in)
-		  (let* ((o (js-json-parser in (js-undefined) %this))
-			 (m (js-tostring (js-get o 'main %this) %this)))
-		     (when (string? m)
-			(make-file-name path m))))))))
+	       (lambda (ip)
+		  (let* ((o (json-parse ip
+			       :object-alloc (lambda () (list '#unspecified))
+			       :object-set (lambda (o p val)
+					      (set-cdr! o
+						 (cons (cons p val) o)))
+			       :object-return cdr))
+			 (m (assq 'main o)))
+		     (when (and (pair? m) (string? (cdr m)))
+			(make-file-name path (cdr m)))))))))
    
    (define (suffix name)
       (if (string-suffix? ".js" name )
@@ -252,25 +281,38 @@
 	  (nodejs-resolve-package name)
 	  (suffix name)))
 
-   (cond
-      ((string-null? name)
-       #f)
-      ((char=? (string-ref name 0) (file-separator))
-       (package-or-file name))
-      ((or (string-prefix? "./" name) (string-prefix? "../" name))
-       (package-or-file (file-name-canonicalize! (make-file-path (pwd) name))))
-      (else
+   (define (resolve-in-dir dir)
+      (cond
+	 ((string-null? name)
+	  #f)
+	 ((char=? (string-ref name 0) (file-separator))
+	  (package-or-file name))
+	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
+	  (package-or-file (file-name-canonicalize! (make-file-path dir name))))
+	 (else
+	  #f)))
+
+   (any (lambda (dir)
+	   (let ((path (make-file-name dir name)))
+	      (if (directory? path)
+		  (nodejs-resolve-package path)
+		  (let ((src (suffix path)))
+		     (when (file-exists? src)
+			src)))))
+      path))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-resolve ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Resolve the path name according to the current module path.      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-resolve name::bstring %this::JsGlobalObject)
+   (or (nodejs-resolve-filename name (cons (pwd) (nodejs-env-path)))
        (let ((module (js-get %this 'module %this)))
 	  (when (isa? module JsObject)
-	     (any (lambda (dir)
-		     (let ((path (make-file-name dir name)))
-			(if (directory? path)
-			    (nodejs-resolve-package path)
-			    (let ((src (suffix path)))
-			       (when (file-exists? src)
-				  src)))))
+	     (nodejs-resolve-filename name
 		(append (vector->list (js-get module 'paths %this))
-		   (nodejs-env-path))))))))
+		   (nodejs-env-path)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-cache-module ...                                          */

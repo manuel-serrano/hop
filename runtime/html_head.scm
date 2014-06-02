@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Apr 19 08:04:12 2014 (serrano)                */
+;*    Last change :  Wed May 28 18:54:44 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -228,6 +228,10 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
       (<SCRIPT> :type (hop-mime-type)
 	 :inline inl :src p))
    
+   (define (require p m inl)
+      (<REQUIRE> :type (hop-mime-type)
+	 :inline inl :src p :mod m))
+   
    (define (find-head p)
       (call-with-input-file p
 	 (lambda (in)
@@ -364,7 +368,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (mode #f)
 	      (rts #t)
 	      (dir #f)
-	      (path '())
+	      (path (list (pwd)))
 	      (base #f)
 	      (inl #f)
 	      (packed #t)
@@ -388,7 +392,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (if (null? (cdr a))
 	      (error "<HEAD>" (format "Missing ~a value" (car a)) a)
 	      (case (car a)
-		 ((:css :jscript :include :hz :library)
+		 ((:css :jscript :require :include :hz :library)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
 		  (if (string? (cadr a))
@@ -446,6 +450,12 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
+	     ((:require)
+	      (let ((file (clientc-resolve-filename (car a) path)))
+		 (if (not file)
+		     (error "<HEAD>" "Cannot find required file" file)
+		     (loop (cdr a) mode rts dir path base inl packed 
+			(cons (require file (car a) inl) els)))))
 	     ((:library)
 	      (let ((file (find-file/path (car a) (library-path))))
 		 (if (not (string? file))
@@ -590,10 +600,12 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
    
    (define (default src)
       (if (string? src)
-	  (let ((src (if (member (suffix src) (hop-client-script-suffixes))
-			 (clientc-url src)
-			 src)))
-	     (when inline (warning '<SCRIPT> "Cannot inline file -- " src))
+	  (let ((src (cond
+			((member (suffix src) (hop-client-script-suffixes))
+			 (string-append src "?" (hop-scm-compile-suffix)))
+			(else
+			 src))))
+	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(tag 'script)
 		(attributes `(:src ,src type: ,type ,@attributes))
@@ -604,9 +616,11 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	     (body body))))
    
    (define (inl src)
-      (let ((body (if (member (suffix src) (hop-client-script-suffixes))
-		      (get-clientc-compiled-file src)
-		      (with-input-from-file src read-string))))
+      (let ((body (cond
+		     ((member (suffix src) (hop-client-script-suffixes))
+		      (get-clientc-compiled-file src src))
+		     (else
+		      (with-input-from-file src read-string)))))
 	 (if body
 	     (instantiate::xml-cdata
 		(tag 'script)
@@ -620,6 +634,49 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (inl src)
 	      (default src))
 	  (default src))))
+ 
+;*---------------------------------------------------------------------*/
+;*    REQUIRE ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-tag <REQUIRE> ((inline #f boolean)
+		       (src #unspecified string)
+		       (mod #unspecified string)
+		       (id #unspecified string)
+		       (type (hop-mime-type) string)
+		       (attributes)
+		       body)
+   
+   (define (default src)
+      (if (string? src)
+	  (let ((src (string-append src "?js=" (or mod src))))
+	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
+	     (instantiate::xml-cdata
+		(tag 'script)
+		(attributes `(:src ,src type: ,type ,@attributes))
+		(body body)))
+	  (instantiate::xml-cdata
+	     (tag 'script)
+	     (attributes `(:type ,type ,@attributes))
+	     (body body))))
+   
+   (define (inl src)
+      (let ((body (cond
+		     ((member (suffix src) (hop-client-script-suffixes))
+		      (get-clientc-compiled-file src mod))
+		     (else
+		      (with-input-from-file src read-string)))))
+	 (if body
+	     (instantiate::xml-cdata
+		(tag 'script)
+		(attributes `(:type ,type ,@attributes))
+		(body (list "\n" body)))
+	     (default src))))
+   
+   (if (and inline (string? src))
+       (if (file-exists? src)
+	   (inl src)
+	   (default src))
+       (default src)))
  
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */

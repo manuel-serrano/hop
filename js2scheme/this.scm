@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Apr 14 13:40:05 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -27,7 +27,7 @@
 ;*    j2s-this-stage ...                                               */
 ;*---------------------------------------------------------------------*/
 (define j2s-this-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "this")
       (comment "Init the this variable of non-strict functions")
       (proc j2s-this)

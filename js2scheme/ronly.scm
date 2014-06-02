@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Mon Apr 14 13:40:26 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -26,7 +26,7 @@
 ;*    j2s-ronly-stage ...                                              */
 ;*---------------------------------------------------------------------*/
 (define j2s-ronly-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "read-only")
       (comment "Mark read-only variables")
       (proc j2s-ronly)))

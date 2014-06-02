@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Apr 17 11:12:44 2014 (serrano)                */
+;*    Last change :  Wed May 28 19:15:29 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -33,7 +33,7 @@
 ;*    j2s-symbol-stage                                                 */
 ;*---------------------------------------------------------------------*/
 (define j2s-symbol-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "symbol")
       (comment "symbol resolution")
       (proc j2s-symbol)))
@@ -153,7 +153,7 @@
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "js-symbol")
-			 (msg "Illegal duplicate parameter name")
+			 (msg "illegal duplicate parameter name")
 			 (obj id)
 			 (fname (cadr loc))
 			 (location (caddr loc))))))))))
@@ -203,7 +203,7 @@
 	     (nwenv (cons arguments (append decls params wenv))))
 	 (if (pair? decls)
 	     (set! body
-		(instantiate::J2SBlock
+		(instantiate::J2SSeq
 		   (loc loc)
 		   (nodes (append
 			     (bind-decls! decls nenv fmode #f withs wenv)
@@ -324,7 +324,7 @@
 				      (unless (isa? nd J2SNop) nd)))
 		       decls)))
 	 (if (pair? ndecls)
-	     (instantiate::J2SBlock
+	     (instantiate::J2SSeq
 		(loc loc)
 		(nodes ndecls))
 	     (instantiate::J2SNop
@@ -341,7 +341,7 @@
        (raise
 	  (instantiate::&io-parse-error
 	     (proc "js-symbol")
-	     (msg "Variable name may not be eval or arguments in strict mode")
+	     (msg "variable name may not be eval or arguments in strict mode")
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))
@@ -349,7 +349,7 @@
        (raise
 	  (instantiate::&io-parse-error
 	     (proc "js-symbol")
-	     (msg "Variable name may not be a reserved name")
+	     (msg "variable name may not be a reserved name")
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
@@ -459,7 +459,7 @@
 			  (loop (cdr inits) (cons (car inits) ninits)))
 			 ((not (eq? (object-class old) (object-class (car inits))))
 			  (property-error name
-			     "Duplicate data property in object literal not allowed in strict mode"
+			     "duplicate data property in object literal not allowed in strict mode"
 			     loc))
 			 ((isa? (car inits) J2SAccessorPropertyInit)
 			  (with-access::J2SAccessorPropertyInit (car inits) (get set)
@@ -470,7 +470,7 @@
 					(and (proc? oget) (proc? get))
 					(and (proc? oset) (proc? set)))
 				    (property-error name
-				       "Duplicate data property in object literal not allowed in strict mode"
+				       "duplicate data property in object literal not allowed in strict mode"
 				       loc)
 				    (begin
 				       (unless (proc? oset) (set! oset set))
@@ -478,7 +478,7 @@
 				       (loop (cdr inits) ninits))))))
 			 ((eq? mode 'strict)
 			  (property-error name
-			     "Duplicate data property in object literal not allowed in strict mode"
+			     "duplicate data property in object literal not allowed in strict mode"
 			     loc))
 			 (else
 			  (loop (cdr inits) (cons (car inits) ninits))))))))))
@@ -494,7 +494,7 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "js-symbol")
-		(msg "Octal literals are not allowed in strict mode")
+		(msg "octal literals are not allowed in strict mode")
 		(obj val)
 		(fname (cadr loc))
 		(location (caddr loc)))))
@@ -509,7 +509,7 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "js-symbol")
-		(msg "Octal literals are not allowed in strict mode")
+		(msg "octal literals are not allowed in strict mode")
 		(obj val)
 		(fname (cadr loc))
 		(location (caddr loc))))

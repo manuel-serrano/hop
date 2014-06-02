@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May 21 11:33:59 2014 (serrano)                */
+;*    Last change :  Sat May 24 06:36:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -76,6 +76,7 @@
 	      (js-date::JsFunction (default (class-nil JsFunction)))
 	      (js-json::JsJSON (default (class-nil JsJSON)))
 	      (js-service-prototype::JsService (default (class-nil JsService)))
+	      (js-hopframe-prototype (default (class-nil JsFunction)))
 	      (js-error::JsFunction (default (class-nil JsFunction)))
 	      (js-syntax-error::JsFunction (default (class-nil JsFunction)))
 	      (js-type-error::JsFunction (default (class-nil JsFunction)))

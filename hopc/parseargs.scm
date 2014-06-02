@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr 16 13:04:55 2014 (serrano)                */
+;*    Last change :  Mon May 26 08:48:46 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -136,6 +136,8 @@
 	     (hopc-js-module-main-set! #f))
 	    (("--no-js-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))
+	    (("--js-driver" ?driver (help "Set j2s compiler driver"))
+	     (hopc-js-driver-set! driver))
 	    (else
 	     (if (string=? else "--")
 		 (begin
@@ -144,12 +146,13 @@
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       (when loadp
-	 (if (string? rc-file)
-	     (%hopc-load-rc rc-file)
-	     (let ((path (make-file-name (hop-rc-directory) (hopc-rc-file))))
-		(if (file-exists? path)
-		    (%hopc-load-rc path)
-		    (%hopc-load-rc (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
+	 (%hopc-load-rc
+	    (if (string? rc-file)
+		rc-file
+		(let ((path (make-file-name (hop-rc-directory) (hopc-rc-file))))
+		   (if (file-exists? path)
+		       path
+		       (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
       exprs))
 
 ;*---------------------------------------------------------------------*/

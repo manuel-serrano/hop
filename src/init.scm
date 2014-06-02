@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/3.0.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Jul 29 09:06:04 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed May 28 18:46:33 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -188,7 +188,9 @@
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
-	  (clientc-response req abspath))
+	  (clientc-response req abspath abspath))
+	 ((string-prefix? "js=" query)
+	  (clientc-response req abspath (substring query 3)))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
 	 (else

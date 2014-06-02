@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Apr 19 08:46:00 2014 (serrano)                */
+;*    Last change :  Sun May 25 19:08:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -110,7 +110,8 @@
 	      body::J2SNode)
 
 	   (class J2SSvc::J2SFun
-	      (init::J2SNode read-only))
+	      (init::J2SNode read-only)
+	      (register::bool read-only (default #t)))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
@@ -278,7 +279,7 @@
 	   (generic walk3!::J2SNode n::J2SNode p::procedure a0 a1 a2)
 	   (generic walk4!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
-	   
+
 	   (macro define-walk-method)))
 
 ;*---------------------------------------------------------------------*/

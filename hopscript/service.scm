@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed May 21 07:22:31 2014 (serrano)                */
+;*    Last change :  Sat May 24 08:14:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -24,20 +24,36 @@
 	   __hopscript_public
 	   __hopscript_property
 	   __hopscript_function
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_json)
+
+   (static (class JsHopFrame::JsObject
+	      (url read-only)))
 
    (export (js-init-service! ::JsGlobalObject)
+	   (js-make-hopframe ::JsGlobalObject url)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::hop-service)))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsHopFrame ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsHopFrame op compile isexpr)
+   (with-access::JsHopFrame o (url)
+      (display "new HopFrame(\"" op)
+      (display url op)
+      (display "\")" op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-service! %this::JsGlobalObject)
    ;; first, create the builtin prototype
-   (with-access::JsGlobalObject %this (js-function js-service-prototype)
+   (with-access::JsGlobalObject %this (__proto__ js-function
+					 js-service-prototype
+					 js-hopframe-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
-	 ;; create a HopScript regexp object constructor
+	 ;; service prototype
 	 (set! js-service-prototype
 	    (instantiate::JsService
 	       (__proto__ js-function-prototype)
@@ -50,7 +66,7 @@
 	       (procedure list)
 	       (svc #f)
 	       (extensible #t)))
-	 ;; prototype properties
+
 	 (js-bind! %this js-function-prototype 'resource
 	    :value (js-make-function %this
 		      (lambda (this file)
@@ -59,7 +75,92 @@
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
+	 
+	 ;; HopFrame prototype
+	 (set! js-hopframe-prototype
+	    (instantiate::JsObject
+	       (__proto__ __proto__)
+	       (extensible #t)))
+
+	 (js-bind! %this js-hopframe-prototype 'post
+	    :value (js-make-function %this
+		      (lambda (this success opt)
+			 (lambda (this::JsHopFrame)
+			    (with-access::JsHopFrame this (url)
+			       (post url success opt %this))))
+		      2 "post"))
+	 
+	 (js-bind! %this js-hopframe-prototype 'toString
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame)
+			 (with-access::JsHopFrame this (url)
+			    url))
+		      0 "toString"))
+	 
+	 ;; HopFrame constructor 
+	 (letrec ((js-hopframe (js-make-function %this
+				  (lambda (this url)
+				     (js-new %this js-hopframe url))
+				  1 "JsHopFrame"
+				  :__proto__ js-function-prototype
+				  :prototype js-hopframe-prototype
+				  :construct (lambda (this url)
+						(js-make-hopframe %this url)))))
+	    (js-bind! %this %this 'HopFrame
+	       :configurable #f :enumerable #f :value js-hopframe))
+	 
 	 (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-hopframe ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-make-hopframe %this::JsGlobalObject url)
+   (with-access::JsGlobalObject %this (js-hopframe-prototype)
+      (let ((obj (instantiate::JsHopFrame
+		    (url url)
+		    (__proto__ js-hopframe-prototype))))
+	 obj)))
+
+;*---------------------------------------------------------------------*/
+;*    post ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (post svc success opt %this)
+   
+   (define (parse-json in)
+      (js-json-parser in (js-undefined) %this))
+   
+   (let ((host "localhost")
+	 (port 8080)
+	 (user #f)
+	 (password #f)
+	 (authorization #f)
+	 (fail #f))
+      (unless (eq? opt (js-undefined))
+	 (let ((h (js-get opt 'host %this))
+	       (p (js-get opt 'port %this))
+	       (u (js-get opt 'user %this))
+	       (w (js-get opt 'password %this))
+	       (a (js-get opt 'authorization %this))
+	       (f (js-get opt 'fail %this)))
+	    (unless (eq? h (js-undefined))
+	       (set! host (js-tostring h %this)))
+	    (unless (eq? p (js-undefined))
+	       (set! port (js-tointeger p %this)))
+	    (unless (eq? u (js-undefined))
+	       (set! user u))
+	    (unless (eq? w (js-undefined))
+	       (set! password (js-tostring w %this)))
+	    (unless (eq? a (js-undefined))
+	       (set! authorization (js-tostring a %this)))
+	    (when (isa? f JsFunction)
+	       (set! fail (lambda (x) (js-call1 %this f %this x))))))
+      (with-hop-remote svc
+	 (if (isa? success JsFunction)
+	     (lambda (x) (js-call1 %this success %this x))
+	     (lambda (x) x))
+	 fail
+	 :host host :port port 
+	 :user user :password password :authorization authorization)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */

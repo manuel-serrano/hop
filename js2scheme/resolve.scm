@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/js2scheme/resolve.scm             */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/resolve.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct 23 14:37:39 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Sun May 25 18:45:03 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind all the unresolved variables.                               */
 ;*=====================================================================*/
@@ -27,7 +27,7 @@
 ;*    j2s-resolve-stage ...                                            */
 ;*---------------------------------------------------------------------*/
 (define j2s-resolve-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "resolve")
       (comment "Pre-bind in the global object unresolved global variables")
       (proc j2s-resolve)

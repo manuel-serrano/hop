@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu May 22 18:11:21 2014 (serrano)                */
+;*    Last change :  Mon May 26 16:52:59 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -46,7 +46,8 @@
 		      fail
 		      (header '())
 		      (timeout 0)
-		      (method "GET")
+		      (method 'GET)
+		      body
 		      parse-json)
 	    (with-hop-remote path success failure
 			     #!key
@@ -308,8 +309,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key fail (header '()) (timeout 0) (method "GET")
-		  parse-json)
+(define (with-url url success #!key fail (header '()) (timeout 0) (method 'GET)
+		  parse-json body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
@@ -357,24 +358,13 @@
 			      (header header)
 			      (connection-timeout timeout)
 			      (timeout timeout)
+			      (method method)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback 'with-url r suc fail
 				parse-json)))
-		    (when (>fx (bigloo-debug) 2)
-		       (with-output-to-port (current-error-port)
-			  (lambda ()
-			     (print method " " path " HTTP/1.1")
-			     (print "Host: " host)
-			     (print "Port: " port)
-			     (for-each (lambda (h)
-					  (display (keyword->string (car h)))
-					  (display ": ")
-					  (display (cadr h))
-					  (newline))
-				       header))))
 		    (trace-item "remote path=" path)
-		    (http-send-request r hdl)))))))))
+		    (http-send-request r hdl body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-remote ...                                              */

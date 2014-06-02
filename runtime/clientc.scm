@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/3.0.x/runtime/clientc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Aug 10 07:42:45 2013 (serrano)                */
-;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    Last change :  Wed May 28 18:55:04 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -44,7 +44,9 @@
 	       (precompiled->JS-return::procedure read-only)
 	       (precompiled->sexp::procedure read-only)
 	       (precompiled-declared-variables::procedure read-only)
-	       (precompiled-free-variables::procedure read-only))
+	       (precompiled-free-variables::procedure read-only)
+	       (jsc::procedure read-only)
+	       (filename-resolver::procedure read-only (default find-file/path)))
 
 	    (init-clientc-compiler! #!key
 				    filec expressionc valuec
@@ -55,14 +57,16 @@
 				    precompiled->JS-return
 				    precompiled->sexp
 				    precompiled-declared-variables
-				    precompiled-free-variables)
+				    precompiled-free-variables
+				    filename-resolver
+				    jsc)
 
 	    (current-module-clientc-import)
 	    
-	    (clientc-url ::bstring)
 	    (clientc-cached-response ::bstring)
-	    (clientc-response::%http-response ::http-request ::bstring)
-	    (get-clientc-compiled-file ::bstring)))
+	    (clientc-response::%http-response ::http-request ::bstring ::bstring)
+	    (get-clientc-compiled-file ::bstring ::bstring)
+	    (clientc-resolve-filename ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cache ...                                                */
@@ -78,41 +82,45 @@
 ;*    init-clientc-compiler! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (init-clientc-compiler! #!key filec expressionc valuec
-				modulec macroe
-				sexp->precompiled
-				precompiled->JS-expression
-				precompiled->JS-statement
-				precompiled->JS-return
-				precompiled->sexp
-				precompiled-declared-variables
-				precompiled-free-variables)
-
+	   modulec macroe
+	   sexp->precompiled
+	   precompiled->JS-expression
+	   precompiled->JS-statement
+	   precompiled->JS-return
+	   precompiled->sexp
+	   precompiled-declared-variables
+	   precompiled-free-variables
+	   filename-resolver
+	   jsc)
+   
    (define (null e) '())
-
+   
    ;; prepare the client-code compiler cache
    (set! clientc-cache
-	 (instantiate::cache-disk
-	    (clear (hop-clientc-clear-cache))
-	    (path (make-cache-name "clientc"))
-	    (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
-
+      (instantiate::cache-disk
+	 (clear (hop-clientc-clear-cache))
+	 (path (make-cache-name "clientc"))
+	 (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+   
    ;; hook the client-code compiler
    (hop-clientc-set!
-    (instantiate::clientc
-       (filec (lambda (ifile ofile env)
-		 (hop-load-afile (dirname ifile))
-		 (filec ifile ofile env)))
-       (expressionc expressionc)
-       (valuec valuec)
-       (modulec modulec)
-       (macroe macroe)
-       (sexp->precompiled sexp->precompiled)
-       (precompiled->JS-expression precompiled->JS-expression)
-       (precompiled->JS-statement precompiled->JS-statement)
-       (precompiled->JS-return precompiled->JS-return)
-       (precompiled->sexp precompiled->sexp)
-       (precompiled-declared-variables (or precompiled-declared-variables null))
-       (precompiled-free-variables (or precompiled-free-variables null)))))
+      (instantiate::clientc
+	 (filec (lambda (ifile ofile env)
+		   (hop-load-afile (dirname ifile))
+		   (filec ifile ofile env)))
+	 (expressionc expressionc)
+	 (valuec valuec)
+	 (modulec modulec)
+	 (macroe macroe)
+	 (sexp->precompiled sexp->precompiled)
+	 (precompiled->JS-expression precompiled->JS-expression)
+	 (precompiled->JS-statement precompiled->JS-statement)
+	 (precompiled->JS-return precompiled->JS-return)
+	 (precompiled->sexp precompiled->sexp)
+	 (precompiled-declared-variables (or precompiled-declared-variables null))
+	 (precompiled-free-variables (or precompiled-free-variables null))
+	 (filename-resolver filename-resolver)
+	 (jsc jsc))))
    
 ;*---------------------------------------------------------------------*/
 ;*    current-module-clientc-import ...                                */
@@ -124,15 +132,9 @@
 	  '())))
 
 ;*---------------------------------------------------------------------*/
-;*    clientc-url ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (clientc-url path)
-   (string-append path "?" (hop-scm-compile-suffix)))
-
-;*---------------------------------------------------------------------*/
 ;*    clientc-response ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (clientc-response req path)
+(define (clientc-response req path name)
    (synchronize clientc-mutex
       (with-access::http-request req (method header)
 	 (let ((ce (cache-get clientc-cache path))
@@ -161,33 +163,41 @@
 			     (file value)))))
 		(let ((m (eval-module)))
 		   (unwind-protect
-		      (with-access::clientc (hop-clientc) (filec)
-			 ;; add a dummy entry value in the cache
-			 (let ((ce (cache-put! clientc-cache path "")))
-			    (if (isa? ce cache-entry)
-				(with-access::cache-entry ce (value signature)
-				   ;; override the cache file
-				   (filec path value '())
-				   ;; sent the file response
-				   (instantiate::http-response-file
-				      (request req)
-				      (charset (hop-locale))
-				      (content-type mime)
-				      (bodyp (eq? method 'GET))
-				      (header (cons `(ETag: . ,signature)
-						 '((Accept-Ranges: . "bytes"))))
-				      (file value)))
-				;; no cache, use a string
-				(instantiate::http-response-string
+		      ;; add a dummy entry value in the cache
+		      (let ((ce (cache-put! clientc-cache path "")))
+			 (if (isa? ce cache-entry)
+			     (with-access::cache-entry ce (value signature)
+				;; override the cache file
+				(compile-client path name value '())
+				;; sent the file response
+				(instantiate::http-response-file
 				   (request req)
 				   (charset (hop-locale))
 				   (content-type mime)
 				   (bodyp (eq? method 'GET))
-				   (body (with-output-to-string
-					    (lambda ()
-					       (filec path "-" '()))))))))
+				   (header (cons `(ETag: . ,signature)
+					      '((Accept-Ranges: . "bytes"))))
+				   (file value)))
+			     ;; no cache, use a string
+			     (instantiate::http-response-string
+				(request req)
+				(charset (hop-locale))
+				(content-type mime)
+				(bodyp (eq? method 'GET))
+				(body (with-output-to-string
+					 (lambda ()
+					    (compile-client path name "-" '())))))))
 		      (eval-module-set! m))))))))
 
+;*---------------------------------------------------------------------*/
+;*    compile-client ...                                               */
+;*---------------------------------------------------------------------*/
+(define (compile-client path name output env)
+   (with-access::clientc (hop-clientc) (filec jsc)
+      (if (string-suffix? ".js" path)
+	  (jsc path name output)
+	  (filec path output env))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cached-response ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -208,9 +218,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-clientc-compiled-file ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (get-clientc-compiled-file path)
+(define (get-clientc-compiled-file path name)
    (let* ((req (or (current-request) dummy-request))
-	  (rep (clientc-response req path)))
+	  (rep (clientc-response req path name)))
       (cond
 	 ((isa? rep http-response-file)
 	  (with-access::http-response-file rep (file)
@@ -221,3 +231,9 @@
 	 (else
 	  (error "get-clientc-compiled-file" "Illegal clientc response" rep)))))
    
+;*---------------------------------------------------------------------*/
+;*    clientc-resolve-filename ...                                     */
+;*---------------------------------------------------------------------*/
+(define (clientc-resolve-filename url path)
+   (with-access::clientc (hop-clientc) (filename-resolver)
+      (filename-resolver url path)))

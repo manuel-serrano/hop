@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Fri Feb 21 17:11:17 2014 (serrano)                */
+#*    Last change :  Sat May 24 06:48:48 2014 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -84,7 +84,7 @@ POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
 
 build: $(BACKEND) runtime-build
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 clean: runtime-clean mco-clean

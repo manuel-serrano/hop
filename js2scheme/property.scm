@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Apr 14 13:40:58 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:45:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -27,7 +27,7 @@
 ;*    j2s-property-stage ...                                           */
 ;*---------------------------------------------------------------------*/
 (define j2s-property-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "property")
       (comment "Add a cache to each object property lookup")
       (proc j2s-property)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed May 21 12:24:10 2014 (serrano)                */
+;*    Last change :  Sun May 25 18:44:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -30,7 +30,7 @@
 ;*    j2s-scheme-stage ...                                             */
 ;*---------------------------------------------------------------------*/
 (define j2s-scheme-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "scheme")
       (comment "Scheme code generation")
       (proc (lambda (ast args) (j2s-scheme ast 'normal comp-return)))))
@@ -39,7 +39,7 @@
 ;*    j2s-scheme-eval-stage ...                                        */
 ;*---------------------------------------------------------------------*/
 (define j2s-scheme-eval-stage
-   (instantiate::J2SStage
+   (instantiate::J2SStageProc
       (name "scheme")
       (comment "Scheme code generation (eval)")
       (proc (lambda (ast args) (j2s-scheme ast 'normal (lambda (x) x))))))
@@ -700,10 +700,10 @@
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
 	 (if (isa? init J2SObjInit)
-	     "(sc_lambda = function ( argument ) { return hop_apply_url( ~s, hop_object_to_dsssl_args( argument ) ); },
+	     "(sc_lambda = function ( argument ) { return new HopFrame( hop_apply_url( ~s, hop_object_to_dsssl_args( argument ) ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
               sc_lambda)"
-	     "(sc_lambda = function () { return hop_apply_url( ~s, arguments ); },
+	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
               sc_lambda)"))
       
@@ -723,9 +723,9 @@
 				     ,(flatten-stmt body)))))))
 	       (epairify-deep loc fun))))
       
-      (with-access::J2SSvc this (init)
+      (with-access::J2SSvc this (init register)
 	 `(js-make-service %this ,tmp ',id
-	     (register-service!
+	     (,(if register 'register-service! 'begin)
 		(instantiate::hop-service
 		   (proc ,(service-proc->scheme this))
 		   (javascript ,(jscript-funcall init))
@@ -753,12 +753,13 @@
 	       (tmps (gensym 'services)))
 	    `(letrec* ((,tmpp (lambda (this ,@params #!rest rest)
 				 (with-access::JsService ,tmps (svc)
-				    (hop-apply-service-url svc 
-				       (if (and (pair? rest)
-						(isa? (car rest) JsObject))
-					   (js-object->keyword-arguments
-					      (car rest) %this)
-					   (list ,@actuals))))))
+				    (js-make-hopframe %this
+				       (hop-apply-service-url svc 
+					  (if (and (pair? rest)
+						   (isa? (car rest) JsObject))
+					      (js-object->keyword-arguments
+						 (car rest) %this)
+					      (list ,@actuals)))))))
 		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
 				  (epairify loc
 				     `(make-hop-url-name

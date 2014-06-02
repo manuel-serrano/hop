@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri May 16 09:19:48 2014 (serrano)                */
+;*    Last change :  Sun May 25 11:55:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -121,6 +121,9 @@
    (define (peek-token-type)
       (car (peek-token)))
    
+   (define (peek-token-value)
+      (cdr (peek-token)))
+   
    (define (at-new-line-token?)
       (eq? *previous-token-type* 'NEWLINE))
 
@@ -176,11 +179,22 @@
    
    (define (source-element)
       (case (peek-token-type)
-	 ((function) (function-declaration))
-	 ((service) (service-declaration))
-	 ((EOF) (parse-token-error "eof" (consume-any!)))
-	 ((ERROR) (parse-token-error "error" (consume-any!)))
-	 (else (statement))))
+	 ((function)
+	  (function-declaration))
+	 ((service)
+	  (service-declaration))
+	 ((RESERVED)
+	  (if (eq? (peek-token-value) 'import)
+	      (begin
+		 (consume-any!)
+		 (service-import))
+	      (statement)))
+	 ((EOF)
+	  (parse-token-error "eof" (consume-any!)))
+	 ((ERROR)
+	  (parse-token-error "error" (consume-any!)))
+	 (else
+	  (statement))))
 
    (define (absolute-file-name? path)
       (and (>fx (string-length path) 0)
@@ -689,6 +703,31 @@
 		(init init)
 		(body body))))))
 
+   (define (service-import)
+      (let* ((token (consume-token! 'service))
+	     (loc (token-loc token))
+	     (id (consume-token! 'ID))
+	     (inits (service-params))
+	     (params (if (isa? inits J2SObjInit)
+			 (with-access::J2SObjInit inits (inits)
+			    (map init->params inits))
+			 inits))
+	     (init (if (isa? inits J2SObjInit)
+		       inits
+		       (instantiate::J2SNop (loc loc)))))
+	 (instantiate::J2SDeclSvc
+	    (loc loc)
+	    (id (cdr id))
+	    (val (instantiate::J2SSvc
+		    (id (cdr id))
+		    (loc loc)
+		    (params params)
+		    (init init)
+		    (register #f)
+		    (body (instantiate::J2SPragma
+			     (loc loc)
+			     (expr "(current-request)"))))))))
+      
    (define (consume-param!)
       (let ((token (consume-token! 'ID)))
 	 (instantiate::J2SParam

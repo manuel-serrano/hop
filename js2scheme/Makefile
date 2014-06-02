@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.6.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/3.0.x/js2scheme/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Feb 11 18:11:39 2014 (serrano)                */
+#*    Last change :  Mon May 26 07:47:23 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -62,7 +62,7 @@ include ../etc/Makefile.library
 
 build: $(BACKEND)
 
-native: heap-c lib-c
+native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 #*---------------------------------------------------------------------*/
