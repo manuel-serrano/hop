@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri May 16 09:19:31 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 17:10:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -50,6 +50,7 @@
      "for"
      "function"
      "service"
+     "tag"
      "if"
      "in"
      "instanceof"
@@ -140,7 +141,7 @@
 	  (special (or kspecial #\:))
 	  (tagid (: (* digit)
 		    (or letter digit)
-		    (* (or letter digit))))
+		    (* (or letter digit #\.))))
 	  (unicode (: #\\ #\u
 		      (or (: (in ("0139afAF")) (= 3 (in ("09afAF"))))
 			  (: "2" (in ("19afAF")) (= 2 (in ("09afAF"))))

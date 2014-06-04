@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun May 25 06:05:50 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 11:57:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -793,6 +793,8 @@
       ((isa? o JsObject)
        o)
       ((pair? o)
+       o)
+      ((null? o)
        o)
       (else
        (js-raise-type-error %this "toObject: cannot convert ~s" o))))

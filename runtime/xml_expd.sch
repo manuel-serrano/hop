@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/xml_expd.sch              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/xml_expd.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Sat Sep  7 11:32:47 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Wed Jun  4 16:43:21 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -231,7 +231,7 @@
 		       elong llong date list))
 	  `(,(symbol-append type '?) ,id)
 	  `(isa? ,id ,type)))
-
+   
    (define (untyped-ident id)
       (let* ((string (symbol->string id))
 	     (len (string-length string)))
@@ -245,12 +245,12 @@
 		(string->symbol (substring string 0 walker)))
 	       (else
 		(loop (+fx walker 1)))))))
-
+   
    (define (attach-loc new old loc)
       (let ((loc (or (get-source-location old) loc)))
 	 (if loc
-	    (econs (car new) (cdr new) loc)
-	    new)))
+	     (econs (car new) (cdr new) loc)
+	     new)))
    
    (let ((args (gensym 'args))
 	 (loop (gensym 'loop))
@@ -266,7 +266,7 @@
 			    (if (symbol? b)
 				(attach-loc `(,b '()) b loc)
 				(error name "Illegal binding" b)))))
-		     bindings)
+		   bindings)
 	     (let ,loop ((,args ,args))
 		  (cond
 		     ((null? ,args)
@@ -280,13 +280,11 @@
 						    ,(predicate type id))
 					   ,(match-case (get-source-location b)
 					       ((at ?fname ?pos)
-						`(bigloo-type-error/location
-						    ,(symbol->string m)
+						`(bigloo-type-error/location ,(symbol->string m)
 						    (symbol->string ',type)
 						    ,id ,fname ,pos))
 					       (else
-						`(bigloo-type-error
-						    ,(symbol->string m)
+						`(bigloo-type-error ,(symbol->string m)
 						    (symbol->string ',type)
 						    ,id))))))
 				   (((and ?id (? symbol?)))
@@ -297,7 +295,7 @@
 				       `(set! ,id (reverse! ,id))))
 				   (else
 				    #unspecified)))
-			     bindings)
+			   bindings)
 		      (let () ,@body))
 		     ,@(map (lambda (b)
 			       (match-case b
@@ -324,15 +322,18 @@
 				  ((and ?id (? symbol?))
 				   (let ((id (untyped-ident id)))
 				      `((not (keyword? (car ,args)))
-					(if (pair? (car ,args))
-					    (,loop (append (car ,args) (cdr ,args)))
-					    (begin
-					       (set! ,id (cons (car ,args) ,id))
-					       (,loop (cdr ,args)))))))
+					(cond
+					   ((xml-unpack (car ,args))
+					    =>
+					    (lambda (l) (,loop (append l (cdr ,args)))))
+					   (else
+					    (set! ,id (cons (car ,args) ,id))
+					    (,loop (cdr ,args)))))))
 				  (else
-				   `((pair? (car ,args))
-				     (,loop (append (car ,args) (cdr ,args)))))))
-			    bindings)
+				   `((xml-unpack (car ,args))
+				     =>
+				     (lambda (l) (,loop (append l (cdr ,args))))))))
+			bindings)
 		     (else
 		      (error ,name "Illegal argument" (car ,args)))))))))
 

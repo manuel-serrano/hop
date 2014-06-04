@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Jun  2 09:01:42 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 08:27:15 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -30,14 +30,14 @@
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
-  (list (cons "service" 'font-lock-keyword-face)
+  (list (cons "^\\s-*\\(?:service\\|tag\\)\\s-+" 'font-lock-keyword-face)
 	(cons ".post" 'font-lock-face-2)
-	(cons "<[a-zA-Z0-9_]*>" 'font-lock-face-9)
+	(cons "</?[a-zA-Z0-9_]*>" 'font-lock-face-9)
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-2)
 	(list "\\([$]\\){" 1 'font-lock-face-2)
 	(list "\\([~]\\){" 1 'font-lock-face-3)
-	(cons "[0-9a-zA-Z_]*:" 'font-lock-face-10)
-	(list (concat "^\\s-*service\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
+	(cons "[0-9a-zA-Z_-]*:" 'font-lock-face-10)
+	(list (concat "^\\s-*\\(?:service\\|tag\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-key-bindings ...                                           */

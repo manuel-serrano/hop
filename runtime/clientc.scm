@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed May 28 18:55:04 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 14:06:02 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -119,8 +119,8 @@
 	 (precompiled->sexp precompiled->sexp)
 	 (precompiled-declared-variables (or precompiled-declared-variables null))
 	 (precompiled-free-variables (or precompiled-free-variables null))
-	 (filename-resolver filename-resolver)
-	 (jsc jsc))))
+	 (filename-resolver (or filename-resolver (lambda (n p) n)))
+	 (jsc (or jsc error)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    current-module-clientc-import ...                                */

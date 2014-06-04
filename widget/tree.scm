@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Feb 21 16:28:11 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 07:26:34 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -64,7 +64,8 @@
 		    (iconopen #t)
 		    (iconclose #t)
 		    body)
-   (let ((head ""))
+   (let ((head "")
+	 (body (xml-body body)))
       (when (and (pair? body) (xml-markup-is? (car body) 'trhead))
 	 (set! head (car body))
 	 (set! body (cdr body)))
@@ -350,7 +351,7 @@
 			     (with-access::xml-delay b (thunk)
 				(loop (thunk))))
 			    ((service? b)
-			     (loop ((service-proc b))))
+			     (loop (xml-body-element ((service-proc b)))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))

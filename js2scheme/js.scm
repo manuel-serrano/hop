@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed May 28 19:16:06 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 17:15:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -315,36 +315,47 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SXml tildec dollarc mode evalp)
    (with-access::J2SXml this (tag attrs body)
-      (cons*
-	 "dom_create( \""
-	 (cons* (string-downcase
-		   (let ((s (symbol->string tag)))
-		      (substring s 1 (-fx (string-length s) 1))))
-	    "\" "
-	    (append
-	       ;; attributes
-	       (if (null? attrs)
-		   '()
-		   (let loop ((attrs attrs))
-		      (let ((p::J2SDataPropertyInit (car attrs)))
-			 (with-access::J2SDataPropertyInit p (name val)
-			    (with-access::J2SString name ((s val))
-			       (cons*
-				  (format ",sc_jsstring2keyword(~s)," s)
-				  (append
-				     (j2s-js val j2s-js-attribute-tilde dollarc mode evalp)
-				     (if (null? (cdr attrs))
-					 '()
-					 (loop (cdr attrs))))))))))
-	       ;; body
-	       (cond
-		  ((isa? body J2SBool)
-		   '(")"))
-		  ((isa? body J2SSequence)
-		   (with-access::J2SSequence body (exprs)
-		      (j2s-js* "," ")" "," exprs tildec dollarc mode evalp)))
-		  (else
-		   (error "js2scheme" "Illegal tag expression" this))))))))
+      ;; for now client side code cannot define new HTML tags
+      (unless (isa? tag J2SPragma)
+	 (error "js2scheme" "Client-side tag unsupported" this))
+      (with-access::J2SPragma tag (expr)
+	 (cons*
+	    "dom_create( \""
+	    (cons* (string-downcase
+		      (let ((s (symbol->string expr)))
+			 (substring s 1 (-fx (string-length s) 1))))
+	       "\" "
+	       (append
+		  ;; attributes
+		  (if (null? attrs)
+		      '()
+		      (let loop ((attrs attrs))
+			 (let ((p::J2SDataPropertyInit (car attrs)))
+			    (with-access::J2SDataPropertyInit p (name val)
+			       (with-access::J2SString name ((s val))
+				  (cons*
+				     (format ",sc_jsstring2keyword(~s)," s)
+				     (append
+					(j2s-js val j2s-js-attribute-tilde dollarc mode evalp)
+					(if (null? (cdr attrs))
+					    '()
+					    (loop (cdr attrs))))))))))
+		  ;; body
+		  (cond
+		     ((isa? body J2SBool)
+		      '(")"))
+		     ((isa? body J2SSequence)
+		      (with-access::J2SSequence body (exprs)
+			 (j2s-js* "," ")" "," exprs tildec dollarc mode evalp)))
+		     (else
+		      (error "js2scheme" "Illegal tag expression" this)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SParen ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SParen tildec dollarc mode evalp)
+   (with-access::J2SParen this (expr)
+      (cons "(" (append (j2s-js expr tildec dollarc mode evalp) '(")")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SUnary ...                                            */

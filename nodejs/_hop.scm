@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun May 25 05:55:39 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 08:56:09 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -39,6 +39,14 @@
 	    (define-js exit 1
 	       (lambda (this code)
 		  (exit (js-tointeger code %this))))
+	    
+	    (define-js srcDir 0
+	       (lambda (this)
+		  (the-loading-dir)))
+	    
+	    (define-js srcFile 0
+	       (lambda (this code)
+		  (the-loading-file)))
 	    
 	    ;; requests
 	    (define-js currentRequest 0

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May 16 13:32:09 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 18:02:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -73,6 +73,13 @@
    (with-access::JsArray obj (vec)
       (vector->list vec)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsArray ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack obj::JsArray)
+   (with-access::JsArray obj (vec)
+      (vector->list vec)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-init-array! ...                                               */
 ;*    -------------------------------------------------------------    */

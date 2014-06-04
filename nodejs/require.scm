@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 28 19:31:16 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 18:00:46 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -262,12 +262,19 @@
 	    (call-with-input-file pkg
 	       (lambda (ip)
 		  (let* ((o (json-parse ip
-			       :object-alloc (lambda () (list '#unspecified))
+			       :array-alloc list
+			       :array-set (lambda (o i v) #f)
+			       :array-return (lambda (o i) #f)
+			       :object-alloc (lambda () (make-cell '()))
 			       :object-set (lambda (o p val)
-					      (set-cdr! o
-						 (cons (cons p val) o)))
-			       :object-return cdr))
-			 (m (assq 'main o)))
+					      (cell-set! o
+						 (cons (cons p val)
+						    (cell-ref o))))
+			       :object-return (lambda (o) (cell-ref o))
+			       :parse-error (lambda (msg token loc)
+					       (js-raise-syntax-error
+						  (js-new-global-object) msg ""))))
+			 (m (assoc "main" o)))
 		     (when (and (pair? m) (string? (cdr m)))
 			(make-file-name path (cdr m)))))))))
    

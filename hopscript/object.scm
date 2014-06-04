@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed May 28 19:31:49 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 16:34:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -51,6 +51,15 @@
 ;*    %this ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define %this #f)
+
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsObject ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Used when an JS object is to pack the arguments sent to          */
+;*    an XML constructor.                                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsObject)
+   (js-object->keyword-arguments o (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Apr 15 09:17:04 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 18:03:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -32,6 +32,13 @@
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsArguments ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack obj::JsArguments)
+   (with-access::JsArguments obj (vec)
+      (vector->list vec)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-define-own-property ...                             */
 ;*---------------------------------------------------------------------*/

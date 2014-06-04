@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun May 25 11:55:11 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 17:22:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -183,6 +183,8 @@
 	  (function-declaration))
 	 ((service)
 	  (service-declaration))
+	 ((tag)
+	  (tag-declaration))
 	 ((RESERVED)
 	  (if (eq? (peek-token-value) 'import)
 	      (begin
@@ -204,6 +206,7 @@
       (case (peek-token-type)
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
+	 ((tag) (tag-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
@@ -417,7 +420,6 @@
 	 (consume! 'LPAREN)
 	 (let ((test (expression #f)))
 	    (consume! 'RPAREN)
-;* 	    (consume-statement-semicolon! "do/while")                  */
 	    (instantiate::J2SDo
 	       (loc loc)
 	       (test test)
@@ -727,6 +729,54 @@
 		    (body (instantiate::J2SPragma
 			     (loc loc)
 			     (expr "(current-request)"))))))))
+
+   (define (tag-declaration)
+
+      (define (err msg)
+	 (parse-token-error msg (peek-token)))
+      
+      (define (tag-params)
+	 (consume! 'LPAREN)
+	 (let loop ((state 0))
+	    (case (peek-token-type)
+	       ((RPAREN)
+		(consume-any!)
+		'())
+	       ((COMMA)
+		(consume-any!)
+		(if (<fx state 0)
+		    (loop (negfx state))
+		    (err "Unexpected \",\"")))
+	       ((ID)
+		(if (=fx state 3)
+		    (err "Extra tag argument")
+		    (cons (consume-param!) (loop (negfx (+fx 1 state))))))
+	       ((LBRACE)
+		(if (=fx state 0)
+		    (cons (object-literal) (loop -1))
+		    (err "Illegal tag attribute declaration")))
+	       (else
+		(err "Illegal tag argument declaration")))))
+      
+      (let* ((token (consume-token! 'tag))
+	     (id (consume-token! 'ID))
+	     (inits (tag-params))
+	     (params (append-map (lambda (p)
+				    (if (isa? p J2SObjInit)
+					(with-access::J2SObjInit p (inits)
+					   (map init->params inits))
+					(list p)))
+			inits))
+	     (body (fun-body)))
+	 (instantiate::J2SDeclTag
+	    (loc (token-loc token))
+	    (id (cdr id))
+	    (val (instantiate::J2STag
+		    (id (cdr id))
+		    (loc (token-loc token))
+		    (params params)
+		    (inits inits)
+		    (body body))))))
       
    (define (consume-param!)
       (let ((token (consume-token! 'ID)))
@@ -768,7 +818,7 @@
 		 (begin
 		    (consume! 'RPAREN)
 		    (reverse! rev-params)))))))
-   
+
    (define (fun-body)
       (let ((token (consume-token! 'LBRACE)))
 	 (let ((loc (current-loc)))
@@ -1028,9 +1078,27 @@
 			(arg (assig-expr #f)))
 		    (loop (cons arg rev-args)))))))
 
-   (define (tag-expression tag)
+   (define (tag->expr tag)
+      (let* ((type (symbol->string! (cdr tag)))
+	     (i (string-index type #\.)))
+	 (if i
+	     ;; a variable access
+	     (instantiate::J2SAccess
+		(loc (token-loc tag))
+		(obj (instantiate::J2SUnresolvedRef
+			(loc (token-loc tag))
+			(id (string->symbol (substring type 1 i)))))
+		(field (instantiate::J2SString
+			  (loc (token-loc tag))
+			  (val (substring type (+fx i 1) (-fx (string-length type) 1))))))
+	     ;; a tag name
+	     (instantiate::J2SPragma
+		(loc (token-loc tag))
+		(expr (cdr tag))))))
 
-      (define (tag-body token attrs)
+   (define (xml-expression tag)
+
+      (define (xml-body token attrs)
 	 (let loop ((exprs '()))
 	    (let ((expr (assig-expr #f)))
 	       (let liip ((sep (consume-any!)))
@@ -1047,7 +1115,7 @@
 				(when (eq? (car ctag) 'CTAG) (consume-any!))
 				(instantiate::J2SXml
 				   (loc (token-loc tag))
-				   (tag (cdr tag))
+				   (tag (tag->expr tag))
 				   (attrs attrs)
 				   (body (instantiate::J2SSequence
 					    (loc (token-loc token))
@@ -1058,7 +1126,7 @@
 				ctag))))
 		     (else
 		      (parse-token-error
-			 (format "Illegal tag \"~a\": \",\" or \"}\" expected"
+			 (format "Illegal ~a xml expression: \"}\", \"\\n\", or \"}\" expected"
 			    (cdr tag))
 			 sep)))))))
 
@@ -1068,7 +1136,7 @@
 		    (loc (token-loc token)))
 		(instantiate::J2SXml
 		   (loc loc)
-		   (tag (cdr tag))
+		   (tag (tag->expr tag))
 		   (body (instantiate::J2SBool (loc loc) (val #f)))))
 	     (let loop ((inits '()))
 		(case (peek-token-type)
@@ -1094,21 +1162,21 @@
 				    ((RBRACE)
 				     (instantiate::J2SXml
 					(loc (token-loc tag))
-					(tag (cdr tag))
+					(tag (tag->expr tag))
 					(attrs (reverse! (cons init inits)))
 					(body (instantiate::J2SBool
 						 (loc (token-loc tag))
 						 (val #f)))))
 				    (else
 				     (parse-token-error
-					(format "Illegal tag \"~a\"" (car tag))
+					(format "Illegal ~a xml expression, \"}\", \"\\n\", or \",\" expected" (cdr tag))
 					sep)))))
 			   ;; the body
 			   (begin
 			      (token-push-back! token)
-			      (tag-body token (reverse! inits))))))
+			      (xml-body token (reverse! inits))))))
 		   (else
-		    (tag-body token (reverse! inits))))))))
+		    (xml-body token (reverse! inits))))))))
 
    (define (tilde token)
       (let loop ((rev-stats '()))
@@ -1143,10 +1211,12 @@
 		(loc (token-loc token))
 		(id (cdr token)))))
 	 ((LPAREN)
-	  (let ((ignore (consume-any!))
+	  (let ((token (consume-any!))
 		(expr (expression #f))
 		(ignore-too (consume! 'RPAREN)))
-	     expr))
+	     (instantiate::J2SParen
+		(loc (token-loc token))
+		(expr expr))))
 	 ((LBRACKET)
 	  (array-literal))
 	 ((LBRACE)
@@ -1215,7 +1285,7 @@
 		   (val (car (cdr pattern)))
 		   (flags (cdr (cdr pattern)))))))
 	 ((OTAG)
-	  (tag-expression (consume-any!)))
+	  (xml-expression (consume-any!)))
 	 ((TILDE)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2STilde

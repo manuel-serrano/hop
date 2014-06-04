@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sun May 25 05:54:25 2014 (serrano)                */
+/*    Last change :  Wed Jun  4 08:55:28 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -11,9 +11,11 @@
 var hop = process.binding( "hop" );
 
 /*---------------------------------------------------------------------*/
-/*    exit                                                             */
+/*    misc                                                             */
 /*---------------------------------------------------------------------*/
 exports.exit = hop.exit;
+exports.srcDir = hop.srcDir;
+exports.srcFile = hop.srcFile;
 
 /*---------------------------------------------------------------------*/
 /*    withHOP                                                          */

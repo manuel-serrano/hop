@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 22 18:05:57 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 16:58:14 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -53,8 +53,10 @@
 
 	    (xml-body ::obj)
 	    (generic xml-body-element ::obj)
+	    (generic xml-unpack ::obj)
+
  	    (generic xml-write ::obj ::output-port ::xml-backend)
-	    (generic xml-write-attribute ::obj ::obj ::output-port ::xml-backend)
+	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 	    (xml-attribute-encode obj)
@@ -225,9 +227,12 @@
 ;*    %make-xml-element ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (%make-xml-element el args)
-   
+
    (define (symbol-upcase s)
       (string->symbol (string-upcase! (symbol->string s))))
+
+   (define (el->string el)
+      (string-append "<" (string-upcase (symbol->string! el)) ">"))
    
    (let loop ((a args)
 	      (attr '())
@@ -243,9 +248,7 @@
 	 ((keyword? (car a))
 	  (cond
 	     ((not (pair? (cdr a)))
-	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
-		     "Illegal attribute"
-		     (car a)))
+	      (error (el->string el) "Illegal attribute" (car a)))
 	     ((eq? (car a) :id)
 	      (if (or (string? (cadr a)) (not (cadr a)))
 		  (loop (cddr a) attr body (cadr a))
@@ -254,13 +257,13 @@
 	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
 	 ((null? (car a))
 	  (loop (cdr a) attr body id))
-	 ((pair? (car a))
-	  (if (not (and (or (null? (cdr a)) (pair? (cdr a))) (list? (car a))))
-	      (error (string-append "<" (string-upcase (symbol->string! el)) ">")
-		     "Illegal arguments"
-		     `(,(string-append "<" (string-upcase (symbol->string! el)) ">")
-		       ,@args))
-	      (loop (append (car a) (cdr a)) attr body id)))
+	 ((xml-unpack (car a))
+	  =>
+	  (lambda (l)
+	     (if (not (or (null? (cdr a)) (pair? (cdr a))))
+		 (error (el->string el) "Illegal arguments"
+		    `(,(el->string el) ,@args))
+		 (loop (append l (cdr a)) attr body id))))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
 
@@ -325,6 +328,14 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-body-element obj)
    obj)
+
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::obj ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-unpack obj::obj)
+   (when (pair? obj)
+      (when (list? obj)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */

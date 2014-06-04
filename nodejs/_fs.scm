@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sun May 18 08:06:50 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 07:06:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -88,7 +88,7 @@
 
    (define (lstat this path)
       (let ((obj (alist->jsobject
-		    `((mode . ,(if (directory? path) (S_IFDIR) (S_IFREG)))))))
+		    `((mode . ,(if (directory? path) S_IFDIR S_IFREG))))))
 	 (with-access::JsObject obj (__proto__)
 	    (set! __proto__ (get-process-fs-stats %this))
 	    obj)))

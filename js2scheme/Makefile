@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May 26 07:47:23 2014 (serrano)                */
+#*    Last change :  Wed Jun  4 15:12:28 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -23,8 +23,10 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = js2scheme
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S)
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U)
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
+  -lhop_s-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
+  -lhop_u-$(HOPRELEASE) -lhopscheme_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -ljs2scheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -ljs2scheme_u-$(HOPRELEASE)
 

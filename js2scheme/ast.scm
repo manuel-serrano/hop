@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun May 25 19:08:48 2014 (serrano)                */
+;*    Last change :  Wed Jun  4 17:19:37 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -113,6 +113,9 @@
 	      (init::J2SNode read-only)
 	      (register::bool read-only (default #t)))
 	   
+	   (class J2STag::J2SFun
+	      (inits::pair-nil read-only))
+	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
 	      body::J2SNode)
@@ -169,6 +172,8 @@
 	   
 	   (class J2SDeclSvc::J2SDeclFun)
 	   
+	   (class J2SDeclTag::J2SDeclFun)
+	   
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f)))
 
@@ -195,10 +200,18 @@
 	   (final-class J2SArray::J2SLiteral
 	      len::int
 	      exprs::pair-nil)
-	      
+
+	   (final-class J2SParen::J2SExpr
+	      expr::J2SExpr)
+	   
 	   (class J2SUnary::J2SExpr
 	      op::symbol
 	      expr::J2SExpr)
+
+	   (final-class J2SBinary::J2SExpr
+	      op::symbol
+	      lhs::J2SExpr
+	      rhs::J2SExpr)
 
 	   (class J2SAssig::J2SExpr
 	      lhs::J2SExpr
@@ -208,11 +221,6 @@
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
 	      op::symbol)
-
-	   (final-class J2SBinary::J2SExpr
-	      op::symbol
-	      lhs::J2SExpr
-	      rhs::J2SExpr)
 
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
@@ -224,7 +232,7 @@
 	      (args::pair-nil (default '())))
 
 	   (final-class J2SXml::J2SExpr
-	      tag::symbol
+	      tag::J2SExpr
 	      (attrs::pair-nil (default '()))
 	      body::J2SExpr)
 
@@ -612,16 +620,18 @@
 (gen-walks J2SForIn lhs obj body)
 (gen-walks J2SWhile test body)
 (gen-walks J2SCase expr body)
+(gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)
 (gen-walks J2SBinary lhs rhs)
 (gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCall fun (args))
-(gen-walks J2SXml (attrs) body)
+(gen-walks J2SXml tag (attrs) body)
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body)
 (gen-walks J2SSvc body init)
+(gen-walks J2STag body (inits))
 (gen-walks J2SObjInit (inits))
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)
