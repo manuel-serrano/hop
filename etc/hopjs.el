@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Jun  4 08:27:15 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 11:43:40 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -30,7 +30,7 @@
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
-  (list (cons "^\\s-*\\(?:service\\|tag\\)\\s-+" 'font-lock-keyword-face)
+  (list (list "^\\s-*\\(service\\|tag\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
 	(cons ".post" 'font-lock-face-2)
 	(cons "</?[a-zA-Z0-9_]*>" 'font-lock-face-9)
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-2)

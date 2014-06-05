@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Jun  5 10:32:39 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 11:41:35 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -16,8 +16,6 @@
 
    (library hopscript hop)
 
-;*    (import __nodejs__hop-ws)                                        */
-   
    (export (hopjs-process-hop ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -121,13 +119,6 @@
 		  (cons car cdr)))
 	    
 	    ))))
-;* 	    ;; websocket                                               */
-;* 	    (define-js WebSocket 1                                     */
-;* 	       (lambda (this) this)                                    */
-;* 	       :construct (hopjs-websocket %this))                     */
-;* 	    (define-js WebSocketServer 1                               */
-;* 	       (lambda (this) this)                                    */
-;* 	       :construct (hopjs-websocket-server %this))))))          */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-with-url ...                                               */
