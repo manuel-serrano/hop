@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat May 24 08:15:11 2014 (serrano)                */
+/*    Last change :  Thu Jun  5 10:44:53 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -383,7 +383,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 /*    Hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function Hop( svc, success, failure ) {
-   return withHOP( svc, success, { fail: failure } );
+   return withHOP( svc.url, success, { fail: failure } );
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Jun  4 08:56:09 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 10:32:39 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -158,7 +158,7 @@
 	 :parse-json parse-json
 	 :fail fail 
 	 :timeout timeout
-	 :method method)))
+	 :method (string->symbol method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-with-hop ...                                               */

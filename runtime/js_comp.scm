@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed May 21 11:20:23 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 10:36:33 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -573,8 +573,8 @@
 ;*---------------------------------------------------------------------*/
 (define (javascript-circle->obj expressions)
    (match-case expressions
-      (((and (? integer?) ?n) (lambda (cache) ?expr))
-       (let ((cache (make-vector n #f)))
+      (((and (? integer?) ?n) (lambda (cache) ?expr) ?flat)
+       (let ((cache (unless flat (make-vector n #f))))
 	  (let loop ((obj expr))
 	     (match-case obj
 		((sc_circle_ref ?- ?n)
