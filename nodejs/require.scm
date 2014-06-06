@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jun  6 12:31:54 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 14:47:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -20,10 +20,9 @@
 	   __nodejs_process)
 
    (export (%nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
-	   (nodejs-require ::bstring ::WorkerHopThread ::JsGlobalObject ::procedure)
 	   (nodejs-load ::bstring ::WorkerHopThread ::procedure)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
-	   (nodejs-resolve-filename ::bstring ::pair-nil)
+	   (nodejs-resolve ::bstring ::JsGlobalObject)
 	   (nodejs-new-global-object::JsGlobalObject)
 	   (nodejs-auto-require! ::WorkerHopThread ::JsGlobalObject)))
 
@@ -77,9 +76,11 @@
       ;; loaded
       (js-put! m 'loaded #t #f %this)
       ;; children
-      (js-put! m 'children '#() #f %this)
+      (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
       ;; paths
-      (js-put! m 'paths (nodejs-filename->paths filename) #f %this))
+      (js-put! m 'paths
+	 (js-vector->jsarray (nodejs-filename->paths filename) %this)
+	 #f %this))
    
    (with-trace 1 "%nodejs-module"
       (trace-item "id=" id)
@@ -108,15 +109,26 @@
 ;*    nodejs-init-global-object! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-init-global-object! this)
-   
+
+   ;; require
    (define require
       (js-make-function this
 	 (lambda (_ name)
-	    (tprint "FILENAME=" (js-get this 'filename this))
-	    (nodejs-require (js-tostring name this) (js-current-worker) this
-	       nodejs-new-global-object))
+	    (nodejs-require (js-tostring name this)
+	       (js-current-worker) this nodejs-new-global-object))
 	 1 "require"))
 
+   ;; require.resolve
+   (js-put! require 'resolve
+      (js-make-function this
+	 (lambda (_ name)
+	    (let ((name (js-tostring name this)))
+	       (if (core-module? name)
+		   name
+		   (nodejs-resolve name this))))
+	 1 "resolve")
+      #f this)
+   
    ;; process
    (js-put! this 'process (%nodejs-process this) #f this)
    ;; require
@@ -198,13 +210,8 @@
       (if (core-module? name)
 	  (nodejs-require-core name worker %this)
 	  (let ((abspath (nodejs-resolve name %this)))
-	     (if (and (string? abspath) (file-exists? abspath))
-		 (let ((mod (nodejs-load abspath worker new-global-object)))
-		    (js-get mod 'exports %this))
-		 (with-access::JsGlobalObject %this (js-uri-error)
-		    (js-raise
-		       (js-new %this js-uri-error
-			  (format "Cannot find module ~s" name)))))))))
+	     (let ((mod (nodejs-load abspath worker new-global-object)))
+		(js-get mod 'exports %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
@@ -244,83 +251,93 @@
       (js-get (nodejs-load-core-module name worker) 'exports %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-env-path ...                                              */
-;*---------------------------------------------------------------------*/
-(define (nodejs-env-path)
-   (let ((env (getenv "NODE_PATH")))
-      (if (string? env)
-	  (unix-path->list env)
-	  '())))
-
-;*---------------------------------------------------------------------*/
-;*    nodejs-resolve-filename ...                                      */
-;*---------------------------------------------------------------------*/
-(define (nodejs-resolve-filename name::bstring path)
-   
-   (define (nodejs-resolve-package path)
-      (let ((pkg (make-file-name path "package.json")))
-	 (when (file-exists? pkg)
-	    (call-with-input-file pkg
-	       (lambda (ip)
-		  (let* ((o (json-parse ip
-			       :array-alloc list
-			       :array-set (lambda (o i v) #f)
-			       :array-return (lambda (o i) #f)
-			       :object-alloc (lambda () (make-cell '()))
-			       :object-set (lambda (o p val)
-					      (cell-set! o
-						 (cons (cons p val)
-						    (cell-ref o))))
-			       :object-return (lambda (o) (cell-ref o))
-			       :parse-error (lambda (msg token loc)
-					       (js-raise-syntax-error
-						  (js-new-global-object) msg ""))))
-			 (m (assoc "main" o)))
-		     (when (and (pair? m) (string? (cdr m)))
-			(make-file-name path (cdr m)))))))))
-   
-   (define (suffix name)
-      (if (string-suffix? ".js" name )
-	  name
-	  (string-append name ".js")))
-   
-   (define (package-or-file name)
-      (if (directory? name)
-	  (nodejs-resolve-package name)
-	  (suffix name)))
-
-   (define (resolve-in-dir dir)
-      (cond
-	 ((string-null? name)
-	  #f)
-	 ((char=? (string-ref name 0) (file-separator))
-	  (package-or-file name))
-	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
-	  (package-or-file (file-name-canonicalize! (make-file-path dir name))))
-	 (else
-	  #f)))
-
-   (any (lambda (dir)
-	   (let ((path (make-file-name dir name)))
-	      (if (directory? path)
-		  (nodejs-resolve-package path)
-		  (let ((src (suffix path)))
-		     (when (file-exists? src)
-			src)))))
-      path))
-
-;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    Resolve the path name according to the current module path.      */
+;*    -------------------------------------------------------------    */
+;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-resolve name::bstring %this::JsGlobalObject)
-   (or (nodejs-resolve-filename name (cons (pwd) (nodejs-env-path)))
-       (let ((module (js-get %this 'module %this)))
-	  (when (isa? module JsObject)
-	     (nodejs-resolve-filename name
-		(append (vector->list (js-get module 'paths %this))
-		   (nodejs-env-path)))))))
+   
+   (define (resolve-file x)
+      (if (file-exists? x)
+	  (file-name-canonicalize x)
+	  (let ((js (string-append x ".js")))
+	     (when (file-exists? js)
+		(file-name-canonicalize js)))))
+   
+   (define (resolve-package pkg)
+      (call-with-input-file pkg
+	 (lambda (ip)
+	    (let* ((o (json-parse ip
+			 :array-alloc list
+			 :array-set (lambda (o i v) #f)
+			 :array-return (lambda (o i) #f)
+			 :object-alloc (lambda () (make-cell '()))
+			 :object-set (lambda (o p val)
+					(cell-set! o
+					   (cons (cons p val)
+					      (cell-ref o))))
+			 :object-return (lambda (o) (cell-ref o))
+			 :parse-error (lambda (msg token loc)
+					 (js-raise-syntax-error
+					    (js-new-global-object) msg ""))))
+		   (m (assoc "main" o)))
+	       (when (and (pair? m) (string? (cdr m)))
+		  (cdr m))))))
+   
+   (define (resolve-directory x)
+      (let ((json (make-file-name x "package.json")))
+	 (or (and (file-exists? json)
+		  (let ((m (resolve-package json)))
+		     (resolve-file (make-file-name x m))))
+	     (let ((p (make-file-name x "index.js")))
+		(when (file-exists? p)
+		   (file-name-canonicalize p))))))
+   
+   (define (resolve-file-or-directory x dir)
+      (let ((file (make-file-name dir x)))
+	 (or (resolve-file file)
+	     (resolve-directory file))))
+   
+   (define (resolve-error x)
+      (with-access::JsGlobalObject %this (js-uri-error)
+	 (js-raise
+	    (js-new %this js-uri-error
+	       (format "Cannot find module ~s" name)))))
+   
+   (define (resolve-modules mod x start)
+      (find (lambda (dir)
+	       (resolve-file-or-directory x dir))
+	 (node-modules-path mod start)))
+   
+   (define (node-modules-path mod start)
+      (append (js-get mod 'paths %this) nodejs-env-path))
+
+   (let* ((mod (js-get %this 'module %this))
+	  (dir (dirname (js-get mod 'filename %this))))
+      (if (or (string-prefix? "./" name)
+	      (string-prefix? "../" name)
+	      (string-prefix? "/" name))
+	  (or (resolve-file-or-directory name dir)
+	      (resolve-modules mod name (dirname dir))
+	      (resolve-error name))
+	  (or (resolve-modules mod name (dirname dir))
+	      (resolve-error name)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-env-path ...                                              */
+;*---------------------------------------------------------------------*/
+(define nodejs-env-path
+   (let ((home-path (let ((home (getenv "HOME")))
+		       (if (string? home)
+			   (list (make-file-name home ".node_modules")
+			      (make-file-name home ".node_libraries"))
+			   '()))))
+      (let ((env (getenv "NODE_PATH")))
+	 (if (string? env)
+	     (append (unix-path->list env) home-path)
+	     home-path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-cache-module ...                                          */
