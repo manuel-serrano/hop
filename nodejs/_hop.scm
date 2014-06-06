@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Jun  5 18:18:59 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 09:00:24 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -45,7 +45,11 @@
 	    (define-js srcFile 0
 	       (lambda (this code)
 		  (the-loading-file)))
-	    
+
+	    ;; info
+	    `(port . ,(hop-port))
+	    `(hostname . ,(hostname))
+	       
 	    ;; requests
 	    (define-js currentRequest 0
 	       (lambda (this) (current-request)))

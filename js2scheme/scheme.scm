@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jun  4 18:00:38 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 10:24:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -403,7 +403,7 @@
 		,(when attributes
 		    (let ((id (j2s-scheme-id attributes)))
 		       `(set! ,id
-			   (plist->jsobject ,id %this))))
+			   (js-plist->jsobject ,id %this))))
 		,(when nodes
 		    (let ((id (j2s-scheme-id nodes)))
 		       `(set! ,id
