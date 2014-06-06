@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Apr 17 08:38:42 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 10:59:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -85,7 +85,7 @@
 		     (js-put! o (js-toname p %this) val #f %this))
       :object-return (lambda (o) o)
       :parse-error (lambda (msg token loc)
-		      (js-raise-syntax-error %this msg ""))
+		      (js-raise-syntax-error %this msg loc))
       :reviver (when (isa? reviver JsFunction)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))

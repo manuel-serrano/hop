@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun  6 08:46:48 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 11:02:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -54,17 +54,10 @@
    (lambda (o)
       (call-with-output-string
 	 (lambda (op)
-	    (tprint "extern S="
-	       (call-with-output-string
-		  (lambda (op)
-		     (obj->javascript-expr o op))))
 	    (obj->javascript-expr o op))))
    (lambda (s)
-      (tprint "intern S=" s)
       (call-with-input-string s
-	 (lambda (ip)
-	    (with-access::WorkerHopThread (js-current-worker) (%this)
-	       (js-json-parser ip (js-undefined) %this))))))
+	 javascript->obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
