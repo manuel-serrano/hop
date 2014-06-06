@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jun  4 18:00:46 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 12:31:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -112,6 +112,7 @@
    (define require
       (js-make-function this
 	 (lambda (_ name)
+	    (tprint "FILENAME=" (js-get this 'filename this))
 	    (nodejs-require (js-tostring name this) (js-current-worker) this
 	       nodejs-new-global-object))
 	 1 "require"))
