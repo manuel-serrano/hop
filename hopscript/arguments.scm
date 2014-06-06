@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Jun  4 18:03:01 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 08:46:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -38,7 +38,31 @@
 (define-method (xml-unpack obj::JsArguments)
    (with-access::JsArguments obj (vec)
       (vector->list vec)))
+
+;*---------------------------------------------------------------------*/
+;*    jsarguments-fields ...                                           */
+;*---------------------------------------------------------------------*/
+(define jsarguments-fields (vector (find-class-field JsObject 'vec)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-class-all-fields ::JsArguments ...                    */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-class-all-fields obj::JsArguments)
+   jsarguments-fields)
    
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::JsArray p backend)
+   (let ((%this (js-initial-global-object)))
+      (with-access::JsGlobalObject %this (js-array-prototype)
+	 (js-call1 %this
+	    (js-get js-array-prototype 'forEach %this)
+	    obj
+	    (js-make-function %this
+	       (lambda (this el) (xml-write el p backend))
+	       1 "")))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-define-own-property ...                             */
 ;*---------------------------------------------------------------------*/

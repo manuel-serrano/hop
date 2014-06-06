@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 28 18:17:48 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:21:42 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -357,6 +357,7 @@
       
       ;; init hss, scm compilers, and services
       (init-hss-compiler! (hop-port))
+      
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :tmp-dir (os-tmp)
 	 :share (hop-share-directory)
@@ -401,7 +402,7 @@
 	 :precompiled-free-variables hopscheme-free
 	 :filename-resolver hop-clientc-filename-resolver
 	 :jsc nodejs-compile-file)
-      
+
       (init-hop-services!)
       (init-hop-widgets!)
 

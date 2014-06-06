@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat May 17 07:05:04 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:19:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -76,21 +76,24 @@
 	       2 "binding")
 	    #f %this)
 	 (js-put! proc 'stdout
-	    (alist->jsobject
+	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display o))
-			      1 "write"))))
+			      1 "write")))
+	       %this)
 	    #f %this)
 	 (js-put! proc 'stderr
-	    (alist->jsobject
+	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o) (display o (current-error-port)))
-			      1 "write"))))
+			      1 "write")))
+	       %this)
 	    #f %this)
 	 (js-put! proc 'env
-	    (alist->jsobject
-	       `((NODE_DEBUG . ,(getenv "NODE_DEBUG"))))
+	    (js-alist->jsobject
+	       `((NODE_DEBUG . ,(getenv "NODE_DEBUG")))
+	       %this)
 	    #f %this)
 	 (js-put! proc '_usingDomains
 	    (js-make-function %this
@@ -102,7 +105,7 @@
 ;*    process-constants ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (process-constants %this)
-   (alist->jsobject
+   (js-alist->jsobject
       `((O_RDONLY . ,O_RDONLY)
 	(O_WRONLY . ,O_WRONLY)
 	(O_RDWR . ,O_RDWR)
@@ -117,7 +120,8 @@
 	
 	(S_IFMT . ,S_IFMT)
 	(S_IFDIR . ,S_IFDIR)
-	(S_IFREG . ,S_IFREG))))
+	(S_IFREG . ,S_IFREG))
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    slowbuffer ...                                                   */
@@ -150,68 +154,74 @@
 		  (js-put! buf '%fast-buffer (make-string d) #f %this))
 	       4 "makeFastBuffer")
 	    #t %this)
-	 (alist->jsobject
-	    `((SlowBuffer . ,SlowBuffer))))))
+	 (js-alist->jsobject
+	    `((SlowBuffer . ,SlowBuffer))
+	    %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-udp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (process-udp-wrap %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((UDP . ,(js-new %this js-object))))))
+      (js-alist->jsobject
+	 `((UDP . ,(js-new %this js-object)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-evals ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (process-evals %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((NodeScript . ,(js-new %this js-object))))))
+      (js-alist->jsobject
+	 `((NodeScript . ,(js-new %this js-object)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-cares-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (process-cares-wrap %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((isIP . ,(js-new %this js-object))))))
+      (js-alist->jsobject
+	 `((isIP . ,(js-new %this js-object)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-process-wrap ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (process-process-wrap %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
-	 `((Process . ,(js-new %this js-object))))))
+      (js-alist->jsobject
+	 `((Process . ,(js-new %this js-object)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (process-crypto %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
+      (js-alist->jsobject
 	 `((SecureContext . ,(js-new %this js-object))
 	   (randomBytes . ,(js-new %this js-object))
 	   (pseudoRandomBytes . ,(js-new %this js-object))
 	   (getCiphers . ,(js-new %this js-object))
-	   (getHashes . ,(js-new %this js-object))))))
+	   (getHashes . ,(js-new %this js-object)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-http-parser ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (process-http-parser %this)
-   (alist->jsobject
+   (js-alist->jsobject
       `((HTTPParser . ,(js-make-function %this
 			  (lambda (this) (js-undefined)) 0
-			  "HTTPParser")))))
+			  "HTTPParser")))
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-zlib ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (process-zlib %this)
-   (alist->jsobject
-      `()))
+   (js-alist->jsobject `() %this))
 
 	   	   
 

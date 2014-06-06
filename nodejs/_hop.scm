@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Jun  5 11:41:35 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:18:59 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-hop %this)
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
+      (js-alist->jsobject
 	 
 	 (list
 	    ;; misc
@@ -118,7 +118,8 @@
 	       (lambda (this car cdr)
 		  (cons car cdr)))
 	    
-	    ))))
+	    )
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-with-url ...                                               */

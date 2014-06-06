@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu May 15 08:55:31 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 17:57:13 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -34,6 +34,7 @@
 	    __hop_misc
 	    __hop_hop
 	    __hop_http-response
+	    __hop_json
 	    __hop_js-comp
 	    __hop_cgi
 	    __hop_read
@@ -1084,9 +1085,9 @@
 		      (hixie-signal-value vstr socket))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    enveloppe-value ...                                              */
+;*    envelope-value ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (enveloppe-value::bstring name value)
+(define (envelope-value::bstring name value)
    (cond
       ((isa? value xml)
        (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
@@ -1107,13 +1108,13 @@
 ;*    multipart-value ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (multipart-value::bstring name value)
-   (enveloppe-value name value))
+   (envelope-value name value))
    
 ;*---------------------------------------------------------------------*/
 ;*    websocket-value ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (websocket-value::bstring name value)
-   (enveloppe-value name value))
+   (envelope-value name value))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-make-signal-value ...                                         */
@@ -1413,7 +1414,7 @@
 	    (thread-start! th)
 	    hs)))
 
-   (define (parse-websocket-enveloppe buf len)
+   (define (parse-websocket-envelope buf len)
       (cond
 	 ((pregexp-match "<x name='([^']*)'>"buf)
 	  => (lambda (m)
@@ -1451,7 +1452,7 @@
 			      (-fx  len 7))))
 		   (values name (call-with-input-string js javascript->obj)))))
 	 (else
-	  (error "hopsocket" "Illegal websocket enveloppe" buf))))
+	  (error "hopsocket" "Illegal websocket envelope" buf))))
 
    (define (read-websocket-event in)
       (let ((buf (make-string 128))
@@ -1460,7 +1461,7 @@
 	    (let ((c (read-byte in)))
 	       (cond
 		  ((=fx c 255)
-		   (parse-websocket-enveloppe buf i))
+		   (parse-websocket-envelope buf i))
 		  ((=fx i len)
 		   (let ((nbuf (make-string (*fx 2 len))))
 		      (blit-string! buf 0 nbuf 0 len)

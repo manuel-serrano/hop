@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon May 26 16:52:59 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 08:25:38 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -260,7 +260,7 @@
 			    (byte-array->string 
 			       (javascript->obj (read-chars clength p)))))
 			((application/json)
-			 ((or parse-json json->obj) p))
+			 ((or parse-json javascript->obj) p))
 			((application/x-javascript)
 			 (javascript->obj p))
 			((text/html application/xhtml+xml)

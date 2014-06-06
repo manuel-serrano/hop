@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun  4 18:02:36 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 08:47:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -30,18 +30,12 @@
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::JsArray ...                                          */
+;*    xml-unpack ::JsArray ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::JsArray p backend)
-   (let ((%this (js-initial-global-object)))
-      (with-access::JsGlobalObject %this (js-array-prototype)
-	 (js-call1 %this
-	    (js-get js-array-prototype 'forEach %this)
-	    obj
-	    (js-make-function %this
-	       (lambda (this el) (xml-write el p backend))
-	       1 "")))))
-      
+(define-method (xml-unpack obj::JsArray)
+   (with-access::JsArray obj (vec)
+      (vector->list vec)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -52,13 +46,13 @@
    (let* ((%this (js-initial-global-object))
 	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
       (if (=u32 len (fixnum->uint32 0))
-	  (display "[]" op)
+	  (display "sc_vector2array([])" op)
 	  (begin
-	     (display "[" op)
+	     (display "sc_vector2array([" op)
 	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr)
 	     (let loop ((i (fixnum->uint32 1)))
 		(if (=u32 i len)
-		    (display "]" op)
+		    (display "])" op)
 		    (begin
 		       (display "," op)
 		       (when (js-has-property o (js-toname i %this))
@@ -66,6 +60,18 @@
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    jsarray-fields ...                                               */
+;*---------------------------------------------------------------------*/
+(define jsarray-fields (vector (find-class-field JsObject 'vec)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-class-all-fields ::JsArray ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-class-all-fields obj::JsArray)
+   jsarray-fields)
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-body-element ::JsArray ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -73,13 +79,6 @@
    (with-access::JsArray obj (vec)
       (vector->list vec)))
 
-;*---------------------------------------------------------------------*/
-;*    xml-unpack ::JsArray ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (xml-unpack obj::JsArray)
-   (with-access::JsArray obj (vec)
-      (vector->list vec)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-init-array! ...                                               */
 ;*    -------------------------------------------------------------    */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/debug.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/debug.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sat Aug 10 09:10:36 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Thu Jun  5 17:46:35 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -115,7 +115,7 @@
    (synchronize *smap-mutex*
       (if (string=? (car *smap-cache*) smap)
 	  (cdr *smap-cache*)
-	  (let ((o (json->obj (call-with-input-file smap read-string))))
+	  (let ((o (javascript->obj (call-with-input-file smap read-string))))
 	     (set-car! *smap-cache* smap)
 	     (set-cdr! *smap-cache* o)
 	     o))))

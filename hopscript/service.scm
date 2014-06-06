@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat May 24 08:14:50 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 16:35:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -84,10 +84,9 @@
 
 	 (js-bind! %this js-hopframe-prototype 'post
 	    :value (js-make-function %this
-		      (lambda (this success opt)
-			 (lambda (this::JsHopFrame)
-			    (with-access::JsHopFrame this (url)
-			       (post url success opt %this))))
+		      (lambda (this::JsHopFrame success opt)
+			 (with-access::JsHopFrame this (url)
+			    (post url success opt %this)))
 		      2 "post"))
 	 
 	 (js-bind! %this js-hopframe-prototype 'toString
@@ -124,13 +123,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc success opt %this)
+(define (post svc::bstring success opt %this)
    
    (define (parse-json in)
       (js-json-parser in (js-undefined) %this))
-   
+
    (let ((host "localhost")
-	 (port 8080)
+	 (port (hop-port))
 	 (user #f)
 	 (password #f)
 	 (authorization #f)

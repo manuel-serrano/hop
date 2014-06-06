@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 28 09:17:32 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:36:09 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -73,8 +73,13 @@
       (make-hop-module-resolver (bigloo-module-resolver)))
    ;; parse the command line
    (let* ((files (parse-args args))
+	  ;; init javascript global object
 	  (%this (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %this)))
+      ;; init javascript marshalling
+      (init-json!
+	 :plist->jsobject (lambda (l) (js-alist->jsobject l %this))
+	 :vector->jsarray (lambda (v) (js-vector->jsarray v %this)))
       ;; complete the global object initialization
       (nodejs-auto-require! %worker %this)
       ;; when debugging, init the debugger runtime

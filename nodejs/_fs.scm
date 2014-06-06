@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jun  4 07:06:45 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:20:55 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -87,8 +87,9 @@
       (js-vector->jsarray (list->vector (directory->path-list path))  %this))
 
    (define (lstat this path)
-      (let ((obj (alist->jsobject
-		    `((mode . ,(if (directory? path) S_IFDIR S_IFREG))))))
+      (let ((obj (js-alist->jsobject
+		    `((mode . ,(if (directory? path) S_IFDIR S_IFREG)))
+		    %this)))
 	 (with-access::JsObject obj (__proto__)
 	    (set! __proto__ (get-process-fs-stats %this))
 	    obj)))
@@ -127,15 +128,16 @@
       (cond
 	 ((output-port? fd) (flush-output-port fd))))
    
-   (alist->jsobject
+   (js-alist->jsobject
       `((rename . ,(js-make-function %this rename 2 "rename"))
 	(truncate . ,(js-make-function %this truncate 2 "truncate"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
-	(Stats . ,(alist->jsobject `((prototype . ,(get-process-fs-stats %this)))))
+	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))
 	(lstat . ,(js-make-function %this lstat 1 "lstat"))
 	(stat . ,(js-make-function %this stat 1 "stat"))
 	(close . ,(js-make-function %this close 1 "close"))
 	(open . ,(js-make-function %this open 3 "open"))
 	(read . ,(js-make-function %this read 5 "read"))
 	(write . ,(js-make-function %this write 5 "write"))
-	(fsync . ,(js-make-function %this fsync 0 "fsync")))))
+	(fsync . ,(js-make-function %this fsync 0 "fsync")))
+      %this))

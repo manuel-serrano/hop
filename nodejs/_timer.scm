@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Thu May 22 17:44:20 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:19:08 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -43,13 +43,14 @@
    (init-timer-prototype! %this js-timer-prototype)
    
    (with-access::JsGlobalObject %this (js-object)
-      (alist->jsobject
+      (js-alist->jsobject
 	 (list
 	    ;; Timer object
 	    (define-js Timer 0
 	       (lambda (this) this)
 	       :prototype js-timer-prototype
-	       :construct (js-timer-construct! %this js-timer-prototype))))))
+	       :construct (js-timer-construct! %this js-timer-prototype)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-timer-construct! ...                                          */

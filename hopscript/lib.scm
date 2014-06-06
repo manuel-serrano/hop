@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Jun  4 13:39:00 2014 (serrano)                */
+;*    Last change :  Thu Jun  5 18:18:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -23,29 +23,28 @@
 	   __hopscript_public
 	   __hopscript_worker)
 
-   (export (alist->jsobject ::pair-nil)
-	   (plist->jsobject ::pair-nil ::JsGlobalObject)))
+   (export (js-alist->jsobject ::pair-nil ::JsGlobalObject)
+	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    alist->jsobject ...                                              */
+;*    js-alist->jsobject ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (alist->jsobject alist)
-   (let ((%this (js-initial-global-object)))
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (js-new %this js-object)))
-	    (for-each (lambda (e)
-			 (js-put! obj (car e)
-			    (if (keyword? (cdr e))
-				(keyword->symbol (cdr e))
-				(cdr e))
-			    #f %this))
-	       alist)
-	    obj))))
+(define (js-alist->jsobject alist %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((obj (js-new %this js-object)))
+	 (for-each (lambda (e)
+		      (js-put! obj (car e)
+			 (if (keyword? (cdr e))
+			     (keyword->symbol (cdr e))
+			     (cdr e))
+			 #f %this))
+	    alist)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    plist->jsobject ...                                              */
+;*    js-plist->jsobject ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (plist->jsobject plist %this)
+(define (js-plist->jsobject plist %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((obj (js-new %this js-object)))
 	 (let loop ((plist plist))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat May 24 06:36:19 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 08:37:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -286,4 +286,7 @@
        "object")
       (else
        (typeof obj))))
+
+
+   
 

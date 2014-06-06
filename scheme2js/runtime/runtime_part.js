@@ -2233,6 +2233,11 @@ function sc_list2jsstring(l) {
 
 var sc_Vector = Array;
 
+/* Dont' removed, needed for the JS unmarshalling, (see runtime/json.scm) */
+function sc_vector2array(v) {
+   return v;
+}
+
 sc_Vector.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
     if (this.length === 0) return "#()";
 

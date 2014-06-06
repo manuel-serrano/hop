@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jun  4 16:34:19 2014 (serrano)                */
+;*    Last change :  Fri Jun  6 08:46:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -48,9 +48,23 @@
 	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    %this ...                                                        */
+;*    object-serializer ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
-(define %this #f)
+(register-class-serialization! JsObject
+   (lambda (o)
+      (call-with-output-string
+	 (lambda (op)
+	    (tprint "extern S="
+	       (call-with-output-string
+		  (lambda (op)
+		     (obj->javascript-expr o op))))
+	    (obj->javascript-expr o op))))
+   (lambda (s)
+      (tprint "intern S=" s)
+      (call-with-input-string s
+	 (lambda (ip)
+	    (with-access::WorkerHopThread (js-current-worker) (%this)
+	       (js-json-parser ip (js-undefined) %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
@@ -62,13 +76,24 @@
    (js-object->keyword-arguments o (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop->javascript ::JsBoolean ...                                  */
+;*    jsobject-fields ...                                              */
+;*---------------------------------------------------------------------*/
+(define jsobject-fields (vector (find-class-field JsObject 'elements)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-class-all-fields ::JsObject ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-class-all-fields obj::JsObject)
+   jsobject-fields)
+   
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsObject ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsObject op compile isexpr)
-   (let ((%this (js-initial-global-object)))
+   (with-access::WorkerHopThread (js-current-worker) (%this)
       (display "{" op)
       (let ((sep ""))
 	 (js-for-in o
@@ -82,6 +107,25 @@
 	       (set! sep ","))
 	    %this))
       (display "}" op)))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ...                                             */
+;*---------------------------------------------------------------------*/
+;* (define-method (scheme->response obj::JsObject req)                 */
+;*    (with-access::http-request req (method header)                   */
+;*       (instantiate::http-response-hop                               */
+;* 	 (backend (hop-xml-backend-secure))                            */
+;* 	 (content-type "application/x-javascript")                     */
+;* 	 (charset (hop-charset))                                       */
+;* 	 (request req)                                                 */
+;* 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))) */
+;* 	 (bodyp (not (eq? method 'HEAD)))                              */
+;* 	 (value obj))))                                                */
+
+;*---------------------------------------------------------------------*/
+;*    %this ...                                                        */
+;*---------------------------------------------------------------------*/
+(define %this #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-initial-global-object ...                                     */
