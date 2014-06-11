@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue May  6 16:42:29 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:46:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -53,7 +53,7 @@
       
       (define js-function-prototype
 	 (instantiate::JsFunction
-	    (name "builtin")
+	    (name 'builtin)
 	    (arity -1)
 	    (procedure (lambda l (js-undefined)))
 	    (alloc (lambda (_) #unspecified))

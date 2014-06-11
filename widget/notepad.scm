@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri May 16 13:34:13 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 19:08:39 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
@@ -177,7 +177,6 @@
 		     (onselect #f)
 		     (attr)
 		     body)
-   
    (cond
       ((null? body)
        (error "<NPTAB>" "Missing <NPTABHEAD> " id))

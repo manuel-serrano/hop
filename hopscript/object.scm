@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun  6 11:02:59 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 19:33:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
 
-   (library hop)
+   (library hop hopwidget)
    
    (import __hopscript_types
 	   __hopscript_string
@@ -102,20 +102,6 @@
       (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
-;*    scheme->response ...                                             */
-;*---------------------------------------------------------------------*/
-;* (define-method (scheme->response obj::JsObject req)                 */
-;*    (with-access::http-request req (method header)                   */
-;*       (instantiate::http-response-hop                               */
-;* 	 (backend (hop-xml-backend-secure))                            */
-;* 	 (content-type "application/x-javascript")                     */
-;* 	 (charset (hop-charset))                                       */
-;* 	 (request req)                                                 */
-;* 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))) */
-;* 	 (bodyp (not (eq? method 'HEAD)))                              */
-;* 	 (value obj))))                                                */
-
-;*---------------------------------------------------------------------*/
 ;*    %this ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define %this #f)
@@ -189,7 +175,7 @@
 			 (%js-eval ip 'eval %this)))))
 	    
 	    (js-bind! %this %this 'eval
-	       :value (js-make-function %this js-eval 1 "eval"
+	       :value (js-make-function %this js-eval 1 'eval
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 	    
@@ -201,7 +187,7 @@
 		  radix #f %this))
 
 	    (js-bind! %this %this 'parseInt
-	       :value (js-make-function %this parseint 2 "parseInt"
+	       :value (js-make-function %this parseint 2 'parseInt
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -214,7 +200,7 @@
 		  %this))
 	    
 	    (js-bind! %this %this 'parseFloat
-	       :value (js-make-function %this parsefloat 1 "parseFloat"
+	       :value (js-make-function %this parsefloat 1 'parseFloat
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -225,7 +211,7 @@
 		  (and (flonum? n) (not (=fl n n)))))
 
 	    (js-bind! %this %this 'isNaN
-	       :value (js-make-function %this isnan 1 "isNaN"
+	       :value (js-make-function %this isnan 1 'isNaN
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -239,7 +225,7 @@
 		     (else #t))))
 
 	    (js-bind! %this %this 'isFinite
-	       :value (js-make-function %this isfinite 1 "isFinite"
+	       :value (js-make-function %this isfinite 1 'isFinite
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -258,7 +244,7 @@
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
    
 	    (js-bind! %this %this 'decodeURI
-	       :value (js-make-function %this decodeuri 1 "decodeURI"
+	       :value (js-make-function %this decodeuri 1 'decodeURI
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -272,7 +258,7 @@
 		
 	    (js-bind! %this %this 'decodeURIComponent
 	       :value (js-make-function %this decodeuricomponent
-			 1 "decodeURIComponent"
+			 1 'decodeURIComponent
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -285,7 +271,7 @@
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this 'encodeURI
-	       :value (js-make-function %this encodeuri 1 "encodeURI"
+	       :value (js-make-function %this encodeuri 1 'encodeURI
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -299,7 +285,7 @@
 
 	    (js-bind! %this %this 'encodeURIComponent
 	       :value (js-make-function %this encodeuricomponent
-			 1 "encodeURIComponent"
+			 1 'encodeURIComponent
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -309,7 +295,7 @@
 	       (url-path-encode (js-tostring string %this)))
 	    
 	    (js-bind! %this %this 'escape
-	       :value (js-make-function %this escape 1 "escape"
+	       :value (js-make-function %this escape 1 'escape
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 
@@ -319,7 +305,7 @@
 	       (url-decode! (js-tostring string %this)))
 
 	    (js-bind! %this %this 'unescape
-	       :value (js-make-function %this unescape 1 "unescape"
+	       :value (js-make-function %this unescape 1 'unescape
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
 	    
@@ -348,7 +334,7 @@
       
       (with-access::JsObject js-function ((js-function-prototype __proto__))
 	 (set! js-object 
-	    (js-make-function %this %js-object 1 "Object" 
+	    (js-make-function %this %js-object 1 'Object 
 	       :__proto__ js-function-prototype
 	       :prototype %prototype
 	       :construct (js-object-construct %this))))
@@ -361,7 +347,7 @@
 	       __proto__)))
       
       (js-bind! %this js-object 'getPrototypeOf
-	 :value (js-make-function %this getprototypeof 1 "getPrototypeOf")
+	 :value (js-make-function %this getprototypeof 1 'getPrototypeOf)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -375,7 +361,7 @@
       
       (js-bind! %this js-object 'getOwnPropertyDescriptor
 	 :value (js-make-function %this
-		   getownpropertydescriptor 2 "getOwnPropertyDescriptor")
+		   getownpropertydescriptor 2 'getOwnPropertyDescriptor)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -388,7 +374,7 @@
       
       (js-bind! %this js-object 'getOwnPropertyNames
 	 :value (js-make-function %this
-		   getownpropertynames 1 "getOwnPropertyNames")
+		   getownpropertynames 1 'getOwnPropertyNames)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -406,7 +392,7 @@
 		obj)))
       
       (js-bind! %this js-object 'create
-	 :value (js-make-function %this create 2 "create")
+	 :value (js-make-function %this create 2 'create)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -421,7 +407,7 @@
 	    obj))
       
       (js-bind! %this js-object 'defineProperty
-	 :value (js-make-function %this defineproperty 3 "defineProperty")
+	 :value (js-make-function %this defineproperty 3 'defineProperty)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -432,7 +418,7 @@
 	 :value (js-make-function %this
 		   (lambda (this obj properties)
 		      (object-defineproperties %this this obj properties))
-		   2 "defineProperties")
+		   2 'defineProperties)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -443,7 +429,7 @@
 	 (js-seal (js-cast-object %this obj "seal") obj))
       
       (js-bind! %this js-object 'seal
-	 :value (js-make-function %this seal 1 "seal")
+	 :value (js-make-function %this seal 1 'seal)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -454,7 +440,7 @@
 	 (js-freeze (js-cast-object %this obj "freeze") obj))
       
       (js-bind! %this js-object 'freeze
-	 :value (js-make-function %this freeze 1 "freeze")
+	 :value (js-make-function %this freeze 1 'freeze)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -468,7 +454,7 @@
 	    obj))
       
       (js-bind! %this js-object 'preventExtensions
-	 :value (js-make-function %this preventextensions 1 "preventExtensions")
+	 :value (js-make-function %this preventextensions 1 'preventExtensions)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -491,7 +477,7 @@
 		   (not extensible))))))
       
       (js-bind! %this js-object 'isSealed
-	 :value (js-make-function %this issealed 1 "isSealed")
+	 :value (js-make-function %this issealed 1 'isSealed)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -519,7 +505,7 @@
 		   (not extensible))))))
       
       (js-bind! %this js-object 'isFrozen
-	 :value (js-make-function %this isfrozen 1 "isFrozen")
+	 :value (js-make-function %this isfrozen 1 'isFrozen)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -532,7 +518,7 @@
 	       extensible)))
       
       (js-bind! %this js-object 'isExtensible
-	 :value (js-make-function %this isextensible 1 "isExtensible")
+	 :value (js-make-function %this isextensible 1 'isExtensible)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -544,11 +530,45 @@
 	    (js-vector->jsarray (js-property-names o #t %this) %this)))
       
       (js-bind! %this js-object 'keys
-	 :value (js-make-function %this keys 1 "keys")
+	 :value (js-make-function %this keys 1 'keys)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)))
 
+;*---------------------------------------------------------------------*/
+;*    js-bind-tag! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-tag! %this obj tag)
+   `(begin
+       (js-bind! ,%this ,obj ',tag
+	  :value (js-make-function ,%this
+		    (lambda (this attrs . nodes)
+		       (tprint "tag=" ',tag " attrs="
+			  (when (isa? attrs JsObject)
+			     (js-object->keyword-arguments attrs ,%this)))
+		       (if (isa? attrs JsObject)
+			   (if (null? nodes)
+			       (apply ,(symbol-append '< tag '>)
+				  (js-object->keyword-arguments attrs ,%this))
+			       (apply ,(symbol-append '< tag '>)
+				  (append
+				     (js-object->keyword-arguments attrs ,%this)
+				     nodes)))
+			   (apply ,(symbol-append '< tag '>)
+			      nodes)))
+		    2 ',tag)
+	  :writable #f
+	  :enumerable #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-bind-tags! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-tags! %this obj . tags)
+   `(begin
+       ,@(map (lambda (tag)
+		 `(js-bind-tag! ,%this ,obj ,tag))
+	    tags)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-init-object-prototype! ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -566,7 +586,7 @@
 		    (let ((o (js-cast-object %this o "__proto__")))
 		       (with-access::JsObject o (__proto__)
 			  __proto__)))
-		 1 "get")
+		 1 'get)
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (let ((o (js-cast-object %this o "__proto__"))
@@ -577,7 +597,7 @@
 				 "Prototype of non-extensible object mutated" v)
 			      (with-access::JsObject o (__proto__)
 				 (set! __proto__ v))))))
-		 2 "set"))
+		 2 'set))
       
       ;; constructor
       (js-bind! %this obj 'constructor
@@ -603,10 +623,10 @@
 		       "Object")
 		      (else
 		       (substring name 2))))))))
-
+      
       (js-bind! %this obj 'toString
 	 :value (js-make-function %this
-		   js-object-prototype-tostring 0 "toString"
+		   js-object-prototype-tostring 0 'toString
 		   :prototype (js-undefined))
 	 :enumerable #f)
       
@@ -617,14 +637,14 @@
       
       (js-bind! %this obj 'toLocaleString
 	 :value (js-make-function %this
-		   js-object-prototype-tolocalestring 0 "toLocaleString"
+		   js-object-prototype-tolocalestring 0 'toLocaleString
 		   :prototype (js-undefined))
 	 :enumerable #f)
-
+      
       ;; valueOf
       (js-bind! %this obj 'valueOf
 	 :value (js-make-function %this (lambda (o) (js-valueof o %this))
-		   0 "valueOf"
+		   0 'valueOf
 		   :prototype (js-undefined))
 	 :enumerable #f)
       
@@ -633,10 +653,10 @@
 	 :value (js-make-function %this
 		   (lambda (this v)
 		      (js-object-prototype-hasownproperty this v %this))
-		   1 "hasOwnProperty"
+		   1 'hasOwnProperty
 		   :prototype (js-undefined))
 	 :enumerable #f)
-
+      
       ;; isPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
       (define (js-object-prototype-isprototypeof this v)
@@ -646,13 +666,13 @@
 		  (with-access::JsObject v ((v __proto__))
 		     (unless (eq? v (js-null))
 			(or (eq? v o) (loop v))))))))
-
+      
       (js-bind! %this obj 'isPrototypeOf
 	 :value (js-make-function %this
-		   js-object-prototype-isprototypeof 1 "isPrototypeOf"
+		   js-object-prototype-isprototypeof 1 'isPrototypeOf
 		   :prototype (js-undefined))
 	 :enumerable #f)
-
+      
       ;; propertyIsEnumerable
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.7
       (define (js-object-prototype-propertyisenumerable this v)
@@ -662,13 +682,67 @@
 	    (if (eq? desc (js-undefined))
 		#f
 		(with-access::JsPropertyDescriptor desc (enumerable) enumerable))))
-
+      
       (js-bind! %this obj 'propertyIsEnumerable
 	 :value (js-make-function %this
-		   js-object-prototype-propertyisenumerable 1 "propertyIsEnumerable"
+		   js-object-prototype-propertyisenumerable 1 'propertyIsEnumerable
 		   :prototype (js-undefined))
-	 :enumerable #f)))
+	 :enumerable #f)
+      
+      ;; html_base
+      (js-bind-tags! %this obj
+	 A ABBR ACRONYM ADDRESS APPLET AREA B BASE
+	 BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
+	 CANVAS CAPTION CENTER CITE CODE COL COLGROUP
+	 DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET
+	 FONT FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	 HR I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
+	 LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
+	 OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
+	 Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
+	 STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
+	 THEAD TITLE TR TT U UL VAR)
 
+      ;; html
+      (js-bind! %this obj 'HTML
+	 :value (js-make-function %this
+		   (lambda (this attrs . nodes)
+		      (apply <HTML> nodes))
+		   1 'HTML)
+	 :enumerable #f)
+
+      (js-bind! %this obj 'HEAD
+	 :value (js-make-function %this
+		   (lambda (this attrs . nodes)
+		      (apply <HEAD>
+			 :this %this
+			 (when (isa? attrs JsObject)
+			    (js-object->keyword-arguments* attrs %this))
+			 nodes))
+		   2 'HEAD)
+	 :enumerable #f)
+		   
+      ;; html_head
+      (js-bind-tags! %this obj
+	 LINK SCRIPT STYLE)
+
+      (js-bind-tag! %this obj IMG)
+
+      ;; svg
+      (js-bind-tags! %this obj
+	 SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
+	 SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
+	 SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
+	 SVG:TEXTPATH SVG:TREF SVG:TSPAN)
+
+      ;; notepad
+      (js-bind-tags! %this obj
+	 NOTEPAD NPTAB NPTABHEAD)
+
+      ;; tree
+      (js-bind-tags! %this obj
+	 TREE TRHEAD TRBODY TRLEAF)))
+		      
 ;*---------------------------------------------------------------------*/
 ;*    js-object-construct ...                                          */
 ;*    -------------------------------------------------------------    */

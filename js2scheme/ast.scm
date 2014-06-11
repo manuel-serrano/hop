@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jun  4 17:19:37 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 08:27:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -113,8 +113,8 @@
 	      (init::J2SNode read-only)
 	      (register::bool read-only (default #t)))
 	   
-	   (class J2STag::J2SFun
-	      (inits::pair-nil read-only))
+;* 	   (class J2STag::J2SFun                                       */
+;* 	      (inits::pair-nil read-only))                             */
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
@@ -231,10 +231,10 @@
 	      fun::J2SExpr
 	      (args::pair-nil (default '())))
 
-	   (final-class J2SXml::J2SExpr
-	      tag::J2SExpr
-	      (attrs::pair-nil (default '()))
-	      body::J2SExpr)
+;* 	   (final-class J2SXml::J2SExpr                                */
+;* 	      tag::J2SExpr                                             */
+;* 	      (attrs::pair-nil (default '()))                          */
+;* 	      body::J2SExpr)                                           */
 
 	   (final-class J2STilde::J2SExpr
 	      stmt::J2SStmt)
@@ -626,12 +626,12 @@
 (gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCall fun (args))
-(gen-walks J2SXml tag (attrs) body)
+;* (gen-walks J2SXml tag (attrs) body)                                 */
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body)
 (gen-walks J2SSvc body init)
-(gen-walks J2STag body (inits))
+;* (gen-walks J2STag body (inits))                                     */
 (gen-walks J2SObjInit (inits))
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)

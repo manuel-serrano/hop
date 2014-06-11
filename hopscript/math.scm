@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Apr 12 08:20:08 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:54:30 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -95,7 +95,7 @@
 	    (else x)))
       
       (js-bind! %this js-math 'abs
-	 :value (js-make-function %this js-math-abs 1 "abs")
+	 :value (js-make-function %this js-math-abs 1 'abs)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -106,7 +106,7 @@
 	 (acos x))
       
       (js-bind! %this js-math 'acos
-	 :value (js-make-function %this js-math-acos 1 "acos")
+	 :value (js-make-function %this js-math-acos 1 'acos)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -117,7 +117,7 @@
 	 (asin x))
       
       (js-bind! %this js-math 'asin
-	 :value (js-make-function %this js-math-asin 1 "asin")
+	 :value (js-make-function %this js-math-asin 1 'asin)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -128,7 +128,7 @@
 	 (atan x))
       
       (js-bind! %this js-math 'atan
-	 :value (js-make-function %this js-math-atan 1 "atan")
+	 :value (js-make-function %this js-math-atan 1 'atan)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -155,7 +155,7 @@
 	     (atan y x)))
       
       (js-bind! %this js-math 'atan2
-	 :value (js-make-function %this js-math-atan2 2 "atan2")
+	 :value (js-make-function %this js-math-atan2 2 'atan2)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -176,7 +176,7 @@
 	     (inexact->exact (ceiling x)))))
       
       (js-bind! %this js-math 'ceil
-	 :value (js-make-function %this js-math-ceil 1 "ceil")
+	 :value (js-make-function %this js-math-ceil 1 'ceil)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -187,7 +187,7 @@
 	 (cos x))
       
       (js-bind! %this js-math 'cos
-	 :value (js-make-function %this js-math-cos 1 "cos")
+	 :value (js-make-function %this js-math-cos 1 'cos)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -198,7 +198,7 @@
 	 (exp x))
       
       (js-bind! %this js-math 'exp
-	 :value (js-make-function %this js-math-exp 1 "exp")
+	 :value (js-make-function %this js-math-exp 1 'exp)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -214,7 +214,7 @@
 	    (else (inexact->exact (floor x)))))
       
       (js-bind! %this js-math 'floor
-	 :value (js-make-function %this js-math-floor 1 "floor")
+	 :value (js-make-function %this js-math-floor 1 'floor)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -225,7 +225,7 @@
 	 (log (js-tonumber x %this)))
       
       (js-bind! %this js-math 'log
-	 :value (js-make-function %this js-math-log 1 "log")
+	 :value (js-make-function %this js-math-log 1 'log)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -243,7 +243,7 @@
 		       (loop (cdr l) (if (> n r) n r)))))))
       
       (js-bind! %this js-math 'max
-	 :value (js-make-function %this js-math-max 2 "max")
+	 :value (js-make-function %this js-math-max 2 'max)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -261,7 +261,7 @@
 		       (loop (cdr l) (if (< n r) n r)))))))
       
       (js-bind! %this js-math 'min
-	 :value (js-make-function %this js-math-min 2 "min")
+	 :value (js-make-function %this js-math-min 2 'min)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -299,7 +299,7 @@
 		      (else (bignum->js-number (* x (loop x (- y 1)))))))))))
       
       (js-bind! %this js-math 'pow
-	 :value (js-make-function %this js-math-pow 1 "pow")
+	 :value (js-make-function %this js-math-pow 1 'pow)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -310,7 +310,7 @@
 	 (randomfl))
       
       (js-bind! %this js-math 'random
-	 :value (js-make-function %this js-math-random 1 "random")
+	 :value (js-make-function %this js-math-random 1 'random)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -326,7 +326,7 @@
 	    (else (inexact->exact (floor (+ x 0.5))))))
       
       (js-bind! %this js-math 'round
-	 :value (js-make-function %this js-math-round 1 "round")
+	 :value (js-make-function %this js-math-round 1 'round)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -337,7 +337,7 @@
 	 (sin x))
       
       (js-bind! %this js-math 'sin
-	 :value (js-make-function %this js-math-sin 1 "sin")
+	 :value (js-make-function %this js-math-sin 1 'sin)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -348,7 +348,7 @@
 	 (if (< x 0) +nan.0 (sqrt x)))
       
       (js-bind! %this js-math 'sqrt
-	 :value (js-make-function %this js-math-sqrt 1 "sqrt")
+	 :value (js-make-function %this js-math-sqrt 1 'sqrt)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
@@ -359,7 +359,7 @@
 	 (tan x))
       
       (js-bind! %this js-math 'tan
-	 :value (js-make-function %this js-math-tan 1 "tan")
+	 :value (js-make-function %this js-math-tan 1 'tan)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)

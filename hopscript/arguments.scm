@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Jun  6 08:46:17 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 17:15:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -33,11 +33,56 @@
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArray ...                                  */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsArray
+   (lambda (o)
+      (call-with-output-string
+	 (lambda (op)
+	    (obj->javascript-expr o op))))
+   (lambda (s)
+      (call-with-input-string s
+	 javascript->obj)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack obj::JsArguments)
    (with-access::JsArguments obj (vec)
-      (vector->list vec)))
+      (map! (lambda (desc)
+	       (unless (eq? desc (js-absent))
+		  (js-property-value obj desc (js-initial-global-object))))
+	 (vector->list vec))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-body-element ::JsArguments ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-body-element obj::JsArguments)
+   (xml-unpack obj))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsArguments ...                                */
+;*    -------------------------------------------------------------    */
+;*    See runtime/js_comp.scm in the Hop library for the definition    */
+;*    of the generic.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsArguments op compile isexpr)
+   (let* ((%this (js-initial-global-object))
+	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+      (if (=u32 len (fixnum->uint32 0))
+	  (display "sc_vector2array([])" op)
+	  (begin
+	     (display "sc_vector2array([" op)
+	     (hop->javascript (js-get o (js-toname 0 %this) %this) op compile isexpr)
+	     (let loop ((i (fixnum->uint32 1)))
+		(if (=u32 i len)
+		    (display "])" op)
+		    (begin
+		       (display "," op)
+		       (when (js-has-property o (js-toname i %this))
+			  (hop->javascript (js-get o i %this)
+			     op compile isexpr))
+		       (loop (+u32 i (fixnum->uint32 1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarguments-fields ...                                           */
@@ -53,16 +98,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsArray ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::JsArray p backend)
-   (let ((%this (js-initial-global-object)))
-      (with-access::JsGlobalObject %this (js-array-prototype)
-	 (js-call1 %this
-	    (js-get js-array-prototype 'forEach %this)
-	    obj
-	    (js-make-function %this
-	       (lambda (this el) (xml-write el p backend))
-	       1 "")))))
-
+;* (define-method (xml-write obj::JsArray p backend)                   */
+;*    (let ((%this (js-initial-global-object)))                        */
+;*       (with-access::JsGlobalObject %this (js-array-prototype)       */
+;* 	 (js-call1 %this                                               */
+;* 	    (js-get js-array-prototype 'forEach %this)                 */
+;* 	    obj                                                        */
+;* 	    (js-make-function %this                                    */
+;* 	       (lambda (this el) (xml-write el p backend))             */
+;* 	       1 "")))))                                               */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments-define-own-property ...                             */
 ;*---------------------------------------------------------------------*/
@@ -76,7 +121,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::JsArguments p)
-   (let ((index (js-toindex p)))
+   (let ((index::uint32 (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsArguments o (vec)
 	     (let ((len (vector-length vec)))

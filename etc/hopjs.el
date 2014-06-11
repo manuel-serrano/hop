@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Jun  5 11:43:40 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 10:30:32 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -29,15 +29,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
+;* (defconst hopjs-font-lock-keywords                                  */
+;*   (list (list "^\\s-*\\(service\\|tag\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face) */
+;* 	(cons ".post" 'font-lock-face-2)                               */
+;* 	(cons "</?[a-zA-Z0-9_]*>" 'font-lock-face-9)                   */
+;* 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-2)                  */
+;* 	(list "\\([$]\\){" 1 'font-lock-face-2)                        */
+;* 	(list "\\([~]\\){" 1 'font-lock-face-3)                        */
+;* 	(cons "[0-9a-zA-Z_-]*:" 'font-lock-face-10)                    */
+;* 	(list (concat "^\\s-*\\(?:service\\|tag\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face))) */
 (defconst hopjs-font-lock-keywords
-  (list (list "^\\s-*\\(service\\|tag\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
+  (list (list "^\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
 	(cons ".post" 'font-lock-face-2)
 	(cons "</?[a-zA-Z0-9_]*>" 'font-lock-face-9)
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-2)
 	(list "\\([$]\\){" 1 'font-lock-face-2)
 	(list "\\([~]\\){" 1 'font-lock-face-3)
 	(cons "[0-9a-zA-Z_-]*:" 'font-lock-face-10)
-	(list (concat "^\\s-*\\(?:service\\|tag\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
+	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-key-bindings ...                                           */

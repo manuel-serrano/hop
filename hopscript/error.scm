@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue May  6 08:45:36 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:56:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -50,9 +50,9 @@
 	  (let ((port (current-error-port)))
 	     (let ((tstack `(,name (at ,fname ,location)))
 		   (stack (cond
-			     ((string=? name "ReferenceError")
+			     ((eq? name 'ReferenceError)
 			      stack)
-			     ((string=? name "TypeError")
+			     ((eq? name 'TypeError)
 			      stack)
 			     (else
 			      stack))))
@@ -102,28 +102,28 @@
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
-		    (lambda (o v) #f) 2 "message")
+		    (lambda (o v) #f) 2 'message)
 	    :get (js-make-function %this
-		    (lambda (o) (with-access::JsError o (msg) msg)) 1 "message")
+		    (lambda (o) (with-access::JsError o (msg) msg)) 1 'message)
 	    :enumerable #f
 	    :configurable #t)
 	 (js-bind! %this js-error-prototype 'name
 	    :set (js-make-function %this
-		    (lambda (o v) #f) 2 "name")
+		    (lambda (o v) #f) 2 'name)
 	    :get (js-make-function %this
-		    (lambda (o) (with-access::JsError o (name) name)) 1 "name")
+		    (lambda (o) (with-access::JsError o (name) name)) 1 'name)
 	    :enumerable #f)
 	 
 	 ;; then, create a HopScript object
 	 (set! js-error
-	    (js-make-function %this (%js-error %this) 1 "Error"
+	    (js-make-function %this (%js-error %this) 1 'Error
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (init-builtin-error-prototype! %this js-error js-error-prototype)
 	 (set! js-syntax-error
-	    (js-make-function %this (%js-syntax-error %this) 1 "SyntaxError"
+	    (js-make-function %this (%js-syntax-error %this) 1 'SyntaxError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -131,7 +131,7 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-type-error
-	    (js-make-function %this (%js-type-error %this) 1 "TypeError"
+	    (js-make-function %this (%js-type-error %this) 1 'TypeError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -139,7 +139,7 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-uri-error
-	    (js-make-function %this (%js-uri-error %this) 1 "URIError"
+	    (js-make-function %this (%js-uri-error %this) 1 'URIError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -147,7 +147,7 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-eval-error
-	    (js-make-function %this (%js-eval-error %this) 1 "EvalError"
+	    (js-make-function %this (%js-eval-error %this) 1 'EvalError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -155,7 +155,7 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-range-error
-	    (js-make-function %this (%js-range-error %this) 1 "RangeError"
+	    (js-make-function %this (%js-range-error %this) 1 'RangeError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -163,7 +163,7 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-reference-error
-	    (js-make-function %this (%js-reference-error %this) 1 "ReferenceError"
+	    (js-make-function %this (%js-reference-error %this) 1 'ReferenceError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -284,7 +284,7 @@
 		(else (string-append name4 ": " msg6))))))
       
    (js-bind! %this obj 'toString
-      :value (js-make-function %this error-prototype-tostring 1 "toString")
+      :value (js-make-function %this error-prototype-tostring 1 'toString)
       :enumerable #f)
    
    (set! *js-builtin-error-prototype* obj))

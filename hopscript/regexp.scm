@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 17 10:49:03 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 17:17:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -26,6 +26,18 @@
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsRegExp ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsRegExp
+   (lambda (o)
+      (call-with-output-string
+	 (lambda (op)
+	    (obj->javascript-expr o op))))
+   (lambda (s)
+      (call-with-input-string s
+	 javascript->obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */
@@ -62,7 +74,7 @@
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
 	    (js-make-function %this
-	       (%js-regexp %this) 2 "JsRegExp"
+	       (%js-regexp %this) 2 'JsRegExp
 	       :__proto__ js-function-prototype
 	       :prototype js-regexp-prototype
 	       :construct (js-regexp-construct %this)))
@@ -255,7 +267,7 @@
 		(lambda (this)
 		   (string-append "/"
 		      (js-tostring (js-get this 'source %this) %this) "/"))
-		0 "toString")
+		0 'toString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -264,13 +276,13 @@
       :value (js-make-function %this
 		(lambda (this string::obj)
 		   (regexp-prototype-exec %this this string))
-		1 "exec")
+		1 'exec)
       :writable #t
       :configurable #t
       :enumerable #f)
    ;; test
    (js-bind! %this obj 'test
-      :value (js-make-function %this (make-regexp-prototype-test %this) 1 "test")
+      :value (js-make-function %this (make-regexp-prototype-test %this) 1 'test)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -306,7 +318,7 @@
       :enumerable #f)
    ;; compile
    (js-bind! %this obj 'compile
-      :value (js-make-function %this regexp-prototype-compile 1 "compile")
+      :value (js-make-function %this regexp-prototype-compile 1 'compile)
       :writable #t
       :configurable #t
       :enumerable #f))

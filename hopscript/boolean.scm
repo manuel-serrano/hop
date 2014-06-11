@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed May 21 12:58:14 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 17:16:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -28,6 +28,18 @@
 	   __hopscript_error)
 
    (export (js-init-boolean! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsBoolean ...                                */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsBoolean
+   (lambda (o)
+      (call-with-output-string
+	 (lambda (op)
+	    (obj->javascript-expr o op))))
+   (lambda (s)
+      (call-with-input-string s
+	 javascript->obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */
@@ -58,7 +70,7 @@
 
 	 ;; then, Create a HopScript string object
 	 (set! js-boolean
-	    (js-make-function %this %js-boolean 1 "JsBoolean"
+	    (js-make-function %this %js-boolean 1 'JsBoolean
 	       :__proto__ js-function-prototype
 	       :prototype js-boolean-prototype
 	       :alloc js-boolean-alloc
@@ -116,7 +128,7 @@
 		       (js-raise-type-error %this "not a boolean"
 			  (typeof this))))
 		0
-		"toString")
+		'toString)
       :enumerable #f)
    ;; valueOf
    (js-bind! %this obj 'valueOf
@@ -126,6 +138,6 @@
 		       (with-access::JsBoolean this (val) val)
 		       (js-raise-type-error %this "not a boolean"
 			  (typeof this))))
-		0 "valueOf")
+		0 'valueOf)
       :enumerable #f))
       

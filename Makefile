@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Mar 10 10:40:58 2014 (serrano)                */
+#*    Last change :  Wed Jun 11 20:51:02 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -64,13 +64,15 @@ lib: libdir scheme2js js2scheme hopscript
 	$(MAKE) -C hopscheme build
 	$(MAKE) -C runtime build
 	$(MAKE) -C js2scheme build
-	$(MAKE) -C hopscript build
 
 widget: libdir hopc-bin share-afile
 	$(MAKE) -C widget build
 
-nodejs: libdir hopc-bin share-afile
+nodejs: libdir hopc-bin hopscript-lib share-afile
 	$(MAKE) -C nodejs build
+
+hopscript-lib: hopc-bin widget
+	$(MAKE) -C hopscript build
 
 share-afile: scheme2js
 	$(MAKE) -C share .afile

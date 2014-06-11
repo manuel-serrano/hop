@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Jun  4 17:10:36 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 07:45:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -50,7 +50,7 @@
      "for"
      "function"
      "service"
-     "tag"
+;*      "tag"                                                          */
      "if"
      "in"
      "instanceof"

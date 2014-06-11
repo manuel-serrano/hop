@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat May 24 06:24:11 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 20:14:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -91,7 +91,7 @@
 	       (__proto__ __proto__)
 	       (extensible #t)))
 
-	 (define (js-websocket-construct o::JsWebSocket url)
+	 (define (js-websocket-construct o url)
 	    (with-access::JsGlobalObject %this (js-object)
 	       (let* ((url (js-tostring url %this))
 		      (ws (instantiate::websocket
@@ -144,7 +144,7 @@
 	    (js-make-function %this
 	       (lambda (this url)
 		  (js-new %this js-websocket url))
-	       1 "WebSocket"
+	       1 'WebSocket
 	       :__proto__ js-function-prototype
 	       :construct js-websocket-construct))
 	 
@@ -152,7 +152,7 @@
 	    (js-make-function %this
 	       (lambda (this path)
 		  (js-new %this js-websocket-server path))
-	       1 "WebSocketServer"
+	       1 'WebSocketServer
 	       :__proto__ js-function-prototype
 	       :construct js-websocket-server-construct))
 	 
@@ -174,7 +174,7 @@
 		 (with-access::JsWebSocket this (ws)
 		    (with-access::websocket ws (state)
 		       (symbol->string state))))
-	      0 "readyState"))
+	      0 'readyState))
    ;; url
    (js-bind! %this obj 'url
       :get (js-make-function %this
@@ -182,7 +182,7 @@
 		 (with-access::JsWebSocket this (ws)
 		    (with-access::websocket ws (url)
 		       (pregexp-replace "http://" url "ws://"))))
-	      0 "url"))
+	      0 'url))
    ;; send
    (js-bind! %this obj 'send
       :value (js-make-function %this
@@ -190,14 +190,14 @@
 		   (with-access::JsWebSocket this (ws)
 		      (with-access::websocket ws (%socket)
 			 (websocket-send %socket value))))
-		1 "send"))
+		1 'send))
    ;; addEventListener
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (add-event-listener! this
 			 (js-tostring message %this) proc))
-		2 "addEventListener"))
+		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))
       (list
@@ -220,15 +220,15 @@
 (define (bind-listener! %this obj action)
    (js-bind! %this obj (car action)
       :get (js-make-function %this
-	      (lambda (this) (cdr action))
-	      0 (car action))
+              (lambda (this) (cdr action))
+              0 (car action))
       :set (js-make-function %this
-	      (lambda (this proc)
-		 (set-cdr! action proc)
-		 (let ((name (substring (symbol->string! (car action)) 2)))
-		    (add-event-listener! this
-			  name (proc->listener %this proc this))))
-	      1 (car action))))
+              (lambda (this proc)
+                 (set-cdr! action proc)
+                 (let ((name (substring (symbol->string! (car action)) 2)))
+                    (add-event-listener! this
+                          name (proc->listener %this proc this))))
+              1 (car action))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-websocket-server-prototype! ...                     */
@@ -241,7 +241,7 @@
 		   (add-event-listener! this
 			 (js-tostring message %this)
 		      (proc->listener %this proc this)))
-		2 "addEventListener"))
+		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))
       (list (cons 'onconnection #f)))
@@ -283,14 +283,14 @@
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket)
 		    socket))
-	      0 "socket"))
+	      0 'socket))
    ;; send
    (js-bind! %this obj 'send
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocketClient this (socket)
 		      (websocket-send socket value)))
-		1 "send"))
+		1 'send))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
@@ -298,7 +298,7 @@
 		   (let ((action (js-tostring message %this)))
 		      (add-event-listener! this action
 			 (proc->listener %this proc this))))
-		2 "addEventListener"))
+		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))
       (list (cons 'onmessage #f)))

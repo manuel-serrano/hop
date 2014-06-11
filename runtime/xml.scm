@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun  4 16:58:14 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 09:20:37 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -233,7 +233,7 @@
 
    (define (el->string el)
       (string-append "<" (string-upcase (symbol->string! el)) ">"))
-   
+
    (let loop ((a args)
 	      (attr '())
 	      (body '())

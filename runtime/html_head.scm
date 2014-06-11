@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed May 28 18:54:44 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 18:41:21 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -77,9 +77,14 @@
 			    (not (string-skip (car body) "\n\t ")))
 		       (loop (cdr body)))
 		      ((not (xml-markup-is? (car body) 'head))
-		       (cons (<HEAD>) body))
+		       (cons (<HEAD>)
+			  (append-map (lambda (n)
+					 (or (xml-unpack n) (list n)))
+			     body)))
 		      (else
-		       body)))))
+		       (append-map (lambda (n)
+				      (or (xml-unpack n) (list n)))
+			  body))))))
       (instantiate::xml-html
 	 (tag 'html)
 	 (attributes attr)
@@ -363,16 +368,18 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	     res)))
    
    (define incs '())
-   
+
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)
 	      (dir #f)
 	      (path (list (pwd)))
+	      (this #f)
 	      (base #f)
 	      (inl #f)
 	      (packed #t)
 	      (els '()))
+	      
       (cond
 	 ((null? a)
 	  (let ((body (reverse! els)))
@@ -385,56 +392,59 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 body)))
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))
-		mode rts dir path base inl packed els))
+		mode rts dir path this base inl packed els))
 	 ((or (null? (car a)) (not (car a)))
-	  (loop (cdr a) mode rts dir path base inl packed els))
+	  (loop (cdr a) mode rts dir path this base inl packed els))
 	 ((keyword? (car a))
 	  (if (null? (cdr a))
 	      (error "<HEAD>" (format "Missing ~a value" (car a)) a)
 	      (case (car a)
 		 ((:css :jscript :require :include :hz :library)
-		  (loop (cdr a) (car a) rts dir path base inl packed els))
+		  (loop (cdr a) (car a) rts dir path this base inl packed els))
 		 ((:favicon)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path base inl packed 
+		      (loop (cddr a) #f rts dir path this base inl packed 
 			    (cons (favicon (absolute-path (cadr a) dir) inl)
 				  els))
 		      (error "<HEAD>" "Illegal :favicon" (cadr a))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
-		      (loop (cddr a) #f (cadr a) dir path base inl packed els)
+		      (loop (cddr a) #f (cadr a) dir path this base inl packed els)
 		      (error "<HEAD>" "Illegal :rts" (cadr a))))
 		 ((:title)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path base inl packed 
+		      (loop (cddr a) #f rts dir path this base inl packed 
 			    (cons (<TITLE> (cadr a)) els))
 		      (error "<HEAD>" "Illegal :title" (cadr a))))
 		 ((:base)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path (cadr a) inl packed
+		      (loop (cddr a) #f rts dir path this (cadr a) inl packed
 			    (cons (<BASE> :href (cadr a)) els))
 		      (error "<HEAD>" "Illegal :base" (cadr a))))
 		 ((:dir)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cadr a) path base inl packed els)
+		      (loop (cddr a) #f rts (cadr a) path this base inl packed els)
 		      (error "<HEAD>" "Illegal :dir" (cadr a))))
 		 ((:path)
 		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir (append! path (list (cadr a))) base
-			    inl packed els)
+		      (loop (cddr a) #f rts dir (append! path (list (cadr a)))
+			 this base inl packed els)
 		      (error "<HEAD>" "Illegal :path" (cadr a))))
+		 ((:this)
+		  (loop (cddr a) #f rts dir path
+		     (cadr a) base inl packed els))
 		 ((:inline)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
-		      (loop (cddr a) #f rts dir path base (cadr a) packed els)
+		      (loop (cddr a) #f rts dir path this base (cadr a) packed els)
 		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:packed)
 		  (if (or (boolean? (cadr a)) (symbol? (cadr a)))
-		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
+		      (loop (cddr a) #f rts dir path this base inl (cadr a) els)
 		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:with-base)
 		  (if (and (string? (cadr a)) (pair? (cddr a)))
-		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) (cadr a) inl packed '())))
-			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
+		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a)) this (cadr a) inl packed '())))
+			 (loop (cdddr a) #f rts dir path this base inl (cadr a) 
 			       (append (reverse! wbels) els)))))
 		 (else
 		  (error "<HEAD>"
@@ -444,57 +454,57 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (case mode
 	     ((:css)
 	      (let ((file (or (find-file/path (car a) path) (car a))))
-		 (loop (cdr a) mode rts dir path base inl packed 
+		 (loop (cdr a) mode rts dir path this base inl packed 
 		       (cons (css (absolute-path file dir) base inl) els))))
 	     ((:jscript)
 	      (let ((file (or (find-file/path (car a) path) (car a))))
-		 (loop (cdr a) mode rts dir path base inl packed 
+		 (loop (cdr a) mode rts dir path this base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:require)
-	      (let ((file (clientc-resolve-filename (car a) path)))
+	      (let ((file (clientc-resolve-filename (car a) (or this path))))
 		 (if (not file)
 		     (error "<HEAD>" "Cannot find required file" file)
-		     (loop (cdr a) mode rts dir path base inl packed 
+		     (loop (cdr a) mode rts dir path this base inl packed 
 			(cons (require file (car a) inl) els)))))
 	     ((:library)
 	      (let ((file (find-file/path (car a) (library-path))))
 		 (if (not (string? file))
 		     (error "<HEAD>" "Cannot find library file" (car a))
-		     (loop (cdr a) mode rts dir path base inl packed 
+		     (loop (cdr a) mode rts dir path this base inl packed 
 			(cons (script file inl) els)))))
 	     ((:include)
 	      (cond
 		 ((member (car a) incs)
-		  (loop (cdr a) mode rts dir path base inl packed els))
+		  (loop (cdr a) mode rts dir path this base inl packed els))
 		 ((hz-package-filename? (car a))
 		  ;; automatic detection of hz package (is it really a
 		  ;; good idea since there is the special :hz keyword?)
-		  (loop a :include-hz rts dir path base inl packed els))
+		  (loop a :include-hz rts dir path this base inl packed els))
 		 (else
 		  (set! incs (cons (car a) incs))
 		  (let* ((heads (find-incl-dep (car a) path))
-			 (hels (loop heads #f #f dir path base inl packed '()))
+			 (hels (loop heads #f #f dir path this base inl packed '()))
 			 (iels (incl (car a) inl path)))
-		     (loop (cdr a) mode rts dir path base inl packed
+		     (loop (cdr a) mode rts dir path this base inl packed
 			   (append iels (reverse! hels) els))))))
 	     ((:hz :include-hz)
 	      (set! incs (cons (car a) incs))
 	      (let* ((hds (hz (car a) path))
-		     (hels (loop hds #f #f dir path base inl packed '())))
+		     (hels (loop hds #f #f dir path base this inl packed '())))
 		 (loop (cdr a)
 		       (if (eq? mode :hz) :hz :include)
-		       rts dir path base inl packed
+		       rts dir path this base inl packed
 		       (append (reverse! hels) els))))
 	     (else
-	      (loop (cdr a) #f rts dir path base inl packed
+	      (loop (cdr a) #f rts dir path this base inl packed
 		    (cons (car a) els)))))
 	 ((isa? (car a) xml-tilde)
-	  (loop (cdr a) :jscript rts dir path base inl packed
+	  (loop (cdr a) :jscript rts dir path this base inl packed
 		(cons (car a) els)))
 	 ((not (car a))
-	  (loop (cdr a) #f rts dir path base inl packed els))
+	  (loop (cdr a) #f rts dir path this base inl packed els))
 	 (else
-	  (loop (cdr a) #f rts dir path base inl packed (cons (car a) els))))))
+	  (loop (cdr a) #f rts dir path this base inl packed (cons (car a) els))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */

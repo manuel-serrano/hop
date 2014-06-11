@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed May 21 11:36:40 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:50:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -88,7 +88,7 @@
 
 	 ;; Create a HopScript number object constructor
 	 (set! js-number
-	    (js-make-function %this %js-number 1 "JsNumber"
+	    (js-make-function %this %js-number 1 'JsNumber
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :alloc js-number-alloc
@@ -197,7 +197,7 @@
 		    (number->string val r)))))))
 
    (js-bind! %this obj 'toString
-      :value (js-make-function %this js-number-to-string 2 "toString")
+      :value (js-make-function %this js-number-to-string 2 'toString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -208,7 +208,7 @@
       (js-number-to-string this radix))
 
    (js-bind! %this obj 'toLocaleString
-      :value (js-make-function %this js-number-to-localestring 2 "toLocaleString")
+      :value (js-make-function %this js-number-to-localestring 2 'toLocaleString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -223,7 +223,7 @@
 	     val)))
 
    (js-bind! %this obj 'valueOf
-      :value (js-make-function %this js-number-valueof 0 "valueOf")
+      :value (js-make-function %this js-number-valueof 0 'valueOf)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -274,7 +274,7 @@
 					       (substring s (-fx l f))))))))))))))))
 
    (js-bind! %this obj 'toFixed
-      :value (js-make-function %this js-number-tofixed 1 "toFixed")
+      :value (js-make-function %this js-number-tofixed 1 'toFixed)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -283,7 +283,7 @@
    (js-bind! %this obj 'toExponential
       :value (js-make-function %this
 		(lambda l (error "not" "implemented" "yet"))
-		1 "toExponential")
+		1 'toExponential)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -292,7 +292,7 @@
    (js-bind! %this obj 'toPrecision
       :value (js-make-function %this
 		(lambda l (error "not" "implemented" "yet"))
-		1 "toPrecision")
+		1 'toPrecision)
       :writable #t
       :configurable #t
       :enumerable #f))

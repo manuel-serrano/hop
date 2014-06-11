@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jun  6 14:47:47 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 19:46:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -260,10 +260,10 @@
 (define (nodejs-resolve name::bstring %this::JsGlobalObject)
    
    (define (resolve-file x)
-      (if (file-exists? x)
+      (if (and (file-exists? x) (not (directory? x)))
 	  (file-name-canonicalize x)
 	  (let ((js (string-append x ".js")))
-	     (when (file-exists? js)
+	     (when (and (file-exists? js) (not (directory? js)))
 		(file-name-canonicalize js)))))
    
    (define (resolve-package pkg)
@@ -307,13 +307,21 @@
 	       (format "Cannot find module ~s" name)))))
    
    (define (resolve-modules mod x start)
-      (find (lambda (dir)
-	       (resolve-file-or-directory x dir))
+      (any (lambda (dir)
+	      (resolve-file-or-directory x dir))
 	 (node-modules-path mod start)))
    
    (define (node-modules-path mod start)
-      (append (js-get mod 'paths %this) nodejs-env-path))
-
+      (let ((paths (js-get mod 'paths %this)))
+	 (cond
+	    ((pair? paths)
+	     (append paths nodejs-env-path))
+	    ((isa? paths JsArray)
+	     (with-access::JsArray paths (vec)
+		(append (vector->list vec) nodejs-env-path)))
+	    (else
+	     nodejs-env-path))))
+   
    (let* ((mod (js-get %this 'module %this))
 	  (dir (dirname (js-get mod 'filename %this))))
       (if (or (string-prefix? "./" name)
@@ -375,5 +383,9 @@
 (js-worker-load-set!
    (lambda (name worker this)
       (nodejs-require name worker this
-	 (lambda () (nodejs-init-global-object! this)))))
+	 (lambda ()
+	    ;; remove the temporary module set in the worker thunk
+	    ;; (see worker.scm)
+	    (js-delete! this 'module #f this)
+	    (nodejs-init-global-object! this)))))
 

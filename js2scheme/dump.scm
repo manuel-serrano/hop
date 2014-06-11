@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun May 25 18:43:30 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 08:26:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -340,9 +340,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SXml ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SXml)
-   (with-access::J2SXml this (tag attrs body)
-      `(,@(call-next-method) ,tag ,@(map j2s->list attrs) ,(j2s->list body))))
+;* (define-method (j2s->list this::J2SXml)                             */
+;*    (with-access::J2SXml this (tag attrs body)                       */
+;*       `(,@(call-next-method) ,tag ,@(map j2s->list attrs) ,(j2s->list body)))) */
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2Stilde ...                                         */

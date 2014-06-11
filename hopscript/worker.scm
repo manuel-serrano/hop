@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Jun  6 08:36:08 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 19:45:06 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -101,7 +101,7 @@
 	 
 	 ;; then, Create a HopScript worker object constructor
 	 (set! js-worker
-	    (js-make-function %this (%js-worker %this) 2 "JsWorker"
+	    (js-make-function %this (%js-worker %this) 2 'JsWorker
 	       :__proto__ js-function-prototype
 	       :prototype js-worker-prototype
 	       :construct (js-worker-construct %this)))
@@ -147,6 +147,7 @@
 		(this (js-new-global-object))
 		(source (js-tostring src %this))
 		(thunk (lambda ()
+			  (js-put! this 'module (js-get %this 'module %this) #f this)
 			  ((js-worker-load) source thread this)))
 		(thread (instantiate::WorkerHopThread
 			   (parent parent)
@@ -174,14 +175,14 @@
 		  (js-bind! %this worker 'onmessage
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
-			     0 "onmessage")
+			     0 'onmessage)
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onmessage v)
 				(add-event-listener! this "message"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 "onmessage")
+			     2 'onmessage)
 		     :configurable #t
 		     :enumerable #t))
 
@@ -190,7 +191,7 @@
 		  :value (js-make-function this
 			    (lambda (this data)
 			       (js-worker-post-slave-message worker data))
-			    1 "postMessage")
+			    1 'postMessage)
 		  :writable #f
 		  :configurable #f
 		  :enumerable #f)
@@ -201,12 +202,12 @@
 			  (lambda (this)
 			     (with-access::WorkerHopThread thread (onmessage)
 				onmessage))
-			  0 "onmessage")
+			  0 'onmessage)
 		  :set (js-make-function this
 			  (lambda (this v)
 			     (with-access::WorkerHopThread thread (onmessage)
 				(set! onmessage v)))
-			  2 "onmessage")
+			  2 'onmessage)
 		  :configurable #t
 		  :writable #f
 		  :enumerable #t)
@@ -236,7 +237,7 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this
 		(lambda (this) "[object Worker]")
-		0 "toString")
+		0 'toString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -246,7 +247,7 @@
 		(lambda (this::JsWorker data)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-post-master-message this data)))
-		1 "postMessage")
+		1 'postMessage)
       :writable #f
       :configurable #t
       :enumerable #f)
@@ -256,7 +257,7 @@
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-terminate! thread)))
-		1 "terminate")
+		1 'terminate)
       :writable #f
       :enumerable #t
       :configurable #f))

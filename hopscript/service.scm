@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jun  5 16:35:16 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:54:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -71,7 +71,7 @@
 	    :value (js-make-function %this
 		      (lambda (this file)
 			 (service-resource this file))
-		      1 "resource")
+		      1 'resource)
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
@@ -87,20 +87,20 @@
 		      (lambda (this::JsHopFrame success opt)
 			 (with-access::JsHopFrame this (url)
 			    (post url success opt %this)))
-		      2 "post"))
+		      2 'post))
 	 
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (with-access::JsHopFrame this (url)
 			    url))
-		      0 "toString"))
+		      0 'toString))
 	 
 	 ;; HopFrame constructor 
 	 (letrec ((js-hopframe (js-make-function %this
 				  (lambda (this url)
 				     (js-new %this js-hopframe url))
-				  1 "JsHopFrame"
+				  1 'JsHopFrame
 				  :__proto__ js-function-prototype
 				  :prototype js-hopframe-prototype
 				  :construct (lambda (this url)
@@ -188,7 +188,7 @@
 				      (with-access::JsService o (svc)
 					 (with-access::hop-service svc (path)
 					    path)))
-				   1 "path"))
+				   1 'path))
 			   (set (js-make-function %this
 				   (lambda (o v)
 				      (with-access::JsService o (svc)
@@ -196,7 +196,7 @@
 					 (with-access::hop-service svc (path)
 					    (set! path (js-tostring v %this))
 					    (register-service! svc))))
-				   2 "path")))))
+				   2 'path)))))
 	 
 	 (svc svc))))
 

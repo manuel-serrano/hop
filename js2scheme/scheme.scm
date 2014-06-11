@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun  6 10:24:19 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 08:27:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -352,73 +352,73 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclTag ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclTag mode return)
-   
-   (define (jstag->scheme this::J2STag id mode return)
-      
-      (define (init->formal init::J2SDataPropertyInit)
-	 (with-access::J2SDataPropertyInit init (name val)
-	    (with-access::J2SString name ((name val))
-	       (list (string->symbol name) (j2s-scheme val mode return)))))
-      
-      (define (tag-parameters-sans-attribute args)
-	 (cond
-	    ((null? args)
-	     '())
-	    ((null? (cdr args))
-	     (with-access::J2SDecl (car args) (id)
-		(list id)))
-	    (else
-	     (list
-		(with-access::J2SDecl (car args) (id) (list id))
-		(with-access::J2SDecl (cadr args) (id) id)))))
-      
-      (define (tag-parameters args)
-	 (cond
-	    ((null? args)
-	     '())
-	    ((isa? (car args) J2SObjInit)
-	     (with-access::J2SObjInit (car args) (inits)
-		(append (map init->formal inits)
-		   (tag-parameters-sans-attribute (cdr args)))))
-	    (else
-	     (tag-parameters-sans-attribute args))))
-      
-      (define (tag-parameters-attributes args)
-	 (match-case args
-	    ((?- ?attributes ?-)
-	     (with-access::J2SDecl attributes (id)
-		id))))
-      
-      (define (tag-parameters-nodes args)
-	 (match-case args
-	    ((?- ?- ?nodes)
-	     (with-access::J2SDecl nodes (id)
-		id))))
-      
-      (with-access::J2STag this (id inits body need-bind-exit-return)
-	 (let ((attributes (tag-parameters-attributes inits))
-	       (nodes (tag-parameters-nodes inits)))
-	    `(define-tag ,(symbol-append '< id '>) ,(tag-parameters inits)
-		,(when attributes
-		    (let ((id (j2s-scheme-id attributes)))
-		       `(set! ,id
-			   (js-plist->jsobject ,id %this))))
-		,(when nodes
-		    (let ((id (j2s-scheme-id nodes)))
-		       `(set! ,id
-			   (js-vector->jsarray (apply vector ,id) %this))))
-		,(if need-bind-exit-return
-		     (with-access::J2SNode body (loc)
-			(epairify loc
-			   (return-body
-			      (flatten-stmt (j2s-scheme body mode return)))))
-		     (flatten-stmt (j2s-scheme body mode return)))))))
-   
-   (with-access::J2SDeclTag this (loc id name val)
-      (let ((scmid (or name (j2s-scheme-id id))))
-	 (epairify-deep loc
-	    (jstag->scheme val scmid mode return)))))
+;* (define-method (j2s-scheme this::J2SDeclTag mode return)            */
+;*                                                                     */
+;*    (define (jstag->scheme this::J2STag id mode return)              */
+;*                                                                     */
+;*       (define (init->formal init::J2SDataPropertyInit)              */
+;* 	 (with-access::J2SDataPropertyInit init (name val)             */
+;* 	    (with-access::J2SString name ((name val))                  */
+;* 	       (list (string->symbol name) (j2s-scheme val mode return))))) */
+;*                                                                     */
+;*       (define (tag-parameters-sans-attribute args)                  */
+;* 	 (cond                                                         */
+;* 	    ((null? args)                                              */
+;* 	     '())                                                      */
+;* 	    ((null? (cdr args))                                        */
+;* 	     (with-access::J2SDecl (car args) (id)                     */
+;* 		(list id)))                                            */
+;* 	    (else                                                      */
+;* 	     (list                                                     */
+;* 		(with-access::J2SDecl (car args) (id) (list id))       */
+;* 		(with-access::J2SDecl (cadr args) (id) id)))))         */
+;*                                                                     */
+;*       (define (tag-parameters args)                                 */
+;* 	 (cond                                                         */
+;* 	    ((null? args)                                              */
+;* 	     '())                                                      */
+;* 	    ((isa? (car args) J2SObjInit)                              */
+;* 	     (with-access::J2SObjInit (car args) (inits)               */
+;* 		(append (map init->formal inits)                       */
+;* 		   (tag-parameters-sans-attribute (cdr args)))))       */
+;* 	    (else                                                      */
+;* 	     (tag-parameters-sans-attribute args))))                   */
+;*                                                                     */
+;*       (define (tag-parameters-attributes args)                      */
+;* 	 (match-case args                                              */
+;* 	    ((?- ?attributes ?-)                                       */
+;* 	     (with-access::J2SDecl attributes (id)                     */
+;* 		id))))                                                 */
+;*                                                                     */
+;*       (define (tag-parameters-nodes args)                           */
+;* 	 (match-case args                                              */
+;* 	    ((?- ?- ?nodes)                                            */
+;* 	     (with-access::J2SDecl nodes (id)                          */
+;* 		id))))                                                 */
+;*                                                                     */
+;*       (with-access::J2STag this (id inits body need-bind-exit-return) */
+;* 	 (let ((attributes (tag-parameters-attributes inits))          */
+;* 	       (nodes (tag-parameters-nodes inits)))                   */
+;* 	    `(define-tag ,(symbol-append '< id '>) ,(tag-parameters inits) */
+;* 		,(when attributes                                      */
+;* 		    (let ((id (j2s-scheme-id attributes)))             */
+;* 		       `(set! ,id                                      */
+;* 			   (js-plist->jsobject ,id %this))))           */
+;* 		,(when nodes                                           */
+;* 		    (let ((id (j2s-scheme-id nodes)))                  */
+;* 		       `(set! ,id                                      */
+;* 			   (js-vector->jsarray (apply vector ,id) %this)))) */
+;* 		,(if need-bind-exit-return                             */
+;* 		     (with-access::J2SNode body (loc)                  */
+;* 			(epairify loc                                  */
+;* 			   (return-body                                */
+;* 			      (flatten-stmt (j2s-scheme body mode return))))) */
+;* 		     (flatten-stmt (j2s-scheme body mode return))))))) */
+;*                                                                     */
+;*    (with-access::J2SDeclTag this (loc id name val)                  */
+;*       (let ((scmid (or name (j2s-scheme-id id))))                   */
+;* 	 (epairify-deep loc                                            */
+;* 	    (jstag->scheme val scmid mode return)))))                  */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
@@ -1732,42 +1732,42 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SXml ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SXml mode return)
-   
-   (define (call-tag tag)
-      (cond
-	 ((isa? tag J2SPragma)
-	  (with-access::J2SPragma tag (expr)
-	     (list expr)))
-	 ((isa? tag J2SAccess)
-	  (with-access::J2SAccess tag (loc obj field)
-	     (if (isa? obj J2SRef)
-		 (let ((thisarg (j2s-scheme obj mode return)))
-		    `(js-calln %this ,(j2s-scheme tag mode return)
-			(js-toobject %this ,thisarg)))
-		 (let ((tmp (gensym)))
-		    `(let ((,tmp ,(j2s-scheme obj mode return)))
-			(js-calln %this `(js-toobject %this ,tmp) ,tmp))))))
-	 (else
-	  (j2s-error "j2sscheme" "Illegal tag expression" this))))
-   
-   (with-access::J2SXml this (loc tag attrs body)
-      (epairify loc
-	 `(,@(call-tag tag)
-	     ,@(append-map (lambda (p::J2SDataPropertyInit)
-			      (with-access::J2SDataPropertyInit p (name val)
-				 (with-access::J2SString name ((s val))
-				    (list (string->keyword s)
-				       (j2s-scheme val mode return)))))
-		  attrs)
-	     ,@(cond
-		  ((isa? body J2SBool)
-		   '())
-		  ((isa? body J2SSequence)
-		   (with-access::J2SSequence body (exprs)
-		      (j2s-scheme exprs mode return)))
-		  (else
-		   (j2s-error "j2sscheme" "Illegal tag expression" this)))))))
+;* (define-method (j2s-scheme this::J2SXml mode return)                */
+;*                                                                     */
+;*    (define (call-tag tag)                                           */
+;*       (cond                                                         */
+;* 	 ((isa? tag J2SPragma)                                         */
+;* 	  (with-access::J2SPragma tag (expr)                           */
+;* 	     (list expr)))                                             */
+;* 	 ((isa? tag J2SAccess)                                         */
+;* 	  (with-access::J2SAccess tag (loc obj field)                  */
+;* 	     (if (isa? obj J2SRef)                                     */
+;* 		 (let ((thisarg (j2s-scheme obj mode return)))         */
+;* 		    `(js-calln %this ,(j2s-scheme tag mode return)     */
+;* 			(js-toobject %this ,thisarg)))                 */
+;* 		 (let ((tmp (gensym)))                                 */
+;* 		    `(let ((,tmp ,(j2s-scheme obj mode return)))       */
+;* 			(js-calln %this `(js-toobject %this ,tmp) ,tmp)))))) */
+;* 	 (else                                                         */
+;* 	  (j2s-error "j2sscheme" "Illegal tag expression" this))))     */
+;*                                                                     */
+;*    (with-access::J2SXml this (loc tag attrs body)                   */
+;*       (epairify loc                                                 */
+;* 	 `(,@(call-tag tag)                                            */
+;* 	     ,@(append-map (lambda (p::J2SDataPropertyInit)            */
+;* 			      (with-access::J2SDataPropertyInit p (name val) */
+;* 				 (with-access::J2SString name ((s val)) */
+;* 				    (list (string->keyword s)          */
+;* 				       (j2s-scheme val mode return))))) */
+;* 		  attrs)                                               */
+;* 	     ,@(cond                                                   */
+;* 		  ((isa? body J2SBool)                                 */
+;* 		   '())                                                */
+;* 		  ((isa? body J2SSequence)                             */
+;* 		   (with-access::J2SSequence body (exprs)              */
+;* 		      (j2s-scheme exprs mode return)))                 */
+;* 		  (else                                                */
+;* 		   (j2s-error "j2sscheme" "Illegal tag expression" this))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAssig ...                                        */

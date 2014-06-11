@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jun  6 08:47:59 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 17:15:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -30,12 +30,30 @@
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArray ...                                  */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsArray
+   (lambda (o)
+      (call-with-output-string
+	 (lambda (op)
+	    (obj->javascript-expr o op))))
+   (lambda (s)
+      (call-with-input-string s
+	 javascript->obj)))
+
+;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack obj::JsArray)
    (with-access::JsArray obj (vec)
       (vector->list vec)))
    
+;*---------------------------------------------------------------------*/
+;*    xml-body-element ::JsArray ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-body-element obj::JsArray)
+   (xml-unpack obj))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -60,7 +78,6 @@
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    jsarray-fields ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -72,13 +89,6 @@
 (define-method (javascript-class-all-fields obj::JsArray)
    jsarray-fields)
    
-;*---------------------------------------------------------------------*/
-;*    xml-body-element ::JsArray ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (xml-body-element obj::JsArray)
-   (with-access::JsArray obj (vec)
-      (vector->list vec)))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-init-array! ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -106,7 +116,7 @@
 	 
 	 ;; create the array object constructor
 	 (set! js-array
-	    (js-make-function %this (%js-array %this) 1 "JsArray"
+	    (js-make-function %this (%js-array %this) 1 'JsArray
 	       :__proto__ js-function-prototype
 	       :prototype js-array-prototype
 	       :alloc (lambda (ctor) (js-array-alloc ctor %this))
@@ -117,7 +127,7 @@
 	 (js-bind! %this js-array 'isArray
 	    :value (js-make-function %this
 		      (lambda (this arg) (isa? arg JsArray))
-		      1 "isArray")
+		      1 'isArray)
 	    :writable #t
 	    :enumerable #f)
 
@@ -152,7 +162,7 @@
 	     (js-tostring this %this))))
    
    (js-bind! %this js-array-prototype 'toString
-      :value (js-make-function %this array-prototype-tostring 0 "toString"
+      :value (js-make-function %this array-prototype-tostring 0 'toString
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -183,7 +193,7 @@
 			  (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype 'toLocaleString
-      :value (js-make-function %this array-prototype-tolocalestring 0 "toLocaleString"
+      :value (js-make-function %this array-prototype-tolocalestring 0 'toLocaleString
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -243,7 +253,7 @@
 		(loop (cdr l) (+fx 1 i)))))))
    
    (js-bind! %this js-array-prototype 'concat
-      :value (js-make-function %this array-prototype-concat 1 "concat"
+      :value (js-make-function %this array-prototype-concat 1 'concat
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -270,7 +280,7 @@
 			  (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype 'join
-      :value (js-make-function %this array-prototype-join 1 "join"
+      :value (js-make-function %this array-prototype-join 1 'join
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -291,7 +301,7 @@
 		el)))))
    
    (js-bind! %this js-array-prototype 'pop
-      :value (js-make-function %this array-prototype-pop 0 "pop"
+      :value (js-make-function %this array-prototype-pop 0 'pop
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -322,7 +332,7 @@
 		      ni))))))
    
    (js-bind! %this js-array-prototype 'push
-      :value (js-make-function %this array-prototype-push 1 "push"
+      :value (js-make-function %this array-prototype-push 1 'push
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -366,7 +376,7 @@
 	     (array-reverse! o))))
    
    (js-bind! %this js-array-prototype 'reverse
-      :value (js-make-function %this array-prototype-reverse 0 "reverse"
+      :value (js-make-function %this array-prototype-reverse 0 'reverse
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -415,7 +425,7 @@
 	     (array-shift! o len)))))
    
    (js-bind! %this js-array-prototype 'shift
-      :value (js-make-function %this array-prototype-shift 0 "shift"
+      :value (js-make-function %this array-prototype-shift 0 'shift
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -481,7 +491,7 @@
 		       (array-slice! o k final)))))))))
    
    (js-bind! %this js-array-prototype 'slice
-      :value (js-make-function %this array-prototype-slice 2 "slice"
+      :value (js-make-function %this array-prototype-slice 2 'slice
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -576,7 +586,7 @@
 		    (array-sort this (get-compare comparefn))))))))
    
    (js-bind! %this js-array-prototype 'sort
-      :value (js-make-function %this array-prototype-sort 1 "sort"
+      :value (js-make-function %this array-prototype-sort 1 'sort
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -655,7 +665,7 @@
 		    (array-splice this len actualstart actualdeletecount)))))))
    
    (js-bind! %this js-array-prototype 'splice
-      :value (js-make-function %this array-prototype-splice 2 "splice"
+      :value (js-make-function %this array-prototype-splice 2 'splice
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -711,7 +721,7 @@
 			(array-unshift this (uint32->integer len)))))))))
    
    (js-bind! %this js-array-prototype 'unshift
-      :value (js-make-function %this array-prototype-unshift 1 "unshift"
+      :value (js-make-function %this array-prototype-unshift 1 'unshift
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -772,7 +782,7 @@
 			   (array-indexof o k len))))))))
    
    (js-bind! %this js-array-prototype 'indexOf
-      :value (js-make-function %this array-prototype-indexof 1 "indexOf"
+      :value (js-make-function %this array-prototype-indexof 1 'indexOf
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -831,7 +841,7 @@
 		    (array-lastindexof o k))))))
    
    (js-bind! %this js-array-prototype 'lastIndexOf
-      :value (js-make-function %this array-prototype-lastindexof 1 "lastIndexOf"
+      :value (js-make-function %this array-prototype-lastindexof 1 'lastIndexOf
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -889,7 +899,7 @@
       (array-prototype-iterator %this this proc t array-every vector-every))
    
    (js-bind! %this js-array-prototype 'every
-      :value (js-make-function %this array-prototype-every 1 "every"
+      :value (js-make-function %this array-prototype-every 1 'every
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -946,7 +956,7 @@
    
    (js-bind! %this js-array-prototype 'some
       :value (js-make-function %this
-		array-prototype-some 1 "some"
+		array-prototype-some 1 'some
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -983,7 +993,7 @@
       (js-undefined))
    
    (js-bind! %this js-array-prototype 'forEach
-      :value (js-make-function %this array-prototype-foreach 1 "forEach"
+      :value (js-make-function %this array-prototype-foreach 1 'forEach
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -1032,7 +1042,7 @@
    
    (js-bind! %this js-array-prototype 'map
       :value (js-make-function %this
-		(make-array-prototype-map %this) 1 "map"
+		(make-array-prototype-map %this) 1 'map
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -1107,7 +1117,7 @@
    
    (js-bind! %this js-array-prototype 'filter
       :value (js-make-function %this
-		array-prototype-filter 1 "filter"
+		array-prototype-filter 1 'filter
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -1147,7 +1157,7 @@
    
    (js-bind! %this js-array-prototype 'reduce
       :value (js-make-function %this
-		array-prototype-reduce 1 "reduce"
+		array-prototype-reduce 1 'reduce
 		:prototype (js-undefined))
       :enumerable #f)
    
@@ -1186,7 +1196,7 @@
 		 (reduce/accumulator o len (-u32 len #u32:1) (car init))))))
    
    (js-bind! %this js-array-prototype 'reduceRight
-      :value (js-make-function %this array-prototype-reduceright 1 "reduceRight"
+      :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
 		:prototype (js-undefined))
       :enumerable #f))
 

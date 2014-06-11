@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun  6 14:36:51 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 18:32:32 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -620,10 +620,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-filename-resolver ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-clientc-filename-resolver name path)
+(define (hop-clientc-filename-resolver name this-or-path)
    (cond
       ((string-suffix? ".js" name)
-       (with-access::WorkerHopThread (js-current-worker) (%this)
-	  (nodejs-resolve name %this)))
+       (nodejs-resolve name this-or-path))
       (else
-       (find-file/path name path))))
+       (find-file/path name this-or-path))))

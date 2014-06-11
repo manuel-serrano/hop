@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  6 10:59:04 2014 (serrano)                */
+;*    Last change :  Wed Jun 11 11:52:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -43,13 +43,13 @@
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse
-	 :value (js-make-function %this (js-json-parse %this) 2 "parse")
+	 :value (js-make-function %this (js-json-parse %this) 2 'parse)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
       ;; stringify
       (js-bind! %this js-json 'stringify
-	 :value (js-make-function %this (js-json-stringify %this) 3 "stringify")
+	 :value (js-make-function %this (js-json-stringify %this) 3 'stringify)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
