@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Jun  6 09:00:24 2014 (serrano)                */
+;*    Last change :  Mon Jun 16 16:41:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -90,6 +90,10 @@
 	    (define-js HTTPResponseAuthentication 2
 	       (lambda (this msg req)
 		  (hopjs-response-authentication this msg req %this)))
+	    
+	    (define-js HTTPResponseProxy 2
+	       (lambda (this proc req)
+		  (hopjs-response-proxy this proc req %this)))
 	    
 	    (define-js HTTPResponseAsync 1
 	       (lambda (this proc req)
@@ -213,12 +217,13 @@
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
 	  (request (get/default req 'currentRequest %this (current-request)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this #f))
+	  (content-type (get/default req 'contentType %this "application/x-javascript"))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
 	  (request (if (eq? req (js-undefined)) (current-request) req))
+	  (content-type "application/x-javascript")
 	  (value obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -256,6 +261,20 @@
    (user-access-denied
       (if (eq? req (js-undefined)) (current-request) req)
       (js-tostring msg %this)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-response-proxy ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hopjs-response-proxy this url req %this)
+   (let ((url (js-tostring url %this)))
+      (multiple-value-bind (scheme uinfo host port abspath)
+	 (http-url-parse url)
+	 (instantiate::http-response-remote
+	    (host host)
+	    (port port)
+	    (path abspath)
+	    (header `((Host: . ,host)))
+	    (request (if (eq? req (js-undefined)) (current-request) req))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-async ...                                         */

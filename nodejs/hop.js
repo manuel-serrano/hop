@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Jun  6 08:59:42 2014 (serrano)                */
+/*    Last change :  Mon Jun 16 16:39:04 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -39,6 +39,7 @@ exports.HTTPResponseFile = hop.HTTPResponseFile;
 exports.HTTPResponseString = hop.HTTPResponseString;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
 exports.HTTPResponseAsync = hop.HTTPResponseAsync;
+exports.HTTPResponseProxy = hop.HTTPResponseProxy;
 
 /*---------------------------------------------------------------------*/
 /*    Charset                                                          */

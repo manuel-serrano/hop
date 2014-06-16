@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jun 11 19:33:41 2014 (serrano)                */
+;*    Last change :  Fri Jun 13 10:13:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -27,6 +27,7 @@
 	   __hopscript_boolean
 	   __hopscript_regexp
 	   __hopscript_array
+	   __hopscript_arraybuffer
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
@@ -137,6 +138,7 @@
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
 	    (js-init-array! %this)
+	    (js-init-arraybuffer! %this)
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
@@ -543,9 +545,6 @@
        (js-bind! ,%this ,obj ',tag
 	  :value (js-make-function ,%this
 		    (lambda (this attrs . nodes)
-		       (tprint "tag=" ',tag " attrs="
-			  (when (isa? attrs JsObject)
-			     (js-object->keyword-arguments attrs ,%this)))
 		       (if (isa? attrs JsObject)
 			   (if (null? nodes)
 			       (apply ,(symbol-append '< tag '>)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 11 17:15:35 2014 (serrano)                */
+;*    Last change :  Fri Jun 13 10:17:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -85,6 +85,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-class-all-fields ::JsArray ...                        */
+;*    -------------------------------------------------------------    */
+;*    JSON serialization, see runtime/json.scm                         */
 ;*---------------------------------------------------------------------*/
 (define-method (javascript-class-all-fields obj::JsArray)
    jsarray-fields)
@@ -116,7 +118,7 @@
 	 
 	 ;; create the array object constructor
 	 (set! js-array
-	    (js-make-function %this (%js-array %this) 1 'JsArray
+	    (js-make-function %this (%js-array %this) 1 'Array
 	       :__proto__ js-function-prototype
 	       :prototype js-array-prototype
 	       :alloc (lambda (ctor) (js-array-alloc ctor %this))
@@ -137,6 +139,7 @@
 	 ;; bind Array in the global object
 	 (js-bind! %this %this 'Array
 	    :configurable #f :enumerable #f :value js-array)
+	 
 	 js-array)))
 
 ;*---------------------------------------------------------------------*/
@@ -146,9 +149,6 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-array-prototype! %this js-array js-array-prototype)
    
-   (define (not-implemented . l)
-      (error "hopscript" "array method not implemented" l))
-
    ;; constructor
    (js-bind! %this js-array-prototype 'constructor :value js-array :enumerable #f)
    
@@ -1201,7 +1201,7 @@
       :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
-;*    %js-sarray ...                                                   */
+;*    %js-array ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.1       */
 ;*---------------------------------------------------------------------*/

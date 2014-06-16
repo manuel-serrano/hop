@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Jun  5 18:20:55 2014 (serrano)                */
+;*    Last change :  Sun Jun 15 17:51:53 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -95,7 +95,13 @@
 	    obj)))
 
    (define (stat this path)
-      (file-exists? path))
+      (when (file-exists? path)
+	 (let ((obj (js-alist->jsobject
+		       `((size . ,(elong->fixnum (file-size path))))
+		       %this)))
+	    (with-access::JsObject obj (__proto__)
+	       (set! __proto__ (get-process-fs-stats %this))
+	       obj))))
 
    (define (close this fd)
       (cond
@@ -104,6 +110,8 @@
 
    (define (open this path flags mode)
       (cond
+	 ((not (integer? flags))
+	  (error "open" "wrong flag" flags))
 	 ((=fx flags O_RDONLY)
 	  (open-input-file path))
 	 ((=fx flags O_WRONLY)

@@ -65,7 +65,6 @@ SlowBuffer.prototype.toString = function(encoding, start, end) {
       return this.utf8Slice(start, end);
 
     case 'ascii':
-#:tprint( "asciiSlide.1.." );
       return this.asciiSlice(start, end);
 
     case 'binary':
@@ -158,7 +157,6 @@ function Buffer(subject, encoding, offset) {
   if (!(this instanceof Buffer)) {
     return new Buffer(subject, encoding, offset);
   }
-
   var type;
 
   // Are we slicing?
@@ -216,13 +214,14 @@ function Buffer(subject, encoding, offset) {
         this.length = this.write(subject, 0, encoding);
       // if subject is buffer then use built-in copy method
       } else if (Buffer.isBuffer(subject)) {
-        if (subject.parent)
+        if (subject.parent) {
           subject.parent.copy(this.parent,
                               this.offset,
                               subject.offset,
                               this.length + subject.offset);
-        else
-          subject.copy(this.parent, this.offset, 0, this.length);
+	} else {
+           subject.copy(this.parent, this.offset, 0, this.length);
+	}
       } else if (isArrayIsh(subject)) {
         for (var i = 0; i < this.length; i++)
           this.parent[i + this.offset] = subject[i];
