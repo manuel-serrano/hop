@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jun  4 15:12:28 2014 (serrano)                */
+#*    Last change :  Tue Jun 24 12:49:44 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -46,7 +46,7 @@ EOBJECTS = o/make_lib.o
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES = $(_OBJECTS:%=%.scm) walk.sch
 
 INCLUDES = 
 
