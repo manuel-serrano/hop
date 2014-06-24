@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Jun 19 08:40:17 2014 (serrano)                */
+#*    Last change :  Tue Jun 24 12:44:56 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ EOBJECTS = o/make_lib.o
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES = $(_OBJECTS:%=%.scm) walk.sch
 
 INCLUDES = 
 
