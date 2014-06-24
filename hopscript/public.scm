@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jun 16 09:34:56 2014 (serrano)                */
+;*    Last change :  Sun Jun 22 21:12:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -95,6 +95,8 @@
 	   (js-raise-syntax-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
+
+	   (generic js-inspect ::obj ::int)
 
 	   ))
 
@@ -819,6 +821,8 @@
        o)
       ((null? o)
        o)
+      ((isa? o object)
+       o)
       (else
        (js-raise-type-error %this "toObject: cannot convert ~s" o))))
 
@@ -1019,3 +1023,53 @@
    (with-access::JsGlobalObject %this (js-error)
       (js-raise (apply js-new %this js-error (format fmt obj) args))))
 
+;*---------------------------------------------------------------------*/
+;*    js-inspect ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-generic (js-inspect o cnt)
+   (if (< cnt 0)
+       "..."
+       (call-with-output-string
+	  (lambda (op)
+	     (write-circle o op)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-markup ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-markup cnt)
+   (with-access::xml-markup o (tag attributes body)
+      (call-with-output-string
+	 (lambda (op)
+	    (display tag op)
+	    (display "{ " op)
+	    (let loop ((attr attributes)
+		       (sep " "))
+	       (if (null? attr)
+		   (let loop ((nodes (xml-unpack body))
+			      (sep sep))
+		      (if (null? nodes)
+			  (display " }" op)
+			  (begin
+			     (display sep op)
+			     (display (js-inspect (car nodes) (- cnt 1)) op)
+			     (loop (cdr nodes) ", "))))
+		   (begin
+		      (display (keyword->string (car attr)) op)
+		      (display ": " op)
+		      (display (js-inspect (cadr attr) (- cnt 1)) op)
+		      (loop (cddr attr) ", "))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-tilde ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-tilde cnt)
+   (with-access::xml-tilde o (%js-statement)
+      (call-with-output-string
+	 (lambda (op)
+	    (display "~{ " op)
+	    (display %js-statement op)
+	    (display " }" op)))))
+			 
+   
+   
+   

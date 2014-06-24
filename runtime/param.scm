@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 28 18:28:29 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 13:51:00 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -83,6 +83,10 @@
 	    (hop-capture-port::obj)
 	    (hop-capture-port-set! ::obj)
 
+	    (hop-loaders::pair-nil)
+	    (hop-loaders-set! ::pair-nil)
+	    (hop-loader-add! ::bstring ::procedure)
+	    
 	    (hop-max-file-size-cache::elong)
 	    (hop-max-file-size-cache-set! ::elong)
 
@@ -127,6 +131,7 @@
 	    (hop-path-set! ::pair-nil)
 	    
 	    (hop-server-hostname::bstring)
+	    (hop-server-hostname-set! ::bstring)
 	    (hop-server-hostip::bstring)
 
 	    (hop-scm-compile-suffix::bstring)
@@ -460,6 +465,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-capture-port
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-loaders ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-loaders
+   '())
+
+(define (hop-loader-add! suffix loader)
+   (hop-loaders-set! (cons (cons suffix loader) (hop-loaders))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-file-size-cache ...                                      */

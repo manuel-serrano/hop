@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jun 13 17:56:22 2014 (serrano)                */
+;*    Last change :  Sun Jun 22 09:32:30 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -97,6 +97,20 @@
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
 	      (vec::u8vector (default '#u8())))
+	   
+	   (abstract-class JsArrayBufferView::JsObject
+	      (sealed::bool (default #f))
+	      (frozen::bool (default #f))
+	      (buffer::JsArrayBuffer (default (class-nil JsArrayBuffer)))
+	      (byteoffset::uint32 (default #u32:0)))
+
+	   (class JsTypedArray::JsArrayBufferView
+	      (length::uint32 (default #u32:0))
+	      (bpe::uint32 read-only)
+	      (vref::procedure read-only)
+	      (vset::procedure read-only))
+	   
+	   (class JsDataView::JsArrayBufferView)
 	   
 	   (class JsArguments::JsObject
 	      vec::vector)

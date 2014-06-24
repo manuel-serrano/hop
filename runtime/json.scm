@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Fri Jun  6 08:51:02 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 09:25:51 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -27,6 +27,7 @@
    (export  (init-json! #!key plist->jsobject vector->jsarray)
 	    (generic obj->json ::obj ::output-port)
             (byte-array->json ::bstring ::output-port)
+	    (javascript-parser ::input-port)
 	    (javascript->obj ::obj)
 	    (generic javascript-class-all-fields ::object)))
 
@@ -129,30 +130,33 @@
 		  ,@Lbody
 		  (,loop (+fx ,i 1)))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    javascript-parser ...                                            */
+;*---------------------------------------------------------------------*/
+(define (javascript-parser ip)
+   (with-handler
+      (lambda (e)
+	 (if (not (isa? e &io-parse-error))
+	     (raise e)
+	     (with-access::&io-parse-error e (obj)
+		(match-case obj
+		   ((?token ?val ?file ?pos)
+		    (raise (duplicate::&io-parse-error e
+			      (obj (format "~a (~a)" token val))
+			      (fname file)
+			      (location pos))))
+		   (else
+		    (raise e))))))
+      (read/lalrp *javascript-parser* *javascript-lexer* ip)))
+
 ;*---------------------------------------------------------------------*/
 ;*    javascript->obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript->obj o)
-   
-   (define (parse-javascript ip)
-      (with-handler
-	 (lambda (e)
-	    (if (not (isa? e &io-parse-error))
-		(raise e)
-		(with-access::&io-parse-error e (obj)
-		   (match-case obj
-		      ((?token ?val ?file ?pos)
-		       (raise (duplicate::&io-parse-error e
-				 (obj (format "~a (~a)" token val))
-				 (fname file)
-				 (location pos))))
-		      (else
-		       (raise e))))))
-	 (read/lalrp *javascript-parser* *javascript-lexer* ip)))
-
    (cond
-      ((input-port? o) (parse-javascript o))
-      ((string? o) (call-with-input-string o parse-javascript))
+      ((input-port? o) (javascript-parser o))
+      ((string? o) (call-with-input-string o javascript-parser))
       (else (error "javascript->obj" "Illegal argument" o))))
 
 ;*---------------------------------------------------------------------*/

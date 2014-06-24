@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jun  4 11:52:21 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 10:16:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -23,7 +23,8 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_worker
-	   __hopscript_pair)
+	   __hopscript_pair
+	   __hopscript_function)
    
    (export (js-toname::symbol ::obj ::JsGlobalObject)
 	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
@@ -507,7 +508,15 @@
 	  (clazz (object-class o))
 	  (field (find-class-field clazz name)))
       (if (not field)
-	  (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o)
+	  (case name
+	     ((inspect)
+	      (js-make-function %this js-inspect
+		 1
+		 'inspect))
+	     ((constructor)
+	      (js-undefined))
+	     (else
+	      (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o)))
 	  ((class-field-accessor field) o))))
 
 ;*---------------------------------------------------------------------*/
@@ -735,7 +744,7 @@
 	  (field (find-class-field clazz name)))
       (cond
 	 ((not field)
-	  (js-raise-type-error %this (format "no such field \"~\" ~~a" name) o))
+	  (js-raise-type-error %this (format "no such field.5 \"~\" ~~a" name) o))
 	 ((not (class-field-mutable? field))
 	  (js-raise-type-error %this (format "field \"~\" read-only ~~a" name) o))
 	 (else

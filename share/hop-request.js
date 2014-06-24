@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jun  5 17:27:41 2014 (serrano)                */
+/*    Last change :  Tue Jun 24 11:27:33 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -408,8 +408,10 @@ function withHOP( svc, success, opt ) {
    var sync = false;
    var fail = false;
    var anim = true;
-   
-   if( opt != undefined ) {
+
+   if( opt instanceof Function ) {
+      fail = opt;
+   } else if( opt != undefined ) {
       sync = opt.sync;
       fail = opt.fail;
       anim = opt.anim;

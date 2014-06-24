@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jun 11 08:27:23 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 08:19:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_ast
 
+   (include "walk.sch")
+   
    (export (abstract-class J2SNode
 	      (loc::pair read-only))
 
@@ -112,9 +114,6 @@
 	   (class J2SSvc::J2SFun
 	      (init::J2SNode read-only)
 	      (register::bool read-only (default #t)))
-	   
-;* 	   (class J2STag::J2SFun                                       */
-;* 	      (inits::pair-nil read-only))                             */
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
@@ -231,11 +230,6 @@
 	      fun::J2SExpr
 	      (args::pair-nil (default '())))
 
-;* 	   (final-class J2SXml::J2SExpr                                */
-;* 	      tag::J2SExpr                                             */
-;* 	      (attrs::pair-nil (default '()))                          */
-;* 	      body::J2SExpr)                                           */
-
 	   (final-class J2STilde::J2SExpr
 	      stmt::J2SStmt)
 	   
@@ -289,80 +283,6 @@
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
 
 	   (macro define-walk-method)))
-
-;*---------------------------------------------------------------------*/
-;*    define-walk-method ...                                           */
-;*    -------------------------------------------------------------    */
-;*    (define-walk-method (optim! this::While x y) BODY)               */
-;*    =>                                                               */
-;*    (define-method (optim! this::While x y)                          */
-;*      (define (default-walk! n x y)                                  */
-;*         (walk2! n optim! x y))                                      */
-;*      (define (walk! n x y)                                          */
-;*         (optim! n x y))                                             */
-;*      BODY)                                                          */
-;*---------------------------------------------------------------------*/
-(define-macro (define-walk-method args . body)
-   
-   (define (parse-ident id::symbol)
-      (let* ((string (symbol->string id))
-	     (len (string-length string)))
-	 (let loop ((walker  0))
-	    (cond
-	       ((=fx walker len)
-		(values id #f))
-	       ((and (char=? (string-ref string walker) #\:)
-		     (<fx walker (-fx len 1))
-		     (char=? (string-ref string (+fx walker 1)) #\:))
-		(values (string->symbol (substring string 0 walker))
-		   (string->symbol (substring string (+fx walker 2)))))
-	       (else
-		(loop (+fx walker 1)))))))
-
-   (define (id-without-type id)
-      (multiple-value-bind (id type)
-	 (parse-ident id)
-	 id))
-
-   (define (id-type id)
-      (multiple-value-bind (id type)
-	 (parse-ident id)
-	 type))
-
-   (let* ((name (car args))
-	  (sname (symbol->string name))
-	  (i (string-contains sname "::"))
-	  (c (string-ref sname (-fx (or i (string-length sname)) 1)))
-	  (nb-method-args (-fx (length args) 2))
-	  (short-walk (case c
-			 ((#\!) 'walk!)
-			 ((#\*) 'walk*)
-			 (else 'walk)))
-	  (tname (case c
-		    ((#\!) (string->symbol (string-append sname "::J2SNode")))
-		    ((#\*) (string->symbol (string-append sname "::pair-nil")))
-		    (else name)))
-	  (long-walk (case c
-			((#\!)
-			 (string->symbol (format "walk~a!" nb-method-args)))
-			((#\*)
-			 (string->symbol (format "walk~a*" nb-method-args)))
-			(else
-			 (string->symbol (format "walk~a" nb-method-args)))))
-	  (define-gen/met (if (eq? (id-type (cadr args)) 'J2SNode)
-			      'define-generic
-			      'define-method))
-	  (default-walk (symbol-append 'default- short-walk)))
-      `(,define-gen/met	(,tname ,@(cdr args))
-	  (define (call-default-walker)
-	     (,long-walk ,(id-without-type (cadr args)) ,(id-without-type name)
-		,@(map id-without-type (cddr args))))
-	  (define (,default-walk ,(id-without-type (cadr args)) ,@(cddr args))
-	     (,long-walk ,(id-without-type (cadr args)) ,(id-without-type name)
-		,@(map id-without-type (cddr args))))
-	  (define (,short-walk ,(id-without-type (cadr args)) ,@(cddr args))
-	     (,name ,@(map id-without-type (cdr args))))
-	  ,@body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    generic walks ...                                                */
@@ -626,12 +546,10 @@
 (gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCall fun (args))
-;* (gen-walks J2SXml tag (attrs) body)                                 */
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body)
 (gen-walks J2SSvc body init)
-;* (gen-walks J2STag body (inits))                                     */
 (gen-walks J2SObjInit (inits))
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)
@@ -643,3 +561,13 @@
 (gen-walks J2SDollar expr)
 
 (gen-traverals J2STilde)
+
+;*---------------------------------------------------------------------*/
+;*    walk.sch at runtime ...                                          */
+;*---------------------------------------------------------------------*/
+(define-macro (eval-walker! path)
+   (call-with-input-file path
+      (lambda (p)
+	 `(eval! ',(read p)))))
+
+(eval-walker! "walk.sch")

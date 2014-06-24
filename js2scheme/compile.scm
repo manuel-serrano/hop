@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed May 28 07:13:57 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 08:01:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -57,6 +57,16 @@
 	     (name name)
 	     (comment name)
 	     (url name)))
+	 ((file-exists? name)
+	  (instantiate::J2SStageFile
+	     (name name)
+	     (comment name)
+	     (path name)))
+	 ((file-exists? (file-name-unix-canonicalize name))
+	  (instantiate::J2SStageFile
+	     (name name)
+	     (comment name)
+	     (path (file-name-unix-canonicalize name))))
 	 ((find (lambda (s::J2SStage)
 		   (with-access::J2SStage s ((sname name))
 		      (string=? sname name)))

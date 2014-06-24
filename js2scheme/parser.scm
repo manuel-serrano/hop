@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 16 08:54:11 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 15:00:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -183,8 +183,6 @@
 	  (function-declaration))
 	 ((service)
 	  (service-declaration))
-;* 	 ((tag)                                                        */
-;* 	  (tag-declaration))                                           */
 	 ((RESERVED)
 	  (if (eq? (peek-token-value) 'import)
 	      (begin
@@ -206,7 +204,6 @@
       (case (peek-token-type)
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
-;* 	 ((tag) (tag-declaration))                                     */
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
@@ -730,54 +727,6 @@
 			     (loc loc)
 			     (expr "(current-request)"))))))))
 
-;*    (define (tag-declaration)                                        */
-;*                                                                     */
-;*       (define (err msg)                                             */
-;* 	 (parse-token-error msg (peek-token)))                         */
-;*                                                                     */
-;*       (define (tag-params)                                          */
-;* 	 (consume! 'LPAREN)                                            */
-;* 	 (let loop ((state 0))                                         */
-;* 	    (case (peek-token-type)                                    */
-;* 	       ((RPAREN)                                               */
-;* 		(consume-any!)                                         */
-;* 		'())                                                   */
-;* 	       ((COMMA)                                                */
-;* 		(consume-any!)                                         */
-;* 		(if (<fx state 0)                                      */
-;* 		    (loop (negfx state))                               */
-;* 		    (err "Unexpected \",\"")))                         */
-;* 	       ((ID)                                                   */
-;* 		(if (=fx state 3)                                      */
-;* 		    (err "Extra tag argument")                         */
-;* 		    (cons (consume-param!) (loop (negfx (+fx 1 state)))))) */
-;* 	       ((LBRACE)                                               */
-;* 		(if (=fx state 0)                                      */
-;* 		    (cons (object-literal) (loop -1))                  */
-;* 		    (err "Illegal tag attribute declaration")))        */
-;* 	       (else                                                   */
-;* 		(err "Illegal tag argument declaration")))))           */
-;*                                                                     */
-;*       (let* ((token (consume-token! 'tag))                          */
-;* 	     (id (consume-token! 'ID))                                 */
-;* 	     (inits (tag-params))                                      */
-;* 	     (params (append-map (lambda (p)                           */
-;* 				    (if (isa? p J2SObjInit)            */
-;* 					(with-access::J2SObjInit p (inits) */
-;* 					   (map init->params inits))   */
-;* 					(list p)))                     */
-;* 			inits))                                        */
-;* 	     (body (fun-body)))                                        */
-;* 	 (instantiate::J2SDeclTag                                      */
-;* 	    (loc (token-loc token))                                    */
-;* 	    (id (cdr id))                                              */
-;* 	    (val (instantiate::J2STag                                  */
-;* 		    (id (cdr id))                                      */
-;* 		    (loc (token-loc token))                            */
-;* 		    (params params)                                    */
-;* 		    (inits inits)                                      */
-;* 		    (body body))))))                                   */
-      
    (define (consume-param!)
       (let ((token (consume-token! 'ID)))
 	 (instantiate::J2SParam
@@ -880,11 +829,6 @@
 		       (loc (token-loc op))
 		       (lhs expr)
 		       (rhs rhs)))
-;* 		   ((isa? expr J2SAccess)                               */
-;* 		    `(instantiate::J2SAccsig-op                         */
-;* 		       (lhs ,expr)                                     */
-;* 		       (op ,(with-out-= op))                           */
-;* 		       (rhs ,rhs)))                                    */
 		   (else
 		    (instantiate::J2SAssigOp
 		       (loc (token-loc op))

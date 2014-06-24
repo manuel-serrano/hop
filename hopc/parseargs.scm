@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 26 08:48:46 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 07:30:37 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -16,7 +16,8 @@
 
    (library hop)
    
-   (import  hopc_param)
+   (import  hopc_param
+	    hopc_driver)
    
    (export  (parse-args ::pair-nil)
 	    (hopc-load-rc ::bstring)))
@@ -138,6 +139,9 @@
 	     (hopc-js-header-set! #f))
 	    (("--js-driver" ?driver (help "Set j2s compiler driver"))
 	     (hopc-js-driver-set! driver))
+	    (("--js-show-driver" (help "Set j2s compiler driver"))
+	     (print (js-driver->string))
+	     (exit 0))
 	    (else
 	     (if (string=? else "--")
 		 (begin

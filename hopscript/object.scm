@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun 13 10:13:32 2014 (serrano)                */
+;*    Last change :  Thu Jun 19 08:40:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
 
-   (library hop hopwidget)
+   (library hop)
    
    (import __hopscript_types
 	   __hopscript_string
@@ -28,6 +28,7 @@
 	   __hopscript_regexp
 	   __hopscript_array
 	   __hopscript_arraybuffer
+	   __hopscript_arraybufferview
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
@@ -139,6 +140,7 @@
 	    ;; the prototypes and other builtin classes
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)
+	    (js-init-arraybufferview! %this)
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
@@ -734,13 +736,14 @@
 	 SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	 SVG:TEXTPATH SVG:TREF SVG:TSPAN)
 
-      ;; notepad
-      (js-bind-tags! %this obj
-	 NOTEPAD NPTAB NPTABHEAD)
-
-      ;; tree
-      (js-bind-tags! %this obj
-	 TREE TRHEAD TRBODY TRLEAF)))
+;*       ;; notepad                                                    */
+;*       (js-bind-tags! %this obj                                      */
+;* 	 NOTEPAD NPTAB NPTABHEAD)                                      */
+;*                                                                     */
+;*       ;; tree                                                       */
+;*       (js-bind-tags! %this obj                                      */
+;* 	 TREE TRHEAD TRBODY TRLEAF)                                    */
+   ))
 		      
 ;*---------------------------------------------------------------------*/
 ;*    js-object-construct ...                                          */

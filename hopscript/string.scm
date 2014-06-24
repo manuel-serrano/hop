@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 11 17:17:29 2014 (serrano)                */
+;*    Last change :  Sun Jun 22 19:22:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -457,44 +457,51 @@
 				'exec %this)))
 		   (js-put! searchvalue 'lastIndex 0 #f %this)
 		   (let loop ((n 0)
-			      (res '()))
+			      (ms '()))
 		      (let ((result (js-call1 %this exec searchvalue string)))
 			 (if (eq? result (js-null))
 			     (cond
-				((null? res)
+				((null? ms)
 				 string)
 				((isa? replacevalue JsFunction)
-				 (let loop ((matches res)
-					    (res string))
+				 (let loop ((matches (reverse! ms))
+					    (res string)
+					    (offset 0))
 				    (if (null? matches)
 					res
 					(let* ((m (car matches))
-					       (i (js-get m 'index %this)))
+					       (i (js-get m 'index %this))
+					       (l (string-length (js-get m (js-toname 0 %this) %this)))
+					       (v (js-tostring
+						     (js-apply %this replacevalue
+							(js-undefined)
+							(cons
+							   (js-get m (js-toname 0 %this) %this)
+							   (append
+							      (matches->string-list m)
+							      (list i string))))
+						     %this)))
 					   (loop (cdr matches)
-					      (string-append (substring string 0 i)
-						 (js-tostring
-						    (js-apply %this replacevalue
-						       (js-undefined)
-						       (cons
-							  (js-get m (js-toname 0 %this) %this)
-							  (append
-							     (matches->string-list m)
-							     (list i string)))) %this)
-						 (substring res
-						    (+fx i (string-length (js-get m (js-toname 0 %this) %this))))))))))
+					      (string-append (substring res 0 (+fx offset i))
+						 v
+						 (substring res (+fx offset (+fx i l))))
+					      (+fx offset (-fx (string-length v) l)))))))
 				(else
 				 (let ((newstring (js-tostring replacevalue %this)))
-				    (let loop ((matches res)
-					       (res string))
+				    (let loop ((matches (reverse! ms))
+					       (res string)
+					       (offset 0))
 				       (if (null? matches)
 					   res
 					   (let* ((m (car matches))
-						  (i (js-get m 'index %this)))
+						  (i (js-get m 'index %this))
+						  (l (string-length (js-get m (js-toname 0 %this) %this)))
+						  (v (table22 newstring m string)))
 					      (loop (cdr matches)
-						 (string-append (substring string 0 i)
-						    (table22 newstring m string)
-						    (substring res
-						       (+fx i (string-length (js-get m (js-toname 0 %this) %this))))))))))))
+						 (string-append (substring res 0 (+fx offset i))
+						    v
+						    (substring res (+fx offset (+fx i l))))
+						 (+fx offset (-fx (string-length v) l)))))))))
 			     (let ((thisIndex (js-get searchvalue 'lastIndex %this)))
 				(if (= thisIndex previousLastIndex)
 				    (begin
@@ -502,7 +509,7 @@
 				       (set! previousLastIndex (+ 1 thisIndex)))
 				    (set! previousLastIndex thisIndex))
 				(let ((matchStr (js-get result 0 %this)))
-				   (loop (+fx 1 n) (cons result res)))))))))))))
+				   (loop (+fx 1 n) (cons result ms)))))))))))))
    
    (js-bind! %this obj 'replace
       :value (js-make-function %this replace 2 'replace)

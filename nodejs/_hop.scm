@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Jun 16 16:41:45 2014 (serrano)                */
+;*    Last change :  Tue Jun 24 11:14:07 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -34,10 +34,6 @@
 	 
 	 (list
 	    ;; misc
-	    (define-js exit 1
-	       (lambda (this code)
-		  (exit (js-tointeger code %this))))
-	    
 	    (define-js srcDir 0
 	       (lambda (this)
 		  (the-loading-dir)))
@@ -175,7 +171,8 @@
 	 (authorization #f)
 	 (fail #f))
       (unless (eq? opt (js-undefined))
-	 (let ((h (js-get opt 'host %this))
+	 (let ((s (js-totest (js-get opt 'async %this)))
+	       (h (js-get opt 'host %this))
 	       (p (js-get opt 'port %this))
 	       (u (js-get opt 'user %this))
 	       (w (js-get opt 'password %this))
@@ -249,6 +246,7 @@
 	  (request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
+	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
 	  (request (if (eq? req (js-undefined)) (current-request) req))

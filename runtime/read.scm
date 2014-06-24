@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Feb 21 13:43:39 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 10:31:00 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1021,13 +1021,26 @@
 			     (obj fname))))))))
    
    (let ((path (find-file/path fname (hop-path))))
-      (if (string? path)
-	  (hop-load-path path)
+      (cond
+	 ((not (string? path))
 	  (raise (instantiate::&io-file-not-found-error
 		    (proc "hop-load")
 		    (msg "file not found")
-		    (obj fname))))))
+		    (obj fname))))
+	 (else
+	  (let ((loader (hop-find-loader path)))
+	     (if (procedure? loader)
+		 (loader path env menv mode charset abase traceid afile)
+		 (hop-load-path path)))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-find-loader ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-find-loader path)
+   (let ((c (assoc (suffix path) (hop-loaders))))
+      (when (pair? c)
+	 (cdr c))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    *load-table* ...                                                 */
 ;*---------------------------------------------------------------------*/

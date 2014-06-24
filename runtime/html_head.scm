@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jun 11 18:41:21 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 13:50:32 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -112,7 +112,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
    (<SCRIPT> :type (hop-mime-type)
-      (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""
+      (string-append "var hop_server = new HopServer(\""
+	 (hop-server-hostname) "\", \""
 	 (hop-server-hostip) "\"); var server = hop_server;")))
 
 ;*---------------------------------------------------------------------*/
@@ -262,13 +263,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	 :href p))
    
    (define (hz-get-weblet-info-files path)
-      (let ((info (make-file-path path "etc" "weblet.info")))
-	 (when (file-exists? info)
-	    (let ((l (call-with-input-file info read)))
-	       (when (pair? l)
-		  (let ((c (assq 'client l)))
-		     (when (pair? c)
-			(cadr c))))))))
+      (let* ((l (get-weblet-info path))
+	     (c (assq 'client l)))
+	 (when (pair? c) (cadr c))))
    
    (define (hz-get-files path)
       (or (hz-get-weblet-info-files path)

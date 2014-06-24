@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jun 11 09:20:37 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 17:48:23 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -59,7 +59,7 @@
 	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
-	    (xml-attribute-encode obj)
+	    (generic xml-attribute-encode ::obj)
 
 	    (xml->string ::obj ::xml-backend)
 
@@ -422,7 +422,7 @@
 	       (if (isa? hss css-stylesheet)
 		   (css-write (hss-compile hss) p)
 		   (error "xml-write" "Illegal style sheet" el))))))
-
+   
    (with-access::xml-style obj (tag body attributes)
       (with-access::xml-backend backend (cdata-start cdata-stop)
 	 (display "<" p)
@@ -431,12 +431,11 @@
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
-	    (xml-write body p backend)
 	    (for-each (lambda (el)
 			 (if (string? el)
 			     (xml-write-style el p)
 			     (xml-write el p backend)))
-		      body)
+	       body)
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)
@@ -728,7 +727,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (xml-attribute-encode obj)
+(define-generic (xml-attribute-encode obj)
    (if (not (string? obj))
        obj
        (let ((ol (string-length obj)))

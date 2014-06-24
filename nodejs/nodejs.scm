@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Thu May 15 18:35:39 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 14:21:00 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -54,7 +54,8 @@
 	   (__nodejs_http "| echo \"(module __nodejs_http (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\"")
 	   (__nodejs_https "| echo \"(module __nodejs_https (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\"")
 	   (__nodejs_zlib "| echo \"(module __nodejs_zlib (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\"")
-	   (__nodejs_hop "| echo \"(module __nodejs_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\""))
+	   (__nodejs_hop "| echo \"(module __nodejs_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\"")
+	   (__nodejs_hophz "| echo \"(module __nodejs_hophz (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject)))\""))
 
    (export (core-module-table)))
 
@@ -107,7 +108,8 @@
       "http"
       "https"
       "zlib"
-      "hop"))
+      "hop"
+      "hophz"))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Jun  4 15:11:44 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 07:32:21 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -22,6 +22,7 @@
    (eval    (library hop))
 
    (export  (jsheap::int)
+	    (js-driver->string)
 	    (hopc-read p)
 	    (setup-client-compiler!)
 	    (compile-sources::int)))
@@ -81,6 +82,29 @@
       :precompiled->JS-return hopscheme->JS-return))
 
 ;*---------------------------------------------------------------------*/
+;*    js-driver ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (js-driver)
+   (cond
+      ((string? (hopc-js-driver))
+       (j2s-make-driver (string-split (hopc-js-driver) ",")))
+      ((>=fx (hopc-optim-level) 1)
+       (j2s-optim-driver))
+      (else
+       (j2s-plain-driver))))
+
+;*---------------------------------------------------------------------*/
+;*    js-driver->string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-driver->string)
+   (reduce (lambda (el rest) (string-append rest "," el))
+      '()
+      (map (lambda (s)
+	      (with-access::J2SStage s (name)
+		 name))
+	 (js-driver))))
+
+;*---------------------------------------------------------------------*/
 ;*    compile-sources ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (compile-sources::int)
@@ -98,15 +122,6 @@
 	 (if (string? (hopc-destination)) (hopc-destination) "-")
 	 '()))
 
-   (define (j2s-driver)
-      (cond
-	 ((string? (hopc-js-driver))
-	  (j2s-make-driver (string-split (hopc-js-driver) ",")))
-	 ((>=fx (hopc-optim-level) 1)
-	  (j2s-optim-driver))
-	 (else
-	  (j2s-plain-driver))))
-   
    (define (compile-module exp)
       (match-case exp
 	 ((module ?id . ?clauses)
@@ -138,7 +153,7 @@
       (define (generate-hopscript out::output-port)
 	 (for-each (lambda (exp) (pp exp out))
 	    (j2s-compile in
-	       :driver (j2s-driver)
+	       :driver (js-driver)
 	       :worker (hopc-js-worker)
 	       :module-main (if (boolean? (hopc-js-module-main))
 				(hopc-js-module-main)
@@ -210,7 +225,7 @@
 	       ;; compile
 	       (map (lambda (e) (write (obj->string e) out))
 		  (j2s-compile in
-		     :driver (j2s-driver)
+		     :driver (js-driver)
 		     :worker (hopc-js-worker)
 		     :module-main (if (boolean? (hopc-js-module-main))
 				      (hopc-js-module-main)

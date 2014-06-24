@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jun 11 11:54:38 2014 (serrano)                */
+;*    Last change :  Tue Jun 24 11:27:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -32,7 +32,14 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::hop-service)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::hop-service)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-encode ::JsHopFrame ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-attribute-encode o::JsHopFrame)
+   (with-access::JsHopFrame o (url)
+      (xml-attribute-encode url)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsHopFrame ...                                 */
@@ -134,25 +141,28 @@
 	 (password #f)
 	 (authorization #f)
 	 (fail #f))
-      (unless (eq? opt (js-undefined))
-	 (let ((h (js-get opt 'host %this))
-	       (p (js-get opt 'port %this))
-	       (u (js-get opt 'user %this))
-	       (w (js-get opt 'password %this))
-	       (a (js-get opt 'authorization %this))
-	       (f (js-get opt 'fail %this)))
-	    (unless (eq? h (js-undefined))
-	       (set! host (js-tostring h %this)))
-	    (unless (eq? p (js-undefined))
-	       (set! port (js-tointeger p %this)))
-	    (unless (eq? u (js-undefined))
-	       (set! user u))
-	    (unless (eq? w (js-undefined))
-	       (set! password (js-tostring w %this)))
-	    (unless (eq? a (js-undefined))
-	       (set! authorization (js-tostring a %this)))
-	    (when (isa? f JsFunction)
-	       (set! fail (lambda (x) (js-call1 %this f %this x))))))
+      (cond
+	 ((isa? opt JsFunction)
+	  (set! fail opt))
+	 ((not (eq? opt (js-undefined)))
+	  (let ((h (js-get opt 'host %this))
+		(p (js-get opt 'port %this))
+		(u (js-get opt 'user %this))
+		(w (js-get opt 'password %this))
+		(a (js-get opt 'authorization %this))
+		(f (js-get opt 'fail %this)))
+	     (unless (eq? h (js-undefined))
+		(set! host (js-tostring h %this)))
+	     (unless (eq? p (js-undefined))
+		(set! port (js-tointeger p %this)))
+	     (unless (eq? u (js-undefined))
+		(set! user u))
+	     (unless (eq? w (js-undefined))
+		(set! password (js-tostring w %this)))
+	     (unless (eq? a (js-undefined))
+		(set! authorization (js-tostring a %this)))
+	     (when (isa? f JsFunction)
+		(set! fail (lambda (x) (js-call1 %this f %this x)))))))
       (with-hop-remote svc
 	 (if (isa? success JsFunction)
 	     (lambda (x) (js-call1 %this success %this x))
@@ -164,8 +174,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service %this proc name svc)
+(define (js-make-service %this proc name register svc)
    (with-access::JsGlobalObject %this (js-service-prototype)
+      (when register (register-service! svc))
       (instantiate::JsService
 	 (procedure proc)
 	 (arity (procedure-arity proc))
@@ -192,12 +203,13 @@
 			   (set (js-make-function %this
 				   (lambda (o v)
 				      (with-access::JsService o (svc)
-					 (unregister-service! svc)
+					 (when register
+					    (unregister-service! svc))
 					 (with-access::hop-service svc (path)
 					    (set! path (js-tostring v %this))
-					    (register-service! svc))))
+					    (when register
+					       (register-service! svc)))))
 				   2 'path)))))
-	 
 	 (svc svc))))
 
 ;*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/3.0.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Sun Jul 14 10:16:20 2013 (serrano)                */
-;*    Copyright   :  2007-13 Manuel Serrano                            */
+;*    Last change :  Mon Jun 23 13:26:00 2014 (serrano)                */
+;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -17,12 +17,13 @@
    (library web)
    
    (import  __hop_param
-	    __hop_misc)
+	    __hop_misc
+	    __hop_types
+	    __hop_weblets)
 
    (export (hz-package-filename? ::bstring)
 	   (hz-package-name-parse ::bstring)
 	   (hz-package-url-parse ::bstring)
-	   (hz-package-info ::bstring)
 	   (hz-local-weblet-path ::bstring ::pair-nil)
 	   (hz-cache-path ::bstring)
 	   (hz-resolve-name ::bstring ::pair-nil)
@@ -116,18 +117,6 @@
       (hz-package-name-parse (basename path))))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-package-info ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hz-package-info url)
-   (multiple-value-bind (base version)
-      (hz-package-url-parse url)
-      (let ((info (make-file-path base "etc" "weblet.info"))
-	    (ip (open-input-gzip-file url)))
-	 (unwind-protect
-	    (untar ip :file info)
-	    (close-input-port ip)))))
-
-;*---------------------------------------------------------------------*/
 ;*    abspath->filename ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (abspath->filename abspath)
@@ -179,20 +168,17 @@
    (define (find-in-dir base regexp dir parent)
       (when (string=? dir base)
 	 ;; directory name matches
-	 (let ((info (make-file-path parent dir "etc" "weblet.info")))
-	    (when (file-exists? info)
-	       ;; there is a weblet.info file
-	       (let ((e (call-with-input-file info read)))
-		  (when (pair? e)
-		     ;; the weblet.info file has the correct format
-		     (let ((v (assq 'version e)))
-			(when (pair? v)
-			   ;; there is a version number
-			   (let ((n (cadr v)))
-			      (when (string? n)
-				 (when (pregexp-match regexp n)
-				    ;; the version number matches.
-				    (make-file-path parent dir))))))))))))
+	 (let ((e (get-weblet-info (make-file-name parent dir))))
+	    (when (pair? e)
+	       ;; the weblet-info file has the correct format
+	       (let ((v (assq 'version e)))
+		  (when (pair? v)
+		     ;; there is a version number
+		     (let ((n (cadr v)))
+			(when (string? n)
+			   (when (pregexp-match regexp n)
+			      ;; the version number matches.
+			      (make-file-path parent dir))))))))))
    
    (multiple-value-bind (base version regexp)
       (hz-package-pattern->regexp url)

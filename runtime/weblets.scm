@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Apr 16 07:56:40 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 13:25:16 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -25,7 +25,8 @@
 	   __hop_service
 	   __hop_misc
 	   __hop_read
-	   __hop_user)
+	   __hop_user
+	   __hop_json)
    
    (static  (abstract-class %autoload
 	       (path::bstring read-only)
@@ -52,23 +53,29 @@
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
 	    (autoload-force-load! ::bstring)
+	    (get-weblet-info::pair-nil ::bstring)
 	    (get-weblets-zeroconf::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-weblets-in-directory dir)
-   
+
    (define (get-weblet-details dir name)
-      (let* ((infos (get-weblet-info dir name))
-	     (main (assoc 'main-file infos))
-	     (prefix (make-file-name dir name))
-	     (weblet (make-file-name prefix 
-				     (if main
-					 (cadr main)
-					 (string-append name ".hop")))))
-	 (when (file-exists? weblet)
-	    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))
+      (let* ((infos (get-weblet-info (make-file-name dir name)))
+	     (main (assoc 'main infos))
+	     (prefix (make-file-name dir name)))
+	 (if main
+	     (let ((weblet (make-file-name prefix (cadr main))))
+		(when (file-exists? weblet)
+		   `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos)))
+	     (let* ((base (make-file-name prefix name))
+		    (weblet (string-append base ".hop")))
+		(if (file-exists? weblet)
+		    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos)
+		    (let ((weblet (string-append base ".js")))
+		       (when (file-exists? weblet)
+			  `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))))))
    
    (let loop ((files (directory->list dir))
 	      (res '()))
@@ -143,13 +150,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-weblet-info ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (get-weblet-info dir name)
-   (let ((file (make-file-path dir name "etc" "weblet.info")))
+(define (get-weblet-info wdir::bstring)
+   
+   (define (normalize-json l)
+      (if (list? l)
+	  (map (lambda (a)
+		  (match-case a
+		     ((?a . ?d) (list a d))
+		     (else (list #f #f))))
+	     l)
+	  '()))
+   
+   (let ((file (make-file-path wdir "etc" "weblet.info")))
       (if (file-exists? file)
-	  (with-input-from-file file read)
-	  (let ((f (make-file-path dir name "etc" (string-append name ".info"))))
-	     (if (file-exists? f)
-		 (with-input-from-file f read)
+	  `((info "weblet.info") ,@(call-with-input-file file read))
+	  (let ((pkg (make-file-path wdir "package.json")))
+	     (if (file-exists? pkg)
+		 `((info "package.json")
+		   ,@(normalize-json (call-with-input-file pkg javascript-parser)))
 		 '())))))
 
 ;*---------------------------------------------------------------------*/
@@ -189,8 +207,8 @@
 	     (let* ((tmp (make-file-name (os-tmp) "hop"))
 		    (file (car (untar p :directory tmp)))
 		    (base (substring file
-				     (+fx (string-length tmp) 1)
-				     (string-length file)))
+			     (+fx (string-length tmp) 1)
+			     (string-length file)))
 		    (dir (dirname base))
 		    (name (if (string=? dir ".") base dir))
 		    (src (make-file-path tmp name (string-append name ".hop"))))
@@ -205,11 +223,8 @@
    (let* ((dir (dirname path))
 	  (name (basename (prefix path))))
       (if (file-exists? path)
-	  (let* ((winfoname (make-file-path dir "etc" "weblet.info"))
-		 (winfo (if (file-exists? winfoname)
-			    (with-input-from-file winfoname read)
-			    '()))
-		 (url (string-append "/hop/" name)))
+	  (let ((winfo (get-weblet-info dir))
+		(url (string-append "/hop/" name)))
 	     (cond
 		((not (weblet-version-compatible? winfo))
 		 (error "hop-load-weblet"
@@ -319,9 +334,11 @@
 		   (else
 		    (hashtable-put! *weblet-table* name svc)
 		    (install-autoload-prefix path url))))
-	     (warning "autoload-weblets"
-		"Illegal weblet etc/weblet.info file"
-		x))))
+	     (let ((info (assq 'info x)))
+		(warning "autoload-weblets"
+		   (format "Illegal weblet ~s file"
+		      (if (pair? info) (cadr info) "etc/weblet.info"))
+		   x)))))
    
    ;; since autoload are likely to be installed before the scheduler
    ;; starts, the lock above is unlikely to be useful.

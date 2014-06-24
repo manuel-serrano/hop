@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jun 13 08:07:02 2014 (serrano)                */
+#*    Last change :  Thu Jun 19 08:40:17 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -25,10 +25,10 @@ do: build
 TARGETNAME = hopscript
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) \
-  -lhopscheme_s-$(HOPRELEASE) -lhopwidget_s-$(HOPRELEASE)
+  -lhopscheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -ljs2scheme_u-$(HOPRELEASE) -lhop_u-$(HOPRELEASE) \
-  -lhopscheme_s-$(HOPRELEASE) -lhopwidget_u-$(HOPRELEASE)
+  -lhopscheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -lhopscript_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -lhopscript_u-$(HOPRELEASE)
 
@@ -39,7 +39,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
-  property websocket pair arraybuffer
+  property websocket pair arraybuffer arraybufferview
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

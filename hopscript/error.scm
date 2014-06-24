@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 11 11:56:41 2014 (serrano)                */
+;*    Last change :  Sun Jun 22 21:29:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -96,7 +96,9 @@
 		   (set! msg m)
 		   (set! fname f)
 		   (set! location l)))
-	       (js-bind! %this this 'name :value name))
+	       (js-bind! %this this 'name
+		  :value (symbol->string! name)
+		  :enumerable #f))
 	    this)
    
 	 ;; bind the properties of the prototype
@@ -111,7 +113,10 @@
 	    :set (js-make-function %this
 		    (lambda (o v) #f) 2 'name)
 	    :get (js-make-function %this
-		    (lambda (o) (with-access::JsError o (name) name)) 1 'name)
+		    (lambda (o)
+		       (with-access::JsError o (name)
+			  (symbol->string! name)))
+		    1 'name)
 	    :enumerable #f)
 	 
 	 ;; then, create a HopScript object

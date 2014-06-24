@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Wed Jun 11 16:20:52 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 09:19:04 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -41,7 +41,7 @@
        (if (epair? o)
 	   (cer o)
 	   (js-raise-type-error %this
-	      (format "no such field \"~a\" ~~a" (js-toname prop %this)) o)))
+	      (format "no such field.3 \"~a\" ~~a" (js-toname prop %this)) o)))
       ((length)
        (js-make-function %this length
 	  0 'length))
@@ -75,9 +75,16 @@
 		    (vector "car" "cdr"))
 		%this))
 	  0 'keys))
+      ((toArray)
+       (js-make-function %this
+	  (lambda (this)
+	     (js-vector->jsarray (list->vector this) %this))
+	  0 'toArray))
+      ((inspect)
+       (js-undefined))
       (else
        (js-raise-type-error %this
-	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))
+	  (format "no such field.1 \"~a\" ~~a" (js-toname prop %this)) o))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-get-null ...                                                  */
@@ -108,6 +115,8 @@
 	  (lambda (this . l)
 	     (js-vector->jsarray '#() %this))
 	  0 'keys))
+      ((inspect)
+       (js-undefined))
       (else
        (js-raise-type-error %this
 	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))

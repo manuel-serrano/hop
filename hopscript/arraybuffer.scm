@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Mon Jun 16 14:22:35 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 19:56:28 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -74,6 +74,11 @@
 	       :construct (lambda (this . items)
 			     (apply js-arraybuffer-construct this items))))
 
+	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
+	    (instantiate::JsArrayBuffer
+	       (cmap #f)
+	       (__proto__ (js-get constructor 'prototype %this))))
+
 	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
 	    (with-access::JsArrayBuffer this (vec)
 	       (when (pair? items)
@@ -125,27 +130,12 @@
 	 js-arraybuffer)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-arraybuffer-alloc ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-arraybuffer-alloc constructor::JsFunction %this)
-   (instantiate::JsArrayBuffer
-      (cmap #f)
-      (__proto__ (js-get constructor 'prototype %this))))
-
-
-
-;*---------------------------------------------------------------------*/
 ;*    js-property-names ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-property-names obj::JsArrayBuffer enump %this)
    (with-access::JsArrayBuffer obj (vec)
       (let ((len (u8vector-length vec)))
-	 (let loop ((i (-fx len 1))
-		    (acc '()))
-	    (if (=fx i -1)
-		(vector-append (apply vector acc) (call-next-method))
-		(let ((v (u8vector-ref vec i)))
-		   (loop (-fx i 1) (cons (integer->string i) acc))))))))
+	 (vector-append (apply vector (iota len)) (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArrayBuffer ...                              */
@@ -186,7 +176,7 @@
 	    ((not (js-isindex? i))
 	     (call-next-method))
 	    ((<uint32 i (u8vector-length vec))
-	     (u8vector-ref vec (uint32->fixnum i)))
+	     (uint8->fixnum (u8vector-ref vec (uint32->fixnum i))))
 	    (else
 	     (call-next-method))))))
 
@@ -203,13 +193,9 @@
 	     ;; 2
 	     (if (js-is-data-descriptor? owndesc)
 		 ;; 3
-		 (if (eq? p 'length)
-		     (let ((newdesc (duplicate::JsValueDescriptor owndesc
-				       (value v))))
-			(js-define-own-property o p newdesc throw %this))
-		     (with-access::JsValueDescriptor owndesc ((valuedesc value))
-			(set! valuedesc v)
-			(js-define-own-property o p owndesc throw %this)))
+		 (with-access::JsValueDescriptor owndesc ((valuedesc value))
+		    (set! valuedesc v)
+		    (js-define-own-property o p owndesc throw %this))
 		 (let ((desc (js-get-property o p %this)))
 		    ;; 4
 		    (if (js-is-accessor-descriptor? desc)
@@ -234,7 +220,7 @@
 	    ((not (js-isindex? i))
 	     (js-put-array! o (js-toname p %this) v))
 	    ((<u32 i (fixnum->uint32 (u8vector-length vec)))
-	     (u8vector-set! vec (uint32->fixnum i) (js-tonumber v %this))
+	     (u8vector-set! vec (uint32->fixnum i) (js-tointeger v %this))
 	     v)
 	    (else
 	     (js-put-array! o (js-toname p %this) v))))))
@@ -263,30 +249,11 @@
 	    ((not (js-isindex? i))
 	     (call-next-method))
 	    ((<uint32 i (u8vector-length vec))
-	     ;; the length is always an integer in the range [0..2^32-1]
-	     (let ((len::uint32 (fixnum->uint32 (u8vector-length vec))))
-		(if (>=u32 i len)
-		    (call-next-method)
-		    (instantiate::JsValueDescriptor
-		       (name (js-toname p %this))
-		       (value (u8vector-ref vec (uint32->fixnum i)))
-		       (enumerable #t)
-		       (writable (not frozen))
-		       (configurable (not frozen))))))
+	     (instantiate::JsValueDescriptor
+		(name (js-toname p %this))
+		(value (uint8->fixnum (u8vector-ref vec (uint32->fixnum i))))
+		(enumerable #t)
+		(writable (not frozen))
+		(configurable (not frozen))))
 	    (else
 	     (call-next-method))))))
-
-
-       
-
-
-
-
-
-
-
-
-		
-   
-
-   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jun 11 08:27:06 2014 (serrano)                */
+;*    Last change :  Mon Jun 23 15:06:08 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -238,7 +238,8 @@
       (let ((ident (or name (j2s-scheme-id id))))
 	 (epairify-deep loc
 	    (if global
-		(let ((fun-name (format "lambda ~a:~a" (cadr loc) (caddr loc))))
+		(let ((fun-name (string->symbol
+				    (format "function:~a:~a" (cadr loc) (caddr loc)))))
 		   (if (in-eval? return)
 		       (j2s-unresolved-put! '%this `',ident
 			  value #f 'normal)
@@ -248,11 +249,11 @@
 			      :configurable #f
 			      :get (js-make-function %this
 				      (lambda (%) ,ident)
-				      1 ,fun-name)
+				      1 ',fun-name)
 			      :set (js-make-function %this
 				      (lambda (% %v)
 					 (set! ,ident %v))
-				      2 ,fun-name)))))
+				      2 ',fun-name)))))
 		`(define ,ident ,value))))))
 
 ;*---------------------------------------------------------------------*/
@@ -324,7 +325,7 @@
 			     :configurable #f
 			     :value (js-make-function  %this
 				       ,fastid
-				       ,(length params) ,(symbol->string! id)
+				       ,(length params) ',id
 				       :strict ,(eq? mode 'strict)
 				       :alloc (lambda (o)
 						 (js-object-alloc o %this))
@@ -638,9 +639,9 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (string->symbol (integer->string ,indx)))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0 "get"))
+			   (lambda (%) ,id) 0 'get))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1 "set"))
+			   (lambda (% %v) (set! ,id %v)) 1 'set))
 		   (configurable #t)
 		   (enumerable #t))))))
    
@@ -750,7 +751,8 @@
 			 (js-make-function %this
 			    ,tmp
 			    ,(length params)
-			    ,(format "lambda ~a: ~a" (cadr loc) (caddr loc))
+			    ',(string->symbol
+				(format "function:~a:~a" (cadr loc) (caddr loc)))
 			    :strict ,(eq? mode 'strict)
 			    :alloc (lambda (o) (js-object-alloc o %this))
 			    :construct ,tmp))))
@@ -796,17 +798,17 @@
       
       (with-access::J2SSvc this (init register)
 	 `(js-make-service %this ,tmp ',id
-	     (,(if register 'register-service! 'begin)
-	      (instantiate::hop-service
-		 (proc ,(service-proc->scheme this))
-		 (javascript ,(jscript-funcall init))
-		 (path ,path)
-		 (id ',id)
-		 (wid ',id)
-		 (args ',args)
-		 (resource %resource)
-		 (source %source)
-		 (decoder %unserialize))))))
+	     ,register
+	     (instantiate::hop-service
+		(proc ,(service-proc->scheme this))
+		(javascript ,(jscript-funcall init))
+		(path ,path)
+		(id ',id)
+		(wid ',id)
+		(args ',args)
+		(resource %resource)
+		(source %source)
+		(decoder %unserialize)))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Jun 11 11:46:16 2014 (serrano)                */
+;*    Last change :  Sat Jun 21 10:39:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -179,6 +179,10 @@
 	       (js-bind! %this fun 'caller
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f))
+	    (js-bind! %this fun 'name
+	       :value name
+	       :writable #f
+	       :enumerable #f :configurable #f)
 	    fun))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 22 08:52:09 2014 (serrano)                */
+;*    Last change :  Fri Jun 20 09:20:43 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -108,7 +108,7 @@
 (define (js-cast-object %this::JsGlobalObject obj name)
    (if (isa? obj JsObject)
        obj
-       (js-raise-type-error %this "cast: not an object ~a" name)))
+       (js-raise-type-error %this "cast: not an object \"~a\"" name)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */
