@@ -65,4 +65,5 @@ hopscheme/hop-runtime.sch
 ^weblets/[^/]+/config\.hop$
 ^weblets/[^/]+/etc/weblet\.info$
 ^weblets/[^/]+/etc/[^/]+\.wiki$
-
+^node_modules/hopc/lib/ast.js$
+^node_modules/hopc/lib/walk.js$ 
