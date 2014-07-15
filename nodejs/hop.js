@@ -3,12 +3,28 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Mon Jun 16 16:39:04 2014 (serrano)                */
+/*    Last change :  Mon Jul 14 07:33:35 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
 var hop = process.binding( "hop" );
+
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+exports.shareDir = hop.shareDir;
+exports.binDir = hop.binDir;
+exports.libDir = hop.libDir;
+exports.contribsDir = hop.contribsDir;
+exports.weblestDir = hop.webletsDir;
+
+Object.defineProperty( exports, "debug", {
+   get: function() { return hop.debug() },
+   set: function( v ) { return hop.debugSet( v ) },
+   enumerable: true,
+   configurable: false
+} );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */
@@ -73,6 +89,12 @@ exports.makeWebColor = hop.makeWebColor;
 /*---------------------------------------------------------------------*/
 exports.List = hop.List;
 exports.Cons = hop.Cons;
+
+/*---------------------------------------------------------------------*/
+/*    Hop sub modules                                                  */
+/*---------------------------------------------------------------------*/
+exports.tree = "tree";
+exports.notepad = "notepad";
 
 Object.seal( exports );
 Object.freeze( exports );

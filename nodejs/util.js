@@ -202,6 +202,7 @@ function arrayToHash(array) {
 
 
 function formatValue(ctx, value, recurseTimes) {
+
   // Provide a hook for user-specified inspect functions.
   // Check that value is an object with an inspect function on it
   if (ctx.customInspect && value && typeof value.inspect === 'function' &&
@@ -578,3 +579,4 @@ exports._extend = function(origin, add) {
 function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
+

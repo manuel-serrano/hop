@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Sat Apr 19 12:15:37 2014 (serrano)                */
+;*    Last change :  Thu Jul  3 20:28:09 2014 (serrano)                */
 ;*    Copyright   :  2003-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -20,14 +20,14 @@
 	    __hop_types
 	    __hop_http-lib)
    
-   (export  (http-request-cgi-args::pair-nil ::http-request)
+   (export  (http-request-cgi-args::pair-nil ::http-request ::procedure)
 	    (cgi-arg::obj ::bstring ::pair-nil)
 	    (serialized-cgi-arg ::bstring ::pair-nil ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (http-request-cgi-args req::http-request)
+(define (http-request-cgi-args req::http-request unjson::procedure)
    
    (define (cgi-args req)
       (with-access::http-request req (socket method path abspath query
@@ -38,32 +38,33 @@
 		    (ctype (http-header-field header content-type:)))
 		(if (and (string? ctype)
 			 (substring-ci-at? ctype
-					   "multipart/form-data; boundary="
-					   0))
+			    "multipart/form-data; boundary="
+			    0))
 		    (let ((boundary (substring
-				     ctype
-				     (string-length
-				      "multipart/form-data; boundary=")
-				     (string-length ctype))))
+				       ctype
+				       (string-length
+					  "multipart/form-data; boundary=")
+				       (string-length ctype))))
 		       (cons path
-			     (with-handler
-				(lambda (e)
-				   (if (isa? e &io-parse-error)
-				       '()
-				       (raise e)))
-				(cgi-multipart->list (hop-upload-directory)
-						     pi
-						     content-length
-						     boundary))))
-		    (let ((body (read-chars (elong->fixnum content-length) pi)))
-		       (cons path (cgi-args->list body))))))
+			  (with-handler
+			     (lambda (e)
+				(if (isa? e &io-parse-error)
+				    '()
+				    (raise e)))
+			     (cgi-multipart->list (hop-upload-directory)
+				pi
+				content-length
+				boundary))))
+		    (cons path
+		       (list (cons "hop-encoding" "json")
+			  (cons "json" (list (unjson pi))))))))
 	    ((GET PUT)
 	     (if (string? query)
 		 (cons abspath (cgi-args->list query))
 		 (cons abspath '())))
 	    (else
 	     (error "http-request-cgi-args" "Illegal HTTP method" method)))))
-   
+
    (define (normalize l)
       (let loop ((l l)
 		 (res '()))
@@ -95,7 +96,9 @@
 				((string? a)
 				 (string-for-read a))
 				((pair? a)
-				 (cons (car a) (string-for-read (cdr a))))
+				 (if (string? (cdr a))
+				     (cons (car a) (string-for-read (cdr a)))
+				     a))
 				(else
 				 a)))
 			  args))

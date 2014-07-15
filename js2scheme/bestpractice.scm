@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May 25 18:45:13 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 12:33:08 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
@@ -36,13 +36,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bestpractice ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-bestpractice this args)
+(define-generic (j2s-bestpractice this conf)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bestpractice ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-bestpractice this::J2SProgram args)
+(define-method (j2s-bestpractice this::J2SProgram conf)
    (with-access::J2SProgram this (nodes mode)
       (for-each (lambda (n) (bestpractice n mode #f)) nodes))
    this)

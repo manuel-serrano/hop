@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jun 24 11:27:33 2014 (serrano)                */
+/*    Last change :  Sun Jul 13 15:58:28 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -108,7 +108,15 @@ function hop_default_failure( exc, xhr ) {
    }
 
    var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
-   nexc.name = "with-hop";
+
+   if( xhr.svc ) {
+      var svc = xhr.svc;
+      var i = svc.indexOf( "?" );
+      nexc.name = i ? svc.substring( 0, i ) : svc;
+   } else {
+      nexc.name = "with-hop"
+   }
+   
    nexc.scObject = "status: " + xhr.status;
    nexc.scOffset = 3;
    nexc.scClientOnly = true;
@@ -419,7 +427,7 @@ function withHOP( svc, success, opt ) {
 
    return hop_send_request( svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
-			    false, false );
+			    false, false, false, false, "javascript" );
 }
 			    
 /*---------------------------------------------------------------------*/
@@ -429,7 +437,7 @@ function withHOP( svc, success, opt ) {
 /*    functions.                                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, idiom ) {
    var xhr = x ? x : hop_make_xml_http_request();
 
    /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
@@ -437,7 +445,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    /* it to a local var eliminates this problem.                           */
    var succ = (typeof success === "function") ? success : hop_default_success;
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
-   
+
    function onreadystatechange() {
       if( this.readyState == 4 ) {
 	 return hop_request_onready( this, svc, succ, fail );
@@ -445,7 +453,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 return false;
       }
    }
-
+   
    if( !sync ) {
       xhr.open( "PUT", svc, true );
       
@@ -490,18 +498,22 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 			    sc_jsstring2symbol( "client" ) );
 	 var fmt = sc_cons( sc_jsstring2symbol( "format" ),
 			    sc_jsstring2string( "~~~a" ) );
-	 var name = "(with-hop (" + svcname + "...) ...)";
+
+	 var name = (idiom === "javascript" ?
+		     svcname + ".post(...)" 
+		     : "(with-hop (" + svcname + "...) ...)");
 	 var frame = sc_cons( name,
 			      sc_cons( loc,
 				       sc_cons( fmt, sc_cons( typ, null ) ) ) );
+
 	 var estk = hop_extend_stack_context( hop_get_exception_stack( e ) );
-	 var stk = sc_cons( "With-Hop trace:", sc_cons( frame, estk ) );
-	 
+	 var stk = sc_cons( "Service trace:", sc_cons( frame, estk ) );
+
          xhr.precontext = stk;
          xhr.setRequestHeader( 'Hop-Debug-Stack', hop_bigloo_serialize( stk ) );
       }
    }
-
+   
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "chrome" &&
@@ -754,7 +766,8 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 			   (base64-encode (string-append user ":" password)))))
 		   ,timeout
 		   #f
-		   ,(when (epair? svc) `',(cer svc)))))
+		   ,(when (epair? svc) `',(cer svc))
+		   "hop")))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)

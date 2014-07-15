@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/3.0.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat Sep  7 13:09:22 2013 (serrano)                */
-;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    Last change :  Sun Jul 13 15:58:53 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -221,7 +221,7 @@
 ;*    <EXCEPTION-STACK> ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (<EXCEPTION-STACK> stack skip)
-
+   
    (define (frame-type rest)
       (with-handler
 	 (lambda (e)
@@ -234,32 +234,35 @@
    (define (frame-klass rest)
       (string-append "hop-exception-frame-"
 	 (frame-type rest)))
-
+   
    (define (js-name s)
       (if (symbol? s)
 	  (symbol->string s)
 	  s))
 
+   (define (js-file f)
+      (pregexp-replace "[?]js=.*$" f ""))
+   
    (define (<TR:LINE> klass name . src)
       (<TR> :class klass
 	 (<TD> :class "hop-exception-frame-id"
 	    name)
 	 (<TD> :class "hop-exception-frame-line"
 	    src)))
-   
+
    (define (pp-stack stack)
       (map (lambda (f)
 	      (match-case f
 		 ((?name (line-col ?file ?line ?col) . ?rest)
 		  (let ((jsline (assq 'js-line-col rest))
-			(klass (frame-klass rest)))
-		     (if (pair? jsline)
+			(klass (frame-klass rest))
+			(file (js-file file)))
+		     (if (and (pair? jsline)
+			      (string=? ((@ hop_idiom js)) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
-				  (dirname file) "/")
-			       (basename file)
-			       ":" line ":" col)
+				  file ":" line ":" col))
 			    (match-case jsline
 			       ((js-line-col ?jsfile ?jsline ?jscol)
 				(<TR:LINE> "hop-exception-frame-js" ""
@@ -268,26 +271,25 @@
 			    file ":" line ":" col))))
 		 ((?name (line ?file ?line) . ?rest)
 		  (let ((jsline (assq 'js-line rest))
-			(klass (frame-klass rest)))
-		     (if (pair? jsline)
+			(klass (frame-klass rest))
+			(file (js-file file)))
+		     (if (and (pair? jsline)
+			      (string=? ((@ hop_idiom js)) "scheme"))
 			 (list
 			    (<TR:LINE> klass (js-name name)
 			       (<SPAN> :class "hop-exception-js"
-				  (dirname file) "/")
-			       (basename file)
-			       ":" line)
+				  file ":" line))
 			    (match-case jsline
 			       ((js-line ?jsfile ?jsline)
 				(<TR:LINE> "hop-exception-frame-js" ""
 				   jsfile ":" jsline))))
 			 (<TR:LINE> klass (js-name name) file ":" line))))
 		 ((?name (at ?file ?point) . ?rest)
-		  (let ((klass (frame-klass rest)))
+		  (let ((klass (frame-klass rest))
+			(file (js-file file)))
 		     (<TR:LINE> klass (js-name name)
 			(<SPAN> :class "hop-exception-js"
-			   (dirname file) "/")
-			(basename file)
-			"@" point)))
+			   file "@" point))))
 		 ((?name ?loc . ?rest)
 		  (<TR:LINE> (frame-klass rest) (js-name name) loc))
 		 ((?name . ?rest)
@@ -295,7 +297,7 @@
 		 ((? string?)
 		  (<TR> (<TH> f)))))
 	 stack))
-
+   
    (let loop ((l stack)
 	      (s skip))
       (cond
@@ -303,17 +305,21 @@
 	  "")
 	 ((= s 0)
 	  (<DIV> :data-hss-class "hop-exception-stack"
-	     (<BUTTON> "Show JavaScript frames"
-		:onclick ~(let* ((p this.parentNode)
-				 (c (p.getAttribute "data-debug-mode")))
-			     (if (equal? c "all")
-				 (begin
-				    (innerHTML-set! this "Show JavaScript frames")
-				    (p.setAttribute "data-debug-mode" "hop"))
-				 (begin
-				    (innerHTML-set! this "Hide JavaScript frames")
-				    (p.setAttribute "data-debug-mode" "all")))
-			     (stop-event-propagation event)))
+	     :data-idiom ((@ hop_idiom js))
+	     :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
+				  "hop" "all")
+	     (if (string=? ((@ hop_idiom js)) "scheme")
+		 (<BUTTON> "Show JavaScript frames"
+		    :onclick ~(let* ((p this.parentNode)
+				     (c (p.getAttribute "data-debug-mode")))
+				 (if (equal? c "all")
+				     (begin
+					(innerHTML-set! this "Show JavaScript frames")
+					(p.setAttribute "data-debug-mode" "hop"))
+				     (begin
+					(innerHTML-set! this "Hide JavaScript frames")
+					(p.setAttribute "data-debug-mode" "all")))
+				 (stop-event-propagation event))))
 	     (<TABLE> :data-hss-class "hop-exception-stack"
 		:onclick ~(stop-event-propagation event)
 		(<TR> (<TH> "Execution stack:"))
@@ -444,7 +450,6 @@
 ;*    See HOP_CALLBACK, hop-lib.js.                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
-;*    (tprint "HOP-CALLBACK-HANDLER ctx=" ctx)                         */
    ;; store the exception for the default handler to display it, don't
    ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it

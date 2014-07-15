@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun 20 07:32:21 2014 (serrano)                */
+;*    Last change :  Thu Jul  3 11:51:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -99,9 +99,7 @@
 (define (js-driver->string)
    (reduce (lambda (el rest) (string-append rest "," el))
       '()
-      (map (lambda (s)
-	      (with-access::J2SStage s (name)
-		 name))
+      (map (lambda (s) (with-access::J2SStage s (name) name))
 	 (js-driver))))
 
 ;*---------------------------------------------------------------------*/
@@ -160,9 +158,7 @@
 				(not (eq? (hopc-pass) 'object)))
 	       :module-name (or (hopc-js-module-name)
 				(input-file->module-name in))
-	       :module-path (hopc-js-module-path)
-	       :hopscript-header (hopc-js-header)
-	       :nodejs-header (hopc-js-header))))
+	       :module-path (hopc-js-module-path))))
 
       (define (generate out::output-port lang::symbol)
 	 (case lang
@@ -232,9 +228,7 @@
 				      (not (eq? (hopc-pass) 'object)))
 		     :module-name (or (hopc-js-module-name)
 				      (input-file->module-name in))
-		     :module-path (hopc-js-module-path)
-		     :hopscript-header (hopc-js-header)
-		     :nodejs-header (hopc-js-header))))
+		     :module-path (hopc-js-module-path))))
 	    file))
       
       (let* ((opts (hopc-bigloo-options))

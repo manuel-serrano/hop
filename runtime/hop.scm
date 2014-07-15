@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Jun 23 14:36:47 2014 (serrano)                */
+;*    Last change :  Wed Jun 25 09:03:48 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -45,6 +45,7 @@
 		      #!key
 		      fail
 		      (header '())
+		      (connection 'keep-alive)
 		      (timeout 0)
 		      (method 'GET)
 		      body
@@ -310,6 +311,7 @@
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (with-url url success #!key fail (header '()) (timeout 0) (method 'GET)
+		  (connection 'keep-alive)
 		  parse-json body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
@@ -355,8 +357,9 @@
 			      (userinfo userinfo)
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
-			      (header header)
+			      (header (cons `(connection: . ,connection) header))
 			      (connection-timeout timeout)
+			      (connection connection)
 			      (timeout timeout)
 			      (method method)
 			      (path (if host path "/"))))

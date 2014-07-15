@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Jun 23 15:00:28 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 07:35:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -19,15 +19,24 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
 
-   (export (j2s-parser ::input-port args::pair-nil)))
+   (export (j2s-parser ::input-port conf::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-parser input-port args::pair-nil)
+(define (j2s-parser input-port conf::pair-nil)
 
+   (define dollarp #f)
+
+   (define (with-dollar val proc)
+      (let ((old dollarp))
+	 (set! dollarp val)
+	 (let ((res (proc)))
+	    (set! dollarp old)
+	    res)))
+	    
    (define (current-loc)
       `(at ,(input-port-name input-port) ,(input-port-position input-port)))
 
@@ -633,18 +642,35 @@
 		(loc (token-loc token))
 		(id (cdr id))
 		(val (instantiate::J2SFun
-			(id (cdr id))
 			(loc (token-loc token))
 			(params params)
 			(mode (or (javascript-mode body) 'normal))
-			(body body)))))
+			(body body)
+			(decl (instantiate::J2SDecl
+				 (loc (token-loc token))
+				 (id (cdr id))
+				 (name (cdr id))
+				 (writable #f)
+				 (ronly #t)
+				 (global #t)
+				 (use 0)))))))
 	    (id
-	     (instantiate::J2SFun
-		(loc (token-loc id))
-		(id (cdr id))
-		(params params)
-		(mode (or (javascript-mode body) 'normal))
-		(body body)))
+	     (co-instantiate ((fun (instantiate::J2SFun
+				      (loc (token-loc id))
+				      (decl decl)
+				      (params params)
+				      (mode (or (javascript-mode body) 'normal))
+				      (body body)))
+			      (decl (instantiate::J2SDeclCnstFun
+				       (loc (token-loc id))
+				       (id (cdr id))
+				       (name (cdr id))
+				       (writable #f)
+				       (ronly #t)
+				       (global #t)
+				       (fun fun)
+				       (use 0))))
+		fun))
 	    (else
 	     (instantiate::J2SFun
 		(loc (token-loc token))
@@ -683,18 +709,35 @@
 		(loc (token-loc token))
 		(id (cdr id))
 		(val (instantiate::J2SSvc
-			(id (cdr id))
 			(loc (token-loc token))
 			(params params)
 			(init init)
-			(body body)))))
+			(body body)
+			(decl (instantiate::J2SDecl
+				 (loc (token-loc token))
+				 (id (cdr id))
+				 (name (cdr id))
+				 (writable #f)
+				 (ronly #t)
+				 (global #t)
+				 (use 0)))))))
 	    (id
-	     (instantiate::J2SSvc
-		(loc (token-loc id))
-		(id (cdr id))
-		(params params)
-		(init init)
-		(body body)))
+	     (co-instantiate ((fun (instantiate::J2SSvc
+				      (loc (token-loc id))
+				      (decl decl)
+				      (params params)
+				      (init init)
+				      (body body)))
+			      (decl (instantiate::J2SDeclCnstFun
+				       (loc (token-loc id))
+				       (id (cdr id))
+				       (name (cdr id))
+				       (writable #f)
+				       (ronly #t)
+				       (global #t)
+				       (fun fun)
+				       (use 0))))
+		fun))
 	    (else
 	     (instantiate::J2SSvc
 		(loc (token-loc token))
@@ -718,14 +761,19 @@
 	    (loc loc)
 	    (id (cdr id))
 	    (val (instantiate::J2SSvc
-		    (id (cdr id))
+		    (decl (instantiate::J2SDecl
+			     (loc loc)
+			     (id (cdr id))))
 		    (loc loc)
 		    (params params)
 		    (init init)
 		    (register #f)
-		    (body (instantiate::J2SPragma
+		    (body (instantiate::J2SBlock
 			     (loc loc)
-			     (expr "(current-request)"))))))))
+			     (nodes (list
+				       (instantiate::J2SPragma
+					  (loc loc)
+					  (expr "(current-request)")))))))))))
 
    (define (consume-param!)
       (let ((token (consume-token! 'ID)))
@@ -865,7 +913,12 @@
 	 ((+ -) 9)
 	 ((* / %) 10)
 	 (else #f)))
-   
+
+   (define (binary-op-type op)
+      (case op
+	 ((< > <= >= instanceof in == ===) 'bool)
+	 (else #f)))
+
    ;; left-associative binary expressions
    (define (binary-expr in-for-init?)
       (define (binary-aux level)
@@ -885,6 +938,7 @@
 				   (loc (token-loc token))
 				   (lhs expr)
 				   (op (car token))
+				   (type (binary-op-type (car token)))
 				   (rhs (binary-aux (+fx level 1)))))))
 		      (else
 		       expr))))))
@@ -895,7 +949,9 @@
 	 ((++ --)
 	  (let* ((token (consume-any!))
 		 (expr (unary)))
-	     (if (or (isa? expr J2SUnresolvedRef) (isa? expr J2SAccess))
+	     (if (or (isa? expr J2SUnresolvedRef)
+		     (isa? expr J2SAccess)
+		     (isa? expr J2SParen))
 		 (instantiate::J2SPrefix
 		       (loc (token-loc token))
 		       (rhs (class-nil J2SExpr))
@@ -933,14 +989,16 @@
 	     (case (peek-token-type)
 		((++ --)
 		 (let ((token (consume-any!)))
-		    (if (or (isa? expr J2SUnresolvedRef) (isa? expr J2SAccess))
+		    (if (or (isa? expr J2SUnresolvedRef)
+			    (isa? expr J2SAccess)
+			    (isa? expr J2SParen))
 			(instantiate::J2SPostfix
 			   (loc (token-loc token))
 			   (rhs (class-nil J2SExpr))
 			   (lhs expr)
 			   (op (car token)))
 			(parse-token-error
-			   "Invalid left-hand side expression in prefix operation"
+			   "Invalid left-hand side expression in postfix operation"
 			   token))))
 		(else
 		 expr))
@@ -976,7 +1034,7 @@
 		    (field (expression #f))
 		    (ignore-too (consume! 'RBRACKET)))
 		(loop (instantiate::J2SAccess
-			 (loc loc)
+			 (loc (token-loc ignore))
 			 (obj expr)
 			 (field field)))))
 	    ((NEWLINE)
@@ -991,7 +1049,7 @@
 			(eq? key 'RESERVED)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
-			     (loc loc)
+			     (loc (token-loc ignore))
 			     (obj expr)
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
@@ -1108,15 +1166,17 @@
 		       (peek-token))))))))
 
    (define (tilde token)
-      (let loop ((rev-stats '()))
-	 (case (peek-token-type)
-	    ((RBRACE)
-	     (consume-any!)
-	     (instantiate::J2SSeq
-		(loc (token-loc token))
-		(nodes (reverse! rev-stats))))
-	    (else
-	     (loop (cons (statement) rev-stats))))))
+      (with-dollar #t
+	 (lambda ()
+	    (let loop ((rev-stats '()))
+	       (case (peek-token-type)
+		  ((RBRACE)
+		   (consume-any!)
+		   (instantiate::J2SSeq
+		      (loc (token-loc token))
+		      (nodes (reverse! rev-stats))))
+		  (else
+		   (loop (cons (statement) rev-stats))))))))
    
    (define (primary)
       (case (peek-token-type)
@@ -1221,12 +1281,18 @@
 		(loc (token-loc token))
 		(stmt (tilde token)))))
 	 ((DOLLAR)
-	  (let ((ignore (consume-any!))
-		(expr (expression #f))
-		(ignore-too (consume! 'RBRACE)))
-	     (instantiate::J2SDollar
-		(loc (token-loc ignore))
-		(expr expr))))
+	  (if dollarp
+	      (with-dollar #f
+		 (lambda ()
+		    (let ((ignore (consume-any!))
+			  (expr (expression #f))
+			  (ignore-too (consume! 'RBRACE)))
+		       (instantiate::J2SDollar
+			  (loc (token-loc ignore))
+			  (node expr)))))
+	      (parse-token-error
+		 "Invalid ${ ... } statement"
+		 (consume-any!))))
 	 ((NaN)
 	  (let ((token (consume-token! 'NaN)))
 	     (instantiate::J2SNumber
@@ -1425,24 +1491,27 @@
       (let ((mode (when (pair? nodes) (javascript-mode-nodes nodes))))
 	 (if (symbol? mode) mode 'normal)))
    
-   (define (program)
+   (define (program dp)
+      (set! dollarp dp)
       (with-access::J2SBlock (source-elements) (loc nodes name)
 	 (let ((module (javascript-module-nodes nodes)))
 	    (instantiate::J2SProgram
 	       (loc loc)
 	       (path (abspath))
 	       (module module)
-	       (main (args-get args :module-main #f))
-	       (name (args-get args :module-name #f))
+	       (path (config-get conf :filename (abspath)))
+	       (main (config-get conf :module-main #f))
+	       (name (config-get conf :module-name #f))
 	       (mode (nodes-mode nodes))
 	       (nodes nodes)))))
    
    (define (eval)
+      (set! dollarp #f)
       (with-access::J2SBlock (source-elements) (loc nodes)
 	 (instantiate::J2SProgram
 	    (loc loc)
-	    (path (args-get args :filename (abspath)))
-	    (name (args-get args :module-name #f))
+	    (path (config-get conf :filename (abspath)))
+	    (name (config-get conf :module-name #f))
 	    (mode (nodes-mode nodes))
 	    (nodes nodes))))
 
@@ -1452,19 +1521,18 @@
 	     (with-access::J2SNode el (loc)
 		(instantiate::J2SProgram
 		   (loc loc)
-		   (main (args-get args :module-main #f))
-		   (name (args-get args :module-name #f))
-		   (path (args-get args :filename (abspath)))
+		   (main (config-get conf :module-main #f))
+		   (name (config-get conf :module-name #f))
+		   (path (config-get conf :filename (abspath)))
 		   (nodes (list el))))
 	     el)))
 
-   ;; procedure entry point.
-   ;; ----------------------
-   (case (args-get args :parser #f)
-      ((module) (program))
+   (case (config-get conf :parser #f)
+      ((module) (program #f))
       ((repl) (repl))
       ((eval) (eval))
-      (else (program))))
+      ((client-program) (program #t))
+      (else (program #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-mode-nodes ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Apr 16 09:57:49 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 06:54:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -20,17 +20,7 @@
    (export (pass ::bstring)
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
-	   (append-after-header stmts nodes)
-	   (args-get ::pair-nil ::keyword ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    args-get ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (args-get args k def)
-   (let ((l (memq k args)))
-      (if (pair? l)
-	  (cadr l)
-	  def)))
+	   (config-get ::pair-nil ::keyword #!optional def)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -59,50 +49,10 @@
 	 loc)))
 
 ;*---------------------------------------------------------------------*/
-;*    is-end-of-header? ...                                            */
+;*    config-get ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (is-end-of-header? n)
-   (when (isa? n J2SPragma)
-      (with-access::J2SPragma n (expr)
-	 (when (equal? expr "end-of-header")
-	    n))))
-
-;*---------------------------------------------------------------------*/
-;*    skip-header ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (skip-header stmts)
-   (let loop ((s stmts))
-      (cond
-	 ((null? s)
-	  stmts)
-	 ((is-end-of-header? (car s))
-	  (cdr s))
-	 (else
-	  (loop (cdr s))))))
-
-;*---------------------------------------------------------------------*/
-;*    append-after-header ...                                          */
-;*    -------------------------------------------------------------    */
-;*    Add news nodes in the AST after the header (i.e., the rts        */
-;*    initialization).                                                 */
-;*---------------------------------------------------------------------*/
-(define (append-after-header stmts nodes)
-   (cond
-      ((null? nodes)
-       stmts)
-      ((null? stmts)
-       nodes)
-      (else
-       (let loop ((s stmts)
-                  (p #f))
-          (cond
-             ((null? s)
-              (append stmts nodes))
-             ((is-end-of-header? (car s))
-              (if p
-                  (begin
-                     (set-cdr! p (append nodes (cdr s)))
-                     stmts)
-                  (append nodes stmts)))
-             (else
-              (loop (cdr s) s)))))))
+(define (config-get conf k #!optional def)
+   (let ((l (memq k conf)))
+      (if (pair? l)
+	  (cadr l)
+	  def)))

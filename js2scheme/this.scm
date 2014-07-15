@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May 25 18:44:54 2014 (serrano)                */
+;*    Last change :  Sat Jul 12 06:04:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -57,6 +57,17 @@
 ;*    this! ::J2SFun ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (this! this::J2SFun)
+
+   (define (init-this loc)
+      (instantiate::J2SPragma
+	 (loc loc)
+	 (expr `(cond
+		   ((or (eq? this (js-undefined))
+			(eq? this (js-null)))
+		    (set! this %scope))
+		   ((not (isa? this JsObject))
+		    (set! this (js-toobject %this this)))))))
+   
    (with-access::J2SFun this (mode body params id loc)
       (when (eq? mode 'normal)
 	 (let ((nbody (this! body)))
@@ -64,15 +75,7 @@
 	       (set! body
 		  (instantiate::J2SBlock
 		     (loc loc)
-		     (nodes (list (instantiate::J2SPragma
-				     (loc loc)
-				     (expr `(cond
-					       ((or (eq? this (js-undefined))
-						    (eq? this (js-null)))
-						(set! this %this))
-					       ((not (isa? this JsObject))
-						(set! this (js-toobject %this this))))))
-			       nbody))))))))
+		     (nodes (list (init-this loc) nbody))))))))
    this)
 
 ;*---------------------------------------------------------------------*/

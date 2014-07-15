@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sun Jun 15 17:51:53 2014 (serrano)                */
+;*    Last change :  Thu Jul 10 15:25:15 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -15,6 +15,8 @@
 (module __nodejs__fs
 
    (library hopscript)
+
+   (import  __nodejs_uv)
 
    (export O_RDONLY
 	   O_WRONLY
@@ -37,21 +39,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
 ;*---------------------------------------------------------------------*/
-(define O_RDONLY (cond-expand (bigloo-c (pragma::long "O_RDONLY")) (else 0)))
-(define O_WRONLY (cond-expand (bigloo-c (pragma::long "O_WRONLY")) (else 1)))
-(define O_RDWR (cond-expand (bigloo-c (pragma::long "O_RDWR")) (else 2)))
-(define O_CREAT (cond-expand (bigloo-c (pragma::long "O_CREAT")) (else #o64)))
-(define O_EXCL (cond-expand (bigloo-c (pragma::long "O_EXCL")) (else #o200)))
-(define O_NOCTTY (cond-expand (bigloo-c (pragma::long "O_NOCTTY")) (else #o400)))
-(define O_TRUNC (cond-expand (bigloo-c (pragma::long "O_TRUNC")) (else #o1000)))
-(define O_APPEND (cond-expand (bigloo-c (pragma::long "O_APPEND")) (else #o2000)))
-(define O_DIRECTORY (cond-expand (bigloo-c (pragma::long "O_DIRECTORY")) (else #o200000)))
-(define O_SYNC (cond-expand (bigloo-c (pragma::long "O_SYNC")) (else #o4010000)))
-(define O_NOFOLLOW (cond-expand (bigloo-c (pragma::long "O_NOFOLLOW")) (else #o400000)))
+(define O_RDONLY
+   (cond-expand (bigloo-c (pragma::long "O_RDONLY")) (else 0)))
+(define O_WRONLY
+   (cond-expand (bigloo-c (pragma::long "O_WRONLY")) (else 1)))
+(define O_RDWR
+   (cond-expand (bigloo-c (pragma::long "O_RDWR")) (else 2)))
+(define O_CREAT
+   (cond-expand (bigloo-c (pragma::long "O_CREAT")) (else #o64)))
+(define O_EXCL
+   (cond-expand (bigloo-c (pragma::long "O_EXCL")) (else #o200)))
+(define O_NOCTTY
+   (cond-expand (bigloo-c (pragma::long "O_NOCTTY")) (else #o400)))
+(define O_TRUNC
+   (cond-expand (bigloo-c (pragma::long "O_TRUNC")) (else #o1000)))
+(define O_APPEND
+   (cond-expand (bigloo-c (pragma::long "O_APPEND")) (else #o2000)))
+(define O_DIRECTORY
+   (cond-expand (bigloo-c (pragma::long "O_DIRECTORY")) (else #o200000)))
+(define O_SYNC
+   (cond-expand (bigloo-c (pragma::long "O_SYNC")) (else #o4010000)))
+(define O_NOFOLLOW
+   (cond-expand (bigloo-c (pragma::long "O_NOFOLLOW")) (else #o400000)))
 
-(define S_IFMT (cond-expand (bigloo-c (pragma::long "S_IFMT")) (else #o170000)))
-(define S_IFREG (cond-expand (bigloo-c (pragma::long "S_IFREG")) (else #o100000)))
-(define S_IFDIR (cond-expand (bigloo-c (pragma::long "S_IFDIR")) (else #o40000)))
+(define S_IFMT
+   (cond-expand (bigloo-c (pragma::long "S_IFMT")) (else #o170000)))
+(define S_IFREG
+   (cond-expand (bigloo-c (pragma::long "S_IFREG")) (else #o100000)))
+
+(define S_IFDIR
+   (cond-expand (bigloo-c (pragma::long "S_IFDIR")) (else #o40000)))
+
+(define ENOENT
+   (cond-expand (bigloo-c (pragma::long "ENOENT")) (else 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-fs-stats ...                                             */
@@ -74,9 +94,34 @@
 (define (process-fs %this)
 
    (define (rename this old new cb)
-      (let ((r (rename-file old new)))
-	 (when (isa? cb JsFunction)
-	    (js-call1 %this cb %this (js-toboolean r)))))
+      (if (isa? cb JsFunction)
+	  ;; asynchronous call
+	  (nodejs-rename-file old new
+	     (lambda (res path)
+		(if (=fx res 0)
+		    (js-call1 %this cb this (js-undefined))
+		    (with-access::JsGlobalObject %this (js-error)
+		       (let ((obj (js-new %this js-error
+				     (format "Cannot rename file ~s into ~a"
+					old new)
+				     new)))
+			  (js-put! obj 'path old #f %this)
+			  (unless (file-exists? old)
+			     (js-put! obj 'errno ENOENT #f %this)
+			     (js-put! obj 'code "ENOENT" #f %this))
+			  (js-call1 %this cb this obj))))))
+	  ;; synchronous call
+	  (if (rename-file old new)
+	      (js-call1 %this cb (js-undefined) (js-undefined))
+	      (with-access::JsGlobalObject %this (js-error)
+		 (let ((obj (js-new %this js-error
+			       (format "Cannot rename file ~s into ~a" old new)
+			       new)))
+		    (js-put! obj 'path old #f %this)
+		    (unless (file-exists? old)
+		       (js-put! obj 'errno ENOENT #f %this)
+		       (js-put! obj 'code "ENOENT" #f %this))
+		    (js-call1 %this cb this obj))))))
    
    (define (ftruncate this path len cb)
       (let ((r (output-port-truncate path len)))

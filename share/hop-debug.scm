@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/share/hop-debug.scm               */
+;*    serrano/prgm/project/hop/3.0.x/share/hop-debug.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul 29 14:46:23 2013                          */
-;*    Last change :  Mon Aug 19 08:32:48 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Jul 11 12:02:28 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop runtime debugging support                                    */
 ;*=====================================================================*/

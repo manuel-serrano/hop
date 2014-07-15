@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jun 24 11:27:06 2014 (serrano)                */
+;*    Last change :  Wed Jul  2 16:32:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -32,7 +32,9 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::hop-service)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::hop-service)
+	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
+	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsHopFrame ...                            */
@@ -69,7 +71,7 @@
 	       (construct (lambda (constructor args)
 			     (js-raise-type-error %this "not a constructor ~s"
 				js-function-prototype)))
-	       (arity -1)
+	       (len -1)
 	       (procedure list)
 	       (svc #f)
 	       (extensible #t)))
@@ -131,10 +133,6 @@
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post svc::bstring success opt %this)
-   
-   (define (parse-json in)
-      (js-json-parser in (js-undefined) %this))
-
    (let ((host "localhost")
 	 (port (hop-port))
 	 (user #f)
@@ -174,12 +172,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service %this proc name register svc)
+(define (js-make-service %this proc name register arity svc)
    (with-access::JsGlobalObject %this (js-service-prototype)
       (when register (register-service! svc))
       (instantiate::JsService
 	 (procedure proc)
-	 (arity (procedure-arity proc))
+	 (len arity)
 	 (__proto__ js-service-prototype)
 	 (name (or name proc))
 	 (alloc (lambda (_)
@@ -243,3 +241,19 @@
    (with-access::JsService obj (svc)
       (with-access::hop-service svc (proc)
 	 proc)))
+;*---------------------------------------------------------------------*/
+;*    js-service-unserialize ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-service-unserialize alist %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((obj (js-new %this js-object)))
+	 (for-each (lambda (e)
+		      (js-put! obj (keyword->symbol (car e)) (cadr e) #f %this))
+	    alist)
+	 obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-service-unjson ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-service-unjson ip %this::JsGlobalObject)
+   (js-json-parser ip (js-undefined) #t %this))

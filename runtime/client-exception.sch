@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/client-exception.sch      */
+;*    serrano/prgm/project/hop/3.0.x/runtime/client-exception.sch      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:33:45 2013                          */
-;*    Last change :  Sat Aug 10 07:38:26 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue Jul 15 11:05:13 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common exception implementation.                                 */
 ;*=====================================================================*/
@@ -21,6 +21,12 @@
 ;*---------------------------------------------------------------------*/
 (define (scheme2js-mangled? str)
    (string-prefix? "sc_" str))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hidden-frame-regexp ...                                      */
+;*---------------------------------------------------------------------*/
+(define hop-hidden-frame-regexp
+   "^(?:hop_send_request|withHOP|HopFrame.post|HTML[A-z][a-z]*Element[.]on[a-z]*|applyCallback|&pool-scheduler[0-9]+)$")
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-demangle ...                                           */
@@ -107,6 +113,12 @@
 	 (and (pair? t) (eq? (cdr t) 'exception)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hidden-frame-id? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hop-hidden-frame-id? id)
+   (pregexp-match hop-hidden-frame-regexp id))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-exception-context->frames ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-exception-context->frames f)
@@ -136,22 +148,23 @@
 		   (loc (caddr m))
 		   (dm (firefox-demangle id))
 		   (l (pregexp-match *firefox-frame-location-regexp* loc)))
-	       (if (pair? l)
-		   (let ((file (abspath (cadr l)))
-			 (line (string->integer (caddr l))))
-		      (multiple-value-bind (srcfile srcline _)
-			 (hop-source-map file line 0)
-			 (if (string? srcfile)
-			     (list dm
-				`(line ,srcfile ,srcline)
-				`(js-line ,file ,(-fx line 1))
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a"))
-			     (list dm
-				`(line ,file ,(-fx line 1))
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a")))))
-		   (list dm))))))
+	       (unless (hop-hidden-frame-id? id)
+		  (if (pair? l)
+		      (let ((file (abspath (cadr l)))
+			    (line (string->integer (caddr l))))
+			 (multiple-value-bind (srcfile srcline _)
+			    (hop-source-map file line 0)
+			    (if (string? srcfile)
+				(list dm
+				   `(line ,srcfile ,srcline)
+				   `(js-line ,file ,(-fx line 1))
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a"))
+				(list dm
+				   `(line ,file ,(-fx line 1))
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a")))))
+		      (list dm)))))))
    
    (define (opera-frame f)
       (let ((m (pregexp-match "^([^()]+)[(][^)]*[)]@([^ ]+)$" f)))
@@ -169,24 +182,25 @@
 		   (loc (caddr m))
 		   (dm (hop-demangle id))
 		   (l (pregexp-match *chrome-frame-location-regexp* loc)))
-	       (if (pair? l)
-		   ;; source map the file position
-		   (let ((file (abspath (cadr l)))
-			 (line (string->integer (caddr l)))
-			 (col (string->integer (cadddr l))))
-		      (multiple-value-bind (srcfile srcline srccol)
-			 (hop-source-map file line col)
-			 (if (string? srcfile)
-			     (list dm
-				`(line-col ,srcfile ,srcline ,srccol)
-				`(js-line-col ,file ,(-fx line 1), col)
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a"))
-			     (list dm
-				`(line-col ,file ,(-fx line 1), col)
-				`(type . ,(if (string=? dm id) 'js 'client))
-				'(format . "~~~a")))))
-		   (list dm))))))
+	       (unless (hop-hidden-frame-id? id)
+		  (if (pair? l)
+		      ;; source map the file position
+		      (let ((file (abspath (cadr l)))
+			    (line (string->integer (caddr l)))
+			    (col (string->integer (cadddr l))))
+			 (multiple-value-bind (srcfile srcline srccol)
+			    (hop-source-map file line col)
+			    (if (string? srcfile)
+				(list dm
+				   `(line-col ,srcfile ,srcline ,srccol)
+				   `(js-line-col ,file ,(-fx line 1), col)
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a"))
+				(list dm
+				   `(line-col ,file ,(-fx line 1), col)
+				   `(type . ,(if (string=? dm id) 'js 'client))
+				   '(format . "~~~a")))))
+		      (list dm)))))))
    
    (let* ((stack (car f))
 	  (lines (string-split stack "\n"))

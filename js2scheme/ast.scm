@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jun 20 08:19:58 2014 (serrano)                */
+;*    Last change :  Mon Jul 14 19:38:08 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -13,20 +13,23 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_ast
-
-   (include "walk.sch")
    
+   (library web)
+   
+   (include "walk.sch")
+
    (export (abstract-class J2SNode
 	      (loc::pair read-only))
-
+	   
 	   (abstract-class J2SStmt::J2SNode)
-
+	   
 	   (class J2SSeq::J2SStmt
 	      nodes::pair-nil)
 	   
 	   (class J2SBlock::J2SSeq)
-
+	   
 	   (class J2SProgram::J2SBlock
+	      (version::int read-only (default 1))
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
 	      (pcache-size::int (default 0))
@@ -34,9 +37,12 @@
 	      (main read-only (default #f))
 	      (module read-only (default #f)))
 
+	   (abstract-class J2SExpr::J2SNode
+	      (type::obj (default #unspecified)))
+	   
 	   (final-class J2SStmtExpr::J2SStmt
 	      expr::J2SExpr)
-
+	   
 	   (final-class J2SIf::J2SStmt
 	      test::J2SExpr
 	      then::J2SStmt
@@ -44,7 +50,7 @@
 	   
 	   (final-class J2SVarDecls::J2SStmt
 	      decls::pair)
-
+	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
 	      (id::obj read-only (default #unspecified)))
@@ -52,25 +58,25 @@
 	   (final-class J2SSwitch::J2SIdStmt
 	      key::J2SNode
 	      cases::pair-nil)
-
+	   
 	   (class J2SLoop::J2SIdStmt
 	      (need-bind-exit-continue::bool (default #t))
 	      body::J2SStmt)
-	      
+	   
 	   (final-class J2SFor::J2SLoop
 	      init::J2SNode
 	      test::J2SExpr
 	      incr::J2SExpr)
-
+	   
 	   (final-class J2SForIn::J2SLoop
 	      lhs::J2SNode
 	      obj::J2SExpr)
-
+	   
 	   (class J2SWhile::J2SLoop
 	      test::J2SExpr)
-
+	   
 	   (class J2SDo::J2SWhile)
-
+	   
 	   (final-class J2SLabel::J2SStmt
 	      id
 	      body::J2SStmt)
@@ -84,17 +90,17 @@
 	      (id (default #f)))
 	   
 	   (final-class J2SNop::J2SStmt)
-
+	   
 	   (class J2SCase::J2SStmt
 	      expr::J2SExpr
 	      body::J2SSeq)
-
+	   
 	   (final-class J2SDefault::J2SCase)
-
+	   
 	   (final-class J2SReturn::J2SStmt
 	      (tail::bool (default #t))
 	      expr::J2SExpr)
-
+	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
 	      obj::J2SExpr
@@ -102,15 +108,15 @@
 	   
 	   (final-class J2SThrow::J2SStmt
 	      expr::J2SExpr)
-
+	   
 	   (class J2SFun::J2SExpr
 	      (mode read-only (default #f))
-	      (id read-only (default #f))
+	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::bool (default #f))
 	      params::pair-nil
-	      body::J2SNode)
-
+	      body::J2SBlock)
+	   
 	   (class J2SSvc::J2SFun
 	      (init::J2SNode read-only)
 	      (register::bool read-only (default #t)))
@@ -118,36 +124,34 @@
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
 	      body::J2SNode)
-
+	   
 	   (final-class J2STry::J2SStmt
 	      body::J2SStmt
 	      catch::J2SStmt
 	      finally::J2SStmt)
 	   
-	   (abstract-class J2SExpr::J2SNode)
-
 	   (class J2SPragma::J2SExpr
 	      (expr read-only))
-
+	   
 	   (class J2SSequence::J2SExpr
 	      (exprs::pair read-only))
 	   
 	   (class J2SUnresolvedRef::J2SExpr
 	      (cache (default #f))
-	      id)
-
-	   (class J2SRef::J2SExpr
-	      decl::J2SDecl)
-
+	      id::symbol)
+	   
+	   (final-class J2SRef::J2SExpr
+	      (decl::J2SDecl (info '("nojson"))))
+	   
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
 	      withs::pair
 	      (expr::J2SExpr read-only))
-
+	   
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
 	      (module read-only (default #f)))
-
+	   
 	   (final-class J2SThis::J2SExpr)
 	   
 	   (final-class J2SCond::J2SExpr
@@ -155,12 +159,13 @@
 	      then::J2SExpr
 	      else::J2SExpr)
 	   
-	   (class J2SDecl::J2SNode
+	   (class J2SDecl::J2SStmt
 	      (id::symbol read-only)
+	      (key (default (ast-decl-key)))
 	      (name (default #f))
 	      (writable (default #t))
 	      (ronly (default #f))
-	      (global::bool (default #f))
+	      (global::obj (default #f))
 	      (use::int (default 0))
 	      (type::obj (default #unspecified)))
 	   
@@ -169,13 +174,16 @@
 	   
 	   (class J2SDeclFun::J2SDeclInit)
 	   
+	   (class J2SDeclCnstFun::J2SDecl
+	      (fun::J2SFun read-only))
+	   
 	   (class J2SDeclSvc::J2SDeclFun)
 	   
 	   (class J2SDeclTag::J2SDeclFun)
 	   
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f)))
-
+	   
 	   (final-class J2SParam::J2SDecl)
 	   
 	   (abstract-class J2SLiteral::J2SExpr)
@@ -184,10 +192,10 @@
 	   
 	   (final-class J2SNull::J2SLiteral)
 	   (final-class J2SUndefined::J2SLiteral)
-
+	   
 	   (class J2SLiteralValue::J2SLiteral
 	      val)
-
+	   
 	   (class J2SString::J2SLiteralValue
 	      (escape::pair-nil read-only (default '())))
 	   (final-class J2SBool::J2SLiteralValue)
@@ -195,23 +203,23 @@
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
 	      (flags::bstring read-only))
-
+	   
 	   (final-class J2SArray::J2SLiteral
 	      len::int
 	      exprs::pair-nil)
-
+	   
 	   (final-class J2SParen::J2SExpr
 	      expr::J2SExpr)
 	   
 	   (class J2SUnary::J2SExpr
 	      op::symbol
 	      expr::J2SExpr)
-
+	   
 	   (final-class J2SBinary::J2SExpr
 	      op::symbol
 	      lhs::J2SExpr
 	      rhs::J2SExpr)
-
+	   
 	   (class J2SAssig::J2SExpr
 	      lhs::J2SExpr
 	      rhs::J2SExpr)
@@ -220,28 +228,28 @@
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
 	      op::symbol)
-
+	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
 	      obj::J2SExpr
 	      field::J2SExpr)
-
+	   
 	   (final-class J2SCall::J2SExpr
 	      fun::J2SExpr
 	      (args::pair-nil (default '())))
-
+	   
 	   (final-class J2STilde::J2SExpr
 	      stmt::J2SStmt)
 	   
 	   (final-class J2SDollar::J2SExpr
-	      expr::J2SExpr)
+	      node::J2SNode)
 	   
 	   (final-class J2SNew::J2SExpr
 	      clazz::J2SNode
 	      args::pair-nil)
-
+	   
 	   (class J2SInit::J2SAssig)
-
+	   
 	   (final-class J2SAssigOp::J2SAssig
 	      op::symbol)
 	   
@@ -249,20 +257,20 @@
 	   (final-class J2SCAssig::J2SAssig)
 	   
 	   (final-class J2SFunBinding::J2SInit)
-
+	   
 	   (final-class J2SObjInit::J2SExpr
 	      inits::pair-nil)
-
+	   
 	   (abstract-class J2SPropertyInit::J2SNode
 	      name::J2SLiteralValue)
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
 	      val::J2SExpr)
-
+	   
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
 	      (get::obj (default #f))
 	      (set::obj (default #f)))
-
+	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -281,8 +289,39 @@
 	   (generic walk3!::J2SNode n::J2SNode p::procedure a0 a1 a2)
 	   (generic walk4!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
+	   
+	   (macro define-walk-method)
 
-	   (macro define-walk-method)))
+	   (j2sfun-id ::J2SFun)
+	   (ast-decl-key::int)
+	   
+	   (ast->json ::obj ::output-port)
+	   (json->ast ::input-port))
+   
+   (static (class %JSONDecl::J2SDecl
+	      (%id read-only))))
+
+;*---------------------------------------------------------------------*/
+;*    js2fun-id ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2sfun-id this::J2SFun)
+   (with-access::J2SFun this (decl)
+      (when (isa? decl J2SDecl)
+	 (with-access::J2SDecl decl (id)
+	    id))))
+
+;*---------------------------------------------------------------------*/
+;*    *ast-decl-key* ...                                               */
+;*---------------------------------------------------------------------*/
+(define *ast-decl-key* 0)
+
+;*---------------------------------------------------------------------*/
+;*    ast-decl-key ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (ast-decl-key)
+   (let ((v (+fx 1 *ast-decl-key*)))
+      (set! *ast-decl-key* v)
+      v))
 
 ;*---------------------------------------------------------------------*/
 ;*    generic walks ...                                                */
@@ -432,6 +471,26 @@
 		`(begin
 		    ,@(map (lambda (f) (visit! f nb-args)) fields))))
 	  n))
+
+   ;; generate the JavaScript walker
+   (cond-expand
+      (generate-javascript-walker
+       (printf "ast.~a.prototype.HopcWalk = function( ast ) {\n" class)
+       (display "   var _this = this;\n")
+       (display "   var _ast = ast;\n")
+       ;; (printf "   console.log( 'walk ', '~a', _ast.__node__ );\n" class)
+       (for-each (lambda (f)
+		    (cond
+		       ((symbol? f)
+			(printf "   Array.prototype.splice.call( arguments, 0, 1, _ast.~a );\n" f)
+			(printf "   _ast.~a = _this.walkNode.apply( _this, arguments );\n" f))
+		       ((pair? f)
+			(printf "   _ast.~a.forEach( function( v, i, a ) {\n" (car f))
+			(printf "      Array.prototype.splice.call( arguments, 0, 1, v );\n" (car f))
+			(printf "      a[ i ] = _this.walkNode.apply( _this, arguments );\n" (car f))
+			(printf "   } );\n"))))
+	  fields)
+       (print "   return _ast;\n};\n\n")))
    
    `(begin
        ,@(map (lambda (nb) (gen-method nb)) (iota 5))
@@ -499,7 +558,8 @@
 	     (let loop ((n n))
 		(cond
 		   ((isa? n J2SDollar)
-		    (,walk n p ,@args))
+		    (,walk n p ,@args)
+		    n)
 		   ((isa? n J2SNode)
 		    (let ((fields (class-all-fields (object-class n))))
 		       (let for ((i (-fx (vector-length fields) 1)))
@@ -514,7 +574,7 @@
 		    (map! loop n))
 		   (else
 		    n))))))
-   
+
    `(begin
        ,@(map (lambda (nb) (gen-method nb)) (iota 5))
        ,@(map (lambda (nb) (gen-method* nb)) (iota 5))
@@ -548,8 +608,8 @@
 (gen-walks J2SCall fun (args))
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
-(gen-walks J2SFun body)
-(gen-walks J2SSvc body init)
+(gen-walks J2SFun body (params))
+(gen-walks J2SSvc body init (params))
 (gen-walks J2SObjInit (inits))
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)
@@ -558,7 +618,7 @@
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)
-(gen-walks J2SDollar expr)
+(gen-walks J2SDollar node)
 
 (gen-traverals J2STilde)
 
@@ -571,3 +631,251 @@
 	 `(eval! ',(read p)))))
 
 (eval-walker! "walk.sch")
+
+;*---------------------------------------------------------------------*/
+;*    ast->json ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (ast->json ast op::output-port)
+   (display "{ " op)
+   (display "\"__ast__\": " op)
+   (j2s->json ast op)
+   (display " }" op))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::obj ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (j2s->json this::obj op::output-port)
+   (match-case this
+      ((at ?fname ?point)
+       (display "\"" op)
+       (display fname op)
+       (display ":" op)
+       (display point op)
+       (display "\"" op))
+      ((?- . ?-)
+       (display "[" op)
+       (let loop ((l this)
+		  (sep ""))
+	  (if (pair? l)
+	      (begin
+		 (display sep op)
+		 (j2s->json (car l) op)
+		 (loop (cdr l) ", "))
+	      (display "]" op))))
+      (()
+       (display "[]" op))
+      ((? string?)
+       (display "\"" op)
+       (display (string-for-read this) op)
+       (display "\"" op))
+      ((? symbol?)
+       (display "{ \"__symbol__\": \"" op)
+       (display this op)
+       (display "\" }" op))
+      (#unspecified
+       (display "null" op))
+      (#t
+       (display "true" op))
+      (#f
+       (display "false" op))
+      (else
+       ;; other literal
+       (display this op))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SNode op::output-port)
+   (let ((clazz (object-class this)))
+      (fprintf op "{ \"__node__\": \"~a\"" (class-name clazz))
+      (let ((fields (class-all-fields clazz)))
+	 (let for ((i (-fx (vector-length fields) 1)))
+	    (when (>=fx i 0)
+	       (let* ((f (vector-ref fields i))
+		      (fi (class-field-info f)))
+		  (unless (and (pair? fi) (member "nojson" fi))
+		     (fprintf op ", \"~a\": " (class-field-name f))
+		     (let ((v ((class-field-accessor f) this)))
+			(j2s->json v op))))
+	       (for (-fx i 1)))))
+      (display " }" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SRef ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SRef op::output-port)
+   (with-access::J2SRef this (decl)
+      (let ((clazz (object-class this)))
+	 (fprintf op "{ \"__node__\": \"~a\"" (class-name clazz))
+	 (with-access::J2SDecl decl (key)
+	    (fprintf op ", \"decl\": {\"__ref__\": ~a}" key))
+	 (let ((fields (class-all-fields clazz)))
+	    (let for ((i (-fx (vector-length fields) 1)))
+	       (when (>=fx i 0)
+		  (let* ((f (vector-ref fields i))
+			 (fi (class-field-info f)))
+		     (unless (and (pair? fi) (member "nojson" fi))
+			(fprintf op ", \"~a\": " (class-field-name f))
+			(let ((v ((class-field-accessor f) this)))
+			   (j2s->json v op))))
+		  (for (-fx i 1)))))
+	 (display " }" op))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->json ::J2SPragma ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->json this::J2SPragma op::output-port)
+   (with-access::J2SPragma this (expr loc)
+      (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
+      (display (string-for-read
+		  (call-with-output-string
+		     (lambda (op) (write expr op))))
+	 op)
+      (display "\", \"loc\": " op)
+      (j2s->json loc op)
+      (display " }" op)))
+
+;*---------------------------------------------------------------------*/
+;*    json->ast ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (json->ast ip::input-port)
+   
+   (define (alist->node cname l)
+      (let* ((clazz (find-class cname))
+	     (ctor (class-constructor clazz))
+	     (inst ((class-allocator clazz)))
+	     (fields (class-all-fields clazz)))
+	 ;; instance fields
+	 (let loop ((i (-fx (vector-length fields) 1)))
+	    (when (>=fx i 0)
+	       (let* ((f (vector-ref-ur fields i))
+		      (n (class-field-name f)))
+		  (cond
+		     ((assq n l)
+		      =>
+		      (lambda (c)
+			 ((class-field-mutator f) inst (cdr c))))
+		     ((class-field-default-value? f)
+		      ((class-field-mutator f) inst (class-field-default-value f)))
+		     ((not (member "nojson" (class-field-info f)))
+		      (error "json->ast"
+			 (format "Missing field \"~a\"" n) cname)))
+		  (loop (-fx i 1)))))
+	 ;; constructor
+	 (when (procedure? ctor) ctor inst)
+	 inst))
+
+   (json-parse ip
+      :expr #t
+      :reviver (lambda (obj key v)
+		   (if (and (string? v) (string=? key "loc"))
+		       (let ((i (string-index-right v #\:)))
+			  (if i
+			      `(at ,(substring v 0 i)
+				  ,(string->integer (substring v (+fx i 1))))
+			      v))
+		       v))
+      :array-alloc (lambda ()
+		      (make-cell '()))
+      :array-set (lambda (a i val)
+		    (cell-set! a (cons val (cell-ref a))))
+      :array-return (lambda (a i)
+		       (reverse! (cell-ref a)))
+      :object-alloc (lambda ()
+		       (make-cell #f))
+      :object-set (lambda (o p val)
+		     (cell-set! o
+			(cons (cons (string->symbol p) val) (cell-ref o))))
+      :object-return (lambda (o)
+			(let ((alist (cell-ref o)))
+			   (cond
+			      ((assq '__node__ alist)
+			       =>
+			       (lambda (c)
+				  (let ((n (cdr c)))
+				     (if (not (string? n))
+					 (error "json->ast" "Illegal node class" n)
+					 (alist->node (string->symbol n) alist)))))
+			      ((assq '__ast__ alist)
+			       =>
+			       (lambda (o) (json-resolve! (cdr o))))
+			      ((assq '__symbol__ alist)
+			       =>
+			       (lambda (a)
+				  (string->symbol (cdr a))))
+			      ((assq '__ref__ alist)
+			       =>
+			       (lambda (r)
+				  (if (not (integer? (cdr r)))
+				      (error "json->ast"
+					 "Illegal reference node"
+					 o)
+				      (instantiate::%JSONDecl
+					 (loc '(no-loc))
+					 (id 'jsondecl)
+					 (%id (cdr r))))))
+			      (else
+			       (tprint "UNKNWON: " o)
+			       o))))
+      :parse-error (lambda (msg fname loc)
+		      (error "json->ast" "Wrong JSON file" msg))))
+
+;*---------------------------------------------------------------------*/
+;*    json-resolve! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (json-resolve! ast)
+   (let ((vec (make-vector 16)))
+      (json-mark-decl! ast (make-cell vec))
+      (json-link-decl! ast vec)))
+
+;*---------------------------------------------------------------------*/
+;*    json-mark-decl! ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-mark-decl! node::J2SNode env)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    json-mark-decl! ::J2SDecl ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-mark-decl! node::J2SDecl env)
+   (with-access::J2SDecl node (key)
+      (let ((len (vector-length (cell-ref env))))
+	 (when (>fx key len)
+	    (let ((nvec (make-vector (+fx key 16))))
+	       (vector-copy! nvec 0 (cell-ref env) 0 len)
+	       (cell-set! env nvec)))
+	 (vector-set! (cell-ref env) key node)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    json-mark-decl! ::J2SFun ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-mark-decl! node::J2SFun env)
+   (with-access::J2SFun node (decl)
+      (when decl (json-mark-decl! decl env))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-link-decl! node::J2SNode env)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (json-link-decl! node::J2SRef env)
+   (with-access::J2SRef node (decl)
+      (with-access::%JSONDecl decl (%id)
+	 (set! decl (vector-ref env %id))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    json-link-decl! ::J2SPragma ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (json-link-decl! node::J2SPragma env)
+   (with-access::J2SPragma node (expr)
+      (set! expr (call-with-input-string expr read))
+      node))
+
+

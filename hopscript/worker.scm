@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Jun 11 19:45:06 2014 (serrano)                */
+;*    Last change :  Sun Jul 13 06:52:37 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -26,6 +26,9 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
+
+   (static (class WorkerException::&exception
+	      exn))
    
    (export (class MessageEvent::event
 	      data::obj)
@@ -37,6 +40,7 @@
 	      (listeners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)
+	      (%process (default #f))
 	      (state::symbol (default 'init))
 	      (module-table::obj (default (make-hashtable)))
 	      (module-mutex::obj (default (make-mutex)))
@@ -298,11 +302,19 @@
 	  (synchronize mutex
 	     (js-worker-push-thunk! th
 		(lambda ()
-		   (set! response (thunk))
+		   (set! response
+		      (with-handler
+			 (lambda (e)
+			    (instantiate::WorkerException
+			       (exn e)))
+			 (thunk)))
 		   (synchronize mutex
 		      (condition-variable-signal! condv))))
 	     (condition-variable-wait! condv mutex)
-	     response))))
+	     (if (isa? response WorkerException)
+		 (with-access::WorkerException response (exn)
+		    (raise exn))
+		 response)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-thunk! ::WorkerHopThread ...                      */

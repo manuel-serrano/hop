@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 18 17:31:22 2014 (serrano)                */
+;*    Last change :  Wed Jul  9 07:50:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -865,11 +865,11 @@
 	 (with-access::JsArray o (vec)
 	    (letrec ((loop-in-property
 			(lambda (i)
-			   (let ((p (js-get-property o (js-toname i %this) %this)))
+			   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
 			      (cond
-				 ((eq? p (js-undefined))
+				 ((eq? pv (js-absent))
 				  (loop-in-vec (+fx i 1)))
-				 ((test-val proc t (js-property-value o p %this) i o)
+				 ((test-val proc t pv i o)
 				  (loop-in-vec (+fx i 1)))
 				 (else
 				  #f)))))
@@ -895,11 +895,11 @@
 	 (let loop ((i 0))
 	    (if (< i len)
 		(let* ((n (js-toname i %this))
-		       (p (js-get-property o n %this)))
+		       (pv (js-get-property-value o n %this)))
 		   (cond
-		      ((eq? p (js-undefined))
+		      ((eq? pv (js-absent))
 		       (loop (+ i 1)))
-		      ((test-val proc t (js-property-value o p %this) i o)
+		      ((test-val proc t pv i o)
 		       (loop (+ i 1)))
 		      (else
 		       #f)))
@@ -922,11 +922,11 @@
 	 (with-access::JsArray o (vec)
 	    (letrec ((loop-in-property
 			(lambda (i)
-			   (let ((p (js-get-property o (js-toname i %this) %this)))
+			   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
 			      (cond
-				 ((eq? p (js-undefined))
+				 ((eq? pv (js-absent))
 				  (loop-in-vec (+fx i 1)))
-				 ((test-val proc t (js-property-value o p %this) i o)
+				 ((test-val proc t pv i o)
 				  #t)
 				 (else
 				  (loop-in-vec (+fx i 1)))))))
@@ -951,11 +951,11 @@
       (define (array-some o len proc t)
 	 (let loop ((i 0))
 	    (if (< i len)
-		(let ((p (js-get-property o (js-toname i %this) %this)))
+		(let ((pv (js-get-property-value o (js-toname i %this) %this)))
 		   (cond
-		      ((eq? p (js-undefined))
+		      ((eq? pv (js-absent))
 		       (loop (+ i 1)))
-		      ((test-val proc t (js-property-value o p %this) i o)
+		      ((test-val proc t pv i o)
 		       #t)
 		      (else
 		       (loop (+ i 1)))))
@@ -969,7 +969,6 @@
 		:prototype (js-undefined))
       :enumerable #f)
    
-   
    ;; forEach
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18
    (define (array-prototype-foreach this::obj proc t)
@@ -979,23 +978,23 @@
 	    (let loop ((i 0))
 	       (when (<fx i len)
 		  (if (=fx (vector-length vec) 0)
-		      (let ((p (js-get-property o (js-toname i %this) %this)))
-			 (unless (eq? p (js-undefined))
-			    (js-call3 %this proc t (js-property-value o p %this) i o)))
+		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			 (unless (eq? pv (js-absent))
+			    (js-call3 %this proc t pv i o)))
 		      (let ((v (vector-ref vec i)))
 			 (if (eq? v (js-absent))
-			     (let ((p (js-get-property o (js-toname i %this) %this)))
-				(unless (eq? p (js-undefined))
-				   (js-call3 %this proc t (js-property-value o p %this) i o)))
+			     (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+				(unless (eq? pv (js-absent))
+				   (js-call3 %this proc t pv i o)))
 			     (js-call3 %this proc t v i o))))
 		  (loop (+fx i 1))))))
       
       (define (array-foreach o len proc t)
 	 (let loop ((i 0))
 	    (when (< i len)
-	       (let ((p (js-get-property o (js-toname i %this) %this)))
-		  (unless (eq? p (js-undefined))
-		     (js-call3 %this proc t (js-property-value o p %this) i o))
+	       (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		  (unless (eq? pv (js-absent))
+		     (js-call3 %this proc t pv i o))
 		  (loop (+ i 1))))))
 
       (array-prototype-iterator %this this proc t array-foreach vector-foreach)
@@ -1013,24 +1012,25 @@
 	 
 	 (define (vector-map o len::long proc t)
 	    (with-access::JsArray o (vec)
-	       (let ((a (make-vector (vector-length vec) (js-absent))))
+	       (let ((a (make-vector (minfx len (vector-length vec))
+			   (js-absent))))
 		  (let loop ((i 0))
 		     (cond
 			((>=fx i len)
 			 (js-vector->jsarray a %this))
 			((=fx (vector-length vec) 0)
-			 (let ((p (js-get-property o (js-toname i %this) %this)))
-			    (unless (eq? p (js-undefined))
+			 (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			    (unless (eq? pv (js-absent))
 			       (vector-set! a i
-				  (js-call3 %this proc t (js-property-value o p %this) i o)))
+				  (js-call3 %this proc t pv i o)))
 			    (loop (+fx i 1))))
 			(else
 			 (let ((v (vector-ref vec i)))
 			    (if (eq? v (js-absent))
-				(let ((p (js-get-property o (js-toname i %this) %this)))
-				   (unless (eq? p (js-undefined))
+				(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+				   (unless (eq? pv (js-absent))
 				      (vector-set! a i
-					 (js-call3 %this proc t (js-property-value o p %this) i o))))
+					 (js-call3 %this proc t pv i o))))
 				(vector-set! a i (js-call3 %this proc t v i o)))
 			    (loop (+fx i 1)))))))))
 	 
@@ -1039,10 +1039,10 @@
 			len)))
 	       (let loop ((i 0))
 		  (if (< i len)
-		      (let ((p (js-get-property o (js-toname i %this) %this)))
-			 (unless (eq? p (js-undefined))
+		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			 (unless (eq? pv (js-absent))
 			    (js-put! a i
-			       (js-call3 %this proc t (js-property-value o p %this) i o)
+			       (js-call3 %this proc t pv i o)
 			       #f %this))
 			 (loop (+ i 1)))
 		      a))))
@@ -1061,7 +1061,7 @@
       
       (define (vector-filter o len::long proc t)
 	 (with-access::JsArray o (vec)
-	    (let ((a (make-vector (vector-length vec) (js-absent))))
+	    (let ((a (make-vector (minfx len (vector-length vec)) (js-absent))))
 	       (let loop ((i 0)
 			  (j 0))
 		  (cond
@@ -1071,10 +1071,10 @@
 			 res))
 		     ((=fx (vector-length vec) 0)
 		      ;; the vector has been modified by the callback...
-		      (let ((p (js-get-property o (js-toname i %this) %this)))
-			 (if (eq? p (js-undefined))
+		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			 (if (eq? pv (js-absent))
 			     (loop (+fx i 1) j)
-			     (let ((v (js-property-value o p %this)))
+			     (let ((v pv))
 				(if (js-totest (js-call3 %this proc t v i o))
 				    (begin
 				       (vector-set! a j v)
@@ -1084,10 +1084,10 @@
 		      (let ((v (vector-ref vec i)))
 			 (cond
 			    ((eq? v (js-absent))
-			     (let ((p (js-get-property o (js-toname i %this) %this)))
-				(if (eq? p (js-undefined))
+			     (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+				(if (eq? pv (js-absent))
 				    (loop (+fx i 1) j)
-				    (let ((v (js-property-value o p %this)))
+				    (let ((v pv))
 				       (if (js-totest (js-call3 %this proc t v i o))
 					   (begin
 					      (vector-set! a j v)
@@ -1104,10 +1104,10 @@
 	    (let loop ((i 0)
 		       (j 0))
 	       (if (< i len)
-		   (let ((p (js-get-property o (js-toname i %this) %this)))
-		      (if (eq? p (js-undefined))
+		   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		      (if (eq? pv (js-absent))
 			  (loop (+ i 1) j)
-			  (let ((v (js-property-value o p %this))
+			  (let ((v pv)
 				(nj (js-toname j %this)))
 			     (if (js-totest (js-call3 %this proc t v i o))
 				 (let ((newdesc (instantiate::JsValueDescriptor
@@ -1138,10 +1138,10 @@
 	 (let loop ((i i)
 		    (acc accumulator))
 	    (if (<u32 i len)
-		(let ((p (js-get-property o (js-toname i %this) %this)))
-		   (if (eq? p (js-undefined))
+		(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		   (if (eq? pv (js-absent))
 		       (loop (+u32 i #u32:1) acc)
-		       (let ((v (js-property-value o p %this)))
+		       (let ((v pv))
 			  (loop (+u32 i #u32:1)
 			     (js-call4 %this proc (js-undefined) acc v
 				(uint32->integer i) o)))))
@@ -1155,11 +1155,10 @@
 	     (if (null? init)
 		 (let loop ((i #u32:0))
 		    (if (<u32 i len)
-			(let ((p (js-get-property o (js-toname i %this) %this)))
-			   (if (eq? p (js-undefined))
+			(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			   (if (eq? pv (js-absent))
 			       (loop (+u32 i #u32:1))
-			       (reduce/accumulator o len (+u32 i #u32:1)
-				  (js-property-value o p %this))))
+			       (reduce/accumulator o len (+u32 i #u32:1) pv)))
 			(js-raise-type-error %this
 			   "reduce: cannot find accumulator ~s" this)))
 		 (reduce/accumulator o len #u32:0 (car init))))))
@@ -1177,11 +1176,11 @@
       (define (reduce/accumulator o len::uint32 i::uint32 accumulator)
 	 (let loop ((i i)
 		    (acc accumulator))
-	    (let ((p (js-get-property o (js-toname i %this) %this)))
+	    (let ((pv (js-get-property-value o (js-toname i %this) %this)))
 	       (if (<u32 i len)
-		   (if (eq? p (js-undefined))
+		   (if (eq? pv (js-absent))
 		       (loop (-u32 i #u32:1) acc)
-		       (let* ((v (js-property-value o p %this))
+		       (let* ((v pv)
 			      (acc (js-call4 %this proc (js-undefined) acc v
 				      (uint32->integer i) o)))
 			  (loop (-u32 i #u32:1) acc)))
@@ -1195,10 +1194,10 @@
 	     (if (null? init)
 		 (let loop ((k (-u32 len #u32:1)))
 		    (if (<u32 k len)
-			(let ((p (js-get-property o (js-toname k %this) %this)))
-			   (if (eq? p (js-undefined))
+			(let ((pv (js-get-property-value o (js-toname k %this) %this)))
+			   (if (eq? pv (js-absent))
 			       (loop (-u32 k #u32:1))
-			       (let ((v (js-property-value o p %this)))
+			       (let ((v pv))
 				  (reduce/accumulator o len (-u32 k #u32:1) v))))
 			(js-raise-type-error %this
 			   "reduce: cannot find accumulator ~s" this)))
@@ -1348,6 +1347,19 @@
 		    (writable #t)
 		    (enumerable #t)
 		    (configurable #t))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value ::JsArray ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property-value o::JsArray p %this)
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsArray o (vec)
+	     (if (or (<=u32 (u32vlen vec) index)
+		     (eq? (u32vref vec index) (js-absent)))
+		 (call-next-method)
+		 (u32vref vec index)))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

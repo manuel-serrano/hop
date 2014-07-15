@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jun 11 18:32:32 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 08:07:20 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -620,9 +620,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-filename-resolver ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-clientc-filename-resolver name this-or-path)
+(define (hop-clientc-filename-resolver name context-or-path)
    (cond
       ((string-suffix? ".js" name)
-       (nodejs-resolve name this-or-path))
+       (let ((scope context-or-path))
+	  (nodejs-resolve name scope (js-get scope 'module scope))))
       (else
-       (find-file/path name this-or-path))))
+       (let ((path context-or-path))
+	  (find-file/path name path)))))

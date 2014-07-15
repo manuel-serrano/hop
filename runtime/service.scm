@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Apr 19 12:15:47 2014 (serrano)                */
+;*    Last change :  Sun Jul 13 06:35:17 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -274,9 +274,8 @@
 		(format "Wrong number of arguments (~a/~a)" (length vals)
 		   (procedure-arity proc))
 		`(,id ,@vals))))))
-   
-   (let ((ca (http-request-cgi-args req)))
-      (with-access::hop-service svc (proc id decoder)
+   (with-access::hop-service svc (proc id decoder unjson)
+      (let ((ca (http-request-cgi-args req unjson)))
 	 (cond
 	    ((null? (cdr ca))
 	     (invoke proc '()))
@@ -287,6 +286,10 @@
 		(if (or (null? vals) (pair? vals))
 		    (invoke proc vals)
 		    (error id "Illegal arguments" vals))))
+	    ((equal? (cgi-arg "hop-encoding" ca) "json")
+	     (with-access::http-request req (charset)
+		(set! charset 'UTF-8))
+	     (invoke proc (cgi-arg "json" ca)))
 	    (else
 	     (invoke proc
 		(append-map (lambda (p)

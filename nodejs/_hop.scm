@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Jun 24 11:14:07 2014 (serrano)                */
+;*    Last change :  Mon Jul 14 07:34:38 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -33,6 +33,18 @@
       (js-alist->jsobject
 	 
 	 (list
+	    ;;configure
+	    `(shareDir . ,(hop-share-directory))
+	    `(binDir . ,(hop-bin-directory))
+ 	    `(libDir . ,(hop-lib-directory))
+ 	    `(contribsDir . ,(hop-contribs-directory))
+ 	    `(webletsDir . ,(hop-weblets-directory))
+
+	    (define-js debug 0
+	       (lambda (this) (bigloo-debug)))
+	    (define-js debugSet 1
+	       (lambda (this v) (bigloo-debug-set! (js-tointeger v %this))))
+		
 	    ;; misc
 	    (define-js srcDir 0
 	       (lambda (this)
@@ -130,8 +142,8 @@
 ;*---------------------------------------------------------------------*/
 (define (hopjs-with-url url success opt %this)
    
-   (define (parse-json in)
-      (js-json-parser in (js-undefined) %this))
+   (define (unjson in)
+      (js-json-parser in (js-undefined) #f %this))
    
    (let ((url (js-tostring url %this))
 	 (fail #f)
@@ -151,7 +163,7 @@
 	 (if (isa? success JsFunction)
 	     (lambda (x) (js-call1 %this success %this x))
 	     (lambda (x) x))
-	 :parse-json parse-json
+	 :parse-json unjson
 	 :fail fail 
 	 :timeout timeout
 	 :method (string->symbol method))))
@@ -160,10 +172,6 @@
 ;*    hopjs-with-hop ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-with-hop svc success opt %this)
-   
-   (define (parse-json in)
-      (js-json-parser in (js-undefined) %this))
-   
    (let ((host "localhost")
 	 (port 8080)
 	 (user #f)
@@ -283,7 +291,7 @@
       (lambda (k)
 	 (with-handler
 	    (lambda (e)
-	       (tprint "ERR: " e)
+	       (tprint "ASYNC ERR: " e)
 	       (cond
 		  ((isa? e JsError) (exception-notify e))
 		  ((isa? e &error) (error-notify e)))

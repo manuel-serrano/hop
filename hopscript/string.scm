@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jun 22 19:22:38 2014 (serrano)                */
+;*    Last change :  Tue Jul  8 15:33:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -866,6 +866,20 @@
 		       (enumerable #t)
 		       (writable #f)
 		       (configurable #f)))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value ::JsString ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property-value o::JsString p %this)
+   (let ((index (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsString o (val)
+	     (let ((len (utf8-string-length val))
+		   (index (uint32->fixnum index)))
+		(if (<=fx len index)
+		    (call-next-method)
+		    (utf8-string-ref val index))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

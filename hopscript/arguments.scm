@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Jun 11 17:15:47 2014 (serrano)                */
+;*    Last change :  Tue Jul  8 19:44:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -51,7 +51,7 @@
    (with-access::JsArguments obj (vec)
       (map! (lambda (desc)
 	       (unless (eq? desc (js-absent))
-		  (js-property-value obj desc (js-initial-global-object))))
+		  (js-property-value obj desc obj (js-initial-global-object))))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -96,19 +96,6 @@
    jsarguments-fields)
    
 ;*---------------------------------------------------------------------*/
-;*    xml-write ::JsArray ...                                          */
-;*---------------------------------------------------------------------*/
-;* (define-method (xml-write obj::JsArray p backend)                   */
-;*    (let ((%this (js-initial-global-object)))                        */
-;*       (with-access::JsGlobalObject %this (js-array-prototype)       */
-;* 	 (js-call1 %this                                               */
-;* 	    (js-get js-array-prototype 'forEach %this)                 */
-;* 	    obj                                                        */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (this el) (xml-write el p backend))             */
-;* 	       1 "")))))                                               */
-;*                                                                     */
-;*---------------------------------------------------------------------*/
 ;*    js-arguments-define-own-property ...                             */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-define-own-property arguments indx prop)
@@ -140,10 +127,26 @@
 	     (let ((len (vector-length vec)))
 		(if (<=u32 (fixnum->uint32 len) index)
 		    (call-next-method)
-		    (let ((o (u32vref vec index)))
-		       (if (eq? o (js-absent))
+		    (let ((d (u32vref vec index)))
+		       (if (eq? d (js-absent))
 			   (call-next-method)
-			   o)))))
+			   d)))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value ::JsArguments ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property-value o::JsArguments p %this)
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsArguments o (vec)
+	     (let ((len (vector-length vec)))
+		(if (<=u32 (fixnum->uint32 len) index)
+		    (call-next-method)
+		    (let ((d (u32vref vec index)))
+		       (if (eq? d (js-absent))
+			   (call-next-method)
+			   (js-property-value o d o %this))))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -161,7 +164,7 @@
 	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))
 		    (call-next-method)
-		    (js-property-value o desc %this))))
+		    (js-property-value o desc o %this))))
 	    (else
 	     (call-next-method))))))
        
@@ -378,7 +381,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (map! (lambda (d) (js-property-value obj d %this)) (vector->list vec))))
+      (map! (lambda (d) (js-property-value obj d obj %this)) (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsArguments ...                                      */

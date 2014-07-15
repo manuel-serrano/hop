@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Jun 11 08:26:12 2014 (serrano)                */
+;*    Last change :  Mon Jul 14 09:50:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -97,8 +97,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRef)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (id)
-	 `(,@(call-next-method) ,id))))
+      (with-access::J2SDecl decl (id key)
+	 `(,@(call-next-method) :key ,key ,id))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
@@ -131,9 +131,12 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (id params body)
-      `(,@(call-next-method) :id ,id
-	  ,(map j2s->list params) ,(j2s->list body))))
+   (with-access::J2SFun this (params body decl)
+      (if (isa? decl J2SDecl)
+	  (with-access::J2SDecl decl (key id)
+	     `(,@(call-next-method) :id ,id :key ,key
+		 ,(map j2s->list params) ,(j2s->list body)))
+	  `(,@(call-next-method) ,(map j2s->list params) ,(j2s->list body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SParam ...                                         */
@@ -179,6 +182,13 @@
    (with-access::J2SBinary this (op rhs lhs)
       `(,@(call-next-method) ,op ,(j2s->list lhs) ,(j2s->list rhs))))
       
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SParen ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SParen)
+   (with-access::J2SParen this (expr)
+      `(,@(call-next-method) ,(j2s->list expr))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -299,15 +309,15 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id)
-      `(,@(call-next-method) ,id)))
+   (with-access::J2SDecl this (id key)
+      `(,@(call-next-method) :key ,key ,id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (id val)
-      `(,@(call-next-method) ,id ,(j2s->list val))))
+   (with-access::J2SDeclInit this (id val key)
+      `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPragma ...                                        */
@@ -338,13 +348,6 @@
       `(,@(call-next-method) ,id ,@(if module (list module) '()))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SXml ...                                           */
-;*---------------------------------------------------------------------*/
-;* (define-method (j2s->list this::J2SXml)                             */
-;*    (with-access::J2SXml this (tag attrs body)                       */
-;*       `(,@(call-next-method) ,tag ,@(map j2s->list attrs) ,(j2s->list body)))) */
-      
-;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2Stilde ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2STilde)
@@ -355,7 +358,7 @@
 ;*    j2s->list ::J2SDollar ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDollar)
-   (with-access::J2SDollar this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+   (with-access::J2SDollar this (node)
+      `(,@(call-next-method) ,(j2s->list node))))
       
    

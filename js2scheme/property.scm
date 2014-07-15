@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May 25 18:45:09 2014 (serrano)                */
+;*    Last change :  Thu Jul 10 10:17:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -90,4 +90,3 @@
    (with-access::J2SUnresolvedRef this (cache)
       (set! cache (inc! count))
       (cons cache (call-default-walker))))
-      

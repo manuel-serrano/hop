@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Jun 20 19:56:28 2014 (serrano)                */
+;*    Last change :  Tue Jul  8 15:32:29 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -167,6 +167,18 @@
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get-property-value ::JsArrayBuffer ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property-value o::JsArrayBuffer p %this)
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsArrayBuffer o (vec)
+	     (if (<=u32 (fixnum->uint32 (u8vector-length vec)) index)
+		 (call-next-method)
+		 (u8vector-ref vec (uint32->fixnum index))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get ::JsArrayBuffer ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArrayBuffer p %this)
@@ -196,7 +208,8 @@
 		 (with-access::JsValueDescriptor owndesc ((valuedesc value))
 		    (set! valuedesc v)
 		    (js-define-own-property o p owndesc throw %this))
-		 (let ((desc (js-get-property o p %this)))
+		 (multiple-value-bind (desc owner)
+		    (js-get-property o p %this)
 		    ;; 4
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5

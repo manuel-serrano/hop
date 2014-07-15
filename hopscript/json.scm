@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 11 11:52:05 2014 (serrano)                */
+;*    Last change :  Sat Jul 12 10:51:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -28,7 +28,7 @@
 	   __hopscript_array)
 
    (export (js-init-json! ::JsObject)
-	   (js-json-parser ::input-port ::obj ::JsGlobalObject)))
+	   (js-json-parser ::input-port ::obj ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */
@@ -54,7 +54,7 @@
 	 :configurable #t
 	 :enumerable #f)
       ;; bind the global object
-      (js-bind! %this %this 'JSON :configurable #t :value js-json)
+      (js-bind! %this %this 'JSON :configurable #t :value js-json :enumerable #f)
       js-json))
 
 ;*---------------------------------------------------------------------*/
@@ -66,26 +66,30 @@
    (lambda (this text reviver)
       (call-with-input-string text
 	 (lambda (ip)
-	    (js-json-parser ip reviver %this)))))
+	    (js-json-parser ip reviver #f %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-json-parser ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-json-parser ip::input-port reviver %this::JsGlobalObject)
+(define (js-json-parser ip::input-port reviver expr %this::JsGlobalObject)
    (json-parse ip
+      :expr expr
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
 			 (js-new %this js-array 10)))
-      :array-set (lambda (a i val) (js-put! a i val #f %this))
-      :array-return (lambda (a i) (js-put! a 'length i #f %this) a)
+      :array-set (lambda (a i val)
+		    (js-put! a i val #f %this))
+      :array-return (lambda (a i)
+		       (js-put! a 'length i #f %this) a)
       :object-alloc (lambda ()
 		       (with-access::JsGlobalObject %this (js-object)
 			  (js-new %this js-object)))
       :object-set (lambda (o p val)
 		     (js-put! o (js-toname p %this) val #f %this))
-      :object-return (lambda (o) o)
-      :parse-error (lambda (msg token loc)
-		      (js-raise-syntax-error %this msg loc))
+      :object-return (lambda (o)
+			o)
+      :parse-error (lambda (msg fname loc)
+		      (js-raise-syntax-error %this msg #f fname loc))
       :reviver (when (isa? reviver JsFunction)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))
@@ -250,6 +254,27 @@
 				(display (proc i) op)
 				(liip (+fx i 1)))))
 		      (set! gap mind))))))
+
+      (define (for-in obj::JsObject proc)
+	 
+	 (define (vfor-each proc vec)
+	    (let ((len (vector-length vec)))
+	       (let loop ((i 0))
+		  (when (<fx i len)
+		     (proc (vector-ref-ur vec i))
+		     (loop (+fx i 1))))))
+	 
+	 (define (in-property p)
+	    (when (isa? p JsPropertyDescriptor)
+	       (with-access::JsPropertyDescriptor p (name)
+		  (proc (symbol->string! name)))))
+	 
+	 (let loop ((o obj))
+	    (with-access::JsObject o (cmap properties __proto__)
+	       (if cmap
+		   (with-access::JsConstructMap cmap (descriptors)
+		      (vfor-each in-property descriptors))
+		   (for-each in-property properties)))))
       
       (define (str key holder stack)
 	 (let* ((value (js-get holder key %this))
@@ -261,7 +286,8 @@
 	    (cond
 	       ((memq value stack)
 		(js-raise-type-error %this
-		   "Converting circular structure to JSON ~s" (typeof value)))
+		   "Converting circular structure to JSON ~s"
+		   (js-tostring value %this)))
 	       ((string? value)
 		(string-quote value))
 	       ((number? value)
@@ -305,30 +331,28 @@
 			  (nstack (cons value stack)))
 		       (call-with-output-string
 			  (lambda (op)
-			     (js-for-in value
+			     (for-in value
 				(lambda (k)
-				   (when (js-object-prototype-hasownproperty value k %this)
-				      (let ((v (str k value nstack)))
-					 (when (js-totest v)
-					    (if (=fx i 0)
-						(begin
-						   (set! i (+fx i 1))
-						   (if (string-null? gap)
-						       (display "{" op)
-						       (begin
-							  (display "{\n" op)
-							  (display gap op))))
+				   (let ((v (str k value nstack)))
+				      (when (js-totest v)
+					 (if (=fx i 0)
+					     (begin
+						(set! i (+fx i 1))
 						(if (string-null? gap)
-						    (display "," op)
+						    (display "{" op)
 						    (begin
-						       (display ",\n" op)
+						       (display "{\n" op)
 						       (display gap op))))
-					    (display (string-quote k) op)
-					    (display
-					       (if (string-null? gap) ":" ": ")
-					       op)
-					    (display v op)))))
-				%this)
+					     (if (string-null? gap)
+						 (display "," op)
+						 (begin
+						    (display ",\n" op)
+						    (display gap op))))
+					 (display (string-quote k) op)
+					 (display
+					    (if (string-null? gap) ":" ": ")
+					    op)
+					 (display v op)))))
 			     (cond
 				((=fx i 0)
 				 (display "{}" op))

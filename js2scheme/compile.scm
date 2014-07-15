@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jun 20 08:01:26 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 12:38:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -19,8 +19,8 @@
 	   __js2scheme_dump
 	   __js2scheme_parser
 	   __js2scheme_syntax
-	   __js2scheme_header
 	   __js2scheme_symbol
+	   __js2scheme_header
 	   __js2scheme_resolve
 	   __js2scheme_return
 	   __js2scheme_bestpractice
@@ -30,6 +30,7 @@
 	   __js2scheme_property
 	   __js2scheme_scheme
 	   __js2scheme_js
+	   __js2scheme_debug
 	   __js2scheme_stage)
 
    (export (j2s-compile in::input-port
@@ -43,38 +44,46 @@
 	   (j2s-optim-driver)
 	   (j2s-plain-driver)
 	   (j2s-eval-driver)
-	   (j2s-javascript-driver)))
+	   (j2s-javascript-driver)
+	   (j2s-javascript-debug-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-driver ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-driver names)
 
-   (define (make-driver-stage name)
+   (define (make-driver-stage name-or-proc)
       (cond
-	 ((string-prefix? "http://" name)
+	 ((procedure? name-or-proc)
+	  (instantiate::J2SStageProc
+	     (name (format "~s" name-or-proc))
+	     (comment "")
+	     (proc name-or-proc)))
+	 ((not (string? name-or-proc))
+	  (error "j2s-make-drive" "Illegal stage" name-or-proc))
+	 ((string-prefix? "http://" name-or-proc)
 	  (instantiate::J2SStageUrl
-	     (name name)
-	     (comment name)
-	     (url name)))
-	 ((file-exists? name)
+	     (name name-or-proc)
+	     (comment name-or-proc)
+	     (url name-or-proc)))
+	 ((file-exists? name-or-proc)
 	  (instantiate::J2SStageFile
-	     (name name)
-	     (comment name)
-	     (path name)))
-	 ((file-exists? (file-name-unix-canonicalize name))
+	     (name name-or-proc)
+	     (comment name-or-proc)
+	     (path name-or-proc)))
+	 ((file-exists? (file-name-unix-canonicalize name-or-proc))
 	  (instantiate::J2SStageFile
-	     (name name)
-	     (comment name)
-	     (path (file-name-unix-canonicalize name))))
+	     (name name-or-proc)
+	     (comment name-or-proc)
+	     (path (file-name-unix-canonicalize name-or-proc))))
 	 ((find (lambda (s::J2SStage)
 		   (with-access::J2SStage s ((sname name))
-		      (string=? sname name)))
+		      (string=? sname name-or-proc)))
 	     (j2s-optim-driver))
 	  =>
 	  (lambda (x) x))
 	 (else
-	  (error "j2s-make-driver" "Cannot find builtin stage" name))))
+	  (error "j2s-make-driver" "Cannot find builtin stage" name-or-proc))))
    
    (map make-driver-stage names))
 
@@ -82,16 +91,14 @@
 ;*    j2s-driver-add-after ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-driver-add-after driver name stage)
-   (let loop ((driver driver)
-	      (sname "first"))
-      (cond
-	 ((null? driver)
-	  (list stage))
-	 ((string=? sname name)
-	  (cons stage driver))
-	 (else
-	  (with-access::J2SStage (car driver) (name)
-	     (loop (cdr driver) name))))))
+   (let loop ((driver driver))
+      (if (null? driver)
+	  (list stage)
+	  (let ((next (car driver)))
+	     (with-access::J2SStage next ((sname name))
+		(if (string=? sname name)
+		    (cons* next stage (cdr driver))
+		    (loop (cdr driver)))))))) 
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-optim-driver ...                                             */
@@ -99,7 +106,7 @@
 (define (j2s-optim-driver)
    (list
       j2s-syntax-stage
-      j2s-hopscript-header-stage
+      j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -115,7 +122,7 @@
 (define (j2s-plain-driver)
    (list
       j2s-syntax-stage
-      j2s-hopscript-header-stage
+      j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -147,6 +154,18 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-javascript-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-javascript-debug-driver ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-javascript-debug-driver)
+   (list
+      j2s-syntax-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
+      j2s-symbol-stage
+      j2s-debug-stage
       j2s-javascript-stage))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 20 07:30:37 2014 (serrano)                */
+;*    Last change :  Wed Jul  2 17:24:49 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -137,6 +137,8 @@
 	     (hopc-js-module-main-set! #f))
 	    (("--no-js-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))
+	    (("--js-header" (help "Generate hopscript header"))
+	     (hopc-js-header-set! #t))
 	    (("--js-driver" ?driver (help "Set j2s compiler driver"))
 	     (hopc-js-driver-set! driver))
 	    (("--js-show-driver" (help "Set j2s compiler driver"))

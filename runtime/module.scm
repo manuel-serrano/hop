@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/3.0.x/runtime/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Fri Feb 21 13:41:44 2014 (serrano)                */
+;*    Last change :  Sun Jul  6 07:32:03 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -63,7 +63,9 @@
 	     (let ((rfiles (resolver module files '*)))
 		(let ((r (if (pair? rfiles)
 			     (hop-module-afile-resolver module rfiles abase)
-			     (hop-module-path-resolver module "."))))
+			     (let ((f (or (hop-module-path-resolver module ".")
+					  (hop-module-path-resolver module abase))))
+				(if f (list f) '())))))
 		   (trace-item "result=" r)
 		   r))))))
 
@@ -73,9 +75,8 @@
 (define (hop-module-path-resolver module dir)
    (let* ((name (string-append (symbol->string module) ".hop"))
 	  (file (make-file-name dir name)))
-      (if (file-exists? file)
-	  (list file)
-	  '())))
+      (when (file-exists? file)
+	  file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-afile-resolver ...                                    */

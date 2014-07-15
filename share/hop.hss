@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop.hss                     */
+/*    serrano/prgm/project/hop/3.0.x/share/hop.hss                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 07:01:42 2004                          */
-/*    Last change :  Thu Aug  8 11:34:01 2013 (serrano)                */
-/*    Copyright   :  2004-13 Manuel Serrano                            */
+/*    Last change :  Fri Jul 11 08:29:31 2014 (serrano)                */
+/*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Standard HOP HSS                                                 */
 /*=====================================================================*/
@@ -198,7 +198,7 @@ div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-js {
   display: block;
 }
 
-.hop-exception-frame-js td.hop-exception-frame-line {
+hop-exception-stack[data-idiom=hop] .hop-exception-frame-js td.hop-exception-frame-line {
   color: #666;
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jun 21 10:39:14 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 18:15:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -33,7 +33,9 @@
 	   
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
-	      #!key __proto__ prototype construct alloc strict)))
+	      #!key
+	      __proto__ prototype construct alloc strict
+	      arity constrarity)))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
@@ -49,17 +51,20 @@
 (define (js-init-function! %this::JsGlobalObject)
    ;; first, bind the builtin function prototype
    (with-access::JsGlobalObject %this ((js-object-prototype __proto__)
+				       js-function-prototype
 				       js-function)
       
-      (define js-function-prototype
+      (set! js-function-prototype
 	 (instantiate::JsFunction
 	    (name 'builtin)
-	    (arity -1)
+	    (len -1)
 	    (procedure (lambda l (js-undefined)))
 	    (alloc (lambda (_) #unspecified))
 	    (construct (lambda (constructor args)
 			  (js-raise-type-error %this "not a constructor ~s"
 			     js-function-prototype)))
+	    (arity -1)
+	    (constrarity -1)
 	    (__proto__ js-object-prototype)))
       
       ;; then, create the properties of the function contructor
@@ -109,9 +114,12 @@
 ;*    js-function-construct ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.2.1     */
+;*    -------------------------------------------------------------    */
+;*    This definition is overriden by the definition of                */
+;*    nodejs_require (nodejs/require.scm).                             */
 ;*---------------------------------------------------------------------*/
 (define (js-function-construct %this::JsGlobalObject)
-   (lambda (_ . args)
+   (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
 	     0 "" :construct (lambda (_) (js-undefined)))
@@ -123,7 +131,7 @@
 			 (js-tostring body %this))))
 	     (call-with-input-string fun
 		(lambda (ip)
-		   (%js-eval ip 'eval %this)))))))
+		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */
@@ -131,7 +139,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct strict)
+	   #!key __proto__ prototype alloc construct strict arity constrarity)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -139,17 +147,24 @@
    
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 (let ((fun (instantiate::JsFunction
+	 (let* ((constr (or construct list))
+		(fun (instantiate::JsFunction
 		       (procedure procedure)
-		       (arity (-fx (procedure-arity procedure) 1))
+		       (arity (or arity (procedure-arity procedure)))
+		       (len length)
 		       (__proto__ (or __proto__ js-function-prototype))
 		       (name (or name procedure))
 		       (alloc (cond
 				 (alloc alloc)
 				 (construct (lambda (_) #unspecified))
 				 (else js-not-a-constructor)))
-		       (construct (or construct list))
+		       (construct constr)
+		       (constrarity (or constrarity (procedure-arity constr)))
 		       (constrmap (when construct (instantiate::JsConstructMap))))))
+	    (with-access::JsFunction js-function (arity constrarity name)
+	       (when (and construct (not (=fx arity constrarity)))
+		  (tprint "ARITIES DIFFER name=" name " arity=" arity
+		     " constrarity=" constrarity)))
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)
@@ -239,8 +254,10 @@
 			       (if (eq? p (js-absent)) (js-undefined) p))
 			  (vector->list vec)))
 		    ;; slow path
+		    ;; CARE (5 jul 2014): MS NOT SURE OF THE SECOND ARGARRAY BELOW
 		    (js-apply %this this thisarg
-		       (map! (lambda (d) (js-property-value argarray d %this))
+		       (map! (lambda (d)
+				(js-property-value argarray d argarray %this))
 			  (filter (lambda (d)
 				     (with-access::JsPropertyDescriptor d (name)
 					(js-isindex? (js-toindex name))))
@@ -282,13 +299,13 @@
    (define (bind this::obj thisarg . args)
       (if (not (isa? this JsFunction))
 	  (js-raise-type-error %this "bind: this not a function ~s" this)
-	  (with-access::JsFunction this (name arity construct alloc procedure)
+	  (with-access::JsFunction this (name len construct alloc procedure)
 	     (let ((fun (lambda (_ . actuals)
 			   (js-apply %this this thisarg (append args actuals)))))
 		(js-make-function
 		   %this
 		   fun
-		   (maxfx 0 (-fx arity (length args)))
+		   (maxfx 0 (-fx len (length args)))
 		   name
 		   :strict #t
 		   :alloc alloc

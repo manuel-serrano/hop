@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jun 22 21:29:41 2014 (serrano)                */
+;*    Last change :  Wed Jul  9 15:52:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -79,7 +79,7 @@
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
 	       (instantiate::JsError
-		  (name name)
+		  (name (symbol->string! name))
 		  (__proto__ (js-get constructor 'prototype %this))
 		  (stack '()))))
 
@@ -97,7 +97,7 @@
 		   (set! fname f)
 		   (set! location l)))
 	       (js-bind! %this this 'name
-		  :value (symbol->string! name)
+		  :value name
 		  :enumerable #f))
 	    this)
    
@@ -115,7 +115,7 @@
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (with-access::JsError o (name)
-			  (symbol->string! name)))
+			  name))
 		    1 'name)
 	    :enumerable #f)
 	 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Fri Jun 20 08:09:27 2014 (serrano)                */
+;*    Last change :  Fri Jul 11 10:59:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
@@ -17,12 +17,14 @@
    (import __js2scheme_compile
 	   __js2scheme_parser
 	   __js2scheme_ast
-	   __js2scheme_header
 	   __js2scheme_symbol
+	   __js2scheme_header
 	   __js2scheme_return
 	   __js2scheme_ronly
 	   __js2scheme_dump
 	   __js2scheme_scheme
+	   __js2scheme_js
+	   __js2scheme_sourcemap
 	   __js2scheme_stage)
    
    (eval   (class J2SStage)

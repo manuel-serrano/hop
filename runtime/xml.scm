@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jun 23 17:48:23 2014 (serrano)                */
+;*    Last change :  Sun Jul 13 15:57:44 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -667,7 +667,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (when attr
+   (unless (or (eq? attr #f) (eq? attr #unspecified))
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -943,8 +943,9 @@
       ;; this is an inlined version of hop_callback (hop-lib.js)
       (let ((ctx (gensym 'ctx)))
 	 (format "var ~a=hop_callback_html_context( \"~a\", \"~a\", ~a );
-hop_curent_stack_context = ~a;
-try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
+hop_current_stack_context = ~a;
+try { ~a } catch( e ) {
+hop_callback_handler(e, ~a); }"
 	    ctx
 	    (string-replace (xml-attribute-encode (parent-context parent))
 	       #\Newline #\Space)
@@ -954,7 +955,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
    (define (js-catch-callback stmt parent)
       (let ((ctx (gensym 'ctx)))
 	 (format "var ~a=hop_callback_listener_context( \"~a\" );
-hop_curent_stack_context = ~a;
+hop_current_stack_context = ~a;
 try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    ctx
 	    (string-replace (xml-attribute-encode (parent-context parent))
@@ -964,7 +965,7 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	    ctx)))
    
    (with-access::xml-tilde obj (%js-statement body loc parent)
-      (when (not (string? %js-statement))
+      (unless (string? %js-statement)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-statement)
 	    (let ((stmt (precompiled->JS-statement body)))
 	       (if (>fx (bigloo-debug) 0)

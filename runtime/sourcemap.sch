@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/sourcemap.sch             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/sourcemap.sch             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:48:08 2013                          */
-;*    Last change :  Mon Aug 19 08:32:39 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Jul 11 16:11:05 2014 (serrano)                */
+;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Source map facilities shared by the server and the client.       */
+;*    Source map facilities shared by servers and clients.             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -32,7 +32,7 @@
 		(base64-vlq-decode mappings i)
 		(if (or (=fx ni len) (separator? ni))
 		    ;; only one value provided
-		    (values ni 1 dstcol 0 0 0 0)
+		    (values 1 ni dstcol 0 0 0 0)
 		    ;; 4 or 5 values expected
 		    (multiple-value-bind (file ni)
 		       (base64-vlq-decode mappings ni)

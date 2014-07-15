@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jun 22 09:32:30 2014 (serrano)                */
+;*    Last change :  Wed Jul  9 15:50:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -37,8 +37,7 @@
 	   (final-class JsValueDescriptor::JsDataDescriptor
 	      (value (default (js-undefined))))
 	   (final-class JsIndexDescriptor::JsDataDescriptor
-	      (index::int (default -1))
-	      (owner::JsObject read-only))
+	      (index::int (default -1)))
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
 	      get
 	      set)
@@ -124,7 +123,9 @@
 	      (construct::procedure read-only)
 	      (constrsize::int (default 3))
 	      (constrmap (default #f)) 
-	      (arity::int read-only)
+	      (arity::int read-only (default -1))
+	      (constrarity::int read-only (default -1))
+	      (len::int read-only)
 	      (procedure::procedure read-only))
 	   
 	   (class JsService::JsFunction
@@ -142,7 +143,7 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name (default "Error"))
+	      (name::bstring (default "Error"))
 	      (msg (default ""))
 	      (stack (default #f))
 	      (fname (default #f))
@@ -250,9 +251,18 @@
    (with-access::JsObject obj (properties __proto__ cmap elements)
       (duplicate::JsGlobalObject obj
 	 (__proto__ (js-clone __proto__))
-	 (cmap cmap)
+	 (cmap (js-clone cmap))
 	 (elements (when (vector? elements) (vector-map js-clone elements)))
 	 (properties (js-properties-clone properties)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-clone ::JsConstructMap ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-clone obj::JsConstructMap)
+   (with-access::JsConstructMap obj (names descriptors)
+      (duplicate::JsConstructMap obj
+	 (names (vector-copy names))
+	 (descriptors (vector-copy descriptors)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-undefined ...                                                 */

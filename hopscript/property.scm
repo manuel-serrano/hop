@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun 20 10:16:31 2014 (serrano)                */
+;*    Last change :  Sun Jul 13 06:10:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -25,15 +25,15 @@
 	   __hopscript_worker
 	   __hopscript_pair
 	   __hopscript_function)
-   
+
    (export (js-toname::symbol ::obj ::JsGlobalObject)
-	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
+	   (js-property-value ::obj ::JsPropertyDescriptor ::JsObject ::JsGlobalObject)
 	   (generic js-property-names::vector ::JsObject ::bool ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
 	   (generic js-has-property::bool ::JsObject ::symbol)
 
-	   (js-from-property-descriptor ::JsGlobalObject desc)
+	   (js-from-property-descriptor ::JsGlobalObject desc ::JsObject)
 	   (js-to-property-descriptor ::JsGlobalObject desc ::symbol)
 
 	   (inline js-is-accessor-descriptor?::bool obj)
@@ -41,8 +41,10 @@
 	   (inline js-is-generic-descriptor?::bool obj)
 	   
 	   (generic js-get-own-property ::JsObject ::obj ::JsGlobalObject)
+	   (generic js-get-property-value ::JsObject ::symbol ::JsGlobalObject)
 	   (generic js-get-property ::JsObject ::symbol ::JsGlobalObject)
-	   
+
+	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (generic js-get/base ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-getvalue ::JsObject ::obj ::symbol ::obj ::JsGlobalObject)
@@ -261,10 +263,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-property-value ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-property-value obj desc %this)
+(define (js-property-value obj desc owner %this)
    (cond
       ((isa? desc JsIndexDescriptor)
-       (with-access::JsIndexDescriptor desc (index owner)
+       (with-access::JsIndexDescriptor desc (index)
 	  (with-access::JsObject owner (elements)
 	     (vector-ref-ur elements index))))
       ((isa? desc JsValueDescriptor)
@@ -292,8 +294,8 @@
 	 ((isa? odesc JsAccessorDescriptor)
 	  odesc)
 	 ((isa? odesc JsIndexDescriptor)
-	  (with-access::JsIndexDescriptor odesc (name configurable enumerable writable owner index)
-	     (with-access::JsObject owner (elements)
+	  (with-access::JsIndexDescriptor odesc (name configurable enumerable writable index)
+	     (with-access::JsObject o (elements)
 		(instantiate::JsValueDescriptor
 		   (name name)
 		   (enumerable enumerable)
@@ -353,14 +355,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.4       */
 ;*---------------------------------------------------------------------*/
-(define (js-from-property-descriptor %this::JsGlobalObject desc)
+(define (js-from-property-descriptor %this::JsGlobalObject desc owner)
    (if (eq? desc (js-undefined))
        desc
        (with-access::JsGlobalObject %this (js-object)
 	  (let ((obj (js-new %this js-object)))
 	     (cond
 		((isa? desc JsIndexDescriptor)
-		 (with-access::JsIndexDescriptor desc (writable index owner)
+		 (with-access::JsIndexDescriptor desc (writable index)
 		    (with-access::JsObject owner (elements)
 		       ;; 3
 		       (js-put! obj 'value (vector-ref-ur elements index) #f %this)
@@ -447,8 +449,8 @@
       (with-access::JsObject o (cmap)
 	 (if cmap
 	     (jsobject-map-find o name
-		(lambda (o i)
-		   (with-access::JsObject o (cmap)
+		(lambda (obj i)
+		   (with-access::JsObject obj (cmap)
 		      (with-access::JsConstructMap cmap (descriptors)
 			 (vector-ref-ur descriptors i))))
 		(lambda () (js-undefined)))
@@ -461,10 +463,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-property o::JsObject name::symbol %this::JsGlobalObject)
-   (with-access::JsObject o (cmap __proto__)
+(define-generic (js-get-property obj::JsObject name::symbol %this::JsGlobalObject)
+   (with-access::JsObject obj (cmap __proto__)
       (if cmap
-	  (jsobject-map-find o name
+	  (jsobject-map-find obj name
 	     (lambda (o i)
 		(with-access::JsObject o (cmap)
 		   (with-access::JsConstructMap cmap (descriptors)
@@ -473,12 +475,53 @@
 		(if (isa? __proto__ JsObject)
 		    (js-get-property __proto__ name %this)
 		    (js-undefined))))
-	  (jsobject-properties-find o name
+	  (jsobject-properties-find obj name
 	     (lambda (o d) d)
 	     (lambda ()
 		(if (isa? __proto__ JsObject)
 		    (js-get-property __proto__ name %this)
 		    (js-undefined)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
+;*    -------------------------------------------------------------    */
+;*    As js-get but if the property is unbound return js-absent.       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-get-property-value obj::JsObject name::symbol %this::JsGlobalObject)
+   (with-access::JsObject obj (cmap __proto__)
+      (if cmap
+	  (jsobject-map-find obj name
+	     (lambda (o i)
+		(with-access::JsObject o (cmap)
+		   (with-access::JsConstructMap cmap (descriptors)
+		      (let ((desc (vector-ref-ur descriptors i)))
+			 (js-property-value obj desc o %this)))))
+	     (lambda ()
+		(if (isa? __proto__ JsObject)
+		    (js-get-property-value __proto__ name %this)
+		    (js-absent))))
+	  (jsobject-properties-find obj name
+	     (lambda (o d)
+		(js-property-value obj d o %this))
+	     (lambda ()
+		(if (isa? __proto__ JsObject)
+		    (js-get-property-value __proto__ name %this)
+		    (js-absent)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get/debug ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-get/debug _o prop %this::JsGlobalObject loc)
+   (cond
+      ((pair? _o)
+       (js-get-pair _o prop %this))
+      ((null? _o)
+       (js-get-null _o prop %this))
+      (else
+       (let ((o (js-toobject/debug %this loc _o)))
+	  (js-get _o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ...                                                       */
@@ -555,10 +598,10 @@
 	    (with-access::JsConstructMap cmap (descriptors)
 	       (let ((descr (vector-ref-ur descriptors i)))
 		  (if (isa? descr JsAccessorDescriptor)
-		      (js-property-value base descr %this)
+		      (js-property-value base descr o %this)
 		      (vector-ref-ur elements i))))))
       (lambda (o d)
-	 (js-property-value base d %this))
+	 (js-property-value base d o %this))
       (lambda ()
 	 ;; not found
 	 (js-get-notfound name throw %this))))
@@ -623,10 +666,10 @@
 		(vector-ref-ur elements index))
 	       ((eq? cmap (construct-map-descriptors omap))
 		;; check if we are accessing a prop via a cached accessor
-		(js-property-value obj (vector-ref-ur cmap index) %this))
+		(js-property-value obj (vector-ref-ur cmap index) o %this))
 	       ((not omap)
 		(jsobject-properties-find o name
-		   (lambda (o v) (js-property-value obj v %this))
+		   (lambda (o v) (js-property-value obj v o %this))
 		   (lambda ()
 		      ;; not found
 		      (if (isa? __proto__ JsObject)
@@ -652,14 +695,14 @@
 		     (if (isa? descr JsAccessorDescriptor)
 			 (begin
 			    (set! cmap descriptors)
-			    (set! index (negfx i))
-			    (js-property-value obj descr %this))
+			    (set! index i)
+			    (js-property-value obj descr o %this))
 			 (begin
 			    (set! cmap omap)
 			    (set! index i)
 			    (vector-ref-ur elements i))))))))
       (lambda (o v)
-	 (js-property-value obj v %this))
+	 (js-property-value obj v o %this))
       (lambda ()
 	 ;; not found
 	 (js-get-notfound name throw %this))))
@@ -796,6 +839,7 @@
 		   ;; 8.12.5, step 3
 		   (let ((owndesc desc))
 		      (with-access::JsDataDescriptor owndesc (writable)
+			 
 			 (if (not writable)
 			     ;; 8.12.4, step 2.b
 			     (reject "Read-only property")
@@ -829,7 +873,6 @@
 		   (let* ((newdesc (instantiate::JsIndexDescriptor
 				      (name name)
 				      (index index)
-				      (owner o)
 				      (writable #t)
 				      (enumerable #t)
 				      (configurable #t)))
@@ -964,7 +1007,8 @@
 			  (set! elements (vector-extend elements value))
 			  (vector-set-ur! elements index value))
 		      value))
-		  (get
+		  ((or (and get (not (eq? get (js-undefined))))
+		       (and set (not (eq? set (js-undefined)))))
 		   ;; create a new map with a JsAccessorDescriptor
 		   (let* ((newdesc (instantiate::JsAccessorDescriptor
 				      (name name)
@@ -974,9 +1018,19 @@
 				      (configurable configurable)))
 			  (nextmap (extend-cmap cmap name newdesc))
 			  (trans (cmap-transition name flags)))
-		      (unless (and (isa? get JsFunction)
-				   (or (not set) (isa? set JsFunction)))
-			 (error "js-bind!" "wrong accessor" name))
+		      (cond
+			 ((not (or (isa? get JsFunction) (eq? get (js-undefined))))
+			  (js-raise-type-error %this
+			     (format "wrong getter for property \"~a\", ~~a"
+				name)
+			     get))
+			 ((and set
+			       (not (eq? set (js-undefined)))
+			       (not (isa? set JsFunction)))
+			  (js-raise-type-error %this
+			     (format "wrong setter for property \"~a\", ~~a"
+				name)
+			     set)))
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory
@@ -988,7 +1042,6 @@
 		   (let* ((newdesc (instantiate::JsIndexDescriptor
 				      (name name)
 				      (index index)
-				      (owner o)
 				      (writable writable)
 				      (enumerable enumerable)
 				      (configurable configurable)))

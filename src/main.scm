@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Jun 23 12:43:06 2014 (serrano)                */
+;*    Last change :  Mon Jul 14 20:20:34 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -74,19 +74,16 @@
    ;; parse the command line
    (let* ((files (parse-args args))
 	  ;; init javascript global object
-	  (%this (nodejs-new-global-object))
-	  (%worker (js-init-main-worker! %this)))
+	  (%global (nodejs-new-global-object))
+	  (%worker (js-init-main-worker! %global)))
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
-	    (tprint "PATH=" path)
-	    (nodejs-load path %worker nodejs-new-global-object)))
+	    (nodejs-load path %worker)))
       ;; init javascript marshalling
       (init-json!
-	 :plist->jsobject (lambda (l) (js-alist->jsobject l %this))
-	 :vector->jsarray (lambda (v) (js-vector->jsarray v %this)))
-      ;; complete the global object initialization
-      (nodejs-auto-require! %worker %this)
+	 :plist->jsobject (lambda (l) (js-alist->jsobject l %global))
+	 :vector->jsarray (lambda (v) (js-vector->jsarray v %global)))
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
@@ -123,18 +120,27 @@
 	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
 	    ;; start the hopscript service worker thread
-	    (hop-hopscript-worker (hop-scheduler) %this %worker)
+	    (hop-hopscript-worker (hop-scheduler) %global %worker)
 	    ;; create the repl JS module
 	    (let ((path (file-name-canonicalize!
 			   (make-file-name (pwd) (car args)))))
-	       (%nodejs-module "repl" path %this))
+	       (nodejs-module "repl" path %global))
 	    ;; hss extension
-	    (hop-hss-foreign-eval-set!
-	       (lambda (ip) (%js-eval-hss ip %this %worker)))
+	    (let ((mod (nodejs-module "hss" "hss" %global))
+		  (scope (nodejs-new-scope-object %global)))
+	       ;; force the module initialization
+	       (let ((exp (call-with-input-string "false"
+			     (lambda (in)
+				(j2s-compile in :driver (j2s-plain-driver)
+				   :parser 'repl
+				   :filename "repl.js")))))
+		  ((eval! exp) %global %global scope mod)
+		  (hop-hss-foreign-eval-set!
+		     (lambda (ip) (%js-eval-hss ip %global %worker scope)))))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
 	       ((scm) (hop-repl (hop-scheduler)))
-	       ((js) (hopscript-repl (hop-scheduler) %this %worker)))
+	       ((js) (hopscript-repl (hop-scheduler) %global %worker)))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -232,7 +238,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (nodejs-load path %worker nodejs-new-global-object))
+	  (nodejs-load path %worker))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))
@@ -255,7 +261,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-repl ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-repl scd %this %worker)
+(define (hopscript-repl scd %global %worker)
    (if (>fx (hop-max-threads) 1)
        (with-access::scheduler scd (size)
 	  (if (<=fx size 1)
@@ -264,7 +270,7 @@
 		 scd)
 	      (spawn0 scd
 		 (stage-repl
-		    (lambda () (repljs %this %worker))))))
+		    (lambda () (repljs %global %worker))))))
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
 	  (hop-max-threads))))
@@ -293,7 +299,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-hopscript-worker ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hop-hopscript-worker scd %this %worker)
+(define (hop-hopscript-worker scd %global %worker)
    (if (>fx (hop-max-threads) 2)
        (begin
 	  (thread-start! %worker)

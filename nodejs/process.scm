@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Jun 23 13:09:37 2014 (serrano)                */
+;*    Last change :  Thu Jul 10 11:17:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -24,12 +24,20 @@
 	   __nodejs__timer
 	   __nodejs__fs)
    
-   (export (%nodejs-process %this::JsGlobalObject)))
+   (export (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    %nodejs-process ...                                              */
+;*    nodejs-process ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (%nodejs-process %this::JsGlobalObject)
+(define (nodejs-process %worker::WorkerHopThread %this::JsGlobalObject)
+   (with-access::WorkerHopThread %worker (%process)
+      (unless %process (set! %process (new-process-object %this)))
+      %process))
+
+;*---------------------------------------------------------------------*/
+;*    new-process-object ...                                           */
+;*---------------------------------------------------------------------*/
+(define (new-process-object %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (js-new %this js-object)))
 	 (js-put! proc 'title (hop-name) #f %this)
@@ -40,6 +48,7 @@
 		  (exit status))
 	       2 "exit")
 	    #f %this)
+	 (js-put! proc 'arch (os-arch) #f %this)
 	 (js-put! proc 'platform (os-name) #f %this)
 	 (js-put! proc 'binding
 	    (js-make-function %this
@@ -67,6 +76,8 @@
 		      (process-http-parser %this))
 		     ((string=? module "zlib")
 		      (process-zlib %this))
+		     ((string=? module "os")
+		      (process-os %this))
 		     ((string=? module "hop")
 		      (hopjs-process-hop %this))
 		     (else
@@ -223,6 +234,57 @@
 (define (process-zlib %this)
    (js-alist->jsobject `() %this))
 
+;*---------------------------------------------------------------------*/
+;*    process-os ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (process-os %this)
+
+   (define (interfaces->js)
+      (let ((t '()))
+	 (for-each (lambda (i)
+		      (match-case i
+			 ((?name ?addr ?family . ?-)
+			  (let* ((id (string->symbol (car i)))
+				 (desc (js-alist->jsobject
+					  `((address . ,addr)
+					    (family . ,family))
+					  %this))
+				 (en (assq id t)))
+			     (if (not en)
+				 (set! t (cons (cons id (list desc)) t))
+				 (set-cdr! en (cons desc (cdr en))))))))
+	    (get-interfaces))
+	 (js-alist->jsobject
+	    (map (lambda (i)
+		    (cons (car i)
+		       (js-vector->jsarray (list->vector (cdr i)) %this)))
+	       t)
+	    %this)))
+
+   (js-alist->jsobject
+      `((getEndianness . ,(js-make-function %this
+			     (lambda (this)
+				(if (eq? (bigloo-config 'endianess) 'little-endian)
+				    "LE"
+				    "BE"))
+			     0 "endianess"))
+	(getHostname . ,(js-make-function %this
+			   (lambda (this)
+			      (hostname))
+			   0 "getHostname"))
+	(getOSType . ,(js-make-function %this
+			    (lambda (this)
+			       (os-name))
+			    0 "getOSType"))
+	(getOSRelease . ,(js-make-function %this
+			    (lambda (this)
+			       (os-version))
+			    0 "getOSRelease"))
+	(getInterfaceAddresses . ,(js-make-function %this
+				     (lambda (this)
+					(interfaces->js))
+				     0 "getInterfaceAddresses")))
+      %this))
 	   	   
 
 

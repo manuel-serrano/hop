@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Jun 19 08:40:40 2014 (serrano)                */
+;*    Last change :  Sun Jul 13 17:52:33 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -39,15 +39,26 @@
 	   __hopscript_worker
 	   __hopscript_websocket)
 
-   (export (js-new-global-object::JsGlobalObject)
-	   (js-initial-global-object)
+   (export (js-initial-global-object)
+	   (js-new-global-object::JsGlobalObject)
 	   
 	   (js-object-prototype-hasownproperty this v ::JsGlobalObject)
 
 	   (js-get-global-object-name
 	      ::JsObject ::symbol ::obj ::JsGlobalObject)
 	   (inline js-get-global-object-name/cache
-	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)))
+	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
+	   ))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsObject ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsObject req)
+   (let* ((this (js-initial-global-object))
+	  (proc (js-get obj 'toResponse this)))
+      (if (isa? proc JsFunction)
+	  (js-call1 this proc obj req)
+	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
@@ -154,7 +165,7 @@
 	    (js-init-websocket! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
-	    
+
 	    ;; bind the global object properties
 	    (js-bind! %this %this 'Object
 	       :value js-object
@@ -171,12 +182,13 @@
 
 	    ;; eval
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1
-	    (define (js-eval this string)
+	    ;; not used, see nodejs/require.scm
+	    (define (js-eval _ string)
 	       (if (not (string? string))
 		   string
 		   (call-with-input-string string
 		      (lambda (ip)
-			 (%js-eval ip 'eval %this)))))
+			 (%js-eval ip 'eval %this %this %this)))))
 	    
 	    (js-bind! %this %this 'eval
 	       :value (js-make-function %this js-eval 1 'eval
@@ -328,6 +340,7 @@
       ;; Object.prototype
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.1
       (define (%js-object this . value)
+	 (tprint "%js-object value=" value)
 	 (cond
 	    ((null? value)
 	     (js-new %this js-object (js-undefined)))
@@ -361,7 +374,7 @@
       (define (getownpropertydescriptor this o p)
 	 (let* ((o (js-cast-object %this o "getOwnPropertyDescriptor"))
 		(desc (js-get-own-property o p %this)))
-	    (js-from-property-descriptor %this desc)))
+	    (js-from-property-descriptor %this desc o)))
       
       (js-bind! %this js-object 'getOwnPropertyDescriptor
 	 :value (js-make-function %this
@@ -712,16 +725,9 @@
 		   1 'HTML)
 	 :enumerable #f)
 
+      ;; only used with the global object, see nodejs/require.scm
       (js-bind! %this obj 'HEAD
-	 :value (js-make-function %this
-		   (lambda (this attrs . nodes)
-		      (apply <HEAD>
-			 :this %this
-			 (when (isa? attrs JsObject)
-			    (js-object->keyword-arguments* attrs %this))
-			 nodes))
-		   2 'HEAD)
-	 :enumerable #f)
+	 :value (js-html-head %this) :enumerable #f)
 		   
       ;; html_head
       (js-bind-tags! %this obj
@@ -735,16 +741,8 @@
 	 SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	 SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	 SVG:TEXTPATH SVG:TREF SVG:TSPAN)
-
-;*       ;; notepad                                                    */
-;*       (js-bind-tags! %this obj                                      */
-;* 	 NOTEPAD NPTAB NPTABHEAD)                                      */
-;*                                                                     */
-;*       ;; tree                                                       */
-;*       (js-bind-tags! %this obj                                      */
-;* 	 TREE TRHEAD TRBODY TRLEAF)                                    */
    ))
-		      
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-construct ...                                          */
 ;*    -------------------------------------------------------------    */
@@ -756,13 +754,14 @@
 				       js-boolean
 				       js-number)
       (lambda (_ . arg)
+	 
 	 (define (object-alloc)
 	    (instantiate::JsObject
 	       (cmap (instantiate::JsConstructMap))
 	       (elements (make-vector 4))
 	       (__proto__ %prototype)
 	       (extensible #t)))
-	 
+
 	 (if (null? arg)
 	     ;; 2
 	     (object-alloc)
@@ -855,7 +854,8 @@
 			  (with-access::JsPropertyDescriptor prop (enumerable)
 			     (when (eq? enumerable #t)
 				(let* ((descobj (if (isa? prop JsAccessorDescriptor)
-						    (js-property-value properties prop %this)
+						    ;; CARE 5 JUL 2014, not sure about props below
+						    (js-property-value properties prop props %this)
 						    (vector-ref-ur elements i)))
 				       (desc (js-to-property-descriptor %this
 						descobj name)))
@@ -866,7 +866,7 @@
       (for-each (lambda (prop)
 		   (with-access::JsPropertyDescriptor prop ((p name) enumerable)
 		      (when (eq? enumerable #t)
-			 (let* ((descobj (js-property-value properties prop %this))
+			 (let* ((descobj (js-property-value properties prop o %this))
 				(desc (js-to-property-descriptor %this
 					 descobj p)))
 			    (js-define-own-property o p desc #t %this)))))
@@ -968,6 +968,10 @@
        (primitive-as-number))
       ((isa? o JsDate)
        (primitive-as-string))
+      ((isa? o JsGlobalObject)
+       ;; according to http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.8
+       ;; the GlobalObject might be considered as a host object, which gives the
+       ;; freedom to default to string instead of number
+       (primitive-as-string))
       (else
        (primitive-as-number))))
-

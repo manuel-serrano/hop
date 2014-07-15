@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed May 28 19:15:29 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 07:36:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -41,28 +41,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-symbol this args)
+(define-generic (j2s-symbol this conf)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-symbol this::J2SProgram args)
+(define-method (j2s-symbol this::J2SProgram conf)
    (with-access::J2SProgram this (nodes loc mode header)
-      (let ((env (append-map (lambda (s) (collect* s)) nodes)))
+      (let ((env (append-map (lambda (s) (collect* s)) nodes))
+	    (global (config-get conf :bind-global '%scope)))
 	 (set! nodes
 	    (if (pair? env)
-		(append
-		   (bind-decls! env env mode #t '() '())
+		(cons
+		   (instantiate::J2SSeq
+		      (loc loc)
+		      (nodes (bind-decls! env env mode global '() '())))
 		   (map (lambda (o) (resolve! o env mode '() '())) nodes))
 		(map! (lambda (o) (resolve! o env mode '() '())) nodes)))))
    this)
-
-(define (dump-env env)
-   (map (lambda (decl)
-	   (with-access::J2SDecl decl (id)
-	      id))
-      env))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-decl ...                                                    */
@@ -80,10 +77,12 @@
    
    (define (decl->assign! decl::J2SDeclInit old::J2SDecl)
       (with-access::J2SDeclInit decl (loc id val)
-	 (instantiate::J2SInit
+	 (instantiate::J2SStmtExpr
 	    (loc loc)
-	    (lhs (j2sref old loc withs wenv))
-	    (rhs val))))
+	    (expr (instantiate::J2SInit
+		     (loc loc)
+		     (lhs (j2sref old loc withs wenv))
+		     (rhs val))))))
    
    (let loop ((decls (map (lambda (e) (bind! e env mode)) decls))
 	      (acc '())
@@ -166,53 +165,42 @@
 		  (set! id (gensym 'arg)))
 	       (loop (cdr args))))))
    
-   (define (fun->decl id fun)
-      (with-access::J2SFun fun (loc)
-	 (instantiate::J2SDeclInit
-	    (loc loc)
-	    (id id)
-	    (name id)
-	    (writable #f)
-	    (ronly #t)
-	    (global #t)
-	    (val fun)
-	    (use 0))))
-
-   (with-access::J2SFun this (body params loc (fmode mode) params id)
-      ;; propagate the compilation mode to the function
-      (when (eq? mode 'strict)
-	 (set! fmode mode))
-      (if (eq? fmode 'strict)
-	  (begin
-	     ;; check parameter correctness
-	     (check-strict-mode-params params loc)
-	     (when (symbol? id)
-		(check-strict-mode-eval id loc)))
-	  (nonstrict-params! params))
-      
-      (let* ((decls (collect* body))
-	     (arguments (instantiate::J2SDeclArguments
-			   (id 'arguments)
-			   (loc loc)))
-	     (envl (append decls params))
-	     (env0 (append envl env))
-	     (nenv (if (find-decl 'arguments envl)
-		       env0
-		       (cons arguments env0)))
-	     (nenv (if id (cons (fun->decl id this) nenv) nenv))
-	     (nwenv (cons arguments (append decls params wenv))))
-	 (if (pair? decls)
-	     (set! body
-		(instantiate::J2SSeq
-		   (loc loc)
-		   (nodes (append
-			     (bind-decls! decls nenv fmode #f withs wenv)
-			     (list (walk! body nenv fmode withs nwenv))))))
-	     (set! body (walk! body nenv fmode withs nwenv)))
-	 (with-access::J2SDeclArguments arguments (use)
-	    (when (>fx use 0)
-	       (with-access::J2SFun this (vararg)
-		  (set! vararg #t))))))
+   (with-access::J2SFun this (body params loc (fmode mode) params decl)
+      (let ((id (j2sfun-id this)))
+	 ;; propagate the compilation mode to the function
+	 (when (eq? mode 'strict)
+	    (set! fmode mode))
+	 (if (eq? fmode 'strict)
+	     (begin
+		;; check parameter correctness
+		(check-strict-mode-params params loc)
+		(when (symbol? id)
+		   (check-strict-mode-eval id "Function name" loc)))
+	     (nonstrict-params! params))
+	 
+	 (let* ((decls (collect* body))
+		(arguments (instantiate::J2SDeclArguments
+			      (id 'arguments)
+			      (loc loc)))
+		(envl (append decls params))
+		(env0 (append envl env))
+		(nenv (if (find-decl 'arguments envl)
+			  env0
+			  (cons arguments env0)))
+		(nenv (if decl (cons decl nenv) nenv))
+		(nwenv (cons arguments (append decls params wenv))))
+	    (if (pair? decls)
+		(set! body
+		   (instantiate::J2SBlock
+		      (loc loc)
+		      (nodes (append
+				(bind-decls! decls nenv fmode #f withs wenv)
+				(list (walk! body nenv fmode withs nwenv))))))
+		(set! body (walk! body nenv fmode withs nwenv)))
+	    (with-access::J2SDeclArguments arguments (use)
+	       (when (>fx use 0)
+		  (with-access::J2SFun this (vararg)
+		     (set! vararg #t)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -242,12 +230,12 @@
       (let ((nenv (cons param env)))
 	 (when (eq? mode 'strict)
 	    (with-access::J2SParam param (id)
-	       (check-strict-mode-eval id loc)))
+	       (check-strict-mode-eval id "Catch name" loc)))
 	 (set! body (walk! body nenv mode withs wenv))))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    j2sdecl ...                                                      */
+;*    j2sref ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2sref decl::J2SDecl loc withs wenv)
    (let ((ref (instantiate::J2SRef
@@ -272,7 +260,7 @@
 	     (when (eq? mode 'strict)
 		(for-each (lambda (decl)
 			     (with-access::J2SDecl (car decls) (loc id)
-				(check-strict-mode-eval id loc)))
+				(check-strict-mode-eval id "variable name" loc)))
 		   decls))
 	     (let ((ref (j2sref (car decls) loc withs wenv)))
 		(set! lhs ref)))
@@ -310,7 +298,7 @@
 (define-walk-method (resolve! this::J2SDecl env mode withs wenv)
    (with-access::J2SDecl this (loc id)
       (when (eq? mode 'strict)
-	 (check-strict-mode-eval id loc))
+	 (check-strict-mode-eval id  "Declaration name" loc))
       (instantiate::J2SNop
 	 (loc loc))))
 
@@ -331,17 +319,24 @@
 		(loc loc))))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SDollar ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (resolve! this::J2SDollar env mode withs wenv)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    check-strict-mode-eval ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1       */
 ;*---------------------------------------------------------------------*/
-(define (check-strict-mode-eval id loc)
+(define (check-strict-mode-eval id msg loc)
    (cond
       ((or (eq? id 'eval) (eq? id 'arguments))
        (raise
 	  (instantiate::&io-parse-error
 	     (proc "js-symbol")
-	     (msg "variable name may not be eval or arguments in strict mode")
+	     (msg (format "~a eval or arguments is not allowed in strict mode"
+		     msg ))
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))
@@ -349,7 +344,7 @@
        (raise
 	  (instantiate::&io-parse-error
 	     (proc "js-symbol")
-	     (msg "variable name may not be a reserved name")
+	     (msg "~a a reserved name is not allowd in strict mode")
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
@@ -363,11 +358,13 @@
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
 	 (when (eq? mode 'strict)
-	    (check-strict-mode-eval id loc))
-	 (instantiate::J2SInit
+	    (check-strict-mode-eval id "Declaration name" loc))
+	 (instantiate::J2SStmtExpr
 	    (loc loc)
-	    (lhs (j2sref ndecl loc withs wenv))
-	    (rhs (resolve! val env mode withs wenv))))))
+	    (expr (instantiate::J2SInit
+		     (loc loc)
+		     (lhs (j2sref ndecl loc withs wenv))
+		     (rhs (resolve! val env mode withs wenv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */
@@ -392,33 +389,18 @@
    (when (eq? mode 'strict)
       ;; strict mode restrictions
       (with-access::J2SAssig this (lhs loc)
-	 (cond
-	    ((isa? lhs J2SRef)
-	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (id)
-		   (check-strict-mode-eval id loc))))
-	    ((isa? lhs J2SUnresolvedRef)
-	     (with-access::J2SUnresolvedRef lhs (id)
-		(check-strict-mode-eval id loc))))))
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SCall ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SCall env mode withs wenv)
-   (when (eq? mode 'strict)
-      (with-access::J2SCall this (fun args)
-	 (if (isa? fun J2SUnresolvedRef)
-	     (with-access::J2SUnresolvedRef fun (id loc)
-		(when (eq? id 'eval)
-		   (set! fun (instantiate::J2SHopRef
-				(id '%js-eval-strict)
-				(loc loc)))
-		   (set! args (append args
-				 (list
-				    (instantiate::J2SPragma
-				       (loc loc)
-				       (expr '%this))))))))))
+	 (let loop ((lhs lhs))
+	    (cond
+	       ((isa? lhs J2SRef)
+		(with-access::J2SRef lhs (decl)
+		   (with-access::J2SDecl decl (id)
+		      (check-strict-mode-eval id "Assignment to" loc))))
+	       ((isa? lhs J2SUnresolvedRef)
+		(with-access::J2SUnresolvedRef lhs (id)
+		   (check-strict-mode-eval id "Assignment to" loc)))
+	       ((isa? lhs J2SParen)
+		(with-access::J2SParen lhs (expr)
+		   (loop expr)))))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -564,6 +546,12 @@
 ;*    collect* ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SFun)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    collect* ::J2SDollar ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (collect* this::J2SDollar)
    '())
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May 25 18:45:03 2014 (serrano)                */
+;*    Last change :  Thu Jul  3 11:37:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind all the unresolved variables.                               */
@@ -37,7 +37,6 @@
 ;*    j2s-resolve ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-resolve this)
-   (tprint "INCORRECT, unbound variables must raise REFERENCE ERROR")
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -48,7 +47,7 @@
       (with-access::J2SProgram this (nodes)
 	 (for-each (lambda (o) (resolve! o env)) nodes)
 	 ;; add the the newly declared global variables
-	 (set! nodes (append-after-header nodes (hashtable->list env))))
+	 (set! nodes (append (hashtable->list env) nodes)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -58,17 +57,19 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SDecl ...                                            */
+;*    resolve! ::J2SUnresolvedRef ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SUnresolvedRef env)
    (with-access::J2SUnresolvedRef this (id loc)
       (let ((decl (hashtable-get env id)))
-	 (if (isa? decl J2SDecl)
+	 (if (or (isa? decl J2SDeclSvc)
+		 (isa? decl J2SDeclFun)
+		 (isa? decl J2SDeclExtern))
 	     (instantiate::J2SRef
 		(loc loc)
 		(decl decl))
 	     (let ((decl (instantiate::J2SDecl
-			    (global #t)
+			    (global '%scope)
 			    (id id)
 			    (loc loc))))
 		(hashtable-put! env id decl)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu May 22 17:43:54 2014 (serrano)                */
+;*    Last change :  Thu Jul 10 15:17:16 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -26,7 +26,8 @@
 	   (nodejs-timer-start ::obj ::uint32 ::uint32)
 	   (nodejs-timer-close ::obj)
 	   (nodejs-timer-stop ::obj)
-	   (nodejs-timer-unref ::obj)))
+	   (nodejs-timer-unref ::obj)
+	   (nodejs-rename-file ::bstring ::bstring ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -138,3 +139,15 @@
       (else
        #unspecified)))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-rename-file ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-rename-file oldp newp cb)
+   (cond-expand
+      (enable-libuv
+       (uv-rename-file oldp newp cb (uv-default-loop)))
+      (else
+       (if (rename-file oldp newp)
+	   (cb (js-undefined))
+	   (cb newp #f)))))
+	  

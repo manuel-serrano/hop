@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Jun 23 10:31:00 2014 (serrano)                */
+;*    Last change :  Sun Jul  6 18:08:13 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -825,11 +825,15 @@
 ;*    with-loading-file ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (with-loading-file file proc)
-   (let ((old (the-loading-file)))
+   (let ((old (the-loading-file))
+	 (abase (module-abase)))
       (loading-file-set! file)
+      (module-abase-set! (dirname file))
       (unwind-protect
 	 (proc)
-	 (loading-file-set! old))))
+	 (begin
+	    (loading-file-set! old)
+	    (module-abase-set! abase)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    with-input-from-loading-file ...                                 */
@@ -1007,6 +1011,19 @@
 					     (reverse! res))
 					  (let ((val (eval! e (eval-module))))
 					     (loop (cons val res) #f))))))
+			       ((module)
+				(let loop ((loc #t))
+				   (let ((e (hop-read port charset menv loc)))
+				      (when (epair? e)
+					 ($env-set-trace-location denv (cer e)))
+				      (if (eof-object? e)
+					  (let ((nm (eval-module)))
+					     (unless (eq? m nm)
+						(evmodule-check-unbound nm #f))
+					     ($env-pop-trace denv)
+					     (unless (eq? m nm) nm))
+					  (let ((val (eval! e (eval-module))))
+					     (loop #f))))))
 			       (else
 				(error "hop-load"
 				   (format "Illegal mode \"~a\"" mode)

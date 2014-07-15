@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Jun 20 18:43:05 2014 (serrano)                */
+;*    Last change :  Fri Jun 27 12:39:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -53,7 +53,8 @@
       (when (procedure? before) (before ast))
       (let ((nast (proc ast args)))
 	 (when (>=fx (bigloo-debug) 1)
-	    (call-with-output-file (make-file-path tmp name)
+	    (call-with-output-file
+		  (make-file-path tmp (string-replace name (file-separator) #\_))
 	       (lambda (p)
 		  (fprint p ";; " comment)
 		  (pp (j2s->list nast) p))))
@@ -74,7 +75,15 @@
    (with-access::J2SStageUrl stage (url)
       (driver-debug-post stage tmp count ast args
 	 (lambda (ast args)
-	    (with-url url string->obj :method 'POST :body (obj->string ast))))))
+	    (with-url (string-append url "?hop-encoding=json")
+	       (lambda (obj) obj)
+	       :parse-json json->ast
+	       :method 'POST
+	       :header '((content-type: . "application/json"))
+	       :connection 'close
+	       :body (call-with-output-string
+			(lambda (op)
+			   (ast->json ast op))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec ::J2SStageFile ...                                    */
