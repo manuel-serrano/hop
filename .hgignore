@@ -39,10 +39,12 @@ scheme2js/runtime/runtime_mapping.sch
 ^scheme2js/runtime/interface$
 ^scheme2js/runtime/.*\.sch$
 ^scheme2js/runtime/runtime\.js$
+^scheme2js/runtime/runtime_[su]\.js$
 ^scheme2js/runtime/runtime_interface.js$
 ^scheme2js/runtime/runtime_interface_callcc.js$
 share/hop-autoconf.js
 share/hop.js
+share/hop_[su].js
 share/hop-runtime.sch
 share/.*\.list$
 ^share/flash/player.swf$
