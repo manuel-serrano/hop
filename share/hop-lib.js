@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Jul 15 19:43:33 2014 (serrano)                */
+/*    Last change :  Wed Jul 16 07:39:17 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -400,8 +400,10 @@ function BgL_setTimeoutz00( proc, timeout ) {
       if( !sc_isNumber( timeout ) ) {
 	 sc_typeError( "setTimeout", "integer", timeout, 2 );
       }
-   
-      if( !proc || !("apply" in proc) ) {
+
+      if( typeof( proc ) == "string" || proc instanceof String ) {
+	 proc = eval( "function() { " + proc + "}" );
+      } else if( !proc || !("apply" in proc) ) {
 	 sc_typeError( "setTimeout", "procedure", proc, 2 );
       }
    
@@ -428,9 +430,51 @@ function BgL_setTimeoutz00( proc, timeout ) {
    }
 #endif
 
-   var i = setInterval( function() { clearInterval( i ); proc() }, timeout );
+   return setTimeout( proc, timeout );
+}
+
+/*---------------------------------------------------------------------*/
+/*    BgL_setIntervalz00 ...                                           */
+/*---------------------------------------------------------------------*/
+function BgL_setIntervalz00( proc, timeout ) {
+#if HOP_RTS_DEBUG
+   var mark = "setInterval trace:";
+
+   if( hop_debug() > 0 ) {
+      if( !sc_isNumber( timeout ) ) {
+	 sc_typeError( "setInterval", "integer", timeout, 2 );
+      }
+
+      if( typeof( proc ) == "string" || proc instanceof String ) {
+	 proc = eval( "function() { " + proc + "}" );
+      } else if( !proc || !("apply" in proc) ) {
+	 sc_typeError( "setInterval", "procedure", proc, 2 );
+      }
    
-   return true;
+      try {
+	 /* raise an error to get the execution stack */
+	 throw new Error( "setInterval" );
+      } catch( e ) {
+	 var ctx;
+	 var estk = hop_get_exception_stack( e );
+
+	 if( !(sc_isPair( hop_current_stack_context )) ||
+	     hop_current_stack_context.__hop_car !== mark ) {
+	    ctx = sc_cons(
+	       mark,
+	       sc_append( estk, hop_current_stack_context ) );
+	 } else {
+	    ctx = hop_current_stack_context;
+	    ctx.__hop_cdr.__hop_car = estk;
+	 }
+
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx,
+			      "setInterval( ..., " + timeout + ")" );
+      }
+   }
+#endif
+
+   return setInterval( proc, timeout );
 }
 
 /*---------------------------------------------------------------------*/
