@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Fri Jul 11 12:57:29 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 20:22:00 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript debugging intrumentation                              */
@@ -61,6 +61,11 @@
 	  (set! id 'BgL_setTimeoutz00)))
       (call-default-walker)))
 	 
-
-
-
+;*---------------------------------------------------------------------*/
+;*    debug ::J2STilde ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (debug this::J2STilde conf)
+   (with-access::J2STilde this (stmt)
+      (debug stmt conf)
+      this))
+   

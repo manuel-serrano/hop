@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Jul 13 15:58:28 2014 (serrano)                */
+/*    Last change :  Tue Jul 15 19:32:42 2014 (serrano)                */
 /*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -506,7 +506,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 			      sc_cons( loc,
 				       sc_cons( fmt, sc_cons( typ, null ) ) ) );
 
-	 var estk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var estk = sc_append( hop_get_exception_stack( e ),
+			       hop_current_stack_context );
 	 var stk = sc_cons( "Service trace:", sc_cons( frame, estk ) );
 
          xhr.precontext = stk;

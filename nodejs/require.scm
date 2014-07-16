@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jul 13 17:54:13 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 19:53:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -90,7 +90,7 @@
 ;*    nodejs-driver ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-driver)
-   (if (> (bigloo-debug) 0) (j2s-plain-driver) (j2s-optim-driver)))
+   (if (> (bigloo-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-module ...                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sun Jul 13 15:58:53 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 19:33:19 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -20,11 +20,10 @@
    
    (export
       hop-name-aliases
-      hop-current-stack-context
+      hop_current_stack_context
       (hop-callback-handler exc ctx)
       (hop-callback-html-context el file line)
       (hop-callback-listener-context msg)
-      (hop-extend-stack-context stk)
       (hop-get-exception-stack e)
       (bigloo-mangled? str)
       (hop-demangle str)
@@ -38,26 +37,18 @@
    
    (scheme2js-pragma
       (hop-name-aliases (JS "hop_name_aliases"))
-      (hop-current-stack-context (JS "hop_current_stack_context"))
+      (hop_current_stack_context (JS "hop_current_stack_context"))
       (hop-callback-handler (JS "hop_callback_handler"))
       (hop-callback-html-context (JS "hop_callback_html_context"))
       (hop-callback-listener-context (JS "hop_callback_listener_context"))
       (hop-get-exception-stack (JS "hop_get_exception_stack"))
-      (hop-extend-stack-context (JS "hop_extend_stack_context"))
       (hop-mangled? (JS "hop_mangledp"))
       (hop-demangle (JS "hop_demangle"))))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-current-stack-context ...                                    */
+;*    hop_current_stack_context ...                                    */
 ;*---------------------------------------------------------------------*/
-(define hop-current-stack-context '())
-
-;*---------------------------------------------------------------------*/
-;*    hop-extend-stack-context ...                                     */
-;*---------------------------------------------------------------------*/
-(define (hop-extend-stack-context stack)
-   (set! hop-current-stack-context (append stack hop-current-stack-context))
-   hop-current-stack-context)
+(define hop_current_stack_context '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-default-source-map ...                                       */
@@ -487,5 +478,5 @@
 ;*    install the default error handler ...                            */
 ;*---------------------------------------------------------------------*/
 (when (>= (hop-debug) 1)
-   (hop-extend-stack-context (list document.location.href))
+   (set! hop_current_stack_context (list document.location.href))
    (set! window.onerror hop-onerror-handler))

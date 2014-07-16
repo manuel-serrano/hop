@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Jul 15 11:11:27 2014 (serrano)                */
+/*    Last change :  Tue Jul 15 19:43:33 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -37,14 +37,16 @@ function hop_callback( proc, ctx, id ) {
    if( !("apply" in proc) ) {
       sc_typeError( id, "procedure", proc, 2 );
    }
-
-   hop_current_stack_context = ctx;
    
    var applyCallback = function() {
+      var old = hop_current_stack_context;
       try {
+	 hop_current_stack_context = ctx;
 	 return proc.apply( this, arguments );
       } catch( e ) {
 	 hop_callback_handler( e, ctx );
+      } finally {
+	 hop_current_stack_context = old;
       }
    }
 
@@ -393,7 +395,7 @@ function hop_typeof( obj ) {
 function BgL_setTimeoutz00( proc, timeout ) {
 #if HOP_RTS_DEBUG
    var mark = "setTimeout trace:";
-   
+
    if( hop_debug() > 0 ) {
       if( !sc_isNumber( timeout ) ) {
 	 sc_typeError( "setTimeout", "integer", timeout, 2 );
@@ -412,7 +414,9 @@ function BgL_setTimeoutz00( proc, timeout ) {
 
 	 if( !(sc_isPair( hop_current_stack_context )) ||
 	     hop_current_stack_context.__hop_car !== mark ) {
-	    ctx = sc_cons( mark, hop_extend_stack_context( estk ) );
+	    ctx = sc_cons(
+	       mark,
+	       sc_append( estk, hop_current_stack_context ) );
 	 } else {
 	    ctx = hop_current_stack_context;
 	    ctx.__hop_cdr.__hop_car = estk;
@@ -423,7 +427,7 @@ function BgL_setTimeoutz00( proc, timeout ) {
       }
    }
 #endif
-   
+
    var i = setInterval( function() { clearInterval( i ); proc() }, timeout );
    
    return true;
@@ -455,7 +459,9 @@ function sc_after( timeout, proc ) {
 
 	 if( !(sc_isPair( hop_current_stack_context )) ||
 	     hop_current_stack_context.__hop_car !== mark ) {
-	    ctx = sc_cons( mark, hop_extend_stack_context( estk ) );
+	    ctx = sc_cons(
+	       mark,
+	       sc_append( estk, hop_current_stack_context ) );
 	 } else {
 	    ctx = hop_current_stack_context;
 	    ctx.__hop_cdr.__hop_car = estk;
@@ -490,7 +496,8 @@ function sc_timeout( tm, proc ) {
 	 /* raise an error to get the execution stack */
 	 throw new Error( "timeout" );
       } catch( e ) {
-	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var stk = sc_append( hop_get_exception_stack( e ),
+			      hop_current_stack_context );
 	 var ctx = sc_cons( "Timeout trace:", stk );
 
 	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "timeout" );

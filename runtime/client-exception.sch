@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:33:45 2013                          */
-;*    Last change :  Tue Jul 15 11:05:13 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 19:40:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common exception implementation.                                 */
@@ -26,7 +26,7 @@
 ;*    hop-hidden-frame-regexp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define hop-hidden-frame-regexp
-   "^(?:hop_send_request|withHOP|HopFrame.post|HTML[A-z][a-z]*Element[.]on[a-z]*|applyCallback|&pool-scheduler[0-9]+)$")
+   "^(?:hop_send_request|withHOP|HopFrame.post|HTML[A-z][a-z]*Element[.]on[a-z]*|applyCallback|&pool-scheduler[0-9]+|&pthread-[0-9]+)$")
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-demangle ...                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jul 11 12:38:41 2014 (serrano)                */
+;*    Last change :  Tue Jul 15 19:48:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -43,6 +43,7 @@
 	   (j2s-driver-add-after ::pair-nil ::bstring ::J2SStage)
 	   (j2s-optim-driver)
 	   (j2s-plain-driver)
+	   (j2s-debug-driver)
 	   (j2s-eval-driver)
 	   (j2s-javascript-driver)
 	   (j2s-javascript-debug-driver)))
@@ -126,6 +127,22 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-this-stage
+      j2s-ronly-stage
+      j2s-return-stage
+      j2s-scheme-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-debug-driver ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-debug-driver)
+   (list
+      j2s-syntax-stage
+      j2s-hopscript-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
+      j2s-symbol-stage
+      j2s-debug-stage
       j2s-this-stage
       j2s-ronly-stage
       j2s-return-stage
