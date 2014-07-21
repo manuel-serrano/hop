@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Jul 10 15:17:16 2014 (serrano)                */
+;*    Last change :  Sat Jul 19 07:04:13 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -27,7 +27,11 @@
 	   (nodejs-timer-close ::obj)
 	   (nodejs-timer-stop ::obj)
 	   (nodejs-timer-unref ::obj)
-	   (nodejs-rename-file ::bstring ::bstring ::procedure)))
+	   (nodejs-rename-file ::bstring ::bstring ::procedure)
+	   (nodejs-loadavg ::u8vector)
+	   (nodejs-getfreemem::double)
+	   (nodejs-gettotalmem::double)
+	   (nodejs-getcpus::vector)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -151,3 +155,43 @@
 	   (cb (js-undefined))
 	   (cb newp #f)))))
 	  
+;*---------------------------------------------------------------------*/
+;*    nodejs-loadavg ...                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-loadavg vec::u8vector)
+   (cond-expand
+      (enable-libuv
+       ($uv-loadavg ($u8vector->double* vec 0))
+       vec)
+      (else
+       vec)))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-getfreemem ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-getfreemem)
+   (cond-expand
+      (enable-libuv
+       (uv-get-free-memory))
+      (else
+       0.0)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-gettotalmem ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-gettotalmem)
+   (cond-expand
+      (enable-libuv
+       (uv-get-total-memory))
+      (else
+       0.0)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-getcpus ...                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-getcpus)
+   (cond-expand
+      (enable-libuv
+       (uv-cpus))
+      (else
+       '#())))

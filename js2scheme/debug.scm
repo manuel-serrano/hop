@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Tue Jul 15 20:22:00 2014 (serrano)                */
+;*    Last change :  Fri Jul 18 07:58:28 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript debugging intrumentation                              */
@@ -58,7 +58,9 @@
    (with-access::J2SUnresolvedRef this (id)
       (cond
 	 ((eq? id 'setTimeout)
-	  (set! id 'BgL_setTimeoutz00)))
+	  (set! id 'BgL_setTimeoutz00))
+	 ((eq? id 'setInterval)
+	  (set! id 'BgL_setIntervalz00)))
       (call-default-walker)))
 	 
 ;*---------------------------------------------------------------------*/

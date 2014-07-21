@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Jun  5 18:18:38 2014 (serrano)                */
+;*    Last change :  Fri Jul 18 17:36:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -34,9 +34,13 @@
       (let ((obj (js-new %this js-object)))
 	 (for-each (lambda (e)
 		      (js-put! obj (car e)
-			 (if (keyword? (cdr e))
-			     (keyword->symbol (cdr e))
-			     (cdr e))
+			 (cond
+			    ((keyword? (cdr e))
+			     (keyword->symbol (cdr e)))
+			    ((pair? (cdr e))
+			     (js-alist->jsobject (cdr e) %this))
+			    (else
+			     (cdr e)))
 			 #f %this))
 	    alist)
 	 obj)))

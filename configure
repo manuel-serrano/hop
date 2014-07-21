@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jun 20 08:13:28 2014 (serrano)                */
+#*    Last change :  Fri Jul 18 16:39:03 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -647,7 +647,7 @@ fi
 #*    uv                                                               */
 #*---------------------------------------------------------------------*/
 if [ "$uv " = " " ]; then
-  if [ -f $bigloolibdir/libuvi.heap ]; then
+  if [ -f $bigloolibdir/libuv.heap ]; then
     uv=yes
   else
     uv=no
@@ -655,7 +655,7 @@ if [ "$uv " = " " ]; then
 fi
 
 if [ "$uv " = "no " ]; then
-  if [ ! -f $bigloolibdir/libuv.heap ]; then
+  if [ "$libuv " != "no " ]; then
     echo "*** ERROR:configure:bigloo libuv. Aborting"
     echo ""
     echo "Bigloo LIBUV is not installed on your machine."
@@ -666,7 +666,7 @@ if [ "$uv " = "no " ]; then
     echo "with the \"--disable-libuv\" option."
     exit 1;
   fi
-
+else
   hopsrfis="$hopsrfis enable-libuv"
   libraries="$libraries libuv"
   bglcloselibs="$bglcloselibs libuv"

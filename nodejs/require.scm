@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul 15 19:53:23 2014 (serrano)                */
+;*    Last change :  Sat Jul 19 06:45:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -117,6 +117,8 @@
       (js-put! m 'filename filename #f %this)
       ;; loaded
       (js-put! m 'loaded #t #f %this)
+      ;; parent
+      (js-put! m 'parent #f #f %this)
       ;; children
       (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
       ;; paths
@@ -291,9 +293,14 @@
       (trace-item "name=" name)
       (if (core-module? name)
 	  (nodejs-require-core name worker %this)
-	  (let ((abspath (nodejs-resolve name %this %module)))
-	     (let ((mod (nodejs-load abspath worker)))
-		(js-get mod 'exports %this))))))
+	  (let* ((abspath (nodejs-resolve name %this %module))
+		 (mod (nodejs-load abspath worker))
+		 (children (js-get 'children %module %this))
+		 (push (js-get 'push children %this)))
+	     (js-call1 %this push children mod)
+	     (when (eq? (js-get mod 'parent %this) (js-undefined))
+		(js-put! mod 'parent %module #f %this))
+	     (js-get mod 'exports %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
