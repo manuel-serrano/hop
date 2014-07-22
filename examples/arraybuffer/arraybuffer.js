@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun 20 18:38:17 2014                          */
-/*    Last change :  Mon Jun 23 09:02:37 2014 (serrano)                */
+/*    Last change :  Tue Jul 22 17:14:08 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    ArrayBuffer example                                              */
 /*    See                                                              */
 /*      http://www.html5rocks.com/en/tutorials/webgl/typed_arrays/     */
 /*    -------------------------------------------------------------    */
-/*    run: hopc -v -g arraybuffer.js && a.out                          */
+/*    run: hopc -v -g arraybuffer.js && ./a.out                        */
 /*=====================================================================*/
 
 var b = new ArrayBuffer( 16 );

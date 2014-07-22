@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Jul 22 15:54:10 2014 (serrano)                */
+#*    Last change :  Tue Jul 22 17:20:23 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -19,6 +19,7 @@
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
+  async/async.js \
   arraybuffer/arraybuffer.js \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue Jul 22 15:35:24 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 17:03:53 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -149,38 +149,48 @@
 	 (with-access::JsObject obj (__proto__)
 	    (set! __proto__ (get-process-fs-stats %this))
 	    (if (isa? callback JsFunction)
-		   (js-call1 %this callback (js-undefined) obj)
-		   obj))))
+		(js-call2 %this callback (js-undefined) #f obj)
+		obj))))
 
    (define (stat this path callback)
-      (when (file-exists? path)
-	 (let ((obj (js-alist->jsobject
-		       `((size . ,(elong->fixnum (file-size path))))
-		       %this)))
-	    (with-access::JsObject obj (__proto__)
-	       (set! __proto__ (get-process-fs-stats %this))
-	       (if (isa? callback JsFunction)
-		   (js-call1 %this callback (js-undefined) obj)
-		   obj)))))
+      (cond
+	 ((file-exists? path)
+	  (let ((obj (js-alist->jsobject
+			`((size . ,(elong->fixnum (file-size path))))
+			%this)))
+	     (with-access::JsObject obj (__proto__)
+		(set! __proto__ (get-process-fs-stats %this))
+		(if (isa? callback JsFunction)
+		    (js-call2 %this callback (js-undefined) #f obj)
+		    obj))))
+	 ((isa? callback JsFunction)
+	  (js-call2 %this callback (js-undefined) "File does not exists" #f))
+	 (else
+	  #f)))
 
    (define (fstat this fd callback)
-      (when (input-port? fd)
-	 (let ((obj (js-alist->jsobject
-		       `((size . ,(elong->fixnum (input-port-length fd))))
-		       %this)))
-	    (with-access::JsObject obj (__proto__)
-	       (set! __proto__ (get-process-fs-fstats %this))
-	       (if (isa? callback JsFunction)
-		   (js-call1 %this callback (js-undefined) obj)
-		   obj)))))
+      (cond
+	 ((input-port? fd)
+	  (let ((obj (js-alist->jsobject
+			`((size . ,(elong->fixnum (input-port-length fd))))
+			%this)))
+	     (with-access::JsObject obj (__proto__)
+		(set! __proto__ (get-process-fs-fstats %this))
+		(if (isa? callback JsFunction)
+		    (js-call2 %this callback (js-undefined) #f obj)
+		    obj))))
+	 ((isa? callback JsFunction)
+	  (js-call2 %this callback (js-undefined) "Not a file descriptor" #f))
+	 (else
+	  #f)))
 
    (define (close this fd callback)
-      (let ((err (cond
-		    ((output-port? fd) (close-output-port fd))
-		    ((input-port? fd) (close-input-port fd)))))
-	 (if (isa? callback JsFunction)
-	     (js-call1 %this callback (js-undefined) err)
-	     err)))
+      (cond
+	 ((output-port? fd) (close-output-port fd))
+	 ((input-port? fd) (close-input-port fd)))
+      (if (isa? callback JsFunction)
+	  (js-call1 %this callback (js-undefined) #f)
+	  #f))
 
    (define (open this path flags mode callback)
       (cond
@@ -196,13 +206,13 @@
 	  (error "open" "flags not implemented" flags))))
 
    (define (read this fd buffer offset length position callback)
-      (if (eq? callback (js-undefined))
-	  (begin
-	     (when (integer? position)
-		(set-input-port-position! fd position))
-	     (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-		(read-fill-string! fast-buffer offset length fd)))
-	  (nodejs-read %this fd buffer offset length position callback)))
+      (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
+	 (if (eq? callback (js-undefined))
+	     (begin
+		(when (integer? position)
+		   (set-input-port-position! fd position))
+		(read-fill-string! fast-buffer offset length fd))
+	     (nodejs-read %this fd fast-buffer offset length position callback))))
 
    (define (write this fd buffer offset length position)
       (unless (= position 0)

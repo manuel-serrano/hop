@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jul 22 15:31:13 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 17:02:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -206,8 +206,10 @@
       (enable-libuv
        (uv-open-input-file path
 	  :callback (when (isa? callback JsFunction)
-		       (lambda (a b)
-			  (js-call2 %this callback (js-undefined) a b)))))
+		       (lambda (obj)
+			  (if (number? obj)
+			      (js-call2 %this callback (js-undefined) obj #f)
+			      (js-call2 %this callback (js-undefined) #f obj))))))
       (else
        (let ((ip (open-input-file path)))
 	  (if (isa? callback JsFunction)
@@ -223,8 +225,10 @@
    (cond-expand
       (enable-libuv
        (uv-fs-read fd buffer length
-	  (lambda (a)
-	     (js-call1 %this cb (js-undefined) a))
+	  (lambda (obj)
+	     (if (<fx obj 0)
+		 (js-call3 %this cb (js-undefined) obj #f buffer)
+		 (js-call3 %this cb (js-undefined) #f obj buffer)))
 	  :offset offset :position position :loop (uv-default-loop)))
       (else
        (when (integer? position)
@@ -232,5 +236,5 @@
        (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
 	  (let ((res (read-fill-string! fast-buffer offset length fd)))
 	     (if (<fx res 0)
-		 (cb res (js-undefined))
-		 (cb 0 res fast-buffer)))))))
+		 (js-call3 %this cb (js-undefined) res #f buffer)
+		 (js-call3 %this cb (js-undefined) #f res buffer)))))))

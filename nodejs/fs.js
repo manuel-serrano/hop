@@ -241,7 +241,6 @@ fs.readFile = function(path, options, callback_) {
     if (bytesRead === 0) {
       return close();
     }
-
     pos += bytesRead;
     if (size !== 0) {
       if (pos === size) close();
@@ -261,7 +260,6 @@ fs.readFile = function(path, options, callback_) {
       } else if (pos < size) {
         buffer = buffer.slice(0, pos);
       }
-
       if (encoding) buffer = buffer.toString(encoding);
       return callback(er, buffer);
     });
