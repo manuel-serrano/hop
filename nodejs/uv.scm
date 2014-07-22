@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jul 22 10:40:32 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 15:31:13 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_uv
 
-   (library hop)
+   (library hop hopscript)
    
    (cond-expand
       (enable-libuv (library libuv))
@@ -32,7 +32,8 @@
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
-	   (nodejs-read ::input-port ::bstring ::long ::long ::long ::obj)))
+	   (nodejs-open ::JsGlobalObject ::bstring ::long ::long ::obj)
+	   (nodejs-read ::JsGlobalObject ::input-port ::bstring ::long ::long ::long ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -198,13 +199,32 @@
        '#())))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-read ...                                                  */
+;*    nodejs-open ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-read fd buffer offset length position cb)
+(define (nodejs-open %this path flags mode callback)
    (cond-expand
       (enable-libuv
-       (tprint "uf-fs-read..." cb)
-       (uv-fs-read fd buffer length cb
+       (uv-open-input-file path
+	  :callback (when (isa? callback JsFunction)
+		       (lambda (a b)
+			  (js-call2 %this callback (js-undefined) a b)))))
+      (else
+       (let ((ip (open-input-file path)))
+	  (if (isa? callback JsFunction)
+	      (if (input-port? ip)
+		  (js-call2 %this callback (js-undefined) #f ip)
+		  (js-call2 %this callback (js-undefined) "cannot open file" #f))
+	      ip)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-read ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-read %this fd buffer offset length position cb)
+   (cond-expand
+      (enable-libuv
+       (uv-fs-read fd buffer length
+	  (lambda (a)
+	     (js-call1 %this cb (js-undefined) a))
 	  :offset offset :position position :loop (uv-default-loop)))
       (else
        (when (integer? position)

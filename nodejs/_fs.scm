@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue Jul 22 10:41:11 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 15:35:24 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -142,43 +142,52 @@
    (define (readdir this path)
       (js-vector->jsarray (list->vector (directory->path-list path))  %this))
 
-   (define (lstat this path)
+   (define (lstat this path callback)
       (let ((obj (js-alist->jsobject
 		    `((mode . ,(if (directory? path) S_IFDIR S_IFREG)))
 		    %this)))
 	 (with-access::JsObject obj (__proto__)
 	    (set! __proto__ (get-process-fs-stats %this))
-	    obj)))
+	    (if (isa? callback JsFunction)
+		   (js-call1 %this callback (js-undefined) obj)
+		   obj))))
 
-   (define (stat this path)
+   (define (stat this path callback)
       (when (file-exists? path)
 	 (let ((obj (js-alist->jsobject
 		       `((size . ,(elong->fixnum (file-size path))))
 		       %this)))
 	    (with-access::JsObject obj (__proto__)
 	       (set! __proto__ (get-process-fs-stats %this))
-	       obj))))
+	       (if (isa? callback JsFunction)
+		   (js-call1 %this callback (js-undefined) obj)
+		   obj)))))
 
-   (define (fstat this fd)
+   (define (fstat this fd callback)
       (when (input-port? fd)
 	 (let ((obj (js-alist->jsobject
 		       `((size . ,(elong->fixnum (input-port-length fd))))
 		       %this)))
 	    (with-access::JsObject obj (__proto__)
 	       (set! __proto__ (get-process-fs-fstats %this))
-	       obj))))
+	       (if (isa? callback JsFunction)
+		   (js-call1 %this callback (js-undefined) obj)
+		   obj)))))
 
-   (define (close this fd)
-      (cond
-	 ((output-port? fd) (close-output-port fd))
-	 ((input-port? fd) (close-input-port fd))))
+   (define (close this fd callback)
+      (let ((err (cond
+		    ((output-port? fd) (close-output-port fd))
+		    ((input-port? fd) (close-input-port fd)))))
+	 (if (isa? callback JsFunction)
+	     (js-call1 %this callback (js-undefined) err)
+	     err)))
 
-   (define (open this path flags mode)
+   (define (open this path flags mode callback)
       (cond
 	 ((not (integer? flags))
 	  (error "open" "wrong flag" flags))
 	 ((=fx flags O_RDONLY)
-	  (open-input-file path))
+	  (nodejs-open %this path flags mode callback))
 	 ((=fx flags O_WRONLY)
 	  (open-output-file path))
 	 ((=fx flags O_APPEND)
@@ -187,14 +196,13 @@
 	  (error "open" "flags not implemented" flags))))
 
    (define (read this fd buffer offset length position callback)
-      (tprint "read cb=" callback)
       (if (eq? callback (js-undefined))
 	  (begin
 	     (when (integer? position)
 		(set-input-port-position! fd position))
 	     (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
 		(read-fill-string! fast-buffer offset length fd)))
-	  (nodejs-read fd buffer offset length position callback)))
+	  (nodejs-read %this fd buffer offset length position callback)))
 
    (define (write this fd buffer offset length position)
       (unless (= position 0)
@@ -210,11 +218,11 @@
 	(truncate . ,(js-make-function %this truncate 2 "truncate"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
 	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))
-	(lstat . ,(js-make-function %this lstat 1 "lstat"))
-	(stat . ,(js-make-function %this stat 1 "stat"))
-	(fstat . ,(js-make-function %this fstat 1 "fstat"))
-	(close . ,(js-make-function %this close 1 "close"))
-	(open . ,(js-make-function %this open 3 "open"))
+	(lstat . ,(js-make-function %this lstat 2 "lstat"))
+	(stat . ,(js-make-function %this stat 2 "stat"))
+	(fstat . ,(js-make-function %this fstat 2 "fstat"))
+	(close . ,(js-make-function %this close 2 "close"))
+	(open . ,(js-make-function %this open 4 "open"))
 	(read . ,(js-make-function %this read 6 "read"))
 	(write . ,(js-make-function %this write 5 "write"))
 	(fsync . ,(js-make-function %this fsync 0 "fsync")))

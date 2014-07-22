@@ -1,0 +1,57 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.0.x/examples/hss/hss.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Apr 20 07:13:21 2014                          */
+/*    Last change :  Thu Jul  3 17:52:10 2014 (serrano)                */
+/*    Copyright   :  2014 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Dynamic CSS construction                                         */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    nthColor                                                         */
+/*---------------------------------------------------------------------*/
+${
+   var hop = require( "hop" );
+
+   function nthColor( length, from, to, i ) {
+      var cfrom = hop.parseWebColor( from );
+      var cto = hop.parseWebColor( to );
+
+      var rs = (cto.red - cfrom.red) / (length - 1);
+      var gs = (cto.green - cfrom.green) / (length - 1);
+      var bs = (cto.blue - cfrom.blue) / (length - 1);
+
+      return hop.makeWebColor(
+	 Math.round( cfrom.red + (i * rs) ),
+	 Math.round( cfrom.green + (i * gs) ),
+	 Math.round( cfrom.blue + (i * bs) ) );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    div                                                              */
+/*---------------------------------------------------------------------*/
+div {
+  padding: 8px;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  width: 4em;
+}
+
+/*---------------------------------------------------------------------*/
+/*    colored div                                                      */
+/*---------------------------------------------------------------------*/
+.div0 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 0 ) }; }
+.div1 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 1 ) }; }
+.div2 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 2 ) }; }
+.div3 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 3 ) }; }
+.div4 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 4 ) }; }
+.div5 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 5 ) }; }
+.div6 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 6 ) }; }
+.div7 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 7 ) }; }
+.div8 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 8 ) }; }
+.div9 { background-color: ${ nthColor( 10, "#ffd100", "#FF0000", 9 ) }; }
