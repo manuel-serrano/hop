@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Jul 10 15:25:15 2014 (serrano)                */
+;*    Last change :  Mon Jul 21 17:43:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -166,11 +166,14 @@
 	 (else
 	  (error "open" "flags not implemented" flags))))
 
-   (define (read this fd buffer offset length position)
-      (unless (= position 0)
-	 (set-input-port-position! fd position))
-      (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	 (read-fill-string! fast-buffer offset length fd)))
+   (define (read this fd buffer offset length position callback)
+      (if (eq? callback (js-undefined))
+	  (begin
+	     (unless (= position 0)
+		(set-input-port-position! fd position))
+	     (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
+		(read-fill-string! fast-buffer offset length fd)))
+	  (nodejs-read fd buffer offset length position callback)))
 
    (define (write this fd buffer offset length position)
       (unless (= position 0)
@@ -190,7 +193,7 @@
 	(stat . ,(js-make-function %this stat 1 "stat"))
 	(close . ,(js-make-function %this close 1 "close"))
 	(open . ,(js-make-function %this open 3 "open"))
-	(read . ,(js-make-function %this read 5 "read"))
+	(read . ,(js-make-function %this read 6 "read"))
 	(write . ,(js-make-function %this write 5 "write"))
 	(fsync . ,(js-make-function %this fsync 0 "fsync")))
       %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Jul 19 07:04:13 2014 (serrano)                */
+;*    Last change :  Mon Jul 21 17:43:48 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -31,7 +31,8 @@
 	   (nodejs-loadavg ::u8vector)
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
-	   (nodejs-getcpus::vector)))
+	   (nodejs-getcpus::vector)
+	   (nodejs-read ::input-port ::bstring ::long ::long ::long ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -195,3 +196,20 @@
        (uv-cpus))
       (else
        '#())))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-read ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-read fd buffer offset length position cb)
+   (cond-expand
+      (enable-libuv
+       (uv-fs-read fd buffer length cb
+	  :offset offset :position position :loop (uv-default-loop)))
+      (else
+       (unless (= position 0)
+	  (set-input-port-position! fd position))
+       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
+	  (let ((res (read-fill-string! fast-buffer offset length fd)))
+	     (if (<fx res 0)
+		 (cb res (js-undefined))
+		 (cb 0 res fast-buffer)))))))
