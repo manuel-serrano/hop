@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Jul 21 17:43:48 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 10:40:32 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -203,10 +203,11 @@
 (define (nodejs-read fd buffer offset length position cb)
    (cond-expand
       (enable-libuv
+       (tprint "uf-fs-read..." cb)
        (uv-fs-read fd buffer length cb
 	  :offset offset :position position :loop (uv-default-loop)))
       (else
-       (unless (= position 0)
+       (when (integer? position)
 	  (set-input-port-position! fd position))
        (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
 	  (let ((res (read-fill-string! fast-buffer offset length fd)))

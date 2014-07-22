@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun May 25 18:44:20 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 09:58:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -78,7 +78,7 @@
       ;; force a return when needed
       (when (and target tail? (not (return? this)))
 	 ;; this is a function tail statement that misses a return
-	 ;; statement, add one.
+	 ;; statement and we add one.
 	 ;; we could do better here, instead of transformaing
 	 ;;    (if test (return XXX))
 	 ;; into
@@ -96,6 +96,31 @@
 		   (for-each (lambda (n) (untail-return! n target)) nodes)
 		   (set-cdr! (last-pair nodes) (list ret)))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SSwitch ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (unreturn! this::J2SSwitch target tail?)
+   (with-access::J2SSwitch this (key cases)
+      (set! key (unreturn! key target tail?))
+      (cond
+	 ((not tail?)
+	  (for-each (lambda (kase::J2SCase)
+		       (with-access::J2SCase kase (expr body)
+			  (set! expr (unreturn! expr target #f))
+			  (set! body (unreturn! body target #f))))
+	     cases))
+	 ((pair? cases)
+	  (let ((sesac (reverse cases)))
+	     (for-each (lambda (kase::J2SCase)
+			  (with-access::J2SCase kase (expr body)
+			     (set! expr (unreturn! expr target #f))
+			     (set! body (unreturn! body target #f))))
+		(cdr sesac))
+	     (with-access::J2SCase (car sesac) (expr body)
+		(set! expr (unreturn! expr target #f))
+		(set! body (unreturn! body target #f))))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2STry...                                            */

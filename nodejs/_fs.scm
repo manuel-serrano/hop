@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Jul 21 17:43:05 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 10:41:11 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -77,14 +77,25 @@
 ;*    process-fs-stats ...                                             */
 ;*---------------------------------------------------------------------*/
 (define process-fs-stats #f)
+(define process-fs-fstats #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    get-process-fs-stats ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (get-process-fs-stats %this)
    (with-access::JsGlobalObject %this (js-object)
-      (unless process-fs-stats (set! process-fs-stats (js-new %this js-object)))
+      (unless process-fs-stats
+	 (set! process-fs-stats (js-new %this js-object)))
       process-fs-stats))
+
+;*---------------------------------------------------------------------*/
+;*    get-process-fs-fstats ...                                        */
+;*---------------------------------------------------------------------*/
+(define (get-process-fs-fstats %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (unless process-fs-fstats
+	 (set! process-fs-fstats (js-new %this js-object)))
+      process-fs-fstats))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-fs ...                                                   */
@@ -148,6 +159,15 @@
 	       (set! __proto__ (get-process-fs-stats %this))
 	       obj))))
 
+   (define (fstat this fd)
+      (when (input-port? fd)
+	 (let ((obj (js-alist->jsobject
+		       `((size . ,(elong->fixnum (input-port-length fd))))
+		       %this)))
+	    (with-access::JsObject obj (__proto__)
+	       (set! __proto__ (get-process-fs-fstats %this))
+	       obj))))
+
    (define (close this fd)
       (cond
 	 ((output-port? fd) (close-output-port fd))
@@ -167,9 +187,10 @@
 	  (error "open" "flags not implemented" flags))))
 
    (define (read this fd buffer offset length position callback)
+      (tprint "read cb=" callback)
       (if (eq? callback (js-undefined))
 	  (begin
-	     (unless (= position 0)
+	     (when (integer? position)
 		(set-input-port-position! fd position))
 	     (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
 		(read-fill-string! fast-buffer offset length fd)))
@@ -191,6 +212,7 @@
 	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))
 	(lstat . ,(js-make-function %this lstat 1 "lstat"))
 	(stat . ,(js-make-function %this stat 1 "stat"))
+	(fstat . ,(js-make-function %this fstat 1 "fstat"))
 	(close . ,(js-make-function %this close 1 "close"))
 	(open . ,(js-make-function %this open 3 "open"))
 	(read . ,(js-make-function %this read 6 "read"))

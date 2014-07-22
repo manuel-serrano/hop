@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Jul 14 09:50:50 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 09:08:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -361,4 +361,13 @@
    (with-access::J2SDollar this (node)
       `(,@(call-next-method) ,(j2s->list node))))
       
-   
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SSwitch ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SSwitch)
+   (with-access::J2SSwitch this (key cases)
+      `(,@(call-next-method) ,(j2s->list key)
+	  ,@(map (lambda (case::J2SCase)
+		   (with-access::J2SCase case (expr body)
+		      (list (j2s->list expr) (j2s->list body))))
+	      cases))))
