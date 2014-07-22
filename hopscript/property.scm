@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul 13 06:10:39 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 21:32:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -530,6 +530,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get _o prop %this::JsGlobalObject)
+   (tprint "js-get prop=" prop " _o=" _o)
    (cond
       ((pair? _o)
        (js-get-pair _o prop %this))

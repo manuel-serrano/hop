@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 19 06:45:28 2014 (serrano)                */
+;*    Last change :  Tue Jul 22 21:33:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -295,8 +295,8 @@
 	  (nodejs-require-core name worker %this)
 	  (let* ((abspath (nodejs-resolve name %this %module))
 		 (mod (nodejs-load abspath worker))
-		 (children (js-get 'children %module %this))
-		 (push (js-get 'push children %this)))
+		 (children (js-get %module 'children %this))
+		 (push (js-get children 'push %this)))
 	     (js-call1 %this push children mod)
 	     (when (eq? (js-get mod 'parent %this) (js-undefined))
 		(js-put! mod 'parent %module #f %this))
