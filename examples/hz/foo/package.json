@@ -1,7 +1,0 @@
-{
-   "name": "foo",
-   "version": "1.0.0",
-   "description": "A simple Hop weblet",
-   "private": true,
-   "homepage": "http://hop.inria.fr"
-}
