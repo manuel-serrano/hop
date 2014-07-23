@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jul 23 12:44:00 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:56:02 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -172,7 +172,7 @@
       (nodejs-fstat %this fd callback))
 
    (define (close this fd callback)
-      (nodejs-close %this fd callbac))
+      (nodejs-close %this fd callback))
 
    (define (open this path flags mode callback)
       (nodejs-open %this path flags mode callback))
