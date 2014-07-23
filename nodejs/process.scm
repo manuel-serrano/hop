@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat Jul 19 06:59:04 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 16:19:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -165,15 +165,13 @@
       %this))
 
 ;*---------------------------------------------------------------------*/
-;*    slowbuffer ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (slowbuffer this len)
-   (make-vector len))
-
-;*---------------------------------------------------------------------*/
 ;*    process-buffer ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (process-buffer %this)
+   
+   (define (slowbuffer this len %this)
+      (make-vector (js-tointeger len %this)))
+
    (with-access::JsGlobalObject %this (js-object)
       (let ((SlowBuffer (js-make-function %this slowbuffer 1 "SlowBuffer"
 			   :alloc (lambda (o) (js-object-alloc o %this))
@@ -192,7 +190,8 @@
 			   (js-get buf '%fast-buffer %this))
 			3 "asciiSlice")
 		     #f %this)
-		  (js-put! buf '%fast-buffer (make-string d) #f %this))
+		  (js-put! buf '%fast-buffer
+		     (make-string (js-tointeger d %this)) #f %this))
 	       4 "makeFastBuffer")
 	    #t %this)
 	 (js-alist->jsobject

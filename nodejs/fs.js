@@ -206,7 +206,6 @@ fs.readFile = function(path, options, callback_) {
   fs.open(path, flag, 438 /*=0666*/, function(er, fd_) {
     if (er) return callback(er);
     fd = fd_;
-
     fs.fstat(fd, function(er, st) {
       if (er) return callback(er);
       size = st.size;

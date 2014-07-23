@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Jul 23 12:43:48 2014 (serrano)                */
+#*    Last change :  Wed Jul 23 15:36:52 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -65,14 +65,14 @@ POPULATION = Makefile \
   authentication/authentication.js \
   image/image.js \
   pair/pair.js \
-  hz/hz.js \
-  hz/foo/package.json \
-  hz/foo/foo.js \
-  hz/foo/foo.hss \
-  hz/foo/etc \
-  hz/foo/etc/favicon.png \
-  hz/foo/etc/logo.png \
-  hz/foo-1.0.0.hz
+  hzdemo/hzdemo.js \
+  hzdemo/foo/package.json \
+  hzdemo/foo/foo.js \
+  hzdemo/foo/foo.hss \
+  hzdemo/foo/etc \
+  hzdemo/foo/etc/favicon.png \
+  hzdemo/foo/etc/logo.png \
+  hzdemo/foo-1.0.0.hz
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */

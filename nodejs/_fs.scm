@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jul 23 12:56:02 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 16:24:51 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -70,9 +70,6 @@
 (define S_IFDIR
    (cond-expand (bigloo-c (pragma::long "S_IFDIR")) (else #o40000)))
 
-(define ENOENT
-   (cond-expand (bigloo-c (pragma::long "ENOENT")) (else 2)))
-
 ;*---------------------------------------------------------------------*/
 ;*    process-fs-stats ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -105,39 +102,19 @@
 (define (process-fs %this)
 
    (define (rename this old new cb)
-      (if (isa? cb JsFunction)
-	  ;; asynchronous call
-	  (nodejs-rename-file old new
-	     (lambda (res path)
-		(if (=fx res 0)
-		    (js-call1 %this cb this (js-undefined))
-		    (with-access::JsGlobalObject %this (js-error)
-		       (let ((obj (js-new %this js-error
-				     (format "Cannot rename file ~s into ~a"
-					old new)
-				     new)))
-			  (js-put! obj 'path old #f %this)
-			  (unless (file-exists? old)
-			     (js-put! obj 'errno ENOENT #f %this)
-			     (js-put! obj 'code "ENOENT" #f %this))
-			  (js-call1 %this cb this obj))))))
-	  ;; synchronous call
-	  (if (rename-file old new)
-	      (js-call1 %this cb (js-undefined) (js-undefined))
-	      (with-access::JsGlobalObject %this (js-error)
-		 (let ((obj (js-new %this js-error
-			       (format "Cannot rename file ~s into ~a" old new)
-			       new)))
-		    (js-put! obj 'path old #f %this)
-		    (unless (file-exists? old)
-		       (js-put! obj 'errno ENOENT #f %this)
-		       (js-put! obj 'code "ENOENT" #f %this))
-		    (js-call1 %this cb this obj))))))
+      (nodejs-rename-file %this old new cb))
    
-   (define (ftruncate this path len cb)
-      (let ((r (output-port-truncate path len)))
-	 (when (isa? cb JsFunction)
-	    (js-call1 %this cb %this (js-toboolean r)))))
+   (define (ftruncate this fd offset cb)
+      (nodejs-ftruncate %this fd offset cb))
+   
+   (define (truncate this path offset cb)
+      (nodejs-truncate %this path offset cb))
+   
+   (define (fchown this fd uid gid cb)
+      (nodejs-fchown %this fd uid gid cb))
+   
+   (define (chown this path uid gid cb)
+      (nodejs-fchown %this path uid gid cb))
    
    (define (readdir this path)
       (js-vector->jsarray (list->vector (directory->path-list path))  %this))
@@ -178,13 +155,11 @@
       (nodejs-open %this path flags mode callback))
 
    (define (read this fd buffer offset length position callback)
-      (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	 (if (eq? callback (js-undefined))
-	     (begin
-		(when (integer? position)
-		   (set-input-port-position! fd position))
-		(read-fill-string! fast-buffer offset length fd))
-	     (nodejs-read %this fd fast-buffer offset length position callback))))
+      (nodejs-read %this fd buffer
+	 (int32->fixnum (js-toint32 offset %this))
+	 (int32->fixnum (js-toint32 length %this))
+	 (int32->fixnum (js-toint32 position %this))
+	 callback))
 
    (define (write this fd buffer offset length position)
       (unless (= position 0)
@@ -197,7 +172,10 @@
    
    (js-alist->jsobject
       `((rename . ,(js-make-function %this rename 2 "rename"))
+	(ftruncate . ,(js-make-function %this ftruncate 2 "ftruncate"))
 	(truncate . ,(js-make-function %this truncate 2 "truncate"))
+	(fchown . ,(js-make-function %this fchown 3 "fchown"))
+	(chown . ,(js-make-function %this chown 3 "chown"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
 	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))
 	(lstat . ,(js-make-function %this lstat 2 "lstat"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Jul 23 12:41:23 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 16:24:54 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -27,7 +27,11 @@
 	   (nodejs-timer-close ::obj)
 	   (nodejs-timer-stop ::obj)
 	   (nodejs-timer-unref ::obj)
-	   (nodejs-rename-file ::bstring ::bstring ::procedure)
+	   (nodejs-rename-file ::JsGlobalObject ::bstring ::bstring ::obj)
+	   (nodejs-ftruncate ::JsGlobalObject ::obj ::int ::obj)
+	   (nodejs-truncate ::JsGlobalObject ::bstring ::int ::obj)
+	   (nodejs-fchown ::JsGlobalObject ::obj ::int ::int ::obj)
+	   (nodejs-chown ::JsGlobalObject ::bstring ::int ::int ::obj)
 	   (nodejs-loadavg ::u8vector)
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
@@ -36,6 +40,12 @@
 	   (nodejs-close ::JsGlobalObject ::obj ::obj)
 	   (nodejs-fstat ::JsGlobalObject ::obj ::obj)
 	   (nodejs-read ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    Constants                                                        */
+;*---------------------------------------------------------------------*/
+(define ENOENT
+   (cond-expand (bigloo-c (pragma::long "ENOENT")) (else 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -148,18 +158,6 @@
        #unspecified)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-rename-file ...                                           */
-;*---------------------------------------------------------------------*/
-(define (nodejs-rename-file oldp newp cb)
-   (cond-expand
-      (enable-libuv
-       (uv-fs-rename oldp newp :callback cb))
-      (else
-       (if (rename-file oldp newp)
-	   (cb (js-undefined))
-	   (cb newp #f)))))
-	  
-;*---------------------------------------------------------------------*/
 ;*    nodejs-loadavg ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-loadavg vec::u8vector)
@@ -201,24 +199,176 @@
        '#())))
 
 ;*---------------------------------------------------------------------*/
+;*    not-implemented-exn ...                                          */
+;*---------------------------------------------------------------------*/
+(define (not-implemented-exn fun %this)
+   (with-access::JsGlobalObject %this (js-error)
+      (js-new %this js-error (format "~a not implemented" fun))))
+
+;*---------------------------------------------------------------------*/
+;*    fs-exn ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (fs-exn fmt errno %this)
+   
+   (cond-expand
+      ((not enable-libuv)
+       (define (uv-strerror errno) (integer->string errno))))
+
+   (cond-expand
+      ((not enable-libuv)
+       (define (uv-err-name errno) (integer->string errno))))
+
+   (with-access::JsGlobalObject %this (js-error)
+      (let ((obj (js-new %this js-error
+		    (format fmt (uv-strerror errno)))))
+	 (js-put! obj 'errno errno #f %this)
+	 (js-put! obj 'code (uv-err-name errno) #f %this)
+	 obj)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-rename-file ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-rename-file %this oldp newp callback)
+   
+   (define (rename-callback res path)
+      (if (=fx res 0)
+	  (js-call1 %this callback (js-undefined) #f)
+	  (let ((exn (fs-exn
+			(format "rename: cannot rename file ~s into ~s -- ~~s"
+			   oldp newp)
+			res %this)))
+	     (js-call1 %this callback  (js-undefined) exn))))
+   
+   (cond-expand
+      (enable-libuv
+       (uv-fs-rename oldp newp
+	  :callback
+	  (when (isa? callback JsFunction) rename-callback)))
+      (else
+       (let ((res (rename-file oldp newp)))
+	  (if (isa? callback JsFunction)
+	      (rename-callback res oldp)
+	      res)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-ftruncate ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-ftruncate %this fd offset callback)
+   
+   (define (ftruncate-callback res)
+      (if (=fx res 0)
+	  (js-call1 %this callback (js-undefined) #f)
+	  (let ((exn (fs-exn
+			(format "ftruncate: cannot truncate ~a to ~a -- ~~s"
+			   fd offset)
+			res %this)))
+	     (js-call1 %this callback (js-undefined) exn))))
+   
+   (cond-expand
+      (enable-libuv
+       (uv-fs-ftruncate fd offset
+	  :callback
+	  (when (isa? callback JsFunction) ftruncate-callback)))
+      (else
+       (cond
+	  ((output-port? port)
+	   (let ((res (output-port-truncate port offset)))
+	      (if (isa? callback JsFunction)
+		  (ftruncate-callback res)
+		  res)))
+	  (else
+	   (ftruncate-callback (not-implemented-exn "ftruncate")))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-truncate ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-truncate %this path offset callback)
+   
+   (define (truncate-callback res)
+      (if (=fx res 0)
+	  (js-call1 %this callback (js-undefined) #f)
+	  (let ((exn (fs-exn
+			(format "truncate: cannot truncate ~a to ~a -- ~s"
+			   path offset)
+			res %this)))
+	     (js-call1 %this callback (js-undefined) exn))))
+   
+   (cond-expand
+      (enable-libuv
+       (uv-fs-truncate path offset
+	  :callback
+	  (when (isa? callback JsFunction) truncate-callback)))
+      (else
+       (truncate-callback (not-implemented-exn "truncate")))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fchown ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fchown %this fd uid guid callback)
+   
+   (define (fchown-callback res)
+      (if (=fx res 0)
+	  (js-call1 %this callback (js-undefined) #f)
+	  (let ((exn (fs-exn
+			(format "fchown: cannot chown ~a, ~a, ~a -- ~~s"
+			   fd uid guid)
+			res %this)))
+	     (js-call1 %this callback (js-undefined) exn))))
+   
+   (cond-expand
+      (enable-libuv
+       (uv-fs-fchown fd uid guid
+	  :callback
+	  (when (isa? callback JsFunction) fchown-callback)))
+      (else
+       (fchown-callback (not-implemented-exn "fchown")))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-chown ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-chown %this fd uid guid callback)
+   
+   (define (chown-callback res)
+      (if (=fx res 0)
+	  (js-call1 %this callback (js-undefined) #f)
+	  (let ((exn (fs-exn
+			(format "chown: cannot chown ~a, ~a, ~a -- ~~s"
+			   fd uid guid)
+			res %this)))
+	     (js-call1 %this callback (js-undefined) exn))))
+   
+   (cond-expand
+      (enable-libuv
+       (uv-fs-chown fd uid guid
+	  :callback
+	  (when (isa? callback JsFunction) chown-callback)))
+      (else
+       (chown-callback (not-implemented-exn "chown")))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-open ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-open %this path flags mode callback)
+
+   (define (open-callback res)
+      (if (isa? res UvFile)
+	  (js-call2 %this callback (js-undefined) #f res)
+	  (let ((exn (fs-exn
+			(format "open: cannot open file ~a, ~a, ~a -- ~~s"
+			   path flags mode)
+			res %this)))
+	     (js-call2 %this callback (js-undefined) exn #f))))
+   
    (cond-expand
       (enable-libuv
-       (uv-fs-open path
-	  flags
+       (uv-fs-open path flags
 	  :mode mode
 	  :loop (uv-default-loop)
-	  :callback (when (isa? callback JsFunction)
-		       (lambda (obj)
-			  (if (number? obj)
-			      (js-call2 %this callback (js-undefined) obj #f)
-			      (js-call2 %this callback (js-undefined) #f obj))))))
+	  :callback (when (isa? callback JsFunction) open-callback)))
       (else
        (let ((ip (cond
 		    ((not (integer? flags))
-		     (error "open" "wrong flag" flags))
+		     #f)
 		    ((=fx flags O_RDONLY)
 		     (open-input-file path))
 		    ((=fx flags O_WRONLY)
@@ -226,11 +376,11 @@
 		    ((=fx flags O_APPEND)
 		     (append-output-file path))
 		    (else
-		     (error "open" "flags not implemented" flags)))))
+		     #f))))
 	  (if (isa? callback JsFunction)
-	      (if ip
-		  (js-call2 %this callback (js-undefined) #f ip)
-		  (js-call2 %this callback (js-undefined) "cannot open file" #f))
+	      (if (not ip)
+		  (open-callback -22)
+		  (open-callback ip))
 	      ip)))))
 
 ;*---------------------------------------------------------------------*/
@@ -239,11 +389,10 @@
 (define (nodejs-close %this fd callback)
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (uv-fs-close fd :callback
-	      (lambda (val)
-		 (js-call1 %this callback (js-undefined) val)))
-	   (uv-fs-close fd)))
+       (uv-fs-close fd :callback
+	  (when (isa? callback JsFunction)
+	     (lambda (val)
+		(js-call1 %this callback (js-undefined) val)))))
       (else
        (let ((res (cond
 		     ((output-port? fd) (close-output-port fd))
@@ -276,7 +425,10 @@
 	   (uv-fs-fstat fd :callback
 	      (lambda (val)
 		 (if (integer? val)
-		     (js-call2 %this callback (js-undefined) val #f)
+		     (js-call2 %this callback (js-undefined)
+			(fs-exn (format "fstat, cannot stat ~a -- ~~s" fd)
+			   val %this)
+			#f)
 		     (let ((stat (js-alist->jsobject (stat-date val %this) %this)))
 			(js-call2 %this callback (js-undefined) #f stat)))))
 	   (let ((val (uv-fs-fstat fd)))
@@ -301,24 +453,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-read ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-read %this fd buffer offset length position cb)
+(define (nodejs-read %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (uv-fs-read fd buffer length
-	  :callback
-	  (lambda (obj)
-	     (if (<fx obj 0)
-		 (js-call3 %this cb (js-undefined) obj #f buffer)
-		 (js-call3 %this cb (js-undefined) #f obj buffer)))
-	  :offset offset :position position :loop (uv-default-loop)))
+       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
+	  (uv-fs-read fd fast-buffer length
+	     :callback
+	     (when (isa? callback JsFunction)
+		(lambda (obj)
+		   (if (<fx obj 0)
+		       (js-call3 %this callback (js-undefined) obj #f buffer)
+		       (js-call3 %this callback (js-undefined) #f obj buffer))))
+	     :offset offset :position position :loop (uv-default-loop))))
       (else
        (when (integer? position)
 	  (set-input-port-position! fd position))
        (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
 	  (let ((res (read-fill-string! fast-buffer offset length fd)))
 	     (if (<fx res 0)
-		 (js-call3 %this cb (js-undefined) res #f buffer)
-		 (js-call3 %this cb (js-undefined) #f res buffer)))))))
+		 (js-call3 %this callback (js-undefined) res #f buffer)
+		 (js-call3 %this callback (js-undefined) #f res buffer)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript binding                                                */
