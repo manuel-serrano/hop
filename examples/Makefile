@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Jul 22 17:20:23 2014 (serrano)                */
+#*    Last change :  Wed Jul 23 12:43:48 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -46,7 +46,6 @@ POPULATION = Makefile \
   proxy/proxy.js \
   worker/slave.js worker/worker.js worker/bar.js \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js \
-  rewrite/rewrite.js \
   widget/node_modules \
   widget/node_modules/flipcounter \
   widget/node_modules/flipcounter/lib \

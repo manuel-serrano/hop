@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jul 15 17:52:51 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:35:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -27,7 +27,8 @@
 	   __hopscript_public
 	   __hopscript_error)
    
-   (export (js-init-date! ::JsObject)))
+   (export (js-init-date! ::JsObject)
+	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsDate ...                                   */
@@ -1065,3 +1066,13 @@
 (define (date->utc-date dt::date)
    (let ((tz (date-timezone dt)))
       (date-copy (seconds->date (+ (date->seconds dt) tz)) :timezone 0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date->jsdate ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-date->jsdate date::date %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-date)
+      (let ((dt (js-new0 %this js-date)))
+	 (with-access::JsDate dt (val)
+	    (set! val date)
+	    dt))))

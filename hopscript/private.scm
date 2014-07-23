@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Jul  3 10:50:24 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:03:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -30,7 +30,6 @@
 	   
 	   (js-cast-object ::JsGlobalObject obj ::bstring)
 	   (expander js-toprimitive)
-	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 
 	   (trim-whitespaces+ ::bstring #!key (left #t) (right #f) (plus #f))
 	   
@@ -133,14 +132,6 @@
 		     (js-toprimitive ,tmp 'any ,this))))
 	    (else
 	     (error "js-toprimitive" "illegal call" x))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-toprimitive ::obj ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
-;*---------------------------------------------------------------------*/
-(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
-   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze-property! ...                                          */

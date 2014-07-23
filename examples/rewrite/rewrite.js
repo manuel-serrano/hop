@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Thu Jun 12 16:17:24 2014 (serrano)                */
+/*    Last change :  Wed Jul 23 12:42:25 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    String response example                                          */
@@ -31,10 +31,14 @@ service rewrite() {
 
 service rewriteNow( url ) {
    var fd = fs.openSync( url, "r" );
+
    var buf = new Buffer( size );
    fs.readSync( fd, buf, 0, size, 0 );
    console.log( buf.toString( "ascii", 0, size ) );
+   
    return hop.HTTPResponseString( 
       buf.toString( "ascii", 0, size ).replace( /Inria/gi, "l'Inria" ),
       { contentType: "text/html" } );
 }
+
+console.log( "Go to \"http://%s:%d/hop/rewrite\"", hop.hostname, hop.port );

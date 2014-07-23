@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jul 14 20:20:58 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:03:29 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -77,10 +77,14 @@
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
+	   
 	   (js-tostring::bstring ::obj ::JsGlobalObject)
+	   (generic js-object-tostring::bstring ::object ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
+	   
+	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
 	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
 	   (js-equality? ::obj ::obj ::JsGlobalObject)
@@ -846,9 +850,17 @@
       ((number? obj)
        (js-number->string obj))
       ((symbol? obj)
-       (symbol->string! obj)) 
+       (symbol->string! obj))
+      ((object? obj)
+       (js-object-tostring obj %this))
       (else
        (typeof obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-tostring ...                                           */
+;*---------------------------------------------------------------------*/
+(define-generic (js-object-tostring obj %this::JsGlobalObject)
+   (typeof obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
@@ -888,6 +900,14 @@
 (define (js-toobject/debug %this::JsGlobalObject loc o)
    (or (js-toobject-failsafe %this o)
        (js-raise-type-error/loc %this loc "toObject: cannot convert ~s" o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::obj ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */

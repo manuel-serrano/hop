@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jul 22 17:02:45 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:41:23 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -33,7 +33,9 @@
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
 	   (nodejs-open ::JsGlobalObject ::bstring ::long ::long ::obj)
-	   (nodejs-read ::JsGlobalObject ::input-port ::bstring ::long ::long ::long ::obj)))
+	   (nodejs-close ::JsGlobalObject ::obj ::obj)
+	   (nodejs-fstat ::JsGlobalObject ::obj ::obj)
+	   (nodejs-read ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
@@ -151,7 +153,7 @@
 (define (nodejs-rename-file oldp newp cb)
    (cond-expand
       (enable-libuv
-       (uv-rename-file oldp newp cb (uv-default-loop)))
+       (uv-fs-rename oldp newp :callback cb))
       (else
        (if (rename-file oldp newp)
 	   (cb (js-undefined))
@@ -204,19 +206,97 @@
 (define (nodejs-open %this path flags mode callback)
    (cond-expand
       (enable-libuv
-       (uv-open-input-file path
+       (uv-fs-open path
+	  flags
+	  :mode mode
+	  :loop (uv-default-loop)
 	  :callback (when (isa? callback JsFunction)
 		       (lambda (obj)
 			  (if (number? obj)
 			      (js-call2 %this callback (js-undefined) obj #f)
 			      (js-call2 %this callback (js-undefined) #f obj))))))
       (else
-       (let ((ip (open-input-file path)))
+       (let ((ip (cond
+		    ((not (integer? flags))
+		     (error "open" "wrong flag" flags))
+		    ((=fx flags O_RDONLY)
+		     (open-input-file path))
+		    ((=fx flags O_WRONLY)
+		     (open-output-file path))
+		    ((=fx flags O_APPEND)
+		     (append-output-file path))
+		    (else
+		     (error "open" "flags not implemented" flags)))))
 	  (if (isa? callback JsFunction)
-	      (if (input-port? ip)
+	      (if ip
 		  (js-call2 %this callback (js-undefined) #f ip)
 		  (js-call2 %this callback (js-undefined) "cannot open file" #f))
 	      ip)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-close ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-close %this fd callback)
+   (cond-expand
+      (enable-libuv
+       (if (isa? callback JsFunction)
+	   (uv-fs-close fd :callback
+	      (lambda (val)
+		 (js-call1 %this callback (js-undefined) val)))
+	   (uv-fs-close fd)))
+      (else
+       (let ((res (cond
+		     ((output-port? fd) (close-output-port fd))
+		     ((input-port? fd) (close-input-port fd))
+		     (else #f))))
+	  (if (isa? callback JsFunction)
+	      (js-call1 %this callback (js-undefined) res)
+	      res)))))
+
+;*---------------------------------------------------------------------*/
+;*    stat-date ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (stat-date stat %this)
+   (for-each (lambda (k)
+		(let ((c (assq k stat)))
+		   (when (pair? c)
+		      (set-cdr! c (js-date->jsdate
+				     (seconds->date (cdr c))
+				     %this)))))
+      '(mtime atime ctime))
+   stat)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fstat ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fstat %this fd callback)
+   (cond-expand
+      (enable-libuv
+       (if (isa? callback JsFunction)
+	   (uv-fs-fstat fd :callback
+	      (lambda (val)
+		 (if (integer? val)
+		     (js-call2 %this callback (js-undefined) val #f)
+		     (let ((stat (js-alist->jsobject (stat-date val %this) %this)))
+			(js-call2 %this callback (js-undefined) #f stat)))))
+	   (let ((val (uv-fs-fstat fd)))
+	      (if (integer? val)
+		  val
+		  (js-alist->jsobject (stat-date val %this) %this)))))
+      (else
+       ((input-port? fd)
+	(let ((obj (js-alist->jsobject
+		      `((size . ,(elong->fixnum (input-port-length fd))))
+		      %this)))
+	   (with-access::JsObject obj (__proto__)
+	      (set! __proto__ (get-process-fs-fstats %this))
+	      (if (isa? callback JsFunction)
+		  (js-call2 %this callback (js-undefined) #f obj)
+		  obj))))
+       ((isa? callback JsFunction)
+	(js-call2 %this callback (js-undefined) "Not a file descriptor" #f))
+       (else
+	#f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-read ...                                                  */
@@ -225,6 +305,7 @@
    (cond-expand
       (enable-libuv
        (uv-fs-read fd buffer length
+	  :callback
 	  (lambda (obj)
 	     (if (<fx obj 0)
 		 (js-call3 %this cb (js-undefined) obj #f buffer)
@@ -238,3 +319,24 @@
 	     (if (<fx res 0)
 		 (js-call3 %this cb (js-undefined) res #f buffer)
 		 (js-call3 %this cb (js-undefined) #f res buffer)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript binding                                                */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (enable-libuv
+
+;;;
+(define-method (js-toprimitive obj::UvFile preferredtype %this::JsGlobalObject)
+   (with-access::UvFile obj (fd)
+      fd))
+
+;;;
+(define-method (js-inspect obj::UvFile cnt)
+   (with-access::UvFile obj (fd)
+      fd))
+
+(define-method (js-object-tostring obj::UvFile %this::JsGlobalObject)
+   (with-access::UvFile obj (fd)
+      (integer->string fd)))
+))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue Jul 22 17:03:53 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 12:44:00 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -169,41 +169,13 @@
 	  #f)))
 
    (define (fstat this fd callback)
-      (cond
-	 ((input-port? fd)
-	  (let ((obj (js-alist->jsobject
-			`((size . ,(elong->fixnum (input-port-length fd))))
-			%this)))
-	     (with-access::JsObject obj (__proto__)
-		(set! __proto__ (get-process-fs-fstats %this))
-		(if (isa? callback JsFunction)
-		    (js-call2 %this callback (js-undefined) #f obj)
-		    obj))))
-	 ((isa? callback JsFunction)
-	  (js-call2 %this callback (js-undefined) "Not a file descriptor" #f))
-	 (else
-	  #f)))
+      (nodejs-fstat %this fd callback))
 
    (define (close this fd callback)
-      (cond
-	 ((output-port? fd) (close-output-port fd))
-	 ((input-port? fd) (close-input-port fd)))
-      (if (isa? callback JsFunction)
-	  (js-call1 %this callback (js-undefined) #f)
-	  #f))
+      (nodejs-close %this fd callbac))
 
    (define (open this path flags mode callback)
-      (cond
-	 ((not (integer? flags))
-	  (error "open" "wrong flag" flags))
-	 ((=fx flags O_RDONLY)
-	  (nodejs-open %this path flags mode callback))
-	 ((=fx flags O_WRONLY)
-	  (open-output-file path))
-	 ((=fx flags O_APPEND)
-	  (append-output-file path))
-	 (else
-	  (error "open" "flags not implemented" flags))))
+      (nodejs-open %this path flags mode callback))
 
    (define (read this fd buffer offset length position callback)
       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))

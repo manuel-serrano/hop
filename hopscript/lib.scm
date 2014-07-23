@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Jul 18 17:36:57 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 10:18:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -39,6 +39,10 @@
 			     (keyword->symbol (cdr e)))
 			    ((pair? (cdr e))
 			     (js-alist->jsobject (cdr e) %this))
+			    ((int64? (cdr e))
+			     (int64->flonum (cdr e)))
+			    ((elong? (cdr e))
+			     (elong->flonum (cdr e)))
 			    (else
 			     (cdr e)))
 			 #f %this))
