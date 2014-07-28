@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul  2 17:24:49 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 17:19:06 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -91,7 +91,7 @@
 		(append (hopc-bigloo-options) (list "-c"))))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
-	    (("--reset-bigloo-options" ?options (help "Reset all Bigloo options"))
+	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
 	     (hopc-bigloo-options-set! '()))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
 	     (hopc-pass-set! 'client-js))

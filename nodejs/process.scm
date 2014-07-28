@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Jul 28 16:15:55 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 16:55:25 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -169,7 +169,7 @@
 	    #f %this)
 
 	 ;; tick
-	 (js-put! proc '_infoBox
+	 (js-put! proc '_tickInfoBox
 	    (js-vector->jsarray (make-vector 3 0) %this)
 	    #f %this)
 	 (js-put! proc '_needTickCallback
@@ -181,7 +181,6 @@
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
-	      _needTickCallback
 	      chdir
 	      setgid
 	      getgid
