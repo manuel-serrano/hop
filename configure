@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jul 28 16:00:13 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 16:26:13 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -831,7 +831,7 @@ cat $mkmf.in \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDDIR@|$PWD|" \
-          -e "s|@BUILDLIBDIR@|$PWD/lib|" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
@@ -987,8 +987,11 @@ cat etc/hopshrc.hop.in \
     >> $hopshrc
 
 # lib/hop.init
-init=lib/hop.init
+init=lib/hop/$version/hop.init
 mkdir -p lib
+mkdir -p lib/hop
+mkdir -p lib/hop/$version
+
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
@@ -1020,7 +1023,7 @@ echo "   ))" >> $init
 chmod a-w $init
 
 # lib/hopwidget.init
-init=lib/hopwidget.init
+init=lib/hop/$version/hopwidget.init
 mkdir -p lib
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
@@ -1033,7 +1036,7 @@ cat etc/hopwidget.init.in \
 echo "" >> $init
 
 # lib/scheme2js.init
-init=lib/scheme2js.init
+init=lib/hop/$version/scheme2js.init
 mkdir -p lib
 mkdir -p scheme2js/o
 
@@ -1048,7 +1051,7 @@ echo "" >> $init
 chmod a-w $init
 
 # lib/hopscheme.init
-init=lib/hopscheme.init
+init=lib/hop/$version/hopscheme.init
 mkdir -p lib
 mkdir -p hopscheme/o
 
@@ -1064,7 +1067,7 @@ chmod a-w $init
 
 # lib/hopdroid.init
 if [ "$arch " = "android " ]; then
-  init=lib/hopdroid.init
+  init=lib/hop/$version/hopdroid.init
   mkdir -p lib
   mkdir -p hopdroid/o
 
@@ -1080,7 +1083,7 @@ if [ "$arch " = "android " ]; then
 fi
   
 # lib/js2scheme.init
-init=lib/js2scheme.init
+init=lib/hop/$version/js2scheme.init
 mkdir -p lib
 mkdir -p js2scheme/o
 
@@ -1095,7 +1098,7 @@ echo "" >> $init
 chmod a-w $init
 
 # lib/hopscript.init
-init=lib/hopscript.init
+init=lib/hop/$version/hopscript.init
 mkdir -p lib
 mkdir -p hopscript/o
 
@@ -1110,7 +1113,7 @@ echo "" >> $init
 chmod a-w $init
 
 # lib/nodejs.init
-init=lib/nodejs.init
+init=lib/hop/$version/nodejs.init
 mkdir -p lib
 mkdir -p nodejs/o
 
