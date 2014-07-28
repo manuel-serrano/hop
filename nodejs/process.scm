@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Jul 28 15:42:37 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 16:05:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -373,7 +373,11 @@
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((isIP . ,(js-new %this js-object))
+	 `((isIP . ,(js-make-function %this
+		       (lambda (this domain)
+			  (tprint "DOMAIN=" domain)
+			  #t)
+		       1 'isIP))
 	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
 	   (queryA . ,(not-implemented "queryA"))
 	   (queryAaaa . ,(not-implemented "queryAaaa"))

@@ -108,7 +108,7 @@ exports.lookup = function(domain, family, callback) {
   }
 #:tprint( "trace1" );
   var matchedFamily = net.isIP(domain);
-#:tprint( "trace2" );
+#:tprint( "trace2", callback, matchedFamily );
   if (matchedFamily) {
     callback(null, domain, matchedFamily);
     return {};

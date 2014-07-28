@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Jul 28 16:02:57 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 16:12:14 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
