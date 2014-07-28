@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Jul  3 11:51:05 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 08:06:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -171,14 +171,19 @@
 	  (generate (current-output-port) lang))
       0)
 
+
    (define (compile-bigloo::int in lang)
 
+      (define (srfi-opts)
+	 (cond-expand
+	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
+	    (else '("-srfi" "hopc"))))
+      
       (define (compile in opts comp file)
-	 (let* ((opts (if (string? file)
-			  (cons* "-fread-internal-src"
-			     "-fread-internal-src-file-name" file
-			     "-srfi" "hopc" opts)
-			  (cons* "-fread-internal-src" "-srfi" "hopc" opts)))
+	 (let* ((baseopts (cons "-fread-internal-src" (append (srfi-opts) opts)))
+		(opts (if (string? file)
+			  (cons* "-fread-internal-src-file-name" file baseopts)
+			  baseopts))
 		(proc (apply run-process (hopc-bigloo)
 			 input: pipe: "-" 
 			 opts))
@@ -196,7 +201,7 @@
 	    (append `("-library" "hop"
 		      "-library" "hopscheme"
 		      "-library" "hopwidget"
-		      "-rpath" ,(hop-lib-directory))
+		      "-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
 	       opts)
 	    (lambda (out)
 	       (let loop ()
@@ -212,10 +217,8 @@
       
       (define (compile-hopscript in opts file exec)
 	 (compile in
-	    (append `("-library" "hopscript"
-			"-library" "nodejs"
-			"-library" "web"
-			"-rpath" ,(hop-lib-directory))
+	    (append (hopc-js-libraries)
+	       `("-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
 	       opts)
 	    (lambda (out)
 	       ;; compile

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jun 23 13:51:00 2014 (serrano)                */
+;*    Last change :  Sat Jul 26 06:33:52 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -208,6 +208,9 @@
 
 	    (hop-server-name::bstring)
 	    (hop-server-name-set! ::bstring)
+
+	    (hop-server-addresses::pair-nil)
+	    (hop-server-addresses-set! ::pair-nil)
 	    
 	    (hop-icons-directory)
 
@@ -1005,6 +1008,17 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-server-name
    (hop-name))
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-addresses ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-addresses
+   (with-handler
+      (lambda (e)
+	 '())
+      (let ((hi (hostinfo (hostname))))
+	 (let ((c (assq 'addresses hi)))
+	    (if (pair? c) (cdr c) '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Connection delays and timeouts                                   */

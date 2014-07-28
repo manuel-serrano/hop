@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 26 08:46:48 2014 (serrano)                */
+;*    Last change :  Sat Jul 26 07:32:08 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -85,6 +85,9 @@
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
+
+	    (hopc-js-libraries::pair-nil)
+	    (hopc-js-libraries-set! ::pair-nil)
 	    
 	    (hopc-js-driver::obj)
 	    (hopc-js-driver-set! ::obj))
@@ -235,6 +238,21 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-header
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-libraries ...                                            */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-libraries
+   (cond-expand
+      (enable-libuv
+       '("-library" "hopscript"
+	 "-library" "web"
+	 "-library" "nodejs"
+	 "-library" "libuv"))
+      (else
+       '("-library" "hopscript"
+	 "-library" "web"
+	 "-library" "nodejs"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-driver ...                                               */

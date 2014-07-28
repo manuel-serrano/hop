@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jul 15 07:30:30 2014 (serrano)                */
+;*    Last change :  Sat Jul 26 07:00:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -212,6 +212,9 @@
 			   (library nodejs)
 			   (library js2scheme))
 			(library hop hopscript nodejs js2scheme)
+			(cond-expand
+			   (enable-libuv
+			    (library libuv)))
 			(main main))))
 	 (with-access::J2SProgram this (nodes mode pcache-size %this path)
 	    (list

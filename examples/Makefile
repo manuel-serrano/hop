@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Jul 23 15:36:52 2014 (serrano)                */
+#*    Last change :  Wed Jul 23 18:51:23 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -66,6 +66,7 @@ POPULATION = Makefile \
   image/image.js \
   pair/pair.js \
   hzdemo/hzdemo.js \
+  hzdemo/README \
   hzdemo/foo/package.json \
   hzdemo/foo/foo.js \
   hzdemo/foo/foo.hss \

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jul 22 14:15:20 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 08:00:38 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -35,7 +35,6 @@ devmode=product
 debug=no
 
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR) -srfi bigloo-compile"
-bldflags="-rpath \$(HOPLIBDIR)"
 bhflags=
 btflags="-gtrace"
 
@@ -410,7 +409,7 @@ EOF
 fi
 
 #*---------------------------------------------------------------------*/
-#*    First check if bigloo exists and if it is recent enough          */
+#*    First check that bigloo exists and is recent enough              */
 #*---------------------------------------------------------------------*/
 if [ ! -f $bigloo ]; then
    which $bigloo > /dev/null 2> /dev/null
@@ -421,9 +420,9 @@ if [ ! -f $bigloo ]; then
    fi
 fi
 
-bglversion=`$bigloo -q -eval "(exit (display *bigloo-version*))"`
+bglversion=`$bigloo -q -eval "(exit (display (bigloo-config 'release-number)))"`
 
-$bigloo -q -eval "(exit (if (string>=? *bigloo-version* \"$bigloorequired\") 0 1))"
+$bigloo -q -eval "(exit (if (string>=? (bigloo-config 'release-number) \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
   echo "*** ERROR:configure:bigloo. Aborting"
@@ -465,9 +464,15 @@ if [ "$cc " = " " ]; then
 fi
 
 if [ "$bigloolibdir " = " " ]; then
-  bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+  bigloolibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
 else
   bcflags="$bcflags -lib-dir $bigloolibdir"
+fi
+
+if [ ! -f $bigloolibdir/Makefile.config ]; then
+  echo "Bigloo not properly installed, file missing:" >&2;
+  echo "  $bigloolibdir/Makefile.config" >&2;
+  exit -1;
 fi
 
 if [ "$ccflags " = " " ]; then
@@ -784,6 +789,10 @@ done
 
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
+
+if [ "$bldflags " = " " ]; then
+  bldflags="-rpath \$(DESTDIR)\$(HOPLIBDIR)/\$(HOPFILDIR)"
+fi
 
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Jul 14 19:38:16 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 10:02:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -187,10 +187,31 @@
 ;*    j2s-js ::J2SFor ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFor tildec dollarc mode evalp conf)
+
+   (define (join sep el)
+      (if (null? el)
+	  '()
+	  (let loop ((el el))
+	     (if (null? (cdr el))
+		 (car el)
+		 (append (car el) (list sep) (loop (cdr el)))))))
+
+   (define (var-decl decl::J2SDecl)
+      (with-access::J2SDecl decl (id)
+	 (cons (symbol->string id)
+	    (if (isa? decl J2SDeclInit)
+		(with-access::J2SDeclInit decl (id val)
+		   (cons "=" (j2s-js val tildec dollarc mode evalp conf)))
+		'()))))
+
    (with-access::J2SFor this (init test incr body)
       (cons* this "for ( "
-         (append (j2s-js init tildec dollarc mode evalp conf)
-	    (if (isa? init J2SStmt) '() '(";"))
+         (append
+	    (if (isa? init J2SVarDecls)
+		(with-access::J2SVarDecls init (decls)
+		   (cons "var " (join "," (map var-decl decls))))
+		(j2s-js init tildec dollarc mode evalp conf))
+	    '(";")
 	    (j2s-js test tildec dollarc mode evalp conf)
 	    '(";")
 	    (j2s-js incr tildec dollarc mode evalp conf)
@@ -203,7 +224,11 @@
 (define-method (j2s-js this::J2SForIn tildec dollarc mode evalp conf)
    (with-access::J2SForIn this (lhs obj body)
       (cons* this "for ("
-         (append (j2s-js lhs tildec dollarc mode evalp conf)
+         (append (if (isa? lhs J2SVarDecls)
+		     (with-access::J2SVarDecls lhs (decls)
+			(with-access::J2SDecl (car decls) (id)
+			   (list "var " (symbol->string id))))
+		     (j2s-js lhs tildec dollarc mode evalp conf))
 	    '(" in ")
 	    (j2s-js obj tildec dollarc mode evalp conf)
 	    '(") ")
@@ -215,15 +240,15 @@
 (define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
    (with-access::J2SDecl this (id)
       (list this "var " (symbol->string id) ";")))
-					     
+                                             
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
    (with-access::J2SDeclInit this (id val)
       (cons* this "var " (symbol->string id) "="
-	 (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
-					     
+         (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
+                                             
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SStmtExpr ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -241,8 +266,10 @@
 	 (append (j2s-js test tildec dollarc mode evalp conf)
 	    (cons ") " 
 	       (append (j2s-js then tildec dollarc mode evalp conf)
-		  (cons " else "
-		     (j2s-js else tildec dollarc mode evalp conf))))))))
+		  (if (isa? else J2SNop)
+		      '()
+		      (cons " else "
+			 (j2s-js else tildec dollarc mode evalp conf)))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SSequence ...                                         */
@@ -257,7 +284,7 @@
 (define-method (j2s-js this::J2SRef tildec dollarc mode evalp conf)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (id name global)
-	 (list this (or name id)))))
+	 (list this (or name (symbol->string id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SUnresolvedRef ...                                    */
@@ -299,6 +326,13 @@
 (define-method (j2s-js this::J2SLiteralValue tildec dollarc mode evalp conf)
    (with-access::J2SLiteralValue this (val)
       (list this (format "~a" val))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SBool ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SBool tildec dollarc mode evalp conf)
+   (with-access::J2SBool this (val)
+      (list this (if val "true" "false"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SString ...                                           */

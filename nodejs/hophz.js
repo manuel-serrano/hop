@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 23 12:59:44 2014                          */
-/*    Last change :  Tue Jun 24 11:54:21 2014 (serrano)                */
+/*    Last change :  Fri Jul 25 16:24:13 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopHz binding                                                    */
@@ -54,7 +54,7 @@ function listWeblets( category, host, port ) {
 import service HZInstall();
 HZInstall.path = "/hop/hz/install";
 
-function install( url, host ) {
+function install( url, host, port ) {
    return HZInstall( { url: url } )
       .post( function( v ) {
 	 if( typeof( v ) === "pair" ) {
@@ -68,7 +68,7 @@ function install( url, host ) {
 	 } else {
 	    return true;
 	 }
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -77,7 +77,7 @@ function install( url, host ) {
 import service HZDownload();
 HZDownload.path = "/hop/hz/download";
 
-function download( url, host ) {
+function download( url, host, port ) {
    return HZDownload( { url: url } )
       .post( function( v ) {
 	 if( typeof( v ) === "pair" ) {
@@ -91,7 +91,7 @@ function download( url, host ) {
 	 } else {
 	    return true;
 	 }
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -100,11 +100,11 @@ function download( url, host ) {
 import service HZUninstall();
 HZInstall.path = "/hop/hz/uinstall";
 
-function uninstall( weblet, host ) {
+function uninstall( weblet, host, port ) {
    return HZUninstall( { weblet: weblet } )
       .post( function( v ) {
 	 return v;
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -113,7 +113,7 @@ function uninstall( weblet, host ) {
 import service HZSearch();
 HZSearch.path = "/hop/hz/search/weblets";
 
-function search( regexp, host ) {
+function search( regexp, host, port ) {
    return HZSearch( { regexp: regexp } )
       .post( function( v ) {
 	 if( typeof v === "pair" ) {
@@ -121,7 +121,7 @@ function search( regexp, host ) {
 	 } else {
 	    return v;
 	 }
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -130,11 +130,11 @@ function search( regexp, host ) {
 import service HZFind();
 HZFind.path = "/hop/hz/find/weblet";
 
-function find( name, host ) {
+function find( name, host, port ) {
    return HZFind( { name: name } )
       .post( function( v ) {
 	 return v;
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -143,11 +143,11 @@ function find( name, host ) {
 import service HZUpdate();
 HZUpdate.path = "/hop/hz/update";
 
-function update( host ) {
+function update( host, port ) {
    return HZUpdate()
       .post( function( v ) {
 	 return v;
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -156,11 +156,11 @@ function update( host ) {
 import service HZListUpdate();
 HZListUpdate.path = "/hop/hz/list/update";
 
-function listUpdate( host ) {
+function listUpdate( host, port ) {
    return HZListUpdate()
       .post( function( v ) {
 	 return v;
-      }, getHostOption( host ) );
+      }, getHostOption( host, port ) );
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Jul 13 06:52:37 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 19:17:59 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -50,6 +50,7 @@
 	   (js-current-worker::WorkerHopThread)
 	   (js-init-worker! ::JsGlobalObject)
 	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject)
+	   (js-worker-construct ::JsGlobalObject ::procedure)
 
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
@@ -97,6 +98,11 @@
 					 js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
+	 (define (%js-worker %this)
+	    (with-access::JsGlobalObject %this (js-worker)
+	       (lambda (this proc)
+		  (js-new %this js-worker proc))))
+
 	 ;; first, create the builtin prototype
 	 (set! js-worker-prototype
 	    (instantiate::JsWorker
@@ -108,10 +114,11 @@
 	    (js-make-function %this (%js-worker %this) 2 'JsWorker
 	       :__proto__ js-function-prototype
 	       :prototype js-worker-prototype
-	       :construct (js-worker-construct %this)))
+	       :construct (js-worker-construct %this (js-worker-load))))
 
 	 ;; prototype properties
 	 (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
+	 
 	 ;; bind Worker in the global object
 	 (js-bind! %this %this 'Worker
 	    :configurable #f :enumerable #f :value js-worker)
@@ -123,17 +130,9 @@
 (define-parameter js-worker-load default-worker-load)
 
 ;*---------------------------------------------------------------------*/
-;*    %js-worker ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (%js-worker %this)
-   (with-access::JsGlobalObject %this (js-worker)
-      (lambda (this proc)
-	 (js-new %this js-worker proc))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-construct ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-worker-construct %this)
+(define (js-worker-construct %this loader)
 
    (define (remove-subworker! parent thread)
       (with-access::WorkerHopThread parent (mutex condv subworkers)
@@ -152,7 +151,7 @@
 		(source (js-tostring src %this))
 		(thunk (lambda ()
 			  (js-put! this 'module (js-get %this 'module %this) #f this)
-			  ((js-worker-load) source thread this)))
+			  (loader source thread this)))
 		(thread (instantiate::WorkerHopThread
 			   (parent parent)
 			   (tqueue (list thunk))

@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/hzdemo/hzdemo.js        */
+/*    serrano/prgm/project/hop/3.0.x/examples/hzdemo/hzdemo.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Jul 17 08:09:53 2014 (serrano)                */
+/*    Last change :  Fri Jul 25 16:29:06 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Programmable hophz interactions                                  */
@@ -52,15 +52,19 @@ service hzdemo() {
 		     var el = document.getElementById( "console" );
 		     el.innerHTML = "";
 
-		     e.forEach( function( e ) {
-			el.appendChild( <DIV> {
-			   e.name, " ", e.version,
-			   <BUTTON> {
-			      onclick: ~{ install( ${e.url} ) },
-			      "install"
-			   }
+		     if( e ) {
+			e.forEach( function( e ) {
+			   el.appendChild( <DIV> {
+			      e.name, " ", e.version,
+			      <BUTTON> {
+				 onclick: ~{ install( ${e.url} ) },
+				 "install"
+			      }
+			   } )
 			} )
-		     } )
+		     } else {
+			el.innerHTML = "not found";
+		     }
 		  } )
 	    },
 	    "search"
@@ -102,7 +106,7 @@ service hzdemo() {
       <DIV> { id: "console" },
       <H1> { "categories" },
       <UL> {
-	 HOPHZ.listCategories().map( function( e ) {
+	 HOPHZ.listCategories( "localhost" ).map( function( e ) {
 	    return <LI> {
 	       <A> {
 		  href: hophzCategory( e ).toString(),
@@ -118,7 +122,7 @@ service hophzCategory( c ) {
    return <HTML> {
       <H1> { c },
       <UL> {
-	 HOPHZ.listWeblets( { category: c } ).map( function( e ) {
+	 HOPHZ.listWeblets( { category: c }, "localhost" ).map( function( e ) {
 	    return <LI> {
 	       <A> {
 		  e.name, " ",
@@ -137,16 +141,18 @@ service hophzCategory( c ) {
 
 service hophzDownload( url ) {
    try {
-      return HOPHZ.download( url );
+      return HOPHZ.download( url, "localhost" );
    } catch( e ) {
       return HOP.HTTPResponseString( e.msg, { startLine: "HTTP/1.0 404 File not found" } );
    }
 }
 
 service hophzSearch( regexp ) {
-   return HOPHZ.search( regexp );
+   return HOPHZ.search( regexp, "localhost" );
 }
 
 service hophzFind( name ) {
-   return HOPHZ.find( name );
+   return HOPHZ.find( name, "localhost" );
 }
+
+console.log( "Go to \"http://%s:%d/hop/hzdemo\"", HOP.hostname, HOP.port );

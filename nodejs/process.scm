@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Jul 23 16:19:47 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 10:19:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -41,6 +41,15 @@
 (define (new-process-object %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (js-new %this js-object)))
+
+	 (define (not-implemented name)
+	    (js-put! proc name
+	       (js-make-function %this
+		  (lambda (this . l)
+		     (error "process" "binding not implemented" name))
+		  0 (symbol->string name))
+	       #f %this))
+	 
 	 (js-put! proc 'stdout
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
@@ -78,6 +87,12 @@
 		  (exit status))
 	       1 "exit")
 	    #f %this)
+	 (js-put! proc 'reallyExit
+	    (js-make-function %this
+	       (lambda (this status)
+		  (exit status))
+	       1 "exit")
+	    #f %this)
 	 (js-put! proc 'arch (os-arch) #f %this)
 	 (js-put! proc 'platform (os-name) #f %this)
 	 (js-put! proc 'binding
@@ -92,6 +107,8 @@
 		      (process-buffer %this))
 		     ((string=? module "udp_wrap")
 		      (process-udp-wrap %this))
+		     ((string=? module "tcp_wrap")
+		      (process-tcp-wrap %this))
 		     ((string=? module "evals")
 		      (process-evals %this))
 		     ((string=? module "cares_wrap")
@@ -110,6 +127,10 @@
 		      (process-os %this))
 		     ((string=? module "hop")
 		      (hopjs-process-hop %this))
+		     ((string=? module "tty_wrap")
+		      (process-tty-wrap %this))
+		     ((string=? module "fs_event_wrap")
+		      (process-fs-event-wrap %this))
 		     (else
 		      (warning "%nodejs-process"
 			 "binding not implemented: " module)
@@ -140,6 +161,26 @@
 	    (js-make-function %this
 	       (lambda (this) (js-undefined)) 0 "_usingDomains")
 	    #f %this)
+
+	 (for-each not-implemented
+	    '(_getActiveRequest
+	      _getActiveHandles
+	      _needTickCallback
+	      chdir
+	      setgid
+	      getgid
+	      getgroups
+	      setgroups
+	      initgroups
+	      _kill
+	      _debugProcess
+	      _debugPause
+	      _debugEnd
+	      hrtime
+	      dlopen
+	      uptime
+	      memoryUsage))
+	 
 	 proc)))
 
 ;*---------------------------------------------------------------------*/
@@ -202,10 +243,91 @@
 ;*    process-udp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (process-udp-wrap %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "udp_wrap" "binding not implemented" name))
+	 0 (symbol->string name)))
+   
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((UDP . ,(js-new %this js-object)))
+	 (map (lambda (id)
+		 (cons id (not-implemented id)))
+	    `(bind
+		send
+		bind6
+		send6
+		close
+		recvStart
+		recvStop
+		getsockname
+		addMembership
+		dropMembership
+		setMulticastTTL
+		setMulticastLoopback
+		setBroadcast
+		setTTL
+		ref
+		unref))
 	 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    process-tcp-wrap ...                                             */
+;*---------------------------------------------------------------------*/
+(define (process-tcp-wrap %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "tcp_wrap" "binding not implemented" name))
+	 0 (symbol->string name)))
+   
+   (with-access::JsGlobalObject %this (js-object)
+      (js-alist->jsobject
+	 (map (lambda (id)
+		 (cons id (not-implemented id)))
+	    `(close
+		ref
+		unref
+		readStart
+		readStop
+		shutdown
+		writeBuffer
+		writeAsciiString
+		writeUtf8String
+		writeUcs2String
+		open
+		bind
+		listen
+		connect
+		bind6
+		connect6
+		getsockname
+		getpeername
+		setNoDelay
+		setKeepAlive
+		setSimultaneousAccepts))
+	 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    process-fs-event-wrap ...                                        */
+;*---------------------------------------------------------------------*/
+(define (process-fs-event-wrap %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "fs_event_wrap" "binding not implemented" name))
+	 0 (symbol->string name)))
+   
+   (with-access::JsGlobalObject %this (js-object)
+      (js-alist->jsobject
+	 (map (lambda (id)
+		 (cons id (not-implemented id)))
+	    `(start close))
+	 %this)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    process-evals ...                                                */
@@ -220,9 +342,59 @@
 ;*    process-cares-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (process-cares-wrap %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "care_wrap" "binding not implemented" name))
+	 0 name))
+   
+   (define (getaddrinfo domain family)
+      (nodejs-getaddrinfo %this domain family))
+   
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((isIP . ,(js-new %this js-object)))
+	 `((isIP . ,(js-new %this js-object))
+	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
+	   (queryA . ,(not-implemented "queryA"))
+	   (queryAaaa . ,(not-implemented "queryAaaa"))
+	   (queryCname . ,(not-implemented "queryCname"))
+	   (queryMx . ,(not-implemented "queryMx"))
+	   (queryNs . ,(not-implemented "queryNs"))
+	   (queryTxt . ,(not-implemented "queryTxt"))
+	   (querySrv . ,(not-implemented "querySrv"))
+	   (queryNaptr . ,(not-implemented "queryNaptr"))
+	   (getHostByAddr . ,(not-implemented "getHostByAddr"))
+	   (getHostByName . ,(not-implemented "getHostByName")))
+	 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    process-tty-wrap ...                                             */
+;*---------------------------------------------------------------------*/
+(define (process-tty-wrap %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "tty_wrap" "binding not implemented" name))
+	 0 (symbol->string name)))
+   
+   (with-access::JsGlobalObject %this (js-object)
+      (js-alist->jsobject
+	 (map (lambda (id)
+		 (cons id (not-implemented id)))
+	    `(isTTY 
+		guessHandleType
+		close
+		unref
+		readStart
+		readStop
+		writeBuffer
+		writeAsciiString
+		writeUtf8String
+		writeUcs2String
+		getWindowSize
+		setRawMode))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -238,13 +410,24 @@
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (process-crypto %this)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "crypto" "binding not implemented" name))
+	 0 name))
+   
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((SecureContext . ,(js-new %this js-object))
+	 `((PBKDF2 . ,(not-implemented "PBKDF2"))
 	   (randomBytes . ,(js-new %this js-object))
 	   (pseudoRandomBytes . ,(js-new %this js-object))
+	   (getSSLCiphers . ,(not-implemented "getSLLCiphers"))
 	   (getCiphers . ,(js-new %this js-object))
-	   (getHashes . ,(js-new %this js-object)))
+	   (getHashes . ,(js-new %this js-object))
+	   (init . ,(not-implemented "init"))
+	   ;;(SecureContext . ,(js-new %this js-object))
+	   )
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

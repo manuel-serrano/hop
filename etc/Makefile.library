@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Wed Apr 16 13:04:39 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 07:43:47 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -21,6 +21,8 @@ CLASS_DIR	= o/class_s/bigloo/$(TARGETNAME)
 CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
 # the library version
 LIBVERSION	= $(HOPRELEASE)
+
+RPATH		= $(BIGLOOLIBDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
@@ -141,7 +143,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX): \
 # unsafe runtime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
-	@ $(MAKE) shared-link-lib \
+	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
@@ -154,7 +156,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
 # unsafe evaltime
 $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX): \
    $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
-	@ $(MAKE) shared-link-lib \
+	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              OBJECTS=$(EOBJECTS) \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Jul 15 07:36:41 2014 (serrano)                */
+;*    Last change :  Fri Jul 25 16:00:54 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -202,6 +202,24 @@
 		  (with-access::J2SFun this (vararg)
 		     (set! vararg #t)))))))
    this)
+
+;; MS CARE: 25 Juil 2014, not sure it would be a good idea to traverse ~ nodes
+;* {*---------------------------------------------------------------------*} */
+;* {*    resolve! ::J2STilde ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (resolve! this::J2STilde env mode withs wenv)   */
+;*    (with-access::J2STilde this (stmt loc)                           */
+;*       (let* ((decls (collect* stmt))                                */
+;* 	     (nwenv (append decls wenv)))                              */
+;* 	 (if (pair? decls)                                             */
+;* 	     (set! stmt                                                */
+;* 		(instantiate::J2SBlock                                 */
+;* 		   (loc loc)                                           */
+;* 		   (nodes (append                                      */
+;* 			     (bind-decls! decls decls mode #f withs wenv) */
+;* 			     (list (walk! stmt decls mode withs nwenv)))))) */
+;* 	     (set! stmt (walk! stmt decls mode withs nwenv))))         */
+;*       this))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SWith ...                                           */

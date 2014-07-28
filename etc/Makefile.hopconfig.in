@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Wed Feb 26 17:44:12 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 10:06:55 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -50,7 +50,7 @@ INSTALL		= @INSTALL@
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
 CCOMP		= @CC@
-BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi hop-$(LINK) $(EFLAGS)
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -srfi hop-$(LINK) $(EFLAGS)
 BLDFLAGS	= @BLDFLAGS@
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
@@ -60,8 +60,6 @@ BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
 BJVMFLAGS	= @BCFLAGS@ -jvm $(EFLAGS)
 BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
 BEJVMFLAGS	= -jvm-jar
-BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
-BLDOTNETFLAGS   = @BLFLAGS@ 
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@

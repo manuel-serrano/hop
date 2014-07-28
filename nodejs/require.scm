@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Jul 22 21:33:18 2014 (serrano)                */
+;*    Last change :  Wed Jul 23 19:18:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -29,7 +29,8 @@
 	   (nodejs-new-global-object::JsGlobalObject)
 	   (nodejs-new-scope-object ::JsGlobalObject)
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
-	   (nodejs-function ::JsGlobalObject ::JsObject)))
+	   (nodejs-function ::JsGlobalObject ::JsObject)
+	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
@@ -556,6 +557,32 @@
       :value js-function
       :configurable #f :enumerable #f))
 
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-worker ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-worker %this::JsGlobalObject scope::JsObject %module::JsObject)
+
+   (define (loader filename worker this)
+      (nodejs-require-module filename worker this %module))
+
+   (define (%js-worker %this)
+      (with-access::JsGlobalObject %this (js-worker)
+	 (lambda (this proc)
+	    (js-new %this js-worker proc))))
+   
+   (define js-worker
+      (with-access::JsGlobalObject %this (js-function-prototype
+					    js-worker-prototype)
+	 (js-make-function %this (%js-worker %this) 2 'JsWorker
+	    :__proto__ js-function-prototype
+	    :prototype js-worker-prototype
+	    :construct (js-worker-construct %this loader))))
+
+   (js-bind! %this scope 'Worker
+      :value js-worker
+      :configurable #f :enumerable #f))
+   
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require function                                 */
 ;*---------------------------------------------------------------------*/
@@ -563,6 +590,3 @@
    (lambda (filename worker this)
       (nodejs-require-module filename worker this
 	 (nodejs-module (basename filename) filename this))))
-
-
-
