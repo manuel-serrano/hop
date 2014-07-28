@@ -189,11 +189,14 @@ function initNodeTick( process ) {
     }
 
     function _nextTick(callback) {
+#:tprint( "_nextTick cb=", callback );
       // on the way out, don't bother. it won't get fired anyway.
       if (process._exiting)
         return;
+#:tprint( "GLOP.1" );       
       if (infoBox[depth] >= process.maxTickDepth)
         maxTickWarn();
+#:tprint( "GLOP.2" );       
 
       var obj = { callback: callback, domain: null };
 
@@ -201,6 +204,7 @@ function initNodeTick( process ) {
       infoBox[length]++;
 
       if (needSpinner) {
+#:tprint( "_needTickBack=", _needTickCallback );
         _needTickCallback();
         needSpinner = false;
       }

@@ -63,15 +63,12 @@ function makeAsync(callback) {
     return callback;
   }
   return function asyncCallback() {
-#:tprint( "1" );
     if (asyncCallback.immediately) {
       // The API already returned, we can invoke the callback immediately.
       callback.apply(null, arguments);
     } else {
       var args = arguments;
-#:tprint( "2", process.nextTick );
       process.nextTick(function() {
-#:tprint( "in nextTick callback=", callback );	 
         callback.apply(null, args);
       });
     }
@@ -109,11 +106,8 @@ exports.lookup = function(domain, family, callback) {
     callback(null, '127.0.0.1', 4);
     return {};
   }
-#:tprint( "trace1" );
   var matchedFamily = net.isIP(domain);
-#:tprint( "trace2" );
   if (matchedFamily) {
-#:tprint( "trace3" );
     callback(null, domain, matchedFamily);
     return {};
   }
