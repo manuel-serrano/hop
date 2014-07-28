@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Jul 25 09:48:31 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 15:20:51 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -32,6 +32,8 @@
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
+
+	   (nodejs-need-tick-callback ::JsGlobalObject)
 	   
 	   (nodejs-rename-file ::JsGlobalObject ::bstring ::bstring ::obj)
 	   (nodejs-ftruncate ::JsGlobalObject ::obj ::int ::obj)
@@ -218,6 +220,46 @@
        (uv-cpus))
       (else
        '#())))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-need-tick-callback ...                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-need-tick-callback %this)
+   (cond-expand
+      (enable-libuv
+       (uv-idle-start (get-tick-spinner %this))))
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    tick-spinner ...                                                 */
+;*---------------------------------------------------------------------*/
+(define tick-spinner #f)
+(define need-tick-cb #f)
+(define tick-from-spinner #f)
+
+;*---------------------------------------------------------------------*/
+;*    get-tick-spinner ...                                             */
+;*---------------------------------------------------------------------*/
+(define (get-tick-spinner %this)
+   (cond-expand
+      (enable-libuv
+       (unless tick-spinner
+	  (letrec* ((spin (lambda ()
+			     (when need-tick-cb
+				(set! need-tick-cb #f)
+				(uv-idle-stop spinner)
+				
+				(unless tick-from-spinner
+				   (set! tick-from-spinner
+				      (js-get %this '_tickFromSpinner %this)))
+				
+				(js-call0 %this tick-from-spinner
+				   (js-undefined)))))
+		    (spinner (instantiate::UvIdle
+				(cb spin)
+				(loop (uv-default-loop)))))
+	     (set! tick-spinner spinner)))))
+   tick-spinner)
 
 ;*---------------------------------------------------------------------*/
 ;*    not-implemented-exn ...                                          */

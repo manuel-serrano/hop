@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Thu Jul 10 10:19:21 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 12:25:37 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -56,7 +56,8 @@
 	   (__nodejs_zlib "| echo \"(module __nodejs_zlib (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_os "| echo \"(module __nodejs_os (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_hop "| echo \"(module __nodejs_hop (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
-	   (__nodejs_hophz "| echo \"(module __nodejs_hophz (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+	   (__nodejs_hophz "| echo \"(module __nodejs_hophz (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_node_tick "| echo \"(module __nodejs_node_tick (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
 
    (export (core-module-table)))
 
@@ -111,7 +112,8 @@
       "zlib"
       "os"
       "hop"
-      "hophz"))
+      "hophz"
+      "node_tick"))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */

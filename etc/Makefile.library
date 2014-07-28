@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Jul 28 07:43:47 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 16:02:57 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -124,6 +124,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
+             LDOPTS="-L$(BUILDLIBDIR)/$(HOPFILDIR) $(LDOPTS)" \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
 	@ $(call done,$@)
 
@@ -137,6 +138,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX): \
              FORCELD=true \
              LIBDEST=$@ \
              SONAME=lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
+             LDOPTS="-L$(BUILDLIBDIR)/$(HOPFILDIR) $(LDOPTS)" \
              CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
 	@ $(call done,$@)
 
@@ -150,6 +152,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
              LIBDEST=$@ \
              LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
+             LDOPTS="-L$(BUILDLIBDIR)/$(HOPFILDIR) $(LDOPTS)" \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
 	@ $(call done,$@)
 
@@ -164,6 +167,7 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX): \
              LIBDEST=$@ \
              LIBSRC=$< \
              SONAME=lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX) \
+             LDOPTS="-L$(BUILDLIBDIR)/$(HOPFILDIR) $(LDOPTS)" \
              CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
 	@ $(call done,$@)
 
@@ -287,19 +291,17 @@ install-native-libs:
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
-        $(MAKE) install-link-lib \
+        $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LN=lib$(TARGETNAME)_s-$(LIBVERSION) \
                 LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
-        $(MAKE) install-link-lib \
+        $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LN=lib$(TARGETNAME)_es-$(LIBVERSION) \
                 LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 install-jvm:

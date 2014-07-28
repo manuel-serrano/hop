@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jul 28 08:00:38 2014 (serrano)                */
+#*    Last change :  Mon Jul 28 16:00:13 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -81,7 +81,7 @@ mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
-buildlibdir=$PWD/lib
+buildlibdir=$PWD/lib/hop/$version
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 distribdir=$HOME/prgm/project/hop/repository

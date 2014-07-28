@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Jul 28 10:19:14 2014 (serrano)                */
+;*    Last change :  Mon Jul 28 15:42:37 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -23,7 +23,8 @@
    (import __nodejs__hop
 	   __nodejs__timer
 	   __nodejs__fs
-	   __nodejs_uv)
+	   __nodejs_uv
+	   __nodejs_require)
    
    (export (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
 
@@ -32,13 +33,18 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-process %worker::WorkerHopThread %this::JsGlobalObject)
    (with-access::WorkerHopThread %worker (%process)
-      (unless %process (set! %process (new-process-object %this)))
+      (unless %process
+	 (set! %process (new-process-object %worker %this))
+	 ;; init tick machinery
+	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
+		(tick (js-get m 'initNodeTick %this)))
+	    (js-call1 %this tick (js-undefined) %process)))
       %process))
 
 ;*---------------------------------------------------------------------*/
 ;*    new-process-object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (new-process-object %this)
+(define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (js-new %this js-object)))
 
@@ -125,12 +131,12 @@
 		      (process-zlib %this))
 		     ((string=? module "os")
 		      (process-os %this))
-		     ((string=? module "hop")
-		      (hopjs-process-hop %this))
 		     ((string=? module "tty_wrap")
 		      (process-tty-wrap %this))
 		     ((string=? module "fs_event_wrap")
 		      (process-fs-event-wrap %this))
+		     ((string=? module "hop")
+		      (hopjs-process-hop %this))
 		     (else
 		      (warning "%nodejs-process"
 			 "binding not implemented: " module)
@@ -162,6 +168,16 @@
 	       (lambda (this) (js-undefined)) 0 "_usingDomains")
 	    #f %this)
 
+	 ;; tick
+	 (js-put! proc '_infoBox
+	    (js-vector->jsarray (make-vector 3 0) %this)
+	    #f %this)
+	 (js-put! proc '_needTickCallback
+	    (js-make-function %this
+	       (lambda (this) (nodejs-need-tick-callback %this))
+	       0 "needTickCallback")
+	    #f %this)
+		  
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
@@ -346,10 +362,13 @@
    (define (not-implemented name)
       (js-make-function %this
 	 (lambda (this . l)
-	    (error "care_wrap" "binding not implemented" name))
+	    (error "care_wrap"
+	       (format "binding not implemented ~a" name)
+	       l))
 	 0 name))
    
    (define (getaddrinfo domain family)
+      (tprint "getaddrinfo domain=" domain " family=" family)
       (nodejs-getaddrinfo %this domain family))
    
    (with-access::JsGlobalObject %this (js-object)
