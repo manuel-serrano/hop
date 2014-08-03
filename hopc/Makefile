@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Thu Jul  3 07:53:54 2014 (serrano)                */
+#*    Last change :  Sun Aug  3 09:07:17 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -174,19 +174,19 @@ install-jvm:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	/bin/rm -f .afile
-	/bin/rm -f $(OBJECTS)
-	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -rf o
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
-	/bin/rm -rf META-INF
+	$(RM) -f .afile
+	$(RM) -f $(OBJECTS)
+	$(RM) -f $(MODULES:%=%.c)
+	$(RM) -rf o
+	$(RM) -f $(BUILDBINDIR)/$(EXEC)
+	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
+	$(RM) -rf META-INF
 
 devclean: clean
 
