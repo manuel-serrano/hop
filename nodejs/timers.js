@@ -21,7 +21,6 @@
 
 var Timer = process.binding('timer_wrap').Timer;
 var L = require('_linklist');
-
 var assert = require('assert').ok;
 
 // Timeout values > TIMEOUT_MAX are set to 1.
@@ -31,8 +30,9 @@ var debug;
 if (process.env.NODE_DEBUG && /timer/.test(process.env.NODE_DEBUG)) {
   debug = function() { require('util').error.apply(this, arguments); };
 } else {
-  debug = function() {};
+  debug = function() { };
 }
+
 
 // IDLE TIMEOUTS
 //
@@ -196,6 +196,7 @@ exports.setTimeout = function(callback, after) {
   if (!(after >= 1 && after <= TIMEOUT_MAX)) {
     after = 1; // schedule on next tick, follows browser behaviour
   }
+
   timer = new Timeout(after);
 
   if (arguments.length <= 2) {

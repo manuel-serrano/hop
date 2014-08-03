@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jul 11 18:15:41 2014 (serrano)                */
+;*    Last change :  Tue Jul 29 13:49:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -34,8 +34,7 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
-	      __proto__ prototype construct alloc strict
-	      arity constrarity)))
+	      __proto__ prototype construct alloc strict arity)))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
@@ -64,7 +63,6 @@
 			  (js-raise-type-error %this "not a constructor ~s"
 			     js-function-prototype)))
 	    (arity -1)
-	    (constrarity -1)
 	    (__proto__ js-object-prototype)))
       
       ;; then, create the properties of the function contructor
@@ -139,7 +137,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct strict arity constrarity)
+	   #!key __proto__ prototype alloc construct strict arity)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -159,12 +157,7 @@
 				 (construct (lambda (_) #unspecified))
 				 (else js-not-a-constructor)))
 		       (construct constr)
-		       (constrarity (or constrarity (procedure-arity constr)))
 		       (constrmap (when construct (instantiate::JsConstructMap))))))
-	    (with-access::JsFunction js-function (arity constrarity name)
-	       (when (and construct (not (=fx arity constrarity)))
-		  (tprint "ARITIES DIFFER name=" name " arity=" arity
-		     " constrarity=" constrarity)))
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)

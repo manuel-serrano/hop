@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Jul 28 16:59:42 2014 (serrano)                */
+;*    Last change :  Sun Aug  3 07:56:36 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -15,12 +15,19 @@
 (module __nodejs_uv
 
    (library hop hopscript)
+
+   (include "nodejs_debug.sch")
    
    (cond-expand
       (enable-libuv (library libuv))
       (else (import __nodejs__uv)))
 
    (export (nodejs-event-loop)
+
+	   (nodejs-close ::JsGlobalObject ::obj ::obj)
+	   (nodejs-ref ::obj)
+	   (nodejs-unref ::obj)
+	   
 	   (nodejs-make-timer)
 	   (nodejs-timer-callback-set! ::obj ::procedure)
 	   (nodejs-timer-start ::obj ::uint32 ::uint32)
@@ -33,7 +40,7 @@
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
 
-	   (nodejs-need-tick-callback ::JsGlobalObject)
+	   (nodejs-need-tick-callback ::JsGlobalObject ::JsObject)
 	   
 	   (nodejs-rename-file ::JsGlobalObject ::bstring ::bstring ::obj)
 	   (nodejs-ftruncate ::JsGlobalObject ::obj ::int ::obj)
@@ -59,9 +66,29 @@
 	   (nodejs-fsync ::JsGlobalObject ::obj ::obj)
 	   (nodejs-write ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)
 	   (nodejs-read ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)
-	   (nodejs-close ::JsGlobalObject ::obj ::obj)
+	   (nodejs-fs-close ::JsGlobalObject ::obj ::obj)
 
 	   (nodejs-getaddrinfo ::JsGlobalObject ::bstring ::int)
+	   (nodejs-query ::JsGlobalObject ::JsObject ::bstring ::int ::JsObject)
+	   (nodejs-isip ::bstring)
+
+	   (nodejs-istty ::obj)
+	   (nodejs-guess-handle-type ::obj)
+	   
+	   (nodejs-tcp-handle)
+	   (nodejs-stream-write-queue-size::long ::obj)
+	   (nodejs-stream-fd::long ::obj)
+	   (nodejs-tcp-connect ::JsGlobalObject ::obj ::bstring ::int ::procedure)
+	   (nodejs-tcp-nodelay ::obj ::bool)
+	   (nodejs-tcp-keepalive ::obj ::bool ::long)
+	   (nodejs-tcp-simultaneous-accepts ::obj ::bool)
+	   (nodejs-tcp-getsockname ::JsGlobalObject ::obj)
+	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
+
+	   (nodejs-stream-write ::JsGlobalObject ::obj ::bstring ::long ::procedure)
+	   (nodejs-stream-read-start ::JsGlobalObject ::obj ::obj)
+	   (nodejs-stream-read-stop ::JsGlobalObject ::obj)
+	   (nodejs-stream-shutdown ::JsGlobalObject ::obj ::procedure)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -96,10 +123,48 @@
 		       (synchronize uv-mutex
 			  (for-each (lambda (action) (action)) uv-actions)
 			  (set! uv-actions '()))))))
+	  (js-async-push-set! (lambda (f)
+				 (synchronize uv-mutex
+				    (set! uv-actions
+				       (cons f uv-actions))
+				    (uv-async-send uv-async))))
 	  (uv-run loop)))
       (else
        (%nodejs-event-loop))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-close ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-close %this obj callback)
+   (cond-expand
+      (enable-libuv
+       (uv-close obj
+	  (when (isa? callback JsFunction)
+	     (lambda (val)
+		(js-call1 %this callback (js-undefined) val)))))
+      (else
+       #f)))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-ref ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (nodejs-ref obj)
+   (cond-expand
+      (enable-libuv
+       (uv-ref obj))
+      (else
+       #f)))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-unref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-unref obj)
+   (cond-expand
+      (enable-libuv
+       (uv-unref obj))
+      (else
+       #f)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-timer ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -134,6 +199,7 @@
 			 (llong->uint64 (uint32->llong start))
 			 (llong->uint64 (uint32->llong rep))))
 		uv-actions))
+	  ;; send a tick
 	  (uv-async-send uv-async)))
       (else
        (%nodejs-timer-start timer start rep))))
@@ -224,10 +290,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-need-tick-callback ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-need-tick-callback %this)
+(define (nodejs-need-tick-callback %this process)
    (cond-expand
       (enable-libuv
-       (uv-idle-start (get-tick-spinner %this))))
+       (set! need-tick-cb #t)
+       (uv-idle-start (get-tick-spinner %this process))
+       (uv-async-send uv-async)))
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
@@ -240,19 +308,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-tick-spinner ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (get-tick-spinner %this)
+(define (get-tick-spinner %this process)
    (cond-expand
       (enable-libuv
        (unless tick-spinner
-	  (letrec* ((spin (lambda ()
+	  (letrec* ((spin (lambda (status)
 			     (when need-tick-cb
 				(set! need-tick-cb #f)
 				(uv-idle-stop spinner)
 				
 				(unless tick-from-spinner
 				   (set! tick-from-spinner
-				      (js-get %this '_tickFromSpinner %this)))
-				
+				      (js-get process '_tickFromSpinner %this)))
+
 				(js-call0 %this tick-from-spinner
 				   (js-undefined)))))
 		    (spinner (instantiate::UvIdle
@@ -517,9 +585,9 @@
 	      ip)))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-close ...                                                 */
+;*    nodejs-fs-close ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-close %this fd callback)
+(define (nodejs-fs-close %this fd callback)
    (cond-expand
       (enable-libuv
        (uv-fs-close fd :callback
@@ -765,7 +833,7 @@
 	  (mkdir-callback (if r 0 (fs-exn "cannot mkdir directory ~a" r)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-write ...                                                  */
+;*    nodejs-write ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-write %this fd buffer offset length position callback)
    (cond-expand
@@ -894,7 +962,6 @@
       (enable-libuv
        (with-access::JsGlobalObject %this (js-object)
 	  (let ((wrap (js-new %this js-object)))
-	     (tprint "GLOP node=" node " family=" family)
 	     (uv-getaddrinfo node #f
 		:family family
 		:callback
@@ -909,7 +976,206 @@
 	     wrap)))
       (else
        (getaddrinfo-callback (not-implemented-exn "getaddrinfo")))))
-	     
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-query ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-query %this process node family cb)
+   
+   (define (query-callback res)
+      (if (pair? res)
+	  (js-call2 %this cb (js-undefined)
+	     #f (js-vector->jsarray (list->vector res) %this))
+	  (js-call2 %this cb (js-undefined)
+	     res '#())))
+   
+   (cond-expand
+      (enable-libuv
+       (with-access::JsGlobalObject %this (js-object)
+	  (let ((res (uv-getaddrinfo node #f :family family :callback query-callback)))
+	     (if (=fx res 0)
+		 #t
+		 (begin
+		    (js-put! process '_errno res #f %this)
+		    #f)))))
+      (else
+       (query-callback (not-implemented-exn "query")))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-isip ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-isip addr)
+   (cond-expand
+      (enable-libuv
+       (cond
+	  ((uv-inet-pton addr :family 4) 4)
+	  ((uv-inet-pton addr :family 6) 6)
+	  (else 0)))
+      (else
+       (define ipv4-regexp
+	  (pregexp "^([0-9]{1,3}[.]){3}[.]([0-9]{1,3})$"))
+       
+       (define ipv6-regexp
+	  (pregexp "^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*$"))
+       (cond
+	  ((pregexp-match ipv4-regexp domain) 4)
+	  ((pregexp-match ipv6-regexp domain) 6)
+	  (else 0)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-istty ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-istty fd)
+   (cond-expand
+      (enable-libuv
+       (eq? (uv-guess-handle fd) 'TTY))
+      (else
+       (and (output-port? fd) (output-port-isatty? fd)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-guess-handle-type ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-guess-handle-type fd)
+   (cond-expand
+      (enable-libuv
+       (symbol->string (uv-guess-handle fd)))
+      (else
+       (if (and (output-port? fd) (output-port-isatty? fd))
+	   "TTY"
+	   "UNKNOWN"))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-handle ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-handle)
+   (cond-expand
+      (enable-libuv
+       (instantiate::UvTcp
+	  (%proc #f)
+	  (loop (uv-default-loop))))
+      (else
+       (error "nodejs-tcp-handle" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-write-queue-size ...                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-write-queue-size hdl)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-write-queue-size hdl))
+      (else
+       0)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-fd ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-fd hdl)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-fd hdl))
+      (else
+       0)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-connect ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-connect %this handle host port callback)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-connect handle host port :callback callback))
+      (else
+       (error "nodejs-tcp-connect" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-nodelay ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-nodelay handle enable)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-nodelay handle enable))
+      (else
+       (error "nodejs-tcp-nodelay" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-keepalive ...                                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-keepalive handle enable timeout)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-keepalive handle enable timeout))
+      (else
+       (error "nodejs-tcp-keepalive" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-simultaneous-accepts ...                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-simultaneous-accepts handle enable)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-simultaneous-accepts handle enable))
+      (else
+       (error "nodejs-tcp-simultaneous-accepts" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-getsockname ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-getsockname %this handle)
+   (cond-expand
+      (enable-libuv
+       (js-alist->jsobject (uv-tcp-getsockname handle) %this))
+      (else
+       (error "nodejs-tcp-getsockname" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-getpeername ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-getpeername %this handle)
+   (cond-expand
+      (enable-libuv
+       (js-alist->jsobject (uv-tcp-getpeername handle) %this))
+      (else
+       (error "nodejs-tcp-getpeername" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-write ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-write %this handle buffer length callback)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-write handle buffer length :callback callback))
+      (else
+       (error "nodejs-stream-write" "not implemented" #f))))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-read-start ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-read-start %this handle callback)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-read-start handle :callback callback))
+      (else
+       (error "nodejs-stream-read-start" "not implemented" #f))))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-read-stop ...                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-read-stop %this handle)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-read-stop handle))
+      (else
+       (error "nodejs-stream-read-stop" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-stream-shutdown ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-shutdown %this handle callback)
+   (cond-expand
+      (enable-libuv
+       (uv-stream-shutdown handle :callback callback))
+      (else
+       (error "nodejs-stream-shutdown" "not implemented" #f))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hopscript binding                                                */
 ;*---------------------------------------------------------------------*/
@@ -930,3 +1196,4 @@
    (with-access::UvFile obj (fd)
       (integer->string fd)))
 ))
+

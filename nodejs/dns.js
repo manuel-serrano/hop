@@ -106,6 +106,7 @@ exports.lookup = function(domain, family, callback) {
     callback(null, '127.0.0.1', 4);
     return {};
   }
+
   var matchedFamily = net.isIP(domain);
   if (matchedFamily) {
     callback(null, domain, matchedFamily);

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Jul 23 18:51:23 2014 (serrano)                */
+#*    Last change :  Sat Aug  2 20:38:46 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -35,6 +35,7 @@ POPULATION = Makefile \
   svc2/extern.js \
   websocket/wsserver.js websocket/wsclient.js \
   svc/svc.js \
+  svc3/svc3.js \
   html/html.js html/html.hss \
   hss/hss.hss hss/hss.js \
   tree/tree.js \

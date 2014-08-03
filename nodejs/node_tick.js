@@ -200,7 +200,6 @@ function initNodeTick( process ) {
       nextTickQueue.push(obj);
       infoBox[length]++;
 
-#:tprint( "_nextTick needSpinner=", needSpinner );
       if (needSpinner) {
         _needTickCallback();
         needSpinner = false;

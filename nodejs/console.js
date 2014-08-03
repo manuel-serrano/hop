@@ -73,7 +73,7 @@ Console.prototype.dir = function(object) {
 Console.prototype.time = function(label) {
   this._times[label] = Date.now();
 };
- 
+
 
 Console.prototype.timeEnd = function(label) {
   var time = this._times[label];

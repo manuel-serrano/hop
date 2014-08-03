@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jul  9 15:50:40 2014 (serrano)                */
+;*    Last change :  Tue Jul 29 13:49:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -124,7 +124,6 @@
 	      (constrsize::int (default 3))
 	      (constrmap (default #f)) 
 	      (arity::int read-only (default -1))
-	      (constrarity::int read-only (default -1))
 	      (len::int read-only)
 	      (procedure::procedure read-only))
 	   

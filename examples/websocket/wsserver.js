@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/wsserver/wsserver.js     */
+/*    .../prgm/project/hop/3.0.x/examples/websocket/wsserver.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Fri Jul  4 17:35:57 2014 (serrano)                */
+/*    Last change :  Sat Aug  2 07:26:48 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
@@ -11,7 +11,7 @@
 /*    run: hop -p 9999 -v -g wsserver.js                               */
 /*=====================================================================*/
 
-var wss = new WebSocketServer( "wss" );
+var wss = new WebSocketServer( { path: "wss", protocol: "foo" } );
 
 wss.onconnection = function( event ) {
    var ws = event.value;

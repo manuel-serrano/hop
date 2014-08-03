@@ -87,6 +87,9 @@ function ReadableState(options, stream) {
   // if true, a maybeReadMore has been scheduled
   this.readingMore = false;
 
+  // if true, stream is in old mode
+  this.oldMode = false;
+
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
@@ -360,8 +363,7 @@ function chunkInvalid(state, chunk) {
       'string' !== typeof chunk &&
       chunk !== null &&
       chunk !== undefined &&
-      !state.objectMode &&
-      !er) {
+      !state.objectMode) {
     er = new TypeError('Invalid non-string/buffer chunk');
   }
   return er;
@@ -767,8 +769,15 @@ function emitDataEvents(stream, startPaused) {
     this.emit('resume');
   };
 
-  // now make it start, just in case it hadn't already.
-  stream.emit('readable');
+  // Start reading in next tick to allow caller to set event listeners on
+  // the stream object (like 'error')
+  process.nextTick(function() {
+    // now make it start, just in case it hadn't already.
+    stream.emit('readable');
+  });
+
+  // Let others know about our mode
+  state.oldMode = true;
 }
 
 // wrap an old-style stream as the async data source.

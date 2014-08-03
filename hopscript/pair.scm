@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Fri Jun 20 09:19:04 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 07:31:41 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -26,7 +26,8 @@
 	   __hopscript_array)
    
    (export  (js-get-pair o::pair prop::symbol %this::JsGlobalObject)
-	    (js-get-null o::nil prop::symbol %this::JsGlobalObject)))
+	    (js-get-null o::nil prop::symbol %this::JsGlobalObject)
+	    (js-put-pair! o::pair prop::symbol v throw::bool %this::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-pair ...                                                  */
@@ -121,4 +122,20 @@
        (js-raise-type-error %this
 	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))
    
-
+;*---------------------------------------------------------------------*/
+;*    js-put-pair! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-put-pair! o::pair prop::symbol v throw::bool %this::JsGlobalObject)
+   (case prop
+      ((car)
+       (set-car! o v)
+       v)
+      ((cdr)
+       (set-cdr! o v)
+       v)
+      (else
+       (if throw
+	   (js-raise-type-error %this
+	      "[[PUT]], read-only or unbound ~~s" (js-toname prop %this))
+	   v))))
+      

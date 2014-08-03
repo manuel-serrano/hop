@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Jul 22 15:49:12 2014 (serrano)                */
+#*    Last change :  Sun Aug  3 06:45:47 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -291,12 +291,7 @@ distclean: clean
 	$(RM) -f etc/hopsh.man
 	$(RM) -f etc/hophz.man
 	$(RM) -f etc/hopreplay.man
-	$(RM) -f lib/hop.init
-	$(RM) -f lib/scheme2js.init
-	$(RM) -f lib/hopscheme.init
-	$(RM) -f lib/js2scheme.init
-	$(RM) -f lib/nodejs.init
-	$(RM) -f lib/hopscript.init
+	$(RM) -rf lib
 	$(RM) -f runtime/configure_android.sch
 	$(RM) -f runtime/configure_macosx.sch
 	$(RM) -f runtime/configure_noarch.sch

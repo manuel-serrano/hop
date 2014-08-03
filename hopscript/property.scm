@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 23 12:17:16 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 14:36:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -55,6 +55,8 @@
 	   
 	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
+
+	   (js-put!/debug ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-put-name/cache! ::obj ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
@@ -772,15 +774,28 @@
    (js-put-jsobject! o p value throw #f %this))
 
 ;*---------------------------------------------------------------------*/
+;*    js-put!/debug ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-put!/debug _o prop v::obj throw::bool %this::JsGlobalObject loc)
+   (cond
+      ((pair? _o)
+       (js-put-pair! _o prop v throw %this))
+      (else
+       (let ((o (js-toobject/debug %this loc _o)))
+	  (js-put! _o prop v throw %this)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-put! ...                                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.5       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put! _o prop v::obj throw::bool %this::JsGlobalObject)
-   (let ((o (js-toobject %this _o)))
-      (if o
-	  (js-put! o prop v throw %this)
-	  (js-raise-type-error %this "[[PUT]]: not an object ~s" _o))))
+   (if (pair? _o)
+       (js-put-pair! _o prop v throw %this)
+       (let ((o (js-toobject %this _o)))
+	  (if o
+	      (js-put! o prop v throw %this)
+	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::Object ...                                             */
@@ -793,9 +808,9 @@
 	  (field (find-class-field clazz name)))
       (cond
 	 ((not field)
-	  (js-raise-type-error %this (format "no such field.5 \"~\" ~~a" name) o))
+	  (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o))
 	 ((not (class-field-mutable? field))
-	  (js-raise-type-error %this (format "field \"~\" read-only ~~a" name) o))
+	  (js-raise-type-error %this (format "field \"~a\" read-only ~~a" name) o))
 	 (else
 	  ((class-field-mutator field) o v)))))
 

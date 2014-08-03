@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jul 26 07:00:05 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 08:00:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -314,12 +314,12 @@
    (cond
       ((isa? lhs J2SRef)
        (with-access::J2SRef lhs (decl)
-	  (with-access::J2SDecl decl (writable global id)
+	  (with-access::J2SDecl decl (writable global id loc)
 	     (if writable
 		 (cond
 		    ((and global (in-eval? return))
 		     `(begin
-			 ,(j2s-put! '%scope `',id val (eq? mode 'strict) #f)
+			 ,(j2s-put! loc '%scope `',id val (eq? mode 'strict) #f)
 			 ,result))
 		    (result
 		     `(begin
@@ -371,7 +371,6 @@
 				       ,fastid
 				       ,(length params) ',id
 				       :arity ,arity
-				       :constrarity ,arity
 				       :strict ,(eq? mode 'strict)
 				       :alloc (lambda (o)
 						 (js-object-alloc o %this))
@@ -384,7 +383,6 @@
 			     ,fastid ,(length params)
 			     ',id
 			     :arity ,arity
-			     :constrarity ,arity
 			     :strict ,(eq? mode 'strict)
 			     :alloc (lambda (o) (js-object-alloc o %this))
 			     :construct ,fastid)))))))))
@@ -504,6 +502,7 @@
 ;*    j2s-unresolved-put! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved-put! obj field expr throw::bool mode::symbol)
+   ;; no need to type check obj as we statically know that it is an obj
    (if (eq? mode 'strict)
        `(js-unresolved-put! ,obj ,field ,expr #t %this)
        `(js-put! ,obj ,field ,expr ,throw %this)))
@@ -750,7 +749,6 @@
 			    ',(string->symbol
 				(format "function:~a:~a" (cadr loc) (caddr loc)))
 			    :arity ,arity
-			    :constrarity ,arity
 			    :strict ,(eq? mode 'strict)
 			    :alloc (lambda (o) (js-object-alloc o %this))
 			    :construct ,tmp))))
@@ -1161,14 +1159,16 @@
 					      (if (string? prov) prov pro)
 					      cache)
 					  %this)))
-			     (js-put! ,obj ,(if (string? prov) prov pro)
-				(js+ ,inc ,tmp %this) ,(eq? mode 'strict) %this)
+			     ,(j2s-put! loca obj (if (string? prov) prov pro)
+				`(js+ ,inc ,tmp %this) (eq? mode 'strict)
+				cache)
 			     ,tmp)))))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id cache loc)
 		   (let ((tmp (gensym 'tmp)))
 		      (epairify-deep loc
-			 `(let ((,tmp (js-tonumber ,(j2s-unresolved id cache loc)
+			 `(let ((,tmp (js-tonumber
+					 ,(j2s-unresolved id cache loc)
 					 %this)))
 			     ,(j2s-unresolved-put! '%scope `',id
 				 `(+ ,inc ,tmp)
@@ -1204,6 +1204,7 @@
 		   (let ((tmp (gensym 'tmp))
 			 (obj (gensym 'obj))
 			 (pro (gensym 'prop))
+			 (res (gensym 'res))
 			 (prov (j2s-scheme field mode return conf)))
 		      (epairify-deep loc
 			 `(let* ((,obj ,(j2s-scheme o mode return conf))
@@ -1212,10 +1213,13 @@
 					  ,(j2s-get loca obj
 					      (if (string? prov) prov pro)
 					      cache)
-					  %this)))
-			     (js-put! ,obj ,(if (string? prov) prov pro)
-				(js+ ,inc ,tmp %this) ,(eq? mode 'strict) %this)
-			     (+ ,inc ,tmp))))))
+					  %this))
+				 (,res (js+ ,inc ,tmp %this)))
+			     ,(j2s-put! loca obj
+				 (if (string? prov) prov pro)
+				 res
+				 (eq? mode 'strict) cache)
+			     ,res)))))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id cache loc)
 		   (let ((tmp (gensym 'tmp)))
@@ -1506,13 +1510,13 @@
 		(epairify loc
 		   (j2s-unresolved-put! '%scope `',id name #f mode))))
 	    ((isa? lhs J2SAccess)
-	     (with-access::J2SAccess lhs (obj field)
+	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
-		   `(js-put! ,(j2s-scheme obj mode return conf)
-		       ,(j2s-scheme field mode return conf)
-		       ,name
-		       ,(eq? mode 'strict)
-		       %this))))
+		   (j2s-put! loc (j2s-scheme obj mode return conf)
+		       (j2s-scheme field mode return conf)
+		       name
+		       (eq? mode 'strict)
+		       #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -1520,7 +1524,7 @@
 		      (if (null? withs)
 			  (loop expr)
 			  `(if ,(j2s-in? loc `',id (car withs))
-			       ,(j2s-put! (car withs) (symbol->string id)
+			       ,(j2s-put! loc (car withs) (symbol->string id)
 				   name #f #f)
 			       ,(liip (cdr withs))))))))
 	    (else
@@ -1769,9 +1773,9 @@
       (let loop ((lhs lhs))
 	 (cond
 	    ((isa? lhs J2SAccess)
-	     (with-access::J2SAccess lhs (obj field cache)
+	     (with-access::J2SAccess lhs (obj field cache (loca loc))
 		(epairify loc
-		   (j2s-put! (j2s-scheme obj mode return conf)
+		   (j2s-put! loca (j2s-scheme obj mode return conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-scheme rhs mode return conf)
 		      (eq? mode 'strict)
@@ -1796,7 +1800,7 @@
 		      (if (null? withs)
 			  (loop expr)
 			  `(if ,(j2s-in? loc `',id (car withs))
-			       ,(j2s-put! (car withs) (symbol->string id)
+			       ,(j2s-put! loc (car withs) (symbol->string id)
 				   (j2s-scheme rhs mode return conf) #f #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
@@ -1828,18 +1832,18 @@
       (epairify-deep loc
 	 (cond
 	    ((isa? lhs J2SAccess)
-	     (with-access::J2SAccess lhs (obj field)
+	     (with-access::J2SAccess lhs (obj field loc)
 		(let ((tobj (gensym 'obj))
 		      (pro (gensym 'pro))
 		      (prov (j2s-scheme field mode return conf)))
 		   `(let ((,tobj ,(j2s-scheme obj mode return conf))
 			  ,@(if (string? prov) '() (list `(,pro ,prov))))
-		       (js-put! ,tobj ,(if (string? prov) prov prov)
-			  ,(js-binop loc op
-			      (j2s-get loc tobj (if (string? prov) prov pro) #f)
-			      (j2s-scheme rhs mode return conf))
-			  ,(eq? mode 'strict)
-			  %this)))))
+		       ,(j2s-put! loc tobj (if (string? prov) prov prov)
+			  (js-binop loc op
+			     (j2s-get loc tobj (if (string? prov) prov pro) #f)
+			     (j2s-scheme rhs mode return conf))
+			  (eq? mode 'strict)
+			  #f)))))
 	    ((isa? lhs J2SRef)
 	     (j2s-scheme-set! lhs
 		(js-binop loc op
@@ -1875,19 +1879,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! obj prop val mode cache)
-   (if cache
+(define (j2s-put! loc obj prop val mode cache)
+   (cond
+      ((> (bigloo-debug) 0)
+       (if (string? prop)
+	   `(js-put!/debug ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
+	   `(js-put!/debug ,obj ,prop ,val ,mode %this ',loc)))
+      (cache
        (cond
 	  ((string? prop)
 	   `(js-put-name/cache! ,obj ',(string->symbol prop) ,val ,mode
 	       ,(pcache cache) %this))
 	  (else
-	   `(js-put/cache! ,obj ,prop ,val ,mode ,(pcache cache) %this)))
+	   `(js-put/cache! ,obj ,prop ,val ,mode ,(pcache cache) %this))))
+      (else
        (cond
 	  ((string? prop)
 	   `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
 	  (else
-	   `(js-put! ,obj ,prop ,val ,mode %this)))))
+	   `(js-put! ,obj ,prop ,val ,mode %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */

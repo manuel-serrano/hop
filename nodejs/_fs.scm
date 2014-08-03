@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Jul 28 10:15:05 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 11:43:37 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -165,7 +165,7 @@
 	  (nodejs-mkdir %this path mode callback)))
 
    (define (close this fd callback)
-      (nodejs-close %this fd callback))
+      (nodejs-fs-close %this fd callback))
 
    (define (open this path flags mode callback)
       (nodejs-open %this path flags mode callback))

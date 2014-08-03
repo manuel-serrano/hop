@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Jun 11 20:14:45 2014 (serrano)                */
+;*    Last change :  Sat Aug  2 07:30:58 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -91,11 +91,20 @@
 	       (__proto__ __proto__)
 	       (extensible #t)))
 
-	 (define (js-websocket-construct o url)
+	 (define (js-websocket-construct o url options)
 	    (with-access::JsGlobalObject %this (js-object)
-	       (let* ((url (js-tostring url %this))
+	       (let* ((protocol (cond
+				   ((string? options)
+				    options)
+				   ((isa? options JsArray)
+				    (let ((join (js-get options 'join %this)))
+				       (js-call1 %this join options ", ")))
+				   ((isa? options JsObject)
+				    (js-get options 'protocol %this))))
+		      (url (js-tostring url %this))
 		      (ws (instantiate::websocket
-			     (url (pregexp-replace "ws://" url "http://"))))
+			     (url (pregexp-replace "ws://" url "http://"))
+			     (protocol protocol)))
 		      (obj (instantiate::JsWebSocket
 			      (__proto__ js-websocket-prototype)
 			      (ws ws))))
@@ -121,10 +130,17 @@
 	 
 	 (define (js-websocket-server-construct this opt)
 	    (letrec* ((path (if (string? opt) opt (js-get opt 'path %this)))
+		      (proto (if (isa? opt JsObject)
+				 (let ((proto (js-get opt 'protocol %this)))
+				    (cond
+				       ((string? proto)
+					proto)
+				       ((isa? proto JsArray)
+					(jsarray->list proto %this))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
-				    (wss-onconnect wss)))))
+				    (wss-onconnect wss) proto))))
 		      (wss (instantiate::JsWebSocketServer
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
@@ -142,9 +158,9 @@
 	 ;; two constructors
 	 (define js-websocket
 	    (js-make-function %this
-	       (lambda (this url)
-		  (js-new %this js-websocket url))
-	       1 'WebSocket
+	       (lambda (this url options)
+		  (js-new %this js-websocket url options))
+	       2 'WebSocket
 	       :__proto__ js-function-prototype
 	       :construct js-websocket-construct))
 	 

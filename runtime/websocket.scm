@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Jun  5 17:56:54 2014 (serrano)                */
+;*    Last change :  Sat Aug  2 07:23:18 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -48,6 +48,7 @@
 
    (export (class websocket
 	      (%mutex read-only (default (make-mutex)))
+	      (%condvar read-only (default (make-condition-variable)))
 	      (%socket (default #f))
 	      (url::bstring read-only)
 	      (onopens::pair-nil (default '()))
@@ -56,7 +57,8 @@
 	      (onmessages::pair-nil (default '()))
 	      (authorization (default #f))
 	      (state::symbol (default 'connecting))
-	      (version read-only (default 'hybi)))
+	      (version read-only (default 'hybi))
+	      (protocol::obj read-only (default #f)))
 	   
 	   (class ws-server
 	      (ws-server-init!)
@@ -71,7 +73,7 @@
 	   (websocket-proxy-request? ::pair-nil)
 	   (websocket-proxy-connect! ::bstring ::int)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
-	   (websocket-server-response ::http-request key #!optional onconnect)
+	   (websocket-server-response ::http-request key #!optional onconnect protocol)
 	   (websocket-debug)
 	   (websocket-debug-level::int)
 	   
@@ -166,7 +168,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-server-response ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (websocket-server-response req key #!optional onconnect)
+(define (websocket-server-response req key #!optional onconnect protocol)
    
    (define (websocket-server-location host)
       (with-access::http-request req ((h host) (p port))
@@ -222,7 +224,22 @@
 	       (blit-string-int32-big-endian! k2 buf 4)
 	       (blit-string! key3 0 buf 8 8)
 	       (string-hex-intern! (md5sum buf))))))
-   
+
+   (define (websocket-subprotocol srvproto clientproto)
+      ;; Subprotocols described at
+      ;; http://tools.ietf.org/html/rfc6455#section-11.3.4
+      (cond
+	 ((not srvproto)
+	  ;; the client will notice the error when it receives the response
+	  #f)
+	 ((not clientproto)
+	  ;; MS: 2 aug 2014, I'm not sure what to do in this case
+	  ;; see http://tools.ietf.org/html/rfc6455#section-4.2.2
+	  #f)
+	 (else
+	  (find (lambda (s) (member s srvproto))
+	     (string-split clientproto ", ")))))
+      
    (define (websocket-sec-challenge req header)
       ;; newer websocket protocols includes a 3 keys challenge
       ;; we check which version we are asked.
@@ -232,18 +249,18 @@
 	       (when key2
 		  (webwocket-hixie-protocol-76 key1 key2 req))))))
    
-   (define (websocket-hixie-protocol header read)
+   (define (websocket-hixie-protocol header subprotocol read)
       (instantiate::http-response-websocket
 	 (request req)
 	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
 	 (location (websocket-server-location (get-header header host: #f)))
 	 (origin (get-header header origin: "localhost"))
-	 (protocol (get-header header WebSocket-Protocol: #f))
+	 (protocol protocol)
 	 (connection 'Upgrade)
 	 (sec (websocket-sec-challenge req header))
 	 (onconnect onconnect)))
    
-   (define (websocket-hybi-protocol header req)
+   (define (websocket-hybi-protocol header subprotocol req)
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
       (with-trace (+ (websocket-debug-level) 3) "websocket-hybi-protocol"
 	 (trace-item "header=" header)
@@ -252,13 +269,15 @@
 	       (request req)
 	       (start-line "HTTP/1.1 101 Switching Protocols")
 	       (connection 'Upgrade)
-	       (protocol (get-header header WebSocket-Protocol: #f))
+	       (protocol subprotocol)
 	       (accept (websocket-hybi-accept key))
 	       (onconnect onconnect)))))
    
    (with-access::http-request req (header connection socket)
-      (let ((host (get-header header host: #f))
-	    (version (get-header header sec-websocket-version: "-1")))
+      (let* ((host (get-header header host: #f))
+	     (version (get-header header sec-websocket-version: "-1"))
+	     (clientprotocol (get-header header Sec-WebSocket-Protocol: #f))
+	     (subprotocol (websocket-subprotocol protocol clientprotocol)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
 	 (with-trace (websocket-debug-level) "ws-register"
@@ -266,14 +285,14 @@
 	       version)
 	    (trace-item "origin="
 	       (get-header header origin: "localhost"))
-	    (trace-item "WebSocket-Protocolo="
-	       (get-header header WebSocket-Protocolo: #f))
+	    (trace-item "Sec-WebSocket-Protocol="
+	       (get-header header Sec-WebSocket-Protocol: #f))
 	    (let ((v (string->integer version)))
 	       (cond
 		  ((and (>=fx v 7) (<=fx v 25))
-		   (websocket-hybi-protocol header req))
+		   (websocket-hybi-protocol header subprotocol req))
 		  (else
-		   (websocket-hixie-protocol header req))))))))
+		   (websocket-hixie-protocol header subprotocol req))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-websocket ...                      */
@@ -304,7 +323,7 @@
 	       (accept
 		  (http-write-line p "Sec-WebSocket-Accept: " accept)
 		  (when protocol
-		     (http-write-line p "WebSocket-Protocol: " protocol))
+		     (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		  (http-write-line p))
 	       (sec
 		  (http-write-line p "Sec-WebSocket-Origin: " origin)
@@ -317,7 +336,7 @@
 		(http-write-line p "WebSocket-Origin: " origin)
 		(http-write-line p "WebSocket-Location: " location)
 		(when protocol
-		   (http-write-line p "WebSocket-Protocol: " protocol))
+		   (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		(http-write-line p)))
 	    (flush-output-port p)
 	    ;; set the socket in non blocking mode to prevent
@@ -392,7 +411,9 @@
 		      (proc e)))
 		(set! onopens (cons proc onopens))))
 	    ((string=? evt "message")
-	     (with-access::websocket ws (onmessages)
+	     (with-access::websocket ws (onmessages %condvar)
+		(unless (pair? onmessages)
+		   (condition-variable-signal! %condvar))
 		(set! onmessages (cons proc onmessages))))
 	    ((string=? evt "close")
 	     (with-access::websocket ws (oncloses)
@@ -484,7 +505,7 @@
 	       (set! state 'closed)
 	       (socket-close %socket)
 	       (set! %socket #f)))))
-
+   
    (define (abort)
       (with-access::websocket ws (%mutex %socket onerrors)
 	 (synchronize %mutex
@@ -495,7 +516,7 @@
 			    (value ws))))
 		  (apply-listeners onerrors se))))
 	 (close)))
-
+   
    (define (message val)
       (with-access::websocket ws (onmessages)
 	 (let ((se (instantiate::websocket-event
@@ -503,11 +524,11 @@
 		      (target ws)
 		      (value val))))
 	    (apply-listeners onmessages se))))
-
+   
    (define (read-check-byte in val)
       (unless (=fx (read-byte in) val)
 	 (abort)))
-
+   
    (define (read-messages)
       (with-access::websocket ws (%socket)
 	 (let ((in (socket-input %socket)))
@@ -519,7 +540,7 @@
 			 (loop))
 		      (abort)))))))
    
-   (with-access::websocket ws (%mutex %socket url authorization state onopens)
+   (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol onmessages)
       (synchronize %mutex
 	 (unless (websocket-connected? ws)
 	    (multiple-value-bind (scheme userinfo host port path)
@@ -534,18 +555,20 @@
 					(format "ws~a"
 					   (hop-login-cookie-crypt-key)))))
 		     (http :in in :out out
-			:protocol "http"
 			:method 'GET
 			:http-version 'HTTP/1.1
 			:host (format "~a:~a" host port)
 			:path path
 			:authorization authorization
-			:header `((upgrade: . websocket)
-				  (connection: . upgrade)
-				  (origin: . ,origin)
-				  (sec-websocket-key: . ,sec-ws-key)
-				  (sec-websocket-version: . 13)
-				  (user-agent: . ,uagent)))
+			:header (append `((user-agent: . ,uagent)
+					  (Connection: . Upgrade)
+					  (Upgrade: . websocket)
+					  (Origin: . ,origin)
+					  (Sec-WebSocket-Key: . ,sec-ws-key)
+					  (Sec-WebSocket-Version: . 13))
+				   (if (string? protocol)
+				       `((Sec-WebSocket-Protocol: . ,protocol))
+				       '())))
 		     (multiple-value-bind (http status line)
 			(http-parse-status-line in)
 			(when (=fx status 101)
@@ -566,12 +589,17 @@
 				    (thread-start!
 				       (instantiate::hopthread
 					  (body (lambda ()
-						   (unwind-protect
-						      (with-handler
-							 (lambda (e)
-							    #f)
-							 (read-messages))
-						      (close))))))))))))))))))
+						   (let loop ()
+						      (synchronize %mutex
+							 (unless (pair? onmessages)
+							    (condition-variable-wait! %condvar %mutex)
+							    (loop)))
+						      (unwind-protect
+							 (with-handler
+							    (lambda (e)
+							       #f)
+							    (read-messages))
+							 (close)))))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-envelope-parse ...                                     */
@@ -798,7 +826,7 @@
 ;*    websocket-read ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (websocket-read sock::socket)
-   
+
    (define (read-int16 in)
       (let ((bh (read-byte in))
 	    (bl (read-byte in)))
@@ -861,5 +889,3 @@
 		       (key (vector key0 key1 key2 key3))
 		       (payload (read-payload in l)))
 		   (unmask payload key)))))))
-		   
-		   

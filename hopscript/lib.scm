@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Jul 23 10:18:47 2014 (serrano)                */
+;*    Last change :  Thu Jul 31 11:39:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -36,7 +36,9 @@
 		      (js-put! obj (car e)
 			 (cond
 			    ((keyword? (cdr e))
-			     (keyword->symbol (cdr e)))
+			     (keyword->string (cdr e)))
+			    ((symbol? (cdr e))
+			     (symbol->string (cdr e)))
 			    ((pair? (cdr e))
 			     (js-alist->jsobject (cdr e) %this))
 			    ((int64? (cdr e))

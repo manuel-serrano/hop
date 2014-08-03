@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jul 23 12:03:29 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 10:05:25 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -118,10 +118,10 @@
 ;*    js-new/function ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-new/function %this::JsGlobalObject f::JsFunction args)
-   (with-access::JsFunction f (construct constrarity alloc name)
+   (with-access::JsFunction f (construct arity alloc name)
       (let ((o (alloc f)))
 	 ;; CARE ARITY
-	 (let ((r (js-apply% construct constrarity o args)))
+	 (let ((r (js-apply% construct arity o args)))
 	    (if (isa? r JsObject) r o)))))
 
 ;*---------------------------------------------------------------------*/
@@ -165,46 +165,46 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new0 %this f)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name constrarity arity)
+       (with-access::JsFunction f (construct alloc name arity)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
-	     (let ((r (js-call0% %this construct constrarity o)))
+	     (let ((r (js-call0% %this construct arity o)))
 		(js-new-return f r o))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new1 %this f a0)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name constrarity)
+       (with-access::JsFunction f (construct alloc name arity)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
-	     (let ((r (js-call1% %this construct constrarity o a0)))
+	     (let ((r (js-call1% %this construct arity o a0)))
 		(js-new-return f r o))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new2 %this f a0 a1)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc constrarity)
+       (with-access::JsFunction f (construct alloc arity)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
-	     (let ((r (js-call2% %this construct constrarity o a0 a1)))
+	     (let ((r (js-call2% %this construct arity o a0 a1)))
 		(js-new-return f r o))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new3 %this f a0 a1 a2)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name constrarity)
+       (with-access::JsFunction f (construct alloc name arity)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
-	     (let ((r (js-call3% %this construct constrarity o a0 a1 a2)))
+	     (let ((r (js-call3% %this construct arity o a0 a1 a2)))
 		(js-new-return f r o))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new4 %this f a0 a1 a2 a3)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc constrarity)
+       (with-access::JsFunction f (construct alloc arity)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
-	     (let ((r (js-call4% %this construct constrarity o a0 a1 a2 a3)))
+	     (let ((r (js-call4% %this construct arity o a0 a1 a2 a3)))
 		(js-new-return f r o))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
@@ -306,62 +306,52 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call0% %this procedure arity this))))
 (define (js-call1 %this fun this a0)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity name)
-	  ;; CARE ARITY
 	  (js-call1% %this procedure arity this a0))))
 (define (js-call2 %this fun this a0 a1)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity name)
-	  ;; CARE ARITY
 	  (js-call2% %this procedure arity this a0 a1))))
 (define (js-call3 %this fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call3% %this procedure arity this a0 a1 a2))))
 (define (js-call4 %this fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call4% %this procedure arity this a0 a1 a2 a3))))
 (define (js-call5 %this fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call5% %this procedure arity this a0 a1 a2 a3 a4))))
 (define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call6% %this procedure arity this a0 a1 a2 a3 a4 a5))))
 (define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call7% %this procedure arity this a0 a1 a2 a3 a4 a5 a6))))
 (define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (js-call8% %this procedure arity this a0 a1 a2 a3 a4 a5 a6 a7))))
 
 (define (js-calln %this fun this . args)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "call: not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity)
-	  ;; CARE ARITY
 	  (let ((arity arity))
 	     (if (<fx arity 0)
 		 (apply procedure this args)
@@ -379,111 +369,111 @@
 
 (define (js-call0/debug %this loc fun this)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call0: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call0: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call0% %this procedure arity this)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call1/debug %this loc fun this a0)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call1: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call1: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call1% %this procedure arity this a0)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call2/debug %this loc fun this a0 a1)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call2: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call2: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call2% %this procedure arity this a0 a1)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call3/debug %this loc fun this a0 a1 a2)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call3: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call3: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call3% %this procedure arity this a0 a1 a2)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call4/debug %this loc fun this a0 a1 a2 a3)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call4: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call4: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call4% %this procedure arity this a0 a1 a2 a3)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call5: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call5: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call5% %this procedure arity this a0 a1 a2 a3 a4)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call6: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call6: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call6% %this procedure arity this a0 a1 a2 a3 a4 a5)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call7: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call7: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call7% %this procedure arity this a0 a1 a2 a3 a4 a5 a6)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call8: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call8: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (js-call8% %this procedure arity this a0 a1 a2 a3 a4 a5 a6 a7)))
 		($env-pop-trace env)
 		aux)))))
 (define (js-calln/debug %this loc fun this . args)
    (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc "call: not a function ~s" fun)
+       (js-raise-type-error/loc %this loc
+	  (format "call: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
 		(name fname))
 	     ($env-push-trace env name loc)
-	  ;; CARE ARITY
 	     (let ((aux (if (<fx arity 0)
 			   (apply procedure this args)
 			   (let ((len (length args)))

@@ -28,7 +28,6 @@ var EventEmitter = require('events').EventEmitter;
 var FreeList = require('freelist').FreeList;
 var HTTPParser = process.binding('http_parser').HTTPParser;
 var assert = require('assert').ok;
-var Buffer = require('buffer').Buffer;
 
 var debug;
 if (process.env.NODE_DEBUG && /http/.test(process.env.NODE_DEBUG)) {
@@ -38,7 +37,8 @@ if (process.env.NODE_DEBUG && /http/.test(process.env.NODE_DEBUG)) {
 }
 
 function readStart(socket) {
-  if (!socket || !socket._handle || !socket._handle.readStart) return;
+  if (!socket || !socket._handle || !socket._handle.readStart || socket._paused)
+    return;
   socket._handle.readStart();
 }
 
@@ -173,10 +173,8 @@ function parserOnMessageComplete() {
     stream.push(null);
   }
 
-  if (parser.socket.readable) {
-    // force to read the next incoming message
-    readStart(parser.socket);
-  }
+  // force to read the next incoming message
+  readStart(parser.socket);
 }
 
 
@@ -346,9 +344,7 @@ IncomingMessage.prototype._read = function(n) {
   // We actually do almost nothing here, because the parserOnBody
   // function fills up our internal buffer directly.  However, we
   // do need to unpause the underlying socket so that it flows.
-  if (!this.socket.readable)
-    this.push(null);
-  else
+  if (this.socket.readable)
     readStart(this.socket);
 };
 
@@ -909,6 +905,7 @@ OutgoingMessage.prototype.addTrailers = function(headers) {
   }
 };
 
+
 var zero_chunk_buf = new Buffer('\r\n0\r\n');
 var crlf_buf = new Buffer('\r\n');
 
@@ -1347,7 +1344,9 @@ function ClientRequest(options, cb) {
   var self = this;
   OutgoingMessage.call(self);
 
-  self.agent = options.agent === undefined ? globalAgent : options.agent;
+  self.agent = options.agent;
+  if (!options.agent && options.agent !== false && !options.createConnection)
+    self.agent = globalAgent;
 
   var defaultPort = options.defaultPort || 80;
 
@@ -1963,6 +1962,7 @@ function connectionListener(socket) {
   });
 
   socket.ondata = function(d, start, end) {
+    assert(!socket._paused);
     var ret = parser.execute(d, start, end - start);
     if (ret instanceof Error) {
       debug('parse error');
@@ -1988,6 +1988,12 @@ function connectionListener(socket) {
         // Got upgrade header or CONNECT method, but have no handler.
         socket.destroy();
       }
+    }
+
+    if (socket._paused) {
+      // onIncoming paused the socket, we should pause the parser as well
+      debug('pause parser');
+      socket.parser.pause();
     }
   };
 
@@ -2017,8 +2023,34 @@ function connectionListener(socket) {
   // The following callback is issued after the headers have been read on a
   // new message. In this callback we setup the response object and pass it
   // to the user.
+
+  socket._paused = false;
+  function socketOnDrain() {
+    // If we previously paused, then start reading again.
+    if (socket._paused) {
+      socket._paused = false;
+      socket.parser.resume();
+      readStart(socket);
+    }
+  }
+  socket.on('drain', socketOnDrain);
+
   parser.onIncoming = function(req, shouldKeepAlive) {
     incoming.push(req);
+
+    // If the writable end isn't consuming, then stop reading
+    // so that we don't become overwhelmed by a flood of
+    // pipelined requests that may never be resolved.
+    if (!socket._paused) {
+      var needPause = socket._writableState.needDrain;
+      if (needPause) {
+        socket._paused = true;
+        // We also need to pause the parser, but don't do that until after
+        // the call to execute, because we may still be processing the last
+        // chunk.
+        readStop(socket);
+      }
+    }
 
     var res = new ServerResponse(req);
 
@@ -2046,7 +2078,7 @@ function connectionListener(socket) {
       // if the user never called req.read(), and didn't pipe() or
       // .resume() or .on('data'), then we call req._dump() so that the
       // bytes will be pulled off the wire.
-      if (!req._consuming)
+      if (!req._consuming && !req._readableState.oldMode)
         req._dump();
 
       res.detachSocket(socket);

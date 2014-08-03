@@ -206,8 +206,14 @@ fs.readFile = function(path, options, callback_) {
   fs.open(path, flag, 438 /*=0666*/, function(er, fd_) {
     if (er) return callback(er);
     fd = fd_;
+
     fs.fstat(fd, function(er, st) {
-      if (er) return callback(er);
+      if (er) {
+        return fs.close(fd, function() {
+          callback(er);
+        });
+      }
+
       size = st.size;
       if (size === 0) {
         // the kernel lies about many files.
@@ -240,6 +246,7 @@ fs.readFile = function(path, options, callback_) {
     if (bytesRead === 0) {
       return close();
     }
+
     pos += bytesRead;
     if (size !== 0) {
       if (pos === size) close();
@@ -259,6 +266,7 @@ fs.readFile = function(path, options, callback_) {
       } else if (pos < size) {
         buffer = buffer.slice(0, pos);
       }
+
       if (encoding) buffer = buffer.toString(encoding);
       return callback(er, buffer);
     });
@@ -336,6 +344,7 @@ fs.readFileSync = function(path, options) {
   return buffer;
 };
 
+
 // Used by binding.open and friends
 function stringToFlags(flag) {
   // Only mess with strings
@@ -380,6 +389,7 @@ Object.defineProperty(exports, '_stringToFlags', {
   enumerable: false,
   value: stringToFlags
 });
+
 
 // Yes, the follow could be easily DRYed up but I provide the explicit
 // list to make the arguments clear.
@@ -551,7 +561,7 @@ fs.truncate = function(path, len, callback) {
     len = 0;
   }
   callback = maybeCallback(callback);
-  fs.open(path, 'w', function(er, fd) {
+  fs.open(path, 'r+', function(er, fd) {
     if (er) return callback(er);
     binding.ftruncate(fd, len, function(er) {
       fs.close(fd, function(er2) {
@@ -570,7 +580,7 @@ fs.truncateSync = function(path, len) {
     len = 0;
   }
   // allow error to be thrown, but still close fd.
-  var fd = fs.openSync(path, 'w');
+  var fd = fs.openSync(path, 'r+');
   try {
     var ret = fs.ftruncateSync(fd, len);
   } finally {
@@ -802,6 +812,7 @@ if (constants.hasOwnProperty('O_SYMLINK')) {
   };
 }
 
+
 fs.chmod = function(path, mode, callback) {
   callback = makeCallback(callback);
   if (!nullCheck(path, callback)) return;
@@ -933,7 +944,7 @@ fs.writeFile = function(path, data, options, callback) {
   assertEncoding(options.encoding);
 
   var flag = options.flag || 'w';
-  fs.open(path, options.flag || 'w', options.mode, function(openErr, fd) {
+  fs.open(path, flag, options.mode, function(openErr, fd) {
     if (openErr) {
       if (callback) callback(openErr);
     } else {
@@ -1125,6 +1136,7 @@ function inStatWatchers(filename) {
 
 fs.watchFile = function(filename) {
   nullCheck(filename);
+  filename = pathModule.resolve(filename);
   var stat;
   var listener;
 
@@ -1159,6 +1171,7 @@ fs.watchFile = function(filename) {
 
 fs.unwatchFile = function(filename, listener) {
   nullCheck(filename);
+  filename = pathModule.resolve(filename);
   if (!inStatWatchers(filename)) return;
 
   var stat = statWatchers[filename];
@@ -1689,12 +1702,16 @@ WriteStream.prototype.destroySoon = WriteStream.prototype.end;
 
 // SyncWriteStream is internal. DO NOT USE.
 // Temporary hack for process.stdout and process.stderr when piped to files.
-function SyncWriteStream(fd) {
+function SyncWriteStream(fd, options) {
   Stream.call(this);
+
+  options = options || {};
 
   this.fd = fd;
   this.writable = true;
   this.readable = false;
+  this.autoClose = options.hasOwnProperty('autoClose') ?
+      options.autoClose : true;
 }
 
 util.inherits(SyncWriteStream, Stream);
@@ -1744,7 +1761,8 @@ SyncWriteStream.prototype.end = function(data, arg1, arg2) {
 
 
 SyncWriteStream.prototype.destroy = function() {
-  fs.closeSync(this.fd);
+  if (this.autoClose)
+    fs.closeSync(this.fd);
   this.fd = null;
   this.emit('close');
   return true;

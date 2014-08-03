@@ -122,7 +122,6 @@ exports._normalizeConnectArgs = normalizeConnectArgs;
 // called when creating new Socket, or when re-using a closed Socket
 function initSocketHandle(self) {
   self.destroyed = false;
-  self.errorEmitted = false;
   self.bytesRead = 0;
   self._bytesDispatched = 0;
 
@@ -184,7 +183,6 @@ function Socket(options) {
   if (this._handle && options.readable !== false)
     this.read(0);
 }
-
 util.inherits(Socket, stream.Duplex);
 
 // the user has called .end(), and all the bytes have been
@@ -406,6 +404,7 @@ Socket.prototype.end = function(data, encoding) {
     maybeDestroy(this);
 };
 
+
 // Call whenever we set writable=false or readable=false
 function maybeDestroy(socket) {
   if (!socket.readable &&
@@ -436,11 +435,11 @@ Socket.prototype._destroy = function(exception, cb) {
 
   function fireErrorCallbacks() {
     if (cb) cb(exception);
-    if (exception && !self.errorEmitted) {
+    if (exception && !self._writableState.errorEmitted) {
       process.nextTick(function() {
         self.emit('error', exception);
       });
-      self.errorEmitted = true;
+      self._writableState.errorEmitted = true;
     }
   };
 
@@ -469,8 +468,11 @@ Socket.prototype._destroy = function(exception, cb) {
     this._handle = null;
   }
 
-  fireErrorCallbacks();
+  // we set destroyed to true before firing error callbacks in order
+  // to make it re-entrance safe in case Socket.prototype.destroy()
+  // is called within callbacks
   this.destroyed = true;
+  fireErrorCallbacks();
 
   if (this.server) {
     COUNTER_NET_SERVER_CONNECTION_CLOSE(this);
@@ -482,10 +484,12 @@ Socket.prototype._destroy = function(exception, cb) {
   }
 };
 
+
 Socket.prototype.destroy = function(exception) {
   debug('destroy', exception);
   this._destroy(exception);
 };
+
 
 // This function is called whenever the handle gets a
 // buffer, or when there's an error reading.
@@ -555,6 +559,7 @@ function onread(buffer, offset, length) {
   }
 }
 
+
 Socket.prototype._getpeername = function() {
   if (!this._handle || !this._handle.getpeername) {
     return {};
@@ -569,12 +574,6 @@ Socket.prototype._getpeername = function() {
   return this._peername;
 };
 
-Socket.prototype.__defineGetter__= function(name, fun) {
-  Object.defineProperty( Socket.prototype, name,
-			 { configurable: true,
-			   enumerable: true,
-			   get: fun } );
-}
 
 Socket.prototype.__defineGetter__('remoteAddress', function() {
   return this._getpeername().address;
@@ -784,6 +783,7 @@ Socket.prototype.connect = function(options, cb) {
   if (this.destroyed) {
     this._readableState.reading = false;
     this._readableState.ended = false;
+    this._readableState.endEmitted = false;
     this._writableState.ended = false;
     this._writableState.ending = false;
     this._writableState.finished = false;
@@ -849,6 +849,7 @@ Socket.prototype.connect = function(options, cb) {
   return self;
 };
 
+
 Socket.prototype.ref = function() {
   if (this._handle)
     this._handle.ref();
@@ -859,6 +860,7 @@ Socket.prototype.unref = function() {
   if (this._handle)
     this._handle.unref();
 };
+
 
 
 function afterConnect(status, handle, req, readable, writable) {
@@ -1005,6 +1007,7 @@ var createServerHandle = exports._createServerHandle =
 
   return handle;
 };
+
 
 Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
   debug('listen2', address, port, addressType, backlog);
@@ -1218,6 +1221,7 @@ Server.prototype.getConnections = function(cb) {
     slave.getConnections(oncount);
   });
 };
+
 
 Server.prototype.close = function(cb) {
   function onSlaveClose() {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul  9 15:52:11 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 09:31:49 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -196,57 +196,57 @@
 ;*    %js-error ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (%js-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-error)
-	 (js-new %this js-error message))))
+	 (js-new %this js-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-syntax-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (%js-syntax-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-syntax-error)
-	 (js-new %this js-syntax-error message))))
+	 (js-new %this js-syntax-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-type-error ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (%js-type-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-type-error)
-	 (js-new %this js-type-error message))))
+	 (js-new %this js-type-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-uri-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (%js-uri-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-uri-error)
-	 (js-new %this js-uri-error message))))
+	 (js-new %this js-uri-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval-error ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-eval-error)
-	 (js-new %this js-eval-error message))))
+	 (js-new %this js-eval-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-range-error ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (%js-range-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-range-error)
-	 (js-new %this js-range-error message))))
+	 (js-new %this js-range-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-reference-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (%js-reference-error %this)
-   (lambda (this message)
+   (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-reference-error)
-	 (js-new %this js-reference-error message))))
+	 (js-new %this js-reference-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *js-builtin-error-prototype* ...                                 */

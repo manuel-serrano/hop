@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jul  2 16:32:55 2014 (serrano)                */
+;*    Last change :  Sat Aug  2 20:26:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -33,6 +33,7 @@
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::hop-service)
+	   (js-async-push-set! ::procedure)
 	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
 	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
 
@@ -138,7 +139,8 @@
 	 (user #f)
 	 (password #f)
 	 (authorization #f)
-	 (fail #f))
+	 (fail #f)
+	 (asynchronous #t))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail opt))
@@ -148,7 +150,8 @@
 		(u (js-get opt 'user %this))
 		(w (js-get opt 'password %this))
 		(a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this)))
+		(f (js-get opt 'fail %this))
+		(y (js-get opt 'asynchronous %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -159,15 +162,33 @@
 		(set! password (js-tostring w %this)))
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
+	     (unless (js-totest y)
+		(set! asynchronous #f))
 	     (when (isa? f JsFunction)
 		(set! fail (lambda (x) (js-call1 %this f %this x)))))))
-      (with-hop-remote svc
-	 (if (isa? success JsFunction)
-	     (lambda (x) (js-call1 %this success %this x))
-	     (lambda (x) x))
-	 fail
-	 :host host :port port 
-	 :user user :password password :authorization authorization)))
+      
+      (define (do-with-hop)
+	 (with-hop-remote svc
+	    (if (isa? success JsFunction)
+		(lambda (x) (js-call1 %this success %this x))
+		(lambda (x) x))
+	    fail
+	    :host host :port port 
+	    :user user :password password :authorization authorization))
+      
+      (if asynchronous
+	  (js-async-push do-with-hop)
+	  (do-with-hop))))
+
+;*---------------------------------------------------------------------*/
+;*    js-async-push ...                                                */
+;*---------------------------------------------------------------------*/
+(define js-async-push
+   (lambda (f)
+      (begin (f) (js-undefined))))
+
+(define (js-async-push-set! proc)
+   (set! js-async-push proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */

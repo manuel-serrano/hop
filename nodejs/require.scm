@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jul 28 12:30:00 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 09:37:42 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -170,7 +170,22 @@
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
-   (js-new-global-object))
+   (nodejs-v8-global-object-init! (js-new-global-object)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-v8-global-object-init! ...                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-v8-global-object-init! %this::JsGlobalObject)
+   ;; v8 compatibility (used by nodejs/lib)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((proto (js-get js-object 'prototype %this)))
+	 (js-put! proto '__defineGetter__
+	    (js-make-function %this
+	       (lambda (this name fun)
+		  (js-bind! %this this (string->symbol name) :get fun))
+	       2 "__defineGetter__")
+	    #f %this)))
+   %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-scope-object ...                                      */

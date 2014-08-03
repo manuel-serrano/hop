@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jul  8 15:33:11 2014 (serrano)                */
+;*    Last change :  Wed Jul 30 16:31:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -547,8 +547,11 @@
 		    (if (< intend 0)
 			(max (+ len intend) 0)
 			(min intend len))))
-	     (span (maxfx (-fx to from) 0)))
-	 (utf8-substring s from (+ from span))))
+	     (span (maxfx (-fx to from) 0))
+	     (end (+ from span)))
+	 (if (or (>fx from 0) (<fx end len))
+	     (utf8-substring s from end)
+	     s)))
    
    (js-bind! %this obj 'slice
       :value (js-make-function %this slice 2 'slice)

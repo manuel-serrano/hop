@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jul  9 07:50:41 2014 (serrano)                */
+;*    Last change :  Sat Aug  2 07:32:33 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -27,7 +27,8 @@
 	   __hopscript_worker)
 
    (export (js-init-array! ::JsGlobalObject)
-	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)))
+	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
+	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
@@ -86,6 +87,23 @@
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    jsarray->list ...                                                */
+;*---------------------------------------------------------------------*/
+(define (jsarray->list o::JsArray %this)
+   (let* ((%this (js-initial-global-object))
+	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+      (if (=u32 len (fixnum->uint32 0))
+	  '()
+	  (let loop ((i (fixnum->uint32 0)))
+	     (cond
+		((=u32 i len)
+		 '())
+		((js-has-property o (js-toname i %this))
+		 (cons (js-get o i %this) (+u32 i (fixnum->uint32 1))))
+		(else
+		 (loop (+u32 i (fixnum->uint32 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray-fields ...                                               */
