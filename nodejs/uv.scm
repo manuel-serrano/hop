@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Aug  3 07:56:36 2014 (serrano)                */
+;*    Last change :  Mon Aug  4 07:11:56 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -78,12 +78,14 @@
 	   (nodejs-tcp-handle)
 	   (nodejs-stream-write-queue-size::long ::obj)
 	   (nodejs-stream-fd::long ::obj)
-	   (nodejs-tcp-connect ::JsGlobalObject ::obj ::bstring ::int ::procedure)
+	   (nodejs-tcp-connect ::JsGlobalObject ::obj ::bstring ::int ::int ::procedure)
 	   (nodejs-tcp-nodelay ::obj ::bool)
 	   (nodejs-tcp-keepalive ::obj ::bool ::long)
 	   (nodejs-tcp-simultaneous-accepts ::obj ::bool)
 	   (nodejs-tcp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
+	   (nodejs-tcp-open ::JsGlobalObject ::obj ::int)
+	   (nodejs-tcp-bind ::JsGlobalObject ::obj ::bstring ::int ::int)
 
 	   (nodejs-stream-write ::JsGlobalObject ::obj ::bstring ::long ::procedure)
 	   (nodejs-stream-read-start ::JsGlobalObject ::obj ::obj)
@@ -1079,10 +1081,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-connect ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-tcp-connect %this handle host port callback)
+(define (nodejs-tcp-connect %this handle host port family callback)
    (cond-expand
       (enable-libuv
-       (uv-tcp-connect handle host port :callback callback))
+       (uv-tcp-connect handle host port :family family :callback callback))
       (else
        (error "nodejs-tcp-connect" "not implemented" #f))))
 
@@ -1135,6 +1137,26 @@
        (js-alist->jsobject (uv-tcp-getpeername handle) %this))
       (else
        (error "nodejs-tcp-getpeername" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-open ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-open %this handle fd)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-open handle fd))
+      (else
+       (error "nodejs-tcp-open" "not implemented" #f))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-bind ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-bind %this handle addr port family)
+   (cond-expand
+      (enable-libuv
+       (uv-tcp-bind handle addr port :family family))
+      (else
+       (error "nodejs-tcp-bind" "not implemented" #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Aug  3 07:56:03 2014 (serrano)                */
+;*    Last change :  Mon Aug  4 07:11:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -376,6 +376,22 @@
 	    0 (symbol->string name))
 	 #f %this))
 
+   (define (connect family)
+      (with-access::JsGlobalObject %this (js-object)
+	 (lambda (this host port callback)
+	    (with-access::JsHandle this (handle)
+	       (let ((req (js-new %this js-object)))
+		  (nodejs-tcp-connect %this handle host port family
+		     (lambda (status handle)
+			(when (<fx status 0)
+			   (js-put! process '_errno
+			      (uv-err-name status) #f %this))
+			(let ((oncomp (js-get req 'oncomplete %this)))
+			   (js-call5 %this oncomp req status
+			      this req #t #t)
+			   (js-undefined))))
+		  req)))))
+
    (define (create-tcp-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
@@ -406,19 +422,13 @@
 	    
 	    (js-put! obj 'connect
 	       (js-make-function %this
-		  (lambda (this host port callback)
-		     (with-access::JsHandle this (handle)
-			(let ((req (js-new %this js-object)))
-			   (nodejs-tcp-connect %this handle host port
-			      (lambda (status handle)
-				 (when (<fx status 0)
-				    (js-put! process '_errno
-				       (uv-err-name status) #f %this))
-				 (let ((oncomp (js-get req 'oncomplete %this)))
-				    (js-call5 %this oncomp req status
-				       this req #t #t)
-				    (js-undefined))))
-			   req)))
+		  (connect 4)
+		  3 "connect")
+	       #f %this)
+
+	    (js-put! obj 'connect6
+	       (js-make-function %this
+		  (connect 6)
 		  3 "connect")
 	       #f %this)
 	    
@@ -444,7 +454,7 @@
 			(stream-write-string %this this string "ascii" #f)))
 		  1 "writeUcs2String")
 	       #f %this)
-
+	    
 	    (js-put! obj 'readStart
 	       (js-make-function %this
 		  (lambda (this)
@@ -456,7 +466,7 @@
 				 (js-undefined))))))
 		  0 "readStart")
 	       #f %this)
-
+	    
 	    (js-put! obj 'readStop
 	       (js-make-function %this
 		  (lambda (this)
@@ -464,7 +474,7 @@
 			(nodejs-stream-read-stop %this handle)))
 		  0 "readStop")
 	       #f %this)
-
+	    
 	    (js-put! obj 'setNoDelay
 	       (js-make-function %this
 		  (lambda (this val)
@@ -472,7 +482,7 @@
 			(nodejs-tcp-nodelay handle (js-totest val))))
 		  1 "setNoDelay")
 	       #f %this)
-
+	    
 	    (js-put! obj 'setKeepAlive
 	       (js-make-function %this
 		  (lambda (this val tmt)
@@ -485,7 +495,7 @@
 				 (else 0))))))
 		  2 "setKeepAlive")
 	       #f %this)
-
+	    
 	    (js-put! obj 'setSimultaneousAccepts
 	       (js-make-function %this
 		  (lambda (this val)
@@ -494,7 +504,7 @@
 			   handle (js-totest val))))
 		  1 "setSimultaneousAccepts")
 	       #f %this)
-
+	    
 	    (js-put! obj 'getsockname
 	       (js-make-function %this
 		  (lambda (this val)
@@ -502,7 +512,7 @@
 			(nodejs-tcp-getsockname %this handle)))
 		  1 "getsockname")
 	       #f %this)
-
+	    
 	    (js-put! obj 'getpeername
 	       (js-make-function %this
 		  (lambda (this val)
@@ -510,7 +520,7 @@
 			(nodejs-tcp-getpeername %this handle)))
 		  1 "getpeername")
 	       #f %this)
-
+	    
 	    (js-put! obj 'shutdown
 	       (js-make-function %this
 		  (lambda (this val)
@@ -528,13 +538,36 @@
 		  1 "shutdown")
 	       #f %this)
 	    
+	    (js-put! obj 'open
+	       (js-make-function %this
+		  (lambda (this handle fd)
+		     (tprint "UNTESTED, example needed")
+		     (with-access::JsHandle this (handle)
+			(nodejs-tcp-open %this handle fd)))
+		  2 "open")
+	       #f %this)
+
+	    (js-put! obj 'bind
+	       (js-make-function %this
+		  (lambda (this addr port)
+		     (tprint "UNTESTED, example needed")
+		     (with-access::JsHandle this (handle)
+			(nodejs-tcp-bind %this handle addr (or port 0) 4)))
+		  2 "bind")
+	       #f %this)
+	    
+	    (js-put! obj 'bind6
+	       (js-make-function %this
+		  (lambda (this addr port)
+		     (tprint "UNTESTED, example needed")
+		     (with-access::JsHandle this (handle)
+			(nodejs-tcp-bind %this handle addr (or port 0) 6)))
+		  2 "bind6")
+	       #f %this)
+	    
+	    
 	    (for-each (lambda (name) (not-implemented obj name))
-	       `(writeBuffer
-		   open
-		   bind
-		   listen
-		   bind6
-		   connect6))
+	       `(writeBuffer listen))
 	    obj)))
    
    (define (get-tcp-proto)
