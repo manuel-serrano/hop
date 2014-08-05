@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Aug  4 07:11:56 2014 (serrano)                */
+;*    Last change :  Tue Aug  5 06:41:02 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -86,6 +86,7 @@
 	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
 	   (nodejs-tcp-open ::JsGlobalObject ::obj ::int)
 	   (nodejs-tcp-bind ::JsGlobalObject ::obj ::bstring ::int ::int)
+	   (nodejs-tcp-listen ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 
 	   (nodejs-stream-write ::JsGlobalObject ::obj ::bstring ::long ::procedure)
 	   (nodejs-stream-read-start ::JsGlobalObject ::obj ::obj)
@@ -122,14 +123,16 @@
 	     (instantiate::UvAsync
 		(loop loop)
 		(cb (lambda (a)
-		       (synchronize uv-mutex
-			  (for-each (lambda (action) (action)) uv-actions)
-			  (set! uv-actions '()))))))
-	  (js-async-push-set! (lambda (f)
-				 (synchronize uv-mutex
-				    (set! uv-actions
-				       (cons f uv-actions))
-				    (uv-async-send uv-async))))
+		       (for-each (lambda (action) (action))
+			  (synchronize uv-mutex
+			     (let ((actions uv-actions))
+				(set! uv-actions '())
+				actions)))))))
+	  (js-async-push-set!
+	     (lambda (f)
+		(synchronize uv-mutex
+		   (set! uv-actions (cons f uv-actions))
+		   (uv-async-send uv-async))))
 	  (uv-run loop)))
       (else
        (%nodejs-event-loop))))
@@ -980,6 +983,19 @@
        (getaddrinfo-callback (not-implemented-exn "getaddrinfo")))))
 
 ;*---------------------------------------------------------------------*/
+;*    process-fail ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (process-fail %this process errno)
+   
+   (cond-expand
+      ((not enable-libuv)
+       (define (uv-err-name errno) (integer->string errno))))
+
+   (js-put! process 'errno errno #f %this)
+   (js-put! process '_errno (uv-err-name errno) #f %this)
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-query ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-query %this process node family cb)
@@ -997,9 +1013,7 @@
 	  (let ((res (uv-getaddrinfo node #f :family family :callback query-callback)))
 	     (if (=fx res 0)
 		 #t
-		 (begin
-		    (js-put! process '_errno res #f %this)
-		    #f)))))
+		 (process-fail %this process res)))))
       (else
        (query-callback (not-implemented-exn "query")))))
 
@@ -1158,6 +1172,30 @@
       (else
        (error "nodejs-tcp-bind" "not implemented" #f))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-tcp-listen ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tcp-listen %this process this handle backlog)
+   (cond-expand
+      (enable-libuv
+       (let ((r (uv-listen handle backlog :callback
+		   (lambda (server status)
+		      (if (< status 0)
+			  (process-fail %this process status)
+			  (with-access::UvTcp server (loop)
+			     (let ((client (instantiate::UvTcp (loop loop))))
+				(let ((r (uv-accept handle client)))
+				   (if (< r 0)
+				       (process-fail %this process r)
+				       (let ((onconn (js-get this 'onconnection %this)))
+					  (js-call1 %this onconn this client)
+					  (js-undefined)))))))))))
+	  (if (<fx r 0)
+	      (fs-errno-exn "Listen failed ~s" r %this)
+	      r)))
+      (else
+       (error "nodejs-tcp-listen" "not implemented" #f))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/

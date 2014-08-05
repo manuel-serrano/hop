@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Aug  4 07:11:13 2014 (serrano)                */
+;*    Last change :  Tue Aug  5 06:47:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -368,14 +368,6 @@
 ;*---------------------------------------------------------------------*/
 (define (process-tcp-wrap %this process::JsProcess)
    
-   (define (not-implemented obj name)
-      (js-put! obj name
-	 (js-make-function %this
-	    (lambda (this . l)
-	       (error "tcp_wrap" "binding not implemented" name))
-	    0 (symbol->string name))
-	 #f %this))
-
    (define (connect family)
       (with-access::JsGlobalObject %this (js-object)
 	 (lambda (this host port callback)
@@ -391,6 +383,12 @@
 			      this req #t #t)
 			   (js-undefined))))
 		  req)))))
+
+   (define (->fixnum n)
+      (cond
+	 ((fixnum? n) n)
+	 ((flonum? n) (flonum->fixnum n))
+	 (else 0)))
 
    (define (create-tcp-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -430,6 +428,15 @@
 	       (js-make-function %this
 		  (connect 6)
 		  3 "connect")
+	       #f %this)
+
+	    (js-put! obj 'writeBuffer
+	       (js-make-function %this
+		  (lambda (this buffer)
+		     (tprint "UNTESTED, example needed")
+		     (with-access::JsSlowBuffer buffer (buffer)
+			(stream-write-string %this this buffer "ascii" #f)))
+		  1 "writeBuffer")
 	       #f %this)
 	    
 	    (js-put! obj 'writeAsciiString
@@ -488,11 +495,7 @@
 		  (lambda (this val tmt)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tcp-keepalive handle (js-totest val)
-			   (let ((n (js-tointeger tmt %this)))
-			      (cond
-				 ((fixnum? n) n)
-				 ((flonum? n) (flonum->fixnum n))
-				 (else 0))))))
+			   (->fixnum (js-tointeger tmt %this)))))
 		  2 "setKeepAlive")
 	       #f %this)
 	    
@@ -564,10 +567,17 @@
 			(nodejs-tcp-bind %this handle addr (or port 0) 6)))
 		  2 "bind6")
 	       #f %this)
+
+	    (js-put! obj 'listen
+	       (js-make-function %this
+		  (lambda (this backlog)
+		     (tprint "UNTESTED, example needed")
+		     (with-access::JsHandle this (handle)
+			(nodejs-tcp-listen %this process this handle
+			   (->fixnum (js-tointeger backlog %this)))))
+		  1 "listen")
+	       #f %this)
 	    
-	    
-	    (for-each (lambda (name) (not-implemented obj name))
-	       `(writeBuffer listen))
 	    obj)))
    
    (define (get-tcp-proto)

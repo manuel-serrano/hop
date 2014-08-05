@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Jul 11 08:14:03 2014 (serrano)                */
+;*    Last change :  Tue Aug  5 05:33:25 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -379,7 +379,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (inl #f)
 	      (packed #t)
 	      (els '()))
-	      
+
       (cond
 	 ((null? a)
 	  (let ((body (reverse! els)))
@@ -450,13 +450,14 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a))
 				      (cadr a) inl packed '())))
 			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
-			       (append (reverse! wbels) els)))))
+			       (append (reverse! wbels) els)))
+		      (error "<HEAD>" "Illegal :with-base argument" (cadr a))))
 		 ((:idiom)
 		  (if (string? (cadr a))
 		      (begin
 			 (set! idiom (cadr a))
-			 (loop (cddr a) #f rts dir path base inl (cadr a) 
-			       els))))
+			 (loop (cddr a) #f rts dir path base inl packed els))
+		      (error "<HEAD>" "Illegal :idiom argument" (cadr a))))
 		 (else
 		  (error "<HEAD>"
 		     (format "Unknown ~a argument" (car a))
