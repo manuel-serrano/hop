@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Aug  6 06:50:02 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 17:29:11 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -23,6 +23,7 @@
       (else (import __nodejs__uv)))
 
    (export (nodejs-event-loop)
+	   (nodejs-async-push ::procedure)
 
 	   (nodejs-close ::JsGlobalObject ::obj ::obj)
 	   (nodejs-ref ::obj)
@@ -128,15 +129,15 @@
 			     (let ((actions uv-actions))
 				(set! uv-actions '())
 				actions)))))))
-	  (js-async-push-set! js-async-push)
+	  (js-async-push-set! nodejs-async-push)
 	  (uv-run loop)))
       (else
        (%nodejs-event-loop))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-async-push ...                                                */
+;*    nodejs-async-push ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-async-push thunk)
+(define (nodejs-async-push thunk)
    (synchronize uv-mutex
       (set! uv-actions (cons thunk uv-actions))
       (uv-async-send uv-async)))
@@ -201,7 +202,7 @@
 (define (nodejs-timer-start timer start rep)
    (cond-expand
       (enable-libuv
-       (js-async-push
+       (nodejs-async-push
 	  (lambda ()
 	     (uv-timer-start timer
 		(llong->uint64 (uint32->llong start))
@@ -215,7 +216,7 @@
 (define (nodejs-timer-close timer)
    (cond-expand
       (enable-libuv
-       (js-async-push
+       (nodejs-async-push
 	  (lambda () (uv-close timer))))
       (else
        (%nodejs-timer-close timer))))
@@ -226,7 +227,7 @@
 (define (nodejs-timer-stop timer)
    (cond-expand
       (enable-libuv
-       (js-async-push
+       (nodejs-async-push
 	  (lambda () (uv-timer-stop timer))))
       (else
        (%nodejs-timer-stop timer))))
@@ -237,7 +238,7 @@
 (define (nodejs-timer-unref timer)
    (cond-expand
       (enable-libuv
-       (js-async-push
+       (nodejs-async-push
 	  (lambda () (uv-unref timer))))
       (else
        #unspecified)))

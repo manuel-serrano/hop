@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat Aug  2 07:30:58 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 17:51:39 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -286,7 +286,8 @@
 						     (value frame))))
 					  (js-worker-push-thunk! worker
 					     (lambda ()
-						(apply-listeners onmessages evt)))))))))))))
+						(apply-listeners onmessages evt)))))))
+			      (loop (websocket-read socket))))))))
 	 ws)))
 
 ;*---------------------------------------------------------------------*/

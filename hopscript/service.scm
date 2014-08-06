@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Aug  6 06:57:57 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 17:28:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -134,6 +134,7 @@
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post svc::bstring success opt %this)
+
    (let ((host "localhost")
 	 (port (hop-port))
 	 (user #f)
@@ -163,7 +164,8 @@
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
 	     (unless (js-totest y)
-		(set! asynchronous #f))
+		(when (js-in? %this 'asynchronous opt)
+		   (set! asynchronous #f)))
 	     (when (isa? f JsFunction)
 		(set! fail (lambda (x) (js-call1 %this f %this x)))))))
       
@@ -175,18 +177,18 @@
 	    :user user :password password :authorization authorization))
 
       (if asynchronous
-	  (js-async-push
-	     (lambda ()
-		(thread-start!
-		   (instantiate::hopthread
-		      (body (lambda ()
-			       (do-with-hop
-				  (if (isa? success JsFunction)
-				      (lambda (x)
-					 (js-async-push
-					    (lambda ()
-					       (js-call1 %this success %this x))))
-				      (lambda (x) x)))))))))
+	  (begin
+	     (thread-start!
+		(instantiate::hopthread
+		   (body (lambda ()
+			    (do-with-hop
+			       (if (isa? success JsFunction)
+				   (lambda (x)
+				      (js-async-push
+					 (lambda ()
+					    (js-call1 %this success %this x))))
+				   (lambda (x) x)))))))
+	     (js-undefined))
 	  (do-with-hop
 	     (if (isa? success JsFunction)
 		 (lambda (x)

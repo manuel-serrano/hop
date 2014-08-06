@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Sat Aug  2 07:25:39 2014 (serrano)                */
+/*    Last change :  Wed Aug  6 17:44:55 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
@@ -16,6 +16,7 @@ var ws = new WebSocket( "ws://localhost:9999/hop/wss", [ "bar", "foo" ] );
 
 ws.onopen = function( event ) {
    this.send( "toto n'est pas content" );
+   this.send( "tutu non plus" );
 };
 
 ws.onmessage = function( event ) {

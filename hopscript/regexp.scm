@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jun 22 19:20:07 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 09:00:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -176,6 +176,10 @@
 				     (blit-string! s 0 res w l)
 				     (loop (+fx j 6) (+fx w l)))
 				  (err "wrong \"\\u\" pattern \"~a\"" str)))))
+		      ((#\\)
+		       (string-set! res w #\\)
+		       (string-set! res (+fx w 1) #\\)
+		       (loop (+fx j 2) (+fx w 2)))
 		      (else
 		       (string-set! res w #\\)
 		       (loop (+fx j 1) (+fx w 1)))))))))))

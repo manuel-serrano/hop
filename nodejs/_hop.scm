@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Jul 14 07:34:38 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 17:31:12 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -15,6 +15,8 @@
 (module __nodejs__hop
 
    (library hopscript hop)
+
+   (import  __nodejs_uv)
 
    (export (hopjs-process-hop ::JsGlobalObject)))
 
@@ -289,18 +291,20 @@
    
    (define (async-proc req)
       (lambda (k)
-	 (with-handler
-	    (lambda (e)
-	       (tprint "ASYNC ERR: " e)
-	       (cond
-		  ((isa? e JsError) (exception-notify e))
-		  ((isa? e &error) (error-notify e)))
-	       #f)
-	    (js-call1 %this proc %this
-	       (js-make-function %this
-		  (lambda (this resp)
-		     (k (scheme->response resp req)))
-		  1 "reply")))))
+	 (nodejs-async-push
+	    (lambda ()
+	       (with-handler
+		  (lambda (e)
+		     (tprint "ASYNC ERR: " e)
+		     (cond
+			((isa? e JsError) (exception-notify e))
+			((isa? e &error) (error-notify e)))
+		     #f)
+		  (js-call1 %this proc %this
+		     (js-make-function %this
+			(lambda (this resp)
+			   (k (scheme->response resp req)))
+			1 "reply")))))))
    
    (if (isa? req JsObject)
        (let ((req (get/default req 'currentRequest %this (current-request))))
