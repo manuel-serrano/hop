@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Aug  5 06:41:02 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 06:50:02 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -128,15 +128,19 @@
 			     (let ((actions uv-actions))
 				(set! uv-actions '())
 				actions)))))))
-	  (js-async-push-set!
-	     (lambda (f)
-		(synchronize uv-mutex
-		   (set! uv-actions (cons f uv-actions))
-		   (uv-async-send uv-async))))
+	  (js-async-push-set! js-async-push)
 	  (uv-run loop)))
       (else
        (%nodejs-event-loop))))
 
+;*---------------------------------------------------------------------*/
+;*    js-async-push ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-async-push thunk)
+   (synchronize uv-mutex
+      (set! uv-actions (cons thunk uv-actions))
+      (uv-async-send uv-async)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-close ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -197,15 +201,11 @@
 (define (nodejs-timer-start timer start rep)
    (cond-expand
       (enable-libuv
-       (synchronize uv-mutex
-	  (set! uv-actions
-	     (cons (lambda ()
-		      (uv-timer-start timer
-			 (llong->uint64 (uint32->llong start))
-			 (llong->uint64 (uint32->llong rep))))
-		uv-actions))
-	  ;; send a tick
-	  (uv-async-send uv-async)))
+       (js-async-push
+	  (lambda ()
+	     (uv-timer-start timer
+		(llong->uint64 (uint32->llong start))
+		(llong->uint64 (uint32->llong rep))))))
       (else
        (%nodejs-timer-start timer start rep))))
 
@@ -215,11 +215,8 @@
 (define (nodejs-timer-close timer)
    (cond-expand
       (enable-libuv
-       (synchronize uv-mutex
-	  (set! uv-actions
-	     (cons (lambda () (uv-close timer))
-		uv-actions))
-	  (uv-async-send uv-async)))
+       (js-async-push
+	  (lambda () (uv-close timer))))
       (else
        (%nodejs-timer-close timer))))
 
@@ -229,11 +226,8 @@
 (define (nodejs-timer-stop timer)
    (cond-expand
       (enable-libuv
-       (synchronize uv-mutex
-	  (set! uv-actions
-	     (cons (lambda () (uv-timer-stop timer))
-		uv-actions))
-	  (uv-async-send uv-async)))
+       (js-async-push
+	  (lambda () (uv-timer-stop timer))))
       (else
        (%nodejs-timer-stop timer))))
 
@@ -243,11 +237,8 @@
 (define (nodejs-timer-unref timer)
    (cond-expand
       (enable-libuv
-       (synchronize uv-mutex
-	  (set! uv-actions
-	     (cons (lambda () (uv-unref timer))
-		uv-actions))
-	  (uv-async-send uv-async)))
+       (js-async-push
+	  (lambda () (uv-unref timer))))
       (else
        #unspecified)))
 

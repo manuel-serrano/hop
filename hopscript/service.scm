@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Aug  2 20:26:58 2014 (serrano)                */
+;*    Last change :  Wed Aug  6 06:57:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -167,18 +167,31 @@
 	     (when (isa? f JsFunction)
 		(set! fail (lambda (x) (js-call1 %this f %this x)))))))
       
-      (define (do-with-hop)
+      (define (do-with-hop callback)
 	 (with-hop-remote svc
-	    (if (isa? success JsFunction)
-		(lambda (x) (js-call1 %this success %this x))
-		(lambda (x) x))
+	    callback
 	    fail
 	    :host host :port port 
 	    :user user :password password :authorization authorization))
-      
+
       (if asynchronous
-	  (js-async-push do-with-hop)
-	  (do-with-hop))))
+	  (js-async-push
+	     (lambda ()
+		(thread-start!
+		   (instantiate::hopthread
+		      (body (lambda ()
+			       (do-with-hop
+				  (if (isa? success JsFunction)
+				      (lambda (x)
+					 (js-async-push
+					    (lambda ()
+					       (js-call1 %this success %this x))))
+				      (lambda (x) x)))))))))
+	  (do-with-hop
+	     (if (isa? success JsFunction)
+		 (lambda (x)
+		    (js-call1 %this success %this x))
+		 (lambda (x) x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-async-push ...                                                */
