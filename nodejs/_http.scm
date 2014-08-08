@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Aug  8 06:50:28 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 07:00:40 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -213,9 +213,11 @@
 			 (js-put! minfo 'versionMinor
 			    (string->integer (substring http-version (+fx i 1)))
 			    #f %this)))
-		   (js-put! minfo 'upgrade (memq 'upgrade headers) #f %this)
 		   ;; parse the header
-		   (let ((headers (http-parse-header pi #f)))
+		   (multiple-value-bind (headers actual-host actual-port cl
+					   tenc auth pauth co)
+		      (http-parse-header pi #f)
+		      (js-put! minfo 'upgrade (memq 'upgrade headers) #f %this)
 		      (js-put! minfo 'headers
 			 (js-vector->jsarray
 			    (list->vector
@@ -231,6 +233,8 @@
 			 #f %this))
 		   (let ((onhdcomp (js-get parser 'onHeadersComplete %this)))
 		      (js-call1 %this onhdcomp parser minfo))
+		   ;; body
+		   
 		   (let ((onbody (js-get parser 'onBody %this)))
 		      (js-call1 %this onbody parser minfo))
 		   (let ((onmsgcomp (js-get parser 'onMessageComplete %this)))
