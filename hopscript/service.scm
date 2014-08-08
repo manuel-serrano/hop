@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Aug  6 17:28:27 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:04:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -33,7 +33,6 @@
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::hop-service)
-	   (js-async-push-set! ::procedure)
 	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
 	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
 
@@ -184,7 +183,7 @@
 			    (do-with-hop
 			       (if (isa? success JsFunction)
 				   (lambda (x)
-				      (js-async-push
+				      (js-worker-exec (js-current-worker)
 					 (lambda ()
 					    (js-call1 %this success %this x))))
 				   (lambda (x) x)))))))
@@ -194,16 +193,6 @@
 		 (lambda (x)
 		    (js-call1 %this success %this x))
 		 (lambda (x) x))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-async-push ...                                                */
-;*---------------------------------------------------------------------*/
-(define js-async-push
-   (lambda (f)
-      (begin (f) (js-undefined))))
-
-(define (js-async-push-set! proc)
-   (set! js-async-push proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */

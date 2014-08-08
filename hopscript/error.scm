@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 30 09:31:49 2014 (serrano)                */
+;*    Last change :  Thu Aug  7 05:33:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -92,7 +92,8 @@
 		      (js-bind! %this this 'message :value m)
 		      (set! msg m)))
 		  ((?m ?f ?l)
-		   (js-bind! %this this 'message :value m)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m))
 		   (set! msg m)
 		   (set! fname f)
 		   (set! location l)))

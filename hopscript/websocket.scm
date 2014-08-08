@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Aug  6 17:51:39 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:33:30 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -274,6 +274,11 @@
 	 (thread-start!
 	    (instantiate::hopthread
 	       (body (lambda ()
+			;; now the connection is established remove all
+			;; connection/read timeouts.
+			(let ((in (socket-input socket)))
+			   (input-port-timeout-set! in 0))
+			;; start reading the frames
 			(synchronize mutex
 			   (let loop ((frame (websocket-read socket)))
 			      (when frame

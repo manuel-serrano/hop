@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Aug  6 06:51:47 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:11:01 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -85,7 +85,7 @@
    (unless %main
       (set! %main
 	 (instantiate::WorkerHopThread
-	    (name "main")
+	    (name "%worker")
 	    (%this %this)
 	    (body (lambda () (js-worker-thread-loop %main))))))
    %main)
@@ -293,7 +293,7 @@
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exec th::WorkerHopThread thunk::procedure)
-   (if (isa? (current-thread) WorkerHopThread)
+   (if (eq? (current-thread) th)
        (thunk)
        (let ((response #f)
 	     (mutex (make-mutex))

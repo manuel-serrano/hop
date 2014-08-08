@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Aug  5 05:39:17 2014 (serrano)                */
+;*    Last change :  Thu Aug  7 16:33:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -184,6 +184,55 @@
 		      (lambda (this name fun)
 			 (js-bind! %this this (string->symbol name) :get fun))
 		      2 "__defineGetter__")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 ;; Dtrace profiling
+	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_REQUEST
+	    :value (js-make-function %this
+		      (lambda (this req socket)
+			 (js-undefined))
+		      2 "DTRACE_HTTP_SERVER_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_REQUEST
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_HTTP_SERVER_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_RESPONSE
+	    :value (js-make-function %this
+		      (lambda (this req socket)
+			 (js-undefined))
+		      2 "DTRACE_HTTP_CLIENT_RESPONSE")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_REQUEST
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_HTTP_CLIENT_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_REQUEST
+	    :value (js-make-function %this
+		      (lambda (this req socket)
+			 (js-undefined))
+		      2 "DTRACE_HTTP_CLIENT_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_RESPONSE
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_HTTP_CLIENT_RESPONSE")
 	    :enumerable #f
 	    :writable #f
 	    :configurable #f)))

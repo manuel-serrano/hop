@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Jul 25 16:05:47 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:52:26 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -103,10 +103,8 @@
        (let ((o (the-failure)))
 	  (if (eof-object? o)
 	      (raise request-eof-exception)
-	      (parse-error "request-line-grammar"
-			   "Illegal method"
-			   o
-			   (the-port)))))))
+	      (parse-error "request-line-grammar" "Illegal method"
+		 o (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
@@ -164,8 +162,7 @@
 		      (port (or actual-port port (hop-port))))
 		  (cond
 		     ((not (fixnum? port))
-		      (parse-error "http-parse-method-request"
-			 "Illegal port"
+		      (parse-error "http-parse-method-request" "Illegal port"
 			 (format "~a://~a:~a/~a" scheme host port path)
 			 pi))
 		     ((string? host)
@@ -244,9 +241,8 @@
       ((: "HTTP/" (+ DIGIT) "." (+ DIGIT) "\r\n")
        (the-subsymbol 0 -2))
       (else
-       (parse-error 'http-version-grammar "Illegal character"
-		    (the-failure)
-		    (the-port)))))
+       (parse-error "http-version-grammar" "Illegal character"
+	  (the-failure) (the-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-sp-grammar ...                                              */
@@ -256,8 +252,6 @@
       (SP
        'sp)
       (else
-       (parse-error 'sp-grammar
-		    "Illegal character"
-		    (the-failure)
-		    (the-port)))))
+       (parse-error "sp-grammar" "Illegal character"
+	  (the-failure) (the-port)))))
       

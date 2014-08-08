@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Aug  6 17:52:24 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:39:42 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -532,6 +532,7 @@
    (define (read-messages)
       (with-access::websocket ws (%socket)
 	 (let ((in (socket-input %socket)))
+	    (input-timeout-set! in 0)
 	    (let loop ()
 	       (let ((msg (websocket-read %socket)))
 		  (if (string? msg)
@@ -591,15 +592,15 @@
 					  (body (lambda ()
 						   (let loop ()
 						      (synchronize %mutex
-							 (unless (pair? onmessages)
-							    (condition-variable-wait! %condvar %mutex)
-							    (loop)))
-						      (unwind-protect
-							 (with-handler
-							    (lambda (e)
-							       #f)
-							    (read-messages))
-							 (close)))))))))))))))))))
+							 (if (pair? onmessages)
+							     (unwind-protect
+								(with-handler
+								   (lambda (e) #f)
+								   (read-messages))
+								(close))
+							     (begin
+								(condition-variable-wait! %condvar %mutex)
+								(loop)))))))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-envelope-parse ...                                     */
@@ -826,7 +827,7 @@
 ;*    websocket-read ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (websocket-read sock::socket)
-
+   
    (define (read-int16 in)
       (let ((bh (read-byte in))
 	    (bl (read-byte in)))
@@ -839,7 +840,7 @@
    
    (define (read-check-byte in val)
       (=fx (read-byte in) val))
-
+   
    (define (read-payload in l)
       (cond
 	 ((<=fx l 125)
@@ -854,7 +855,7 @@
 	     (read-chars (read-int32 in) in)))
 	 (else
 	  #f)))
-
+   
    (define (unmask payload key)
       (let ((len (string-length payload)))
 	 (let loop ((i 0))
@@ -871,7 +872,7 @@
 			    (liip (+fx j 1)))
 			 (loop (+fx i 4))))))))
       payload)
-   
+
    (let ((in (socket-input sock)))
       ;; MS: to be complete, binary, ping, etc. must be supported
       (when (read-check-byte in #x81)

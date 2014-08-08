@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Aug  6 17:29:11 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:05:04 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -129,7 +129,6 @@
 			     (let ((actions uv-actions))
 				(set! uv-actions '())
 				actions)))))))
-	  (js-async-push-set! nodejs-async-push)
 	  (uv-run loop)))
       (else
        (%nodejs-event-loop))))

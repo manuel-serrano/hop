@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Mon Jul 14 07:33:35 2014 (serrano)                */
+/*    Last change :  Fri Aug  8 06:09:00 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -29,9 +29,9 @@ Object.defineProperty( exports, "debug", {
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */
 /*---------------------------------------------------------------------*/
-exports.exit = hop.exit;
 exports.srcDir = hop.srcDir;
 exports.srcFile = hop.srcFile;
+exports.currentThread = hop.currentThread;
 
 /*---------------------------------------------------------------------*/
 /*    info                                                             */

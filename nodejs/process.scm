@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Aug  5 07:04:42 2014 (serrano)                */
+;*    Last change :  Thu Aug  7 20:57:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -24,6 +24,7 @@
    (import __nodejs__hop
 	   __nodejs__timer
 	   __nodejs__fs
+	   __nodejs__http
 	   __nodejs_uv
 	   __nodejs_require)
 
@@ -147,7 +148,7 @@
 		     ((string=? module "fs_event_wrap")
 		      (process-fs-event-wrap %this))
 		     ((string=? module "hop")
-		      (hopjs-process-hop %this))
+		      (hopjs-process-hop %this %worker))
 		     (else
 		      (warning "%nodejs-process"
 			 "binding not implemented: " module)
@@ -334,7 +335,7 @@
    (with-access::JsGlobalObject %this (js-object)
       (let ((ipc #f))
 	 (if ipc
-	     (error "stream-write-string" "Not implemented yet" this)
+	     (error "stream-write-string" "IPC Not implemented yet" this)
 	     (let ((req (js-new %this js-object)))
 		(with-access::JsHandle this (handle)
 		   (nodejs-stream-write %this handle
@@ -368,6 +369,12 @@
 ;*---------------------------------------------------------------------*/
 (define (process-tcp-wrap %this process::JsProcess)
    
+   (define (->fixnum n)
+      (cond
+	 ((fixnum? n) n)
+	 ((flonum? n) (flonum->fixnum n))
+	 (else 0)))
+
    (define (connect family)
       (with-access::JsGlobalObject %this (js-object)
 	 (lambda (this host port callback)
@@ -383,12 +390,6 @@
 			      this req #t #t)
 			   (js-undefined))))
 		  req)))))
-
-   (define (->fixnum n)
-      (cond
-	 ((fixnum? n) n)
-	 ((flonum? n) (flonum->fixnum n))
-	 (else 0)))
 
    (define (create-tcp-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -772,37 +773,6 @@
 	   (init . ,(not-implemented "init"))
 	   ;;(SecureContext . ,(js-new %this js-object))
 	   )
-	 %this)))
-
-;*---------------------------------------------------------------------*/
-;*    process-http-parser ...                                          */
-;*---------------------------------------------------------------------*/
-(define (process-http-parser %this)
-   
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "crypto" "binding not implemented" name))
-	 0 name))
-   
-   (define http-parser-proto
-      (let ((proto (with-access::JsGlobalObject %this (js-object)
-		      (js-new %this js-object))))
-	 (js-put! proto 'REQUEST 0 #f %this)
-	 (js-put! proto 'RESPONSE 1  #f %this)
-	 proto))
-   
-   (define (http-parser this kind)
-      (with-access::JsGlobalObject %this (js-object)
-	 (instantiate::JsObject
-	    (__proto__ http-parser-proto))))
-   
-   (let ((http (js-make-function %this http-parser 1 "HTTPParser"
-		  :alloc (lambda (o) #unspecified)
-		  :construct http-parser
-		  :prototype http-parser-proto)))
-      (js-alist->jsobject
-	 `((HTTPParser . ,http))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Aug  6 17:31:12 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 06:09:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -18,7 +18,7 @@
 
    (import  __nodejs_uv)
 
-   (export (hopjs-process-hop ::JsGlobalObject)))
+   (export (hopjs-process-hop ::JsGlobalObject ::WorkerHopThread)))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-js ...                                                    */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hopjs-process-hop %this)
+(define (hopjs-process-hop %this %worker)
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
 	 
@@ -56,6 +56,9 @@
 	       (lambda (this code)
 		  (the-loading-file)))
 
+	    (define-js currentThread 0
+	       (lambda (this) (current-thread)))
+	    
 	    ;; info
 	    `(port . ,(hop-port))
 	    `(hostname . ,(hostname))
@@ -107,7 +110,7 @@
 	    
 	    (define-js HTTPResponseAsync 1
 	       (lambda (this proc req)
-		  (hopjs-response-async this proc req %this)))
+		  (hopjs-response-async this proc req %this %worker)))
 	    
 	    ;; events
 	    (define-js signal 2
@@ -287,11 +290,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-async ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (hopjs-response-async this proc req %this)
+(define (hopjs-response-async this proc req %this %worker)
    
    (define (async-proc req)
       (lambda (k)
-	 (nodejs-async-push
+	 (js-worker-exec %worker
 	    (lambda ()
 	       (with-handler
 		  (lambda (e)
