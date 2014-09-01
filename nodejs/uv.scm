@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Aug  8 06:05:04 2014 (serrano)                */
+;*    Last change :  Sun Aug 31 18:46:53 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -22,6 +22,9 @@
       (enable-libuv (library libuv))
       (else (import __nodejs__uv)))
 
+   (import __nodejs_process
+	   __nodejs__buffer)
+   
    (export (nodejs-event-loop)
 	   (nodejs-async-push ::procedure)
 
@@ -41,7 +44,7 @@
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
 
-	   (nodejs-need-tick-callback ::JsGlobalObject ::JsObject)
+	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   
 	   (nodejs-rename-file ::JsGlobalObject ::bstring ::bstring ::obj)
 	   (nodejs-ftruncate ::JsGlobalObject ::obj ::int ::obj)
@@ -65,11 +68,11 @@
 	   (nodejs-utimes ::JsGlobalObject ::bstring ::long ::long ::obj)
 	   (nodejs-futimes ::JsGlobalObject ::obj ::long ::long ::obj)
 	   (nodejs-fsync ::JsGlobalObject ::obj ::obj)
-	   (nodejs-write ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)
-	   (nodejs-read ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::obj)
+	   (nodejs-write ::JsGlobalObject ::obj ::obj ::long ::long ::long ::obj)
+	   (nodejs-read ::JsGlobalObject ::obj ::obj ::long ::long ::long ::obj)
 	   (nodejs-fs-close ::JsGlobalObject ::obj ::obj)
 
-	   (nodejs-getaddrinfo ::JsGlobalObject ::bstring ::int)
+	   (nodejs-getaddrinfo ::JsGlobalObject ::JsObject ::bstring ::int)
 	   (nodejs-query ::JsGlobalObject ::JsObject ::bstring ::int ::JsObject)
 	   (nodejs-isip ::bstring)
 
@@ -89,8 +92,8 @@
 	   (nodejs-tcp-bind ::JsGlobalObject ::obj ::bstring ::int ::int)
 	   (nodejs-tcp-listen ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 
-	   (nodejs-stream-write ::JsGlobalObject ::obj ::bstring ::long ::procedure)
-	   (nodejs-stream-read-start ::JsGlobalObject ::obj ::obj)
+	   (nodejs-stream-write ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
+	   (nodejs-stream-read-start ::JsGlobalObject ::obj ::procedure ::obj)
 	   (nodejs-stream-read-stop ::JsGlobalObject ::obj)
 	   (nodejs-stream-shutdown ::JsGlobalObject ::obj ::procedure)
 	   ))
@@ -286,11 +289,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-need-tick-callback ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-need-tick-callback %this process)
+(define (nodejs-need-tick-callback %worker %this process)
    (cond-expand
       (enable-libuv
        (set! need-tick-cb #t)
-       (uv-idle-start (get-tick-spinner %this process))
+       (uv-idle-start (get-tick-spinner %worker %this process))
        (uv-async-send uv-async)))
    #unspecified)
 
@@ -304,7 +307,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-tick-spinner ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (get-tick-spinner %this process)
+(define (get-tick-spinner %worker %this process)
    (cond-expand
       (enable-libuv
        (unless tick-spinner
@@ -317,8 +320,10 @@
 				   (set! tick-from-spinner
 				      (js-get process '_tickFromSpinner %this)))
 
-				(js-call0 %this tick-from-spinner
-				   (js-undefined)))))
+				(js-worker-push-thunk! %worker
+				   (lambda ()
+				      (js-call0 %this tick-from-spinner
+					 (js-undefined)))))))
 		    (spinner (instantiate::UvIdle
 				(cb spin)
 				(loop (uv-default-loop)))))
@@ -834,22 +839,25 @@
 (define (nodejs-write %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	  (uv-fs-write fd fast-buffer length
+       (with-access::JsArrayBufferView buffer (%vec byteoffset)
+	  (uv-fs-write fd %vec length
 	     :callback
 	     (when (isa? callback JsFunction)
 		(lambda (obj)
 		   (if (<fx obj 0)
 		       (js-call3 %this callback (js-undefined) obj #f buffer)
 		       (js-call3 %this callback (js-undefined) #f obj buffer))))
-	     :offset offset :position position :loop (uv-default-loop))))
+	     :offset (+fx offset (uint32->fixnum byteoffset))
+	     :position position :loop (uv-default-loop))))
       (else
        (cond
 	  ((output-port? fd)
 	   (when (integer? position)
 	      (set-input-port-position! fd position))
-	   (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	      (let ((res (display-substring buffer offset (+ offset length) fd)))
+	   (with-access::JsArrayBufferView (%vec byteoffset)
+	      (let ((res (display-substring buffer
+			    (+fx offset byteoffset) (+ byteoffset offset length)
+			    fd)))
 		 (if (<fx res 0)
 		     (js-call3 %this callback (js-undefined) res #f buffer)
 		     (js-call3 %this callback (js-undefined) #f res buffer)))))
@@ -865,23 +873,26 @@
 (define (nodejs-read %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	  (uv-fs-read fd fast-buffer length
+       (with-access::JsArrayBufferView buffer (%vec byteoffset)
+	  (uv-fs-read fd %vec length
 	     :callback
 	     (when (isa? callback JsFunction)
 		(lambda (obj)
 		   (if (<fx obj 0)
 		       (js-call3 %this callback (js-undefined) obj #f buffer)
 		       (js-call3 %this callback (js-undefined) #f obj buffer))))
-	     :offset offset :position position :loop (uv-default-loop))))
+	     :offset (+fx offset (uint32->fixnum byteoffset))
+	     :position position
+	     :loop (uv-default-loop))))
       (else
        (when (integer? position)
 	  (set-input-port-position! fd position))
-       (let ((fast-buffer (js-get buffer '%fast-buffer %this)))
-	  (let ((res (read-fill-string! fast-buffer offset length fd)))
-	     (if (<fx res 0)
-		 (js-call3 %this callback (js-undefined) res #f buffer)
-		 (js-call3 %this callback (js-undefined) #f res buffer)))))))
+       (let ((buf (make-string length)))
+	  (with-access::JsArrayBufferView buffer (%vec byteoffset)
+	     (let ((res (read-fill-string! length (+fx offset byteoffset) length fd)))
+		(if (<fx res 0)
+		    (js-call3 %this callback (js-undefined) res #f buffer)
+		    (js-call3 %this callback (js-undefined) #f res buffer))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-todouble ...                                                  */
@@ -953,7 +964,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getaddrinfo ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-getaddrinfo %this node family)
+(define (nodejs-getaddrinfo %this process node family)
    (cond-expand
       (enable-libuv
        (with-access::JsGlobalObject %this (js-object)
@@ -967,8 +978,10 @@
 			  (if (pair? res)
 			      (js-call1 %this oncomplete (js-undefined)
 				 (js-vector->jsarray (list->vector res) %this))
-			      (js-call1 %this oncomplete (js-undefined)
-				 (js-vector->jsarray '#() %this)))))))
+			      (begin
+				 (process-fail %this process res)
+				 (js-call1 %this oncomplete (js-undefined)
+				    (js-undefined))))))))
 	     wrap)))
       (else
        (getaddrinfo-callback (not-implemented-exn "getaddrinfo")))))
@@ -1058,7 +1071,6 @@
    (cond-expand
       (enable-libuv
        (instantiate::UvTcp
-	  (%proc #f)
 	  (loop (uv-default-loop))))
       (else
        (error "nodejs-tcp-handle" "not implemented" #f))))
@@ -1190,23 +1202,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write %this handle buffer length callback)
+(define (nodejs-stream-write %this handle buffer offset length callback)
    (cond-expand
       (enable-libuv
-       (uv-stream-write handle buffer length :callback callback))
+       (uv-stream-write handle buffer offset length :callback callback))
       (else
        (error "nodejs-stream-write" "not implemented" #f))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-start %this handle callback)
+(define (nodejs-stream-read-start %this handle onalloc callback)
    (cond-expand
       (enable-libuv
-       (uv-stream-read-start handle :callback callback))
+       (uv-stream-read-start handle
+	  :onalloc onalloc
+	  :callback callback))
       (else
        (error "nodejs-stream-read-start" "not implemented" #f))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-stop ...                                      */
 ;*---------------------------------------------------------------------*/

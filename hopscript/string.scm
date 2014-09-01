@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 30 16:31:12 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 13:58:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -16,6 +16,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_string
 
+   (include "../nodejs/nodejs_debug.sch")
+   
    (library hop)
    
    (import __hopscript_types

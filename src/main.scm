@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul 30 09:21:42 2014 (serrano)                */
+;*    Last change :  Wed Aug 27 12:16:55 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -238,7 +238,9 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (nodejs-load path %worker))
+	  (js-worker-push-thunk! %worker
+	     (lambda ()
+		(nodejs-load path %worker))))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))

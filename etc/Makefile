@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun May 25 20:39:32 2014 (serrano)                */
+#*    Last change :  Sat Aug 23 08:10:53 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -40,8 +40,7 @@ install:
 	cp hopshrc.hop $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
 	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
 	if [ ! -d $(DESTDIR)$(HOPMANDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPMANDIR) && \
-            chmod $(MODDIR) $(DESTDIR)$(HOPMANDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPMANDIR); \
         fi
 	for p in hop hopsh hopreplay; do \
           cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jun 25 09:03:48 2014 (serrano)                */
+;*    Last change :  Tue Aug 19 07:02:13 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -155,7 +155,7 @@
 	  (with-access::http-request m (content-length method path host port
 					  user header userinfo scheme http)
 	     (if (or (not (isa? req http-proxy-request))
-		     (not (hop-enable-proxing)))
+		     (not (hop-enable-proxying)))
 		 (hop-request-hook m (http-file-not-found path))
 		 (let* ((n (instantiate::http-response-proxy
 			      (scheme scheme)

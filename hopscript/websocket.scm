@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Aug  8 06:33:30 2014 (serrano)                */
+;*    Last change :  Wed Aug 27 15:35:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -211,8 +211,7 @@
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
 		(lambda (this message proc)
-		   (add-event-listener! this
-			 (js-tostring message %this) proc))
+		   (add-event-listener! this (js-tostring message %this) proc))
 		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))

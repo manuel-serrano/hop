@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Aug  7 16:33:13 2014 (serrano)                */
+;*    Last change :  Sat Aug 30 18:50:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -22,6 +22,7 @@
    (export (nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
 	   (nodejs-require ::JsGlobalObject ::JsObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-init-core ::bstring ::procedure ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
@@ -235,6 +236,14 @@
 		      0 "COUNTER_HTTP_CLIENT_RESPONSE")
 	    :enumerable #f
 	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_NET_STREAM_END
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "DTRACE_NET_STREAM_END")
+	    :enumerable #f
+	    :writable #f
 	    :configurable #f)))
    %this)
 
@@ -300,7 +309,7 @@
 	       (hopscript %this this scope mod)
 	       ;; return the newly created module
 	       mod))))
-
+   
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
@@ -314,7 +323,7 @@
 			((eval! 'hopscript) %this this scope mod))))
 	       ;; return the newly created module
 	       mod))))
-
+   
    (define (load-module-so)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
@@ -326,7 +335,7 @@
 		  (init %this this scope mod))
 	       ;; return the newly created module
 	       mod))))
-
+   
    (define (load-module)
       (cond
 	 ((string-suffix? ".js" filename)
@@ -337,9 +346,9 @@
 	  (load-module-so))
 	 (else
 	  (js-raise-error (js-new-global-object)
-	     "Don't know how to load module"
+	     (format "Don't know how to load module ~s" filename)
 	     filename))))
-
+   
    (with-trace 1 "nodejs-load"
       (trace-item "filename=" filename)
       (with-access::WorkerHopThread worker (module-mutex module-table)
@@ -356,24 +365,47 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-module name worker %this %module)
+
+   (define (load-json filename)
+      (call-with-input-file filename
+	 (lambda (ip)
+	    (js-json-parser ip #f #f %this))))
+   
    (with-trace 1 "nodejs-require-module"
       (trace-item "name=" name)
       (if (core-module? name)
 	  (nodejs-require-core name worker %this)
-	  (let* ((abspath (nodejs-resolve name %this %module))
-		 (mod (nodejs-load abspath worker))
-		 (children (js-get %module 'children %this))
-		 (push (js-get children 'push %this)))
-	     (js-call1 %this push children mod)
-	     (when (eq? (js-get mod 'parent %this) (js-undefined))
-		(js-put! mod 'parent %module #f %this))
-	     (js-get mod 'exports %this)))))
+	  (let ((abspath (nodejs-resolve name %this %module)))
+	     (if (string-suffix? ".json" abspath)
+		 (load-json abspath)
+		 (let* ((mod (nodejs-load abspath worker))
+			(children (js-get %module 'children %this))
+			(push (js-get children 'push %this)))
+		    (js-call1 %this push children mod)
+		    (when (eq? (js-get mod 'parent %this) (js-undefined))
+		       (js-put! mod 'parent %module #f %this))
+		    (js-get mod 'exports %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (core-module? name)
    (assoc name (core-module-table)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-init-core ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-init-core name init %this)
+   (with-trace 2 "nodejs-init-core"
+      (trace-item "name=" name)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((this (js-new0 %this js-object))
+	       (scope (nodejs-new-scope-object %this))
+	       (mod (nodejs-module name name %this)))
+	    ;; initialize the core module
+	    (init %this this scope mod)
+	    ;; return the module
+	    mod))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
@@ -385,24 +417,12 @@
    
    (define (nodejs-load-core-module name worker)
       
-      (define (nodejs-init-core-module name)
-	 (with-trace 2 "nodejs-init-core-module"
-	    (trace-item "name=" name)
-	    (with-access::JsGlobalObject %this (js-object)
-	       (let ((this (js-new0 %this js-object))
-		     (scope (nodejs-new-scope-object %this))
-		     (mod (nodejs-module name name %this)))
-		  (let ((c (assoc name (core-module-table))))
-		     ;; initialize the core module
-		     ((cdr c) %this this scope mod)
-		     ;; return the module
-		     mod)))))
-      
       (with-trace 1 "nodejs-load-core-module"
 	 (trace-item "name=" name)
 	 (trace-item "cache=" (nodejs-cache-module name worker))
 	 (or (nodejs-cache-module name worker)
-	     (nodejs-init-core-module name))))
+	     (let ((init (assoc name (core-module-table))))
+		(nodejs-init-core name (cdr init) %this)))))
 
    (with-trace 1 "nodejs-require-core"
       (trace-item "name=" name)
@@ -420,12 +440,13 @@
    (define (resolve-file x)
       (if (and (file-exists? x) (not (directory? x)))
 	  (file-name-canonicalize x)
-	  (let loop ((suffixes '("js" "hop" "so")))
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
-		       (src (string-append x ".js")))
-		   (when (and (file-exists? src) (not (directory? src)))
-		      (file-name-canonicalize src)))))))
+		       (src (string-append x suffix)))
+		   (if (and (file-exists? src) (not (directory? src)))
+		       (file-name-canonicalize src)
+		       (loop (cdr suffixes))))))))
    
    (define (resolve-package pkg)
       (call-with-input-file pkg
@@ -444,8 +465,11 @@
 					 (js-raise-syntax-error
 					    (js-new-global-object) msg ""))))
 		   (m (assoc "main" o)))
-	       (when (and (pair? m) (string? (cdr m)))
-		  (cdr m))))))
+	       (if (and (pair? m) (string? (cdr m)))
+		   (cdr m)
+		   (let ((idx (make-file-name (dirname pkg) "index.js")))
+		      (when (file-exists? idx)
+			 idx)))))))
    
    (define (resolve-directory x)
       (let ((json (make-file-name x "package.json")))
@@ -533,7 +557,7 @@
 	 module)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-import ...                                                */
+;*    nodejs-import! ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    Bind the exported binding into a global object.                  */
 ;*---------------------------------------------------------------------*/

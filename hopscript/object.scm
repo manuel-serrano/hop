@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jul 13 17:52:33 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 19:13:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -340,7 +340,6 @@
       ;; Object.prototype
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.1
       (define (%js-object this . value)
-	 (tprint "%js-object value=" value)
 	 (cond
 	    ((null? value)
 	     (js-new %this js-object (js-undefined)))

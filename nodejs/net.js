@@ -306,7 +306,7 @@ Socket.prototype.listen = function() {
 
 
 Socket.prototype.setTimeout = function(msecs, callback) {
-  if (msecs > 0 && !isNaN(msecs) && isFinite(msecs)) {
+  if (msecs > 0 && isFinite(msecs)) {
     timers.enroll(this, msecs);
     timers._unrefActive(this);
     if (callback) {
@@ -494,6 +494,7 @@ Socket.prototype.destroy = function(exception) {
 // This function is called whenever the handle gets a
 // buffer, or when there's an error reading.
 function onread(buffer, offset, length) {
+   console.log( "onread.1 buffer=", typeof( buffer ), offset, length );
   var handle = this;
   var self = handle.owner;
   assert(handle === self._handle, 'handle != self._handle');
@@ -522,11 +523,19 @@ function onread(buffer, offset, length) {
     // again right away.
     self.bytesRead += length;
 
+   console.log( "onread.2 buffer=", typeof( buffer ), offset, length );
     // Optimization: emit the original buffer with end points
     var ret = true;
     if (self.ondata) self.ondata(buffer, offset, end);
-    else ret = self.push(buffer.slice(offset, end));
+    else {
+       console.log( "slice.0 offset=", offset, " end=", end );
+#:tprint( "slice.1=", #:typeof( buffer ) );
+       console.log( "slice.2=", buffer.slice(offset, end));
+       ret = self.push(buffer.slice(offset, end));
+       console.log( "apres push..." );
+    }
 
+   console.log( "onread.3 buffer=", typeof( buffer ), offset, length );
     if (handle.reading && !ret) {
       handle.reading = false;
       debug('readStop');
@@ -535,6 +544,7 @@ function onread(buffer, offset, length) {
         self._destroy(errnoException(process._errno, 'read'));
     }
 
+   console.log( "onread.4 buffer=", typeof( buffer ), offset, length );
   } else if (process._errno == 'EOF') {
     debug('EOF');
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon Jul 28 11:51:42 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 15:20:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -69,6 +69,9 @@
       (js-def-extern 'Worker '(nodejs-worker %this %scope %module))
       (js-def-extern 'global '%this)
       (js-def-extern 'GLOBAL '%this)
+      (instantiate::J2SPragma
+	 (loc loc)
+	 (expr `(js-put! GLOBAL 'global GLOBAL #f %this)))
       (js-def-extern 'process '(nodejs-process %worker %this))
       (js-def-extern 'console '(nodejs-require-core "console" %worker %this))
       (instantiate::J2SPragma

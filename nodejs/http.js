@@ -1038,6 +1038,7 @@ OutgoingMessage.prototype._flush = function() {
   // This function, outgoingFlush(), is called by both the Server and Client
   // to attempt to flush any pending messages out to the socket.
 
+   console.log( "http _flush..." );
   if (!this.socket) return;
 
   var ret;
@@ -1266,6 +1267,8 @@ Agent.prototype.addRequest = function(req, host, port, localAddress) {
   }
   if (this.sockets[name].length < this.maxSockets) {
     // If we are under maxSockets create a new one.
+   console.log( "addRequest name=", name, " host=", host, " port=", port,
+		" localadd=", localAddress );
     req.onSocket(this.createSocket(name, host, port, localAddress, req));
   } else {
     // We are over limit so we'll add it to the queue.
@@ -1361,6 +1364,7 @@ function ClientRequest(options, cb) {
 
   var method = self.method = (options.method || 'GET').toUpperCase();
   self.path = options.path || '/';
+   console.log( "ClientRequest.2 path=", self.path );
   if (cb) {
     self.once('response', cb);
   }
@@ -1401,10 +1405,12 @@ function ClientRequest(options, cb) {
     self._storeHeader(self.method + ' ' + self.path + ' HTTP/1.1\r\n',
                       self._renderHeaders());
   }
+   console.log( "ClientRequest.3 path=", self.socketPath );
   if (self.socketPath) {
     self._last = true;
     self.shouldKeepAlive = false;
     if (options.createConnection) {
+       console.log( "createConnection options.createConnect path=",self.socketPath ); 
       self.onSocket(options.createConnection(self.socketPath));
     } else {
       self.onSocket(net.createConnection(self.socketPath));
@@ -1433,6 +1439,7 @@ function ClientRequest(options, cb) {
   }
 
   self._deferToConnect(null, null, function() {
+     console.log( "deferToConnect..." );
     self._flush();
     self = null;
   });
@@ -2078,7 +2085,7 @@ function connectionListener(socket) {
       // if the user never called req.read(), and didn't pipe() or
       // .resume() or .on('data'), then we call req._dump() so that the
       // bytes will be pulled off the wire.
-      if (!req._consuming && !req._readableState.oldMode)
+      if (!req._consuming)
         req._dump();
 
       res.detachSocket(socket);

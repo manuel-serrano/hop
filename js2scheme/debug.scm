@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Fri Jul 18 07:58:28 2014 (serrano)                */
+;*    Last change :  Wed Aug 27 06:56:32 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    JavaScript debugging intrumentation                              */
+;*    JavaScript debugging instrumentation                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -20,7 +20,7 @@
 	   __js2scheme_stage)
    
    (export j2s-debug-stage
-	   (generic j2s-debug ::obj ::obj)))
+	   (generic j2s-debug ::obj ::obj ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-debug-stage ...                                              */
@@ -29,45 +29,52 @@
    (instantiate::J2SStageProc
       (name "debug")
       (comment "JavaScript debug intrumentation")
-      (proc j2s-debug)))
+      (proc (lambda (n conf) (j2s-debug n conf 'server)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-debug ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-debug this conf)
+(define-generic (j2s-debug this conf site)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-debug ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-debug this::J2SProgram conf)
+(define-method (j2s-debug this::J2SProgram conf site)
    (with-access::J2SProgram this (nodes)
-      (for-each (lambda (n) (debug n conf)) nodes))
+      (for-each (lambda (n) (debug n conf site)) nodes))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    debug ::J2SNode ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (debug this::J2SNode conf)
-   (default-walk this conf))
+(define-walk-method (debug this::J2SNode conf site)
+   (default-walk this conf site))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug ::J2SUnresolvedRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (debug this::J2SUnresolvedRef conf)
-   (with-access::J2SUnresolvedRef this (id)
-      (cond
-	 ((eq? id 'setTimeout)
-	  (set! id 'BgL_setTimeoutz00))
-	 ((eq? id 'setInterval)
-	  (set! id 'BgL_setIntervalz00)))
+(define-walk-method (debug this::J2SUnresolvedRef conf site)
+   (when (eq? site 'client)
+      (with-access::J2SUnresolvedRef this (id)
+	 (cond
+	    ((eq? id 'setTimeout)
+	     (set! id 'BgL_setTimeoutz00))
+	    ((eq? id 'setInterval)
+	     (set! id 'BgL_setIntervalz00))))
       (call-default-walker)))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    debug ::J2STilde ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (debug this::J2STilde conf)
+(define-walk-method (debug this::J2STilde conf side)
    (with-access::J2STilde this (stmt)
-      (debug stmt conf)
+      (debug stmt conf 'client)
       this))
    
+;*---------------------------------------------------------------------*/
+;*    debug ::J2SDollar ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (debug this::J2SDollar conf site)
+   (with-access::J2SDollar this (node)
+      (debug node conf 'server)))

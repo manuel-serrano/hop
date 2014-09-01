@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Aug  2 07:32:33 2014 (serrano)                */
+;*    Last change :  Sat Aug 30 19:08:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -15,6 +15,8 @@
 (module __hopscript_array
 
    (library hop)
+   
+   (include "../nodejs/nodejs_debug.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -177,7 +179,8 @@
 (define (init-builtin-array-prototype! %this js-array js-array-prototype)
    
    ;; constructor
-   (js-bind! %this js-array-prototype 'constructor :value js-array :enumerable #f)
+   (js-bind! %this js-array-prototype 'constructor
+      :value js-array :enumerable #f)
    
    ;; tostring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.2
@@ -561,7 +564,8 @@
       
       (define (vector-sort this cmp)
 	 (with-access::JsArray this (vec)
-	    ($sort-vector vec cmp)))
+	    ($sort-vector vec cmp)
+	    this))
       
       (define (partition arr cmp left right pivotindex)
 	 (let ((pivotvalue (js-get arr pivotindex %this)))

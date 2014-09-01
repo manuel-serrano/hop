@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Jul 28 10:06:55 2014 (serrano)                */
+#*    Last change :  Sat Aug 23 08:10:25 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -138,7 +138,7 @@ HOPDISTRIBDIR	= @HOPDISTRIBDIR@
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */
 #*---------------------------------------------------------------------*/
-.PHONY: compile compile2 link
+.PHONY: compile compile2 link mkdir
 
 COLOR		= yes
 
@@ -156,3 +156,12 @@ compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP)
 
 heap = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(6) $(COLOR_DEST)$(7)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6) $(7)
 link = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_DEST)$(6)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6)
+
+#*---------------------------------------------------------------------*/
+#*    mkdir                                                            */
+#*---------------------------------------------------------------------*/
+mkdir:
+	if [ ! -d $(DIR) ]; then \
+          $(MAKE) mkdir DIR=`dirname $(DIR)`; \
+          mkdir $(DIR) && chmod $(MODDIR) $(DIR); \
+        fi

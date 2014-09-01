@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Aug  3 06:45:47 2014 (serrano)                */
+#*    Last change :  Sat Aug 23 08:02:46 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -174,32 +174,25 @@ install-init: hop-dirs
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
-          mkdir -p $(DESTDIR)$(HOPBINDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPBINDIR); \
+          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPBINDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR) ]; then \
-          mkdir -p $(DESTDIR)$(HOPLIBDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR); \
+          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPSHAREDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPETCDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPETCDIR) \
-            && chmod $(MODDIR) $(DESTDIR)$(HOPETCDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPETCDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/hop ]; then \
-	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/hop \
-           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/hop; \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/hop; \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-           && chmod $(MODDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
-	  mkdir -p $(DESTDIR)$(HOPWEBLETSDIR) \
-	   && chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR); \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPWEBLETSDIR); \
         fi
 
 install-android: hop-dirs

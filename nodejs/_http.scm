@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Aug  8 07:00:40 2014 (serrano)                */
+;*    Last change :  Sat Aug 23 08:56:40 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __nodejs__http
+
+   (include "nodejs_debug.sch")
    
    (library hopscript)
 
@@ -31,13 +33,12 @@
    (define (not-implemented name)
       (js-make-function %this
 	 (lambda (this . l)
-	    (error "crypto" "binding not implemented" name))
+	    (error "http-parse" "binding not implemented" name))
 	 0 name))
 
    (define (exn msg . args)
       (with-access::JsGlobalObject %this (js-object js-error)
-	 (raise
-	    (js-new %this js-error (apply format msg args)))))
+	 (raise (js-new %this js-error (apply format msg args)))))
    
    (define http-parser-proto
       (with-access::JsGlobalObject %this (js-object)
@@ -72,6 +73,27 @@
 			   (js-undefined))))
 		  1 'execute)
 	       #f %this)
+	    (js-put! proto 'finish
+	       (js-make-function %this
+		  (lambda (this)
+		     (with-access::JsHttpParser this (buffer)
+			(set! buffer #f)))
+		  0 'finish)
+	       #f %this)
+	    (js-put! proto 'pause
+	       (js-make-function %this
+		  (lambda (this)
+		     (tprint "parser pause not implemented...")
+		     (js-undefined))
+		  0 'pause)
+	       #f %this)
+	    (js-put! proto 'resume
+	       (js-make-function %this
+		  (lambda (this)
+		     (tprint "parser resume not implemented...")
+		     (js-undefined))
+		  0 'resume)
+	       #f %this)
 	    proto)))
    
    (define http-proto
@@ -87,7 +109,6 @@
 	    (__proto__ http-parser-proto))))
    
    (let ((http (js-make-function %this http-parser 1 "HTTPParser"
-		  :alloc (lambda (o) #unspecified)
 		  :construct http-parser
 		  :prototype http-parser-proto)))
       (with-access::JsObject http (__proto__)
@@ -214,7 +235,7 @@
 			    (string->integer (substring http-version (+fx i 1)))
 			    #f %this)))
 		   ;; parse the header
-		   (multiple-value-bind (headers actual-host actual-port cl
+		   (multiple-value-bind (headers actual-host actual-port clen
 					   tenc auth pauth co)
 		      (http-parse-header pi #f)
 		      (js-put! minfo 'upgrade (memq 'upgrade headers) #f %this)
@@ -230,15 +251,19 @@
 					(list key val)))
 				  headers))
 			    %this)
-			 #f %this))
-		   (let ((onhdcomp (js-get parser 'onHeadersComplete %this)))
-		      (js-call1 %this onhdcomp parser minfo))
-		   ;; body
-		   
-		   (let ((onbody (js-get parser 'onBody %this)))
-		      (js-call1 %this onbody parser minfo))
-		   (let ((onmsgcomp (js-get parser 'onMessageComplete %this)))
-		      (js-call1 %this onmsgcomp parser minfo))))))))
+			 #f %this)
+		      (let ((onhdcomp (js-get parser 'onHeadersComplete %this)))
+			 (js-call1 %this onhdcomp parser minfo))
+		      ;; body
+		      (let* ((onbody (js-get parser 'onBody %this))
+			     (offset (input-port-position pi))
+			     (plen (elong->fixnum (input-port-length pi)))
+			     (len (if (<=fx clen 0) plen (minfx clen plen))))
+			 (with-access::JsHttpParser parser (buffer)
+			    (js-call3 %this onbody parser buffer offset len)))
+		      ;; message complete
+		      (let ((onmsgcomp (js-get parser 'onMessageComplete %this)))
+			 (js-call0 %this onmsgcomp parser)))))))))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    http-version-grammar ...                                         */

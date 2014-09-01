@@ -143,10 +143,16 @@ SlowBuffer.prototype.write = function(string, offset, length, encoding) {
 
 // slice(start, end)
 SlowBuffer.prototype.slice = function(start, end) {
+#:tprint( "SlowBuffer.proto.slice start=", start, " end=", end );
   var len = this.length;
+#:tprint( "len=", len );
   start = clamp(start, len, 0);
+#:tprint( "start=", start );
   end = clamp(end, len, len);
-  return new Buffer(this, end - start, start);
+#:tprint( "end=", end );
+   #:tprint( "slice, new buffer: ", end-start, start );
+   var b = new Buffer(this, end - start, start);
+   return b;
 };
 
 
@@ -159,7 +165,6 @@ function Buffer(subject, encoding, offset) {
   }
 
   var type;
-
   // Are we slicing?
   if (typeof offset === 'number') {
     if (!Buffer.isBuffer(subject)) {
@@ -188,7 +193,6 @@ function Buffer(subject, encoding, offset) {
         throw new TypeError('First argument needs to be a number, ' +
                             'array or string.');
     }
-
     if (this.length > Buffer.poolSize) {
       // Big buffer, just alloc one.
       this.parent = new SlowBuffer(this.length);

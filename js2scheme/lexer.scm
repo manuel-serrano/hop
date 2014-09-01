@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Aug  6 08:57:15 2014 (serrano)                */
+;*    Last change :  Fri Aug  8 18:44:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -166,7 +166,7 @@
       ;; linecomment
       ((:"//" (* (or (out "\n\xe2\r")
 		     (: "\xe2" (out "\x80"))
-		     (: "\xee\x80" (out "\xa8\xa9")))))
+		     (: "\xe2\x80" (out "\xa9\xa9")))))
        (ignore))
       
       ;; multi-line comment on one line

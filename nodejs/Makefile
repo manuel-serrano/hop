@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Aug  7 06:25:10 2014 (serrano)                */
+#*    Last change :  Sat Aug 30 06:51:44 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -39,7 +39,8 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = nodejs require process repl _hop _timer uv _uv _fs _http
+_OBJECTS = nodejs require process repl _hop _timer uv _uv _fs _http _crypto \
+  _buffer
 _JS_OBJECTS = console constants util sys path stream events fs \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \

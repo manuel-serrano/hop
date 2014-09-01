@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed May 28 18:46:33 2014 (serrano)                */
+;*    Last change :  Tue Aug 19 10:48:43 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -106,7 +106,10 @@
 (define (http-get req)
    (with-access::http-request req (abspath query connection header)
       (cond
-	 ((and (eq? connection 'upgrade) (websocket-proxy-request? header))
+	 ((and (or (eq? connection 'upgrade)
+		   (eq? connection '|keep-alive, upgrade|)
+		   (eq? connection '|upgrade, keep-alive|))
+	       (websocket-proxy-request? header))
 	  (websocket-proxy-response req))
 	 ((not (authorized-path? req abspath))
 	  (user-access-denied req))
@@ -153,7 +156,7 @@
    (with-access::http-request req (host port)
       (if (isa? req http-proxy-request)
 	  ;; okay for proxying connect response (probably used for websocket)
-	  (websocket-proxy-connect! host port)
+	  (websocket-proxy-connect! host port req)
 	  ;; refused
 	  (instantiate::http-response-abort
 	     (request req)))))

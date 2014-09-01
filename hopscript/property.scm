@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 30 14:36:17 2014 (serrano)                */
+;*    Last change :  Sat Aug 30 19:24:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -588,7 +588,7 @@
        (js-raise-reference-error %this "variable unbound \"~a\"" name))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/base :: ...                                               */
+;*    js-get/base ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get/base o base prop %this)
    (js-getvalue o base (js-toname prop %this) #f %this))
@@ -947,7 +947,8 @@
 			    (writable #t)
 			    (enumerable #t)
 			    (configurable #t))))
-	    (js-define-own-property o name newdesc throw %this))))
+	    (js-define-own-property o name newdesc throw %this)
+	    value)))
    
    (define (extend-object!)
       (with-access::JsObject o (cmap properties extensible)

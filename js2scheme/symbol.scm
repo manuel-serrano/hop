@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jul 25 16:00:54 2014 (serrano)                */
+;*    Last change :  Wed Aug 27 14:30:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -177,7 +177,7 @@
 		(when (symbol? id)
 		   (check-strict-mode-eval id "Function name" loc)))
 	     (nonstrict-params! params))
-	 
+
 	 (let* ((decls (collect* body))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
@@ -187,7 +187,7 @@
 		(nenv (if (find-decl 'arguments envl)
 			  env0
 			  (cons arguments env0)))
-		(nenv (if decl (cons decl nenv) nenv))
+		(nenv (if decl (append nenv (list decl)) nenv))
 		(nwenv (cons arguments (append decls params wenv))))
 	    (if (pair? decls)
 		(set! body

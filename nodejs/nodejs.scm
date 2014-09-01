@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Mon Jul 28 12:25:37 2014 (serrano)                */
+;*    Last change :  Sat Aug 30 18:28:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -20,6 +20,7 @@
 
    (import __nodejs_require
 	   __nodejs_process
+	   __nodejs__buffer
 	   (__nodejs_console "| echo \"(module __nodejs_console (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_constants "| echo \"(module __nodejs_constants (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_util "| echo \"(module __nodejs_util (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
@@ -75,45 +76,48 @@
 ;*    module-table ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define module-table
-   (make-core-module-table
-      "console"
-      "constants"
-      "util"
-      "sys"
-      "path"
-      "_linklist"
-      "events"
-      "assert"
-      "_stream_readable"
-      "_stream_writable"
-      "_stream_duplex"
-      "_stream_transform"
-      "_stream_passthrough"
-      "stream"
-      "fs"
-      "punycode"
-      "buffer"
-      "dgram"
-      "vm"
-      "timers"
-      "net"
-      "querystring"
-      "string_decoder"
-      "child_process"
-      "cluster"
-      "crypto"
-      "dns"
-      "domain"
-      "freelist"
-      "url"
-      "tls"
-      "http"
-      "https"
-      "zlib"
-      "os"
-      "hop"
-      "hophz"
-      "node_tick"))
+   (cons
+      ;; the buffer module is special as the Buffer constructor
+      ;; does not allocate a plain JsObject (see _buffer.scm)
+      (cons "buffer" (@ hopscript __nodejs__buffer))
+      (make-core-module-table
+	 "console"
+	 "constants"
+	 "util"
+	 "sys"
+	 "path"
+	 "_linklist"
+	 "events"
+	 "assert"
+	 "_stream_readable"
+	 "_stream_writable"
+	 "_stream_duplex"
+	 "_stream_transform"
+	 "_stream_passthrough"
+	 "stream"
+	 "fs"
+	 "punycode"
+	 "dgram"
+	 "vm"
+	 "timers"
+	 "net"
+	 "querystring"
+	 "string_decoder"
+	 "child_process"
+	 "cluster"
+	 "crypto"
+	 "dns"
+	 "domain"
+	 "freelist"
+	 "url"
+	 "tls"
+	 "http"
+	 "https"
+	 "zlib"
+	 "os"
+	 "hop"
+	 "hophz"
+	 "node_tick")))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */

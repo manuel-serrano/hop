@@ -28,6 +28,8 @@ var stream = require('stream');
 var assert = require('assert').ok;
 var constants = require('constants');
 
+var Timer = process.binding('timer_wrap').Timer;
+
 var DEFAULT_CIPHERS = 'ECDHE-RSA-AES128-SHA256:AES128-GCM-SHA256:' + // TLS 1.2
                       'RC4:HIGH:!MD5:!aNULL:!EDH';                   // TLS 1.0
 
@@ -220,6 +222,7 @@ SlabBuffer.prototype.create = function create() {
 
 
 SlabBuffer.prototype.use = function use(context, fn, size) {
+   console.log( ">>> ++++++++++++++++ SlabBuffer.prototype.use fn=", fn, " size=", size );
   if (this.remaining === 0) {
     this.isFull = true;
     return 0;
@@ -230,6 +233,7 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
   if (size !== null) actualSize = Math.min(size, actualSize);
 
   var bytes = fn.call(context, this.pool, this.offset, actualSize);
+   console.log( "SlabBuffer.prototype.use bytes=", bytes);
   if (bytes > 0) {
     this.offset += bytes;
     this.remaining -= bytes;
@@ -237,6 +241,7 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   assert(this.remaining >= 0);
 
+   console.log( "<<< +++++++++++++++++ SlabBuffer.prototype.use size=", size, " -> ", bytes );
   return bytes;
 };
 
@@ -453,6 +458,7 @@ CryptoStream.prototype._read = function read(size) {
     if (read > 0) {
       bytesRead += read;
     }
+     console.log( "tls.1 _read read=", read, " bytesRead=", bytesRead );
     last = this._buffer.offset;
 
     // Handle and report errors
@@ -465,6 +471,7 @@ CryptoStream.prototype._read = function read(size) {
            bytesRead < size &&
            this.pair.ssl !== null);
 
+   console.log( "tls.2 _read read=", read, " bytesRead=", bytesRead );
   // Get NPN and Server name when ready
   this.pair.maybeInitFinished();
 
@@ -790,7 +797,7 @@ function onhandshakestart() {
 
   var self = this;
   var ssl = self.ssl;
-  var now = Date.now();
+  var now = Timer.now();
 
   assert(now >= ssl.lastHandshakeTime);
 
@@ -938,6 +945,7 @@ function SecurePair(credentials, isServer, requestCert, rejectUnauthorized,
   process.nextTick(function() {
     /* The Connection may be destroyed by an abort call */
     if (self.ssl) {
+       console.log( "tls self.ssl.start" );
       self.ssl.start();
 
       /* In case of cipher suite failures - SSL_accept/SSL_connect may fail */
@@ -1347,7 +1355,7 @@ exports.connect = function(/* [port, host], options, cb */) {
     pair.ssl.setSession(session);
   }
 
-  var cleartext = pipe(pair, socket);
+   var cleartext = pipe(pair, socket);
   if (cb) {
     cleartext.once('secureConnect', cb);
   }
@@ -1401,11 +1409,15 @@ exports.connect = function(/* [port, host], options, cb */) {
 
 
 function pipe(pair, socket) {
+   console.log( "tls pipe.1",  "[" + process.title + "]", (process.title != "/opt/nodejs/bin/node") ? pair.encrypted.pipe : "FUNCTION..." );
   pair.encrypted.pipe(socket);
+   console.log( "tls pipe.2", (process.title != "/opt/nodejs/bin/node") ? socket.pipe : "FUNCTION..." );
   socket.pipe(pair.encrypted);
 
   pair.encrypted.on('close', function() {
+console.log( "tls pipe.4 onclose" );
     process.nextTick(function() {
+console.log( "tls pipe.5 onclose ontick" );
       // Encrypted should be unpiped from socket to prevent possible
       // write after destroy.
       pair.encrypted.unpipe(socket);
@@ -1427,26 +1439,32 @@ function pipe(pair, socket) {
   // its data from the cleartext side, we have to give it a
   // light kick to get in motion again.
   socket.on('drain', function() {
+console.log( "tls pipe.7 drain");
     if (pair.encrypted._pending)
       pair.encrypted._writePending();
     if (pair.cleartext._pending)
       pair.cleartext._writePending();
+console.log( "tls pipe.8 drain encrypted read(0)");
     pair.encrypted.read(0);
+console.log( "tls pipe.9 drain clearText read(0)");
     pair.cleartext.read(0);
   });
 
   function onerror(e) {
+console.log( "tls pipe.10 onerror e=", e );
     if (cleartext._controlReleased) {
       cleartext.emit('error', e);
     }
   }
 
   function onclose() {
+console.log( "tls pipe.11 onclose" );
     socket.removeListener('error', onerror);
     socket.removeListener('timeout', ontimeout);
   }
 
   function ontimeout() {
+console.log( "tls pipe.12 ontimeout" );
     cleartext.emit('timeout');
   }
 

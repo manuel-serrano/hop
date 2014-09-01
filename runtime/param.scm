@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jul 26 06:33:52 2014 (serrano)                */
+;*    Last change :  Tue Aug 19 10:47:21 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -158,11 +158,14 @@
 	    (hop-hss-foreign-eval::procedure)
 	    (hop-hss-foreign-eval-set! ::procedure)
 
-	    (hop-enable-proxing::bool)
-	    (hop-enable-proxing-set! ::bool)
+	    (hop-enable-proxying::bool)
+	    (hop-enable-proxying-set! ::bool)
 	    
-	    (hop-enable-websocket-proxing::bool)
-	    (hop-enable-websocket-proxing-set! ::bool)
+	    (hop-enable-websocket-proxying::bool)
+	    (hop-enable-websocket-proxying-set! ::bool)
+	    
+	    (hop-max-websocket-proxy-tunnel::int)
+	    (hop-max-websocket-proxy-tunnel-set! ::int)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -802,16 +805,19 @@
    (string->symbol (hop-service-weblet-name)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-enable-proxing ...                                           */
+;*    hop-enable-proxying ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Enable (or disable) the proxy facility. If set to #f HOP no      */
 ;*    longer acts as proxy.                                            */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-enable-proxing
+(define-parameter hop-enable-proxying
    #t)
 
-(define-parameter hop-enable-websocket-proxing
+(define-parameter hop-enable-websocket-proxying
    #t)
+
+(define-parameter hop-max-websocket-proxy-tunnel
+   10)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
@@ -1069,7 +1075,7 @@
    256)
    
 (define-parameter hop-max-proxy-keep-alive-connection
-   ;; the max number of keep-alive remote (proxing) connections
+   ;; the max number of keep-alive remote (proxying) connections
    8
    (lambda (v)
       (if (<fx v 4)

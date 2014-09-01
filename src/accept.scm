@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Tue May  6 08:21:37 2014 (serrano)                */
+;*    Last change :  Sat Aug 23 09:10:08 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -36,6 +36,7 @@
 
    (export  (generic scheduler-accept-loop ::scheduler ::socket ::bool)
 	    *verb-mutex*))
+
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/

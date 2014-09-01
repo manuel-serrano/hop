@@ -90,7 +90,6 @@ exports.createCredentials = function(options, context) {
   var c = new Credentials(options.secureProtocol,
                           options.secureOptions,
                           context);
-
   if (context) return c;
 
   if (options.key) {
