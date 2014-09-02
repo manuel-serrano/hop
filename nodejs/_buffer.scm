@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sun Aug 31 18:38:07 2014 (serrano)                */
+;*    Last change :  Mon Sep  1 07:22:24 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -22,11 +22,20 @@
 	    __nodejs_require)
 
    (import  (__nodejs_buffer "| echo \"(module __nodejs_buffer (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+
+   (static  (class Slab
+	       (%this::JsGlobalObject read-only)
+	       (js-slowbuffer::JsObject read-only)
+	       (slowbuffer #f)
+	       (offset::long 0)
+	       (lastoffset::long 0)))
    
    (export  (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
 	    (make-slowbuffer ::JsGlobalObject)
-	    (make-slab-allocate ::JsGlobalObject ::JsObject)))
+	    (make-slab-allocator ::JsGlobalObject ::JsObject)
+	    (slab-allocate ::object ::obj ::long)
+	    (slab-shrink! ::obj ::long ::long)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript ...                                                    */
@@ -216,11 +225,45 @@
       %this))
 
 ;*---------------------------------------------------------------------*/
-;*    make-slab-allocate ...                                           */
+;*    make-slab-allocator ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (make-slab-allocate %this::JsGlobalObject slowbuffer)
-   (lambda (obj size)
-      (let ((slowbuf::JsArrayBuffer (js-new1 %this slowbuffer size))
-	    (offset 0))
-	 (with-access::JsArrayBuffer slowbuf (vec)
-	    (values slowbuf vec offset)))))
+(define (make-slab-allocator %this::JsGlobalObject js-slowbuffer)
+   (instantiate::Slab
+      (%this %this)
+      (js-slowbuffer js-slowbuffer)))
+
+;*---------------------------------------------------------------------*/
+;*    slab-allocate ...                                                */
+;*    -------------------------------------------------------------    */
+;*    See src/slab_allocator.cc in nodejs                              */
+;*---------------------------------------------------------------------*/
+(define (slab-allocate slab obj size)
+   (with-access::Slab slab (%this js-slowbuffer slowbuffer offset)
+      (if (not slowbuffer)
+	  (let ((buf::JsArrayBuffer (js-new1 %this js-slowbuffer size)))
+	     (set! slowbuffer buf)
+	     (with-access::JsArrayBuffer buf (vec)
+		(values buf vec 0)))
+	  (with-access::JsArrayBuffer slowbuffer (vec)
+	     ;; slowbuffer vectors are implemented as strings
+	     (let ((sz (string-length vec)))
+		(if (>fx (+ offset size) sz)
+		    ;; not enough space, new buffer required
+		    (let ((buf::JsArrayBuffer (js-new1 %this js-slowbuffer sz)))
+		       (set! offset 0)
+		       (set! slowbuffer buf)
+		       (with-access::JsArrayBuffer buf (vec)
+			  (values buf vec 0)))
+		    (let ((loff offset))
+		       (set! offset (+fx offset size))
+		       (set! lastoffset loff)
+		       (values slowbuf vec loff))))))))
+
+;*---------------------------------------------------------------------*/
+;*    slab-shrink! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (slab-shrink! slab off size)
+   (with-access::Slab slab (lastoffset)
+      (when (=fx off lastoffset)
+	 (set! offset lastoffset)))
+   slab)

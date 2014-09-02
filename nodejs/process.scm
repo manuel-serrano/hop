@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Aug 31 18:49:06 2014 (serrano)                */
+;*    Last change :  Mon Sep  1 07:20:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -433,13 +433,18 @@
 	    (js-put! obj 'readStart
 	       (js-make-function %this
 		  (lambda (this)
+		     (let ((slab (make-slab-allocator %this slowbuffer)))
 		     (with-access::JsHandle this (handle)
 			(nodejs-stream-read-start %this handle
-			   (make-slab-allocate %this slowbuffer)
+			   (lambda (obj size)
+			      (slab-allocate slab obj size))
 			   (lambda (buf offset len)
-			      (when (integer? buf)
-				 (js-put! process '_errno
-				    (uv-err-name buf) #f %this))
+			      (if (integer? buf)
+				  (begin
+				     (slab-shrink! slab offset 0)
+				     (js-put! process '_errno
+					(uv-err-name buf) #f %this))
+				  (slab-shrink! slab offset len))
 			      (let ((onread (js-get this 'onread %this)))
 				 (js-call3 %this onread this buf offset len)
 				 (js-undefined))))))
