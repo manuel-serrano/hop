@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Aug 31 18:46:53 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 14:42:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -878,9 +878,10 @@
 	     :callback
 	     (when (isa? callback JsFunction)
 		(lambda (obj)
+		   (tprint "nodejs-read cb obj=" obj " buffer=" buffer)
 		   (if (<fx obj 0)
-		       (js-call3 %this callback (js-undefined) obj #f buffer)
-		       (js-call3 %this callback (js-undefined) #f obj buffer))))
+		       (js-call2 %this callback (js-undefined) obj #f)
+		       (js-call2 %this callback (js-undefined) #f obj))))
 	     :offset (+fx offset (uint32->fixnum byteoffset))
 	     :position position
 	     :loop (uv-default-loop))))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 23 12:59:44 2014                          */
-/*    Last change :  Fri Jul 25 16:24:13 2014 (serrano)                */
+/*    Last change :  Tue Sep  2 14:36:51 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HopHz binding                                                    */
@@ -15,7 +15,7 @@ var hop = require( "hop" );
 /*---------------------------------------------------------------------*/
 function getHostOption( host, port ) {
    return {
-      async: false,
+      asynchronous: false,
       port: (port ? port : hop.port),
       host: (host ? host : hop.hostname),
       fail: function( e ) { throw e; }

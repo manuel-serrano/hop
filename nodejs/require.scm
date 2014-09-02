@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Aug 30 18:50:16 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 15:22:59 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -299,12 +299,15 @@
 (define (nodejs-load filename worker::WorkerHopThread)
    
    (define (load-module-js)
-      (with-access::WorkerHopThread worker (%this)
+      (with-access::WorkerHopThread worker (%this prehook)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((hopscript (nodejs-compile filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-module (basename filename) filename %this)))
+	       ;; prehooking
+	       (when (procedure? prehook)
+		  (prehook %this this scope mod))
 	       ;; create the module
 	       (hopscript %this this scope mod)
 	       ;; return the newly created module

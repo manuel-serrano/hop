@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Aug  8 06:11:01 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 15:33:29 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -36,6 +36,7 @@
 	   (class WorkerHopThread::hopthread
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
+	      (prehook (default #f))
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
@@ -144,13 +145,42 @@
       (with-access::WorkerHopThread parent (mutex subworkers)
 	 (synchronize mutex
 	    (set! subworkers (cons thread subworkers)))))
+
+   (define (bind-worker-methods! %this scope worker)
+      ;; postMessage
+      (js-bind! %this scope 'postMessage
+	 :value (js-make-function %this
+		   (lambda (this data)
+		      (js-worker-post-slave-message worker data))
+		   1 'postMessage)
+	 :writable #f
+	 :configurable #f
+	 :enumerable #f)
+
+      (with-access::JsWorker worker (thread)
+	 ;; onmessage
+	 (js-bind! %this scope 'onmessage
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (with-access::WorkerHopThread thread (onmessage)
+			  onmessage))
+		    0 'onmessage)
+	    :set (js-make-function %this
+		    (lambda (this v)
+		       (with-access::WorkerHopThread thread (onmessage)
+			  (set! onmessage v)))
+		    2 'onmessage)
+	    :configurable #f
+	    :writable #t
+	    :enumerable #t)))
    
    (lambda (_ src)
       (letrec* ((parent (js-current-worker))
 		(this (js-new-global-object))
 		(source (js-tostring src %this))
 		(thunk (lambda ()
-			  (js-put! this 'module (js-get %this 'module %this) #f this)
+			  (js-put! this 'module
+			     (js-get %this 'module %this) #f this)
 			  (loader source thread this)))
 		(thread (instantiate::WorkerHopThread
 			   (parent parent)
@@ -172,6 +202,10 @@
 			     (__proto__ js-worker-prototype)
 			     (extensible #t)
 			     (thread thread))))
+	       (with-access::WorkerHopThread thread (prehook)
+		  (set! prehook
+		     (lambda (%this this scope mod)
+			(bind-worker-methods! %this scope worker))))
 	       
 	       ;; master onmessage
 	       (let ((onmessage (js-undefined)))
@@ -188,32 +222,6 @@
 			     2 'onmessage)
 		     :configurable #t
 		     :enumerable #t))
-
-	       ;; postMessage
-	       (js-bind! this this 'postMessage
-		  :value (js-make-function this
-			    (lambda (this data)
-			       (js-worker-post-slave-message worker data))
-			    1 'postMessage)
-		  :writable #f
-		  :configurable #f
-		  :enumerable #f)
-
-	       ;; onmessage
-	       (js-bind! this this 'onmessage
-		  :get (js-make-function this
-			  (lambda (this)
-			     (with-access::WorkerHopThread thread (onmessage)
-				onmessage))
-			  0 'onmessage)
-		  :set (js-make-function this
-			  (lambda (this v)
-			     (with-access::WorkerHopThread thread (onmessage)
-				(set! onmessage v)))
-			  2 'onmessage)
-		  :configurable #t
-		  :writable #f
-		  :enumerable #t)
 	       
 	       ;; start the worker thread
 	       (thread-start! thread)

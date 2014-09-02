@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Jul 23 15:43:43 2014 (serrano)                */
+/*    Last change :  Tue Sep  2 14:46:28 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing asynchronous response                     */
@@ -25,3 +25,5 @@ service async() {
       },
       hop.currentRequest() );
 }
+
+console.log( "Go to \"http://%s:%d/hop/async\"", hop.hostname, hop.port );
