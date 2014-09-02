@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Aug 19 10:47:21 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 13:28:42 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -160,6 +160,7 @@
 
 	    (hop-enable-proxying::bool)
 	    (hop-enable-proxying-set! ::bool)
+	    (hop-enable-proxing-set! ::bool)
 	    
 	    (hop-enable-websocket-proxying::bool)
 	    (hop-enable-websocket-proxying-set! ::bool)
@@ -818,6 +819,13 @@
 
 (define-parameter hop-max-websocket-proxy-tunnel
    10)
+
+(define (hop-enable-proxing-set! v)
+   (fprint (current-error-port) "\"hop-enable-proxing-set!\" is deprecated\n"
+      "It has been replaced with \"hop-enable-proxying-set!\"."
+      (format "Edit the file\"~a/wizard.hop\" and fix it."
+	 (hop-rc-directory)))
+   (hop-enable-proxying-set! v))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
