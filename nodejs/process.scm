@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Sep  1 07:20:57 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 10:19:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -331,7 +331,7 @@
 	 ((fixnum? n) n)
 	 ((flonum? n) (flonum->fixnum n))
 	 (else 0)))
-
+   
    (define (connect family)
       (with-access::JsGlobalObject %this (js-object)
 	 (lambda (this host port callback)
@@ -348,7 +348,7 @@
 			      this req #t #t)
 			   (js-undefined))))
 		  req)))))
-
+   
    (define (create-tcp-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
@@ -434,20 +434,20 @@
 	       (js-make-function %this
 		  (lambda (this)
 		     (let ((slab (make-slab-allocator %this slowbuffer)))
-		     (with-access::JsHandle this (handle)
-			(nodejs-stream-read-start %this handle
-			   (lambda (obj size)
-			      (slab-allocate slab obj size))
-			   (lambda (buf offset len)
-			      (if (integer? buf)
-				  (begin
-				     (slab-shrink! slab offset 0)
-				     (js-put! process '_errno
-					(uv-err-name buf) #f %this))
-				  (slab-shrink! slab offset len))
-			      (let ((onread (js-get this 'onread %this)))
-				 (js-call3 %this onread this buf offset len)
-				 (js-undefined))))))
+			(with-access::JsHandle this (handle)
+			   (nodejs-stream-read-start %this handle
+			      (lambda (obj size)
+				 (slab-allocate slab obj size))
+			      (lambda (buf offset len)
+				 (if (integer? buf)
+				     (begin
+					(slab-shrink! slab offset 0)
+					(js-put! process '_errno
+					   (uv-err-name buf) #f %this))
+				     (slab-shrink! slab offset len))
+				 (let ((onread (js-get this 'onread %this)))
+				    (js-call3 %this onread this buf offset len)
+				    (js-undefined)))))))
 		  0 "readStart")
 	       #f %this)
 	    
@@ -523,7 +523,7 @@
 			(nodejs-tcp-open %this handle fd)))
 		  2 "open")
 	       #f %this)
-
+	    
 	    (js-put! obj 'bind
 	       (js-make-function %this
 		  (lambda (this addr port)
@@ -541,7 +541,7 @@
 			(nodejs-tcp-bind %this handle addr (or port 0) 6)))
 		  2 "bind6")
 	       #f %this)
-
+	    
 	    (js-put! obj 'listen
 	       (js-make-function %this
 		  (lambda (this backlog)

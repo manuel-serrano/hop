@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Sep  1 07:22:24 2014 (serrano)                */
+;*    Last change :  Tue Sep  2 10:20:49 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -26,9 +26,9 @@
    (static  (class Slab
 	       (%this::JsGlobalObject read-only)
 	       (js-slowbuffer::JsObject read-only)
-	       (slowbuffer #f)
-	       (offset::long 0)
-	       (lastoffset::long 0)))
+	       (slowbuffer (default #f))
+	       (offset::long (default 0))
+	       (lastoffset::long (default 0))))
    
    (export  (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
@@ -238,7 +238,7 @@
 ;*    See src/slab_allocator.cc in nodejs                              */
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
-   (with-access::Slab slab (%this js-slowbuffer slowbuffer offset)
+   (with-access::Slab slab (%this js-slowbuffer slowbuffer offset lastoffset)
       (if (not slowbuffer)
 	  (let ((buf::JsArrayBuffer (js-new1 %this js-slowbuffer size)))
 	     (set! slowbuffer buf)
@@ -257,13 +257,13 @@
 		    (let ((loff offset))
 		       (set! offset (+fx offset size))
 		       (set! lastoffset loff)
-		       (values slowbuf vec loff))))))))
+		       (values slowbuffer vec loff))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-shrink! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (slab-shrink! slab off size)
-   (with-access::Slab slab (lastoffset)
+   (with-access::Slab slab (lastoffset offset)
       (when (=fx off lastoffset)
 	 (set! offset lastoffset)))
    slab)
