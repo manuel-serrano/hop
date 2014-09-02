@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/3.0.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Aug  9 19:40:27 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Tue Sep  2 13:22:21 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -436,7 +436,7 @@ setting can be overriden when starting Hop.]))))))
 	    (newline)
 	    (newline))
 	 (print ";; proxying")
-	 (write `(hop-enable-proxing-set! ,uproxy))
+	 (write `(hop-enable-proxying-set! ,uproxy))
 	 (newline)
 	 (newline)
 	 (when proxy
