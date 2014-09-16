@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Sep  2 10:20:49 2014 (serrano)                */
+;*    Last change :  Sun Sep 14 12:59:04 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -28,7 +28,8 @@
 	       (js-slowbuffer::JsObject read-only)
 	       (slowbuffer (default #f))
 	       (offset::long (default 0))
-	       (lastoffset::long (default 0))))
+	       (lastoffset::long (default 0))
+	       (slice (default #f))))
    
    (export  (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
@@ -113,18 +114,38 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (js-new %this js-object)))
    
-   (define (slowbuffer-constr this len)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((this (instantiate::JsArrayBuffer
-			(__proto__ slowbuffer-proto)
-			(vec (make-string len)))))
-	    ;; length
-	    (js-bind! %this this 'length
-	       :value len
-	       :configurable #f
-	       :writable #f
-	       :enumerable #t)
-	    this)))
+   (define (slowbuffer-constr this a0)
+      (let loop ((a0 a0))
+	 (cond
+	    ((integer? a0)
+	     (with-access::JsGlobalObject %this (js-object)
+		(let ((this (instantiate::JsArrayBuffer
+			       (__proto__ slowbuffer-proto)
+			       (vec (make-string a0)))))
+		   ;; length
+		   (js-bind! %this this 'length
+		      :value a0
+		      :configurable #f
+		      :writable #f
+		      :enumerable #t)
+		   this)))
+	    ((string? a0)
+	     (with-access::JsGlobalObject %this (js-object)
+		(let ((this (instantiate::JsArrayBuffer
+			       (__proto__ slowbuffer-proto)
+			       (vec a0))))
+		   ;; length
+		   (js-bind! %this this 'length
+		      :value (string-length a0)
+		      :configurable #f
+		      :writable #f
+		      :enumerable #t)
+		   this)))
+	    ((isa? a0 JsArrayBuffer)
+	     (with-access::JsArrayBuffer a0 (vec)
+		(loop vec)))
+	    (else
+	     (error "buffer" "Illegal constructor call" a0)))))
    
    (define js-slowbuffer
       (js-make-function %this slowbuffer-constr 1 "SlowBuffer"
@@ -169,7 +190,7 @@
 	 1 "utf8Write")
       #f %this)
 
-1   (js-put! slowbuffer-proto 'asciiWrite
+   (js-put! slowbuffer-proto 'asciiWrite
       (js-make-function %this
 	 (lambda (this::JsArrayBuffer string::bstring offset length)
 	    (js-put! js-slowbuffer '_charsWritten
@@ -225,6 +246,11 @@
       %this))
 
 ;*---------------------------------------------------------------------*/
+;*    SLAB-SIZE ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (SLAB-SIZE) (*fx 1024 1024))
+
+;*---------------------------------------------------------------------*/
 ;*    make-slab-allocator ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (make-slab-allocator %this::JsGlobalObject js-slowbuffer)
@@ -233,37 +259,68 @@
       (js-slowbuffer js-slowbuffer)))
 
 ;*---------------------------------------------------------------------*/
+;*    roundup ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (roundup a b)
+   (let ((r (remainderfx a b)))
+      (if (=fx r 0)
+	  a
+	  (-fx (+fx a b) r))))
+
+(define count 0)
+(define debug 1)
+
+;*---------------------------------------------------------------------*/
 ;*    slab-allocate ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    See src/slab_allocator.cc in nodejs                              */
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
-   (with-access::Slab slab (%this js-slowbuffer slowbuffer offset lastoffset)
+   (set! count (+fx count 1))
+   (with-access::Slab slab (%this js-slowbuffer slowbuffer slice
+			      offset lastoffset)
       (if (not slowbuffer)
-	  (let ((buf::JsArrayBuffer (js-new1 %this js-slowbuffer size)))
+	  (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
+		 (buf (js-new1 %this js-slowbuffer rsize)))
 	     (set! slowbuffer buf)
+	     (set! slice (js-get buf 'slice %this))
+	     (set! offset size)
 	     (with-access::JsArrayBuffer buf (vec)
+		(when (>fx debug 0)
+		   (tprint "SLAB-ALLOC.1(" count ") size=" size
+		      " size_=" rsize " -> offset=" offset))
 		(values buf vec 0)))
 	  (with-access::JsArrayBuffer slowbuffer (vec)
 	     ;; slowbuffer vectors are implemented as strings
-	     (let ((sz (string-length vec)))
+	     (let* ((sz (string-length vec)))
 		(if (>fx (+ offset size) sz)
 		    ;; not enough space, new buffer required
-		    (let ((buf::JsArrayBuffer (js-new1 %this js-slowbuffer sz)))
-		       (set! offset 0)
+		    (let* ((rsize (roundup (max size sz) 16))
+			   (buf::JsArrayBuffer (js-new1 %this js-slowbuffer rsize)))
 		       (set! slowbuffer buf)
+		       (set! offset size)
+		       (when (>fx debug 0)
+			  (tprint "SLAB-ALLOC.2(" count ") size=" size
+			     " size_=" rsize " -> offset=" offset))
 		       (with-access::JsArrayBuffer buf (vec)
 			  (values buf vec 0)))
 		    (let ((loff offset))
 		       (set! offset (+fx offset size))
 		       (set! lastoffset loff)
+		       (when (>fx debug 0)
+			  (tprint "SLAB-ALLOC.3(" count ") size=" size
+			     " sz=" sz " -> offset=" offset))
 		       (values slowbuffer vec loff))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-shrink! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (slab-shrink! slab off size)
-   (with-access::Slab slab (lastoffset offset)
+   (with-access::Slab slab (lastoffset js-slowbuffer slowbuffer %this offset)
       (when (=fx off lastoffset)
-	 (set! offset lastoffset)))
-   slab)
+	 (set! offset (+fx lastoffset (roundup size 16))))
+      (when (>fx debug 0)
+	 (tprint "SLAB-SHRINK(" count ") size=" size " -> offset=" offset))
+      (if (>fx size 0)
+	  (js-new %this js-slowbuffer slowbuffer)
+	  (js-undefined))))

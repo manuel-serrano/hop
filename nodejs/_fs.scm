@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Jul 30 11:43:37 2014 (serrano)                */
+;*    Last change :  Mon Sep 15 09:01:59 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -34,7 +34,7 @@
 	   S_IFDIR
 	   S_IFREG
 	   
-	   (process-fs ::JsGlobalObject)))
+	   (process-fs ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
@@ -99,85 +99,85 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/fs.html                                    */
 ;*---------------------------------------------------------------------*/
-(define (process-fs %this)
+(define (process-fs %worker %this)
 
    (define (rename this old new cb)
-      (nodejs-rename-file %this old new cb))
+      (nodejs-rename-file %worker %this old new cb))
    
    (define (ftruncate this fd offset cb)
-      (nodejs-ftruncate %this fd offset cb))
+      (nodejs-ftruncate %worker %this fd offset cb))
    
    (define (truncate this path offset cb)
-      (nodejs-truncate %this path offset cb))
+      (nodejs-truncate %worker %this path offset cb))
    
    (define (fchown this fd uid gid cb)
-      (nodejs-fchown %this fd uid gid cb))
+      (nodejs-fchown %worker %this fd uid gid cb))
    
    (define (chown this path uid gid cb)
-      (nodejs-chown %this path uid gid cb))
+      (nodejs-chown %worker %this path uid gid cb))
    
    (define (lchown this path uid gid cb)
-      (nodejs-lchown %this path uid gid cb))
+      (nodejs-lchown %worker %this path uid gid cb))
    
    (define (fchmod this fd mod cb)
-      (nodejs-fchmod %this fd mod cb))
+      (nodejs-fchmod %worker %this fd mod cb))
    
    (define (chmod this path mod cb)
-      (nodejs-chmod %this path mod cb))
+      (nodejs-chmod %worker %this path mod cb))
    
    (define (lchmod this path mod cb)
-      (nodejs-lchmod %this path mod cb))
+      (nodejs-lchmod %worker %this path mod cb))
    
    (define (readdir this path)
       (js-vector->jsarray (list->vector (directory->path-list path))  %this))
 
    (define (fstat this fd callback)
-      (nodejs-fstat %this fd callback (get-process-fs-stats %this)))
+      (nodejs-fstat %worker %this fd callback (get-process-fs-stats %this)))
 
    (define (stat this path callback)
-      (nodejs-stat %this path callback (get-process-fs-stats %this)))
+      (nodejs-stat %worker %this path callback (get-process-fs-stats %this)))
 
    (define (lstat this path callback)
-      (nodejs-lstat %this path callback (get-process-fs-stats %this)))
+      (nodejs-lstat %worker %this path callback (get-process-fs-stats %this)))
 
    (define (link this src dst callback)
-      (nodejs-link %this src dst callback))
+      (nodejs-link %worker %this src dst callback))
 
    (define (symlink this src dst type callback)
       (if (eq? callback (js-undefined))
-	  (nodejs-symlink %this src dst type)
-	  (nodejs-symlink %this src dst callback)))
+	  (nodejs-symlink %worker %this src dst type)
+	  (nodejs-symlink %worker %this src dst callback)))
 
    (define (readlink this path callback)
-      (nodejs-readlink %this path callback))
+      (nodejs-readlink %worker %this path callback))
 
    (define (unlink this path callback)
-      (nodejs-unlink %this path callback))
+      (nodejs-unlink %worker %this path callback))
 
    (define (rmdir this path callback)
-      (nodejs-rmdir %this path callback))
+      (nodejs-rmdir %worker %this path callback))
 
    (define (mkdir this path mode callback)
       (if (eq? callback (js-undefined))
 	  (if (isa? mode JsFunction)
-	      (nodejs-mkdir %this path #o777 mode)
-	      (nodejs-mkdir %this path mode #f))
-	  (nodejs-mkdir %this path mode callback)))
+	      (nodejs-mkdir %worker %this path #o777 mode)
+	      (nodejs-mkdir %worker %this path mode #f))
+	  (nodejs-mkdir %worker %this path mode callback)))
 
    (define (close this fd callback)
-      (nodejs-fs-close %this fd callback))
+      (nodejs-fs-close %worker %this fd callback))
 
    (define (open this path flags mode callback)
-      (nodejs-open %this path flags mode callback))
+      (nodejs-open %worker %this path flags mode callback))
 
    (define (utimes this path atime mtime callback)
-      (nodejs-utimes %this path atime mtime callback))
+      (nodejs-utimes %worker %this path atime mtime callback))
    
    (define (futimes this fd atime mtime callback)
-      (nodejs-futimes %this fd atime mtime callback))
+      (nodejs-futimes %worker %this fd atime mtime callback))
    
    (define (fsync this fd callback)
-      (nodejs-fsync %this fd callback))
+      (nodejs-fsync %worker %this fd callback))
    
    (define (write this fd buffer offset length position)
       (unless (= position 0)
@@ -185,7 +185,7 @@
       (display-substring buffer offset (+ offset length) fd))
    
    (define (read this fd buffer offset length position callback)
-      (nodejs-read %this fd buffer
+      (nodejs-read %worker %this fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))
 	 (int32->fixnum (js-toint32 position %this))

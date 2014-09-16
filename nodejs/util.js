@@ -32,7 +32,7 @@ exports.format = function(f) {
   var i = 1;
   var args = arguments;
   var len = args.length;
-  var str = String(f).replace(formatRegExp, function(x) {
+   var str = String( f ).replace(formatRegExp, function(x) {
     if (x === '%%') return '%';
     if (i >= len) return x;
     switch (x) {

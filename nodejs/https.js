@@ -25,6 +25,14 @@ var util = require('util');
 var url = require('url');
 var inherits = require('util').inherits;
 
+var debug;
+if (process.env.NODE_DEBUG && /https/.test(process.env.NODE_DEBUG)) {
+  debug = function(x) { console.error('HTTPS: %s', x); };
+} else {
+  debug = function() { };
+}
+
+
 function Server(opts, requestListener) {
   if (!(this instanceof Server)) return new Server(opts, requestListener);
 
@@ -76,6 +84,7 @@ function createConnection(port, host, options) {
     options.host = host;
   }
 
+   debug( "createConnection port=" + port + " host=" + host );
   return tls.connect(options);
 }
 

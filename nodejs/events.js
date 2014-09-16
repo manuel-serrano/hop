@@ -53,6 +53,7 @@ EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
 EventEmitter.prototype.emit = function emit(type) {
   var er, handler, len, args, i, listeners;
 
+#:tprint( "emit type=", type );
   if (!this._events)
     this._events = {};
 

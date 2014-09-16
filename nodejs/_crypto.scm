@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sun Aug 31 19:04:12 2014 (serrano)                */
+;*    Last change :  Sun Sep 14 12:28:25 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -79,29 +79,50 @@
 	      setOptions setSessionIdContext close loadPKCS12))
 	 proto))
 
+   (define c -1)
+   (define (count)
+      (set! c (+fx c 1))
+      c)
+   
    (define (connection-start this)
       (with-access::JsSSLConnection this (ssl)
 	 (ssl-connection-start ssl)))
 
    (define (connection-encout this buffer offset len)
+      (with-access::JsTypedArray buffer (length)
+	 (tprint "EncOut(" (count) ") buffer=" length
+	    " offset=" offset
+	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (let ((n (ssl-connection-read ssl %vec offset len)))
-	       (when (>fx n 0)
-		  (set! length (fixnum->uint32 n)))
-	       n))))
+	    (ssl-connection-read ssl %vec offset len))))
    
    (define (connection-encin this buffer offset len)
+      (with-access::JsTypedArray buffer (length)
+	 (tprint "EncIn(" (count) ") buffer=" length
+	    " offset=" offset
+	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%vec byteoffset length)
 	    (ssl-connection-write ssl %vec offset len))))
    
    (define (connection-clearin this buffer offset len)
+      (with-access::JsTypedArray buffer (length)
+	 (tprint "ClearIn(" (count) ") buffer=" length
+	    " offset=" offset
+	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (ssl-connection-clear-in ssl %vec offset len))))
+	    (let ((r (ssl-connection-clear-in ssl %vec offset len)))
+	       (tprint "ClearIn(" c ") <- " r)
+	       r))))
+	       
    
    (define (connection-clearout this buffer offset len)
+      (with-access::JsTypedArray buffer (length)
+	 (tprint "ClearOut(" (count) ") buffer=" length
+	    " offset=" offset
+	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%vec byteoffset length)
 	    (ssl-connection-clear-out ssl %vec offset len))))
@@ -126,6 +147,12 @@
    (define (connection-verify-error this)
       (with-access::JsSSLConnection this (ssl)
 	 (ssl-connection-verify-error ssl)))
+   
+   (define (connection-get-peer-certificate this)
+      (with-access::JsSSLConnection this (ssl)
+	 (js-alist->jsobject
+	    (ssl-connection-get-peer-certificate ssl)
+	    %this)))
    
    (define connection-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
@@ -170,9 +197,13 @@
 	    (js-make-function %this connection-verify-error
 	       1 "verifyError")
 	    #f %this)
+	 (js-put! proto 'getPeerCertificate
+	    (js-make-function %this connection-get-peer-certificate
+	       1 "getPeerCertificate")
+	    #f %this)
 	 (for-each (lambda (name)
 		      (js-put! proto name (not-implemented name) #f %this))
-	    '(getPeerCertificate getSession setSettion loadSession
+	    '(getSession setSettion loadSession
 	      isSessionReused getCurrentCipher
 	      shutdown close))
 	 proto))
@@ -181,14 +212,15 @@
       (instantiate::JsSecureContext
 	 (__proto__ secure-context-proto)))
    
-   (define (connection this jsctx serverp request-cert reject)
+   (define (connection this jsctx serverp request-cert-or-server-name reject)
       (with-access::JsSecureContext jsctx (ctx)
 	 (instantiate::JsSSLConnection
 	    (__proto__ connection-proto)
 	    (ssl (instantiate::ssl-connection
 		    (ctx ctx)
 		    (isserver (js-toboolean serverp))
-		    (request-cert serverp)
+		    (request-cert (when serverp request-cert-or-server-name))
+		    (server-name (unless serverp request-cert-or-server-name))
 		    (reject-unauthorized reject))))))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"

@@ -222,7 +222,7 @@ SlabBuffer.prototype.create = function create() {
 
 
 SlabBuffer.prototype.use = function use(context, fn, size) {
-   console.log( ">>> ++++++++++++++++ SlabBuffer.prototype.use fn=", fn, " size=", size );
+   debug( ">>> +++++++++++++++++ SlabBuffer.prototype.use size=" + size + " offset=" + this.offset + " remaining=" + this.remaining );
   if (this.remaining === 0) {
     this.isFull = true;
     return 0;
@@ -232,8 +232,10 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   if (size !== null) actualSize = Math.min(size, actualSize);
 
+   debug( "SlabBuffer.prototype.use this.pool.length=" + this.pool.length + " " + this.pool.constructor.name );
+
   var bytes = fn.call(context, this.pool, this.offset, actualSize);
-   console.log( "SlabBuffer.prototype.use bytes=", bytes);
+   debug( "SlabBuffer.prototype.use bytes=" + bytes);
   if (bytes > 0) {
     this.offset += bytes;
     this.remaining -= bytes;
@@ -241,7 +243,9 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   assert(this.remaining >= 0);
 
-   console.log( "<<< +++++++++++++++++ SlabBuffer.prototype.use size=", size, " -> ", bytes );
+   debug( "<<< +++++++++++++++++ SlabBuffer.prototype.use size=" + size
+	  + " -> " + bytes + " offset=" + this.offset
+	  + " remaining=" + this.remaining );
   return bytes;
 };
 
@@ -303,7 +307,10 @@ function onCryptoStreamFinish() {
   }
 
   // Try to read just to get sure that we won't miss EOF
-  if (this._opposite.readable) this._opposite.read(0);
+  if (this._opposite.readable) {
+     debug( "read(0).1" );
+     this._opposite.read(0);
+  }
 
   if (this._opposite._ended) {
     this._done();
@@ -342,6 +349,7 @@ CryptoStream.prototype.init = function init() {
 CryptoStream.prototype._write = function write(data, encoding, cb) {
   assert(this._pending === null);
 
+   debug( 'CryptoStream.prototype._write ' + this.pair.ssl );
   // Black-hole data
   if (!this.pair.ssl) return cb(null);
 
@@ -357,6 +365,7 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
     if (this === this.pair.cleartext) {
       debug('cleartext.write called with ' + data.length + ' bytes');
       written = this.pair.ssl.clearIn(data, 0, data.length);
+       debug('clearin <- ' + written );
     } else {
       debug('encrypted.write called with ' + data.length + ' bytes');
       written = this.pair.ssl.encIn(data, 0, data.length);
@@ -364,20 +373,27 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
 
     // Handle and report errors
     if (this.pair.ssl && this.pair.ssl.error) {
+       debug( 'CryptoStream.prototype._write RETURN WITH ERROR...' );
       return cb(this.pair.error(true));
     }
 
     // Force SSL_read call to cycle some states/data inside OpenSSL
+     debug( "read(0).2");
     this.pair.cleartext.read(0);
 
     // Cycle encrypted data
-    if (this.pair.encrypted._internallyPendingBytes())
+     debug( '>>> CryptoStream internallyPendingBytes=' +
+	    this.pair.encrypted._internallyPendingBytes() );
+    if (this.pair.encrypted._internallyPendingBytes()) {
+     debug( "read(0).3");
       this.pair.encrypted.read(0);
+    }
 
     // Get NPN and Server name when ready
     this.pair.maybeInitFinished();
 
     // Whole buffer was written
+      debug('CryptoStream.prototype._write written=' + written + " data.length=" + data.length);
     if (written === data.length) {
       if (this === this.pair.cleartext) {
         debug('cleartext.write succeed with ' + written + ' bytes');
@@ -404,6 +420,7 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
     debug('cleartext.write queue is full');
 
     // Force SSL_read call to cycle some states/data inside OpenSSL
+     debug( "read(0).4");
     this.pair.cleartext.read(0);
   }
 
@@ -458,7 +475,7 @@ CryptoStream.prototype._read = function read(size) {
     if (read > 0) {
       bytesRead += read;
     }
-     console.log( "tls.1 _read read=", read, " bytesRead=", bytesRead );
+     debug( "tls.1 _read read=" + read + " bytesRead=" + bytesRead );
     last = this._buffer.offset;
 
     // Handle and report errors
@@ -471,7 +488,7 @@ CryptoStream.prototype._read = function read(size) {
            bytesRead < size &&
            this.pair.ssl !== null);
 
-   console.log( "tls.2 _read read=", read, " bytesRead=", bytesRead );
+   debug( "tls.2 _read read=" + read + " bytesRead=" + bytesRead );
   // Get NPN and Server name when ready
   this.pair.maybeInitFinished();
 
@@ -521,6 +538,7 @@ CryptoStream.prototype._read = function read(size) {
       this.push('');
 
       // Try reading more, we most likely have some data
+     debug( "read(0).5");
       this.read(0);
     } else {
       this.push(pool.slice(start, start + bytesRead));
@@ -746,8 +764,12 @@ function CleartextStream(pair, options) {
     readStart: function() {
       if (self._reading && self._readableState.length > 0) return;
       self._reading = true;
+       debug( "read(0).6");
       self.read(0);
-      if (self._opposite.readable) self._opposite.read(0);
+      if (self._opposite.readable) {
+       debug( "read(0).7");
+	 self._opposite.read(0);
+      }
     }
   };
 }
@@ -842,7 +864,9 @@ function onclienthello(hello) {
 
     // Cycle data
     self._resumingSession = false;
+       debug( "read(0).8");
     self.cleartext.read(0);
+       debug( "read(0).9");
     self.encrypted.read(0);
   }
 
@@ -945,7 +969,7 @@ function SecurePair(credentials, isServer, requestCert, rejectUnauthorized,
   process.nextTick(function() {
     /* The Connection may be destroyed by an abort call */
     if (self.ssl) {
-       console.log( "tls self.ssl.start" );
+       debug( "tls self.ssl.start" );
       self.ssl.start();
 
       /* In case of cipher suite failures - SSL_accept/SSL_connect may fail */
@@ -1167,6 +1191,7 @@ function Server(/* [options], listener */) {
                                 encrypted: self._encrypted
                               });
 
+     debug( "tls call pipe Server");
     var cleartext = pipe(pair, socket);
     cleartext._controlReleased = false;
 
@@ -1323,6 +1348,7 @@ function normalizeConnectArgs(listArgs) {
 }
 
 exports.connect = function(/* [port, host], options, cb */) {
+   debug( "connect...");
   var args = normalizeConnectArgs(arguments);
   var options = args[0];
   var cb = args[1];
@@ -1355,7 +1381,8 @@ exports.connect = function(/* [port, host], options, cb */) {
     pair.ssl.setSession(session);
   }
 
-   var cleartext = pipe(pair, socket);
+   debug( "tls call pipe connect hostname=" + hostname);
+  var cleartext = pipe(pair, socket);
   if (cb) {
     cleartext.once('secureConnect', cb);
   }
@@ -1409,15 +1436,15 @@ exports.connect = function(/* [port, host], options, cb */) {
 
 
 function pipe(pair, socket) {
-   console.log( "tls pipe.1",  "[" + process.title + "]", (process.title != "/opt/nodejs/bin/node") ? pair.encrypted.pipe : "FUNCTION..." );
+   debug( "tls pipe.1" );
   pair.encrypted.pipe(socket);
-   console.log( "tls pipe.2", (process.title != "/opt/nodejs/bin/node") ? socket.pipe : "FUNCTION..." );
+   debug( "tls pipe.2" );
   socket.pipe(pair.encrypted);
 
   pair.encrypted.on('close', function() {
-console.log( "tls pipe.4 onclose" );
+debug( "tls pipe.4 onclose" );
     process.nextTick(function() {
-console.log( "tls pipe.5 onclose ontick" );
+debug( "tls pipe.5 onclose ontick" );
       // Encrypted should be unpiped from socket to prevent possible
       // write after destroy.
       pair.encrypted.unpipe(socket);
@@ -1439,32 +1466,32 @@ console.log( "tls pipe.5 onclose ontick" );
   // its data from the cleartext side, we have to give it a
   // light kick to get in motion again.
   socket.on('drain', function() {
-console.log( "tls pipe.7 drain");
+debug( "tls pipe.7 drain");
     if (pair.encrypted._pending)
       pair.encrypted._writePending();
     if (pair.cleartext._pending)
       pair.cleartext._writePending();
-console.log( "tls pipe.8 drain encrypted read(0)");
+       debug( "read(0).10");
     pair.encrypted.read(0);
-console.log( "tls pipe.9 drain clearText read(0)");
+       debug( "read(0).11");
     pair.cleartext.read(0);
   });
 
   function onerror(e) {
-console.log( "tls pipe.10 onerror e=", e );
+debug( "tls pipe.10 onerror e=", e );
     if (cleartext._controlReleased) {
       cleartext.emit('error', e);
     }
   }
 
   function onclose() {
-console.log( "tls pipe.11 onclose" );
+debug( "tls pipe.11 onclose" );
     socket.removeListener('error', onerror);
     socket.removeListener('timeout', ontimeout);
   }
 
   function ontimeout() {
-console.log( "tls pipe.12 ontimeout" );
+debug( "tls pipe.12 ontimeout" );
     cleartext.emit('timeout');
   }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Sep  2 10:19:36 2014 (serrano)                */
+;*    Last change :  Mon Sep 15 19:45:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -75,14 +75,15 @@
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
-				 (display o))
+				 (display o (current-output-port)))
 			      1 "write")))
 	       %this)
 	    #f %this)
 	 (js-put! proc 'stderr
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
-			      (lambda (this o) (display o (current-error-port)))
+			      (lambda (this o)
+				 (display o (current-error-port)))
 			      1 "write")))
 	       %this)
 	    #f %this)
@@ -123,19 +124,19 @@
 		     ((string=? module "constants")
 		      (process-constants %this))
 		     ((string=? module "fs")
-		      (process-fs %this))
+		      (process-fs %worker %this))
 		     ((string=? module "buffer")
 		      (process-buffer %this slowbuffer))
 		     ((string=? module "udp_wrap")
 		      (process-udp-wrap %this))
 		     ((string=? module "tcp_wrap")
-		      (process-tcp-wrap %this proc slowbuffer))
+		      (process-tcp-wrap %worker %this proc slowbuffer))
 		     ((string=? module "pipe_wrap")
 		      (process-pipe-wrap %this))
 		     ((string=? module "evals")
 		      (process-evals %this))
 		     ((string=? module "cares_wrap")
-		      (process-cares-wrap %this proc))
+		      (process-cares-wrap %worker %this proc))
 		     ((string=? module "timer_wrap")
 		      (hopjs-process-timer %this))
 		     ((string=? module "process_wrap")
@@ -285,7 +286,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    stream-write-string ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (stream-write-string %this this::JsHandle
+(define (stream-write-string %worker %this this::JsHandle
 	   string::bstring offset::long len::long
 	   encoding callback)
    (with-access::JsGlobalObject %this (js-object)
@@ -295,9 +296,14 @@
 	     (let ((req (js-new %this js-object)))
 		(js-put! req 'bytes len #f %this)
 		(with-access::JsHandle this (handle)
-		   (nodejs-stream-write %this handle
+		   (js-put! this 'writeQueueSize
+		      (nodejs-stream-write-queue-size handle) #f %this)
+		   (tprint ">>> nodejs-stream-write... len=" len)
+		   (nodejs-stream-write %worker %this handle
 		      string offset len
 		      (lambda (status)
+			 (tprint "<<< nodejs-stream-write CB len=" len
+			    " status=" status)
 			 (let ((oncomp (js-get req 'oncomplete %this)))
 			    (js-call3 %this oncomp req status this req)
 			    (js-put! this 'writeQueueSize
@@ -324,7 +330,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tcp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tcp-wrap %this process::JsProcess slowbuffer::JsObject)
+(define (process-tcp-wrap %worker %this process::JsProcess slowbuffer::JsObject)
    
    (define (->fixnum n)
       (cond
@@ -337,7 +343,7 @@
 	 (lambda (this host port callback)
 	    (with-access::JsHandle this (handle)
 	       (let ((req (js-new %this js-object)))
-		  (nodejs-tcp-connect %this handle host
+		  (nodejs-tcp-connect %worker %this handle host
 		     (->fixnum (js-tointeger port %this)) family
 		     (lambda (status handle)
 			(when (<fx status 0)
@@ -348,6 +354,8 @@
 			      this req #t #t)
 			   (js-undefined))))
 		  req)))))
+
+   (define slab (make-slab-allocator %this slowbuffer))
    
    (define (create-tcp-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -357,7 +365,7 @@
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (with-access::JsHandle this (handle)
-			(nodejs-close %this handle cb)))
+			(nodejs-close %worker %this handle cb)))
 		  1 "close")
 	       #f %this)
 	    
@@ -393,7 +401,7 @@
 	       (js-make-function %this
 		  (lambda (this buffer)
 		     (with-access::JsTypedArray buffer (%vec byteoffset length)
-			(stream-write-string %this this
+			(stream-write-string %worker %this this
 			   %vec
 			   (uint32->fixnum byteoffset)
 			   (uint32->fixnum length)
@@ -404,7 +412,7 @@
 	    (js-put! obj 'writeAsciiString
 	       (js-make-function %this
 		  (lambda (this string)
-		     (stream-write-string %this this
+		     (stream-write-string %worker %this this
 			string 0 (string-length string)
 			"ascii" #f))
 		  1 "writeAsciiString")
@@ -413,7 +421,7 @@
 	    (js-put! obj 'writeUtf8String
 	       (js-make-function %this
 		  (lambda (this string)
-		     (stream-write-string %this this
+		     (stream-write-string %worker %this this
 			string 0 (string-length string)
 			"utf8" #f))
 		  1 "writeUtf8String")
@@ -424,7 +432,7 @@
 		  (lambda (this string)
 		     (let* ((ucs2string (utf8-string->ucs2-string string))
 			    (buffer (ucs2-string->buffer ucs2string)))
-			(stream-write-string %this this
+			(stream-write-string %worker %this this
 			   string 0 (string-length string)
 			   "ascii" #f)))
 		  1 "writeUcs2String")
@@ -433,21 +441,24 @@
 	    (js-put! obj 'readStart
 	       (js-make-function %this
 		  (lambda (this)
-		     (let ((slab (make-slab-allocator %this slowbuffer)))
-			(with-access::JsHandle this (handle)
-			   (nodejs-stream-read-start %this handle
-			      (lambda (obj size)
-				 (slab-allocate slab obj size))
-			      (lambda (buf offset len)
-				 (if (integer? buf)
-				     (begin
-					(slab-shrink! slab offset 0)
-					(js-put! process '_errno
-					   (uv-err-name buf) #f %this))
-				     (slab-shrink! slab offset len))
-				 (let ((onread (js-get this 'onread %this)))
-				    (js-call3 %this onread this buf offset len)
-				    (js-undefined)))))))
+		     (with-access::JsHandle this (handle)
+			(nodejs-stream-read-start %worker %this handle
+			   (lambda (obj size)
+			      (slab-allocate slab obj size))
+			   (lambda (buf offset len)
+			      (cond
+				 ((not (integer? buf))
+				  (let ((b (slab-shrink! slab offset len)))
+				     (let ((onread (js-get this 'onread %this)))
+					(js-call3 %this onread this b offset len)
+					(js-undefined))))
+				 ((=fx buf 0)
+				  (slab-shrink! slab offset 0))
+				 (else
+				  (slab-shrink! slab offset 0)
+				  (js-put! process '_errno
+				     (uv-err-name buf) #f %this)
+				  buf))))))
 		  0 "readStart")
 	       #f %this)
 	    
@@ -506,12 +517,16 @@
 		  (lambda (this val)
 		     (with-access::JsHandle this (handle)
 			(let* ((req (js-new %this js-object))
-			       (res (nodejs-stream-shutdown %this handle
+			       (res (nodejs-stream-shutdown %worker %this handle
 				       (lambda (status handle)
 					  (when (<fx status 0)
 					     (js-put! process '_errno
-						(uv-err-name status) #f %this))))))
-			   (=fx res 0))))
+						(uv-err-name status) #f %this))
+					  (let ((oncomp (js-get req 'oncomplete %this)))
+					     (js-call3 %this oncomp req status this req))))))
+			   (nodejs-need-tick-callback %worker %this process)
+			   (when (=fx res 0)
+			      req))))
 		  1 "shutdown")
 	       #f %this)
 	    
@@ -547,7 +562,7 @@
 		  (lambda (this backlog)
 		     (tprint "UNTESTED, example needed")
 		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-listen %this process this handle
+			(nodejs-tcp-listen %worker %this process this handle
 			   (->fixnum (js-tointeger backlog %this)))))
 		  1 "listen")
 	       #f %this)
@@ -633,7 +648,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-cares-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (process-cares-wrap %this process)
+(define (process-cares-wrap %worker %this process)
    
    (define (not-implemented name)
       (js-make-function %this
@@ -647,7 +662,7 @@
       (nodejs-getaddrinfo %this process domain family))
    
    (define (query this domain family callback)
-      (nodejs-query %this process domain family callback))
+      (nodejs-query %worker %this process domain family callback))
    
    (define (query4 this domain callback)
       (query this domain 4 callback))

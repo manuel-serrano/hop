@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Aug  8 18:44:01 2014 (serrano)                */
+;*    Last change :  Wed Sep 10 07:26:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -110,10 +110,16 @@
        ,(-fx (input-port-position input-port) offset)))
 
 ;*---------------------------------------------------------------------*/
+;*    make-token ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (make-token type value loc)
+   (econs type value loc))
+
+;*---------------------------------------------------------------------*/
 ;*    token ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-macro (token type value offset)
-   `(econs ,type ,value (the-coord input-port ,offset)))
+(define-macro (token  type value offset)
+   `(make-token ,type ,value (the-coord (the-port) ,offset)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-grammar ...                                                  */
@@ -243,9 +249,9 @@
       ((: #\' (* string_char_dquote) #\')
        (token 'STRING (the-substring 1 (-fx (the-length) 1)) (the-length)))
       ((: #\" (* (or string_char_quote (: #\\ all) line_cont)) #\")
-       (escape-js-string (the-substring 1 (-fx (the-length) 1)) input-port))
+       (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
       ((: #\' (* (or string_char_dquote (: #\\ all) line_cont)) #\')
-       (escape-js-string (the-substring 1 (-fx (the-length) 1)) input-port))
+       (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
 
       ((: #\# #\:
 	  (: (* digit)
@@ -286,7 +292,7 @@
 	      (unread-string! (substring str 0 7) (the-port))
 	      (token 'return 'return 7))
 	     (else
-	      (let ((estr (escape-js-string str input-port)))
+	      (let ((estr (escape-js-string str (the-port))))
 		 (if (memq (car estr) '(ESTRING OSTRING))
 		     (let ((symbol (string->symbol (cdr estr))))
 			(cond
@@ -347,7 +353,8 @@
 (define (escape-js-string str input-port)
    
    (define (err)
-      (token 'ERROR str (+fx (string-length str) 1)))
+      (make-token 'ERROR str
+	 (the-coord input-port (+fx (string-length str) 1))))
    
    (define (char-alpha c)
       (cond
@@ -405,7 +412,8 @@
 	       ((not j)
 		(blit-string! str i res w (-fx len i))
 		(string-shrink! res (+fx w (-fx len i)))
-		(token (if octal 'OSTRING 'ESTRING) res (+fx len 1)))
+		(make-token (if octal 'OSTRING 'ESTRING) res
+		   (the-coord input-port (+fx len 1))))
 	       ((=fx j (-fx len 1))
 		(err))
 	       (else

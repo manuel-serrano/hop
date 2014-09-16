@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Jul  6 18:08:13 2014 (serrano)                */
+;*    Last change :  Tue Sep  9 08:24:40 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -245,7 +245,7 @@
 (define (read-multi-line-comment port)
    (let ((g (regular-grammar ()
 	       ("#|"
-		(read-multi-line-comment input-port)
+		(read-multi-line-comment (the-port))
 		(ignore))
 	       ((+ (or (out #\# #\|) (: #\# (out #\|)) (: #\| (out #\#))))
 		(ignore))
@@ -257,8 +257,8 @@
 		       (read-error/location 
 			"EOF inside block comment -- #| missing a closing |#"
 			c
-			(input-port-name input-port)
-			(input-port-position input-port))))))))
+			(input-port-name (the-port))
+			(input-port-position (the-port)))))))))
       (read/rp g port)))
 
 ;*---------------------------------------------------------------------*/

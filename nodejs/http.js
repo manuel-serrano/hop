@@ -139,6 +139,7 @@ function parserOnBody(b, start, len) {
   // pretend this was the result of a stream._read call.
   if (len > 0 && !stream._dumped) {
     var slice = b.slice(start, start + len);
+     debug( "slice start=" + start + " end=" + (start+len) );
     var ret = stream.push(slice);
     if (!ret)
       readStop(socket);
@@ -148,7 +149,6 @@ function parserOnBody(b, start, len) {
 function parserOnMessageComplete() {
   var parser = this;
   var stream = parser.incoming;
-
   if (stream) {
     stream.complete = true;
     // Emit any trailing headers.
@@ -491,6 +491,7 @@ OutgoingMessage.prototype._send = function(data, encoding) {
   // This is a shameful hack to get the headers and first body chunk onto
   // the same packet. Future versions of Node are going to take care of
   // this at a lower level and in a more general way.
+   debug( "OutgoingMessage _send[" + data.toString( "ascii" ) + "]" );
   if (!this._headerSent) {
     if (typeof data === 'string' &&
         encoding !== 'hex' &&
@@ -507,6 +508,7 @@ OutgoingMessage.prototype._send = function(data, encoding) {
 
 
 OutgoingMessage.prototype._writeRaw = function(data, encoding) {
+   debug( "OutgoingMessage _writeRaw [" + data.toString( "ascii" ) + "]" );
   if (data.length === 0) {
     return true;
   }
@@ -541,6 +543,7 @@ OutgoingMessage.prototype._writeRaw = function(data, encoding) {
 
 
 OutgoingMessage.prototype._buffer = function(data, encoding) {
+   debug( "OutgoingMessage _buffer[" + data.toString( "ascii" ) + "]" );
   this.output.push(data);
   this.outputEncodings.push(encoding);
 
@@ -551,6 +554,7 @@ OutgoingMessage.prototype._buffer = function(data, encoding) {
 OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
   // firstLine in the case of request is: 'GET /index.html HTTP/1.1\r\n'
   // in the case of response it is: 'HTTP/1.1 200 OK\r\n'
+   debug( "OutgoingMessage _storeHeader[" + headers + "]" );
   var state = {
     sentConnectionHeader: false,
     sentContentLengthHeader: false,
@@ -1038,7 +1042,6 @@ OutgoingMessage.prototype._flush = function() {
   // This function, outgoingFlush(), is called by both the Server and Client
   // to attempt to flush any pending messages out to the socket.
 
-   console.log( "http _flush..." );
   if (!this.socket) return;
 
   var ret;
@@ -1267,8 +1270,6 @@ Agent.prototype.addRequest = function(req, host, port, localAddress) {
   }
   if (this.sockets[name].length < this.maxSockets) {
     // If we are under maxSockets create a new one.
-   console.log( "addRequest name=", name, " host=", host, " port=", port,
-		" localadd=", localAddress );
     req.onSocket(this.createSocket(name, host, port, localAddress, req));
   } else {
     // We are over limit so we'll add it to the queue.
@@ -1364,7 +1365,6 @@ function ClientRequest(options, cb) {
 
   var method = self.method = (options.method || 'GET').toUpperCase();
   self.path = options.path || '/';
-   console.log( "ClientRequest.2 path=", self.path );
   if (cb) {
     self.once('response', cb);
   }
@@ -1405,12 +1405,11 @@ function ClientRequest(options, cb) {
     self._storeHeader(self.method + ' ' + self.path + ' HTTP/1.1\r\n',
                       self._renderHeaders());
   }
-   console.log( "ClientRequest.3 path=", self.socketPath );
   if (self.socketPath) {
     self._last = true;
     self.shouldKeepAlive = false;
     if (options.createConnection) {
-       console.log( "createConnection options.createConnect path=",self.socketPath ); 
+       debug( "createConnection options.createConnect path=",self.socketPath ); 
       self.onSocket(options.createConnection(self.socketPath));
     } else {
       self.onSocket(net.createConnection(self.socketPath));
@@ -1439,7 +1438,6 @@ function ClientRequest(options, cb) {
   }
 
   self._deferToConnect(null, null, function() {
-     console.log( "deferToConnect..." );
     self._flush();
     self = null;
   });
@@ -1582,19 +1580,23 @@ function socketOnEnd() {
   socket.destroy();
 }
 
+var cnt = 0;
 function socketOnData(d, start, end) {
   var socket = this;
   var req = this._httpMessage;
   var parser = this.parser;
-
+   
+   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor );
   var ret = parser.execute(d, start, end - start);
+   debug( "--- socketOnData -> ret=" + ret );
   if (ret instanceof Error) {
-    debug('parse error');
+    debug('socketOnData parse error');
     freeParser(parser, req);
     socket.destroy();
     req.emit('error', ret);
     req._hadError = true;
   } else if (parser.incoming && parser.incoming.upgrade) {
+    debug('socketOnData incoming upgrade');
     // Upgrade or CONNECT
     var bytesParsed = ret;
     var res = parser.incoming;
@@ -1628,8 +1630,10 @@ function socketOnData(d, start, end) {
              // send a final response after this client sends a request
              // body. So, we must not free the parser.
              parser.incoming.statusCode !== 100) {
+    debug('socketOnData freeParser');
     freeParser(parser, req);
   }
+   debug( "<<< socketOnData -> ret=" + ret );
 }
 
 
@@ -1709,6 +1713,7 @@ function responseOnEnd() {
   var req = res.req;
   var socket = req.socket;
 
+   debug( "responseOnEnd: " + req.shouldKeepAlive );
   if (!req.shouldKeepAlive) {
     if (socket.writable) {
       debug('AGENT socket.destroySoon()');
@@ -2157,8 +2162,10 @@ Client.prototype.request = function(method, path, headers) {
     s.on('end', function() {
       if (self._decoder) {
         var ret = self._decoder.end();
-        if (ret)
+        if (ret) {
+	   debug( "~~~~~~~~~~~~~~~ EMIT ON DATA " + typeof( ret ) );
           self.emit('data', ret);
+	}
       }
       self.emit('end');
     });

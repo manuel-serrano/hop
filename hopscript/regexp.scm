@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug  8 18:23:56 2014 (serrano)                */
+;*    Last change :  Sun Sep 14 10:14:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -413,8 +413,12 @@
 				   (loop (cdr c) (+fx i 1))))
 			     a))))
 		   (else
-		    (set! i (+fx i 1))
-		    (loop))))))))
+		    (js-put! this 'lastIndex 0 #f %this)
+		    (js-null))
+		   ))))))
+;* 		    (set! i (+fx i 1))                                 */
+;* 		    (tprint "i=i+1 " i " " rx)                         */
+;* 		    (loop))))))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    make-regexp-prototype-test ...                                   */

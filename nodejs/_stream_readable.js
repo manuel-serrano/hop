@@ -123,7 +123,6 @@ Readable.prototype.push = function(chunk, encoding) {
       encoding = '';
     }
   }
-
   return readableAddChunk(this, state, chunk, encoding, false);
 };
 
@@ -135,6 +134,7 @@ Readable.prototype.unshift = function(chunk) {
 
 function readableAddChunk(stream, state, chunk, encoding, addToFront) {
   var er = chunkInvalid(state, chunk);
+
   if (er) {
     stream.emit('error', er);
   } else if (chunk === null || chunk === undefined) {
@@ -254,16 +254,22 @@ Readable.prototype.read = function(n) {
   state.calledRead = true;
   var nOrig = n;
   var ret;
-
   if (typeof n !== 'number' || n > 0)
     state.emittedReadable = false;
 
   // if we're doing read(0) to trigger a readable event, but we
   // already have a bunch of data in the buffer, then just trigger
   // the 'readable' event and move on.
+   #:tprint( "Readable.prototype.read n=", n,
+	     " needReable=", state.needReadable,
+	     " state.length=", state.length,
+	     " state.highWaterMark=", state.highWaterMark,
+	     " state.ended=", state.ended );
+	     
   if (n === 0 &&
       state.needReadable &&
       (state.length >= state.highWaterMark || state.ended)) {
+#:tprint( "emitReable" );
     emitReadable(this);
     return null;
   }
@@ -290,8 +296,9 @@ Readable.prototype.read = function(n) {
       state.length -= ret.length;
     }
 
-    if (state.length === 0)
+    if (state.length === 0) {
       endReadable(this);
+    }
 
     return ret;
   }
@@ -367,8 +374,9 @@ Readable.prototype.read = function(n) {
   // If we happened to read() exactly the remaining amount in the
   // buffer, and the EOF has been seen at this point, then make sure
   // that we emit 'end' on the very next tick.
-  if (state.ended && !state.endEmitted && state.length === 0)
+  if (state.ended && !state.endEmitted && state.length === 0) {
     endReadable(this);
+  }
 
   return ret;
 };
@@ -400,8 +408,9 @@ function onEofChunk(stream, state) {
   // 'readable' now to make sure it gets picked up.
   if (state.length > 0)
     emitReadable(stream);
-  else
+  else {
     endReadable(stream);
+  }
 }
 
 // Don't emit readable right away in sync mode, because this can trigger
@@ -475,6 +484,7 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
       state.pipes = [state.pipes, dest];
       break;
     default:
+     tprint( "push.3: ", dest );
       state.pipes.push(dest);
       break;
   }
@@ -487,8 +497,9 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
   var endFn = doEnd ? onend : cleanup;
   if (state.endEmitted)
     process.nextTick(endFn);
-  else
+  else {
     src.once('end', endFn);
+  }
 
   dest.on('unpipe', onunpipe);
   function onunpipe(readable) {
@@ -799,8 +810,9 @@ Readable.prototype.wrap = function(stream) {
   stream.on('end', function() {
     if (state.decoder && !state.ended) {
       var chunk = state.decoder.end();
-      if (chunk && chunk.length)
+      if (chunk && chunk.length) {
         self.push(chunk);
+      }
     }
 
     self.push(null);
