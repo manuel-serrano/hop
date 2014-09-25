@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Aug 30 19:08:28 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 08:57:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1442,8 +1442,8 @@
 			   ;; 6
 			   (js-define-own-property o p newdesc throw %this)))))
 	     v)))
-   
-   (with-access::JsArray o (vec inline frozen)
+
+   (with-access::JsArray o (vec)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
@@ -1693,6 +1693,19 @@
 	     (uninline-array! a)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this)))))
 
+    (define max-expandable-array-size::uint32
+       (bit-lshu32 #u32:1 19))
+   
+  (define (expandable-array index::uint32 len::uint32)
+     ;; a basic heuristic (to be improved) to decide when an array
+     ;; should be expanded
+     (when (<u32 index max-expandable-array-size)
+	(if (=u32 index #u32:0)
+	    #u32:2
+	    (if (<u32 (*u32 #u32:2 index) max-expandable-array-size)
+		(*u32 #u32:2 index)
+		max-expandable-array-size))))
+
    (let ((oldlendesc (js-get-own-property a 'length %this)))
       (if (eq? p 'length)
 	  ;; 3
@@ -1706,14 +1719,26 @@
 			   ;; 4.b
 			   (reject "wrong index ~a")
 			   ;; 4.c
-			   (let ((s (if (<u32 index (u32vlen vec))
+			   (let ((s (cond
+				       ((<u32 index (u32vlen vec))
+					;; fast access, inline vector
 					(js-define-own-property-array
-					   a index desc #f)
-					(begin
-					   (uninline-array! a)
-					   (js-define-own-property%
-					      a (js-toname p %this) desc #f
-					      %this)))))
+					   a index desc #f))
+				       ((expandable-array index (u32vlen vec))
+					;; expand the vector
+					=>
+					(lambda (len)
+					   (set! vec
+					      (copy-vector vec
+						 (uint32->fixnum len)))
+					   (js-define-own-property-array
+					      a index desc #f)))
+				       (else
+					;; slow access
+					(uninline-array! a)
+					(js-define-own-property%
+					   a (js-toname p %this) desc #f
+					   %this)))))
 			      (cond
 				 ((not s)
 				  (reject "wrong index \"~a\""))

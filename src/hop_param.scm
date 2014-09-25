@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Feb 21 16:21:48 2014 (serrano)                */
+;*    Last change :  Fri Sep 19 09:21:14 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -108,7 +108,10 @@
 	    (hop-server-socket-set! ::obj)
 	    
 	    (hop-client-output-port::output-port)
-	    (hop-client-output-port-set! ::output-port))
+	    (hop-client-output-port-set! ::output-port)
+
+	    (hop-run-server::bool)
+	    (hop-run-server-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -353,3 +356,8 @@
 (define-parameter hop-client-output-port
    (current-error-port))
 
+;*---------------------------------------------------------------------*/
+;*    hop-run-server ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-run-server
+   #t)

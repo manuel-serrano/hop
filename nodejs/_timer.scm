@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Fri Jul 25 16:47:14 2014 (serrano)                */
+;*    Last change :  Mon Sep 22 17:18:30 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -21,6 +21,7 @@
    (static (class JsTimer::JsObject
 	      (worker::WorkerHopThread read-only)
 	      (timer read-only)
+	      (count::int (default 0))
 	      (proc (default #f))))
 
    (export (hopjs-process-timer ::JsGlobalObject)))
@@ -57,6 +58,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %this::JsGlobalObject js-timer-prototype)
    (lambda (_)
+	 (tprint "====================== make-timer")
       (let ((obj (instantiate::JsTimer
 		    (__proto__ js-timer-prototype)
 		    (worker (js-current-worker))
@@ -91,26 +93,28 @@
    (js-bind! %this obj 'start
       :value (js-make-function %this
 		(lambda (this start rep)
-		   (with-access::JsTimer this (timer)
-		      (nodejs-timer-start timer
+		   (with-access::JsTimer this (timer worker count)
+		      (set! count (+fx 1 count))
+		      (nodejs-timer-start worker timer count
 			 (js-touint32 start %this) (js-touint32 rep %this))))
 		2 "start"))
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer)
-		      (nodejs-timer-close timer)))
+		   (with-access::JsTimer this (timer worker count)
+		      (nodejs-timer-close worker timer count)
+		      (set! count 0)))
 		0 "close"))
    (js-bind! %this obj 'stop
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer)
-		      (nodejs-timer-stop timer)))
+		   (with-access::JsTimer this (timer worker count)
+		      (nodejs-timer-stop worker timer count)))
 		0 "stop"))
    (js-bind! %this obj 'unref
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer)
-		      (nodejs-timer-unref timer)))
+		   (with-access::JsTimer this (timer worker count)
+		      (nodejs-timer-unref worker timer count)))
 		0 "unref")))
 					

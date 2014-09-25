@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Tue Jul  8 15:32:29 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 08:52:41 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -80,12 +80,12 @@
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
-	    (with-access::JsArrayBuffer this (vec)
+	    (with-access::JsArrayBuffer this (data)
 	       (when (pair? items)
 		  (let ((i (car items)))
 		     (let* ((n (js-touint32 i %this))
 			    (f (uint32->fixnum n)))
-			(set! vec (make-u8vector f))
+			(set! data (make-u8vector f))
 			
 			;; byteLength
 			(js-bind! %this this 'byteLength
@@ -96,23 +96,29 @@
 			
 			;; slice
 			(define (arraybuffer-slice this::JsArrayBuffer beg end)
-			   (let ((b (js-tonumber beg %this))
-				 (e (js-tonumber end %this)))
-			      (with-access::JsArrayBuffer this (vec)
-				 (let ((l (u8vector-length vec)))
-				    (when (< b 0) (set! b (- l b)))
-				    (when (< e 0) (set! e (- l e)))
-				    (set! b (min b l))
-				    (set! e (min e l))
-				    (let* ((l (max (min (- e b) l) 0))
-					   (new (%js-arraybuffer %this l)))
-				       (with-access::JsArrayBuffer new ((dst vec))
-					  (let loop ((i 0))
-					     (when (<fx i l)
-						(u8vector-set! dst i
-						   (u8vector-ref vec (+fx i b)))
-						(loop (+fx i 1))))
-					  new))))))
+			   (with-access::JsArrayBuffer this (data)
+			      (let* ((l (u8vector-length data))
+				     (b (if (eq? beg (js-undefined))
+					    (js-raise-error %this
+					       "Wrong number of arguments."
+					       #f)
+					    (->fixnum (js-tointeger beg %this))))
+				     (e (if (eq? end (js-undefined))
+					    l
+					    (->fixnum (js-tointeger end %this)))))
+				 (when (< b 0) (set! b (+ l b)))
+				 (when (< e 0) (set! e (+ l e)))
+				 (set! b (min b l))
+				 (set! e (min e l))
+				 (let* ((l (max (min (- e b) l) 0))
+					(new (%js-arraybuffer %this l)))
+				    (with-access::JsArrayBuffer new ((dst data))
+				       (let loop ((i 0))
+					  (when (<fx i l)
+					     (u8vector-set! dst i
+						(u8vector-ref data (+fx i b)))
+					     (loop (+fx i 1))))
+				       new)))))
 			
 			(js-bind! %this this 'slice
 			   :value (js-make-function %this
@@ -133,9 +139,8 @@
 ;*    js-property-names ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-property-names obj::JsArrayBuffer enump %this)
-   (with-access::JsArrayBuffer obj (vec)
-      (let ((len (u8vector-length vec)))
-	 (vector-append (apply vector (iota len)) (call-next-method)))))
+   (let ((len (js-arraybuffer-length obj)))
+      (vector-append (apply vector (iota len)) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArrayBuffer ...                              */
@@ -143,10 +148,9 @@
 (define-method (js-has-property o::JsArrayBuffer p)
    (let ((index::uint32 (js-toindex p)))
       (if (js-isindex? index)
-	  (with-access::JsArrayBuffer o (vec)
-	     (if (<=u32 (fixnum->uint32 (u8vector-length vec)) index)
-		 (call-next-method)
-		 #t))
+	  (if (<=u32 (fixnum->uint32 (js-arraybuffer-length o)) index)
+	      (call-next-method)
+	      #t)
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -155,42 +159,34 @@
 (define-method (js-get-property o::JsArrayBuffer p %this)
    (let ((index::uint32 (js-toindex p)))
       (if (js-isindex? index)
-	  (with-access::JsArrayBuffer o (vec)
-	     (if (<=u32 (fixnum->uint32 (u8vector-length vec)) index)
-		 (call-next-method)
-		 (instantiate::JsValueDescriptor
-		    (name (js-toname index %this))
-		    (value (u8vector-ref vec (uint32->fixnum index)))
-		    (writable #t)
-		    (enumerable #t)
-		    (configurable #t))))
+	  (if (<=u32 (fixnum->uint32 (js-arraybuffer-length o)) index)
+	      (call-next-method)
+	      (instantiate::JsValueDescriptor
+		 (name (js-toname index %this))
+		 (value (js-arraybuffer-ref o (uint32->fixnum index)))
+		 (writable #t)
+		 (enumerable #t)
+		 (configurable #t)))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsArrayBuffer ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsArrayBuffer p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArrayBuffer o (vec)
-	     (if (<=u32 (fixnum->uint32 (u8vector-length vec)) index)
-		 (call-next-method)
-		 (u8vector-ref vec (uint32->fixnum index))))
-	  (call-next-method))))
+   (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsArrayBuffer ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArrayBuffer p %this)
-   (with-access::JsArrayBuffer o (vec)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (call-next-method))
-	    ((<uint32 i (u8vector-length vec))
-	     (uint8->fixnum (u8vector-ref vec (uint32->fixnum i))))
-	    (else
-	     (call-next-method))))))
+   (let ((i::uint32 (js-toindex p)))
+      (cond
+	 ((not (js-isindex? i))
+	  (call-next-method))
+	 ((<uint32 i (js-arraybuffer-length o))
+	  (js-arraybuffer-ref o (uint32->fixnum i)))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArrayBuffer ...                                      */
@@ -227,44 +223,43 @@
 			   (js-define-own-property o p newdesc throw %this)))))
 	     v)))
    
-   (with-access::JsArrayBuffer o (vec)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (js-put-array! o (js-toname p %this) v))
-	    ((<u32 i (fixnum->uint32 (u8vector-length vec)))
-	     (u8vector-set! vec (uint32->fixnum i) (js-tointeger v %this))
-	     v)
-	    (else
-	     (js-put-array! o (js-toname p %this) v))))))
+   (let ((i::uint32 (js-toindex p)))
+      (cond
+	 ((not (js-isindex? i))
+	  (js-put-array! o (js-toname p %this) v))
+	 ((<u32 i (fixnum->uint32 (js-arraybuffer-length o)))
+	  (js-arraybuffer-set! o (uint32->fixnum i)
+	     (->fixnum (js-tointeger v %this)))
+	  v)
+	 (else
+	  (js-put-array! o (js-toname p %this) v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-delete! o::JsArrayBuffer p throw %this)
-   (with-access::JsArrayBuffer o (vec frozen)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (call-next-method))
-	    ((<uint32 i (u8vector-length vec))
-	     #t)
-	    (else
-	     (call-next-method))))))
+   (let ((i::uint32 (js-toindex p)))
+      (cond
+	 ((not (js-isindex? i))
+	  (call-next-method))
+	 ((<uint32 i (js-arraybuffer-length o))
+	  #t)
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsArrayBuffer p %this::JsGlobalObject)
-   (with-access::JsArrayBuffer o (vec frozen)
+   (with-access::JsArrayBuffer o (frozen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
 	     (call-next-method))
-	    ((<uint32 i (u8vector-length vec))
+	    ((<uint32 i (js-arraybuffer-length o))
 	     (instantiate::JsValueDescriptor
 		(name (js-toname p %this))
-		(value (uint8->fixnum (u8vector-ref vec (uint32->fixnum i))))
+		(value (js-arraybuffer-ref o (uint32->fixnum i)))
 		(enumerable #t)
 		(writable (not frozen))
 		(configurable (not frozen))))

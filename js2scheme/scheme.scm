@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jul 30 08:00:41 2014 (serrano)                */
+;*    Last change :  Fri Sep 19 10:48:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -408,10 +408,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclExtern mode return conf)
    (with-access::J2SDeclExtern this (loc id name val bind writable)
-      (if bind
-          (j2s-scheme-decl this (j2s-scheme val mode return conf) writable mode return)
-          (epairify loc
-             `(define ,(j2s-name name id) ,(j2s-scheme val mode return conf))))))
+      (cond
+	 (bind
+          (j2s-scheme-decl this (j2s-scheme val mode return conf) writable mode return))
+	 (else
+	  (j2s-scheme val mode return conf)))))
+;* 	 (else                                                         */
+;*           (epairify loc                                             */
+;*              `(define ,(j2s-name name id) ,(j2s-scheme val mode return conf))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */

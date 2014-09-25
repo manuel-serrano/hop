@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Sat Aug 23 09:10:08 2014 (serrano)                */
+;*    Last change :  Wed Sep 17 11:46:07 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -90,7 +90,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket w::bool)
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
-	  (socks (make-vector acclen))) 
+	  (socks (make-vector acclen)))
       (let loop ((id 1))
 	 (with-access::queue-scheduler scd (mutex condv qlength max-qlength)
 	    (synchronize mutex

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Sep 10 07:26:31 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 15:53:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -50,7 +50,6 @@
      "for"
      "function"
      "service"
-;*      "tag"                                                          */
      "if"
      "in"
      "instanceof"
@@ -131,8 +130,11 @@
 	  (blank (or (in #\Space #\Tab #a010 #a011 #a012 #a013 #\Newline)
 		     blank_u))
 	  (blank_no_lt (or (in #\Space #\Tab #a011 #a012) blank_u))
+	  (bom_utf8 "\xef\xbb\xbf")
+	  (bom_utf16_le "\xff\xfe")
+	  (bom_utf16_be "\xfe\xff")
 	  (lt (in #a013 #\Newline))
-	  (nonzero-digit (in ("19")))
+	  (nonzero_digit (in ("19")))
 	  (e2 (or (: "\xe2" (out "\x80")) (: "\xe2\x80" (out "\xa8\xa9"))))
 	  (id_part_sans (or (in #a127 #a225) (in #a227 #a255) e2))
 	  (unicode_char (: (in "\xd0\xd1") (or all #\Newline)))
@@ -159,9 +161,15 @@
 	  (string_char (or (out #a226 #\" #\' #\\ #\Return #\Newline) e2))
 	  (string_char_quote (or #\' string_char))
 	  (string_char_dquote (or #\" string_char)))
-      
+
       ((+ blank_no_lt)
        (ignore))
+
+      (bom_utf8
+       (ignore))
+
+      ((or bom_utf16_le bom_utf16_be)
+       (token 'ERROR (string-for-read (the-string)) 1))
 
       ((or ls ps)
        (token 'NEWLINE 'ls 1))
@@ -169,7 +177,7 @@
       ((: (* blank_no_lt) lt (* blank))
        (token 'NEWLINE #\newline 1))
 
-      ;; linecomment
+      ;; line comment
       ((:"//" (* (or (out "\n\xe2\r")
 		     (: "\xe2" (out "\x80"))
 		     (: "\xe2\x80" (out "\xa9\xa9")))))
@@ -191,14 +199,14 @@
        (token 'NUMBER 0 (the-length)))
       ((+ #\0)
        (token 'OCTALNUMBER 0 (the-length)))
-      ((: nonzero-digit (* digit))
+      ((: nonzero_digit (* digit))
        ;; integer constant
        (let* ((len (the-length))
 	      (val (if (>=fx len 18)
 		       (flonum->bignum (string->real (the-string)))
 		       (string->number (the-string)))))
 	  (token 'NUMBER val len)))
-      ((: (+ #\0) nonzero-digit (* digit))
+      ((: (+ #\0) nonzero_digit (* digit))
        ;; integer constant
        (let* ((len (the-length))
 	      (val (if (>=fx len 18)
@@ -265,7 +273,7 @@
       ("${"
        (token 'DOLLAR (the-string) (the-length)))
       
-      ;; Identifiers and Keywords
+      ;; identifiers and keywords
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
@@ -305,19 +313,14 @@
 			    (token 'ID symbol (the-length)))))
 		     estr))))))
 
-      ;; Tags (hopscript extension)
+      ;; tags (hopscript extension)
       ((: "<" tagid ">")
        (token 'OTAG (the-symbol) (the-length)))
       
-      ;; Closing Tags (hopscript extension)
+      ;; closing tags (hopscript extension)
       ((: "</" tagid ">")
        (token 'CTAG (symbol-append '< (string->symbol (the-substring 2 -1)) '>)
 	  (the-length)))
-      
-      ;; small HACK: 0 is used to indicate that a pragma should be inserted.
-      ;; doesn't get caught by lexer... (bug?)
-      ;; -> will be "retreated" in else-clause
-      ;(#a000 (token 'PRAGMA #unspecified))
       
       ;; error
       (else
@@ -388,6 +391,11 @@
       (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	 (ucs2-string->utf8-string u)))
 
+   (define (integer2->utf8 n1 n2)
+      (let ((u (make-ucs2-string 2 (integer->ucs2 n1))))
+	 (ucs2-string-set! u 1 (integer->ucs2 n2))
+	 (ucs2-string->utf8-string u)))
+   
    (define (octal? c)
       (and (char>=? c #\0) (char<=? c #\7)))
 
@@ -457,12 +465,32 @@
 		       (if (>=fx j (-fx len 5))
 			   (err)
 			   (let ((n (hex4 str (+fx j 2))))
-			      (if n
+			      (cond
+				 ((not n)
+				  (err))
+				 ((and (>=fx n #xd800) (<=fx n #xdfff)
+				       (<fx j (-fx len 11))
+				       (char=? (string-ref str (+fx j 6)) #\\)
+				       (char=? (string-ref str (+fx j 7)) #\u))
+				  (let ((n2 (hex4 str (+fx j 8))))
+				     (if (=fx (bit-and n2 #xdc00) #xdc00)
+					 ;; utf6-be character
+					 ;; http://en.wikipedia.org/wiki/UTF-16
+					 ;; http://fr.wikipedia.org/wiki/UTF-16
+					 (let* ((s (integer2->utf8 n n2))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 12) (+fx w l) octal))
+					 ;; consider a single ucs2 char
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 6) (+fx w l) octal)))))
+				 (else
 				  (let* ((s (integer->utf8 n))
 					 (l (string-length s)))
 				     (blit-string! s 0 res w l)
-				     (loop (+fx j 6) (+fx w l) octal))
-				  (err)))))
+				     (loop (+fx j 6) (+fx w l) octal)))))))
 		      ((#\newline)
 		       (loop (+fx j 2) w octal))
 		      ((#\return)

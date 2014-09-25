@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Sun Jul  6 07:32:03 2014 (serrano)                */
+;*    Last change :  Sat Sep 20 06:53:40 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -54,7 +54,7 @@
 (define (make-hop-module-resolver resolver)
    (set! initial-resolver resolver)
    (lambda (module files abase)
-      (with-trace 1 "hop-module-resolver"
+      (with-trace 'module "hop-module-resolver"
 	 (trace-item "module=" module)
 	 (trace-item "files=" files)
 	 (trace-item "abase=" abase)
@@ -98,7 +98,7 @@
 (define (hz-module-resolver module url)
    
    (define (resolve-in-dir dir)
-      (with-trace 1 "resolve-in-dir"
+      (with-trace 'module "resolve-in-dir"
 	 (trace-item "module=" module)
 	 (trace-item "url=" url)
 	 (trace-item "dir=" dir)
@@ -117,7 +117,7 @@
 	     (resolve-in-dir dir)
 	     '())))
 
-   (with-trace 1 "hz-module-resolver"
+   (with-trace 'module "hz-module-resolver"
       (trace-item "module=" module)
       (trace-item "url=" url)
       (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Sep  2 15:33:29 2014 (serrano)                */
+;*    Last change :  Mon Sep 22 08:18:48 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -37,6 +37,7 @@
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
+	      (alivep (default #f))
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
@@ -59,7 +60,8 @@
 	   (generic js-worker-thread-loop ::WorkerHopThread)
 	   (generic js-worker-exec ::WorkerHopThread ::procedure)
 	   (generic js-worker-push-thunk! ::WorkerHopThread ::procedure)
-	   (generic js-worker-terminate! ::WorkerHopThread)
+	   (generic js-worker-alive? ::WorkerHopThread)
+	   (generic js-worker-terminate! ::WorkerHopThread ::obj)
 	   (generic js-worker-post-slave-message ::JsWorker ::obj)
 	   (generic js-worker-post-master-message ::JsWorker ::obj)))
 
@@ -88,7 +90,19 @@
 	 (instantiate::WorkerHopThread
 	    (name "%worker")
 	    (%this %this)
-	    (body (lambda () (js-worker-thread-loop %main))))))
+	    (body (lambda ()
+		     (signal sigsegv
+			(lambda (x)
+			   (js-raise-range-error %this
+			      "Maximum call stack size exceeded"
+			      #f)))
+		     (with-handler
+			(lambda (e)
+			   (exception-notify e)
+			   #f)
+			(begin
+			   (js-worker-thread-loop %main)
+			   #t)))))))
    %main)
    
 ;*---------------------------------------------------------------------*/
@@ -267,7 +281,7 @@
       :value (js-make-function %this
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
-		      (js-worker-terminate! thread)))
+		      (js-worker-terminate! thread #f)))
 		1 'terminate)
       :writable #f
       :enumerable #t
@@ -277,25 +291,28 @@
 ;*    js-worker-thread-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-thread-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers name)
+   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers name alivep)
       ;; loop unless terminated
-      (let loop ()
-	 (let ((thunk (synchronize mutex
-			 (let liip ()
-			    (cond
-			       ((pair? tqueue)
-				(let ((thunk (car tqueue)))
-				   (set! tqueue (cdr tqueue))
-				   thunk))
-			       ((and (eq? state 'terminated)
-				     (null? subworkers))
-				#f)
-			       (else
-				(condition-variable-wait! condv mutex)
-				(liip)))))))
-	    (when (procedure? thunk)
-	       (thunk)
-	       (loop))))))
+      (unwind-protect
+	 (let loop ()
+	    (let ((thunk (synchronize mutex
+			    (let liip ()
+			       (cond
+				  ((pair? tqueue)
+				   (let ((thunk (car tqueue)))
+				      (set! tqueue (cdr tqueue))
+				      thunk))
+				  ((and (eq? state 'terminated)
+					(or (not alivep) (not (alivep)))
+					(null? subworkers))
+				   #f)
+				  (else
+				   (condition-variable-wait! condv mutex)
+				   (liip)))))))
+	       (when (procedure? thunk)
+		  (thunk)
+		  (loop))))
+	 (set! state 'terminated))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -333,10 +350,18 @@
 	 (condition-variable-signal! condv))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-alive? ::WorkerHopThread ...                           */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-alive? th::WorkerHopThread)
+   (with-access::WorkerHopThread th (tqueue state)
+      (and (not (eq? state 'terminated)) (pair? tqueue))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-terminate! th::WorkerHopThread)
-   (with-access::WorkerHopThread th (state mutex condv)
+(define-generic (js-worker-terminate! th::WorkerHopThread pred)
+   (with-access::WorkerHopThread th (state mutex condv alivep)
+      (set! alivep pred)
       (synchronize mutex
 	 (set! state 'terminated)
 	 (condition-variable-signal! condv))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Aug 31 16:42:04 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 12:26:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -95,13 +95,13 @@
 	   (class JsArrayBuffer::JsObject
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
-	      (vec (default '#u8())))
+	      (data (default '#u8())))
 	   
 	   (abstract-class JsArrayBufferView::JsObject
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
 	      (buffer::JsArrayBuffer (default (class-nil JsArrayBuffer)))
-	      (%vec (default '#u8()))
+	      (%data (default '#u8()))
 	      (byteoffset::uint32 (default #u32:0)))
 
 	   (class JsTypedArray::JsArrayBufferView
@@ -163,7 +163,11 @@
 	   (inline js-null)
 	   (js-absent)
 
-	   (js-typeof obj)))
+	   (generic js-typeof obj)
+
+	   (generic js-arraybuffer-length ::JsArrayBuffer)
+	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)
+	   (generic js-arraybuffer-set! ::JsArrayBuffer ::int ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ...                                                 */
@@ -297,7 +301,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
 ;*---------------------------------------------------------------------*/
-(define (js-typeof obj)
+(define-generic (js-typeof obj)
    (cond
       ((isa? obj JsFunction)
        "function")
@@ -316,6 +320,26 @@
       (else
        (typeof obj))))
 
+;*---------------------------------------------------------------------*/
+;*    js-arraybuffer-length ::JsArrayBuffer ...                        */
+;*---------------------------------------------------------------------*/
+(define-generic (js-arraybuffer-length o::JsArrayBuffer)
+   (with-access::JsArrayBuffer o (data)
+      (u8vector-length data)))
+
+;*---------------------------------------------------------------------*/
+;*    js-arraybuffer-ref ::JsArrayBuffer ...                           */
+;*---------------------------------------------------------------------*/
+(define-generic (js-arraybuffer-ref o::JsArrayBuffer index)
+   (with-access::JsArrayBuffer o (data)
+      (uint8->fixnum (u8vector-ref data index))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arraybuffer-set! ::JsArrayBuffer ...                          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-arraybuffer-set! o::JsArrayBuffer index val)
+   (with-access::JsArrayBuffer o (data)
+      (u8vector-set! data index (fixnum->uint8 val))))
+
 
    
-

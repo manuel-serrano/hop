@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug  7 05:33:23 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 17:50:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -57,8 +57,23 @@
 			     (else
 			      stack))))
 		(display-trace-stack-source (list tstack) port)
-		(fprint port "*** " name ": "msg "\n")
+		(fprint port name ": "msg "\n")
 		(display-trace-stack stack port))))))
+
+;*---------------------------------------------------------------------*/
+;*    exception-notify ::obj ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (exception-notify exc::JsObject)
+   (let* ((%this (js-new-global-object))
+	  (msg (js-get exc 'message %this))
+	  (stack (js-get exc 'stack %this))
+	  (name (js-get exc 'name %this))
+	  (port (current-error-port)))
+      (if (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
+	  (call-next-method)
+	  (begin
+	     (fprint port name ": " msg "\n")
+	     (display-trace-stack stack port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-error! ...                                               */
@@ -105,18 +120,27 @@
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
-		    (lambda (o v) #f) 2 'message)
+		    (lambda (o v)
+		       (js-bind! %this o 'message :value v))
+		    2 'message)
 	    :get (js-make-function %this
-		    (lambda (o) (with-access::JsError o (msg) msg)) 1 'message)
+		    (lambda (o)
+		       (if (isa? o JsError)
+			   (with-access::JsError o (msg) msg)
+			   (js-undefined)))
+		       1 'message)
 	    :enumerable #f
 	    :configurable #t)
 	 (js-bind! %this js-error-prototype 'name
 	    :set (js-make-function %this
-		    (lambda (o v) #f) 2 'name)
+		    (lambda (o v)
+		       (js-bind! %this o 'name :value v))
+		    2 'name)
 	    :get (js-make-function %this
 		    (lambda (o)
-		       (with-access::JsError o (name)
-			  name))
+		       (if (isa? o JsError)
+			   (with-access::JsError o (name) name)
+			   (js-undefined)))
 		    1 'name)
 	    :enumerable #f)
 	 
@@ -191,6 +215,15 @@
 	    :value js-range-error)
 	 (js-bind! %this %this 'ReferenceError :configurable #f :enumerable #f
 	    :value js-reference-error)
+	 ;; nodejs addon
+	 (js-bind! %this js-error 'captureStackTrace
+	    :value (js-make-function %this
+		      (lambda (o this start-func)
+			 (js-put! this 'stack (cddr (get-trace-stack)) #f %this)
+			 this)
+		      2 'captureStackTrace)
+	    :enumerable #f)
+
 	 js-error)))
 
 ;*---------------------------------------------------------------------*/

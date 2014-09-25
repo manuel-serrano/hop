@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Aug 27 12:16:55 2014 (serrano)                */
+;*    Last change :  Sun Sep 21 08:47:39 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -59,7 +59,7 @@
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
-    ;; define the Hop macros
+   ;; define the Hop macros
    (hop-install-expanders!)
    ;; setup the hop readers
    (bigloo-load-reader-set! hop-read)
@@ -162,27 +162,30 @@
 		     files)
 		  ;; unset the dummy request
 		  (thread-request-set! #unspecified #unspecified)))
-	    ;; preload all the forced services
-	    (for-each (lambda (svc)
-			 (let* ((path (string-append (hop-service-base) "/" svc))
-				(req (instantiate::http-server-request
-					(user (anonymous-user))
-					(localclientp #t)
-					(path path)
-					(abspath path)
-					(port (hop-port))
-					(connection 'close))))
-			    (with-handler
-			       (lambda (err)
-				  (exception-notify err)
-				  (fprintf (current-error-port)
-				     "*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-			       (current-request-set! #f req)
-			       (service-filter req))))
-	       (hop-preload-services))
-	    (current-request-set! #f #f)
-	    ;; start the main loop
-	    (scheduler-accept-loop (hop-scheduler) serv #t)))))
+	    (when (hop-run-server)
+	       ;; preload all the forced services
+	       (for-each (lambda (svc)
+			    (let* ((path (string-append (hop-service-base) "/" svc))
+				   (req (instantiate::http-server-request
+					   (user (anonymous-user))
+					   (localclientp #t)
+					   (path path)
+					   (abspath path)
+					   (port (hop-port))
+					   (connection 'close))))
+			       (with-handler
+				  (lambda (err)
+				     (exception-notify err)
+				     (fprintf (current-error-port)
+					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
+				  (current-request-set! #f req)
+				  (service-filter req))))
+		  (hop-preload-services))
+	       (current-request-set! #f #f)
+	       ;; start the main loop
+	       (scheduler-accept-loop (hop-scheduler) serv #t))
+	    (js-worker-terminate! %worker nodejs-event-loop-alive?)
+	    (if (thread-join! %worker) 0 1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-scheduler! ...                                               */
@@ -304,7 +307,7 @@
 (define (hop-hopscript-worker scd %global %worker)
    (if (>fx (hop-max-threads) 2)
        (begin
-	  (thread-start! %worker)
+	  (thread-start-joinable! %worker)
 	  (thread-start! (instantiate::hopthread (body nodejs-event-loop))))
        (error "hop-repl"
 	  "not enough threads to start the main worker (see --threads-max option)"

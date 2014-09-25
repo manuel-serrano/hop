@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Sep 15 09:01:59 2014 (serrano)                */
+;*    Last change :  Sun Sep 21 19:03:18 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -128,8 +128,11 @@
    (define (lchmod this path mod cb)
       (nodejs-lchmod %worker %this path mod cb))
    
-   (define (readdir this path)
-      (js-vector->jsarray (list->vector (directory->path-list path))  %this))
+   (define (readdir this path cb)
+      (let ((r (js-vector->jsarray (list->vector (directory->path-list path))  %this)))
+	 (if (isa? cb JsFunction)
+	     (nodejs-async-invoke %worker %this this cb r)
+	     r)))
 
    (define (fstat this fd callback)
       (nodejs-fstat %worker %this fd callback (get-process-fs-stats %this)))
@@ -185,10 +188,13 @@
       (display-substring buffer offset (+ offset length) fd))
    
    (define (read this fd buffer offset length position callback)
+      (tprint "read callback=" callback)
       (nodejs-read %worker %this fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))
-	 (int32->fixnum (js-toint32 position %this))
+	 (if (eq? position (js-undefined))
+	     -1
+	     (int32->fixnum (js-toint32 position %this)))
 	 callback))
 
    (js-alist->jsobject

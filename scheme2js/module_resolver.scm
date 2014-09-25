@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -21,7 +21,7 @@
 ;*    scheme2js-module-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (scheme2js-module-resolver mod files file)
-   (with-trace 1 "scheme2js-module-resolver"
+   (with-trace 'scheme2js "scheme2js-module-resolver"
       (trace-item "mod=" mod)
       (trace-item "files=" files)
       (with-abase file

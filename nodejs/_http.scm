@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Sun Sep 14 09:34:50 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 07:44:51 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -156,7 +156,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-parser-execute ...                                          */
 ;*---------------------------------------------------------------------*/
-(define debug-parser 0)
+(define debug-parser 2)
 
 (define (http-parser-execute %this parser::JsHttpParser buf off len)
 
@@ -164,6 +164,8 @@
       (when (>=fx debug-parser 1)
 	 (tprint ">>> execute len="
 	    (string-length vec) " off=" off " len=" len))
+      (when (>=fx debug-parser 2)
+	 (tprint ">>>>> execute [" (substring vec off (+fx off len) ) "]"))
       (with-access::JsHttpParser parser (buffer state obuf oend ooff)
 	 (cond
 	    ((>= off length)
@@ -231,7 +233,7 @@
 			     (with-access::JsGlobalObject %this (js-error)
 				(let ((err (js-new %this js-error "Parse Error")))
 				   (js-put! err 'bytesParsed nread #f %this)
-				   (js-put! error 'code errname #f %this)
+				   (js-put! err 'code errname #f %this)
 				   err)))))))))))
 
    (with-access::JsHttpParser parser (buffer state obuf oend ooff)
@@ -239,11 +241,12 @@
 	 (buffer
 	  (exn %this "Already parsing a buffer"))
 	 ((isa? buf JsArrayBuffer)
-	  (with-access::JsArrayBuffer buf (vec)
-	     (execute vec 0 (string-length vec))))
+	  (with-access::JsArrayBuffer buf (data)
+	     [assert (data) (string? data)]
+	     (execute data 0 (string-length data))))
 	 ((isa? buf JsTypedArray)
-	  (with-access::JsTypedArray buf (%vec byteoffset length)
-	     (execute %vec (uint32->fixnum byteoffset) length)))
+	  (with-access::JsTypedArray buf (%data byteoffset length)
+	     (execute %data (uint32->fixnum byteoffset) length)))
 	 (else
 	  (exn %this "Argument should be a buffer ~a"
 	     (typeof buf))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Aug  8 19:13:14 2014 (serrano)                */
+;*    Last change :  Sun Sep 21 09:06:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -570,7 +570,7 @@
 			   (apply ,(symbol-append '< tag '>)
 			      nodes)))
 		    2 ',tag)
-	  :writable #f
+	  :writable #t
 	  :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sun Sep 14 12:28:25 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 07:44:56 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -61,6 +61,19 @@
 	 (else
 	  #unspecified)))
    
+   (define (add-ca-cert this cert)
+      (cond-expand
+	 (enable-ssl
+	  (with-access::JsSecureContext this (ctx)
+	     (if (string? cert)
+		 (secure-context-add-ca-cert! ctx cert 0 (string-length cert))
+		 (with-access::JsTypedArray cert (%data byteoffset length)
+		    (secure-context-add-ca-cert! ctx %data
+		       (uint32->fixnum byteoffset)
+		       (uint32->fixnum length))))))
+	 (else
+	  #unspecified)))
+   
    (define secure-context-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
@@ -72,10 +85,14 @@
 	    (js-make-function %this add-root-certs
 	       0 "addRootCerts")
 	    #f %this)
+	 (js-put! proto 'addCACert
+	    (js-make-function %this add-ca-cert
+	       1 "addCACert")
+	    #f %this)
 	 
 	 (for-each (lambda (name)
 		      (js-put! proto name (not-implemented name) #f %this))
-	    '(setKey setCert addCACert addCRL setCiphers
+	    '(setKey setCert addCRL setCiphers
 	      setOptions setSessionIdContext close loadPKCS12))
 	 proto))
 
@@ -94,8 +111,9 @@
 	    " offset=" offset
 	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
-	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (ssl-connection-read ssl %vec offset len))))
+	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (ssl-connection-read ssl %data
+	       (+fx (uint32->fixnum byteoffset) offset) len))))
    
    (define (connection-encin this buffer offset len)
       (with-access::JsTypedArray buffer (length)
@@ -103,20 +121,19 @@
 	    " offset=" offset
 	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
-	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (ssl-connection-write ssl %vec offset len))))
+	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (ssl-connection-write ssl %data
+	       (+fx (uint32->fixnum byteoffset) offset) len))))
    
    (define (connection-clearin this buffer offset len)
-      (with-access::JsTypedArray buffer (length)
+      (with-access::JsTypedArray buffer (length byteoffset)
 	 (tprint "ClearIn(" (count) ") buffer=" length
-	    " offset=" offset
+	    " offset=" offset " byteoffset=" byteoffset
 	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
-	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (let ((r (ssl-connection-clear-in ssl %vec offset len)))
-	       (tprint "ClearIn(" c ") <- " r)
-	       r))))
-	       
+	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (ssl-connection-clear-in ssl %data
+	       (+fx (uint32->fixnum byteoffset) offset) len))))
    
    (define (connection-clearout this buffer offset len)
       (with-access::JsTypedArray buffer (length)
@@ -124,8 +141,9 @@
 	    " offset=" offset
 	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
-	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (ssl-connection-clear-out ssl %vec offset len))))
+	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (ssl-connection-clear-out ssl %data
+	       (+fx (uint32->fixnum byteoffset) offset) len))))
    
    (define (connection-is-init-finished this)
       (with-access::JsSSLConnection this (ssl)
@@ -141,8 +159,8 @@
    
    (define (connection-set-session this buffer)
       (with-access::JsSSLConnection this (ssl)
-	 (with-access::JsTypedArray buffer (%vec byteoffset length)
-	    (ssl-connection-set-session ssl %vec))))
+	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (ssl-connection-set-session ssl %data))))
    
    (define (connection-verify-error this)
       (with-access::JsSSLConnection this (ssl)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Jul 12 10:51:24 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 08:56:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -223,6 +223,8 @@
 	 (cond
 	    ((isa? replacer JsFunction) replacer)
 	    ((isa? replacer JsArray) replacer)
+	    ((isa? replacer JsTypedArray) replacer)
+	    ((isa? replacer JsArrayBufferView) replacer)
 	    (else #f)))
       
       (define gap "")
@@ -306,7 +308,6 @@
 		   ((isa? value JsFunction)
 		    (js-undefined))
 		   ((isa? value JsArray)
-		    ;; value is an array
 		    (let ((res (lst key holder value mind "[" "]"
 				  (lambda (i)
 				     (str i value stack)))))

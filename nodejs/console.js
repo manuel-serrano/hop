@@ -58,19 +58,6 @@ Console.prototype.info = Console.prototype.log;
 
 
 Console.prototype.warn = function() {
-/* Console.prototype.warn = function(_, a, b) {                        */
-/* #:tprint( "WARN args[0]={", _, "}", "th=", #:current-thread());     */
-/*    if( (typeof( a ) == "string") || (typeof( a ) == 'number') ) {   */
-/* #:tprint( "WARN args[1]=[", arguments[ 1 ], "]" );                  */
-/*    }                                                                */
-/*    if( (typeof( b ) == "string") || (typeof( b ) == 'number') ) {   */
-/* #:tprint( "WARN args[2]=[", arguments[ 2 ], "]" );                  */
-/*    }                                                                */
-   if( !#:isa?( #:current-thread(), #:WorkerHopThread ) ) {
-      var x = 1;
-#:tprint( "..... PAS GLOP.............................." );
-      return #:/fx(1, x-1);
-   }
   this._stderr.write(util.format.apply(this, arguments) + '\n');
 };
 

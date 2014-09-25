@@ -123,8 +123,10 @@ exports.request = function(options, cb) {
         typeof options.passphrase === 'undefined' &&
         typeof options.pfx === 'undefined' &&
         typeof options.rejectUnauthorized === 'undefined') {
+       debug( "Global Agent" );
       options.agent = globalAgent;
     } else {
+       debug( "new Agent" );
       options.agent = new Agent(options);
     }
   }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Sep  2 15:22:59 2014 (serrano)                */
+;*    Last change :  Sat Sep 20 06:52:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -22,7 +22,6 @@
    (export (nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
 	   (nodejs-require ::JsGlobalObject ::JsObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-init-core ::bstring ::procedure ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
@@ -128,7 +127,7 @@
 	 (js-vector->jsarray (nodejs-filename->paths filename) %this)
 	 #f %this))
 
-   (with-trace 1 "nodejs-module"
+   (with-trace 'require "nodejs-module"
       (trace-item "id=" id)
       (trace-item "filename=" filename)
       (with-access::JsGlobalObject %this (js-object)
@@ -352,7 +351,7 @@
 	     (format "Don't know how to load module ~s" filename)
 	     filename))))
    
-   (with-trace 1 "nodejs-load"
+   (with-trace 'require "nodejs-load"
       (trace-item "filename=" filename)
       (with-access::WorkerHopThread worker (module-mutex module-table)
 	 (synchronize module-mutex
@@ -374,7 +373,7 @@
 	 (lambda (ip)
 	    (js-json-parser ip #f #f %this))))
    
-   (with-trace 1 "nodejs-require-module"
+   (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
       (if (core-module? name)
 	  (nodejs-require-core name worker %this)
@@ -396,21 +395,6 @@
    (assoc name (core-module-table)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-init-core ...                                             */
-;*---------------------------------------------------------------------*/
-(define (nodejs-init-core name init %this)
-   (with-trace 2 "nodejs-init-core"
-      (trace-item "name=" name)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((this (js-new0 %this js-object))
-	       (scope (nodejs-new-scope-object %this))
-	       (mod (nodejs-module name name %this)))
-	    ;; initialize the core module
-	    (init %this this scope mod)
-	    ;; return the module
-	    mod))))
-
-;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Require a nodejs module, load it if necessary or simply          */
@@ -418,18 +402,24 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name worker %this)
    
-   (define (nodejs-load-core-module name worker)
-      
-      (with-trace 1 "nodejs-load-core-module"
+   (define (nodejs-init-core name %this)
+      (with-trace 'require "nodejs-init-core"
 	 (trace-item "name=" name)
-	 (trace-item "cache=" (nodejs-cache-module name worker))
-	 (or (nodejs-cache-module name worker)
-	     (let ((init (assoc name (core-module-table))))
-		(nodejs-init-core name (cdr init) %this)))))
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let ((init (cdr (assoc name (core-module-table))))
+		  (this (js-new0 %this js-object))
+		  (scope (nodejs-new-scope-object %this))
+		  (mod (nodejs-module name name %this)))
+	       ;; initialize the core module
+	       (init %this this scope mod)
+	       ;; return the module
+	       mod))))
 
-   (with-trace 1 "nodejs-require-core"
+   (with-trace 'require "nodejs-require-core"
       (trace-item "name=" name)
-      (js-get (nodejs-load-core-module name worker) 'exports %this)))
+      (let ((mod (or (nodejs-cache-module name worker)
+		     (nodejs-init-core name %this))))
+      (js-get mod 'exports %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -596,7 +586,11 @@
 		(let ((k (string->symbol p)))
 		   (js-put! %scope k (js-get e k %this) #f %this))))
 	  (for-each (lambda (k)
-		       (js-put! %scope k (js-get e k %this) #f %this))
+		       (js-bind! %this %scope k
+			  :get (js-make-function %this
+				  (lambda (o)
+				     (js-get e k %this))
+				  0 'get)))
 	     bindings))))
 
 ;*---------------------------------------------------------------------*/

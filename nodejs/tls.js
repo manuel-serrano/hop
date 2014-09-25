@@ -363,7 +363,7 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
     // Write current buffer now
     var written;
     if (this === this.pair.cleartext) {
-      debug('cleartext.write called with ' + data.length + ' bytes');
+      debug('cleartext.write.1 called with ' + data.length + ' bytes');
       written = this.pair.ssl.clearIn(data, 0, data.length);
        debug('clearin <- ' + written );
     } else {
@@ -396,7 +396,7 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
       debug('CryptoStream.prototype._write written=' + written + " data.length=" + data.length);
     if (written === data.length) {
       if (this === this.pair.cleartext) {
-        debug('cleartext.write succeed with ' + written + ' bytes');
+        debug('cleartext.write.2 succeed with ' + written + ' bytes');
       } else {
         debug('encrypted.write succeed with ' + written + ' bytes');
       }
@@ -406,12 +406,14 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
         assert(this._sslOutCb === null);
         this._sslOutCb = cb;
       } else {
+	 debug( "_write invoke cb" );
         cb(null);
       }
       return;
     } else if (written !== 0 && written !== -1) {
       assert(!this._retryAfterPartial);
       this._retryAfterPartial = true;
+	 debug( "_write invoke slice written=" + written );
       this._write(data.slice(written), encoding, cb);
       this._retryAfterPartial = false;
       return;
@@ -450,6 +452,7 @@ CryptoStream.prototype._writePending = function writePending() {
 
 
 CryptoStream.prototype._read = function read(size) {
+   debug( "CyrptoStream.prototype._read size=" + size );
   // XXX: EOF?!
   if (!this.pair.ssl) return this.push(null);
 

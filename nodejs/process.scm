@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Mon Sep 15 19:45:57 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 07:44:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -32,7 +32,8 @@
 
    (static (class JsProcess::JsObject
 	      (tcp-proto (default #f))
-	      (buffer-binding (default #f)))
+	      (buffer-binding (default #f))
+	      (exiting::bool (default #f)))
 
 	   (class JsHandle::JsObject
 	      (handle (default #f))))
@@ -49,7 +50,36 @@
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
 		(tick (js-get m 'initNodeTick %this)))
-	    (js-call1 %this tick (js-undefined) %process)))
+	    (js-call1 %this tick (js-undefined) %process))
+	 ;; events
+	 (with-access::JsObject %process (__proto__)
+	    (let* ((e (nodejs-require-core "events" %worker %this))
+		   (em (js-get e 'EventEmitter %this))
+		   (proto (js-get em 'prototype %this))
+		   (add (js-get proto 'addListener %this))
+		   (rem (js-get proto 'removeListener %this))
+		   (exitarmed #f))
+	       
+	       (set! __proto__ proto)
+
+	       (define (on this signal proc)
+		  (when (and (equal? signal "exit") (not exitarmed))
+		     (set! exitarmed #t)
+		     (register-exit-function!
+			(lambda (status)
+			   (with-access::JsProcess %process (exiting)
+			      (unless exiting
+				 (set! exiting #t)
+				 (let ((emit (js-get %process 'emit %this)))
+				    (js-call2 %this emit %process "exit" status))))
+			   status)))
+		  (js-call2 %this add this signal proc))
+
+	       ;; on
+	       (js-put! %process 'on
+		  (js-make-function %this on 2 "on") #f %this)
+	       (js-put! %process 'addListener add #f %this)
+	       (js-put! %process 'removeListener rem #f %this))))
       %process))
 
 ;*---------------------------------------------------------------------*/
@@ -103,10 +133,17 @@
 	 
 	 (js-put! proc 'title (hop-name) #f %this)
 	 (js-put! proc 'version (hop-version) #f %this)
+	 
 	 (js-put! proc 'exit
 	    (js-make-function %this
 	       (lambda (this status)
-		  (exit status))
+		  (let ((r (if (eq? status (js-undefined)) 0 status)))
+		     (with-access::JsProcess proc (exiting)
+			(unless exiting
+			   (set! exiting #t)
+			   (let ((emit (js-get proc 'emit %this)))
+			      (js-call2 %this emit proc "exit" r)))
+			(exit r))))
 	       1 "exit")
 	    #f %this)
 	 (js-put! proc 'reallyExit
@@ -207,7 +244,7 @@
 		  (nodejs-need-tick-callback %worker %this proc))
 	       0 "needTickCallback")
 	    #f %this)
-		  
+	 
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
@@ -400,9 +437,9 @@
 	    (js-put! obj 'writeBuffer
 	       (js-make-function %this
 		  (lambda (this buffer)
-		     (with-access::JsTypedArray buffer (%vec byteoffset length)
+		     (with-access::JsTypedArray buffer (%data byteoffset length)
 			(stream-write-string %worker %this this
-			   %vec
+			   %data
 			   (uint32->fixnum byteoffset)
 			   (uint32->fixnum length)
 			   "ascii" #f)))
@@ -524,7 +561,6 @@
 						(uv-err-name status) #f %this))
 					  (let ((oncomp (js-get req 'oncomplete %this)))
 					     (js-call3 %this oncomp req status this req))))))
-			   (nodejs-need-tick-callback %worker %this process)
 			   (when (=fx res 0)
 			      req))))
 		  1 "shutdown")
@@ -659,7 +695,7 @@
 	 0 name))
    
    (define (getaddrinfo this domain family)
-      (nodejs-getaddrinfo %this process domain family))
+      (nodejs-getaddrinfo %worker %this process domain family))
    
    (define (query this domain family callback)
       (nodejs-query %worker %this process domain family callback))
@@ -727,11 +763,11 @@
 	 (append
 	    `((isTTY . ,(js-make-function %this
 			   (lambda (this fd)
-			      (nodejs-istty fd))
+			      (nodejs-istty %this fd))
 			   1 'isTTY))
 	      (guessHandleType . (js-make-function %this
 				    (lambda (this fd)
-				       (nodejs-guess-handle-type fd))
+				       (nodejs-guess-handle-type %this fd))
 				    1 'guessHandleType)))
 	    (map (lambda (id)
 		    (cons id (not-implemented id)))
@@ -772,11 +808,12 @@
       (let ((t '()))
 	 (for-each (lambda (i)
 		      (match-case i
-			 ((?name ?addr ?family . ?-)
+			 ((?name ?addr ?family ?- ?internal . ?-)
 			  (let* ((id (string->symbol (car i)))
 				 (desc (js-alist->jsobject
 					  `((address . ,addr)
-					    (family . ,family))
+					    (family . ,family)
+					    (internal . ,internal))
 					  %this))
 				 (en (assq id t)))
 			     (if (not en)
@@ -813,13 +850,17 @@
 				     (lambda (this)
 					(interfaces->js))
 				     0 "getInterfaceAddresses"))
+	(getUptime . ,(js-make-function %this
+			 (lambda (this)
+			    (nodejs-getuptime))
+			 0 "getUptime"))
 	(getLoadAvg . ,(js-make-function %this
 			  (lambda (this)
 			     (let* ((f64 (js-get %this 'Float64Array %this))
 				    (obj (js-new %this f64 3)))
 				(with-access::JsTypedArray obj (buffer)
-				   (with-access::JsArrayBuffer buffer (vec)
-				      (nodejs-loadavg vec))) obj))
+				   (with-access::JsArrayBuffer buffer (data)
+				      (nodejs-loadavg data))) obj))
 			  0 "getLoadAvg"))
 	(getFreeMem . ,(js-make-function %this
 			  (lambda (this)

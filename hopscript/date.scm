@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 23 12:35:32 2014 (serrano)                */
+;*    Last change :  Mon Sep 22 16:17:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -228,7 +228,7 @@
 	 ;; now
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4
 	 (define (js-date-now this)
-	    (llong->flonum (quotientllong (current-microseconds) #l1000)))
+	    (llong->flonum (quotientllong (current-nanoseconds) #l1000000)))
 	 
 	 (js-bind! %this js-date 'now
 	    :value (js-make-function %this js-date-now 0 'now)
@@ -495,7 +495,7 @@
    (define (date-prototype-valueof this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->seconds val)
+	     (llong->flonum (/llong (date->nanoseconds val) #l1000000))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'valueOf
@@ -509,10 +509,8 @@
    (define (date-prototype-gettime this::JsDate)
       
       (define (date->milliseconds date::date)
-	 (let ((seconds (*llong #l1000 (elong->llong (date->seconds date)))))
-	    (+llong seconds
-	       (quotientllong (elong->llong (date-nanosecond date))
-		  #l1000000))))
+	 (let ((nsec (date->nanoseconds date)))
+	    (llong->fixnum (/llong nsec #l1000000))))
       
       (with-access::JsDate this (val)
 	 (if (date? val)

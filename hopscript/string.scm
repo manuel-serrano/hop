@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Sep 14 10:14:44 2014 (serrano)                */
+;*    Last change :  Wed Sep 24 16:31:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -33,7 +33,9 @@
 
    (export (js-init-string! ::JsGlobalObject)
 	   
-	   (inline js-string-append ::bstring ::bstring)))
+	   (inline js-string-append ::bstring ::bstring)
+
+	   (utf8-codepoint-length::long ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -60,6 +62,26 @@
       (display "\"" op)))
 
 ;*---------------------------------------------------------------------*/
+;*    utf8-codepoint-length ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Returns the number of code points required to encode that        */
+;*    UTF8 string (might be bigger than the UTF8 length).              */
+;*---------------------------------------------------------------------*/
+(define (utf8-codepoint-length str)
+   (let ((len (string-length str)))
+      (let loop ((r 0)
+		 (l 0))
+	 (if (=fx r len)
+	     l
+	     (let* ((c (string-ref str r))
+		    (s (utf8-char-size c)))
+		(if (and (=fx s 4)
+			 (or (=fx (char->integer c) #xf0)
+			     (=fx (char->integer c) #xf4)))
+		    (loop (+fx r s) (+fx l 2))
+		    (loop (+fx r s) (+fx l 1))))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-init-string! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-string! %this::JsGlobalObject)
@@ -82,7 +104,7 @@
 			     (writable #f)
 			     (configurable #f)
 			     (enumerable #f)
-			     (value (utf8-string-length v)))))
+			     (value (utf8-codepoint-length v)))))
 		  (with-access::JsString o (val properties)
 		     (set! val v)
 		     (set! properties (list len)))))

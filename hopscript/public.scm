@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Aug 23 08:56:26 2014 (serrano)                */
+;*    Last change :  Tue Sep 23 16:13:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -77,6 +77,9 @@
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
+
+	   (js-toindex::uint32 ::obj)
+	   (js-isindex?::bool ::uint32)
 	   
 	   (js-tostring::bstring ::obj ::JsGlobalObject)
 	   (generic js-object-tostring::bstring ::object ::JsGlobalObject)
@@ -817,6 +820,71 @@
 		  (int64->int32 (flonum->int64 i)))))))
       (else
        (js-toint32 (js-tonumber obj %this) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4         */
+;*    -------------------------------------------------------------    */
+;*    Performance demands this function not to returned a boxed        */
+;*    result. So, false is here denoted 1^32-1, as an uint32.          */
+;*---------------------------------------------------------------------*/
+(define (js-toindex p)
+   
+   (define false (-u32 #u32:0 #u32:1))
+   
+   (define (string->index p::bstring)
+      (let ((num (string->number p)))
+	 (if (bignum? num)
+	     (if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
+		 (llong->uint32 (bignum->llong num))
+		 false)
+	     (js-toindex num))))
+
+   (cond
+      ((uint32? p)
+       p)
+      ((fixnum? p)
+       (cond-expand
+	  (bint30
+	   (if (>=fx p 0)
+	       (fixnum->uint32 p)
+	       false))
+	  (bint32
+	   (let ((e (fixnum->elong p)))
+	      (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 31)))
+		  (elong->uint32 e)
+		  false)))
+	  (else
+	   (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 32) 1)))
+	       (fixnum->uint32 p)
+	       false))))
+      ((flonum? p)
+       (if (and (>=fl p 0.) (<fl p (exptfl 2. 31.)) (=fl (roundfl p) p))
+	   (cond-expand
+	      (bint30
+	       (if (<fl p (exptfl 2. 32.))
+		   (flonum->uint32 p)
+		   (llong->uint32 (flonum->llong p))))
+	      (else
+	       (flonum->uint32 p)))
+	   false))
+      ((isa? p JsNumber)
+       (with-access::JsNumber p (val) (js-toindex val)))
+      ((string? p)
+       (string->index p))
+      ((symbol? p)
+       (string->index (symbol->string! p)))
+      ((isa? p JsString)
+       (with-access::JsString p (val) (string->index val)))
+      (else
+       false)))
+
+;*---------------------------------------------------------------------*/
+;*    js-isindex? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-isindex? u32::uint32)
+   (<u32 u32 (-u32 (fixnum->uint32 0) (fixnum->uint32 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Sep  9 08:24:40 2014 (serrano)                */
+;*    Last change :  Sat Sep 20 06:46:00 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -869,7 +869,7 @@
 	    (unless (member dir *afile-dirs*)
 	       (set! *afile-dirs* (cons dir *afile-dirs*))
 	       #t))
-      (with-trace 1 "hop-load-afile"
+      (with-trace 'read "hop-load-afile"
 	 (trace-item "dir=" dir)
 	 (let ((path (make-file-name dir ".afile")))
 	    (if (file-exists? path)
@@ -927,7 +927,7 @@
 ;*    hop-load-from-hz ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-from-hz fname env menv mode charset abase)
-   (with-trace 1 "hop-load-from-hz"
+   (with-trace 'read "hop-load-from-hz"
       (trace-item "fname=" fname)
       (trace-item "abase=" abase)
       ;; feed the cache
@@ -956,7 +956,7 @@
 		      (else ".")))
 	    (menv (or menv (with-access::clientc (hop-clientc) (macroe)
 			      (macroe)))))
-	 (with-trace 1 "hop-load-file"
+	 (with-trace 'read "hop-load-file"
 	    (trace-item "fname=" fname)
 	    (trace-item "path=" path)
 	    (trace-item "abase=" abase)
@@ -1182,7 +1182,7 @@
 	       (else
 		(cons 'error t))))))
    
-   (with-trace 2 "%hop-load"
+   (with-trace 'read "%hop-load"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)

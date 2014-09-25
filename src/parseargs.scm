@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jul 11 08:07:20 2014 (serrano)                */
+;*    Last change :  Tue Sep 23 09:03:03 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -34,7 +34,7 @@
    (let ((loadp #t)
 	 (mimep #t)
 	 (autoloadp #t)
-	 (p (hop-port))
+	 (p #f)
 	 (ep #unspecified)
 	 (dp #unspecified)
 	 (rc-file #unspecified)
@@ -164,7 +164,6 @@
 		 (set! clientc-inlining (<=fx l 2))
 		 (set! clientc-arity-check #t)
 		 (set! clientc-type-check #t)
-		 (bigloo-debug-module-set! (-fx l 1))
 		 (bigloo-debug-set! l)
 		 (hop-clientc-debug-unbound-set! l)))))
 	 (("--client-output" ?file (help "Client output port [stderr]"))
@@ -255,8 +254,13 @@
 	  (set! setuser user))
 	 (("--no-user" (help "Don't attempt to set the Hop process owner"))
 	  (hop-user-set! #f))
+	 (("--server" (help "Start the Web server (default)"))
+	  (hop-run-server-set! #t))
+	 (("--no-server" (help "Exit after loading command line files"))
+	  (hop-run-server-set! #f)
+	  (unless p (set! p 0)))
 	 
-	 ;; Paths
+	 ;; PATHS
 	 (section "Paths")
 	 ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
 	  (hop-path-set! (cons path (hop-path))))
@@ -305,7 +309,7 @@
 	  (set! files (cons else files))))
 
       ;; http port
-      (hop-port-set! p)
+      (hop-port-set! (or p (hop-port)))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
@@ -542,7 +546,7 @@
 (define (usage args-parse-usage)
    (print "Hop v" (hop-version))
    (print "usage: hop [options] ...")
-   (print "       hop [options] file.hop|file.hz ...")
+   (print "       hop [options] file.hop|file.hz|file.js ...")
    (args-parse-usage #f))
 
 ;*---------------------------------------------------------------------*/

@@ -253,6 +253,7 @@ fs.readFile = function(path, options, callback_) {
       else read();
     } else {
       // unknown size, just read until we don't get bytes.
+       console.error( "fs.push.1");
       buffers.push(buffer.slice(0, bytesRead));
       read();
     }
@@ -304,7 +305,13 @@ fs.readFileSync = function(path, options) {
   if (size === 0) {
     buffers = [];
   } else {
-    buffer = new Buffer(size);
+    var threw = true;
+    try {
+      buffer = new Buffer(size);
+      threw = false;
+    } finally {
+      if (threw) fs.closeSync(fd);
+    }
   }
 
   var done = false;
@@ -319,6 +326,7 @@ fs.readFileSync = function(path, options) {
         buffer = new Buffer(8192);
         var bytesRead = fs.readSync(fd, buffer, 0, 8192);
         if (bytesRead) {
+       console.error( "fs.push.2");
           buffers.push(buffer.slice(0, bytesRead));
         }
       }
@@ -455,10 +463,12 @@ fs.read = function(fd, buffer, offset, length, position, callback) {
   }
 
   function wrapper(err, bytesRead) {
+     console.error( "WRAPPER err=", err, " bytesRead=", bytesRead );
     // Retain a reference to buffer so that it can't be GC'ed too soon.
     callback && callback(err, bytesRead || 0, buffer);
   }
 
+   console.error( "fs.read offset=", offset,  " length=", length );
   binding.read(fd, buffer, offset, length, position, wrapper);
 };
 
@@ -1499,7 +1509,11 @@ fs.FileReadStream = fs.ReadStream; // support the legacy name
 
 ReadStream.prototype.open = function() {
   var self = this;
+
+   console.error( "ReadStream open path=", this.path );
   fs.open(this.path, this.flags, this.mode, function(er, fd) {
+     console.error( "ReadStream on open" );
+
     if (er) {
       if (self.autoClose) {
         self.destroy();
@@ -1511,11 +1525,14 @@ ReadStream.prototype.open = function() {
     self.fd = fd;
     self.emit('open', fd);
     // start the flow of data.
+     console.error( "ReadStream open... read...");
     self.read();
   });
 };
 
 ReadStream.prototype._read = function(n) {
+   console.error( "ReadStream.prototype.read n=", n, " fd=", this.fd );
+   
   if (typeof this.fd !== 'number')
     return this.once('open', function() {
       this._read(n);
@@ -1542,11 +1559,14 @@ ReadStream.prototype._read = function(n) {
 
   // already read everything we were supposed to read!
   // treat as EOF.
-  if (toRead <= 0)
+  if (toRead <= 0) {
+       console.error( "fs.push.3");
     return this.push(null);
+  }
 
   // the actual read.
   var self = this;
+   console.error( "fs.read ToRead=", toRead );
   fs.read(this.fd, pool, pool.used, toRead, this.pos, onread);
 
   // move the pool positions, and internal position for reading.
@@ -1555,6 +1575,7 @@ ReadStream.prototype._read = function(n) {
   pool.used += toRead;
 
   function onread(er, bytesRead) {
+     console.error( "on er=", er, " bytesRead=", bytesRead );
     if (er) {
       if (self.autoClose) {
         self.destroy();
@@ -1565,6 +1586,7 @@ ReadStream.prototype._read = function(n) {
       if (bytesRead > 0)
         b = thisPool.slice(start, start + bytesRead);
 
+       console.error( "fs.push.4");
       self.push(b);
     }
   }

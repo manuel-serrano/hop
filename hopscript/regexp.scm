@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Sep 14 10:14:09 2014 (serrano)                */
+;*    Last change :  Sun Sep 21 08:42:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -51,8 +51,8 @@
       (display (js-tostring (js-get o 'source %this) %this) op)
       (display "/" op)
       (when (js-totest (js-get o 'global %this)) (display "g" op))
-      (when (js-totest (js-get o 'multiline %this)) (display "m" op))
-      (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))))
+      (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
+      (when (js-totest (js-get o 'multiline %this)) (display "m" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -270,7 +270,11 @@
       :value (js-make-function %this
 		(lambda (this)
 		   (string-append "/"
-		      (js-tostring (js-get this 'source %this) %this) "/"))
+		      (js-tostring (js-get this 'source %this) %this) "/"
+		      (if (js-totest (js-get this 'global %this)) "g" "")
+		      (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
+		      (if (js-totest (js-get this 'multiline %this)) "m" "")))
+
 		0 'toString)
       :writable #t
       :configurable #t

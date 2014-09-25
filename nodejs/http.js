@@ -491,7 +491,7 @@ OutgoingMessage.prototype._send = function(data, encoding) {
   // This is a shameful hack to get the headers and first body chunk onto
   // the same packet. Future versions of Node are going to take care of
   // this at a lower level and in a more general way.
-   debug( "OutgoingMessage _send[" + data.toString( "ascii" ) + "]" );
+   debug( "OutgoingMessage _send [" + data.toString( "ascii" ) + "]" );
   if (!this._headerSent) {
     if (typeof data === 'string' &&
         encoding !== 'hex' &&
@@ -508,7 +508,10 @@ OutgoingMessage.prototype._send = function(data, encoding) {
 
 
 OutgoingMessage.prototype._writeRaw = function(data, encoding) {
-   debug( "OutgoingMessage _writeRaw [" + data.toString( "ascii" ) + "]" );
+   debug( "OutgoingMessage _writeRaw "
+	  + data.toString( "ascii" ).length
+	  + " [" + data.toString( "ascii" )
+	  + "]" );
   if (data.length === 0) {
     return true;
   }
@@ -543,7 +546,7 @@ OutgoingMessage.prototype._writeRaw = function(data, encoding) {
 
 
 OutgoingMessage.prototype._buffer = function(data, encoding) {
-   debug( "OutgoingMessage _buffer[" + data.toString( "ascii" ) + "]" );
+   debug( "OutgoingMessage _buffer [" + data.toString( "ascii" ) + "]" );
   this.output.push(data);
   this.outputEncodings.push(encoding);
 
@@ -651,7 +654,10 @@ OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
 
   // wait until the first body chunk, or close(), is sent to flush,
   // UNLESS we're sending Expect: 100-continue.
-  if (state.sentExpect) this._send('');
+  if (state.sentExpect) {
+     debug( "send.1" );
+     this._send('');
+  }
 };
 
 function storeHeader(self, state, field, value) {
@@ -866,9 +872,11 @@ OutgoingMessage.prototype.write = function(chunk, encoding) {
         encoding !== 'base64') {
       len = Buffer.byteLength(chunk, encoding);
       chunk = len.toString(16) + CRLF + chunk + CRLF;
+   debug( "send.2" );
       ret = this._send(chunk, encoding);
     } else if (Buffer.isBuffer(chunk)) {
       var buf = chunkify(chunk, '', '', false);
+   debug( "send.3" );
       ret = this._send(buf, encoding);
     } else {
       // Non-toString-friendly encoding.
@@ -877,11 +885,15 @@ OutgoingMessage.prototype.write = function(chunk, encoding) {
       else
         len = chunk.length;
 
+   debug( "send.4" );
       this._send(len.toString(16) + CRLF, 'ascii');
+   debug( "send.5" );
       this._send(chunk, encoding);
+   debug( "send.6" );
       ret = this._send(CRLF);
     }
   } else {
+   debug( "send.7" );
     ret = this._send(chunk, encoding);
   }
 
@@ -987,9 +999,11 @@ OutgoingMessage.prototype.end = function(data, encoding) {
 
   if (!hot) {
     if (this.chunkedEncoding) {
+   debug( "send.7" );
       ret = this._send('0\r\n' + this._trailer + '\r\n', 'ascii');
     } else {
       // Force a flush, HACK.
+   debug( "send.8" );
       ret = this._send('');
     }
   }
@@ -1586,7 +1600,7 @@ function socketOnData(d, start, end) {
   var req = this._httpMessage;
   var parser = this.parser;
    
-   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor );
+   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name + " " + #:current-thread() );
   var ret = parser.execute(d, start, end - start);
    debug( "--- socketOnData -> ret=" + ret );
   if (ret instanceof Error) {

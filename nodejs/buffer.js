@@ -196,7 +196,9 @@ function Buffer(subject, encoding, offset) {
 
     } else if (this.length > 0) {
       // Small buffer.
-      if (!pool || pool.length - pool.used < this.length) allocPool();
+      if (!pool || pool.length - pool.used < this.length) {
+	 allocPool();
+      }
       this.parent = pool;
       this.offset = pool.used;
       // Align on 8 byte boundary to avoid alignment issues on ARM.
@@ -240,7 +242,6 @@ function isArrayIsh(subject) {
 
 exports.SlowBuffer = SlowBuffer;
 exports.Buffer = Buffer;
-
 
 Buffer.isEncoding = function(encoding) {
   switch (encoding && encoding.toLowerCase()) {
