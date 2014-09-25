@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Tue Sep  2 14:19:23 2014 (serrano)                */
+/*    Last change :  Thu Sep 25 15:40:34 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Server side worker thread example                                */
@@ -19,7 +19,7 @@ var w = new Worker( "./slave.js" );
 w.onmessage = function( e ) {
    console.log( "received from the slave: ", e.data );
    w.terminate();
-   console.log( "master: ", bar.count( 1 ) );
+   console.log( "onmsg master: ", bar.count( 1 ) );
 }
 
 w.postMessage( "hello slave" );

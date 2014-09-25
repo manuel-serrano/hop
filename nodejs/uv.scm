@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Sep 24 07:44:38 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 15:12:56 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1516,8 +1516,8 @@
 (define (uvfile->int file::UvFile)
    (synchronize uvfiles-mutex
       (with-access::UvFile file (fd)
-	 (when (>fx fd (vector-length uvfiles))
-	    (let ((new (make-vector (*fx 2 (vector-length uvfiles)))))
+	 (when (>=fx fd (vector-length uvfiles))
+	    (let ((new (make-vector (*fx 2 fd))))
 	       (vector-copy! new 0 uvfiles)
 	       (set! uvfiles new)))
 	 (vector-set! uvfiles fd file)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 25 09:49:22 2014                          */
-/*    Last change :  Fri Apr 25 11:37:36 2014 (serrano)                */
+/*    Last change :  Thu Sep 25 15:27:34 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example of Bigloo/JS connection                               */
