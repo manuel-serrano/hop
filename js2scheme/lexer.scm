@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Sep 24 15:53:57 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 12:39:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -180,7 +180,7 @@
       ;; line comment
       ((:"//" (* (or (out "\n\xe2\r")
 		     (: "\xe2" (out "\x80"))
-		     (: "\xe2\x80" (out "\xa9\xa9")))))
+		     (: "\xe2\x80" (out "\xa8\xa9")))))
        (ignore))
       
       ;; multi-line comment on one line

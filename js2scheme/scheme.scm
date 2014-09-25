@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Sep 19 10:48:53 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 10:03:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -235,7 +235,7 @@
 			(js-new0 %this js-object)))
 		   (define %module (nodejs-module ,(basename path) ,path %this))
 		   ,@body
-		   (js-worker-terminate! %worker)
+		   (js-worker-terminate! %worker #f)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
 

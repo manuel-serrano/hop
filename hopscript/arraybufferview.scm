@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Sep 25 08:56:14 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 10:16:36 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -153,7 +153,6 @@
 		    buf::JsArrayBuffer off::uint32 len::uint32)
 	    (with-access::JsTypedArray this (buffer %data length byteoffset bpe)
 	       (with-access::JsArrayBuffer buf (data)
-		  [assert (data) (u8vector? data)]
 		  (let ((vlen (u8vector-length data)))
 		     (set! buffer buf)
 		     (set! %data data)
@@ -237,7 +236,6 @@
 			  #u32:0 len))))
 	       ((isa? (car items) JsArrayBuffer)
 		(with-access::JsArrayBuffer (car items) (data)
-		   [assert (data) (u8vector? data)]
 		   (let ((len (u8vector-length data)))
 		      (cond
 			 ((or (null? (cdr items)) (not (integer? (cadr items))))
@@ -444,7 +442,6 @@
 		 (instantiate::JsValueDescriptor
 		    (name (js-toname i %this))
 		    (value (with-access::JsArrayBuffer buffer (data)
-			      [assert (data) (u8vector? data)]
 			      (vref data (uint32->fixnum (+u32 byteoffset i)))))
 		    (writable #t)
 		    (enumerable #t)
@@ -468,7 +465,6 @@
 	     (call-next-method))
 	    ((<uint32 i length)
 	     (with-access::JsArrayBuffer buffer (data)
-		[assert (data) (u8vector? data)]
 		(vref data (uint32->fixnum (+u32 byteoffset i)))))
 	    (else
 	     (call-next-method))))))
@@ -514,7 +510,6 @@
 	     (js-put-array! o (js-toname p %this) v))
 	    ((<u32 i length)
 	     (with-access::JsArrayBuffer buffer (data)
-		[assert (data) (u8vector? data)]
 		(vset data (uint32->fixnum (+u32 byteoffset i)) v))
 	     v)
 	    (else
@@ -545,7 +540,6 @@
 	     (call-next-method))
 	    ((<uint32 i length)
 	     (with-access::JsArrayBuffer buffer (data)
-		[assert (data) (u8vector? data)]
 		(instantiate::JsValueDescriptor
 		   (name (js-toname p %this))
 		   (value (vref data (uint32->fixnum (+u32 byteoffset i))))
@@ -577,7 +571,6 @@
 		    buf::JsArrayBuffer off::uint32 len::uint32)
 	    (with-access::JsDataView this (buffer %data byteoffset)
 	       (with-access::JsArrayBuffer buf (data)
-		  [assert (data) (u8vector? data)]
 		  (let ((vlen (u8vector-length data)))
 		     (set! buffer buf)
 		     (set! %data data)
@@ -708,7 +701,6 @@
 		(js-raise-error %this "Wrong number of argument" 0))
 	       ((isa? (car items) JsArrayBuffer)
 		(with-access::JsArrayBuffer (car items) (data)
-		   [assert (data) (u8vector? data)]
 		   (let ((len (u8vector-length data)))
 		      (cond
 			 ((or (null? (cdr items)) (not (integer? (cadr items))))
@@ -773,8 +765,6 @@
 	 (define (js-dataview-get this::JsDataView offset lendian get)
 	    (let ((off (uint32->fixnum (js-touint32 offset %this))))
 	       (with-access::JsDataView this (buffer %data)
-		  (with-access::JsArrayBuffer buffer (data)
-		     [assert (%data data) (eq? %data data)])
 		  (let ((len (u8vector-length %data)))
 		     (cond
 			((<fx off 0)
@@ -787,8 +777,6 @@
 	 (define (js-dataview-set this::JsDataView offset value lendian set)
 	    (let ((off (uint32->fixnum (js-touint32 offset %this))))
 	       (with-access::JsDataView this (buffer %data)
-		  (with-access::JsArrayBuffer buffer (data)
-		     [assert (%data data) (eq? %data data)])
 		  (let ((len (u8vector-length %data)))
 		     (cond
 			((<fx off 0)
@@ -900,8 +888,6 @@
 
 	 (define (js-getFloat32 this::JsDataView offset lendian)
 	    (with-access::JsDataView this (buffer %data)
-	       (with-access::JsArrayBuffer buffer (data)
-		  [assert (data %data) (eq? %data data)])
 	       (let ((len (u8vector-length %data))
 		     (lendian (js-totest lendian)))
 		  (cond
@@ -920,8 +906,6 @@
 
 	 (define (js-setFloat32 this::JsDataView offset value lendian)
 	    (with-access::JsDataView this (buffer %data)
-	       (with-access::JsArrayBuffer buffer (data)
-		  [assert (data %data) (eq? %data data)])
 	       (let* ((len (u8vector-length %data))
 		      (lendian (js-totest lendian))
 		      (value (js-tonumber value %this))
@@ -942,8 +926,6 @@
 		      
 	 (define (js-getFloat64 this::JsDataView offset lendian)
 	    (with-access::JsDataView this (buffer %data)
-	       (with-access::JsArrayBuffer buffer (data)
-		  [assert (data %data) (eq? %data data)])
 	       (let ((len (u8vector-length %data))
 		     (lendian (js-totest lendian)))
 		  (cond
@@ -966,8 +948,6 @@
 
 	 (define (js-setFloat64 this::JsDataView offset value lendian)
 	    (with-access::JsDataView this (buffer %data)
-	       (with-access::JsArrayBuffer buffer (data)
-		  [assert (data %data) (eq? %data data)])
 	       (let ((len (u8vector-length %data))
 		     (lendian (js-totest lendian))
 		     (value (js-tonumber value %this))

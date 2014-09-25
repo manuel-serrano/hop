@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed Sep 24 07:44:51 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 10:17:35 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -242,7 +242,6 @@
 	  (exn %this "Already parsing a buffer"))
 	 ((isa? buf JsArrayBuffer)
 	  (with-access::JsArrayBuffer buf (data)
-	     [assert (data) (string? data)]
 	     (execute data 0 (string-length data))))
 	 ((isa? buf JsTypedArray)
 	  (with-access::JsTypedArray buf (%data byteoffset length)
