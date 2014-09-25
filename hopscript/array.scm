@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Sep 25 08:57:13 2014 (serrano)                */
+;*    Last change :  Thu Sep 25 13:59:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -445,7 +445,7 @@
 	     (js-put! o 'length 0 #f %this)
 	     (js-undefined))
 	    ((isa? o JsArray)
-	     (with-access::JsArray o (vec inline)
+	     (with-access::JsArray o (vec)
 		(if (<=u32 len (u32vlen vec))
 		    ;; fast path
 		    (vector-shift! o vec (uint32->fixnum len))
@@ -1714,7 +1714,7 @@
 	     (if (js-isindex? index)
 		 ;; 4
 		 (with-access::JsValueDescriptor oldlendesc ((oldlen value) writable)
-		    (with-access::JsArray a (vec)
+		    (with-access::JsArray a (vec cmap)
 		       (if (and (>=uint32 index oldlen) (not (eq? writable #t)))
 			   ;; 4.b
 			   (reject "wrong index ~a")
@@ -1724,7 +1724,7 @@
 					;; fast access, inline vector
 					(js-define-own-property-array
 					   a index desc #f))
-				       ((expandable-array index (u32vlen vec))
+				       ((and cmap (expandable-array index (u32vlen vec)))
 					;; expand the vector
 					=>
 					(lambda (len)
