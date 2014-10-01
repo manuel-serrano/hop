@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Aug  5 08:40:17 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 15:40:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -178,12 +178,16 @@
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
 		    (loc `(at ,(input-port-name input-port) 0))
+		    (endloc `(at ,(input-port-name input-port) 0))
 		    (nodes '()))
-		 (let ((nodes (reverse! rev-ses)))
+		 (let* ((fnode (car rev-ses))
+			(nodes (reverse! rev-ses)))
 		    (with-access::J2SNode (car nodes) (loc)
-		       (instantiate::J2SBlock
-			  (loc loc)
-			  (nodes nodes)))))
+		       (with-access::J2SNode fnode ((endloc loc))
+			  (instantiate::J2SBlock
+			     (loc loc)
+			     (endloc endloc)
+			     (nodes nodes))))))
 	     (loop (cons (source-element) rev-ses)))))
    
    (define (source-element)
@@ -246,10 +250,11 @@
 	 (let loop ((rev-stats '()))
 	    (case (peek-token-type)
 	       ((RBRACE)
-		(consume-any!)
-		(instantiate::J2SBlock
-		   (loc (token-loc token))
-		   (nodes (reverse! rev-stats))))
+		(let ((etoken (consume-any!)))
+		   (instantiate::J2SBlock
+		      (loc (token-loc token))
+		      (endloc (token-loc etoken))
+		      (nodes (reverse! rev-stats)))))
 	       (else
 		(loop (cons (statement) rev-stats)))))))
    
@@ -518,7 +523,7 @@
       (let ((token (consume-token! 'case)))
 	 (let ((expr (expression #f)))
 	    (consume! ':)
-	    (let ((body (switch-clause-statements)))
+	    (let ((body (switch-clause-statements (token-loc token))))
 	       (instantiate::J2SCase
 		  (loc (token-loc token))
 		  (expr expr)
@@ -530,14 +535,15 @@
 	 (instantiate::J2SDefault
 	    (loc (token-loc token))
 	    (expr (class-nil J2SExpr))
-	    (body (switch-clause-statements)))))
+	    (body (switch-clause-statements (token-loc token))))))
    
-   (define (switch-clause-statements)
+   (define (switch-clause-statements loc)
       (let loop ((rev-stats '()))
 	 (case (peek-token-type)
 	    ((RBRACE EOF ERROR default case)
 	     (instantiate::J2SBlock
-		(loc (token-loc (peek-token)))
+		(loc loc)
+		(endloc (token-loc (peek-token)))
 		(nodes (reverse! rev-stats))))
 	    (else
 	     (loop (cons (statement) rev-stats))))))
@@ -770,6 +776,7 @@
 		    (register #f)
 		    (body (instantiate::J2SBlock
 			     (loc loc)
+			     (endloc loc)
 			     (nodes (list
 				       (instantiate::J2SPragma
 					  (loc loc)
@@ -821,10 +828,10 @@
 	 (let ((loc (current-loc)))
 	    (let loop ((rev-ses '()))
 	       (if (eq? (peek-token-type) 'RBRACE)
-		   (begin
-		      (consume-any!)
+		   (let ((etoken (consume-any!)))
 		      (instantiate::J2SBlock
 			 (loc (token-loc token))
+			 (endloc (token-loc etoken))
 			 (nodes (reverse! rev-ses))))
 		   (loop (cons (source-element) rev-ses)))))))
    
@@ -1403,8 +1410,16 @@
 			   (loc (token-loc token))
 			   (val (symbol->string (cdr token)))))))
 		 (parse-token-error "Wrong property name" (peek-token))))))
-
-      (define (property-accessor tokname name)
+      
+      (define (find-prop name props)
+	 (find (lambda (prop)
+		  (when (isa? prop J2SAccessorPropertyInit)
+		     (with-access::J2SAccessorPropertyInit prop ((pname name))
+			(with-access::J2SString pname (val)
+			   (string=? val name)))))
+	    props))
+      
+      (define (property-accessor tokname name props)
 	 (let* ((id (consume-any!))
 		(params (params))
 		(body (fun-body))
@@ -1413,31 +1428,36 @@
 			(loc (token-loc tokname))
 			(params params)
 			(body body)))
-		(prop (instantiate::J2SAccessorPropertyInit
-			 (loc (token-loc tokname))
-			 (name (instantiate::J2SString
-				  (loc (token-loc id))
-				  (val (symbol->string (cdr id))))))))
+		(oprop (find-prop (symbol->string! (cdr id)) props))
+		(prop (or oprop
+			  (instantiate::J2SAccessorPropertyInit
+			     (loc (token-loc tokname))
+			     (get (instantiate::J2SUndefined
+				     (loc (token-loc id))))
+			     (set (instantiate::J2SUndefined
+				     (loc (token-loc id))))
+			     (name (instantiate::J2SString
+				      (loc (token-loc id))
+				      (val (symbol->string (cdr id)))))))))
 	    (with-access::J2SAccessorPropertyInit prop (get set)
 	       (if (eq? name 'get)
-		   (begin
-		      (set! get fun)
-		      (set! set (instantiate::J2SUndefined
-				   (loc (token-loc id)))))
-		   (begin
-		      (set! set fun)
-		      (set! get (instantiate::J2SUndefined
-				   (loc (token-loc id))))))
-	       prop)))
+		   (if (isa? get J2SUndefined)
+		       (set! get fun)
+		       (parse-token-error "Wrong property" (peek-token)))
+		   (if (isa? set J2SUndefined)
+		       (set! set fun)
+		       (parse-token-error "Wrong property" (peek-token))))
+	       ;; return a prop only if new
+	       (unless oprop prop))))
       
-      (define (property-init)
+      (define (property-init props)
 	 (let* ((tokname (property-name))
 		(name (when (pair? tokname) (cdr tokname))))
 	    (case name
 	       ((get set)
 		(case (peek-token-type)
 		   ((ID RESERVED)
-		    (property-accessor tokname name))
+		    (property-accessor tokname name props))
 		   ((:)
 		    (let* ((ignore (consume-any!))
 			   (val (assig-expr #f)))
@@ -1450,7 +1470,7 @@
 			     (val val)))))
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
-			(property-accessor tokname name)
+			(property-accessor tokname name props)
 			(parse-token-error "Wrong property name" (peek-token))))))
 	       (else
 		(let* ((ignore (consume! ':))
@@ -1467,7 +1487,7 @@
 	     (instantiate::J2SObjInit
 		(loc (token-loc token))
 		(inits '())))
-	  (let loop ((rev-props (list (property-init))))
+	  (let loop ((rev-props (list (property-init '()))))
 	     (if (eq? (peek-token-type) 'RBRACE)
 		 (let ((token (consume-any!)))
 		    (instantiate::J2SObjInit
@@ -1479,7 +1499,11 @@
 		    ;; JS syntax test case uses it (15.2.3.6-4-293-3.js)
 		    (if (eq? (peek-token-type) 'RBRACE)
 			(loop rev-props)
-			(loop (cons (property-init) rev-props))))))))
+			(let ((newp (property-init rev-props)))
+			   ;; property-init returns a new props except
+			   ;; for accessor properties which might set
+			   ;; a field of an already existing prop
+			   (loop (if newp (cons newp rev-props) rev-props)))))))))
 
    (define (abspath)
       (let ((path (input-port-name input-port)))
@@ -1493,10 +1517,11 @@
    
    (define (program dp)
       (set! dollarp dp)
-      (with-access::J2SBlock (source-elements) (loc nodes name)
+      (with-access::J2SBlock (source-elements) (loc endloc nodes name)
 	 (let ((module (javascript-module-nodes nodes)))
 	    (instantiate::J2SProgram
 	       (loc loc)
+	       (endloc endloc)
 	       (path (abspath))
 	       (module module)
 	       (path (config-get conf :filename (abspath)))
@@ -1507,9 +1532,10 @@
    
    (define (eval)
       (set! dollarp #f)
-      (with-access::J2SBlock (source-elements) (loc nodes)
+      (with-access::J2SBlock (source-elements) (loc endloc nodes)
 	 (instantiate::J2SProgram
 	    (loc loc)
+	    (endloc endloc)
 	    (path (config-get conf :filename (abspath)))
 	    (name (config-get conf :module-name #f))
 	    (mode (nodes-mode nodes))
@@ -1521,6 +1547,7 @@
 	     (with-access::J2SNode el (loc)
 		(instantiate::J2SProgram
 		   (loc loc)
+		   (endloc loc)
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sun Sep 21 19:03:18 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 18:06:14 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -129,10 +129,26 @@
       (nodejs-lchmod %worker %this path mod cb))
    
    (define (readdir this path cb)
-      (let ((r (js-vector->jsarray (list->vector (directory->path-list path))  %this)))
-	 (if (isa? cb JsFunction)
-	     (nodejs-async-invoke %worker %this this cb r)
-	     r)))
+      (let ((l (directory->list path)))
+	 (if (and (null? l) (not (directory? path)))
+	     (let ((exn (with-access::JsGlobalObject %this (js-error)
+			   (let ((obj (js-new %this js-error
+					 (format "readdir: cannot read dir ~a"
+					    path))))
+			      (js-put! obj 'errno 20 #f %this)
+			      (js-put! obj 'code "ENOTDIR" #f %this)
+			      obj))))
+		(if (isa? cb JsFunction)
+		    (js-worker-push-thunk! %worker
+		       (lambda ()
+			  (js-call2 %this cb this exn (js-undefined))))
+		    (js-raise exn)))
+	     (let ((r (js-vector->jsarray (list->vector l)  %this)))
+		(if (isa? cb JsFunction)
+		    (js-worker-push-thunk! %worker
+		       (lambda ()
+			  (js-call2 %this cb this #f r)))
+		    r)))))
 
    (define (fstat this fd callback)
       (nodejs-fstat %worker %this fd callback (get-process-fs-stats %this)))
@@ -182,13 +198,19 @@
    (define (fsync this fd callback)
       (nodejs-fsync %worker %this fd callback))
    
-   (define (write this fd buffer offset length position)
-      (unless (= position 0)
-	 (set-output-port-position! fd position))
-      (display-substring buffer offset (+ offset length) fd))
+   (define (write this fd buffer offset length position callback)
+      (nodejs-write %worker %this fd buffer offset length
+	 (if (eq? position (js-undefined))
+	     -1
+	     (int32->fixnum (js-toint32 position %this)))
+	 callback))
+;*       (tprint "write fd=" fd " offset=" offset " length=" length    */
+;* 	 " position=" position)                                        */
+;*       (unless (= position 0)                                        */
+;* 	 (set-output-port-position! fd position))                      */
+;*       (display-substring buffer offset (+ offset length) fd))       */
    
    (define (read this fd buffer offset length position callback)
-      (tprint "read callback=" callback)
       (nodejs-read %worker %this fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))

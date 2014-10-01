@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Sep 19 10:34:29 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 09:50:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -191,11 +191,13 @@
 		(nwenv (cons arguments (append decls params wenv))))
 	    (if (pair? decls)
 		(set! body
-		   (instantiate::J2SBlock
-		      (loc loc)
-		      (nodes (append
-				(bind-decls! decls nenv fmode #f withs wenv)
-				(list (walk! body nenv fmode withs nwenv))))))
+		   (with-access::J2SBlock body (endloc)
+		      (instantiate::J2SBlock
+			 (loc loc)
+			 (endloc endloc)
+			 (nodes (append
+				   (bind-decls! decls nenv fmode #f withs wenv)
+				   (list (walk! body nenv fmode withs nwenv)))))))
 		(set! body (walk! body nenv fmode withs nwenv)))
 	    (with-access::J2SDeclArguments arguments (use)
 	       (when (>fx use 0)

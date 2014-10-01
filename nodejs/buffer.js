@@ -111,7 +111,6 @@ SlowBuffer.prototype.write = function(string, offset, length, encoding) {
     }
   }
   encoding = String(encoding || 'utf8').toLowerCase();
-
   switch (encoding) {
     case 'hex':
       return this.hexWrite(string, offset, length);
@@ -157,7 +156,6 @@ function Buffer(subject, encoding, offset) {
   if (!(this instanceof Buffer)) {
     return new Buffer(subject, encoding, offset);
   }
-
   var type;
 
   // Are we slicing?
@@ -188,7 +186,6 @@ function Buffer(subject, encoding, offset) {
         throw new TypeError('First argument needs to be a number, ' +
                             'array or string.');
     }
-
     if (this.length > Buffer.poolSize) {
       // Big buffer, just alloc one.
       this.parent = new SlowBuffer(this.length);
@@ -745,11 +742,16 @@ Buffer.prototype.writeUInt32LE = function(value, offset, noAssert) {
 
 
 Buffer.prototype.writeUInt32BE = function(value, offset, noAssert) {
+#:tprint( "--------------- writeUInt32 value=",  value, " offset=", offset );
   if (!noAssert)
     checkInt(this, value, offset, 4, 0xffffffff, 0);
+   #:tprint( "writeUInt32[ offset ]=", (value >>> 24), " ", value );
   this[offset] = (value >>> 24);
+   #:tprint( "writeUInt32[ offset+1 ]=", (value >>> 16) );
   this[offset + 1] = (value >>> 16);
+   #:tprint( "writeUInt32[ offset+2 ]=", (value >>> 8) );
   this[offset + 2] = (value >>> 8);
+#:tprint( "writeUInt32[ offset+3 ]=", value, " ", #:typeof( this ) );
   this[offset + 3] = value;
 };
 

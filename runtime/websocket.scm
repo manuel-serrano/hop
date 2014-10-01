@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Aug 27 15:45:26 2014 (serrano)                */
+;*    Last change :  Tue Sep 30 08:06:04 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -216,7 +216,7 @@
 	 (string-set! buf o (integer->char b0))))
    
    (define (webwocket-hixie-protocol-76 key1 key2 req)
-      (with-trace (+ (websocket-debug-level) 2) "websocket-protocol76"
+      (with-trace 'websocket "websocket-protocol76"
 	 (trace-item "key1=" key1)
 	 (trace-item "key2=" key2)
 	 ;; Handshake known as draft-hixie-thewebsocketprotocol-76
@@ -265,15 +265,15 @@
 	 (start-line "HTTP/1.1 101 Web Socket Protocol Handshake")
 	 (location (websocket-server-location (get-header header host: #f)))
 	 (origin (get-header header origin: "localhost"))
-	 (protocol protocol)
+	 (protocol subprotocol)
 	 (connection 'Upgrade)
 	 (sec (websocket-sec-challenge req header))
 	 (onconnect onconnect)))
    
    (define (websocket-hybi-protocol header subprotocol req)
       ;; http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-08
-      (with-trace (+ (websocket-debug-level) 3) "websocket-hybi-protocol"
-	 (trace-item "header=" header)
+      (with-trace 'websocket "websocket-hybi-protocol"
+	 (trace-item "header=" header " subprotocol=" subprotocol)
 	 (let ((key (get-header header sec-websocket-key: #f)))
 	    (instantiate::http-response-websocket
 	       (request req)
@@ -286,17 +286,17 @@
    (with-access::http-request req (header connection socket)
       (let* ((host (get-header header host: #f))
 	     (version (get-header header sec-websocket-version: "-1"))
-	     (clientprotocol (get-header header Sec-WebSocket-Protocol: #f))
+	     (clientprotocol (get-header header sec-websocket-protocol: #f))
 	     (subprotocol (websocket-subprotocol protocol clientprotocol)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (with-trace (websocket-debug-level) "ws-register"
+	 (with-trace 'websocket "ws-register"
 	    (trace-item "version="
 	       version)
 	    (trace-item "origin="
 	       (get-header header origin: "localhost"))
 	    (trace-item "Sec-WebSocket-Protocol="
-	       (get-header header Sec-WebSocket-Protocol: #f))
+	       (get-header header sec-websocket-protocol: #f))
 	    (let ((v (string->integer version)))
 	       (cond
 		  ((and (>=fx v 7) (<=fx v 25))
@@ -314,7 +314,7 @@
 ;*    uses a dedicated class instead of a generic response-string.     */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-websocket socket)
-   (with-trace 3 "http-response::http-response-websocket"
+   (with-trace 'websocket "http-response::http-response-websocket"
       (with-access::http-response-websocket r (start-line
 					       connection
 					       origin
@@ -324,6 +324,7 @@
 					       sec
 					       accept
 					       onconnect)
+	 (trace-item "sec=" sec " protocol=" protocol " accept=" accept)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (http-write-line-string p start-line)
@@ -360,7 +361,7 @@
 ;*    http-response ::http-response-proxy-websocket ...                */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-proxy-websocket socket)
-   (with-trace 3 "http-response::http-response-proxy-websocket"
+   (with-trace 'websocket "http-response::http-response-proxy-websocket"
       (cond-expand
 	 (enable-threads
 	    (thread-start!
@@ -428,7 +429,7 @@
 ;*    websocket-tunnel ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (websocket-tunnel resp socket)
-   (with-trace (websocket-debug-level) "ws-tunnel"
+   (with-trace 'websocket "ws-tunnel"
       (with-access::http-response-proxy-websocket resp (request remote-timeout)
 	 (with-access::http-request request (header connection-timeout path timeout)
 	    (let* ((host (get-header header host: "localhost"))
@@ -734,71 +735,56 @@
 ;*---------------------------------------------------------------------*/
 (define (websocket-send-frame payload::bstring port::output-port
 	   #!key (opcode 0) (final #t) (mask #t))
-;*    (call-with-output-file "/tmp/BAD"                                */
-;*       (lambda (out)                                                 */
-;* 	 (websocket-send-frame-new payload out                         */
-;* 	    :opcode opcode :final final :mask mask)))                  */
-;*    (call-with-output-file "/tmp/GOOD"                               */
-;*       (lambda (out)                                                 */
-;* 	 (write-frame (instantiate::websocket-frame                    */
-;* 			 (kind 'text)                                  */
-;* 			 (final? #t)                                   */
-;* 			 (payload payload))                            */
-;* 	    out)))                                                     */
-;*    (websocket-send-frame-new payload port                           */
-;*       :opcode opcode :final final :mask mask))                      */
-;*                                                                     */
-;* (define (websocket-send-frame-new payload::bstring port::output-port */
-;* 	   #!key (opcode 0) (final #t) (mask #t))                      */
-   ;; byte 0, FIN + opcode
-   (write-byte (if final (bit-or #x80 opcode) opcode) port)
-   ;; byte 1, Mask + payload len (7)
-   (let ((len (string-length payload)))
-      ;; the length
-      (cond
-	 ((<=fx len 125)
-	  ;; 1 byte length
-	  (write-byte (if mask (bit-or #x80 len) len) port))
-	 ((<=fx len 65535)
-	  ;; 2 bytes length
-	  (write-byte (if mask (bit-or #x80 126) 126) port)
-	  (write-byte (quotientfx len 256) port)
-	  (write-byte (remainderfx len 256) port))
-	 (else
-	  ;; 8 bytes length
-	  (write-byte (if mask (bit-or #x80 127) 127) port)
-	  (let loop ((i 0)
-		     (len len))
-	     (if (=fx i 8)
-		 (write-byte len port)
-		 (begin
-		    (loop (+fx i 1) (quotientfx len 256))
-		    (write-byte (remainderfx len 256) port))))))
-      (if mask
-	  ;; masked payload data
-;* 	  (let ((key (vector (random 256) (random 256) (random 256) (random 256)))) */
-	  (let ((key (vector 1 2 3 4)))
-	     ;; key
-	     (write-byte (vector-ref-ur key 0) port)
-	     (write-byte (vector-ref-ur key 1) port)
-	     (write-byte (vector-ref-ur key 2) port)
-	     (write-byte (vector-ref-ur key 3) port)
-	     ;; payload
-	     (let loop ((i 0))
-		(when (<fx i len)
-		   (let* ((end (-fx len i))
-			  (stop (if (>=fx end 4) 4 end)))
-		      (let liip ((j 0))
-			 (if (<fx j stop)
-			     (let ((c (char->integer
-					 (string-ref-ur payload (+fx i j))))
-				   (k (vector-ref-ur key j)))
-				(write-byte (bit-xor c k) port)
-				(liip (+fx j 1)))
-			     (loop (+fx i 4))))))))
-	  ;; unmasked payload data
-	  (display-string payload port)))
-   (flush-output-port port))
+   (with-trace 'websocket "websocket-send-frame"
+      (trace-item "opcode=" opcode " final=" final " mask=" mask)
+      ;; byte 0, FIN + opcode
+      (write-byte (if final (bit-or #x80 opcode) opcode) port)
+      ;; byte 1, Mask + payload len (7)
+      (let ((len (string-length payload)))
+	 ;; the length
+	 (cond
+	    ((<=fx len 125)
+	     ;; 1 byte length
+	     (write-byte (if mask (bit-or #x80 len) len) port))
+	    ((<=fx len 65535)
+	     ;; 2 bytes length
+	     (write-byte (if mask (bit-or #x80 126) 126) port)
+	     (write-byte (quotientfx len 256) port)
+	     (write-byte (remainderfx len 256) port))
+	    (else
+	     ;; 8 bytes length
+	     (write-byte (if mask (bit-or #x80 127) 127) port)
+	     (let loop ((i 0)
+			(len len))
+		(if (=fx i 8)
+		    (write-byte len port)
+		    (begin
+		       (loop (+fx i 1) (quotientfx len 256))
+		       (write-byte (remainderfx len 256) port))))))
+	 (if mask
+	     ;; masked payload data
+	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+		;; key
+		(write-byte (vector-ref-ur key 0) port)
+		(write-byte (vector-ref-ur key 1) port)
+		(write-byte (vector-ref-ur key 2) port)
+		(write-byte (vector-ref-ur key 3) port)
+		;; payload
+		(let loop ((i 0))
+		   (when (<fx i len)
+		      (let* ((end (-fx len i))
+			     (stop (if (>=fx end 4) 4 end)))
+			 (let liip ((j 0))
+			    (if (<fx j stop)
+				(let ((c (char->integer
+					    (string-ref-ur payload (+fx i j))))
+				      (k (vector-ref-ur key j)))
+				   (write-byte (bit-xor c k) port)
+				   (liip (+fx j 1)))
+				(loop (+fx i 4))))))))
+	     ;; unmasked payload data
+	     (display-string payload port)))
+      (flush-output-port port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    write-frame ...                                                  */
@@ -885,7 +871,9 @@
 (define (websocket-send sock::socket obj #!key (mask #t) (final #t))
    (cond
       ((string? obj)
-       (websocket-send-text sock obj :mask mask :final final))))
+       (websocket-send-text sock obj :mask mask :final final))
+      (else
+       (error "websocket-send" "obj type not implemented" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-read ...                                               */

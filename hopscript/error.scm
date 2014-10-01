@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 24 17:50:40 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 15:56:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -94,10 +94,10 @@
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
 	       (instantiate::JsError
-		  (name (symbol->string! name))
+		  (name name)
 		  (__proto__ (js-get constructor 'prototype %this))
 		  (stack '()))))
-
+	 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11
 	 (define (js-error-construct this::JsError . args)
 	    (with-access::JsError this (msg fname location name)
@@ -116,7 +116,7 @@
 		  :value name
 		  :enumerable #f))
 	    this)
-   
+	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
@@ -128,7 +128,7 @@
 		       (if (isa? o JsError)
 			   (with-access::JsError o (msg) msg)
 			   (js-undefined)))
-		       1 'message)
+		    1 'message)
 	    :enumerable #f
 	    :configurable #t)
 	 (js-bind! %this js-error-prototype 'name
@@ -219,11 +219,22 @@
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (js-put! this 'stack (cddr (get-trace-stack)) #f %this)
+			 (let ((stk (get-trace-stack)))
+			    (match-case stk
+			       ((?- ?- . ?rest)
+				(js-put! this 'stack
+				   (call-with-output-string
+				      (lambda (op)
+					 (display "Trace: " op)
+					 (display (js-get this 'message %this)
+					    op)
+					 (newline op)
+					 (display-trace-stack
+					    (get-trace-stack) op 2)))
+				   #f %this))))
 			 this)
 		      2 'captureStackTrace)
 	    :enumerable #f)
-
 	 js-error)))
 
 ;*---------------------------------------------------------------------*/

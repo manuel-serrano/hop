@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Aug 27 15:35:05 2014 (serrano)                */
+;*    Last change :  Tue Sep 30 08:15:29 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -134,9 +134,9 @@
 				 (let ((proto (js-get opt 'protocol %this)))
 				    (cond
 				       ((string? proto)
-					proto)
+					(list proto))
 				       ((isa? proto JsArray)
-					(jsarray->list proto %this))))))
+					(map car (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
@@ -205,7 +205,7 @@
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
 		      (with-access::websocket ws (%socket)
-			 (websocket-send %socket value))))
+			 (websocket-send %socket value :mask #f))))
 		1 'send))
    ;; addEventListener
    (js-bind! %this obj 'addEventListener
@@ -310,7 +310,7 @@
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocketClient this (socket)
-		      (websocket-send socket value)))
+		      (websocket-send socket value :mask #f)))
 		1 'send))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener

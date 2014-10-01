@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Sep 25 09:30:50 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 17:54:15 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -87,14 +87,11 @@
 		  (vref (lambda (buf o)
 			   (char->integer (string-ref buf o))))
 		  (vset (lambda (buf o v)
-			   (let ((val (js-tointeger v %this)))
+			   (let ((w (bit-andu32 #u32:255
+				       (js-touint32 v %this))))
 			      (string-set! buf o
-				 (integer->char
-				    (uint8->fixnum
-				       (fixnum->uint8
-					  (if (flonum? val)
-					      (flonum->fixnum val)
-					      val))))))))
+				 (integer->char (uint32->fixnum w)))
+			      v)))
 		  (__proto__ proto)))))
       %module))
 
@@ -315,7 +312,7 @@
 		(cond
 		   ((>fl n (exptfl 2. 32.))
 		    (js-raise-type-error %this "Bad argument" a0))
-		   ((>fl n (fixnum->flonum #x3fffffff))
+		   ((>fl n 1073741823.0) ;; #x3fffffff
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)
@@ -352,6 +349,121 @@
 	 :alloc (lambda (o) #unspecified)
 	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto))
+
+   (define (check-offset data offset fxoffset sizeof action)
+      ;; the error messages (including the case) are imposed by node_buffer.cc
+      (cond
+	 ((or (not (integer? offset)) (< offset 0) (<fx fxoffset 0))
+	  (js-raise-type-error %this "offset is not uint" offset))
+	 ((and (flonum? offset) (>fl offset (exptfl 2. 31.)))
+	  (js-raise-type-error %this "Trying to ~a beyond buffer length"
+	     action))
+	 ((>=fx (->fixnum offset) (-fx (string-length data) sizeof))
+	  (js-raise-range-error %this
+	     "Trying to ~s beyond buffer length" action))))
+
+   (define (byte-ref str i)
+      (fixnum->uint8 (char->integer (string-ref-ur str i))))
+
+   (define (byte-set! str i v)
+      (string-set! str i (integer->char (uint8->fixnum v))))
+
+   (define (get-data obj)
+      (cond
+	 ((isa? obj JsSlowBuffer)
+	  (with-access::JsSlowBuffer obj (data) data))
+	 ((isa? obj JsTypedArray)
+	  (with-access::JsTypedArray obj (%data) %data))
+	 (else
+	  (js-raise-type-error obj "not a buffer" #f))))
+   
+   (define (read-float this offset noassert le)
+      (let ((data (get-data this))
+	    (i (->fixnum offset)))
+	 (unless (js-totest noassert) (check-offset data offset i 4 "read"))
+	 (let ((buf (make-u8vector 4)))
+	    (if le
+		(begin
+		   (u8vector-set! buf 0 (byte-ref data i))
+		   (u8vector-set! buf 1 (byte-ref data (+fx i 1)))
+		   (u8vector-set! buf 2 (byte-ref data (+fx i 2)))
+		   (u8vector-set! buf 3 (byte-ref data (+fx i 3))))
+		(begin
+		   (u8vector-set! buf 3 (byte-ref data i))
+		   (u8vector-set! buf 2 (byte-ref data (+fx i 1)))
+		   (u8vector-set! buf 1 (byte-ref data (+fx i 2)))
+		   (u8vector-set! buf 0 (byte-ref data (+fx i 3)))))
+	    ($f32/u8vector-ref buf 0))))
+
+   (define (read-double this offset noassert le)
+      (let ((data (get-data this))
+	    (i (->fixnum offset)))
+	 (unless (js-totest noassert) (check-offset data offset i 8 "read"))
+	 (let ((buf (make-u8vector 8)))
+	    (if le
+		(begin
+		   (u8vector-set! buf 0 (byte-ref data i))
+		   (u8vector-set! buf 1 (byte-ref data (+fx i 1)))
+		   (u8vector-set! buf 2 (byte-ref data (+fx i 2)))
+		   (u8vector-set! buf 3 (byte-ref data (+fx i 3)))
+		   (u8vector-set! buf 4 (byte-ref data (+fx i 4)))
+		   (u8vector-set! buf 5 (byte-ref data (+fx i 5)))
+		   (u8vector-set! buf 6 (byte-ref data (+fx i 6)))
+		   (u8vector-set! buf 7 (byte-ref data (+fx i 7))))
+		(begin
+		   (u8vector-set! buf 7 (byte-ref data i))
+		   (u8vector-set! buf 6 (byte-ref data (+fx i 1)))
+		   (u8vector-set! buf 5 (byte-ref data (+fx i 2)))
+		   (u8vector-set! buf 4 (byte-ref data (+fx i 3)))
+		   (u8vector-set! buf 3 (byte-ref data (+fx i 4)))
+		   (u8vector-set! buf 2 (byte-ref data (+fx i 5)))
+		   (u8vector-set! buf 1 (byte-ref data (+fx i 6)))
+		   (u8vector-set! buf 0 (byte-ref data (+fx i 7)))))
+	    ($f64/u8vector-ref buf 0))))
+
+   (define (write-float this value offset noassert le)
+      (let ((data (get-data this))
+	    (i (->fixnum offset)))
+	 (unless (js-totest noassert) (check-offset data offset i 4 "write"))
+	 (let ((buf (make-u8vector 4)))
+	    ($f32/u8vector-set! buf 0 value)
+	    (if le
+		(begin
+		   (byte-set! data i (u8vector-ref buf 0))
+		   (byte-set! data (+fx 1 i) (u8vector-ref buf 1))
+		   (byte-set! data (+fx 2 i) (u8vector-ref buf 2))
+		   (byte-set! data (+fx 3 i) (u8vector-ref buf 3)))
+		(begin
+		   (byte-set! data i (u8vector-ref buf 3))
+		   (byte-set! data (+fx 1 i) (u8vector-ref buf 2))
+		   (byte-set! data (+fx 2 i) (u8vector-ref buf 1))
+		   (byte-set! data (+fx 3 i) (u8vector-ref buf 0)))))))
+
+   (define (write-double this value offset noassert le)
+      (let ((data (get-data this))
+	    (i (->fixnum offset)))
+	 (unless (js-totest noassert) (check-offset data offset i 8 "write"))
+	 (let ((buf (make-u8vector 8)))
+	    ($f64/u8vector-set! buf 0 value)
+	    (if le
+		(begin
+		   (byte-set! data (+fx 0 i) (u8vector-ref buf 0))
+		   (byte-set! data (+fx 1 i) (u8vector-ref buf 1))
+		   (byte-set! data (+fx 2 i) (u8vector-ref buf 2))
+		   (byte-set! data (+fx 3 i) (u8vector-ref buf 3))
+		   (byte-set! data (+fx 4 i) (u8vector-ref buf 4))
+		   (byte-set! data (+fx 5 i) (u8vector-ref buf 5))
+		   (byte-set! data (+fx 6 i) (u8vector-ref buf 6))
+		   (byte-set! data (+fx 7 i) (u8vector-ref buf 7)))
+		(begin
+		   (byte-set! data (+fx 0 i) (u8vector-ref buf 7))
+		   (byte-set! data (+fx 1 i) (u8vector-ref buf 6))
+		   (byte-set! data (+fx 2 i) (u8vector-ref buf 5))
+		   (byte-set! data (+fx 3 i) (u8vector-ref buf 4))
+		   (byte-set! data (+fx 4 i) (u8vector-ref buf 3))
+		   (byte-set! data (+fx 5 i) (u8vector-ref buf 2))
+		   (byte-set! data (+fx 6 i) (u8vector-ref buf 1))
+		   (byte-set! data (+fx 7 i) (u8vector-ref buf 0)))))))
 
    ;; binarySlice
    (js-put! slowbuffer-proto 'binarySlice
@@ -424,8 +536,10 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::bstring offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (minfx (string-length string)
-			   (minfx length (-fx (string-length data) offset)))))
+	       (let ((n (maxfx 0
+			   (minfx (string-length string)
+			      (minfx length
+				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (let ((l (blit-string-binary-decode! string 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
@@ -439,8 +553,10 @@
 	 (lambda (this::JsSlowBuffer string::bstring offset length)
 	    
 	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (minfx (string-length string)
-			   (minfx length (-fx (string-length data) offset)))))
+	       (let ((n (maxfx 0
+			   (minfx (string-length string)
+			      (minfx length
+				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (multiple-value-bind (m c)
 			 (blit-string-utf8! string 0 data offset n)
@@ -456,8 +572,10 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::bstring offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (minfx (string-length string)
-			   (minfx length (-fx (string-length data) offset)))))
+	       (let ((n (maxfx 0
+			   (minfx (string-length string)
+			      (minfx length
+				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (let ((l (blit-string-ascii-decode! string 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
@@ -475,8 +593,10 @@
 		  (base64-decode-port ip op #t)
 		  (close-input-port ip)
 		  (let* ((s (close-output-port op))
-			 (n (minfx (string-length s)
-			       (minfx length (-fx (string-length data) offset)))))
+			 (n (maxfx 0
+			       (minfx (string-length s)
+				  (minfx length
+				     (-fx (string-length data) offset))))))
 		     (when (>fx n 0)
 			(blit-string! s 0 data offset n))
 		     (js-put! js-slowbuffer '_charsWritten n #t %this)
@@ -489,8 +609,10 @@
 	 (lambda (this::JsSlowBuffer string::bstring offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let* ((s (utf8-string->ucs2-string string))
-		      (n (minfx (*fx 2 (ucs2-string-length s))
-			    (minfx length (-fx (string-length data) offset)))))
+		      (n (maxfx 0
+			    (minfx (*fx 2 (ucs2-string-length s))
+			       (minfx length
+				  (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (let ((l (blit-string-ucs2! s 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten (/fx l 2)
@@ -505,8 +627,10 @@
 	 (lambda (this::JsSlowBuffer string::bstring offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let* ((s (string-hex-intern string))
-		      (n (minfx (*fx 2 (string-length s))
-			    (minfx length (-fx (string-length data) offset)))))
+		      (n (maxfx 0
+			    (minfx (*fx 2 (string-length s))
+			       (minfx length
+				  (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (begin
 			 (blit-string! s 0 data offset n)
@@ -602,6 +726,62 @@
 		      (js-undefined))))))
 	 3 "fill")
       #t %this)
+
+   (js-put! slowbuffer-proto 'readFloatLE
+      (js-make-function %this
+	 (lambda (this offset noassert)
+	    (read-float this offset noassert #t))
+	 2 "readFloatLE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'readFloatBE
+      (js-make-function %this
+	 (lambda (this offset noassert)
+	    (read-float this offset noassert #f))
+	 2 "readFloatBE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'readDoubleLE
+      (js-make-function %this
+	 (lambda (this offset noassert)
+	    (read-double this offset noassert #t))
+	 2 "readDoubleLE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'readDoubleBE
+      (js-make-function %this
+	 (lambda (this offset noassert)
+	    (read-double this offset noassert #f))
+	 2 "readDoubleBE")
+      #t %this)
+   
+   (js-put! slowbuffer-proto 'writeFloatLE
+      (js-make-function %this
+	 (lambda (this value offset noassert)
+	    (write-float this value offset noassert #t))
+	 3 "writeFloatLE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'writeFloatBE
+      (js-make-function %this
+	 (lambda (this value offset noassert)
+	    (write-float this value offset noassert #f))
+	 3 "writeFloatBE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'writeDoubleLE
+      (js-make-function %this
+	 (lambda (this value offset noassert)
+	    (write-double this value offset noassert #t))
+	 3 "writeDoubleLE")
+      #t %this)
+
+   (js-put! slowbuffer-proto 'writeDoubleBE
+      (js-make-function %this
+	 (lambda (this value offset noassert)
+	    (write-double this value offset noassert #f))
+	 3 "writeDoubleBE")
+      #t %this)
    
    (js-put! js-slowbuffer 'byteLength
       (js-make-function %this
@@ -620,7 +800,8 @@
 	       ((string=? encoding "base64")
 		(string-length (base64-decode string #t)))
 	       ((or (string=? encoding "ascii")
-		    (string=? encoding "binary"))
+		    (string=? encoding "binary")
+		    (string=? encoding "buffer"))
 		(utf8-string-length string))
 	       (else
 		(error "buffer" "byteLength encoding not implemented"
@@ -635,20 +816,23 @@
 	    ;; which is defined in the buffer.js module
 	    (with-access::JsSlowBuffer sbuf (data)
 	       (with-access::JsTypedArray buf (buffer length byteoffset %data)
+		  (cond
+		     ((< offset 0)
+		      (js-raise-range-error %this "wrong offset (~s)" offset))
+		     ((> offset (string-length data))
+		      (js-raise-range-error %this "wrong offset (~s)" offset))
+		     ((> len (string-length data))
+		      (js-raise-range-error %this "wrong length (~s)" len)))
 		  (set! %data data)
-		  (set! length (fixnum->uint32 len))
-		  (set! byteoffset (fixnum->uint32 offset))
+		  (set! length (fixnum->uint32 (->fixnum len)))
+		  (set! byteoffset (fixnum->uint32 (->fixnum offset)))
+		  ;; we can now override the length field of the fast buffer
+		  ;; as we know it is in range
+		  (js-put! buf 'length (->fixnum len) #f %this)
 		  (set! buffer sbuf))))
 	 4 "makeFastBuffer")
       #t %this)
    
-   (for-each (lambda (fun)
-		(js-put! slowbuffer-proto fun (not-implemented fun) #f %this))
-      '(readFloatLE readFloatBE
-	readDoubleLE readDoubleBE
-	writeFloatLE writeFloatBE
-	writeDoubleLE writeDoubleBE))
-
    js-slowbuffer)
    
    

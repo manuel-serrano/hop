@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jul 30 07:04:17 2014                          */
-;*    Last change :  Wed Jul 30 08:35:06 2014 (serrano)                */
+;*    Last change :  Sat Sep 27 19:57:44 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Macro used for debugging the nodejs runtime implementation.      */
@@ -168,7 +168,7 @@
 	 ((js-put! ?obj ?name ?v ?throw ?this)
 	  (map! (lambda (f) (e f e)) (cdr x))
 	  (when (and (not *unsafe-type*) (epair? x))
-	     (set-car! x 'js-put!/debug)
+	     (set-car! x 'js-put/debug!)
 	     (set-cdr! (last-pair x) (cons `',(cer x) '())))
 	  x)
 	 (else

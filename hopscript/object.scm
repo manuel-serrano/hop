@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Sep 25 10:48:21 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 17:00:12 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -386,7 +386,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.4
       (define (getownpropertynames this o p)
 	 (let ((o (js-cast-object %this o "getOwnPropertyNames")))
-	    (js-vector->jsarray (js-property-names o #f %this) %this)))
+	    (js-vector->jsarray (js-properties-name o #f %this) %this)))
       
       (js-bind! %this js-object 'getOwnPropertyNames
 	 :value (js-make-function %this
@@ -529,7 +529,7 @@
       ;; isExtensible
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
-	 (let ((o (js-cast-object %this obj "isExtensible")))
+	 (let ((o (js-cast-object %this obj "Object.isExtensible")))
 	    (with-access::JsObject o (extensible)
 	       extensible)))
       
@@ -542,8 +542,8 @@
       ;; keys
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
       (define (keys this obj)
-	 (let ((o (js-cast-object %this obj "keys")))
-	    (js-vector->jsarray (js-property-names o #t %this) %this)))
+	 (let ((o (js-cast-object %this obj "Object.keys")))
+	    (js-vector->jsarray (js-properties-name o #t %this) %this)))
       
       (js-bind! %this js-object 'keys
 	 :value (js-make-function %this keys 1 'keys)
@@ -634,6 +634,10 @@
 		       name)
 		      ((string=? name "JsGlobalObject")
 		       "Object")
+		      ((isa? obj JsArrayBufferView)
+		       (let ((ctor (js-get obj 'constructor %this)))
+			  (with-access::JsFunction ctor (name)
+			     name)))
 		      (else
 		       (substring name 2))))))))
       
@@ -796,14 +800,6 @@
       (not (eq? desc (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get ::JsObject ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
-;*---------------------------------------------------------------------*/
-(define-method (js-get o::JsObject p %this)
-   (js-getvalue o o (js-toname p %this) #f %this))
-
-;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
@@ -854,7 +850,7 @@
 			     (when (eq? enumerable #t)
 				(let* ((descobj (if (isa? prop JsAccessorDescriptor)
 						    ;; CARE 5 JUL 2014, not sure about props below
-						    (js-property-value properties prop props %this)
+						    (js-property-value properties props prop %this)
 						    (vector-ref-ur elements i)))
 				       (desc (js-to-property-descriptor %this
 						descobj name)))
@@ -865,7 +861,7 @@
       (for-each (lambda (prop)
 		   (with-access::JsPropertyDescriptor prop ((p name) enumerable)
 		      (when (eq? enumerable #t)
-			 (let* ((descobj (js-property-value properties prop o %this))
+			 (let* ((descobj (js-property-value properties o prop %this))
 				(desc (js-to-property-descriptor %this
 					 descobj p)))
 			    (js-define-own-property o p desc #t %this)))))
@@ -886,6 +882,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
+   (tprint "TODO, why js-seal need unmap?")
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
       ;; 2
@@ -905,6 +902,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
+   (tprint "TODO, why js-freeze need unmap?")
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
       (for-each js-freeze-property! properties)
@@ -918,7 +916,10 @@
 ;*    This is an inlined version of js-get-own-property.               */
 ;*---------------------------------------------------------------------*/
 (define (js-get-global-object-name o::JsObject name throw %this)
-   (js-getvalue o o name throw %this))
+   (let ((pval (js-get-property-value o o name %this)))
+      (if (eq? pval (js-absent))
+	  (js-get-notfound name #t %this)
+	  pval)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-global-object-name/cache ...                              */

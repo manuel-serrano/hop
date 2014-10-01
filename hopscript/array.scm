@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Sep 25 13:59:48 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 16:47:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -85,7 +85,7 @@
 		    (display "])" op)
 		    (begin
 		       (display "," op)
-		       (when (js-has-property o (js-toname i %this))
+		       (when (js-has-property o (js-toname i %this) %this)
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
@@ -102,8 +102,9 @@
 	     (cond
 		((=u32 i len)
 		 '())
-		((js-has-property o (js-toname i %this))
-		 (cons (js-get o i %this) (+u32 i (fixnum->uint32 1))))
+		((js-has-property o (js-toname i %this) %this)
+		 (cons (cons (js-get o i %this) (+u32 i (fixnum->uint32 1)))
+		    (loop (+u32 i (fixnum->uint32 1)))))
 		(else
 		 (loop (+u32 i (fixnum->uint32 1)))))))))
 
@@ -247,13 +248,14 @@
 	       ;; try to use a vector copy
 	       (if (and (>fx (vector-length vdst) 0)
 			(>fx (vector-length vsrc) 0))
-		   (let ((lsrc (vector-length vsrc))
-			 (slen (js-get src 'length %this)))
+		   (let* ((lsrc (vector-length vsrc))
+			  (slen (js-get src 'length %this))
+			  (alen (minfx slen lsrc)))
 		      ;; fast vector-copy
-		      (vector-copy! vdst i vsrc 0 lsrc)
+		      (vector-copy! vdst i vsrc 0 alen)
 		      (if (> slen lsrc)
 			  (copy-array-slow dst (+fx i lsrc) src lsrc slen)
-			  (+fx i lsrc)))
+			  (+fx i alen)))
 		   ;; slow copy
 		   (copy-array-slow dst i src 0 (js-get src 'length %this))))))
       
@@ -419,7 +421,9 @@
 	    (vector-copy! val 0 val 1)
 	    (vector-set! val (-fx len 1) (js-absent))
 	    (js-put! o 'length (-fx len 1) #f %this)
-	    first))
+	    (if (eq? first (js-absent))
+		(js-undefined)
+		first)))
       
       (define (array-shift! o len::uint32)
 	 (let ((first (js-get o 0 %this))
@@ -437,7 +441,7 @@
 		   (let ((v (js-get o i %this)))
 		      (js-put! o (-fx i 1) v #f %this)
 		      (loop (+fx i 1))))))))
-      
+
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
 	 (cond
@@ -465,13 +469,14 @@
       
       (define (vector-slice! o val k::long final::long)
 	 (let* ((vec (vector-copy val k final))
-		(arr (js-vector->jsarray vec %this)))
-	    (let loop ((i (-fx (vector-length vec) 1)))
+		(arr (js-vector->jsarray vec %this))
+		(len (vector-length vec)))
+	    (let loop ((i (-fx len 1)))
 	       (cond
 		  ((=fx i -1)
 		   arr)
 		  ((not (eq? (vector-ref vec i) (js-absent)))
-		   (unless (=fx i (-fx (vector-length vec) 1))
+		   (unless (=fx i (-fx len 1))
 		      (js-put! arr 'length i #f %this))
 		   arr)
 		  (else
@@ -509,7 +514,7 @@
 	     (array-slice! o k final))
 	    (else
 	     (with-access::JsArray o (vec)
-		(let ((vlen (vector-length vec)))
+		(let ((vlen (js-array-vector-length o %this)))
 		   (cond
 		      ((<= final vlen)
 		       (vector-slice! o vec (->fixnum k) (->fixnum final)))
@@ -627,7 +632,7 @@
       
       (define (vector-splice this actualstart actualdeletecount)
 	 (with-access::JsArray this (vec)
-	    (let* ((len (vector-length vec))
+	    (let* ((len (js-array-vector-length this %this))
 		   (litems (length items))
 		   (rlen (+fx actualstart actualdeletecount))
 		   (nlen (+fx len (-fx litems actualdeletecount)))
@@ -704,19 +709,21 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.13
    (define (array-prototype-unshift this::obj . items)
       
-      (define (vector-unshift arr)
+      (define (vector-unshift arr len)
 	 (with-access::JsArray arr (vec)
 	    (let* ((litems (length items))
-		   (len (vector-length vec))
-		   (nvec (make-vector (+fx len litems))))
+		   (vlen (js-array-vector-length arr %this))
+		   (nvec (make-vector (+fx vlen litems)))
+		   (nlen (+fx litems (uint32->fixnum len))))
 	       (vector-copy! nvec litems vec)
 	       (let ((i 0))
 		  (for-each (lambda (el)
-			       (vector-set! nvec i el))
+			       (vector-set! nvec i el)
+			       (set! i (+fx i 1)))
 		     items)
 		  (set! vec nvec)
-		  (js-put! arr 'length (+ len litems) #f %this)
-		  (+fx litems len)))))
+		  (js-put! arr 'length nlen #f %this)
+		  nlen))))
       
       (define (array-unshift arr len)
 	 (let ((rest (array-get-elements arr 0 len %this))
@@ -724,11 +731,11 @@
 	    ;; add all the new elements
 	    (for-each (lambda (el)
 			 (js-put! arr i el #f %this)
-			 (set! i (+ 1 i)))
+			 (set! i (+fx 1 i)))
 	       items)
 	    (for-each (lambda (el)
 			 (js-put! arr i el #f %this)
-			 (set! i (+ 1 i)))
+			 (set! i (+fx 1 i)))
 	       rest)
 	    ;; shrink the vector
 	    (js-put! arr 'length i #f %this)
@@ -747,7 +754,7 @@
 		 (with-access::JsArray this (vec)
 		    (cond
 		       ((>fx (vector-length vec) 0)
-			(vector-unshift this))
+			(vector-unshift this len))
 		       (else
 			(array-unshift this (uint32->integer len)))))))))
    
@@ -769,7 +776,7 @@
 		k)
 	       ((and (eq? (vector-ref-ur vec k) (js-absent))
 		     (let ((name (js-toname k %this)))
-			(and (js-has-property arr name)
+			(and (js-has-property arr name %this)
 			     (js-strict-equal? (js-get arr name %this) el))))
 		k)
 	       (else
@@ -783,7 +790,7 @@
 		  ((>= k len)
 		   -1)
 		  ((let ((name (js-toname k %this)))
-		      (and (js-has-property arr name)
+		      (and (js-has-property arr name %this)
 			   (js-strict-equal? (js-get arr name %this) el)))
 		   k)
 		  (else
@@ -830,7 +837,7 @@
 		k)
 	       ((and (eq? (vector-ref vec k) (js-absent))
 		     (let ((name (js-toname k %this)))
-			(and (js-has-property arr name)
+			(and (js-has-property arr name %this)
 			     (js-strict-equal? (js-get arr name %this) el))))
 		k)
 	       (else
@@ -842,7 +849,7 @@
 	       ((< k 0)
 		-1)
 	       ((let ((name (js-toname k %this)))
-		   (and (js-has-property arr name)
+		   (and (js-has-property arr name %this)
 			(js-strict-equal? (js-get arr name %this) el)))
 		k)
 	       (else
@@ -867,7 +874,8 @@
 		    (with-access::JsArray o (vec)
 		       (if (and (>fx (vector-length vec) 0) (> k 0))
 			   (vector-lastindexof o vec
-			      (minfx (->fixnum k) (vector-length vec)))
+			      (minfx (->fixnum k)
+				 (-fx (js-array-vector-length o %this) 1)))
 			   (array-lastindexof o k)))
 		    (array-lastindexof o k))))))
    
@@ -887,7 +895,7 @@
 	 (with-access::JsArray o (vec)
 	    (letrec ((loop-in-property
 			(lambda (i)
-			   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			   (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			      (cond
 				 ((eq? pv (js-absent))
 				  (loop-in-vec (+fx i 1)))
@@ -917,7 +925,7 @@
 	 (let loop ((i 0))
 	    (if (< i len)
 		(let* ((n (js-toname i %this))
-		       (pv (js-get-property-value o n %this)))
+		       (pv (js-get-property-value o o n %this)))
 		   (cond
 		      ((eq? pv (js-absent))
 		       (loop (+ i 1)))
@@ -944,7 +952,7 @@
 	 (with-access::JsArray o (vec)
 	    (letrec ((loop-in-property
 			(lambda (i)
-			   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			   (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			      (cond
 				 ((eq? pv (js-absent))
 				  (loop-in-vec (+fx i 1)))
@@ -973,7 +981,7 @@
       (define (array-some o len proc t)
 	 (let loop ((i 0))
 	    (if (< i len)
-		(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		(let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 		   (cond
 		      ((eq? pv (js-absent))
 		       (loop (+ i 1)))
@@ -1000,12 +1008,12 @@
 	    (let loop ((i 0))
 	       (when (<fx i len)
 		  (if (=fx (vector-length vec) 0)
-		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		      (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			 (unless (eq? pv (js-absent))
 			    (js-call3 %this proc t pv i o)))
 		      (let ((v (vector-ref vec i)))
 			 (if (eq? v (js-absent))
-			     (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			     (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 				(unless (eq? pv (js-absent))
 				   (js-call3 %this proc t pv i o)))
 			     (js-call3 %this proc t v i o))))
@@ -1014,7 +1022,7 @@
       (define (array-foreach o len proc t)
 	 (let loop ((i 0))
 	    (when (< i len)
-	       (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+	       (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 		  (unless (eq? pv (js-absent))
 		     (js-call3 %this proc t pv i o))
 		  (loop (+ i 1))))))
@@ -1041,7 +1049,7 @@
 			((>=fx i len)
 			 (js-vector->jsarray a %this))
 			((=fx (vector-length vec) 0)
-			 (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			 (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			    (unless (eq? pv (js-absent))
 			       (vector-set! a i
 				  (js-call3 %this proc t pv i o)))
@@ -1049,7 +1057,7 @@
 			(else
 			 (let ((v (vector-ref vec i)))
 			    (if (eq? v (js-absent))
-				(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+				(let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 				   (unless (eq? pv (js-absent))
 				      (vector-set! a i
 					 (js-call3 %this proc t pv i o))))
@@ -1061,7 +1069,7 @@
 			len)))
 	       (let loop ((i 0))
 		  (if (< i len)
-		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		      (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			 (unless (eq? pv (js-absent))
 			    (js-put! a i
 			       (js-call3 %this proc t pv i o)
@@ -1083,7 +1091,8 @@
       
       (define (vector-filter o len::long proc t)
 	 (with-access::JsArray o (vec)
-	    (let ((a (make-vector (minfx len (vector-length vec)) (js-absent))))
+	    (let ((a (make-vector (minfx len (vector-length vec))
+			(js-absent))))
 	       (let loop ((i 0)
 			  (j 0))
 		  (cond
@@ -1093,7 +1102,7 @@
 			 res))
 		     ((=fx (vector-length vec) 0)
 		      ;; the vector has been modified by the callback...
-		      (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		      (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			 (if (eq? pv (js-absent))
 			     (loop (+fx i 1) j)
 			     (let ((v pv))
@@ -1106,7 +1115,7 @@
 		      (let ((v (vector-ref vec i)))
 			 (cond
 			    ((eq? v (js-absent))
-			     (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			     (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 				(if (eq? pv (js-absent))
 				    (loop (+fx i 1) j)
 				    (let ((v pv))
@@ -1126,7 +1135,7 @@
 	    (let loop ((i 0)
 		       (j 0))
 	       (if (< i len)
-		   (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		   (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 		      (if (eq? pv (js-absent))
 			  (loop (+ i 1) j)
 			  (let ((v pv)
@@ -1160,7 +1169,7 @@
 	 (let loop ((i i)
 		    (acc accumulator))
 	    (if (<u32 i len)
-		(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+		(let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 		   (if (eq? pv (js-absent))
 		       (loop (+u32 i #u32:1) acc)
 		       (let ((v pv))
@@ -1177,7 +1186,7 @@
 	     (if (null? init)
 		 (let loop ((i #u32:0))
 		    (if (<u32 i len)
-			(let ((pv (js-get-property-value o (js-toname i %this) %this)))
+			(let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 			   (if (eq? pv (js-absent))
 			       (loop (+u32 i #u32:1))
 			       (reduce/accumulator o len (+u32 i #u32:1) pv)))
@@ -1198,7 +1207,7 @@
       (define (reduce/accumulator o len::uint32 i::uint32 accumulator)
 	 (let loop ((i i)
 		    (acc accumulator))
-	    (let ((pv (js-get-property-value o (js-toname i %this) %this)))
+	    (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 	       (if (<u32 i len)
 		   (if (eq? pv (js-absent))
 		       (loop (-u32 i #u32:1) acc)
@@ -1216,7 +1225,7 @@
 	     (if (null? init)
 		 (let loop ((k (-u32 len #u32:1)))
 		    (if (<u32 k len)
-			(let ((pv (js-get-property-value o (js-toname k %this) %this)))
+			(let ((pv (js-get-property-value o o (js-toname k %this) %this)))
 			   (if (eq? pv (js-absent))
 			       (loop (-u32 k #u32:1))
 			       (let ((v pv))
@@ -1300,9 +1309,9 @@
 	    (vec vec)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-property-names ::JsArray ...                                  */
+;*    js-properties-name ::JsArray ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-property-names obj::JsArray enump %this)
+(define-method (js-properties-name obj::JsArray enump %this)
    (with-access::JsArray obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (let loop ((i (-fx (uint32->fixnum (minu32 len (u32vlen vec))) 1))
@@ -1343,46 +1352,64 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-property o::JsArray p)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArray o (vec)
-	     (if (or (<=u32 (u32vlen vec) index)
-		     (eq? (u32vref vec index) (js-absent)))
-		 (call-next-method)
-		 #t))
-	  (call-next-method))))
+(define-method (js-has-property o::JsArray p %this)
+   (with-access::JsArray o (vec)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (vector-length vec))
+	     ;; the length is always an integer in the range [0..2^32-1]
+	     (let ((len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+		(if (or (>=u32 i len) (eq? (u32vref vec i) (js-absent)))
+		    (call-next-method)
+		    #t)))
+	    (else
+	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-property ::JsArray ...                                    */
+;*    js-get-own-property ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property o::JsArray p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArray o (vec)
-	     (if (or (<=u32 (u32vlen vec) index)
-		     (eq? (u32vref vec index) (js-absent)))
-		 (call-next-method)
-		 (instantiate::JsValueDescriptor
-		    (name (js-toname index %this))
-		    (value (u32vref vec index))
-		    (writable #t)
-		    (enumerable #t)
-		    (configurable #t))))
-	  (call-next-method))))
+(define-method (js-get-own-property o::JsArray p %this::JsGlobalObject)
+   (with-access::JsArray o (vec frozen)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (vector-length vec))
+	     ;; the length is always an integer in the range [0..2^32-1]
+	     (let ((len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+		(if (or (>=u32 i len) (eq? (u32vref vec i) (js-absent)))
+		    (call-next-method)
+		    (instantiate::JsValueDescriptor
+		       (name (js-toname p %this))
+		       (value (u32vref vec i))
+		       (enumerable #t)
+		       (writable (not frozen))
+		       (configurable (not frozen))))))
+	    (else
+	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsArray ...                              */
+;*    -------------------------------------------------------------    */
+;*    This method is optional. It could be removed without changing    */
+;*    the programs behaviors. It merely optimizes access to strings.   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property-value o::JsArray p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArray o (vec)
-	     (if (or (<=u32 (u32vlen vec) index)
-		     (eq? (u32vref vec index) (js-absent)))
-		 (call-next-method)
-		 (u32vref vec index)))
-	  (call-next-method))))
+(define-method (js-get-property-value o::JsArray base p %this)
+   (with-access::JsArray o (vec)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (vector-length vec))
+	     ;; the length is always an integer in the range [0..2^32-1]
+	     (let ((len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+		(if (or (>=u32 i len) (eq? (u32vref vec i) (js-absent)))
+		    (call-next-method)
+		    (u32vref vec i))))
+	    (else
+	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsArray ...                                             */
@@ -1402,7 +1429,7 @@
 		    v)))
 	    (else
 	     (call-next-method))))))
-       
+
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArray ...                                            */
 ;*    -------------------------------------------------------------    */
@@ -1459,7 +1486,7 @@
 ;*    js-delete! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-delete! o::JsArray p throw %this)
-   (with-access::JsArray o (vec inline properties frozen)
+   (with-access::JsArray o (vec properties frozen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((not (js-isindex? i))
@@ -1472,44 +1499,26 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-own-property ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-own-property o::JsArray p %this::JsGlobalObject)
-   (with-access::JsArray o (vec frozen)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (call-next-method))
-	    ((<uint32 i (vector-length vec))
-	     ;; the length is always an integer in the range [0..2^32-1]
-	     (let ((len::uint32 (js-touint32 (js-get o 'length %this) %this)))
-		(if (or (>=u32 i len) (eq? (u32vref vec i) (js-absent)))
-		    (call-next-method)
-		    (instantiate::JsValueDescriptor
-		       (name (js-toname p %this))
-		       (value (u32vref vec i))
-		       (enumerable #t)
-		       (writable (not frozen))
-		       (configurable (not frozen))))))
-	    (else
-	     (call-next-method))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-define-own-property ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.5.1     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-define-own-property a::JsArray p desc throw %this::JsGlobalObject)
    
+   (define rejected #f)
+
    (define (reject fmt)
-      (when throw
-	 (js-raise-type-error %this fmt p)))
+      (if throw
+	  (js-raise-type-error %this fmt p)
+	  (set! rejected #t)))
 
    (define (newwritable! oldlendesc newlendesc)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.5.1
       (or (not (isa? newlendesc JsValueDescriptor))
 	  (with-access::JsValueDescriptor newlendesc (writable)
-	     (not (eq? writable #f)))))
+	     (let ((r (not (eq? writable #f))))
+		(set! writable #t)
+		r))))
 
    (define (js-array-property-names arr)
       (let loop ((o arr))
@@ -1558,27 +1567,28 @@
 		      (vector-set-ur! vec i  (js-absent))
 		      (loop (-fx i 1)))))
 	     (for-each (lambda (name)
-			  (let ((num (js-string->number (symbol->string! name))))
-			     (when (and num (<=uint32 newlen num))
-				(let ((r (js-delete! a name #f %this)))
-				   (if (eq? r #f)
-				       ;; 3.l.iii
-				       (with-access::JsValueDescriptor newlendesc (value writable)
-					  ;; 3.l.iii.1
-					  (set! value (+ num 1))
-					  ;; 3.l.iii.2
-					  (set! writable newwritable)
-					  ;; 3.l.iii.3
-					  (js-define-own-property% a 'length
-					     newlendesc #f %this)
-					  ;; 3.l.iii.4
-					  (reject (format "Cannot delete element ~a" num))))))))
+			  (unless rejected
+			     (let ((num (js-string->number (symbol->string! name))))
+				(when (and num (<=uint32 newlen num))
+				   (let ((r (js-delete! a name #f %this)))
+				      (unless r
+					 ;; 3.l.iii
+					 (with-access::JsValueDescriptor newlendesc (value writable)
+					    ;; 3.l.iii.1
+					    (set! value (+ num 1))
+					    ;; 3.l.iii.2
+					    (set! writable newwritable)
+					    ;; 3.l.iii.3
+					    (js-define-own-property% a 'length
+					       newlendesc #f %this)
+					    ;; 3.l.iii.4
+					    (reject (format "Cannot delete element ~a" num)))))))))
 		(sort (lambda (n1 n2)
 			 (string>? (symbol->string! n1) (symbol->string! n2)))
 		   (js-array-property-names a))))))
    
    (define (define-own-property/length oldlendesc)
-      (with-access::JsValueDescriptor oldlendesc (value writable)
+      (with-access::JsValueDescriptor oldlendesc (value (owritable writable))
 	 (let ((oldlen value))
 	    (if (not (isa? desc JsValueDescriptor))
 		;; 3.a
@@ -1598,14 +1608,12 @@
 			  ;; 3.f
 			  (js-define-own-property% a 'length
 			     newlendesc throw %this)
-			  (if (not writable)
+			  (if (not owritable)
 			      ;; 3.g
 			      (reject "property read-only \"~a\"")
 			      ;; 3.h
-			      (let* ((newwritable (newwritable!
+			      (let* ((deferredwritable (newwritable!
 						     oldlendesc newlendesc))
-				     (_ (with-access::JsValueDescriptor newlendesc (writable)
-					   (set! writable #t)))
 				     (desc (js-define-own-property% a 'length
 					      newlendesc throw %this)))
 				 (if (not desc)
@@ -1614,18 +1622,19 @@
 				     (begin
 					;; 3.l
 					(delete-out-of-range!
-					   a newlendesc newwritable
+					   a newlendesc deferredwritable
 					   oldlen newlen)
-					;; 3.m
-					(if (not newwritable)
-					    ;; 3.m.i
-					    (js-define-own-property% a 'length
-					       (instantiate::JsDataDescriptor
-						  (name 'length)
-						  (writable #f))
-					       #f %this)
-					    ;; 3.n
-					    #t))))))))))))
+					(unless rejected
+					   ;; 3.m
+					   (if (not deferredwritable)
+					       ;; 3.m.i
+					       (js-define-own-property% a 'length
+						  (instantiate::JsDataDescriptor
+						     (name 'length)
+						     (writable #f))
+						  #f %this)
+					       ;; 3.n
+					       #t)))))))))))))
 
    (define (js-default-array-property! desc)
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
@@ -1658,12 +1667,13 @@
 	 (with-access::JsValueDescriptor desc (enumerable writable configurable)
 	    (and (eq? enumerable #t)
 		 (eq? writable #t)
-		 (not (eq? configurable #f))))))
+		 (eq? configurable #t)))))
    
    (define (uninline-array! arr::JsArray)
       ;; this function switch from a fast inlined array representation
       ;; to a slow inefficient object representation
-      (with-access::JsArray arr (vec properties cmap)
+      (with-access::JsArray arr (vec properties cmap inline)
+	 (set! inline #f)
 	 (when (>fx (vector-length vec) 0)
 	    (set! cmap #f)
 	    (set! properties
@@ -1672,9 +1682,11 @@
 	 arr))
 
    (define (js-define-own-property-array a p::uint32 desc throw)
-      (with-access::JsArray a (vec)
+      (with-access::JsArray a (vec extensible)
 	 (cond
-	    ((eq? (u32vref vec p) (js-absent))
+	    ;; MS CARE 26 sep 2014: I'm not sure if impossible (not extensible)
+	    ;; is correct, let's remove this warning if all the test262 pass
+	    ((and (eq? (u32vref vec p) (js-absent)) (not extensible))
 	     (let ((r (js-define-own-property% a (js-toname p %this) desc #f %this)))
 		(unless (inline-value-descriptor? desc)
 		   (uninline-array! a))
@@ -1693,66 +1705,81 @@
 	     (uninline-array! a)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this)))))
 
-    (define max-expandable-array-size::uint32
-       (bit-lshu32 #u32:1 19))
+   (define max-expandable-array-size::uint32
+      (bit-lshu32 #u32:1 20))
+   (define max-expandable-array-size/2::uint32
+      (/u32 max-expandable-array-size #u32:2))
+   (define max-expandable-array-size/8::uint32
+      (/u32 max-expandable-array-size #u32:8))
    
-  (define (expandable-array index::uint32 len::uint32)
+  (define (expandable-array vec::JsArray index::uint32 len::uint32)
+     ;; Check is an inline array can be expanded. To take the descision,
      ;; a basic heuristic (to be improved) to decide when an array
      ;; should be expanded
-     (when (<u32 index max-expandable-array-size)
-	(if (=u32 index #u32:0)
-	    #u32:2
-	    (if (<u32 (*u32 #u32:2 index) max-expandable-array-size)
-		(*u32 #u32:2 index)
-		max-expandable-array-size))))
+     (with-access::JsArray vec (inline)
+	(when inline
+	   ;; the vector is inlined, make the real check
+	   (when (<u32 index max-expandable-array-size)
+	      (cond
+		 ((=u32 index #u32:0)
+		  #u32:2)
+		 ((<u32 (*u32 #u32:2 index)
+		     (/u32  max-expandable-array-size #u32:2))
+		  (*u32 index #u32:2))
+		 ((<u32 (+u32 max-expandable-array-size/8 index)
+		     max-expandable-array-size)
+		  (+u32 index max-expandable-array-size/8))
+		 (else
+		  max-expandable-array-size))))))
 
-   (let ((oldlendesc (js-get-own-property a 'length %this)))
-      (if (eq? p 'length)
-	  ;; 3
-	  (define-own-property/length oldlendesc)
-	  (let ((index::uint32 (js-toindex p)))
-	     (if (js-isindex? index)
-		 ;; 4
-		 (with-access::JsValueDescriptor oldlendesc ((oldlen value) writable)
-		    (with-access::JsArray a (vec cmap)
-		       (if (and (>=uint32 index oldlen) (not (eq? writable #t)))
-			   ;; 4.b
-			   (reject "wrong index ~a")
-			   ;; 4.c
-			   (let ((s (cond
-				       ((<u32 index (u32vlen vec))
-					;; fast access, inline vector
-					(js-define-own-property-array
-					   a index desc #f))
-				       ((and cmap (expandable-array index (u32vlen vec)))
-					;; expand the vector
-					=>
-					(lambda (len)
-					   (set! vec
-					      (copy-vector vec
-						 (uint32->fixnum len)))
-					   (js-define-own-property-array
-					      a index desc #f)))
-				       (else
-					;; slow access
-					(uninline-array! a)
-					(js-define-own-property%
-					   a (js-toname p %this) desc #f
-					   %this)))))
-			      (cond
-				 ((not s)
-				  (reject "wrong index \"~a\""))
-				 ((>=uint32 index oldlen)
-				  ;; 4.e.i,
-				  (set! oldlen
-				     (uint32->integer (+u32 index #u32:1)))
-				  ;; 4.e.ii
-				  (js-define-own-property a 'length
-				     oldlendesc #f %this)
-				  ;; 4.f
-				  #t))))))
-		 ;; 5
-		 (call-next-method))))))
+  (let ((oldlendesc (js-get-own-property a 'length %this)))
+     (if (eq? p 'length)
+	 ;; 3
+	 (define-own-property/length oldlendesc)
+	 (let ((index::uint32 (js-toindex p)))
+	    (if (js-isindex? index)
+		;; 4
+		(with-access::JsValueDescriptor oldlendesc ((oldlen value) writable)
+		   (with-access::JsArray a (vec)
+		      (if (and (>=uint32 index oldlen) (not (eq? writable #t)))
+			  ;; 4.b
+			  (reject "wrong index ~a")
+			  ;; 4.c
+			  (let ((s (cond
+				      ((<u32 index (u32vlen vec))
+				       ;; fast access, inline vector
+				       (js-define-own-property-array
+					  a index desc #f))
+				      ((expandable-array a index (u32vlen vec))
+				       ;; expand the vector
+				       =>
+				       (lambda (len)
+					  (let ((olen (vector-length vec))
+						(nlen (uint32->fixnum len)))
+					     (set! vec (copy-vector vec nlen))
+					     (vector-fill! vec (js-absent) olen ))
+					  (js-define-own-property-array
+					     a index desc #f)))
+				      (else
+				       ;; slow access
+				       (uninline-array! a)
+				       (js-define-own-property%
+					  a (js-toname p %this) desc #f
+					  %this)))))
+			     (cond
+				((not s)
+				 (reject "wrong index \"~a\""))
+				((>=uint32 index oldlen)
+				 ;; 4.e.i,
+				 (set! oldlen
+				    (uint32->integer (+u32 index #u32:1)))
+				 ;; 4.e.ii
+				 (js-define-own-property a 'length
+				    oldlendesc #f %this)
+				 ;; 4.f
+				 #t))))))
+		;; 5
+		(call-next-method))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    array-get-elements ...                                           */
@@ -1803,9 +1830,7 @@
 (define-method (js-for-in o::JsArray proc %this)
    (with-access::JsArray o (vec)
       (if (>fx (vector-length vec) 0)
-	  (let ((len (minfx (vector-length vec)
-			(uint32->fixnum
-			   (js-touint32 (js-get o 'length %this) %this)))))
+	  (let ((len (js-array-vector-length o %this)))
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
@@ -1814,3 +1839,10 @@
 		    (call-next-method))))
 	  (call-next-method))))
   
+;*---------------------------------------------------------------------*/
+;*    js-array-vector-length ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-vector-length o::JsArray %this::JsGlobalObject)
+   (with-access::JsArray o (vec)
+      (minfx (vector-length vec)
+	 (uint32->fixnum (js-touint32 (js-get o 'length %this) %this)))))

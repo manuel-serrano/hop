@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Jul  8 19:44:27 2014 (serrano)                */
+;*    Last change :  Sat Sep 27 11:36:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -51,7 +51,7 @@
    (with-access::JsArguments obj (vec)
       (map! (lambda (desc)
 	       (unless (eq? desc (js-absent))
-		  (js-property-value obj desc obj (js-initial-global-object))))
+		  (js-property-value obj obj desc (js-initial-global-object))))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -79,7 +79,7 @@
 		    (display "])" op)
 		    (begin
 		       (display "," op)
-		       (when (js-has-property o (js-toname i %this))
+		       (when (js-has-property o (js-toname i %this) %this)
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
@@ -102,72 +102,6 @@
    (with-access::JsArguments arguments (vec)
       (vector-set! vec indx prop)))
 
-;*---------------------------------------------------------------------*/
-;*    js-has-property ::JsArguments ...                                */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
-;*---------------------------------------------------------------------*/
-(define-method (js-has-property o::JsArguments p)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArguments o (vec)
-	     (let ((len (vector-length vec)))
-		(if (<=u32 (fixnum->uint32 len) index)
-		    (call-next-method)
-		    #t)))
-	  (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-property ::JsArguments ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-property o::JsArguments p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArguments o (vec)
-	     (let ((len (vector-length vec)))
-		(if (<=u32 (fixnum->uint32 len) index)
-		    (call-next-method)
-		    (let ((d (u32vref vec index)))
-		       (if (eq? d (js-absent))
-			   (call-next-method)
-			   d)))))
-	  (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-property-value ::JsArguments ...                          */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-property-value o::JsArguments p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (with-access::JsArguments o (vec)
-	     (let ((len (vector-length vec)))
-		(if (<=u32 (fixnum->uint32 len) index)
-		    (call-next-method)
-		    (let ((d (u32vref vec index)))
-		       (if (eq? d (js-absent))
-			   (call-next-method)
-			   (js-property-value o d o %this))))))
-	  (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get ::JsArguments ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
-;*---------------------------------------------------------------------*/
-(define-method (js-get o::JsArguments p %this)
-   (with-access::JsArguments o (vec properties)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (call-next-method))
-	    ((<uint32 i (vector-length vec))
-	     (let ((desc (u32vref vec i)))
-		(if (eq? desc (js-absent))
-		    (call-next-method)
-		    (js-property-value o desc o %this))))
-	    (else
-	     (call-next-method))))))
-       
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArguments ...                                        */
 ;*    -------------------------------------------------------------    */
@@ -301,9 +235,9 @@
 	     #t))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-property-names ::JsArray ...                                  */
+;*    js-properties-name ::JsArray ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-property-names obj::JsArguments enump %this)
+(define-method (js-properties-name obj::JsArguments enump %this)
    (with-access::JsArguments obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (vector-append
@@ -311,11 +245,64 @@
 	    (call-next-method))	 )))
 
 ;*---------------------------------------------------------------------*/
+;*    js-has-property ::JsArguments ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-property o::JsArguments p %this)
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsArguments o (vec)
+	     (let ((len (vector-length vec)))
+		(if (<=u32 (fixnum->uint32 len) index)
+		    (call-next-method)
+		    #t)))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsArguments p %this)
    (or (get-mapped-property o p) (call-next-method)))
 
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value ::JsArguments ...                          */
+;*    -------------------------------------------------------------    */
+;*    This method is optional. It could be removed without changing    */
+;*    the programs behaviors. It merely optimizes access to strings.   */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-property-value o::JsArguments base p %this)
+   (let ((index::uint32 (js-toindex p)))
+      (if (js-isindex? index)
+	  (with-access::JsArguments o (vec)
+	     (let ((len (vector-length vec)))
+		(if (<=u32 (fixnum->uint32 len) index)
+		    (call-next-method)
+		    (let ((d (u32vref vec index)))
+		       (if (eq? d (js-absent))
+			   (call-next-method)
+			   (js-property-value o o d %this))))))
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::JsArguments ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.6         */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsArguments p %this)
+   (with-access::JsArguments o (vec properties)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (vector-length vec))
+	     (let ((desc (u32vref vec i)))
+		(if (eq? desc (js-absent))
+		    (call-next-method)
+		    (js-property-value o o desc %this))))
+	    (else
+	     (call-next-method))))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
 ;*    -------------------------------------------------------------    */
@@ -381,7 +368,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (map! (lambda (d) (js-property-value obj d obj %this)) (vector->list vec))))
+      (map! (lambda (d) (js-property-value obj obj d %this))
+	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsArguments ...                                      */

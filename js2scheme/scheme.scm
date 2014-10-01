@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 25 10:03:06 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 12:01:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -351,11 +351,28 @@
 		    (js-undefined)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-function-src ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-function-src loc val::J2SFun conf)
+   (let ((m (config-get conf :mmap-src)))
+      (match-case loc
+	 ((at ?path ?start)
+	  `'(,loc
+	     ,(when (mmap? m)
+		 (with-access::J2SFun val (body)
+		    (with-access::J2SBlock body (endloc)
+		       (match-case endloc
+			  ((at ?- ?end)
+			   (mmap-substring m
+			      (fixnum->elong start)
+			      (+elong 1 (fixnum->elong end)))))))))))))
+  
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
    (with-access::J2SDeclFun this (loc id name val global)
-      (with-access::J2SFun val (params mode vararg)
+      (with-access::J2SFun val (params mode vararg body)
 	 (let* ((scmid (j2s-name name id))
 		(fastid (j2s-fast-id id))
 		(arity (if vararg -1 (+fx 1 (length params)))))
@@ -370,6 +387,7 @@
 			     :value (js-make-function %this
 				       ,fastid
 				       ,(length params) ',id
+				       :src ,(j2s-function-src loc val conf)
 				       :arity ,arity
 				       :strict ,(eq? mode 'strict)
 				       :alloc (lambda (o)
@@ -382,6 +400,7 @@
 			  (js-make-function %this
 			     ,fastid ,(length params)
 			     ',id
+			     :src ,(j2s-function-src loc val conf)
 			     :arity ,arity
 			     :strict ,(eq? mode 'strict)
 			     :alloc (lambda (o) (js-object-alloc o %this))
@@ -750,8 +769,8 @@
 			 (js-make-function %this
 			    ,tmp
 			    ,(length params)
-			    ',(string->symbol
-				(format "function:~a:~a" (cadr loc) (caddr loc)))
+			    '||
+			    :src ,(j2s-function-src loc this conf)
 			    :arity ,arity
 			    :strict ,(eq? mode 'strict)
 			    :alloc (lambda (o) (js-object-alloc o %this))
@@ -1874,9 +1893,13 @@
 	   `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
 	   `(js-get/debug ,obj ,prop %this ',loc)))
       (cache
-       (if (string? prop)
-	   `(js-get-name/cache ,obj ',(string->symbol prop) ,(pcache cache) %this)
-	   `(js-get/cache ,obj ,prop ,(pcache cache) %this)))
+       (cond
+	  ((string? prop)
+	   `(js-get-name/cache ,obj ',(string->symbol prop) ,(pcache cache) %this))
+	  ((number? prop)
+	   `(js-get ,obj ,prop %this))
+	  (else
+	   `(js-get/cache ,obj ,prop ,(pcache cache) %this))))
       (else
        `(js-get ,obj ,prop %this))))
 
@@ -1887,13 +1910,15 @@
    (cond
       ((> (bigloo-debug) 0)
        (if (string? prop)
-	   `(js-put!/debug ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
-	   `(js-put!/debug ,obj ,prop ,val ,mode %this ',loc)))
+	   `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
+	   `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
       (cache
        (cond
 	  ((string? prop)
 	   `(js-put-name/cache! ,obj ',(string->symbol prop) ,val ,mode
 	       ,(pcache cache) %this))
+	  ((number? prop)
+	   `(js-put! ,obj ,prop ,val ,mode %this))
 	  (else
 	   `(js-put/cache! ,obj ,prop ,val ,mode ,(pcache cache) %this))))
       (else

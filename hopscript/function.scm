@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Jul 29 13:49:58 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 10:16:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -34,7 +34,7 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
-	      __proto__ prototype construct alloc strict arity)))
+	      __proto__ prototype construct alloc strict arity src)))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
@@ -55,7 +55,8 @@
       
       (set! js-function-prototype
 	 (instantiate::JsFunction
-	    (name 'builtin)
+	    (name "builtin")
+	    (src #f)
 	    (len -1)
 	    (procedure (lambda l (js-undefined)))
 	    (alloc (lambda (_) #unspecified))
@@ -137,21 +138,28 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct strict arity)
+	   #!key __proto__ prototype alloc construct strict arity src)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
 	 (js-raise-type-error %this "not a constructor ~a" name)))
+
+   (define (get-source this::JsFunction)
+      (with-access::JsFunction this (src)
+	 (when (pair? src)
+	    (format "~a:~a" (cadr (car src)) (caddr (car src))))))
    
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
+		(fname (if (symbol? name) (symbol->string! name) name))
 		(fun (instantiate::JsFunction
 		       (procedure procedure)
 		       (arity (or arity (procedure-arity procedure)))
 		       (len length)
 		       (__proto__ (or __proto__ js-function-prototype))
-		       (name (or name procedure))
+		       (name fname)
+		       (src src)
 		       (alloc (cond
 				 (alloc alloc)
 				 (construct (lambda (_) #unspecified))
@@ -188,7 +196,12 @@
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f))
 	    (js-bind! %this fun 'name
-	       :value name
+	       :value fname
+	       :writable #f
+	       :enumerable #f :configurable #f)
+	    ;; source is an hop extension
+	    (js-bind! %this fun 'source
+	       :get get-source 
 	       :writable #f
 	       :enumerable #f :configurable #f)
 	    fun))))
@@ -214,8 +227,17 @@
    (define (tostring this)
       (cond
 	 ((isa? this JsFunction)
-	  (with-access::JsFunction this (name)
-	     (format "[JsFunction ~a]" name)))
+	  (with-access::JsFunction this (name src)
+	     (cond
+		((pair? src)
+		 (if (string? (cdr src))
+		     (cdr src)
+		     (format "[Function ~a~a]"
+			(cadr (car src)) (caddr (car src)))))
+		((>fx (string-length name) 0)
+		 (format "[Function ~a]" name))
+		(else
+		 "[Function]"))))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Jul 12 06:04:27 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 09:51:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -73,9 +73,11 @@
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
 	       (set! body
-		  (instantiate::J2SBlock
-		     (loc loc)
-		     (nodes (list (init-this loc) nbody))))))))
+		  (with-access::J2SBlock body (endloc)
+		     (instantiate::J2SBlock
+			(loc loc)
+			(endloc endloc)
+			(nodes (list (init-this loc) nbody)))))))))
    this)
 
 ;*---------------------------------------------------------------------*/

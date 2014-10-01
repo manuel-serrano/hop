@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Aug  8 06:04:24 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 08:53:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -204,7 +204,7 @@
 	 (procedure proc)
 	 (len arity)
 	 (__proto__ js-service-prototype)
-	 (name (or name proc))
+	 (name (if (symbol? name) (symbol->string! name) ""))
 	 (alloc (lambda (_)
 		   (js-raise-type-error %this
 		      "service not a constructor" #f)))

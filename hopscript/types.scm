@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Sep 24 12:26:53 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 08:51:45 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -88,6 +88,7 @@
 	      (js-others::pair-nil (default '())))
 	   
 	   (class JsArray::JsObject
+	      (inline::bool (default #t))
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
 	      (vec::vector (default '#())))
@@ -119,14 +120,15 @@
 	      (val::bstring (default "")))
 	   
 	   (class JsFunction::JsObject
-	      (name read-only)
+	      (name::bstring read-only)
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::int (default 3))
 	      (constrmap (default #f)) 
 	      (arity::int read-only (default -1))
 	      (len::int read-only)
-	      (procedure::procedure read-only))
+	      (procedure::procedure read-only)
+	      (src read-only (default #f)))
 	   
 	   (class JsService::JsFunction
 	      (svc::obj read-only))

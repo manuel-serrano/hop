@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Sep 25 12:39:48 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 07:09:02 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -162,6 +162,16 @@
 	  (string_char_quote (or #\' string_char))
 	  (string_char_dquote (or #\" string_char)))
 
+      (define (octalllong n::llong)
+       (let loop ((power #l1)
+		  (n n)
+		  (res #l0))
+	  (if (=llong n #l0)
+	      res
+	      (loop (*llong power #l8)
+		 (/llong n #l8)
+		 (+llong (*llong (modulollong n #l8) power) res)))))
+      
       ((+ blank_no_lt)
        (ignore))
 
@@ -202,16 +212,23 @@
       ((: nonzero_digit (* digit))
        ;; integer constant
        (let* ((len (the-length))
-	      (val (if (>=fx len 18)
-		       (flonum->bignum (string->real (the-string)))
-		       (string->number (the-string)))))
+	      (val (cond
+		      ((>=fx len 21)
+		       (string->real (the-string)))
+		      ((>=fx len 18)
+		       (string->real (the-string)))
+		      (else
+		       (string->number (the-string))))))
 	  (token 'NUMBER val len)))
       ((: (+ #\0) nonzero_digit (* digit))
        ;; integer constant
        (let* ((len (the-length))
 	      (val (if (>=fx len 18)
-		       (flonum->bignum (string->real (the-string)))
-		       (string->number (the-string)))))
+		       (let ((o (octalllong (string->llong (the-string)))))
+			  (if (>llong o (bit-lshllong #l1 29))
+			      (llong->bignum o)
+			      (llong->fixnum o)))
+		       (string->number (the-string) 8))))
 	  (token 'OCTALNUMBER val len)))
       ((: (+ digit) (: (in #\e #\E) #\- (+ digit)))
        ;; floating-point constant

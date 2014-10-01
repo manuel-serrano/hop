@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 24 16:31:51 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 17:23:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -648,7 +648,6 @@
 			   (p p))
 		   (if (not (=fx q s))
 		       (let ((z (split-match S q R)))
-;* 		    (tprint "split-match S=" S " q=" q " p=" p " -> z=" z) */
 			  (if (eq? z 'failure)
 			      (loop (+fx q (utf8-char-size (string-ref S q))) p)
 			      ;; 13.c.i
@@ -828,44 +827,20 @@
 	     (if (fixnum? i) i 0))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-property-names ::JsString ...                                 */
+;*    js-properties-name ::JsString ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-property-names obj::JsString enump %this)
+(define-method (js-properties-name obj::JsString enump %this)
    (with-access::JsString obj (val)
       (vector-append
 	 (apply vector (map! integer->string (iota (utf8-string-length val))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-own-property ::JsString ...                               */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-own-property o::JsString p %this)
-   (let ((desc (call-next-method)))
-      (if (eq? desc (js-undefined))
-	  (let ((index (js-toindex p)))
-	     (if (js-isindex? index)
-		 (with-access::JsString o (val)
-		    (let ((len (utf8-string-length val))
-			  (index (uint32->fixnum index)))
-		       (if (<=fx len index)
-			   (js-undefined)
-			   (instantiate::JsValueDescriptor
-			      (name (js-toname p %this))
-			      (value (utf8-string-ref val index))
-			      (enumerable #t)
-			      (writable #f)
-			      (configurable #f)))))
-		 (js-undefined)))
-	  desc)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsString ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-property o::JsString p)
+(define-method (js-has-property o::JsString p %this)
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsString o (val)
@@ -877,9 +852,11 @@
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-property ::JsString ...                                   */
+;*    js-get-own-property ::JsString ...                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property o::JsString p %this)
+(define-method (js-get-own-property o::JsString p %this)
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsString o (val)
@@ -897,8 +874,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsString ...                             */
+;*    -------------------------------------------------------------    */
+;*    This method is optional. It could be removed without changing    */
+;*    the programs behaviors. It merely optimizes access to strings.   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property-value o::JsString p %this)
+(define-method (js-get-property-value o::JsString base p::obj %this::JsGlobalObject)
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsString o (val)
@@ -922,19 +902,6 @@
 		(if (<=fx len index)
 		    (call-next-method)
 		    (utf8-string-ref val index)))))))
-       
-;*---------------------------------------------------------------------*/
-;*    js-get/base ::JsString ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (js-get/base o::JsString base p %this)
-   (let ((i (js-toindex p)))
-      (if (not (js-isindex? i))
-	  (call-next-method)
-	  (let ((len (utf8-string-length base))
-		(index (uint32->fixnum i)))
-	     (if (<=fx len index)
-		 (call-next-method)
-		 (utf8-string-ref base index))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    js-string-append ...                                             */

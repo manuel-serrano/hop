@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Sep 25 15:12:56 2014 (serrano)                */
+;*    Last change :  Mon Sep 29 13:03:07 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -50,16 +50,16 @@
 	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   
 	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::bstring ::bstring ::obj)
-	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::obj ::int ::obj)
+	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::int ::int ::obj)
 	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::obj)
-	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::obj ::int ::int ::obj)
+	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::int ::int ::int ::obj)
 	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::int ::obj)
 	   (nodejs-lchown ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::int ::obj)
-	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::obj ::int ::obj)
+	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::int ::int ::obj)
 	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::obj)
 	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::obj)
 	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::bstring ::obj ::obj)
-	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::obj ::obj ::obj)
+	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::int ::obj ::obj)
 	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::bstring ::obj ::obj)
 	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::bstring ::bstring ::obj)
 	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::bstring ::bstring ::obj)
@@ -69,11 +69,11 @@
 	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::obj)
 	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::bstring ::long ::long ::obj)
 	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::bstring ::long ::long ::obj)
-	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::obj ::long ::long ::obj)
-	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::obj ::obj)
-;* 	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::obj ::obj ::long ::long ::long ::obj) */
-	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::obj ::obj ::long ::long ::long ::obj)
-	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::obj ::obj)
+	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::int ::long ::long ::obj)
+	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::int ::obj)
+	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::int ::obj ::long ::long ::long ::obj)
+	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::int ::obj ::long ::long ::long ::obj)
+	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::int ::obj)
 
 	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::int)
 	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::int ::JsObject)
@@ -107,6 +107,9 @@
 (define ENOENT
    (cond-expand (bigloo-c (pragma::long "ENOENT")) (else 2)))
 
+(define EBADF
+   (cond-expand (bigloo-c (pragma::long "EBADF")) (else 9)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    uv-mutex ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -183,7 +186,7 @@
    (let ((thunk (lambda ()
 		   (js-worker-push-thunk! %worker
 		      (lambda ()
-			 (js-call1 %this this cb arg))))))
+			 (js-call1 %this cb this arg))))))
       (synchronize uv-mutex
 	 (set! uv-actions (append! uv-actions (list thunk)))
 	 (uv-async-send uv-async))))
@@ -467,6 +470,20 @@
 	     (uv-async-- name))))))
 
 ;*---------------------------------------------------------------------*/
+;*    fs-callback-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (fs-callback-error %worker %this name callback . args)
+   (with-access::JsGlobalObject %this (js-error)
+      (let ((err (js-new %this js-error (format "EBADF, ~a" name))))x
+	   (js-put! err 'errno EBADF #f %this)
+	   (js-put! err 'code  "EBADF" #f %this)
+	   (if (isa? callback JsFunction)
+	       (js-worker-push-thunk! %worker
+		  (lambda ()
+		     (js-apply %this callback (js-undefined) (cons err args))))
+	       (js-raise err)))))
+       
+;*---------------------------------------------------------------------*/
 ;*    nodejs-rename-file ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-rename-file %worker %this oldp newp callback)
@@ -482,8 +499,14 @@
 	   (nodejs-async-push "rename-file"
 	      (lambda ()
 		 (uv-fs-rename oldp newp :callback rename-callback)))
-	   (uv-fs-rename oldp newp)))
-
+	   (let ((r (uv-fs-rename oldp newp)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "rename: cannot rename file ~a into ~a"
+			   oldp newp)
+			r %this))
+		  r))))
       (else
        (let ((res (rename-file oldp newp)))
 	  (if (isa? callback JsFunction)
@@ -502,21 +525,25 @@
    
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "ftruncate"
-	      (lambda ()
-		 (uv-fs-ftruncate fd offset
-		    :callback ftruncate-callback)))
-	   (uv-fs-ftruncate fd offset)))
-      (else
-       (cond
-	  ((output-port? port)
-	   (let ((res (output-port-truncate port offset)))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
 	      (if (isa? callback JsFunction)
-		  (ftruncate-callback res)
-		  res)))
-	  (else
-	   (ftruncate-callback (not-implemented-exn "ftruncate")))))))
+		  (nodejs-async-push "ftruncate"
+		     (lambda ()
+			(uv-fs-ftruncate file offset
+			   :callback ftruncate-callback)))
+		  (uv-fs-ftruncate file offset))
+	      (fs-callback-error %worker %this callback "ftruncate"))))
+      (else
+       (let ((port (int->uvfile %this fd)))
+	  (cond
+	     ((output-port? port)
+	      (let ((res (output-port-truncate port offset)))
+		 (if (isa? callback JsFunction)
+		     (ftruncate-callback res)
+		     res)))
+	     (else
+	      (ftruncate-callback (not-implemented-exn "ftruncate"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-truncate ...                                              */
@@ -550,22 +577,26 @@
    
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "fchown"
-	      (lambda ()
-		 (uv-fs-fchown fd uid guid :callback fchown-callback)))
-	   (uv-fs-fchown fd uid guid)))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "fchown"
+		     (lambda ()
+			(uv-fs-fchown file uid guid
+			   :callback fchown-callback)))
+		  (uv-fs-fchown file uid guid))
+	      (fs-callback-error %worker %this callback "fchown"))))
       (else
        (fchown-callback (not-implemented-exn "fchown")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-chown ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-chown %worker %this fd uid guid callback)
+(define (nodejs-chown %worker %this path uid guid callback)
 
    (define (fchown-callback res)
       (fs-callback %worker %this callback "chown"
-	 (format "chown: cannot chown ~a, ~a, ~a -- ~~s" fd uid guid)
+	 (format "chown: cannot chown ~a, ~a, ~a -- ~~s" path uid guid)
 	 res))
    
    (cond-expand
@@ -573,19 +604,19 @@
        (if (isa? callback JsFunction)
 	   (nodejs-async-push "chown"
 	      (lambda ()
-		 (uv-fs-chown fd uid guid :callback fchown-callback)))
-	   (uv-fs-chown fd uid guid)))
+		 (uv-fs-chown path uid guid :callback fchown-callback)))
+	   (uv-fs-chown path uid guid)))
       (else
        (chown-callback (not-implemented-exn "chown")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lchown ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lchown %worker %this fd uid guid callback)
+(define (nodejs-lchown %worker %this path uid guid callback)
    
    (define (lchown-callback res)
       (fs-callback %worker %this callback "lchown"
-	 (format "lchown: cannot chown ~a, ~a, ~a -- ~~s" fd uid guid)
+	 (format "lchown: cannot chown ~a, ~a, ~a -- ~~s" path uid guid)
 	 res))
    
    (cond-expand
@@ -593,8 +624,8 @@
        (if (isa? callback JsFunction)
 	   (nodejs-async-push "lchown"
 	      (lambda ()
-		 (uv-fs-lchown fd uid guid :callback lchown-callback)))
-	   (uv-fs-lchown fd uid guid)))
+		 (uv-fs-lchown path uid guid :callback lchown-callback)))
+	   (uv-fs-lchown path uid guid)))
       (else
        (chown-callback (not-implemented-exn "lchown")))))
 
@@ -610,11 +641,21 @@
    
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "fchmod"
-	      (lambda ()
-		 (uv-fs-fchmod fd mod :callback fchmod-callback)))
-	   (uv-fs-fchmod fd mod)))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "fchmod"
+		     (lambda ()
+			(uv-fs-fchmod file mod
+			   :callback fchmod-callback)))
+		  (let ((r (uv-fs-fchmod file mod)))
+		     (if (and (integer? r) (<fx r 0))
+			 (js-raise
+			    (fs-errno-exn
+			       (format "fchmod: cannot chmod ~a ~a" fd mod)
+			       r %this))
+			 r)))
+	      (fs-callback-error %worker %this callback "fchmod"))))
       (else
        (fchmod-callback (not-implemented-exn "fchmod")))))
 
@@ -634,7 +675,13 @@
 	   (nodejs-async-push "chmod"
 	      (lambda ()
 		 (uv-fs-chmod fd mod :callback chmod-callback)))
-	   (uv-fs-chmod fd mod)))
+	   (let ((r (uv-fs-chmod fd mod)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "chmod: cannot chmod ~a ~a" fd mod)
+			r %this))
+		  r))))
       (else
        (chmod-callback (not-implemented-exn "chmod")))))
 
@@ -664,18 +711,16 @@
 	 (enable-libuv
 	  (js-worker-push-thunk! %worker
 	     (lambda ()
-		(if (isa? res UvFile)
-		    (js-call2 %this callback (js-undefined) #f
-		       (uvfile->int res))
-		    (let ((exn (fs-errno-exn
-				  (format "open: cannot open file ~a, ~a, ~a -- ~~s"
-				     path flags mode)
-				  res %this)))
-		       (js-call2 %this callback (js-undefined) exn #f)))
-		(uv-async-- (string-append "open:" path))
-		(tprint "<<<<<<<<<<<<<<<<<<<<<<< OPEN "
-		   path " " 
-		   uv-async-count " " uv-async-count-debug))))
+		(unwind-protect
+		   (if (isa? res UvFile)
+		       (js-call2 %this callback (js-undefined) #f
+			  (uvfile->int res))
+		       (let ((exn (fs-errno-exn
+				     (format "open: cannot open file ~a, ~a, ~a -- ~~s"
+					path flags mode)
+				     res %this)))
+			  (js-call2 %this callback (js-undefined) exn #f)))
+		      (uv-async-- (string-append "open:" path))))))
 	 (else
 	  (if (input-port? res)
 	      (js-call2 %this callback (js-undefined) #f res)
@@ -729,21 +774,30 @@
 (define (nodejs-fs-close %worker %this fd callback)
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "close"
-	      (lambda ()
-		 (uv-fs-close (close-uvfile %this fd) :callback
-		    (lambda (val)
-		       (js-worker-push-thunk! %worker
-			  (lambda ()
-			     (js-call1 %this callback (js-undefined) val)
-			     (uv-async-- "close")))))))
-	   (uv-fs-close fd)))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (begin
+		 (close-uvfile fd)
+		 (if (isa? callback JsFunction)
+		     (nodejs-async-push "close"
+			(lambda ()
+			   (uv-fs-close file
+			      :callback
+			      (lambda (val)
+				 (js-worker-push-thunk! %worker
+				    (lambda ()
+				       (unwind-protect
+					  (js-call1 %this callback (js-undefined) val)
+					  (uv-async-- "close"))))))))
+		     (uv-fs-close file)))
+	      (fs-callback-error %worker %this callback "close"))))
       (else
-       (let ((res (cond
-		     ((output-port? fd) (close-output-port fd))
-		     ((input-port? fd) (close-input-port fd))
-		     (else #f))))
+       (let* ((port (int->uvfile %this fs))
+	      (res (cond
+		      ((output-port? fd) (close-output-port fd))
+		      ((input-port? fd) (close-input-port fd))
+		      (else #f))))
+	  (close-uvfile fd)
 	  (if (isa? callback JsFunction)
 	      (js-call1 %this callback (js-undefined) res)
 	      res)))))
@@ -778,16 +832,19 @@
       (if (integer? res)
 	  (js-worker-push-thunk! %worker
 	     (lambda ()
-		(js-call2 %this callback (js-undefined)
-		   (fs-errno-exn (format "~a: cannot stat ~a -- ~~s" name obj)
-		      res %this)
-		   #f)
-		(uv-async-- name)))
+		(unwind-protect
+		   (js-call2 %this callback (js-undefined)
+		      (fs-errno-exn
+			 (format "~a: cannot stat ~a -- ~~s" name obj)
+			 res %this)
+		      #f)
+		   (uv-async-- name))))
 	  (let ((jsobj (stat->jsobj %this proto res)))
 	     (js-worker-push-thunk! %worker
 		(lambda ()
-		   (js-call2 %this callback (js-undefined) #f jsobj)
-		   (uv-async-- name)))))))
+		   (unwind-protect
+		      (js-call2 %this callback (js-undefined) #f jsobj)
+		      (uv-async-- name))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -795,15 +852,21 @@
 (define (nodejs-fstat %worker %this fd callback proto)
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "fstat"
-	      (lambda ()
-		 (uv-fs-fstat (int->uvfile %this fd)
-		    :callback (stat-cb %worker %this callback "fstat" fd proto))))
-	   (let ((res (uv-fs-fstat fd)))
-	      (if (integer? res)
-		  res
-		  (stat->jsobj %this proto res)))))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "fstat"
+		     (lambda ()
+			(uv-fs-fstat file
+			   :callback (stat-cb %worker %this callback "fstat" fd proto))))
+		  (let ((res (uv-fs-fstat file)))
+		     (if (integer? res)
+			 (js-raise
+			    (fs-errno-exn
+			       (format "stat: cannot stat ~a -- ~~s" fd)
+			       res %this))
+			 (stat->jsobj %this proto res))))
+	      (fs-callback-error %worker %this callback "fstat" #f))))
       (else
        ((input-port? fd)
 	(let ((obj (js-alist->jsobject
@@ -833,7 +896,9 @@
 		    :callback (stat-cb %worker %this callback "stat" path proto))))
 	   (let ((res (uv-fs-stat path)))
 	      (if (integer? res)
-		  res
+		  (js-raise
+		     (fs-errno-exn (format "stat: cannot stat ~a -- ~~s" path)
+			res %this))
 		  (stat->jsobj %this proto res)))))
       (else
        (if (file-exists? path)
@@ -871,7 +936,9 @@
 		    (stat-cb %worker %this callback "lstat" path proto))))
 	   (let ((res (uv-fs-lstat path)))
 	      (if (integer? res)
-		  res
+		  (js-raise
+		     (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s" path)
+			res %this))
 		  (stat->jsobj %this proto res)))))
       (else
        (if (isa? callback Js-Undefined)
@@ -894,7 +961,13 @@
 	   (nodejs-async-push "link"
 	      (lambda ()
 		 (uv-fs-link src dst :callback link-callback)))
-	   (uv-fs-link src dst)))
+	   (let ((r (uv-fs-link src dst)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "link: cannot lin ~a ~a" src dst)
+			r %this))
+		  r))))
       (else
        (link-callback (not-implemented-exn "link")))))
 
@@ -934,7 +1007,14 @@
 	   (nodejs-async-push "readlink"
 	      (lambda ()
 		 (uv-fs-readlink src :callback readlink-callback)))
-	   (uv-fs-readlink src)))
+	   (let ((r (uv-fs-readlink src)))
+	      (if (and (integer? r) (<fx r 0))
+		  (with-access::JsGlobalObject %this (js-error)
+		     (let ((exn (js-new %this js-error
+				   (format "readlink: cannot read lin ~a" src))))
+			(js-put! exn 'errno r #f %this)
+			(js-raise exn)))
+		  r))))
       (else
        (readlink-callback (not-implemented-exn "readlink")))))
 
@@ -954,7 +1034,14 @@
 	   (nodejs-async-push "unlink"
 	      (lambda ()
 		 (uv-fs-unlink src :callback unlink-callback)))
-	   (uv-fs-unlink src)))
+	   (let ((r (uv-fs-unlink src)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "unlink: cannot unlink ~a" src)
+			r %this))
+		  r)
+	      r)))
       (else
        (let ((r (delete-file src)))
 	  (unlink-callback (if r 0 (fs-exn "cannot unlink ~a" r)))))))
@@ -975,7 +1062,13 @@
 	   (nodejs-async-push "rmdir"
 	      (lambda ()
 		 (uv-fs-rmdir src :callback rmdir-callback)))
-	   (uv-fs-rmdir src)))
+	   (let ((r (uv-fs-rmdir src)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "rmdir: cannot rmdir ~a" src)
+			r %this))
+		  r))))
       (else
        (let ((r (delete-directory src)))
 	  (rmdir-callback (if r 0 (fs-exn "cannot rmdir ~a" r)))))))
@@ -996,48 +1089,66 @@
 	   (nodejs-async-push "mkdir"
 	      (lambda ()
 		 (uv-fs-mkdir src mode :callback mkdir-callback)))
-	   (uv-fs-mkdir src mode)))
+	   (let ((r (uv-fs-mkdir src mode)))
+	      (if (and (integer? r) (<fx r 0))
+		  (js-raise
+		     (fs-errno-exn
+			(format "mkdir: cannot mkdir ~a" src)
+			r %this))
+		  r))))
       (else
        (let ((r (make-directory src)))
 	  (mkdir-callback (if r 0 (fs-exn "cannot mkdir directory ~a" r)))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-write ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-write %worker %this fd buffer offset length position callback) */
-;*    (cond-expand                                                     */
-;*       (enable-libuv                                                 */
-;*        (with-access::JsArrayBufferView buffer (%data byteoffset)     */
-;* 	  (uv-fs-write fd %data length                                  */
-;* 	     :callback                                                 */
-;* 	     (when (isa? callback JsFunction)                          */
-;* 		(lambda (obj)                                          */
-;* 		   (js-worker-push-thunk! %worker                      */
-;* 		      (lambda ()                                       */
-;* 			 (if (<fx obj 0)                               */
-;* 			     (js-call3 %this callback (js-undefined)   */
-;* 				obj #f buffer)                         */
-;* 			     (js-call3 %this callback (js-undefined)   */
-;* 				#f obj buffer))))))                    */
-;* 	     :offset (+fx offset (uint32->fixnum byteoffset))          */
-;* 	     :position position :loop (uv-default-loop))))             */
-;*       (else                                                         */
-;*        (cond                                                        */
-;* 	  ((output-port? fd)                                           */
-;* 	   (when (integer? position)                                   */
-;* 	      (set-input-port-position! fd position))                  */
-;* 	   (with-access::JsArrayBufferView (%data byteoffset)           */
-;* 	      (let ((res (display-substring buffer                     */
-;* 			    (+fx offset byteoffset) (+ byteoffset offset length) */
-;* 			    fd)))                                      */
-;* 		 (if (<fx res 0)                                       */
-;* 		     (js-call3 %this callback (js-undefined) res #f buffer) */
-;* 		     (js-call3 %this callback (js-undefined) #f res buffer))))) */
-;* 	  (else                                                        */
-;* 	   (let ((r (fs-exn "Illegal port ~a" fd)))                    */
-;* 	      (if (isa? callback JsFunction)                           */
-;* 		  (js-call3 %this callback (js-undefined) r #f buffer) */
-;* 		  r)))))))                                             */
+;*---------------------------------------------------------------------*/
+;*    nodejs-write ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-write %worker %this fd buffer offset length position callback)
+   (cond-expand
+      (enable-libuv
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "write"
+		     (lambda ()
+			(with-access::JsArrayBufferView buffer (%data byteoffset)
+			   (uv-fs-write (int->uvfile %this fd) %data length
+			      :callback
+			      (lambda (obj)
+				 (js-worker-push-thunk! %worker
+				    (lambda ()
+				       (unwind-protect
+					  (if (<fx obj 0)
+					      (js-call3 %this callback (js-undefined)
+						 obj #f buffer)
+					      (js-call3 %this callback (js-undefined)
+						 #f obj buffer))
+					  (uv-async-- "write")))))
+			      :offset (+fx offset (uint32->fixnum byteoffset))
+			      :position position :loop (uv-default-loop)))))
+		  (with-access::JsArrayBufferView buffer (%data byteoffset)
+		     (uv-fs-write (int->uvfile %this fd) %data length
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position position :loop (uv-default-loop))))
+	      (fs-callback-error %worker %this "write" callback #f buffer))))
+      (else
+       (let ((port (int->uvfile %this fd)))
+	  (cond
+	     ((output-port? port)
+	      (when (integer? position)
+		 (set-input-port-position! port position))
+	      (with-access::JsArrayBufferView (%data byteoffset)
+		    (let ((res (display-substring buffer
+				  (+fx offset byteoffset) (+ byteoffset offset length)
+				  port)))
+		       (if (<fx res 0)
+			   (js-call3 %this callback (js-undefined) res #f buffer)
+			   (js-call3 %this callback (js-undefined) #f res buffer)))))
+	     (else
+	      (let ((r (fs-exn "Illegal port ~a" port)))
+		 (if (isa? callback JsFunction)
+		     (js-call3 %this callback (js-undefined) r #f buffer)
+		     r))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-read ...                                                  */
@@ -1045,30 +1156,29 @@
 (define (nodejs-read %worker %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (with-access::JsArrayBufferView buffer (%data byteoffset)
-	  (tprint "nodejs-read fd=" fd " cb=" (typeof callback))
-	  (if (isa? callback JsFunction)
-	      (begin
-		 (tprint "nodejs-read async fd=" fd)
-		 (nodejs-async-push "read"
-		    (lambda ()
-		       (tprint "nodejs-read uv-fs-read...")
-		       (uv-fs-read (int->uvfile %this fd) %data length
-			  :callback
-			  (lambda (obj)
-			     (js-worker-push-thunk! %worker
-				(lambda ()
-				   (tprint "nodejs-read uv-fs-read callback...")
-				   (if (<fx obj 0)
-				       (js-call2 %this callback (js-undefined) obj #f)
-				       (js-call2 %this callback (js-undefined) #f obj))
-				   (uv-async-- "read"))))
-			  :offset (+fx offset (uint32->fixnum byteoffset))
-			  :position position
-			  :loop (uv-default-loop)))))
-	      (uv-fs-read (int->uvfile %this fd) %data length
-		 :offset (+fx offset (uint32->fixnum byteoffset))
-		 :position position))))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (with-access::JsArrayBufferView buffer (%data byteoffset)
+		 (if (isa? callback JsFunction)
+		     (nodejs-async-push "read"
+			(lambda ()
+			   (uv-fs-read file %data length
+			      :callback
+			      (lambda (obj)
+				 (js-worker-push-thunk! %worker
+				    (lambda ()
+				       (unwind-protect
+					  (if (<fx obj 0)
+					      (js-call2 %this callback (js-undefined) obj #f)
+					      (js-call2 %this callback (js-undefined) #f obj))
+					  (uv-async-- "read")))))
+			      :offset (+fx offset (uint32->fixnum byteoffset))
+			      :position position
+			      :loop (uv-default-loop))))
+		     (uv-fs-read file %data length
+			:offset (+fx offset (uint32->fixnum byteoffset))
+			:position position)))
+	      (fs-callback-error %worker %this "read" callback #f))))
       (else
        (when (integer? position)
 	  (set-input-port-position! fd position))
@@ -1122,13 +1232,16 @@
    
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "futimes"
-	      (lambda ()
-		 (uv-fs-futime (int->uvfile %this fd) (js-todouble atime %this)
-		    (js-todouble mtime %this) :callback utimes-callback)))
-	   (uv-fs-futime (int->uvfile %this fd) (js-todouble atime %this)
-	      (js-todouble mtime %this))))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "futimes"
+		     (lambda ()
+			(uv-fs-futime file (js-todouble atime %this)
+			   (js-todouble mtime %this) :callback utimes-callback)))
+		  (uv-fs-futime file (js-todouble atime %this)
+		     (js-todouble mtime %this)))
+	      (fs-callback-error %worker %this "futimes" callback))))
       (else
        (utimes-callback (not-implemented-exn "futimes")))))
 
@@ -1144,11 +1257,14 @@
    
    (cond-expand
       (enable-libuv
-       (if (isa? callback JsFunction)
-	   (nodejs-async-push "fsync"
-	      (lambda ()
-		 (uv-fs-fsync (int->uvfile %this fd) :callback fsync-callback)))
-	   (uv-fs-fsync (int->uvfile %this fd))))
+       (let ((file (int->uvfile %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "fsync"
+		     (lambda ()
+			(uv-fs-fsync file :callback fsync-callback)))
+		  (uv-fs-fsync file))
+	      (fs-callback-error %worker %this "fsync" callback))))
       (else
        (if (output-port? fd)
 	   (begin
@@ -1173,16 +1289,17 @@
 		      (lambda (res)
 			 (js-worker-push-thunk! %worker
 			    (lambda ()
-			       (let ((oncomplete (js-get wrap 'oncomplete %this)))
-				  (if (isa? oncomplete JsFunction)
-				      (if (pair? res)
-					  (js-call1 %this oncomplete (js-undefined)
-					     (js-vector->jsarray (list->vector res) %this))
-					  (begin
-					     (process-fail %this process res)
+			       (unwind-protect
+				  (let ((oncomplete (js-get wrap 'oncomplete %this)))
+				     (if (isa? oncomplete JsFunction)
+					 (if (pair? res)
 					     (js-call1 %this oncomplete (js-undefined)
-						(js-undefined))))))
-			       (uv-async-- "getaddrinfo")))))))
+						(js-vector->jsarray (list->vector res) %this))
+					     (begin
+						(process-fail %this process res)
+						(js-call1 %this oncomplete (js-undefined)
+						   (js-undefined))))))
+				  (uv-async-- "getaddrinfo"))))))))
 	     wrap)))
       (else
        (getaddrinfo-callback (not-implemented-exn "getaddrinfo")))))
@@ -1210,14 +1327,14 @@
 	  (let ((v (js-vector->jsarray (list->vector res) %this)))
 	     (js-worker-push-thunk! %worker
 		(lambda ()
-		   (js-call2 %this cb (js-undefined)
-		      #f v)
-		   (uv-async-- "query"))))
+		   (unwind-protect
+		      (js-call2 %this cb (js-undefined) #f v)
+		      (uv-async-- "query")))))
 	  (js-worker-push-thunk! %worker
 	     (lambda ()
-		(js-call2 %this cb (js-undefined)
-		   res '#())
-		(uv-async-- "query")))))
+		(unwind-protect
+		   (js-call2 %this cb (js-undefined) res '#())
+		   (uv-async-- "query"))))))
    
    (cond-expand
       (enable-libuv
@@ -1260,7 +1377,9 @@
 (define (nodejs-istty %this fd)
    (cond-expand
       (enable-libuv
-       (eq? (uv-guess-handle (int->uvfile %this fd)) 'TTY))
+       (let ((file (int->uvfile %this fd)))
+	  (when file
+	     (eq? (uv-guess-handle file) 'TTY))))
       (else
        (and (output-port? fd) (output-port-isatty? fd)))))
 
@@ -1270,7 +1389,9 @@
 (define (nodejs-guess-handle-type %this fd)
    (cond-expand
       (enable-libuv
-       (symbol->string (uv-guess-handle (int->uvfile %this fd))))
+       (let ((file (int->uvfile %this fd)))
+	  (when file
+	     (symbol->string (uv-guess-handle file)))))
       (else
        (if (and (output-port? fd) (output-port-isatty? fd))
 	   "TTY"
@@ -1320,8 +1441,9 @@
 		:callback (lambda (status handle)
 			     (js-worker-push-thunk! %worker
 				(lambda ()
-				   (callback status handle)
-				   (uv-async-- "tcp-connect"))))))))
+				   (unwind-protect
+				      (callback status handle)
+				      (uv-async-- "tcp-connect")))))))))
       (else
        (error "nodejs-tcp-connect" "not implemented" #f))))
 
@@ -1408,17 +1530,18 @@
 			 (lambda (server status)
 			    (js-worker-push-thunk! %worker
 			       (lambda ()
-				  (if (< status 0)
-				      (process-fail %this process status)
-				      (with-access::UvTcp server (loop)
-					 (let ((client (instantiate::UvTcp (loop loop))))
-					    (let ((r (uv-accept handle client)))
-					       (if (< r 0)
-						   (process-fail %this process r)
-						   (let ((onconn (js-get this 'onconnection %this)))
-						      (js-call1 %this onconn this client)
-						      (js-undefined)))))))
-				  (uv-async-- "tcp-listen")))))))
+				  (unwind-protect
+				     (if (< status 0)
+					 (process-fail %this process status)
+					 (with-access::UvTcp server (loop)
+					    (let ((client (instantiate::UvTcp (loop loop))))
+					       (let ((r (uv-accept handle client)))
+						  (if (< r 0)
+						      (process-fail %this process r)
+						      (let ((onconn (js-get this 'onconnection %this)))
+							 (js-call1 %this onconn this client)
+							 (js-undefined)))))))
+				     (uv-async-- "tcp-listen"))))))))
 		(if (<fx r 0)
 		    (fs-errno-exn "Listen failed ~s" r %this)
 		    r)))))
@@ -1432,14 +1555,16 @@
    (cond-expand
       (enable-libuv
        [assert () (isa? (current-thread) WorkerHopThread)]
+       (tprint "stream-write handle=" handle)
        (nodejs-async-push "stream-write"
 	  (lambda ()
 	     (uv-stream-write handle buffer offset length
 		:callback (lambda (status)
 			     (js-worker-push-thunk! %worker
 				(lambda ()
-				   (callback status)
-				   (uv-async-- "sream-write"))))))))
+				   (unwind-protect
+				      (callback status)
+				      (uv-async-- "sream-write")))))))))
       (else
        (error "nodejs-stream-write" "not implemented" #f))))
    
@@ -1457,8 +1582,9 @@
 		:callback (lambda (buf offset len)
 			     (js-worker-push-thunk! %worker
 				(lambda ()
-				   (callback buf offset len)
-				   (uv-async-- "stream-read-start"))))))))
+				   (unwind-protect
+				      (callback buf offset len)
+				      (uv-async-- "stream-read-start")))))))))
       (else
        (error "nodejs-stream-read-start" "not implemented" #f))))
 
@@ -1486,8 +1612,9 @@
 		:callback (lambda (status handle)
 			     (js-worker-push-thunk! %worker
 				(lambda ()
-				   (callback status handle)
-				   (uv-async-- "stream-shutdown"))))))))
+				   (unwind-protect
+				      (callback status handle)
+				      (uv-async-- "stream-shutdown")))))))))
       (else
        (error "nodejs-stream-shutdown" "not implemented" #f))))
 
@@ -1502,7 +1629,7 @@
 ;*    uvfiles ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define uvfiles
-   (make-vector 16))
+   (make-vector 32))
 
 ;*---------------------------------------------------------------------*/
 ;*    uvfiles-mutex ...                                                */
@@ -1528,23 +1655,19 @@
 ;*---------------------------------------------------------------------*/
 (define (int->uvfile %this fd::int)
    (cond
-      ((<fx fd 0)
-       (js-raise-type-error %this "Not a file descriptor" fd))
-      ((>fx fd (vector-length uvfiles))
-       (js-raise-type-error %this "Not a file descriptor" fd))
+      ((<fx fd 0) #f)
+      ((>fx fd (vector-length uvfiles)) #f)
       (else
        (let ((file (vector-ref uvfiles fd)))
 	  (if (isa? file UvFile)
 	      file
-	      (js-raise-type-error %this "Illegal file descriptor" fd))))))
+	      (js-raise-type-error %this "Illegal file descriptor ~a" fd))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    close-uvfile ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (close-uvfile %this fd::int)
-   (let ((file (int->uvfile %this fd)))
-      (vector-set! uvfiles fd #f)
-      file))
+(define (close-uvfile fd::int)
+   (vector-set! uvfiles fd #f))
    
 ;* ;;;                                                                 */
 ;* (define-method (js-typeof o::UvFile)                                */

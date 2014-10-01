@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Wed Jul 30 07:31:41 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 15:38:12 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -25,9 +25,63 @@
 	   __hopscript_property
 	   __hopscript_array)
    
-   (export  (js-get-pair o::pair prop::symbol %this::JsGlobalObject)
-	    (js-get-null o::nil prop::symbol %this::JsGlobalObject)
-	    (js-put-pair! o::pair prop::symbol v throw::bool %this::JsGlobalObject)))
+   (export  (js-properties-name-pair::vector ::pair ::JsGlobalObject)
+	    (js-get-own-property-pair ::pair ::obj ::JsGlobalObject)
+	    (js-get-property-value-pair ::pair ::pair ::obj ::JsGlobalObject)
+	    (js-get-pair ::pair ::symbol ::JsGlobalObject)
+	    (js-get-null ::nil ::symbol ::JsGlobalObject)
+	    (js-put-pair! ::pair ::symbol v throw::bool ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-name-pair ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-properties-name-pair::vector o::pair %this)
+   (if (epair? o)
+       '#("car" "cdr" "cer")
+       '#("car" "cdr")))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-pair ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-get-own-property-pair o::pair p::obj %this)
+   (let ((n (js-toname p %this)))
+      (case n
+	 ((car)
+	  (instantiate::JsValueDescriptor
+	     (name 'car)
+	     (writable #t)
+	     (value (car o))
+	     (enumerable #t)
+	     (configurable #f)))
+	 ((cdr)
+	  (instantiate::JsValueDescriptor
+	     (name 'cdr)
+	     (writable #t)
+	     (value (cdr o))
+	     (enumerable #t)
+	     (configurable #f)))
+	 ((cer)
+	  (if (epair? o)
+	      (instantiate::JsValueDescriptor	
+		 (name 'cer)
+		 (writable #t)
+		 (value (cer o))
+		 (enumerable #t)
+		 (configurable #f))
+	      (js-undefined)))
+	 (else
+	  (js-undefined)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-property-value-pair ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-get-property-value-pair o::pair base::pair p::obj %this)
+   (let ((n (js-toname p %this)))
+      (case n
+	 ((car) (car base))
+	 ((cdr) (cdr base))
+	 ((cer) (if (epair? o) (cdr base) (js-undefined)))
+	 (else (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-pair ...                                                  */

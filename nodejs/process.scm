@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Sep 24 07:44:24 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 16:49:07 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -80,6 +80,9 @@
 		  (js-make-function %this on 2 "on") #f %this)
 	       (js-put! %process 'addListener add #f %this)
 	       (js-put! %process 'removeListener rem #f %this))))
+      ;; bind process into %this
+      (js-put! %this 'process %process #t %this)
+      ;; return the process object
       %process))
 
 ;*---------------------------------------------------------------------*/
@@ -106,7 +109,9 @@
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display o (current-output-port)))
-			      1 "write")))
+			      1 "write"))
+		 (writable . #t)
+		 (fd . 1))
 	       %this)
 	    #f %this)
 	 (js-put! proc 'stderr
@@ -114,7 +119,9 @@
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display o (current-error-port)))
-			      1 "write")))
+			      1 "write"))
+		 (writable . #t)
+		 (fd . 2))
 	       %this)
 	    #f %this)
 	 (js-put! proc 'argv
@@ -218,6 +225,11 @@
 	       (lambda (this) (pwd))
 	       0 "cwd")
 	    #f %this)
+	 (js-put! proc 'chdir
+	    (js-make-function %this
+	       (lambda (this path) (chdir path))
+	       1 "chdir")
+	    #f %this)
 	 (js-put! proc 'getuid
 	    (js-make-function %this
 	       (lambda (this) (getuid))
@@ -248,7 +260,6 @@
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
-	      chdir
 	      setgid
 	      getgid
 	      getgroups
@@ -261,6 +272,7 @@
 	      hrtime
 	      dlopen
 	      uptime
+	      umask
 	      memoryUsage))
 	 
 	 proc)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Sep 23 16:13:10 2014 (serrano)                */
+;*    Last change :  Sat Sep 27 09:51:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -542,7 +542,7 @@
        (js-raise-type-error %this
 	  "instanceof: not a function ~s" f)
        (when (isa? v JsObject)
-	  (let ((o (js-getvalue f f 'prototype #f %this)))
+	  (let ((o (js-get f 'prototype %this)))
 	     (if (not (isa? o JsObject))
 		 (js-raise-type-error %this
 		    "instanceof: no prototype ~s" v)
@@ -558,7 +558,7 @@
        (js-raise-type-error/loc %this loc
 	  "instanceof: not a function ~s" f)
        (when (isa? v JsObject)
-	  (let ((o (js-getvalue f f 'prototype #f %this)))
+	  (let ((o (js-get f 'prototype %this)))
 	     (if (not (isa? o JsObject))
 		 (js-raise-type-error/loc %this loc
 		    "instanceof: no prototype ~s" v)
@@ -577,12 +577,12 @@
 (define (js-in? %this field obj)
    (if (not (isa? obj JsObject))
        (js-raise-type-error %this "in: not a object ~s" obj)
-       (js-has-property obj (js-toname field %this))))
+       (js-has-property obj (js-toname field %this) %this)))
 
 (define (js-in?/debug %this loc field obj)
    (if (not (isa? obj JsObject))
        (js-raise-type-error/loc %this loc "in: not a object ~s" obj)
-       (js-has-property obj (js-toname field %this))))
+       (js-has-property obj (js-toname field %this) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-totest ...                                                    */

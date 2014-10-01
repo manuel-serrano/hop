@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 11 11:54:30 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 07:24:48 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -173,7 +173,7 @@
 	    ((=fl x -inf.0)
 	     x)
 	    (else
-	     (inexact->exact (ceiling x)))))
+	     (ceilingfl x))))
       
       (js-bind! %this js-math 'ceil
 	 :value (js-make-function %this js-math-ceil 1 'ceil)
@@ -294,9 +294,12 @@
 		(let loop ((x n1)
 			   (y n2))
 		   (cond
-		      ((= y 0) 1)
-		      ((even? y) (bignum->js-number (loop (* x x) (quotient y 2))))
-		      (else (bignum->js-number (* x (loop x (- y 1)))))))))))
+		      ((= y 0)
+		       1)
+		      ((even? y)
+		       (bignum->js-number (loop (* x x) (quotient y 2))))
+		      (else
+		       (bignum->js-number (* x (loop x (- y 1)))))))))))
       
       (js-bind! %this js-math 'pow
 	 :value (js-make-function %this js-math-pow 1 'pow)

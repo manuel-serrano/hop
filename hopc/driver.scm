@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Jul 28 08:06:05 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 10:08:47 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -149,16 +149,20 @@
 		  (loop)))))
       
       (define (generate-hopscript out::output-port)
-	 (for-each (lambda (exp) (pp exp out))
-	    (j2s-compile in
-	       :driver (js-driver)
-	       :worker (hopc-js-worker)
-	       :module-main (if (boolean? (hopc-js-module-main))
-				(hopc-js-module-main)
-				(not (eq? (hopc-pass) 'object)))
-	       :module-name (or (hopc-js-module-name)
-				(input-file->module-name in))
-	       :module-path (hopc-js-module-path))))
+	 (let* ((fname (input-port-name in))
+		(mmap (when (and (string? fname) (file-exists? fname))
+			 (open-mmap fname :read #t :write #f))))
+	    (for-each (lambda (exp) (pp exp out))
+	       (j2s-compile in
+		  :mmap-src mmap
+		  :driver (js-driver)
+		  :worker (hopc-js-worker)
+		  :module-main (if (boolean? (hopc-js-module-main))
+				   (hopc-js-module-main)
+				   (not (eq? (hopc-pass) 'object)))
+		  :module-name (or (hopc-js-module-name)
+				   (input-file->module-name in))
+		  :module-path (hopc-js-module-path)))))
 
       (define (generate out::output-port lang::symbol)
 	 (case lang
@@ -216,23 +220,27 @@
 	    file))
       
       (define (compile-hopscript in opts file exec)
-	 (compile in
-	    (append (hopc-js-libraries)
-	       `("-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
-	       opts)
-	    (lambda (out)
-	       ;; compile
-	       (map (lambda (e) (write (obj->string e) out))
-		  (j2s-compile in
-		     :driver (js-driver)
-		     :worker (hopc-js-worker)
-		     :module-main (if (boolean? (hopc-js-module-main))
-				      (hopc-js-module-main)
-				      (not (eq? (hopc-pass) 'object)))
-		     :module-name (or (hopc-js-module-name)
-				      (input-file->module-name in))
-		     :module-path (hopc-js-module-path))))
-	    file))
+	 (let* ((fname (input-port-name in))
+		(mmap (when (and (string? fname) (file-exists? fname))
+			 (open-mmap fname :read #t :write #f))))
+	    (compile in
+	       (append (hopc-js-libraries)
+		  `("-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
+		  opts)
+	       (lambda (out)
+		  ;; compile
+		  (map (lambda (e) (write (obj->string e) out))
+		     (j2s-compile in
+			:mmap-src mmap
+			:driver (js-driver)
+			:worker (hopc-js-worker)
+			:module-main (if (boolean? (hopc-js-module-main))
+					 (hopc-js-module-main)
+					 (not (eq? (hopc-pass) 'object)))
+			:module-name (or (hopc-js-module-name)
+					 (input-file->module-name in))
+			:module-path (hopc-js-module-path))))
+	       file)))
       
       (let* ((opts (hopc-bigloo-options))
 	     (file (when (and (pair? (hopc-sources))

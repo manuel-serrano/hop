@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Wed Aug  6 17:44:55 2014 (serrano)                */
+/*    Last change :  Mon Sep 29 17:28:04 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
@@ -20,5 +20,5 @@ ws.onopen = function( event ) {
 };
 
 ws.onmessage = function( event ) {
-   console.log( "received [%s]", event.value );
+   console.log( "received [%s]", event.data );
 };

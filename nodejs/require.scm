@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Sep 25 10:48:13 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 10:02:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -279,10 +279,15 @@
 	  (let* ((mod (gensym))
 		 (expr (call-with-input-file filename
 			  (lambda (in)
-			     (j2s-compile in
-				:driver (nodejs-driver)
-				:module-main #f
-				:module-name (symbol->string mod)))))
+			     (let ((m (open-mmap filename read: #t :write #f)))
+				(unwind-protect
+				   (j2s-compile in
+				      :driver (nodejs-driver)
+				      :filename filename
+				      :mmap-src m
+				      :module-main #f
+				      :module-name (symbol->string mod))
+				   (close-mmap m))))))
 		 (evmod (eval-module)))
 	     (unwind-protect
 		(begin

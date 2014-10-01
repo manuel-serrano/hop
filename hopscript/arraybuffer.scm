@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Thu Sep 25 08:52:41 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 17:50:17 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -136,57 +136,66 @@
 	 js-arraybuffer)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-property-names ::JsArray ...                                  */
+;*    js-properties-name ::JsArray ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-property-names obj::JsArrayBuffer enump %this)
+(define-method (js-properties-name obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
       (vector-append (apply vector (iota len)) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArrayBuffer ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-property o::JsArrayBuffer p)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (if (<=u32 (fixnum->uint32 (js-arraybuffer-length o)) index)
-	      (call-next-method)
-	      #t)
-	  (call-next-method))))
+(define-method (js-has-property o::JsArrayBuffer p %this)
+   (let ((i::uint32 (js-toindex p)))
+      (cond
+	 ((not (js-isindex? i))
+	  (call-next-method))
+	 ((<uint32 i (fixnum->uint32 (js-arraybuffer-length o)))
+	  #t)
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-property ::JsArrayBuffer ...                              */
+;*    js-get-own-property ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property o::JsArrayBuffer p %this)
-   (let ((index::uint32 (js-toindex p)))
-      (if (js-isindex? index)
-	  (if (<=u32 (fixnum->uint32 (js-arraybuffer-length o)) index)
-	      (call-next-method)
-	      (instantiate::JsValueDescriptor
-		 (name (js-toname index %this))
-		 (value (js-arraybuffer-ref o (uint32->fixnum index)))
-		 (writable #t)
-		 (enumerable #t)
-		 (configurable #t)))
-	  (call-next-method))))
+(define-method (js-get-own-property o::JsArrayBuffer p %this::JsGlobalObject)
+   (with-access::JsArrayBuffer o (frozen)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (js-arraybuffer-length o))
+	     (instantiate::JsValueDescriptor
+		(name (js-toname p %this))
+		(value (js-arraybuffer-ref o (uint32->fixnum i)))
+		(enumerable #t)
+		(writable (not frozen))
+		(configurable (not frozen))))
+	    (else
+	     (call-next-method))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-get-arraybuffer ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-get-arraybuffer o p %this)
+   (let ((i::uint32 (js-toindex p)))
+      (when (and (js-isindex? i) (<uint32 i (js-arraybuffer-length o)))
+	 (js-arraybuffer-ref o (uint32->fixnum i)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsArrayBuffer ...                        */
+;*    -------------------------------------------------------------    */
+;*    This method is optional. It could be removed without changing    */
+;*    the programs behaviors. It merely optimizes access to strings.   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-property-value o::JsArrayBuffer p %this)
-   (js-get o p %this))
+(define-method (js-get-property-value o::JsArrayBuffer base p %this)
+   (or (js-get-arraybuffer o p %this) (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsArrayBuffer ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArrayBuffer p %this)
-   (let ((i::uint32 (js-toindex p)))
-      (cond
-	 ((not (js-isindex? i))
-	  (call-next-method))
-	 ((<uint32 i (js-arraybuffer-length o))
-	  (js-arraybuffer-ref o (uint32->fixnum i)))
-	 (else
-	  (call-next-method)))))
+   (or (js-get-arraybuffer o p %this) (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArrayBuffer ...                                      */
@@ -229,7 +238,7 @@
 	  (js-put-array! o (js-toname p %this) v))
 	 ((<u32 i (fixnum->uint32 (js-arraybuffer-length o)))
 	  (js-arraybuffer-set! o (uint32->fixnum i)
-	     (->fixnum (js-tointeger v %this)))
+	     (uint32->fixnum (bit-andu32 (js-touint32 v %this) #u32:255)))
 	  v)
 	 (else
 	  (js-put-array! o (js-toname p %this) v)))))
@@ -247,21 +256,3 @@
 	 (else
 	  (call-next-method)))))
 
-;*---------------------------------------------------------------------*/
-;*    js-get-own-property ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-own-property o::JsArrayBuffer p %this::JsGlobalObject)
-   (with-access::JsArrayBuffer o (frozen)
-      (let ((i::uint32 (js-toindex p)))
-	 (cond
-	    ((not (js-isindex? i))
-	     (call-next-method))
-	    ((<uint32 i (js-arraybuffer-length o))
-	     (instantiate::JsValueDescriptor
-		(name (js-toname p %this))
-		(value (js-arraybuffer-ref o (uint32->fixnum i)))
-		(enumerable #t)
-		(writable (not frozen))
-		(configurable (not frozen))))
-	    (else
-	     (call-next-method))))))

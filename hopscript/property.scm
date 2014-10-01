@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Aug 30 19:24:23 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 15:41:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -26,38 +26,36 @@
 	   __hopscript_pair
 	   __hopscript_function)
 
-   (export (js-toname::symbol ::obj ::JsGlobalObject)
-	   (js-property-value ::obj ::JsPropertyDescriptor ::JsObject ::JsGlobalObject)
-	   (generic js-property-names::vector ::JsObject ::bool ::JsGlobalObject)
-
-	   (js-object-unmap! ::JsObject)
-	   (generic js-has-property::bool ::JsObject ::symbol)
-
-	   (js-from-property-descriptor ::JsGlobalObject desc ::JsObject)
-	   (js-to-property-descriptor ::JsGlobalObject desc ::symbol)
-
+   (export (js-object-unmap! ::JsObject)
+	   (js-toname::symbol ::obj ::JsGlobalObject)
+	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
 	   (inline js-is-generic-descriptor?::bool obj)
+	   (js-from-property-descriptor ::JsGlobalObject desc ::obj)
+	   (js-to-property-descriptor ::JsGlobalObject desc ::symbol)
+	   (js-property-value ::obj ::JsObject
+	      ::JsPropertyDescriptor ::JsGlobalObject)
 	   
-	   (generic js-get-own-property ::JsObject ::obj ::JsGlobalObject)
-	   (generic js-get-property-value ::JsObject ::symbol ::JsGlobalObject)
-	   (generic js-get-property ::JsObject ::symbol ::JsGlobalObject)
+	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
+	   (generic js-has-property::bool ::obj ::symbol ::JsGlobalObject)
+	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 
-	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
+	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
+
+	   (js-get-notfound ::obj ::bool ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
-	   (generic js-get/base ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-getvalue ::JsObject ::obj ::symbol ::obj ::JsGlobalObject)
-	   
+	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
-	   (inline js-get-name/cache ::obj ::symbol ::JsPropertyCache ::JsGlobalObject)
+	   (js-get-name/cache ::obj ::symbol ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
 	   
 	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 
-	   (js-put!/debug ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
+	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-put-name/cache! ::obj ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (js-put-name/cache-miss! ::JsObject ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
@@ -109,6 +107,14 @@
 ;*---------------------------------------------------------------------*/
 (define (cmap-transition name flags)
    (cons name flags))
+
+;*---------------------------------------------------------------------*/
+;*    cmap-descriptors ...                                             */
+;*---------------------------------------------------------------------*/
+(define (cmap-descriptors omap)
+   (when omap
+      (with-access::JsConstructMap omap (descriptors)
+	 descriptors)))
 
 ;*---------------------------------------------------------------------*/
 ;*    link-cmap! ...                                                   */
@@ -164,33 +170,6 @@
        (string->symbol (fixnum->string indx))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-toname ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (js-toname p %this)
-   (let loop ((p p))
-      (cond
-	 ((string? p)
-	  (string->symbol p))
-	 ((symbol? p)
-	  p)
-	 ((fixnum? p)
-	  (fixnum->pname p))
-	 ((uint32? p)
-	  (cond-expand
-	     (bint30
-	      (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
-		  (fixnum->pname (uint32->fixnum p))
-		  (string->symbol (llong->string (uint32->llong p)))))
-	     (bint32
-	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
-		  (fixnum->pname (uint32->fixnum p))
-		  (string->symbol (llong->string (uint32->llong p)))))
-	     (else
-	      (fixnum->pname (uint32->fixnum p)))))
-	 (else
-	  (loop (js-tostring p %this))))))
-
-;*---------------------------------------------------------------------*/
 ;*    jsobject-map-find ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-macro (jsobject-map-find o p succeed fail)
@@ -229,58 +208,48 @@
 ;*    looking of a property. It calls on of the successXXX hooks       */
 ;*    when found.                                                      */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsobject-find o name successmap successprop failure)
+;* (define-macro (jsobject-find o name successmap successprop failure) */
+;*    (let ((obj (gensym 'o)))                                         */
+;*       `(let loop ((,obj ,o))                                        */
+;* 	  (with-access::JsObject ,obj (cmap __proto__)                 */
+;* 	     (if cmap                                                  */
+;* 		 (jsobject-map-find ,obj ,name ,successmap             */
+;* 		    (lambda ()                                         */
+;* 		       (if (isa? __proto__ JsObject)                   */
+;* 			   (loop __proto__)                            */
+;* 			   (,failure))))                               */
+;* 		 (jsobject-properties-find ,obj ,name ,successprop     */
+;* 		    (lambda ()                                         */
+;* 		       (if (isa? __proto__ JsObject)                   */
+;* 			   (loop __proto__)                            */
+;* 			   (,failure)))))))))                          */
+
+;*---------------------------------------------------------------------*/
+;*    js-object-find ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This is a general macro that walks thru the prototype chains     */
+;*    (iff the optional loop argument is provided) looking of a        */
+;*    property. It calls on of the successXXX hooks when found.        */
+;*---------------------------------------------------------------------*/
+(define-macro (jsobject-find o name foundinmap foundinprop notfound . loop)
    (let ((obj (gensym 'o)))
-      `(let loop ((,obj ,o))
+      `(let ((,obj ,o))
 	  (with-access::JsObject ,obj (cmap __proto__)
 	     (if cmap
-		 (jsobject-map-find ,obj ,name ,successmap
+		 (jsobject-map-find ,obj ,name ,foundinmap
 		    (lambda ()
-		       (if (isa? __proto__ JsObject)
-			   (loop __proto__)
-			   (,failure))))
-		 (jsobject-properties-find ,obj ,name ,successprop
+		       ,(if (pair? loop)
+			    `(if (isa? __proto__ JsObject)
+				 (,(car loop) __proto__)
+				 (,notfound))
+			    `(,notfound))))
+		 (jsobject-properties-find ,obj ,name ,foundinprop
 		    (lambda ()
-		       (if (isa? __proto__ JsObject)
-			   (loop __proto__)
-			   (,failure)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-property-names ...                                            */
-;*    -------------------------------------------------------------    */
-;*    Returns a vector of the property names.                          */
-;*---------------------------------------------------------------------*/
-(define-generic (js-property-names obj::JsObject enump %this::JsGlobalObject)
-   (with-access::JsObject obj (cmap properties)
-      (apply vector
-	 (filter-map (lambda (p)
-			(with-access::JsPropertyDescriptor p (name enumerable)
-			   (when (or (not enump) enumerable)
-			      (symbol->string! name))))
-	    (if cmap
-		(with-access::JsConstructMap cmap (descriptors)
-		   (vector->list descriptors))
-		properties)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-property-value ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-property-value obj desc owner %this)
-   (cond
-      ((isa? desc JsIndexDescriptor)
-       (with-access::JsIndexDescriptor desc (index)
-	  (with-access::JsObject owner (elements)
-	     (vector-ref-ur elements index))))
-      ((isa? desc JsValueDescriptor)
-       (with-access::JsValueDescriptor desc (value)
-	  value))
-      ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (get)
-	  (if (isa? get JsFunction)
-	      (js-call0 %this get obj)
-	      (js-undefined))))
-      (else
-       (js-undefined))))
+		       ,(if (pair? loop)
+			    `(if (isa? __proto__ JsObject)
+				 (,(car loop) __proto__)
+				 (,notfound))
+			    `(,notfound)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-unmap! ...                                             */
@@ -289,6 +258,8 @@
 ;*    switch from the mapped representation to a plain property        */
 ;*    based representation.                                            */
 ;*---------------------------------------------------------------------*/
+;; MS CARE 27 sep 2014: This function is used by js-freeze and js-seal
+;; I don't understand why.
 (define (js-object-unmap! o::JsObject)
 
    (define (mapped-descriptor->descriptor odesc)
@@ -325,6 +296,33 @@
 	 (set! cmap #f)
 	 (set! elements '#())))
    o)
+
+;*---------------------------------------------------------------------*/
+;*    js-toname ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (js-toname p %this)
+   (let loop ((p p))
+      (cond
+	 ((string? p)
+	  (string->symbol p))
+	 ((symbol? p)
+	  p)
+	 ((fixnum? p)
+	  (fixnum->pname p))
+	 ((uint32? p)
+	  (cond-expand
+	     (bint30
+	      (if (<u32 p (fixnum->uint32 (bit-lsh 1 29)))
+		  (fixnum->pname (uint32->fixnum p))
+		  (string->symbol (llong->string (uint32->llong p)))))
+	     (bint32
+	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
+		  (fixnum->pname (uint32->fixnum p))
+		  (string->symbol (llong->string (uint32->llong p)))))
+	     (else
+	      (fixnum->pname (uint32->fixnum p)))))
+	 (else
+	  (loop (js-tostring p %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-is-accessor-descriptor? ...                                   */
@@ -393,20 +391,20 @@
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::symbol)
    (let* ((obj (js-cast-object %this obj "[[ToPropertyDescriptor]]"))
-	  (enumerable (if (js-has-property obj 'enumerable)
+	  (enumerable (if (js-has-property obj 'enumerable %this)
 			  (js-toboolean (js-get obj 'enumerable %this))
 			  (js-undefined)))
-	  (configurable (if (js-has-property obj 'configurable)
+	  (configurable (if (js-has-property obj 'configurable %this)
 			    (js-toboolean (js-get obj 'configurable %this))
 			    (js-undefined)))
-	  (hasget (js-has-property obj 'get))
-	  (hasset (js-has-property obj 'set)))
+	  (hasget (js-has-property obj 'get %this))
+	  (hasset (js-has-property obj 'set %this)))
       (cond
 	 ((or hasget hasset)
 	  (let ((get (js-get obj 'get %this))
 		(set (js-get obj 'set %this)))
-	     (if (or (js-has-property obj 'writable)
-		     (js-has-property obj 'value)
+	     (if (or (js-has-property obj 'writable %this)
+		     (js-has-property obj 'value %this)
 		     (and (not (isa? get JsFunction))
 			  (not (eq? get (js-undefined))))
 		     (and (not (isa? set JsFunction))
@@ -419,8 +417,8 @@
 		    (set (when hasset set))
 		    (enumerable enumerable)
 		    (configurable configurable)))))
-	 ((js-has-property obj 'value)
-	  (let ((writable (if (js-has-property obj 'writable)
+	 ((js-has-property obj 'value %this)
+	  (let ((writable (if (js-has-property obj 'writable %this)
 			      (js-toboolean (js-get obj 'writable %this))
 			      (js-undefined))))
 	     (instantiate::JsValueDescriptor
@@ -429,7 +427,7 @@
 		(writable writable)
 		(enumerable enumerable)
 		(configurable configurable))))
-	 ((js-has-property obj 'writable)
+	 ((js-has-property obj 'writable %this)
 	  (instantiate::JsDataDescriptor
 	     (name name)
 	     (writable (js-toboolean (js-get obj 'writable %this)))
@@ -442,88 +440,172 @@
 	     (configurable configurable))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-property-value ...                                            */
+;*    -------------------------------------------------------------    */
+;*    Get the value of a property. Owner, is the object owning the     */
+;*    property. Obj, is the object used to access the property.        */
+;*    Owner != Obj if the property is defined in the prototype chain.  */
+;*    Obj is the "this" value of AccessorDescriptors.                  */
+;*---------------------------------------------------------------------*/
+(define (js-property-value obj owner desc %this)
+   (cond
+      ((isa? desc JsIndexDescriptor)
+       (with-access::JsIndexDescriptor desc (index)
+	  (with-access::JsObject owner (elements)
+	     (vector-ref-ur elements index))))
+      ((isa? desc JsValueDescriptor)
+       (with-access::JsValueDescriptor desc (value name)
+	  value))
+      ((isa? desc JsAccessorDescriptor)
+       (with-access::JsAccessorDescriptor desc (get)
+	  (if (isa? get JsFunction)
+	      (js-call0 %this get obj)
+	      (js-undefined))))
+      (else
+       (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-name ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Returns a vector of the properties name.                         */
+;*---------------------------------------------------------------------*/
+(define-generic (js-properties-name::vector o enump::bool %this::JsGlobalObject)
+   (if (pair? o)
+       (js-properties-name-pair o %this)
+       (js-raise-type-error %this "[[PROP]]: not an object ~s" o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-name ::JsObject ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-properties-name::vector o::JsObject enump::bool %this::JsGlobalObject)
+   (with-access::JsObject o (cmap properties)
+      (apply vector
+	 (filter-map (lambda (p)
+			(with-access::JsPropertyDescriptor p (name enumerable)
+			   (when (or (not enump) enumerable)
+			      (symbol->string! name))))
+	    (if cmap
+		(with-access::JsConstructMap cmap (descriptors)
+		   (vector->list descriptors))
+		properties)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-property ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-has-property::bool o name::symbol %this)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-has-property ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-property::bool o::JsObject name::symbol %this)
+   (jsobject-find o name
+      ;; cmap search
+      (lambda (o i) #t)
+      ;; property search
+      (lambda (o d) #t)
+      ;; failure
+      (lambda () #f)
+      ;; prototype search
+      (lambda (__proto__) (js-has-property __proto__ name %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.1       */
+;*    -------------------------------------------------------------    */
+;*    Returns the property _directly_ owned by the object (i.e.,       */
+;*    without traversing the prototype chain).                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
-   (let ((name (js-toname p %this)))
-      (with-access::JsObject o (cmap)
-	 (if cmap
-	     (jsobject-map-find o name
-		(lambda (obj i)
-		   (with-access::JsObject obj (cmap)
-		      (with-access::JsConstructMap cmap (descriptors)
-			 (vector-ref-ur descriptors i))))
-		(lambda () (js-undefined)))
-	     (jsobject-properties-find o name
-		(lambda (o d) d)
-		(lambda () (js-undefined)))))))
+(define-generic (js-get-own-property o::obj p::obj %this::JsGlobalObject)
+   (if (pair? o)
+       (js-get-own-property-pair o p %this)
+       (js-undefined)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
+   ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
+   (jsobject-find o (js-toname p %this)
+      ;; cmap search
+      (lambda (owner i)
+	 (with-access::JsObject owner (cmap)
+	    (with-access::JsConstructMap cmap (descriptors)
+	       (vector-ref-ur descriptors i))))
+      ;; prototype search
+      (lambda (o d) d)
+      ;; not found
+      (lambda () (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
+;*    -------------------------------------------------------------    */
+;*    Returns the property owned by the object (i.e., traverses the    */
+;*    prototype chain if the object does not own it directly).         */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-property obj::JsObject name::symbol %this::JsGlobalObject)
-   (with-access::JsObject obj (cmap __proto__)
-      (if cmap
-	  (jsobject-map-find obj name
-	     (lambda (o i)
-		(with-access::JsObject o (cmap)
-		   (with-access::JsConstructMap cmap (descriptors)
-		      (vector-ref-ur descriptors i))))
-	     (lambda ()
-		(if (isa? __proto__ JsObject)
-		    (js-get-property __proto__ name %this)
-		    (js-undefined))))
-	  (jsobject-properties-find obj name
-	     (lambda (o d) d)
-	     (lambda ()
-		(if (isa? __proto__ JsObject)
-		    (js-get-property __proto__ name %this)
-		    (js-undefined)))))))
+(define (js-get-property o::JsObject p::obj %this::JsGlobalObject)
+   ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
+   (let ((desc (js-get-own-property o p %this)))
+      (if (eq? desc (js-undefined))
+	  (with-access::JsObject o (__proto__)
+	     (if (isa? __proto__ JsObject)
+		 (js-get-property __proto__ p %this)
+		 (js-undefined)))
+	  desc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.2       */
 ;*    -------------------------------------------------------------    */
-;*    As js-get but if the property is unbound return js-absent.       */
+;*    This function is a generic to allow subclass optimization.       */
+;*    See for instance sj JsString class. By overriding this generic,  */
+;*    it avoids, allocating a JsValueDescriptor that is immediately    */
+;*    destructured by JS-GET-PROPERTY-VALUE. This optimization only    */
+;*    applies to the first level of the prototype root chain.          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-property-value obj::JsObject name::symbol %this::JsGlobalObject)
-   (with-access::JsObject obj (cmap __proto__)
-      (if cmap
-	  (jsobject-map-find obj name
-	     (lambda (o i)
-		(with-access::JsObject o (cmap)
-		   (with-access::JsConstructMap cmap (descriptors)
-		      (let ((desc (vector-ref-ur descriptors i)))
-			 (js-property-value obj desc o %this)))))
-	     (lambda ()
-		(if (isa? __proto__ JsObject)
-		    (js-get-property-value __proto__ name %this)
-		    (js-absent))))
-	  (jsobject-properties-find obj name
-	     (lambda (o d)
-		(js-property-value obj d o %this))
-	     (lambda ()
-		(if (isa? __proto__ JsObject)
-		    (js-get-property-value __proto__ name %this)
-		    (js-absent)))))))
+(define-generic (js-get-property-value o::obj base p::obj %this::JsGlobalObject)
+   (if (pair? o)
+       (js-get-property-value-pair o base p %this)
+       (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/debug ...                                                 */
+;*    js-get-property-value ::JsObject ...                             */
 ;*---------------------------------------------------------------------*/
-(define (js-get/debug _o prop %this::JsGlobalObject loc)
+(define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
+   ;; JsObject x obj x JsGlobalObject -> value | Absent
+   (let loop ((owner o))
+      (let ((desc (js-get-own-property owner p %this)))
+	 (if (eq? desc (js-undefined))
+	     (with-access::JsObject owner (__proto__)
+		(if (isa? __proto__ JsObject)
+		    (loop __proto__)
+		    (js-absent)))
+	     (js-property-value base owner desc %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-notfound ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-get-notfound name throw %this)
    (cond
-      ((pair? _o)
-       (js-get-pair _o prop %this))
-      ((null? _o)
-       (js-get-null _o prop %this))
+      ((not throw)
+       (js-undefined))
+      ((pair? throw)
+       (match-case throw
+	  ((at ?fname ?point)
+	   (js-raise-reference-error %this "variable unbound \"~a\"" name
+	      fname point))
+	  (else
+	   (js-raise-reference-error %this "variable unbound \"~a\"" name))))
       (else
-       (let ((o (js-toobject/debug %this loc _o)))
-	  (js-get _o prop %this)))))
+       (js-raise-reference-error %this "variable unbound \"~a\"" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ...                                                       */
@@ -531,20 +613,26 @@
 ;*    ECMA-262, Section 8.12.3                                         */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get _o prop %this::JsGlobalObject)
+(define-generic (js-get o prop %this::JsGlobalObject)
    (cond
-      ((pair? _o)
-       (js-get-pair _o prop %this))
-      ((null? _o)
-       (js-get-null _o prop %this))
+      ((pair? o)
+       (js-get-pair o prop %this))
+      ((null? o)
+       (js-get-null o prop %this))
       (else
-       (let ((o (js-toobject %this _o)))
-	  (if o
-	      (js-get/base o _o prop %this)
-	      (js-raise-type-error %this "[[GET]]: not an object ~s" _o))))))
+       (let ((obj (js-toobject %this o)))
+	  (if obj
+	      (js-get-jsobject obj o prop %this)
+	      (js-raise-type-error %this "[[GET]]: not an object ~s" o))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get ::Object ...                                              */
+;*    js-get ::JsObject ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsObject prop %this::JsGlobalObject)
+   (js-get-jsobject o o prop %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::object ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Accessing Bigloo objects from hopscript                          */
 ;*---------------------------------------------------------------------*/
@@ -571,48 +659,35 @@
 	  ((class-field-accessor field) o))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-notfound ...                                              */
-;*---------------------------------------------------------------------*/
-(define (js-get-notfound name throw %this)
-   (cond
-      ((not throw)
-       (js-undefined))
-      ((pair? throw)
-       (match-case throw
-	  ((at ?fname ?point)
-	   (js-raise-reference-error %this "variable unbound \"~a\"" name
-	      fname point))
-	  (else
-	   (js-raise-reference-error %this "variable unbound \"~a\"" name))))
-      (else
-       (js-raise-reference-error %this "variable unbound \"~a\"" name))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get/base ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-generic (js-get/base o base prop %this)
-   (js-getvalue o base (js-toname prop %this) #f %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-getvalue ...                                                  */
+;*    js-get-jsobject ::JsObject ...                                   */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1        */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
+;*    -------------------------------------------------------------    */
+;*    This function seconds JS-GET. It is required because in strict   */
+;*    mode, "this" is not converted in a object, which demands         */
+;*    to keep the base object (the actual receiver) avaiable.          */
 ;*---------------------------------------------------------------------*/
-(define (js-getvalue obj::JsObject base name::symbol throw %this)
-   (jsobject-find obj name
-      (lambda (o i)
-	 ;; found in a map
-	 (with-access::JsObject o (elements cmap)
-	    (with-access::JsConstructMap cmap (descriptors)
-	       (let ((descr (vector-ref-ur descriptors i)))
-		  (if (isa? descr JsAccessorDescriptor)
-		      (js-property-value base descr o %this)
-		      (vector-ref-ur elements i))))))
-      (lambda (o d)
-	 (js-property-value base d o %this))
-      (lambda ()
-	 ;; not found
-	 (js-get-notfound name throw %this))))
+(define (js-get-jsobject o::JsObject base p %this)
+   (let ((pval (js-get-property-value o base p %this)))
+      (if (eq? pval (js-absent))
+	  (js-undefined)
+	  pval)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get/debug ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Instrumented version of js-get to provide information about      */
+;*    potential type errors.                                           */
+;*---------------------------------------------------------------------*/
+(define (js-get/debug _o prop %this::JsGlobalObject loc)
+   (cond
+      ((pair? _o)
+       (js-get-pair _o prop %this))
+      ((null? _o)
+       (js-get-null _o prop %this))
+      (else
+       (let ((o (js-toobject/debug %this loc _o)))
+	  (js-get _o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */
@@ -620,17 +695,50 @@
 ;*    Use a per site cache for the [[GET]] operation. The property     */
 ;*    name is not know statically.                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-get/cache obj
-	   prop::obj cache::JsPropertyCache %this::JsGlobalObject)
-   (if (or (not (string? prop)) (not (isa? obj JsObject)))
-       (js-get obj prop %this)
-       (let ((pname (js-toname prop %this)))
-	  (with-access::JsPropertyCache cache (name)
-	     (if (eq? name pname)
-		 (js-get-name/cache obj name cache %this)
-		 (if (not (isa? obj JsObject))
-		     (js-get-lookup obj name cache #f %this)
-		     (js-get obj prop %this)))))))
+(define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (if (or (not (symbol? prop)) (not (isa? o JsObject)))
+       (js-get o prop %this)
+       (with-access::JsPropertyCache cache (name)
+	  (if (eq? name prop)
+	      (js-get-name/cache o name cache %this)
+	      (js-get-lookup o name cache #f %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lookup ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Look for the property, if found update the cache and return      */
+;*    the property value.                                              */
+;*    -------------------------------------------------------------    */
+;*    As this is only used when the property is a name (i.e., a        */
+;*    symbol), it is never used to access indexed object. Hence,       */
+;*    it does not need to be generic function.                         */
+;*---------------------------------------------------------------------*/
+(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw %this)
+   (let loop ((owner obj))
+      (jsobject-find owner name
+	 ;; map search
+	 (lambda (owner i)
+	    (with-access::JsObject owner ((omap cmap) elements)
+	       (with-access::JsConstructMap omap (descriptors)
+		  (with-access::JsPropertyCache cache (cmap index)
+		     (let ((descr (vector-ref-ur descriptors i)))
+			(if (isa? descr JsAccessorDescriptor)
+			    (begin
+			       (set! cmap descriptors)
+			       (set! index i)
+			       (js-property-value obj owner descr %this))
+			    (begin
+			       (set! cmap omap)
+			       (set! index i)
+			       (vector-ref-ur elements i))))))))
+	 ;; property search
+	 (lambda (owner v)
+	    (js-property-value obj owner v %this))
+	 ;; not found
+	 (lambda ()
+	    (js-get-notfound name throw %this))
+	 ;; loop
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -639,7 +747,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-get-name/cache obj
+(define (js-get-name/cache obj
 		  name::symbol cache::JsPropertyCache %this::JsGlobalObject)
    (if (not (isa? obj JsObject))
        (js-get obj name %this)
@@ -650,14 +758,6 @@
 		 (js-get-name/cache-miss obj name cache #f %this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    construct-map-descriptors ...                                    */
-;*---------------------------------------------------------------------*/
-(define (construct-map-descriptors omap)
-   (when omap
-      (with-access::JsConstructMap omap (descriptors)
-	 descriptors)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    Use a per site cache for the [[GET]] operation. The name is a    */
@@ -665,55 +765,27 @@
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw %this)
-   (let loop ((o obj))
-      (with-access::JsObject o ((omap cmap) elements __proto__)
+   (let loop ((owner obj))
+      (with-access::JsObject owner ((omap cmap) elements __proto__)
 	 (with-access::JsPropertyCache cache (cmap index)
 	    (cond
-	       ((eq? cmap omap)
-		;; we got the map
-		(vector-ref-ur elements index))
-	       ((eq? cmap (construct-map-descriptors omap))
-		;; check if we are accessing a prop via a cached accessor
-		(js-property-value obj (vector-ref-ur cmap index) o %this))
 	       ((not omap)
-		(jsobject-properties-find o name
-		   (lambda (o v) (js-property-value obj v o %this))
+		(jsobject-properties-find owner name
+		   (lambda (owner d)
+		      (js-property-value obj owner d %this))
 		   (lambda ()
 		      ;; not found
 		      (if (isa? __proto__ JsObject)
 			  (loop __proto__)
 			  (js-get-lookup obj name cache throw %this)))))
+	       ((eq? cmap omap)
+		;; we got the map
+		(vector-ref-ur elements index))
+	       ((eq? cmap (cmap-descriptors omap))
+		;; check if we are accessing a prop via a cached accessor
+		(js-property-value obj owner (vector-ref-ur cmap index) %this))
 	       (else
 		(js-get-lookup obj name cache throw %this)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-lookup ...                                                */
-;*    -------------------------------------------------------------    */
-;*    Look for the property, if found update the cache and return      */
-;*    the property value.                                              */
-;*---------------------------------------------------------------------*/
-(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw %this)
-   (jsobject-find obj name
-      (lambda (o i)
-	 ;; found in a map
-	 (with-access::JsObject o ((omap cmap) elements)
-	    (with-access::JsConstructMap omap (descriptors)
-	       (with-access::JsPropertyCache cache (cmap index)
-		  (let ((descr (vector-ref-ur descriptors i)))
-		     (if (isa? descr JsAccessorDescriptor)
-			 (begin
-			    (set! cmap descriptors)
-			    (set! index i)
-			    (js-property-value obj descr o %this))
-			 (begin
-			    (set! cmap omap)
-			    (set! index i)
-			    (vector-ref-ur elements i))))))))
-      (lambda (o v)
-	 (js-property-value obj v o %this))
-      (lambda ()
-	 ;; not found
-	 (js-get-notfound name throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-can-put ...                                                   */
@@ -774,17 +846,6 @@
    (js-put-jsobject! o p value throw #f %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put!/debug ...                                                */
-;*---------------------------------------------------------------------*/
-(define (js-put!/debug _o prop v::obj throw::bool %this::JsGlobalObject loc)
-   (cond
-      ((pair? _o)
-       (js-put-pair! _o prop v throw %this))
-      (else
-       (let ((o (js-toobject/debug %this loc _o)))
-	  (js-put! _o prop v throw %this)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-put! ...                                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.5       */
@@ -798,7 +859,7 @@
 	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put! ::Object ...                                             */
+;*    js-put! ::object ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    Mutating Bigloo objects from hopscript                           */
 ;*---------------------------------------------------------------------*/
@@ -829,6 +890,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject! ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This function does not need to be generic because PUT only       */
+;*    stores values on the direct object. It might use the setter      */
+;*    of one of the object's prototypes but once again, the object     */
+;*    to be used in the setter, is the direct object itself.           */
+;*                                                                     */
+;*    At the first level, special put! form for Array, String, etc.    */
+;*    are overriden by method of the js-put! function.                 */
 ;*---------------------------------------------------------------------*/
 (define (js-put-jsobject! o p value throw extend::bool %this)
    
@@ -967,10 +1036,23 @@
 	     ;; 8.12.5, step 6
 	     (extend-properties-object!)))))
 
-   (jsobject-find o (js-toname p %this)
-      update-mapped-object!
-      update-properties-object!
-      extend-object!))
+   (let loop ((obj o))
+      (jsobject-find obj (js-toname p %this)
+	 update-mapped-object!
+	 update-properties-object!
+	 extend-object!
+	 loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-put/debug! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-put/debug! _o prop v::obj throw::bool %this::JsGlobalObject loc)
+   (cond
+      ((pair? _o)
+       (js-put-pair! _o prop v throw %this))
+      (else
+       (let ((o (js-toobject/debug %this loc _o)))
+	  (js-put! _o prop v throw %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
@@ -1152,25 +1234,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-put-name/cache-miss! o::JsObject prop::symbol v::obj throw::bool cache::JsPropertyCache %this)
    (js-put! o prop v throw %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-has-property ...                                              */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
-;*---------------------------------------------------------------------*/
-(define-generic (js-has-property::bool o name::symbol)
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    js-has-property ...                                              */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
-;*---------------------------------------------------------------------*/
-(define-method (js-has-property::bool o::JsObject name::symbol)
-   (jsobject-find o name
-      (lambda (o i) #t)
-      (lambda (o d) #t)
-      (lambda () #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ...                                                   */

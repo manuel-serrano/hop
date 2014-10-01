@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Sep 19 10:45:06 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 09:17:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -26,7 +26,8 @@
 	   (class J2SSeq::J2SStmt
 	      nodes::pair-nil)
 	   
-	   (class J2SBlock::J2SSeq)
+	   (class J2SBlock::J2SSeq
+	      (endloc::pair read-only))
 	   
 	   (class J2SProgram::J2SBlock
 	      (version::int read-only (default 1))
