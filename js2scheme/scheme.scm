@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct  1 12:01:19 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 19:15:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -357,15 +357,14 @@
    (let ((m (config-get conf :mmap-src)))
       (match-case loc
 	 ((at ?path ?start)
-	  `'(,loc
-	     ,(when (mmap? m)
-		 (with-access::J2SFun val (body)
-		    (with-access::J2SBlock body (endloc)
-		       (match-case endloc
-			  ((at ?- ?end)
-			   (mmap-substring m
-			      (fixnum->elong start)
-			      (+elong 1 (fixnum->elong end)))))))))))))
+	  `'(,loc . ,(when (mmap? m)
+			(with-access::J2SFun val (body)
+			   (with-access::J2SBlock body (endloc)
+			      (match-case endloc
+				 ((at ?- ?end)
+				  (mmap-substring m
+				     (fixnum->elong start)
+				     (+elong 1 (fixnum->elong end)))))))))))))
   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct  1 10:16:40 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 19:17:04 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -231,7 +231,7 @@
 	     (cond
 		((pair? src)
 		 (if (string? (cdr src))
-		     (cdr src)
+		     (string-append "function " (cdr src))
 		     (format "[Function ~a~a]"
 			(cadr (car src)) (caddr (car src)))))
 		((>fx (string-length name) 0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Oct  1 17:54:15 2014 (serrano)                */
+;*    Last change :  Wed Oct  1 18:27:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -85,7 +85,7 @@
 		  (cmap #f)
 		  (bpe #u32:1)
 		  (vref (lambda (buf o)
-			   (char->integer (string-ref buf o))))
+			   (char->integer (string-ref-ur buf o))))
 		  (vset (lambda (buf o v)
 			   (let ((w (bit-andu32 #u32:255
 				       (js-touint32 v %this))))
