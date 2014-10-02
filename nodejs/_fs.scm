@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Oct  2 12:13:09 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 15:41:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -217,21 +217,16 @@
    
    (define (write this fd buffer offset length position callback)
       (nodejs-write %worker %this fd buffer offset length
-	 (if (eq? position (js-undefined))
+	 (if (not (integer? position))
 	     -1
 	     (int32->fixnum (js-toint32 position %this)))
 	 callback))
-;*       (tprint "write fd=" fd " offset=" offset " length=" length    */
-;* 	 " position=" position)                                        */
-;*       (unless (= position 0)                                        */
-;* 	 (set-output-port-position! fd position))                      */
-;*       (display-substring buffer offset (+ offset length) fd))       */
    
    (define (read this fd buffer offset length position callback)
       (nodejs-read %worker %this fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))
-	 (if (eq? position (js-undefined))
+	 (if (not (integer? position))
 	     -1
 	     (int32->fixnum (js-toint32 position %this)))
 	 callback))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Oct  1 18:27:45 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 15:50:47 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -318,7 +318,7 @@
 		    (with-access::JsGlobalObject %this (js-object)
 		       (let ((this (instantiate::JsSlowBuffer
 				      (__proto__ slowbuffer-proto)
-				      (data (make-string a0 #a000)))))
+				      (data (make-string (->fixnum a0) #a000)))))
 			  ;; length
 			  (js-bind! %this this 'length
 			     :value a0
