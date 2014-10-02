@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Oct  1 18:25:52 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 12:13:09 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -33,6 +33,11 @@
 	   S_IFMT
 	   S_IFDIR
 	   S_IFREG
+	   S_IFBLK
+	   S_IFCHR
+	   S_IFLNK
+	   S_IFIFO
+	   S_IFSOCK
 	   
 	   (process-fs ::WorkerHopThread ::JsGlobalObject)))
 
@@ -66,9 +71,18 @@
    (cond-expand (bigloo-c (pragma::long "S_IFMT")) (else #o170000)))
 (define S_IFREG
    (cond-expand (bigloo-c (pragma::long "S_IFREG")) (else #o100000)))
-
 (define S_IFDIR
    (cond-expand (bigloo-c (pragma::long "S_IFDIR")) (else #o40000)))
+(define S_IFBLK
+   (cond-expand (bigloo-c (pragma::long "S_IFBLK")) (else #o60000)))
+(define S_IFCHR
+   (cond-expand (bigloo-c (pragma::long "S_IFCHR")) (else #o20000)))
+(define S_IFLNK
+   (cond-expand (bigloo-c (pragma::long "S_IFLNK")) (else #o120000)))
+(define S_IFIFO
+   (cond-expand (bigloo-c (pragma::long "S_IFIFO")) (else #o10000)))
+(define S_IFSOCK
+   (cond-expand (bigloo-c (pragma::long "S_IFSOCK")) (else #o140000)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-fs-stats ...                                             */
@@ -176,6 +190,9 @@
    (define (rmdir this path callback)
       (nodejs-rmdir %worker %this path callback))
 
+   (define (fdatasync this path callback)
+      (nodejs-fdatasync %worker %this path callback))
+
    (define (mkdir this path mode callback)
       (if (eq? callback (js-undefined))
 	  (if (isa? mode JsFunction)
@@ -237,6 +254,7 @@
 	(readlink . ,(js-make-function %this readlink 2 "readlink"))
 	(unlink . ,(js-make-function %this unlink 2 "unlink"))
 	(rmdir . ,(js-make-function %this rmdir 2 "rmdir"))
+	(fdatasync . ,(js-make-function %this fdatasync 2 "fdatasync"))
 	(mkdir . ,(js-make-function %this mkdir 3 "mkdir"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
 	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Sep 22 08:18:48 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 08:28:26 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -47,7 +47,8 @@
 	      (module-table::obj (default (make-hashtable)))
 	      (module-mutex::obj (default (make-mutex)))
 	      (parent::obj (default #f))
-	      (subworkers::pair-nil (default '())))
+	      (subworkers::pair-nil (default '()))
+	      (uvfiles::vector (default (make-vector 32))))
 
 	   (js-current-worker::WorkerHopThread)
 	   (js-init-worker! ::JsGlobalObject)

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Jul 24 11:05:30 2013 (serrano)                */
-/*    Copyright   :  2005-13 Manuel Serrano                            */
+/*    Last change :  Wed Oct  1 19:22:06 2014 (serrano)                */
+/*    Copyright   :  2005-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -218,6 +218,10 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 	 var val = step * (( mx > (bbox.left + bbox.width/2) ) ? 4 : -4);
 
 	 hop_slider_value_set( slider, slider.value + val );
+	 
+	 if( slider.onchange != undefined ) {
+	    slider.onchange( { value: slider.value, target: slider } );
+	 }
       }
    }
       

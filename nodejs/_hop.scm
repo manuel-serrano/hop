@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Aug  8 06:09:20 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 08:29:58 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -18,7 +18,7 @@
 
    (import  __nodejs_uv)
 
-   (export (hopjs-process-hop ::JsGlobalObject ::WorkerHopThread)))
+   (export (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-js ...                                                    */
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hopjs-process-hop %this %worker)
+(define (hopjs-process-hop %worker %this)
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
 	 

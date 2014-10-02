@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Jul 28 16:26:13 2014 (serrano)                */
+#*    Last change :  Thu Oct  2 13:37:21 2014 (serrano)                */
 #*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -920,6 +920,36 @@ for p in nodejs.sch; do
             -e "s|@HOPSRFIS@|$hopsrfis|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
+done
+
+# script
+for script in test/nodejs/TEST; do
+  rm -f $script 2> /dev/null
+  cat $script.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@MIMETYPES@|$mimetypes|" \
+            -e "s|@JSMIMETYPE@|$jsmimetype|" \
+            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
+            -e "s|@HOPJSFILES@|$hopjsfiles|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPZEROCONF@|$zeroconf|" \
+            -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPARCH@|$arch|" \
+      >> $script
+  chmod a+x $script
 done
 
 #* # hopscript/configure.sch                                           */

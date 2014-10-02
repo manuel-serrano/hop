@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  1 07:24:48 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 08:15:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -290,14 +290,18 @@
 		(if (= (abs n1) 1)
 		    +nan.0
 		    0))
+	       ((not (integer? y))
+		(if (> y 0) (* x 0) (if (< x 0) -inf.0 +inf.0)))
 	       (else
 		(let loop ((x n1)
-			   (y n2))
+			   (y (inexact->exact n2)))
 		   (cond
 		      ((= y 0)
 		       1)
 		      ((even? y)
 		       (bignum->js-number (loop (* x x) (quotient y 2))))
+		      ((< y 0)
+		       (bignum->js-number (* x (loop x (+ y 1)))))
 		      (else
 		       (bignum->js-number (* x (loop x (- y 1)))))))))))
       

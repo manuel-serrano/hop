@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Oct  1 16:49:07 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 12:13:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -194,11 +194,11 @@
 		     ((string=? module "os")
 		      (process-os %this))
 		     ((string=? module "tty_wrap")
-		      (process-tty-wrap %this))
+		      (process-tty-wrap %worker %this))
 		     ((string=? module "fs_event_wrap")
 		      (process-fs-event-wrap %this))
 		     ((string=? module "hop")
-		      (hopjs-process-hop %this %worker))
+		      (hopjs-process-hop %worker %this))
 		     (else
 		      (warning "%nodejs-process"
 			 "binding not implemented: " module)
@@ -296,7 +296,12 @@
 	
 	(S_IFMT . ,S_IFMT)
 	(S_IFDIR . ,S_IFDIR)
-	(S_IFREG . ,S_IFREG))
+	(S_IFREG . ,S_IFREG)
+	(S_IFBLK . ,S_IFBLK)
+	(S_IFCHR . ,S_IFCHR)
+	(S_IFLNK . ,S_IFLNK)
+	(S_IFIFO . ,S_IFIFO)
+	(S_IFSOCK . ,S_IFSOCK))
       %this))
 
 ;*---------------------------------------------------------------------*/
@@ -583,7 +588,7 @@
 		  (lambda (this handle fd)
 		     (tprint "UNTESTED, example needed")
 		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-open %this handle fd)))
+			(nodejs-tcp-open %worker %this handle fd)))
 		  2 "open")
 	       #f %this)
 	    
@@ -762,7 +767,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-tty-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (process-tty-wrap %this)
+(define (process-tty-wrap %worker %this)
    
    (define (not-implemented name)
       (js-make-function %this
@@ -775,11 +780,11 @@
 	 (append
 	    `((isTTY . ,(js-make-function %this
 			   (lambda (this fd)
-			      (nodejs-istty %this fd))
+			      (nodejs-istty %worker %this fd))
 			   1 'isTTY))
 	      (guessHandleType . (js-make-function %this
 				    (lambda (this fd)
-				       (nodejs-guess-handle-type %this fd))
+				       (nodejs-guess-handle-type %worker %this fd))
 				    1 'guessHandleType)))
 	    (map (lambda (id)
 		    (cons id (not-implemented id)))

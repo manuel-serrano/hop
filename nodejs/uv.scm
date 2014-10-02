@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Oct  1 19:08:12 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 13:30:49 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -66,6 +66,7 @@
 	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::bstring ::obj)
 	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::bstring ::obj)
 	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::bstring ::obj)
+	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::int ::obj)
 	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::bstring ::int ::obj)
 	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::bstring ::long ::long ::obj)
 	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::bstring ::long ::long ::obj)
@@ -79,8 +80,8 @@
 	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::int ::JsObject)
 	   (nodejs-isip ::bstring)
 
-	   (nodejs-istty ::JsGlobalObject ::obj)
-	   (nodejs-guess-handle-type ::JsGlobalObject ::obj)
+	   (nodejs-istty ::WorkerHopThread ::JsGlobalObject ::obj)
+	   (nodejs-guess-handle-type ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (nodejs-tcp-handle)
 	   (nodejs-stream-write-queue-size::long ::obj)
@@ -91,7 +92,7 @@
 	   (nodejs-tcp-simultaneous-accepts ::obj ::bool)
 	   (nodejs-tcp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
-	   (nodejs-tcp-open ::JsGlobalObject ::obj ::int)
+	   (nodejs-tcp-open ::WorkerHopThread ::JsGlobalObject ::obj ::int)
 	   (nodejs-tcp-bind ::JsGlobalObject ::obj ::bstring ::int ::int)
 	   (nodejs-tcp-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 
@@ -377,6 +378,7 @@
       (enable-libuv
        (set! need-tick-cb #t)
        (uv-idle-start (get-tick-spinner %worker %this process))
+       (uv-async++ "nextTick")
        (uv-async-send uv-async)))
    #unspecified)
 
@@ -406,7 +408,8 @@
 				(js-worker-push-thunk! %worker
 				   (lambda ()
 				      (js-call0 %this tick-from-spinner
-					 (js-undefined)))))))
+					 (js-undefined))
+				      (uv-async-- "nextTick"))))))
 		    (spinner (instantiate::UvIdle
 				(cb spin)
 				(loop (uv-default-loop)))))
@@ -460,7 +463,7 @@
       ((=fx res 0)
        (js-worker-push-thunk! %worker
 	  (lambda ()
-	     (js-call1 %this callback (js-undefined) #f)
+	     (js-call1 %this callback (js-undefined) '())
 	     (uv-async-- name))))
       (else
        (js-worker-push-thunk! %worker
@@ -525,7 +528,7 @@
    
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "ftruncate"
@@ -535,7 +538,7 @@
 		  (uv-fs-ftruncate file offset))
 	      (fs-callback-error %worker %this callback "ftruncate"))))
       (else
-       (let ((port (int->uvfile %this fd)))
+       (let ((port (int->uvfile %worker %this fd)))
 	  (cond
 	     ((output-port? port)
 	      (let ((res (output-port-truncate port offset)))
@@ -577,7 +580,7 @@
    
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "fchown"
@@ -641,7 +644,7 @@
    
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "fchmod"
@@ -714,7 +717,7 @@
 		(unwind-protect
 		   (if (isa? res UvFile)
 		       (js-call2 %this callback (js-undefined) #f
-			  (uvfile->int res))
+			  (uvfile->int %worker res))
 		       (let ((exn (fs-errno-exn
 				     (format "open: cannot open file ~a, ~a, ~a -- ~~s"
 					path flags mode)
@@ -742,7 +745,7 @@
 		       :callback open-callback))))
 	   (let ((res (uv-fs-open path flags :mode mode)))
 	      (if (isa? res UvFile)
-		  (uvfile->int res)
+		  (uvfile->int %worker res)
 		  (let ((exn (fs-errno-exn
 				(format "open: cannot open file ~a, ~a, ~a -- ~~s"
 				   path flags mode)
@@ -774,10 +777,10 @@
 (define (nodejs-fs-close %worker %this fd callback)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (begin
-		 (close-uvfile fd)
+		 (close-uvfile %worker fd)
 		 (if (isa? callback JsFunction)
 		     (nodejs-async-push "close"
 			(lambda ()
@@ -792,12 +795,12 @@
 		     (uv-fs-close file)))
 	      (fs-callback-error %worker %this callback "close"))))
       (else
-       (let* ((port (int->uvfile %this fs))
+       (let* ((port (int->uvfile %worker %this fs))
 	      (res (cond
 		      ((output-port? fd) (close-output-port fd))
 		      ((input-port? fd) (close-input-port fd))
 		      (else #f))))
-	  (close-uvfile fd)
+	  (close-uvfile %worker fd)
 	  (if (isa? callback JsFunction)
 	      (js-call1 %this callback (js-undefined) res)
 	      res)))))
@@ -852,7 +855,7 @@
 (define (nodejs-fstat %worker %this fd callback proto)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "fstat"
@@ -997,9 +1000,12 @@
 (define (nodejs-readlink %worker %this src callback)
    
    (define (readlink-callback res)
-      (fs-callback %worker %this callback "readlink"
-	 (format "readlink: cannot read link ~a -- ~~s" src)
-	 res))
+      (js-worker-push-thunk! %worker
+	 (lambda ()
+	    (js-call2 %this callback (js-undefined)
+	       (if (integer? res) res (js-undefined))
+	       (if (integer? res) '() res))
+	    (uv-async-- "readlink"))))
    
    (cond-expand
       (enable-libuv
@@ -1074,6 +1080,35 @@
 	  (rmdir-callback (if r 0 (fs-exn "cannot rmdir ~a" r)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-fdatasync ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fdatasync %worker %this fd callback)
+   
+   (define (datasync-callback res)
+      (fs-callback %worker %this callback "datasync"
+	 (format "datasync: cannot datasync ~a -- ~~s" fd)
+	 res))
+   
+   (cond-expand
+      (enable-libuv
+       (let ((file (int->uvfile %worker %this fd)))
+	  (if file
+	      (if (isa? callback JsFunction)
+		  (nodejs-async-push "datasync"
+		     (lambda ()
+			(uv-fs-fdatasync file :callback datasync-callback)))
+		  (let ((r (uv-fs-fdatasync file)))
+		     (if (and (integer? r) (<fx r 0))
+			 (js-raise
+			    (fs-errno-exn
+			       (format "datasync: cannot datasync ~a" fd)
+			       r %this))
+			 r)))
+	      (fs-callback-error %worker %this callback "fdatasync" #f))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-mkdir ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-mkdir %worker %this src mode callback)
@@ -1106,13 +1141,13 @@
 (define (nodejs-write %worker %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "write"
 		     (lambda ()
 			(with-access::JsArrayBufferView buffer (%data byteoffset)
-			   (uv-fs-write (int->uvfile %this fd) %data length
+			   (uv-fs-write (int->uvfile %worker %this fd) %data length
 			      :callback
 			      (lambda (obj)
 				 (js-worker-push-thunk! %worker
@@ -1127,12 +1162,12 @@
 			      :offset (+fx offset (uint32->fixnum byteoffset))
 			      :position position :loop (uv-default-loop)))))
 		  (with-access::JsArrayBufferView buffer (%data byteoffset)
-		     (uv-fs-write (int->uvfile %this fd) %data length
+		     (uv-fs-write (int->uvfile %worker %this fd) %data length
 			:offset (+fx offset (uint32->fixnum byteoffset))
 			:position position :loop (uv-default-loop))))
 	      (fs-callback-error %worker %this "write" callback #f buffer))))
       (else
-       (let ((port (int->uvfile %this fd)))
+       (let ((port (int->uvfile %worker %this fd)))
 	  (cond
 	     ((output-port? port)
 	      (when (integer? position)
@@ -1156,7 +1191,7 @@
 (define (nodejs-read %worker %this fd buffer offset length position callback)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
 		 (if (isa? callback JsFunction)
@@ -1232,7 +1267,7 @@
    
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "futimes"
@@ -1257,7 +1292,7 @@
    
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (if file
 	      (if (isa? callback JsFunction)
 		  (nodejs-async-push "fsync"
@@ -1374,10 +1409,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-istty ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-istty %this fd)
+(define (nodejs-istty %worker %this fd)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (when file
 	     (eq? (uv-guess-handle file) 'TTY))))
       (else
@@ -1386,10 +1421,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-guess-handle-type ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-guess-handle-type %this fd)
+(define (nodejs-guess-handle-type %worker %this fd)
    (cond-expand
       (enable-libuv
-       (let ((file (int->uvfile %this fd)))
+       (let ((file (int->uvfile %worker %this fd)))
 	  (when file
 	     (symbol->string (uv-guess-handle file)))))
       (else
@@ -1500,10 +1535,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-open ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-tcp-open %this handle fd)
+(define (nodejs-tcp-open %worker %this handle fd)
    (cond-expand
       (enable-libuv
-       (uv-tcp-open handle (int->uvfile %this fd)))
+       (uv-tcp-open handle (int->uvfile %worker %this fd)))
       (else
        (error "nodejs-tcp-open" "not implemented" #f))))
 
@@ -1626,22 +1661,10 @@
    (enable-libuv
 
 ;*---------------------------------------------------------------------*/
-;*    uvfiles ...                                                      */
-;*---------------------------------------------------------------------*/
-(define uvfiles
-   (make-vector 32))
-
-;*---------------------------------------------------------------------*/
-;*    uvfiles-mutex ...                                                */
-;*---------------------------------------------------------------------*/
-(define uvfiles-mutex
-   (make-mutex "uvfiles-mutex"))
-
-;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (uvfile->int file::UvFile)
-   (synchronize uvfiles-mutex
+(define (uvfile->int %worker file::UvFile)
+   (with-access::WorkerHopThread %worker (uvfiles)
       (with-access::UvFile file (fd)
 	 (when (>=fx fd (vector-length uvfiles))
 	    (let ((new (make-vector (*fx 2 fd))))
@@ -1653,38 +1676,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    int->uvfile ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (int->uvfile %this fd::int)
-   (cond
-      ((<fx fd 0) #f)
-      ((>fx fd (vector-length uvfiles)) #f)
-      (else
-       (let ((file (vector-ref uvfiles fd)))
-	  (if (isa? file UvFile)
-	      file
-	      (js-raise-type-error %this "Illegal file descriptor ~a" fd))))))
+(define (int->uvfile %worker %this fd::int)
+   (with-access::WorkerHopThread %worker (uvfiles)
+      (cond
+	 ((<fx fd 0) #f)
+	 ((>fx fd (vector-length uvfiles)) #f)
+	 (else
+	  (let ((file (vector-ref uvfiles fd)))
+	     (if (isa? file UvFile)
+		 file
+		 (js-raise-type-error %this
+		    "Illegal file descriptor ~a" fd)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    close-uvfile ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (close-uvfile fd::int)
-   (vector-set! uvfiles fd #f))
-   
-;* ;;;                                                                 */
-;* (define-method (js-typeof o::UvFile)                                */
-;*    "number")                                                        */
-;*                                                                     */
-;* ;;;                                                                 */
-;* (define-method (js-toprimitive obj::UvFile preferredtype %this::JsGlobalObject) */
-;*    (with-access::UvFile obj (fd)                                    */
-;*       fd))                                                          */
-;*                                                                     */
-;* ;;;                                                                 */
-;* (define-method (js-inspect obj::UvFile cnt)                         */
-;*    (with-access::UvFile obj (fd)                                    */
-;*       fd))                                                          */
-;*                                                                     */
-;* (define-method (js-object-tostring obj::UvFile %this::JsGlobalObject) */
-;*    (with-access::UvFile obj (fd)                                    */
-;*       (integer->string fd)))                                        */
-))
+(define (close-uvfile %worker fd::int)
+   (with-access::WorkerHopThread %worker (uvfiles)
+      (vector-set! uvfiles fd #f)))
 
+))

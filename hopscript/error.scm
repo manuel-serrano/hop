@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  1 15:56:11 2014 (serrano)                */
+;*    Last change :  Thu Oct  2 12:43:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -73,7 +73,7 @@
 	  (call-next-method)
 	  (begin
 	     (fprint port name ": " msg "\n")
-	     (display-trace-stack stack port)))))
+	     (display stack port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-error! ...                                               */
@@ -219,19 +219,16 @@
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (let ((stk (get-trace-stack)))
-			    (match-case stk
-			       ((?- ?- . ?rest)
-				(js-put! this 'stack
-				   (call-with-output-string
-				      (lambda (op)
-					 (display "Trace: " op)
-					 (display (js-get this 'message %this)
-					    op)
-					 (newline op)
-					 (display-trace-stack
-					    (get-trace-stack) op 2)))
-				   #f %this))))
+			 (js-put! this 'stack
+			    (call-with-output-string
+			       (lambda (op)
+				  (display "Trace: " op)
+				  (display (js-get this 'message %this)
+				     op)
+				  (newline op)
+				  (display-trace-stack
+				     (get-trace-stack) op 0)))
+			    #f %this)
 			 this)
 		      2 'captureStackTrace)
 	    :enumerable #f)

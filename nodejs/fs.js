@@ -494,7 +494,6 @@ fs.readSync = function(fd, buffer, offset, length, position) {
 };
 
 fs.write = function(fd, buffer, offset, length, position, callback) {
-   console.log( "fs.js: fs.write fd=", fd );
   if (!Buffer.isBuffer(buffer)) {
     // legacy string interface (fd, data, position, encoding, callback)
     callback = arguments[4];
