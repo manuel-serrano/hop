@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Mon Sep 22 17:18:30 2014 (serrano)                */
+;*    Last change :  Fri Oct  3 17:09:21 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -58,7 +58,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %this::JsGlobalObject js-timer-prototype)
    (lambda (_)
-	 (tprint "====================== make-timer")
       (let ((obj (instantiate::JsTimer
 		    (__proto__ js-timer-prototype)
 		    (worker (js-current-worker))

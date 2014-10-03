@@ -1,0 +1,13 @@
+The "TEST" script shell checks the official ECMA-262-51 test suite. It
+depends on:
+  
+  - The Hop binary $buildir/bin/testjs, compiled with "make -C $buildir/tools"
+  - The ECMA-262-51 test suite which can be downloaded at:
+      https://github.com/tc39/test262
+
+To check how to run the tests:
+
+   ./TEST --help
+
+The BLACKLIST file contains the list of test not be executed because 
+of Hop structural incompatilibities with the JavaScript standard.

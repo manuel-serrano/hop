@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Oct  2 16:03:06 2014 (serrano)                */
+;*    Last change :  Fri Oct  3 16:19:38 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -233,9 +233,7 @@
 (define (nodejs-make-timer)
    (cond-expand
       (enable-libuv
-       (let ((t (instantiate::UvTimer (loop (uv-default-loop)))))
-	  (tprint "nodejs-make-timer t=" t)
-	  t))
+       (instantiate::UvTimer (loop (uv-default-loop))))
       (else
        (%nodejs-make-timer))))
 
@@ -256,7 +254,6 @@
 (define (nodejs-timer-start %worker timer count start rep)
    (cond-expand
       (enable-libuv
-       (tprint "------------------------------ timer-start..." timer)
        (nodejs-async-push "timer-start"
 	  (lambda ()
 	     (uv-timer-start timer
@@ -271,7 +268,6 @@
 (define (nodejs-timer-close %worker timer count)
    (cond-expand
       (enable-libuv
-       (tprint "------------------------------ timer-close..." timer " " count)
        (when (>fx count 0)
 	  ;; protect against multi-close (see nodejs/src/handle_wrap.cc:88)
 	  (nodejs-async-push "timer-close"
@@ -296,10 +292,8 @@
 (define (nodejs-timer-stop %worker timer count)
    (cond-expand
       (enable-libuv
-       (tprint "------------------------------ timer-stop...")
        (nodejs-async-push "timer-stop"
 	  (lambda ()
-	     (tprint "timer-stop")
 	     (uv-async-- "timer-stop")
 	     (uv-timer-stop timer))))
       (else
@@ -311,7 +305,6 @@
 (define (nodejs-timer-unref %worker timer count)
    (cond-expand
       (enable-libuv
-       (tprint "------------------------------ timer-unref")
        (nodejs-async-push "timer-unref"
 	  (lambda ()
 	     (uv-async-- "timer-unref")
@@ -1590,7 +1583,6 @@
    (cond-expand
       (enable-libuv
        [assert () (isa? (current-thread) WorkerHopThread)]
-       (tprint "stream-write handle=" handle)
        (nodejs-async-push "stream-write"
 	  (lambda ()
 	     (uv-stream-write handle buffer offset length

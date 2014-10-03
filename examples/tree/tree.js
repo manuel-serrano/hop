@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Thu Jul 24 14:55:37 2014 (serrano)                */
+/*    Last change :  Fri Oct  3 16:18:40 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    TREE widget example                                              */
@@ -30,12 +30,13 @@ function dirToTree( dir ) {
 	 service() {
 	    return fs.readdirSync( dir ).map(
 	       function( p ) {
-		  if( fs.lstatSync( p ).isDirectory( p ) ) {
-		     return dirToTree( p );
+		  var fp = path.join( dir, p );
+		  if( fs.lstatSync( fp ).isDirectory() ) {
+		     return dirToTree( fp );
 		  } else {
 		     return <TR.TRLEAF> {
-			value: p,
-			base( p )
+			value: fp,
+			p
 		     }
 		  }
 	       } );

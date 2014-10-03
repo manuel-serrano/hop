@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Sep 29 17:27:44 2014 (serrano)                */
+;*    Last change :  Fri Oct  3 16:10:41 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -78,7 +78,8 @@
 	       (stopped::bool (default #f))
 	       (value::obj (default #unspecified)))
 
-	    (class websocket-event::event)
+	    (class websocket-event::event
+	       (data::obj (default #unspecified)))
 
 	    (class server-event::event)
 	    

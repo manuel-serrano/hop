@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Sep 30 08:06:04 2014 (serrano)                */
+;*    Last change :  Fri Oct  3 16:10:00 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -586,6 +586,7 @@
 	 (let ((se (instantiate::websocket-event
 		      (name "message")
 		      (target ws)
+		      (data val)
 		      (value val))))
 	    (synchronize %mutex
 	       (apply-listeners onmessages se)))))

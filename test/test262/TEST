@@ -1,0 +1,49 @@
+#!/bin/bash
+
+chapters=
+rest=
+verb=-v
+basedir=/usr/local/src/ecma-262-51/test262-d067d2f0ca30
+hopc=../../bin/hopc
+testjs=../../bin/testjs
+
+while : ; do
+
+  case $1 in
+    "")
+     break;;
+
+  -h|--help)
+    echo "usage: $0 [-v|-s] [--basedir path] [chapter0 [chapter1...]]";
+    echo "example: $0 ch07 ch10";
+    exit 0;;
+
+  -v)
+    verb="$verb -v";;
+
+  -s)
+    verb="";;
+
+  -*)
+    rest=$1;;
+
+  --basedir)
+    shift;
+    basedir=$1;;    
+
+  *)
+    chapters="$chapters $1";;
+  esac
+
+  shift
+done   
+
+if [ "$chapters " = " " ]; then
+  chapters="ch06 ch07 ch08 ch09 ch10 ch11 ch12 ch13 ch14 ch15 bestPractice annexB"
+fi
+
+for c in $chapters; do
+  echo "$testjs $verb --hopc=$hopc $basedir/test/suite/$c $*"
+  $testjs $verb --hopc=$hopc $basedir/test/suite/$c $rest || exit 1
+  echo
+done

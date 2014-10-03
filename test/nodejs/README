@@ -1,0 +1,7 @@
+A mere driver to execute the NODEJS test programs. Usage obtained with:
+
+  ./TEST --help
+
+The BLACKLIST file contains the list of test not be executed because 
+of Hop structural incompatilibities with nodejs or because of lacking
+features.

@@ -1,0 +1,85 @@
+#!/bin/bash
+
+chapters=simple
+rest=
+verb=
+basedir=/usr/local/src/node-v0.10.31/test
+hop=/tmp/HOP3/bin/hop
+
+while : ; do
+
+  case $1 in
+    "")
+     break;;
+
+  -h|--help)
+    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [subdir0 [subdir1 ...]]";
+    echo "example: $0 simple";
+    exit 0;;
+
+  -v)
+    verb="$verb -v";;
+
+  -s)
+    verb="";;
+
+  -*)
+    rest=$1;;
+
+  --basedir)
+    shift;
+    basedir=$1;;    
+
+  --hop)
+    shift;
+    hop=$1;;    
+
+  *)
+    chapters="$chapters $1";;
+  esac
+
+  shift
+done   
+
+if [ "$chapters " = " " ]; then
+  chapters="simple"
+fi
+
+success=0
+failure=0
+blacklist=0
+i=0
+
+for chapter in $chapters; do
+  echo "$basedir/$chapter"
+
+  for path in $basedir/$chapter/*.js; do
+    i=`expr $i + 1`
+    grep "^$chapter/`basename $path`" BLACKLIST 2> /dev/null > /dev/null
+
+    if [ $? != 0  ]; then
+      echo -n "$i. $chapter/`basename $path` ... "
+      (cd $basedir; $hop -g --no-zeroconf --no-server $path > /tmp/TEST-NODEJS.out 2>&1)
+  
+      if [ $? = 0 ]; then
+        echo "ok.";
+        success=`expr $success + 1`
+      else
+        echo "failure !!!"
+        if [ "$verb " != " " ]; then
+          cat /tmp/TEST-NODEJS.out
+        fi
+        failure=`expr $failure + 1`
+      fi
+      /bin/rm -f /tmp/TEST-NODEJS.out
+    else
+      echo "$i. $chapter/`basename $path` ### BLACKLISTED"
+      blacklist=`expr $blacklist + 1`
+    fi
+  done
+done
+
+echo "`expr $success + $failure` executed"
+echo "   $success success"
+echo "   $failure failure"
+echo "   $blacklist blacklist"

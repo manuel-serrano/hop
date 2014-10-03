@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Sep 30 08:15:29 2014 (serrano)                */
+;*    Last change :  Fri Oct  3 16:26:49 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -38,8 +38,7 @@
 	      (svc::procedure read-only)
 	      (conns::pair-nil (default '())))
 	   
-	   (class JsWebSocketEvent::websocket-event
-	      (data read-only)))
+	   (class JsWebSocketEvent::websocket-event))
 	   
    (export (js-init-websocket! ::JsGlobalObject)))
 
@@ -205,7 +204,7 @@
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
 		      (with-access::websocket ws (%socket)
-			 (websocket-send %socket value :mask #f))))
+			 (websocket-send %socket value))))
 		1 'send))
    ;; addEventListener
    (js-bind! %this obj 'addEventListener
