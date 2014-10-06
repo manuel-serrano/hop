@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct  1 09:17:03 2014 (serrano)                */
+;*    Last change :  Sat Oct  4 06:52:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -115,6 +115,7 @@
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::bool (default #f))
+	      (name::symbol read-only)
 	      params::pair-nil
 	      body::J2SBlock)
 	   

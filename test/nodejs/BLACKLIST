@@ -6,6 +6,7 @@ simple/net-socket-readystate.js
 simple/test-domain-multi.js
 simple/test-http-set-timeout-server.js
 simple/test-http-set-timeout.js
+simple/test-http-exceptions.js
 simple/test-net-eaddrinuse.js
 simple/test-net-server-bind.js
 simple/test-net-server-listen-remove-callback.js
@@ -29,6 +30,17 @@ simple/test-repl-require-cache.js
 simple/test-repl-tab-complete.js
 simple/test-repl.js
 
+# debug
+simple/test-debug-brk-no-arg.js
+simple/test-debugger-client.js
+simple/test-debugger-repl-break-in-module.js
+simple/test-debugger-repl-restart.js
+simple/test-debugger-repl-utf8.js
+simple/test-debugger-repl.js
+
 # bad tests
 simple/test-stream-pipe-multi.js
 simple/test-executable-path.js
+
+# unsupported features
+simple/test-event-emitter-memory-leak.js

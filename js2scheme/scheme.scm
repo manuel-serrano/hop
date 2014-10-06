@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct  1 19:15:03 2014 (serrano)                */
+;*    Last change :  Sat Oct  4 06:58:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -384,8 +384,7 @@
 			  (js-bind! %this ,global ',id
 			     :configurable #f
 			     :value (js-make-function %this
-				       ,fastid
-				       ,(length params) ',id
+				       ,fastid ,(length params) ',id
 				       :src ,(j2s-function-src loc val conf)
 				       :arity ,arity
 				       :strict ,(eq? mode 'strict)
@@ -397,8 +396,7 @@
 			  ,(jsfun->scheme val mode return conf))
 		       (define ,scmid
 			  (js-make-function %this
-			     ,fastid ,(length params)
-			     ',id
+			     ,fastid ,(length params) ',id
 			     :src ,(j2s-function-src loc val conf)
 			     :arity ,arity
 			     :strict ,(eq? mode 'strict)
@@ -760,15 +758,13 @@
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return conf)
-   (with-access::J2SFun this (loc params mode vararg)
+   (with-access::J2SFun this (loc name params mode vararg)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef `(let ((,tmp ,(jsfun->scheme this mode return conf)))
 			 (js-make-function %this
-			    ,tmp
-			    ,(length params)
-			    '||
+			    ,tmp ,(length params) ',(j2s-name name id)
 			    :src ,(j2s-function-src loc this conf)
 			    :arity ,arity
 			    :strict ,(eq? mode 'strict)

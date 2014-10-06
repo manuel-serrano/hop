@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Oct  2 12:13:22 2014 (serrano)                */
+;*    Last change :  Sun Oct  5 09:39:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -61,25 +61,38 @@
 		   (exitarmed #f))
 	       
 	       (set! __proto__ proto)
-
+	       
 	       (define (on this signal proc)
-		  (when (and (equal? signal "exit") (not exitarmed))
-		     (set! exitarmed #t)
-		     (register-exit-function!
-			(lambda (status)
-			   (with-access::JsProcess %process (exiting)
-			      (unless exiting
-				 (set! exiting #t)
-				 (let ((emit (js-get %process 'emit %this)))
-				    (js-call2 %this emit %process "exit" status))))
-			   status)))
-		  (js-call2 %this add this signal proc))
-
+		  (cond
+		     ((equal? signal "uncaughtException")
+		      (js-worker-add-handler! %worker proc))
+		     ((and (equal? signal "exit") (not exitarmed))
+		      (set! exitarmed #t)
+		      (register-exit-function!
+			 (lambda (status)
+			    (with-access::JsProcess %process (exiting)
+			       (unless exiting
+				  (set! exiting #t)
+				  (let ((emit (js-get %process 'emit %this)))
+				     (js-call2 %this emit %process "exit" status))))
+			    status)))
+		     (else
+		      (js-call2 %this add this signal proc))))
+	       
+	       (define (remove this signal proc)
+		  (cond
+		     ((equal? signal "uncaughtException")
+		      (js-worker-remove-handler! %worker proc))
+		     (else
+		      (js-call2 %this rem this signal proc))))
+	       
 	       ;; on
-	       (js-put! %process 'on
-		  (js-make-function %this on 2 "on") #f %this)
-	       (js-put! %process 'addListener add #f %this)
-	       (js-put! %process 'removeListener rem #f %this))))
+	       (let ((add (js-make-function %this on 2 "")))
+		  (js-put! %process 'on add #f %this)
+		  (js-put! %process 'addListener add #f %this))
+	       ;; remove
+	       (let ((rem (js-make-function %this remove 2 "")))
+		  (js-put! %process 'removeListener rem #f %this)))))
       ;; bind process into %this
       (js-put! %this 'process %process #t %this)
       ;; return the process object

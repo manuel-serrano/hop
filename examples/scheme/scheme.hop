@@ -1,0 +1,46 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.0.x/examples/scheme/scheme.hop        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Oct  6 09:53:48 2014                          */
+;*    Last change :  Mon Oct  6 11:09:00 2014 (serrano)                */
+;*    Copyright   :  2014 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme part                                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module scheme
+   (library hopscript)
+   (export (hopscript %this this %scope %module)))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    This is the function called by JavaScript when the Hop module    */
+;*    is required. It binds the exports field of the newly             */
+;*    allocated module                                                 */
+;*---------------------------------------------------------------------*/
+(define (hopscript %this this %scope %module)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((exports (js-new0 %this js-object)))
+	 (js-put! %module 'exports exports #f %this)
+	 ;; bind the md5sum function is the pseudo javascript module
+	 (js-put! exports 'md5sum
+	    (js-make-function %this
+	       ;; wrap the Hop md5sum function into a JS function
+	       (lambda (this val)
+		  ;; as JavaScript string values are represented as
+		  ;; Hop strings, there is no need to convert the val
+		  ;; value
+		  (md5sum val))
+	       1 "md5sum")
+	    #f %this)
+	 (js-put! exports 'sha256sum
+	    ;; wrap the Hop sh256sum function into a JS function
+	    (js-make-function %this
+	       (lambda (this val) (sha256sum val))
+	       1 "sha256sum")
+	    #f %this))))

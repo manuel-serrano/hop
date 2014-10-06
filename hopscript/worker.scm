@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Oct  2 08:28:26 2014 (serrano)                */
+;*    Last change :  Sun Oct  5 08:06:46 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -48,7 +48,8 @@
 	      (module-mutex::obj (default (make-mutex)))
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
-	      (uvfiles::vector (default (make-vector 32))))
+	      (uvfiles::vector (default (make-vector 32)))
+	      (handlers::pair-nil (default '())))
 
 	   (js-current-worker::WorkerHopThread)
 	   (js-init-worker! ::JsGlobalObject)
@@ -64,7 +65,9 @@
 	   (generic js-worker-alive? ::WorkerHopThread)
 	   (generic js-worker-terminate! ::WorkerHopThread ::obj)
 	   (generic js-worker-post-slave-message ::JsWorker ::obj)
-	   (generic js-worker-post-master-message ::JsWorker ::obj)))
+	   (generic js-worker-post-master-message ::JsWorker ::obj)
+	   (generic js-worker-add-handler! ::WorkerHopThread ::procedure)
+	   (generic js-worker-remove-handler! ::WorkerHopThread ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %main ...                                                        */
@@ -292,28 +295,37 @@
 ;*    js-worker-thread-loop ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-thread-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers name alivep)
+   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers
+				       name alivep %this %process handlers)
       ;; loop unless terminated
-      (unwind-protect
-	 (let loop ()
-	    (let ((thunk (synchronize mutex
-			    (let liip ()
-			       (cond
-				  ((pair? tqueue)
-				   (let ((thunk (car tqueue)))
-				      (set! tqueue (cdr tqueue))
-				      thunk))
-				  ((and (eq? state 'terminated)
-					(or (not alivep) (not (alivep)))
-					(null? subworkers))
-				   #f)
-				  (else
-				   (condition-variable-wait! condv mutex)
-				   (liip)))))))
-	       (when (procedure? thunk)
-		  (thunk)
-		  (loop))))
-	 (set! state 'terminated))))
+      (with-handler
+	 (lambda (exn)
+	    (if (pair? handlers)
+		(begin
+		   (for-each (lambda (h)
+				(js-call1 %this h %process exn)) handlers)
+		   (js-worker-thread-loop th))
+		(raise exn)))
+	 (unwind-protect
+	    (let loop ()
+	       (let ((thunk (synchronize mutex
+			       (let liip ()
+				  (cond
+				     ((pair? tqueue)
+				      (let ((thunk (car tqueue)))
+					 (set! tqueue (cdr tqueue))
+					 thunk))
+				     ((and (eq? state 'terminated)
+					   (or (not alivep) (not (alivep)))
+					   (null? subworkers))
+				      #f)
+				     (else
+				      (condition-variable-wait! condv mutex)
+				      (liip)))))))
+		  (when (procedure? thunk)
+		     (thunk)
+		     (loop))))
+	    (set! state 'terminated)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -441,4 +453,16 @@
 	    ;; restore the previous module
 	    (eval-module-set! m)))))
 
-   
+;*---------------------------------------------------------------------*/
+;*    js-worker-add-handler! ::WorkerHopThread ...                     */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-add-handler! obj::WorkerHopThread fun)
+   (with-access::WorkerHopThread obj (handlers)
+      (set! handlers (cons fun handlers))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-remove-handler! ::WorkerHopThread ...                  */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-remove-handler! obj::WorkerHopThread fun)
+   (with-access::WorkerHopThread obj (handlers)
+      (set! handlers (remq! fun handlers))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct  1 15:40:21 2014 (serrano)                */
+;*    Last change :  Sat Oct  4 06:52:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -650,6 +650,7 @@
 		(val (instantiate::J2SFun
 			(loc (token-loc token))
 			(params params)
+			(name (cdr id))
 			(mode (or (javascript-mode body) 'normal))
 			(body body)
 			(decl (instantiate::J2SDecl
@@ -665,6 +666,7 @@
 				      (loc (token-loc id))
 				      (decl decl)
 				      (params params)
+				      (name (cdr id))
 				      (mode (or (javascript-mode body) 'normal))
 				      (body body)))
 			      (decl (instantiate::J2SDeclCnstFun
@@ -681,6 +683,7 @@
 	     (instantiate::J2SFun
 		(loc (token-loc token))
 		(params params)
+		(name '||)
 		(mode (or (javascript-mode body) 'normal))
 		(body body))))))
 
@@ -717,6 +720,7 @@
 		(val (instantiate::J2SSvc
 			(loc (token-loc token))
 			(params params)
+			(name (cdr id))
 			(init init)
 			(body body)
 			(decl (instantiate::J2SDecl
@@ -732,6 +736,7 @@
 				      (loc (token-loc id))
 				      (decl decl)
 				      (params params)
+				      (name (cdr id))
 				      (init init)
 				      (body body)))
 			      (decl (instantiate::J2SDeclCnstFun
@@ -748,6 +753,7 @@
 	     (instantiate::J2SSvc
 		(loc (token-loc token))
 		(params params)
+		(name (cdr id))
 		(init init)
 		(body body))))))
 
@@ -772,6 +778,7 @@
 			     (id (cdr id))))
 		    (loc loc)
 		    (params params)
+		    (name (cdr id))
 		    (init init)
 		    (register #f)
 		    (body (instantiate::J2SBlock
@@ -1427,6 +1434,7 @@
 			(mode (or (javascript-mode body) 'normal))
 			(loc (token-loc tokname))
 			(params params)
+			(name (cdr id))
 			(body body)))
 		(oprop (find-prop (symbol->string! (cdr id)) props))
 		(prop (or oprop

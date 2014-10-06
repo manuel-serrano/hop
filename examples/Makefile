@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Oct  3 16:13:06 2014 (serrano)                */
+#*    Last change :  Mon Oct  6 09:49:13 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -75,7 +75,10 @@ POPULATION = Makefile \
   hzdemo/foo/etc \
   hzdemo/foo/etc/favicon.png \
   hzdemo/foo/etc/logo.png \
-  hzdemo/foo-1.0.0.hz
+  hzdemo/foo-1.0.0.hz \
+  scheme/scheme.js \
+  scheme/scheme.hop
+
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
