@@ -14,7 +14,8 @@
 13. simple/test-chdir.js ... ok.
 14. simple/test-child-process-buffering.js ... failure !!!
 15. simple/test-child-process-customfd-bounded.js ... failure !!!
-16. simple/test-child-process-cwd.js ... failure !!!
+16. simple/test-child-process-cwd.js ... [4]  + done       $@
+failure !!!
 17. simple/test-child-process-detached.js ... failure !!!
 18. simple/test-child-process-disconnect.js ... failure !!!
 19. simple/test-child-process-double-pipe.js ... failure !!!
@@ -88,12 +89,12 @@
 87. simple/test-crypto-stream.js ... failure !!!
 88. simple/test-crypto-verify-failure.js ... failure !!!
 89. simple/test-crypto.js ... ok.
-90. simple/test-debug-brk-no-arg.js ... failure !!!
-91. simple/test-debugger-client.js ... failure !!!
-92. simple/test-debugger-repl-break-in-module.js ... failure !!!
-93. simple/test-debugger-repl-restart.js ... failure !!!
-94. simple/test-debugger-repl-utf8.js ... failure !!!
-95. simple/test-debugger-repl.js ... failure !!!
+90. simple/test-debug-brk-no-arg.js ### BLACKLISTED
+91. simple/test-debugger-client.js ### BLACKLISTED
+92. simple/test-debugger-repl-break-in-module.js ### BLACKLISTED
+93. simple/test-debugger-repl-restart.js ### BLACKLISTED
+94. simple/test-debugger-repl-utf8.js ### BLACKLISTED
+95. simple/test-debugger-repl.js ### BLACKLISTED
 96. simple/test-delayed-require.js ... ok.
 97. simple/test-deprecation-flags.js ... failure !!!
 98. simple/test-dgram-address.js ... failure !!!
@@ -133,7 +134,7 @@
 132. simple/test-event-emitter-listeners-side-effects.js ... ok.
 133. simple/test-event-emitter-listeners.js ... ok.
 134. simple/test-event-emitter-max-listeners.js ... ok.
-135. simple/test-event-emitter-memory-leak.js ... failure !!!
+135. simple/test-event-emitter-memory-leak.js ### BLACKLISTED
 136. simple/test-event-emitter-method-names.js ... failure !!!
 137. simple/test-event-emitter-modify-in-emit.js ... ok.
 138. simple/test-event-emitter-no-error-provided-to-error-event.js ... ok.
@@ -244,7 +245,7 @@
 243. simple/test-http-dns-error.js ... failure !!!
 244. simple/test-http-end-throw-socket-handling.js ... failure !!!
 245. simple/test-http-eof-on-connect.js ... failure !!!
-246. simple/test-http-exceptions.js ... failure !!!
+246. simple/test-http-exceptions.js ### BLACKLISTED
 247. simple/test-http-exit-delay.js ### BLACKLISTED
 248. simple/test-http-expect-continue.js ... failure !!!
 249. simple/test-http-extra-response.js ... failure !!!
@@ -339,7 +340,7 @@
 338. simple/test-listen-fd-cluster.js ... failure !!!
 339. simple/test-listen-fd-detached-inherit.js ... failure !!!
 340. simple/test-listen-fd-detached.js ... failure !!!
-341. simple/test-listen-fd-ebadf.js ... failure !!!
+341. simple/test-listen-fd-ebadf.js ... ok.
 342. simple/test-listen-fd-server.js ... failure !!!
 343. simple/test-memory-usage-emfile.js ... failure !!!
 344. simple/test-memory-usage.js ... failure !!!
@@ -367,7 +368,7 @@
 366. simple/test-net-keepalive.js ... failure !!!
 367. simple/test-net-large-string.js ... failure !!!
 368. simple/test-net-listen-error.js ... ok.
-369. simple/test-net-listen-fd0.js ... failure !!!
+369. simple/test-net-listen-fd0.js ... ok.
 370. simple/test-net-local-address-port.js ... failure !!!
 371. simple/test-net-pause-resume-connecting.js ... failure !!!
 372. simple/test-net-pingpong.js ... failure !!!
@@ -614,7 +615,7 @@
 613. simple/test-zlib-write-after-flush.js ... failure !!!
 614. simple/test-zlib-zero-byte.js ... failure !!!
 615. simple/test-zlib.js ... failure !!!
-589 executed
-   147 success
-   442 failure
-   26 blacklist
+581 executed
+   149 success
+   432 failure
+   34 blacklist
