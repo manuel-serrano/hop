@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Oct  3 16:19:38 2014 (serrano)                */
+;*    Last change :  Tue Oct  7 13:46:06 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -400,9 +400,10 @@
 
 				(js-worker-push-thunk! %worker
 				   (lambda ()
-				      (js-call0 %this tick-from-spinner
-					 (js-undefined))
-				      (uv-async-- "nextTick"))))))
+				      (unwind-protect
+					 (js-call0 %this tick-from-spinner
+					    (js-undefined))
+					 (uv-async-- "nextTick")))))))
 		    (spinner (instantiate::UvIdle
 				(cb spin)
 				(loop (uv-default-loop)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Oct  2 15:50:47 2014 (serrano)                */
+;*    Last change :  Tue Oct  7 14:04:44 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -788,7 +788,8 @@
 	 (lambda (this string encoding)
 	    (cond
 	       ((or (eq? encoding (js-undefined))
-		    (string=? encoding "utf8"))
+		    (string=? encoding "utf8")
+		    (string=? encoding "utf-8"))
 		(string-length string))
 	       ((or (string=? encoding "ucs2")
 		    (string=? encoding "ucs-2")
