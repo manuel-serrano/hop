@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  1 13:24:38 2014 (serrano)                */
+;*    Last change :  Mon Oct  6 13:25:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -391,8 +391,7 @@
    (define (date-prototype-tostring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->string (seconds->date (date->seconds val)))
-;* 	     (date->string val)                                        */
+	     (date->rfc2822-date (seconds->date (date->seconds val)))
 	     "Invalid date")))
    
    (js-bind! %this obj 'toString

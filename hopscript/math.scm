@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct  2 08:15:26 2014 (serrano)                */
+;*    Last change :  Tue Oct  7 06:27:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -211,7 +211,7 @@
 	    ((nanfl? x) x)
 	    ((=fl x +inf.0) x)
 	    ((=fl x -inf.0) x)
-	    (else (inexact->exact (floor x)))))
+	    (else (floor x))))
       
       (js-bind! %this js-math 'floor
 	 :value (js-make-function %this js-math-floor 1 'floor)

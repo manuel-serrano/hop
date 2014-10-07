@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct  1 16:47:44 2014 (serrano)                */
+;*    Last change :  Tue Oct  7 13:30:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -630,21 +630,42 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.12
    (define (array-prototype-splice this::obj start deletecount . items)
       
-      (define (vector-splice this actualstart actualdeletecount)
+      (define (vector-splice this len actualstart actualdeletecount)
 	 (with-access::JsArray this (vec)
-	    (let* ((len (js-array-vector-length this %this))
+	    (let* ((vlen (vector-length vec))
 		   (litems (length items))
 		   (rlen (+fx actualstart actualdeletecount))
 		   (nlen (+fx len (-fx litems actualdeletecount)))
-		   (res (js-vector->jsarray
-			   (vector-copy vec actualstart rlen) %this)))
-	       (when (>fx nlen len)
-		  ;; enargle the vector if needed
-		  (let ((tmp (make-vector nlen)))
-		     (vector-copy! tmp 0 vec 0 actualstart)
-		     (let ((cstart (+fx actualstart actualdeletecount)))
-			(vector-copy! tmp (-fx nlen (-fx len cstart)) vec cstart len))
-		     (set! vec tmp)))
+		   (cstart (+fx actualstart actualdeletecount))
+		   (vres (make-vector actualdeletecount))
+		   (res (js-vector->jsarray vres %this)))
+	       ;; populate the result vector
+	       (when (<fx actualstart vlen)
+		  ;; from the inlined vector
+		  (vector-copy! vres 0 vec actualstart
+		     (minfx vlen (+fx actualstart actualdeletecount))))
+ 	       (when (>fx actualdeletecount (-fx vlen actualstart))
+		  ;;  from the protype object
+		  (let loop ((k (+fx actualstart (-fx vlen actualstart))))
+		     (when (<fx k actualdeletecount)
+			(let ((o (js-get this k %this)))
+			   (vector-set! vres k o)
+			   (loop (+fx k 1))))))
+	       ;; modify the source array
+	       (cond
+		  ((>fx nlen len)
+		   ;; enargle the vector if needed
+		   (let ((tmp (make-vector nlen)))
+		      (vector-copy! tmp 0 vec 0 actualstart)
+		      (vector-copy! tmp (-fx nlen (-fx len cstart))
+			 vec cstart len)
+		      (set! vec tmp)))
+		  ((<=fx nlen 0)
+		   (set! vec '#()))
+		  ((<fx nlen len)
+		   ;; shift the vector
+		   (vector-copy! vec (-fx nlen (-fx len cstart))
+		      vec cstart len)))
 	       ;; insert the new items
 	       (let loop ((k actualstart)
 			  (items items))
@@ -652,13 +673,11 @@
 		      (begin
 			 (vector-set! vec k (car items))
 			 (loop (+fx k 1) (cdr items)))
-		      (begin
-			 (when (< k len)
-			    (vector-copy! vec k vec rlen len))
-			 (js-put! this 'length nlen #f %this))))
+		      (js-put! this 'length nlen #f %this)))
 	       res)))
       
       (define (array-splice arr len actualstart actualdeletecount)
+	 (tprint "asplice")
 	 (let* ((els (array-get-elements arr actualstart
 			(+ actualstart actualdeletecount) %this))
 		(res (js-vector->jsarray (list->vector els) %this))
@@ -690,13 +709,11 @@
 				   (- len actualstart))))
 	 (if (not (isa? this JsArray))
 	     (array-splice this len actualstart actualdeletecount)
-	     (with-access::JsArray this (vec)
+	     (with-access::JsArray this (vec inline)
 		(cond
-		   ((>fx (vector-length vec) 0)
-		    (vector-splice this
+		   (inline
+		    (vector-splice this len
 		       (->fixnum actualstart) (->fixnum actualdeletecount)))
-		   ((= len 0)
-		    (js-vector->jsarray '#() %this))
 		   (else
 		    (array-splice this len actualstart actualdeletecount)))))))
    
