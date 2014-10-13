@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Oct 13 18:27:50 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:44:08 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -633,6 +633,7 @@
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
+(gen-walks J2SComprehension iterable test expr)
 
 (gen-traverals J2STilde)
 
