@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Oct  4 06:52:16 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:27:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -160,6 +160,12 @@
 	      test::J2SExpr
 	      then::J2SExpr
 	      else::J2SExpr)
+
+	   (class J2SComprehension::J2SExpr
+	      (decl::J2SLet read-only)
+	      (iterable::J2SExpr read-only)
+	      (test::J2SExpr read-only)
+	      (expr::J2SExpr read-only))
 	   
 	   (class J2SDecl::J2SStmt
 	      (id::symbol read-only)
@@ -172,6 +178,11 @@
 	      (type::obj (default #unspecified)))
 	   
 	   (class J2SDeclInit::J2SDecl
+	      (val::J2SExpr read-only))
+
+	   (class J2SLet::J2SDecl)
+	   
+	   (class J2SLetInit::J2SLet
 	      (val::J2SExpr read-only))
 	   
 	   (class J2SDeclFun::J2SDeclInit)
@@ -617,6 +628,7 @@
 (gen-walks J2SAccessorPropertyInit name get set)
 (gen-walks J2SArray (exprs))
 (gen-walks J2SDeclInit val)
+(gen-walks J2SLetInit val)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)

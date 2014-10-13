@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct  2 12:43:22 2014 (serrano)                */
+;*    Last change :  Sun Oct 12 08:58:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -104,11 +104,11 @@
 	       (match-case args
 		  ((?m)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m)
+		      (js-bind! %this this 'message :value m :enumerable #f)
 		      (set! msg m)))
 		  ((?m ?f ?l)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m))
+		      (js-bind! %this this 'message :value m :enumerable #f))
 		   (set! msg m)
 		   (set! fname f)
 		   (set! location l)))
@@ -121,7 +121,7 @@
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
-		       (js-bind! %this o 'message :value v))
+		       (js-bind! %this o 'message :value v :enumerable #f))
 		    2 'message)
 	    :get (js-make-function %this
 		    (lambda (o)

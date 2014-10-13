@@ -14,8 +14,7 @@
 13. simple/test-chdir.js ... ok.
 14. simple/test-child-process-buffering.js ... failure !!!
 15. simple/test-child-process-customfd-bounded.js ... failure !!!
-16. simple/test-child-process-cwd.js ... [4]  + done       $@
-failure !!!
+16. simple/test-child-process-cwd.js ... failure !!!
 17. simple/test-child-process-detached.js ... failure !!!
 18. simple/test-child-process-disconnect.js ... failure !!!
 19. simple/test-child-process-double-pipe.js ... failure !!!
@@ -62,7 +61,7 @@ failure !!!
 60. simple/test-cluster-eaddrinuse.js ... failure !!!
 61. simple/test-cluster-fork-env.js ... failure !!!
 62. simple/test-cluster-http-pipe.js ... failure !!!
-63. simple/test-cluster-listening-port.js ... failure !!!
+63. simple/test-cluster-listening-port.js ... ok.
 64. simple/test-cluster-master-error.js ... failure !!!
 65. simple/test-cluster-master-kill.js ... failure !!!
 66. simple/test-cluster-message.js ... failure !!!
@@ -135,7 +134,7 @@ failure !!!
 133. simple/test-event-emitter-listeners.js ... ok.
 134. simple/test-event-emitter-max-listeners.js ... ok.
 135. simple/test-event-emitter-memory-leak.js ### BLACKLISTED
-136. simple/test-event-emitter-method-names.js ... failure !!!
+136. simple/test-event-emitter-method-names.js ... ok.
 137. simple/test-event-emitter-modify-in-emit.js ... ok.
 138. simple/test-event-emitter-no-error-provided-to-error-event.js ... ok.
 139. simple/test-event-emitter-num-args.js ... ok.
@@ -144,8 +143,8 @@ failure !!!
 142. simple/test-event-emitter-remove-listeners.js ... ok.
 143. simple/test-event-emitter-set-max-listeners-side-effects.js ... ok.
 144. simple/test-event-emitter-subclass.js ... ok.
-145. simple/test-exception-handler.js ... failure !!!
-146. simple/test-exception-handler2.js ... failure !!!
+145. simple/test-exception-handler.js ... ok.
+146. simple/test-exception-handler2.js ... ok.
 147. simple/test-exec-max-buffer.js ... failure !!!
 148. simple/test-executable-path.js ### BLACKLISTED
 149. simple/test-file-read-noexist.js ... ok.
@@ -153,11 +152,11 @@ failure !!!
 151. simple/test-file-write-stream2.js ... ok.
 152. simple/test-file-write-stream3.js ... ok.
 153. simple/test-force-repl.js ... failure !!!
-154. simple/test-fs-append-file-sync.js ... failure !!!
+154. simple/test-fs-append-file-sync.js ... ok.
 155. simple/test-fs-append-file.js ... ok.
 156. simple/test-fs-chmod.js ... ok.
 157. simple/test-fs-empty-readStream.js ... ok.
-158. simple/test-fs-error-messages.js ... failure !!!
+158. simple/test-fs-error-messages.js ... ok.
 159. simple/test-fs-exists.js ... ok.
 160. simple/test-fs-fsync.js ... ok.
 161. simple/test-fs-long-path.js ... ok.
@@ -179,28 +178,28 @@ failure !!!
 177. simple/test-fs-readfile-pipe.js ... failure !!!
 178. simple/test-fs-readfile-unlink.js ... ok.
 179. simple/test-fs-readfile-zero-byte-liar.js ... ok.
-180. simple/test-fs-realpath.js ... failure !!!
+180. simple/test-fs-realpath.js ... ok.
 181. simple/test-fs-sir-writes-alot.js ... ok.
-182. simple/test-fs-stat.js ... failure !!!
+182. simple/test-fs-stat.js ... ok.
 183. simple/test-fs-stream-double-close.js ... ok.
 184. simple/test-fs-symlink-dir-junction.js ... ok.
 185. simple/test-fs-symlink.js ... ok.
 186. simple/test-fs-sync-fd-leak.js ... ok.
 187. simple/test-fs-truncate-GH-6233.js ... ok.
 188. simple/test-fs-truncate.js ... ok.
-189. simple/test-fs-utimes.js ... failure !!!
-190. simple/test-fs-watch.js ... failure !!!
+189. simple/test-fs-utimes.js ... ok.
+190. simple/test-fs-watch.js ... ok.
 191. simple/test-fs-write-buffer.js ... ok.
 192. simple/test-fs-write-file-buffer.js ... ok.
-193. simple/test-fs-write-file-sync.js ... failure !!!
-194. simple/test-fs-write-file.js ... failure !!!
+193. simple/test-fs-write-file-sync.js ... ok.
+194. simple/test-fs-write-file.js ... ok.
 195. simple/test-fs-write-stream-change-open.js ... ok.
 196. simple/test-fs-write-stream-end.js ... ok.
 197. simple/test-fs-write-stream-err.js ... ok.
 198. simple/test-fs-write-stream.js ... ok.
 199. simple/test-fs-write-sync.js ... ok.
-200. simple/test-fs-write.js ... failure !!!
-201. simple/test-global.js ... failure !!!
+200. simple/test-fs-write.js ... ok.
+201. simple/test-global.js ... ok.
 202. simple/test-http-1.0-keep-alive.js ... failure !!!
 203. simple/test-http-1.0.js ... failure !!!
 204. simple/test-http-304.js ... failure !!!
@@ -344,8 +343,8 @@ failure !!!
 342. simple/test-listen-fd-server.js ... failure !!!
 343. simple/test-memory-usage-emfile.js ... failure !!!
 344. simple/test-memory-usage.js ... failure !!!
-345. simple/test-mkdir-rmdir.js ... failure !!!
-346. simple/test-module-loading-error.js ... failure !!!
+345. simple/test-mkdir-rmdir.js ... ok.
+346. simple/test-module-loading-error.js ### BLACKLISTED
 347. simple/test-module-loading.js ... failure !!!
 348. simple/test-net-GH-5504.js ... failure !!!
 349. simple/test-net-after-close.js ... failure !!!
@@ -360,7 +359,7 @@ failure !!!
 358. simple/test-net-connect-options.js ... failure !!!
 359. simple/test-net-create-connection.js ... failure !!!
 360. simple/test-net-dns-error.js ... failure !!!
-361. simple/test-net-during-close.js ... failure !!!
+361. simple/test-net-during-close.js ... ok.
 362. simple/test-net-eaddrinuse.js ### BLACKLISTED
 363. simple/test-net-end-without-connect.js ... ok.
 364. simple/test-net-error-twice.js ... failure !!!
@@ -393,7 +392,7 @@ failure !!!
 391. simple/test-next-tick-doesnt-hang.js ... ok.
 392. simple/test-next-tick-domain.js ... ok.
 393. simple/test-next-tick-error-spin.js ... failure !!!
-394. simple/test-next-tick-errors.js ... failure !!!
+394. simple/test-next-tick-errors.js ... ok.
 395. simple/test-next-tick-intentional-starvation.js ... ok.
 396. simple/test-next-tick-ordering.js ... ok.
 397. simple/test-next-tick-ordering2.js ... ok.
@@ -414,23 +413,23 @@ failure !!!
 412. simple/test-process-config.js ... failure !!!
 413. simple/test-process-env.js ... failure !!!
 414. simple/test-process-exec-argv.js ... failure !!!
-415. simple/test-process-exit-recursive.js ... ok.
+415. simple/test-process-exit-recursive.js ... failure !!!
 416. simple/test-process-exit.js ... ok.
 417. simple/test-process-getgroups.js ... failure !!!
-418. simple/test-process-hrtime.js ... failure !!!
+418. simple/test-process-hrtime.js ... ok.
 419. simple/test-process-kill-null.js ... failure !!!
-420. simple/test-process-next-tick.js ... failure !!!
+420. simple/test-process-next-tick.js ... ok.
 421. simple/test-process-wrap.js ... failure !!!
 422. simple/test-pump-file2tcp-noexist.js ... failure !!!
 423. simple/test-pump-file2tcp.js ... failure !!!
-424. simple/test-punycode.js ... failure !!!
+424. simple/test-punycode.js ... ok.
 425. simple/test-querystring.js ... failure !!!
 426. simple/test-readdir.js ... ok.
-427. simple/test-readdouble.js ... failure !!!
-428. simple/test-readfloat.js ... failure !!!
+427. simple/test-readdouble.js ... ok.
+428. simple/test-readfloat.js ... ok.
 429. simple/test-readint.js ... ok.
-430. simple/test-readline-interface.js ... failure !!!
-431. simple/test-readline-set-raw-mode.js ... failure !!!
+430. simple/test-readline-interface.js ### BLACKLISTED
+431. simple/test-readline-set-raw-mode.js ### BLACKLISTED
 432. simple/test-readuint.js ... ok.
 433. simple/test-regress-GH-1531.js ... failure !!!
 434. simple/test-regress-GH-1697.js ... failure !!!
@@ -499,7 +498,7 @@ failure !!!
 497. simple/test-stream-push-strings.js ... ok.
 498. simple/test-stream-readable-event.js ... ok.
 499. simple/test-stream-readable-flow-recursion.js ... ok.
-500. simple/test-stream-transform-objectmode-falsey-value.js ... failure !!!
+500. simple/test-stream-transform-objectmode-falsey-value.js ... ok.
 501. simple/test-stream-unshift-empty-chunk.js ... ok.
 502. simple/test-stream-unshift-read-race.js ... failure !!!
 503. simple/test-stream-writable-decoded-encoding.js ... ok.
@@ -526,23 +525,23 @@ failure !!!
 524. simple/test-stream2-transform.js ... ok.
 525. simple/test-stream2-unpipe-drain.js ... failure !!!
 526. simple/test-stream2-unpipe-leak.js ... ok.
-527. simple/test-stream2-writable.js ... failure !!!
-528. simple/test-string-decoder-end.js ... failure !!!
+527. simple/test-stream2-writable.js ... ok.
+528. simple/test-string-decoder-end.js ... ok.
 529. simple/test-string-decoder.js ... failure !!!
 530. simple/test-sync-fileread.js ... ok.
 531. simple/test-sys.js ... ok.
 532. simple/test-tcp-wrap-connect.js ... failure !!!
 533. simple/test-tcp-wrap-listen.js ... failure !!!
 534. simple/test-tcp-wrap.js ... failure !!!
-535. simple/test-timers-first-fire.js ... failure !!!
+535. simple/test-timers-first-fire.js ... ok.
 536. simple/test-timers-immediate.js ... failure !!!
 537. simple/test-timers-linked-list.js ... ok.
 538. simple/test-timers-ordering.js ... ok.
-539. simple/test-timers-this.js ... failure !!!
-540. simple/test-timers-uncaught-exception.js ... failure !!!
+539. simple/test-timers-this.js ... ok.
+540. simple/test-timers-uncaught-exception.js ... ok.
 541. simple/test-timers-unref.js ... failure !!!
 542. simple/test-timers-zero-timeout.js ... ok.
-543. simple/test-timers.js ... failure !!!
+543. simple/test-timers.js ... ok.
 544. simple/test-tls-check-server-identity.js ... ok.
 545. simple/test-tls-client-abort.js ... failure !!!
 546. simple/test-tls-client-abort2.js ... failure !!!
@@ -589,18 +588,18 @@ failure !!!
 587. simple/test-tls-zero-clear-in.js ... failure !!!
 588. simple/test-tty-stdout-end.js ... failure !!!
 589. simple/test-tty-wrap.js ... failure !!!
-590. simple/test-typed-arrays.js ... failure !!!
-591. simple/test-umask.js ... failure !!!
-592. simple/test-url.js ... failure !!!
+590. simple/test-typed-arrays.js ... ok.
+591. simple/test-umask.js ... ok.
+592. simple/test-url.js ... ok.
 593. simple/test-utf8-scripts.js ... ok.
-594. simple/test-util-format.js ... failure !!!
-595. simple/test-util-inspect.js ... failure !!!
-596. simple/test-util.js ... failure !!!
+594. simple/test-util-format.js ... ok.
+595. simple/test-util-inspect.js ### BLACKLISTED
+596. simple/test-util.js ### BLACKLISTED
 597. simple/test-vm-create-context-accessors.js ... failure !!!
 598. simple/test-vm-create-context-arg.js ... failure !!!
 599. simple/test-vm-create-context-circular-reference.js ... failure !!!
-600. simple/test-writedouble.js ... failure !!!
-601. simple/test-writefloat.js ... failure !!!
+600. simple/test-writedouble.js ... ok.
+601. simple/test-writefloat.js ... ok.
 602. simple/test-writeint.js ... ok.
 603. simple/test-writeuint.js ... ok.
 604. simple/test-zerolengthbufferbug.js ... failure !!!
@@ -615,7 +614,7 @@ failure !!!
 613. simple/test-zlib-write-after-flush.js ... failure !!!
 614. simple/test-zlib-zero-byte.js ... failure !!!
 615. simple/test-zlib.js ... failure !!!
-581 executed
-   149 success
-   432 failure
-   34 blacklist
+576 executed
+   183 success
+   393 failure
+   39 blacklist

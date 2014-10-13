@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct  1 09:51:14 2014 (serrano)                */
+;*    Last change :  Thu Oct  9 21:19:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -64,7 +64,10 @@
 	 (expr `(cond
 		   ((or (eq? this (js-undefined))
 			(eq? this (js-null)))
-		    (set! this %scope))
+		    ;; use to be
+		    ;; (set! this %scope)
+		    ;; but it breaks nodejs/test/simple/test-fs-fstat.js
+		    (set! this %this))
 		   ((not (isa? this JsObject))
 		    (set! this (js-toobject %this this)))))))
    

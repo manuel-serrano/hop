@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 11 17:16:06 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:48:56 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -39,7 +39,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jun 15 17:56:16 2014 (serrano)                */
+;*    Last change :  Fri Oct 10 17:01:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -363,14 +363,27 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (js* left right %this)
-   (let ((r (if (and (number? left) (number? right))
-		(* left right)
-		(let* ((lnum (js-tonumber left %this))
-		       (rnum (js-tonumber right %this)))
-		   (* lnum rnum)))))
-      (if (bignum? r)
-	  (bignum->flonum r)
-	  r)))
+   
+   (define (neg? o)
+      (if (flonum? o)
+	  (=fx (signbitfl o) (signbitfl -0.0))
+	  (<fx o 0)))
+   
+   (let* ((lnum (if (number? left) left (js-tonumber left %this)))
+	  (rnum (if (number? right) right (js-tonumber right %this)))
+	  (r (* lnum rnum)))
+      (cond
+	 ((fixnum? r)
+	  (if (=fx r 0)
+	      (if (or (and (neg? lnum) (not (neg? rnum)))
+		      (and (not (neg? lnum)) (neg? rnum)))
+		  -0.0
+		  r)
+	      r))
+	 ((bignum? r)
+	  (bignum->flonum r))
+	 (else
+	  r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */

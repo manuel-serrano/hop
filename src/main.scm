@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Sep 21 08:47:39 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:45:54 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -81,7 +81,7 @@
 	 (lambda (path . test)
 	    (nodejs-load path %worker)))
       ;; init javascript marshalling
-      (init-json!
+      (init-javascript->jsobj!
 	 :plist->jsobject (lambda (l) (js-alist->jsobject l %global))
 	 :vector->jsarray (lambda (v) (js-vector->jsarray v %global)))
       ;; when debugging, init the debugger runtime

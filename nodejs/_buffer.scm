@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Oct  7 14:04:44 2014 (serrano)                */
+;*    Last change :  Sat Oct 11 15:16:27 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -277,7 +277,7 @@
 ;*    Convert a LE 8bits strings into an equivalent UCS2 string.       */
 ;*---------------------------------------------------------------------*/
 (define (string->ucs2-string string start end)
-   (let* ((len (-fx end start))
+   (let* ((len (*fx (/fx (-fx end start) 2) 2))
 	  (res (make-ucs2-string (/fx len 2))))
       (let loop ((i 0))
 	 (if (=fx i len)
@@ -351,14 +351,14 @@
 	 :prototype slowbuffer-proto))
 
    (define (check-offset data offset fxoffset sizeof action)
-      ;; the error messages (including the case) are imposed by node_buffer.cc
+      ;; the error messages (case sensitive) are imposed by node_buffer.cc
       (cond
 	 ((or (not (integer? offset)) (< offset 0) (<fx fxoffset 0))
 	  (js-raise-type-error %this "offset is not uint" offset))
 	 ((and (flonum? offset) (>fl offset (exptfl 2. 31.)))
 	  (js-raise-type-error %this "Trying to ~a beyond buffer length"
 	     action))
-	 ((>=fx (->fixnum offset) (-fx (string-length data) sizeof))
+	 ((>fx (->fixnum offset) (-fx (string-length data) sizeof))
 	  (js-raise-range-error %this
 	     "Trying to ~s beyond buffer length" action))))
 
@@ -425,8 +425,9 @@
       (let ((data (get-data this))
 	    (i (->fixnum offset)))
 	 (unless (js-totest noassert) (check-offset data offset i 4 "write"))
-	 (let ((buf (make-u8vector 4)))
-	    ($f32/u8vector-set! buf 0 value)
+	 (let ((buf (make-u8vector 4))
+	       (val (->flonum (js-tonumber value %this))))
+	    ($f32/u8vector-set! buf 0 val)
 	    (if le
 		(begin
 		   (byte-set! data i (u8vector-ref buf 0))
@@ -443,8 +444,9 @@
       (let ((data (get-data this))
 	    (i (->fixnum offset)))
 	 (unless (js-totest noassert) (check-offset data offset i 8 "write"))
-	 (let ((buf (make-u8vector 8)))
-	    ($f64/u8vector-set! buf 0 value)
+	 (let ((buf (make-u8vector 8))
+	       (val (->flonum (js-tonumber value %this))))
+	    ($f64/u8vector-set! buf 0 val)
 	    (if le
 		(begin
 		   (byte-set! data (+fx 0 i) (u8vector-ref buf 0))
@@ -836,7 +838,6 @@
    
    js-slowbuffer)
    
-   
 ;*---------------------------------------------------------------------*/
 ;*    ->fixnum ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -847,6 +848,17 @@
       ((elong? r) (elong->fixnum r))
       ((llong? r) (llong->fixnum r))
       (else (error "->fixnum" (format "Illegal number (~a)" (typeof r)) r))))
+
+;*---------------------------------------------------------------------*/
+;*    ->flonum ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (->flonum r)
+   (cond
+      ((flonum? r) r)
+      ((fixnum? r) (fixnum->flonum r))
+      ((elong? r) (elong->flonum r))
+      ((llong? r) (llong->flonum r))
+      (else (error "->flonum" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-buffer ...                                               */

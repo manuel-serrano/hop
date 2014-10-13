@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Oct  5 09:39:53 2014 (serrano)                */
+;*    Last change :  Sun Oct 12 09:12:33 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -32,6 +32,7 @@
 
    (static (class JsProcess::JsObject
 	      (tcp-proto (default #f))
+	      (fs-event-proto (default #f))
 	      (buffer-binding (default #f))
 	      (exiting::bool (default #f)))
 
@@ -51,6 +52,10 @@
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
 		(tick (js-get m 'initNodeTick %this)))
 	    (js-call1 %this tick (js-undefined) %process))
+	 ;; stdios
+	 (let* ((m (nodejs-require-core "node_stdio" %worker %this))
+		(stdio (js-get m 'initNodeStdio %this)))
+	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; events
 	 (with-access::JsObject %process (__proto__)
 	    (let* ((e (nodejs-require-core "events" %worker %this))
@@ -124,6 +129,7 @@
 				 (display o (current-output-port)))
 			      1 "write"))
 		 (writable . #t)
+		 (_isStdio . #t)
 		 (fd . 1))
 	       %this)
 	    #f %this)
@@ -134,7 +140,19 @@
 				 (display o (current-error-port)))
 			      1 "write"))
 		 (writable . #t)
+		 (_isStdio . #t)
 		 (fd . 2))
+	       %this)
+	    #f %this)
+	 (js-put! proc 'stdin
+	    (js-alist->jsobject
+	       `((read . ,(js-make-function %this
+			      (lambda (this o)
+				 (tprint "stdin read not implemented"))
+			      1 "read"))
+		 (writable . #f)
+		 (_isStdio . #t)
+		 (fd . 0))
 	       %this)
 	    #f %this)
 	 (js-put! proc 'argv
@@ -209,7 +227,7 @@
 		     ((string=? module "tty_wrap")
 		      (process-tty-wrap %worker %this))
 		     ((string=? module "fs_event_wrap")
-		      (process-fs-event-wrap %this))
+		      (process-fs-event-wrap %worker %this proc))
 		     ((string=? module "hop")
 		      (hopjs-process-hop %worker %this))
 		     (else
@@ -253,6 +271,18 @@
 	       (lambda (this val) (setuid (js-tointeger val %this)))
 	       1 "setuid")
 	    #f %this)
+	 (js-put! proc 'umask
+	    (js-make-function %this
+	       (lambda (this val)
+		  (cond
+		     ((eq? val (js-undefined))
+		      (umask))
+		     ((string? val)
+		      (umask (string->integer val 8)))
+		     (else
+		      (umask (js-tointeger val %this)))))
+	       1 "umask")
+	    #f %this)
 	 
 	 (js-put! proc '_usingDomains
 	    (js-make-function %this
@@ -269,6 +299,23 @@
 		  (nodejs-need-tick-callback %worker %this proc))
 	       0 "needTickCallback")
 	    #f %this)
+
+	 ;; hrtime
+	 (js-put! proc 'hrtime
+	    (js-make-function %this
+	       (lambda (this diff)
+		  (let* ((t (current-nanoseconds))
+			 (t0 (llong->flonum (/llong t #l1000000000)))
+			 (t1 (llong->flonum (remainderllong t #l1000000000))))
+		     (if (eq? diff (js-undefined))
+			 (js-vector->jsarray (vector t0 t1) %this)
+			 (let ((dt0 (js-get diff 0 %this))
+			       (dt1 (js-get diff 1 %this)))
+			 (js-vector->jsarray
+			    (vector (- t0 dt0) (- t1 dt1)) %this)))))
+			 
+	       1 "hrtime")
+	    #t %this)
 	 
 	 (for-each not-implemented
 	    '(_getActiveRequest
@@ -282,10 +329,8 @@
 	      _debugProcess
 	      _debugPause
 	      _debugEnd
-	      hrtime
 	      dlopen
 	      uptime
-	      umask
 	      memoryUsage))
 	 
 	 proc)))
@@ -687,19 +732,70 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-fs-event-wrap ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (process-fs-event-wrap %this)
+(define (process-fs-event-wrap %worker %this process)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "fs_event_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
+   (define (create-fs-event-proto)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((obj (js-new %this js-object)))
+	    
+	    (js-put! obj 'start
+	       (js-make-function %this
+		  (lambda (this::JsHandle path options listener)
+		     (with-access::JsHandle this (handle)
+			(js-put! this 'initialized_ #t #f %this)
+			(nodejs-fs-event-start handle
+			   (lambda (_ path events status)
+			      ;; see fs_event_wrap.cc
+			      (let ((eventstr "")
+				    (onchange (js-get this 'onchange %this)))
+				 (cond
+				    ((not (=fx status 0))
+				     (js-put! process '_errno
+					(uv-err-name status) #f %this))
+				    ((=fx (uv-fs-event-change)
+					(bit-and events (uv-fs-event-change)))
+				     (set! eventstr "change"))
+				    ((=fx (uv-fs-event-rename)
+					(bit-and events (uv-fs-event-rename)))
+				     (set! eventstr "rename"))
+				    (else
+				     (error "process-fs-event-wrap"
+					"bad event" eventstr)))
+				 (js-call3 %this onchange this
+				    status eventstr path)))
+			   path))
+		     (when (js-totest options)
+			(nodejs-unref this)))
+		  3 "start")
+	       #f %this)
+	    
+	    (js-put! obj 'close
+	       (js-make-function %this
+		  (lambda (this)
+		     (js-put! this 'initialized_ #f #f %this)
+		     (with-access::JsHandle this (handle)
+			(nodejs-fs-event-close handle)))
+		  1 "close")
+	       #f %this)
+	    
+	    obj)))
+   
+   (define (get-fs-event-proto process)
+      (with-access::JsProcess process (fs-event-proto)
+	 (unless fs-event-proto
+	    (set! fs-event-proto (create-fs-event-proto)))
+	 fs-event-proto))
+   
+   (define (fs-event this)
+      (instantiate::JsHandle
+	 (handle (nodejs-make-fs-event))
+	 (__proto__ (get-fs-event-proto process))))
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 (map (lambda (id)
-		 (cons id (not-implemented id)))
-	    `(start close))
+	 `((FSEvent . ,(js-make-function %this fs-event 0 "FSEvent"
+			  :alloc (lambda (o) #unspecified)
+			  :construct fs-event)))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

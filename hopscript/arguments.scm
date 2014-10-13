@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Sep 27 11:36:55 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:46:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -42,7 +42,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */

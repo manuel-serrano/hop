@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Oct  1 17:00:12 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:49:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -70,7 +70,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */

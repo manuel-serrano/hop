@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Oct  1 18:40:24 2014 (serrano)                */
+;*    Last change :  Thu Oct  9 21:51:15 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -78,7 +78,6 @@
    (js-init-typedarray! %this 'Uint16Array
       2
       (lambda (buf o)
-	 (tprint "o=" o)
 	 (uint16->fixnum ($u16/u8vector-ref buf o)))
       (lambda (buf o v)
 	 (let ((val (js-tointeger v %this)))
@@ -291,7 +290,7 @@
 				    (car items)
 				    (fixnum->uint32 off)
 				    (fixnum->uint32 l))))))))))
-	       ((isa? (car items) JsArray)
+	       ((or (isa? (car items) JsArray) (isa? (car items) JsTypedArray))
 		(let ((len (js-get (car items) 'length %this)))
 		   (let ((arr (js-typedarray-construct this (list len))))
 		      (with-access::JsTypedArray arr (buffer vset)
@@ -915,48 +914,54 @@
 	 (define (js-getFloat64 this::JsDataView offset lendian)
 	    (with-access::JsDataView this (buffer %data)
 	       (let ((len (u8vector-length %data))
-		     (lendian (js-totest lendian)))
+		     (lendian (js-totest lendian))
+		     (offset (js-touint32 offset %this)))
 		  (cond
-		     ((<fx offset 0)
-		      (js-get this (js-toname offset %this) %this))
-		     ((>=fx offset len)
+		     ((not (js-isindex? offset))
+		      (js-raise-range-error %this "getFloat64: Index out of range" offset))
+		     ((>=u32 offset (fixnum->uint32 len))
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f64/u8vector-ref %data (/fx offset 8)))
+		      ($f64/u8vector-ref %data
+			 (uint32->fixnum (/u32 offset 8))))
 		     (else
-		      (u8vector-set! buf 0 (u8vector-ref %data (+fx offset 7)))
-		      (u8vector-set! buf 1 (u8vector-ref %data (+fx offset 6)))
-		      (u8vector-set! buf 2 (u8vector-ref %data (+fx offset 5)))
-		      (u8vector-set! buf 3 (u8vector-ref %data (+fx offset 4)))
-		      (u8vector-set! buf 4 (u8vector-ref %data (+fx offset 3)))
-		      (u8vector-set! buf 5 (u8vector-ref %data (+fx offset 2)))
-		      (u8vector-set! buf 6 (u8vector-ref %data (+fx offset 1)))
-		      (u8vector-set! buf 7 (u8vector-ref %data offset))
-		      ($f64/u8vector-ref buf 0))))))
+		      (let ((offset (uint32->fixnum offset)))
+			 (u8vector-set! buf 0 (u8vector-ref %data (+fx offset 7)))
+			 (u8vector-set! buf 1 (u8vector-ref %data (+fx offset 6)))
+			 (u8vector-set! buf 2 (u8vector-ref %data (+fx offset 5)))
+			 (u8vector-set! buf 3 (u8vector-ref %data (+fx offset 4)))
+			 (u8vector-set! buf 4 (u8vector-ref %data (+fx offset 3)))
+			 (u8vector-set! buf 5 (u8vector-ref %data (+fx offset 2)))
+			 (u8vector-set! buf 6 (u8vector-ref %data (+fx offset 1)))
+			 (u8vector-set! buf 7 (u8vector-ref %data offset))
+			 ($f64/u8vector-ref buf 0)))))))
 
 	 (define (js-setFloat64 this::JsDataView offset value lendian)
 	    (with-access::JsDataView this (buffer %data)
 	       (let ((len (u8vector-length %data))
 		     (lendian (js-totest lendian))
 		     (value (js-tonumber value %this))
-		     (v (if (flonum? value) value (fixnum->flonum value))))
+		     (v (if (flonum? value) value (fixnum->flonum value)))
+		     (offset (js-touint32 offset %this)))
 		  (cond
-		     ((<fx offset 0)
-		      (js-get this (js-toname offset %this) %this))
-		     ((>=fx offset len)
+		     ((not (js-isindex? offset))
+		      (js-raise-range-error %this "setFloat64: Index out of range" offset))
+		     ((>=u32 offset (fixnum->uint32 len))
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f64/u8vector-set! %data (/fx offset 8) v))
+		      ($f64/u8vector-set! %data
+			 (uint32->fixnum (/u32 offset 8)) v))
 		     (else
 		      ($f64/u8vector-set! buf 0 v)
-		      (u8vector-set! %data offset (u8vector-ref buf 7))
-		      (u8vector-set! %data (+fx offset 1) (u8vector-ref buf 6))
-		      (u8vector-set! %data (+fx offset 2) (u8vector-ref buf 5))
-		      (u8vector-set! %data (+fx offset 3) (u8vector-ref buf 4))
-		      (u8vector-set! %data (+fx offset 4) (u8vector-ref buf 3))
-		      (u8vector-set! %data (+fx offset 5) (u8vector-ref buf 2))
-		      (u8vector-set! %data (+fx offset 6) (u8vector-ref buf 1))
-		      (u8vector-set! %data (+fx offset 7) (u8vector-ref buf 0)))))))
+		      (let ((offset (uint32->fixnum offset)))
+			 (u8vector-set! %data offset (u8vector-ref buf 7))
+			 (u8vector-set! %data (+fx offset 1) (u8vector-ref buf 6))
+			 (u8vector-set! %data (+fx offset 2) (u8vector-ref buf 5))
+			 (u8vector-set! %data (+fx offset 3) (u8vector-ref buf 4))
+			 (u8vector-set! %data (+fx offset 4) (u8vector-ref buf 3))
+			 (u8vector-set! %data (+fx offset 5) (u8vector-ref buf 2))
+			 (u8vector-set! %data (+fx offset 6) (u8vector-ref buf 1))
+			 (u8vector-set! %data (+fx offset 7) (u8vector-ref buf 0))))))))
 	 
 	 ;; bind the Dataview in the global object
 	 (js-bind! %this %this 'DataView

@@ -50,6 +50,10 @@ failure=0
 blacklist=0
 i=0
 
+rm -rf $basedir/tmp
+mkdir -p $basedir/tmp
+rm -rf $basedir/tmp/a
+
 for chapter in $chapters; do
   echo "$basedir/$chapter"
 
@@ -59,6 +63,7 @@ for chapter in $chapters; do
 
     if [ $? != 0  ]; then
       echo -n "$i. $chapter/`basename $path` ... "
+      rm -rf $basedir/tmp/a
       (cd $basedir; $hop -g --no-zeroconf --no-server $path > /tmp/TEST-NODEJS.out 2>&1)
   
       if [ $? = 0 ]; then

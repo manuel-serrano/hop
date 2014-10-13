@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct  4 06:52:41 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:36:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -50,16 +50,16 @@
 	     (raise
 		(instantiate::&io-parse-error
 		   (proc "js-parser")
-		   (msg msg)
-		   (obj (cdr token))
+		   (msg (if (eq? (car token) 'BAD) (cadr token) msg))
+		   (obj (if (eq? (car token) 'BAD) (cddr token) (cdr token)))
 		   (fname fname)
 		   (location loc))))
 	    (else
 	     (raise
 		(instantiate::&io-parse-error
 		   (proc "js-parser")
-		   (msg msg)
-		   (obj (cdr token))))))))
+		   (msg (if (eq? (car token) 'BAD) (cadr token) msg))
+		   (obj (if (eq? (car token) 'BAD) (cddr token) (cdr token)))))))))
 
    (define (parse-node-error msg node::J2SNode)
       (with-access::J2SNode node (loc)
@@ -1347,17 +1347,76 @@
 		      (+fx length 1))))
 	       (else
 		(let ((array-el (assig-expr #f)))
-		   (if (eq? (peek-token-type) 'COMMA)
-		       (begin
-			  (consume-any!)
-			  (loop (cons array-el rev-els)
-			     (+fx length 1)))
-		       (begin
-			  (consume! 'RBRACKET)
-			  (instantiate::J2SArray
-			     (loc (token-loc token))
-			     (exprs (reverse! (cons array-el rev-els)))
-			     (len (+fx length 1)))))))))))
+		   (case (peek-token-type)
+		      ((COMMA)
+		       (consume-any!)
+		       (loop (cons array-el rev-els)
+			  (+fx length 1)))
+		      ((RBRACKET)
+		       (consume! 'RBRACKET)
+		       (instantiate::J2SArray
+			  (loc (token-loc token))
+			  (exprs (reverse! (cons array-el rev-els)))
+			  (len (+fx length 1))))
+		      ((for)
+		       (let* ((tok (consume-any!))
+			      (expr (instantiate::J2SSequence
+				       (loc (token-loc tok))
+				       (exprs (reverse!
+						 (cons array-el rev-els))))))
+			  (comprehension-literal (token-loc token) expr)))
+		      (else
+		       (parse-token-error "unexpected token"
+			  (consume-any!))))))))))
+
+   (define (comprehension-literal loc expr)
+      (consume-token! 'LPAREN)
+      (let* ((id (consume-token! 'ID))
+	     (of (consume-any!)))
+	 (unless (and (eq? (car of) 'ID) (eq? (cdr of) 'of))
+	    (parse-token-error
+	       (format "expected \"of\" got \"~a\"" (cdr of)) of))
+	 (let ((iterable (expression #f)))
+	    (consume-token! 'RPAREN)
+	    (case (peek-token-type)
+	       ((for)
+		(let* ((tok (consume-any!)))
+		   (instantiate::J2SComprehension
+		      (loc loc)
+		      (decl (instantiate::J2SLet
+			       (id (cdr id))
+			       (loc (token-loc id))))
+		      (test (instantiate::J2SBool
+			       (val #t)
+			       (loc (token-loc id))))
+		      (expr (comprehension-literal (token-loc tok) expr))
+		      (iterable iterable))))
+	       ((if)
+		(consume-any!)
+		(consume-token! 'LPAREN)
+		(let ((test (expression #f)))
+		   (consume-token! 'RPAREN)
+		   (consume-token! 'RBRACKET)
+		   (instantiate::J2SComprehension
+		      (loc loc)
+		      (decl (instantiate::J2SLet
+			       (id (cdr id))
+			       (loc (token-loc id))))
+		      (test test)
+		      (expr expr)
+		      (iterable iterable))))
+	       ((RBRACKET)
+		(consume-any!)
+		(instantiate::J2SComprehension
+		   (loc loc)
+		   (decl (instantiate::J2SLet
+			    (id (cdr id))
+			    (loc (token-loc id))))
+		   (test (instantiate::J2SBool
+					(val #t)
+					(loc (token-loc id))))
+		   (expr expr)
+		   (iterable iterable)))))))
    
    (define (object-literal)
       

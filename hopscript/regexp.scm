@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Sep 21 08:42:23 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:49:14 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -37,7 +37,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */

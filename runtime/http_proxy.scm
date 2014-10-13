@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Fri Mar  7 17:33:21 2014 (serrano)                */
+;*    Last change :  Sat Oct 11 09:53:01 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
@@ -156,10 +156,9 @@
 					   ;; capture dumping
 					   (when (output-port? (hop-capture-port))
 					      (log-capture request r))
-					   (let ((rep (if (assq :xhr-multipart header)
-							  (remote-multipart-body r socket remote)
-							  (remote-body r socket remote))))
-					      rep))))))))))))
+					   (if (assq :xhr-multipart header)
+					       (remote-multipart-body r socket remote)
+					       (remote-body r socket remote)))))))))))))
 	 (synchronize *debug-mutex*
 	    (set! *debug-open* (delete! count *debug-open*))))))
 

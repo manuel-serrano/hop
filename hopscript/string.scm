@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct  1 17:23:24 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:49:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -47,7 +47,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */
@@ -261,9 +261,22 @@
 	     (pos (if (eq? position (js-undefined))
 		      0
 		      (js-tointeger position %this)))
-	     (len (utf8-string-length s))
-	     (start (inexact->exact (min (max pos 0) len))))
-	 (or (string-contains s searchstr start) -1)))
+	     (len (string-length s))
+	     (ulen (utf8-string-length s))
+	     (start (inexact->exact (min (max pos 0) ulen))))
+	 (let ((i (utf8-string-index->string-index s start)))
+	    (if (<fx i 0)
+		i
+		(let loop ((i i)
+			   (u start))
+		   (cond
+		      ((=fx i len)
+		       -1)
+		      ((substring-at? s searchstr i)
+		       u)
+		      (else
+		       (let ((c (string-ref s i)))
+			  (loop (+fx i (utf8-char-size c)) (+fx u 1))))))))))
    
    (js-bind! %this obj 'indexOf
       :value (js-make-function %this indexof 1 'indexOf)
@@ -274,18 +287,27 @@
    (define (last-indexof this search position)
       (let* ((s (js-tostring (js-cast-string %this this) %this))
 	     (searchstr (js-tostring search %this))
-	     (len (utf8-string-length s))
+	     (searchlen (string-length searchstr))
+	     (usearchlen (utf8-string-length searchstr))
+	     (len (string-length s))
+	     (ulen (utf8-string-length s))
 	     (numpos (js-tonumber position %this))
 	     (pos (if (and (flonum? numpos) (nanfl? numpos))
-		      (+ len 1)
+		      (+ ulen 1)
 		      (js-tointeger numpos %this)))
-	     (start (inexact->exact (min (max pos 0) len)))
-	     (searchlen (utf8-string-length searchstr)))
-	 (let loop ((i start))
+	     (start (inexact->exact (min (max pos 0) ulen))))
+	 ;; utf-8 imposes a left-to-right parsing
+	 (let loop ((i 0)
+		    (u 0)
+		    (r -1))
 	    (cond
-	       ((=fx i -1) -1)
-	       ((substring-at? s searchstr i) i)
-	       (else (loop (-fx i 1)))))))
+	       ((or (=fx i len) (=fx u start))
+		r)
+	       ((substring-at? s searchstr i)
+		(loop (+fx searchlen i) (+fx u usearchlen) u))
+	       (else
+		(let ((c (string-ref s i)))
+		   (loop (+fx i (utf8-char-size c)) (+fx u 1) r)))))))
    
    (js-bind! %this obj 'lastIndexOf
       :value (js-make-function %this last-indexof 1 'lastIndexOf)
@@ -592,8 +614,8 @@
 	 (if (isa? R JsRegExp)
 	     (with-access::JsRegExp R (rx)
 		(or (pregexp-match-positions rx S q) 'failure))
-	     (let ((r (utf8-string-length R))
-		   (s (utf8-string-length S)))
+	     (let ((r (string-length R))
+		   (s (string-length S)))
 		(cond
 		   ((>fx (+fx q r) s)
 		    'failure)
@@ -611,9 +633,11 @@
 			    (minelong2
 			       (uint32->elong (js-touint32 limit %this))
 			       (fixnum->elong (+fx 1 (string-length S)))))))
-		(s (utf8-string-length S))
+		(s (string-length S))
 		(p 0)
-		(R (if (isa? separator JsRegExp) separator (js-tostring separator %this))))
+		(R (if (isa? separator JsRegExp)
+		       separator
+		       (js-tostring separator %this))))
 	    (cond
 	       ((=fx lim 0)
 		;; 9
@@ -732,7 +756,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16
    (define (tolowercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
-	 (string-downcase s)))
+	 (ucs2-string->utf8-string (ucs2-string-downcase (utf8-string->ucs2-string s)))))
    
    (js-bind! %this obj 'toLowerCase
       :value (js-make-function %this tolowercase 0 'toLowerCase)
@@ -751,7 +775,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18
    (define (touppercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
-	 (string-upcase s)))
+	 (ucs2-string->utf8-string (ucs2-string-upcase (utf8-string->ucs2-string s)))))
    
    (js-bind! %this obj 'toUpperCase
       :value (js-make-function %this touppercase 0 'toUpperCase)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct  4 06:58:21 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:29:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -27,6 +27,11 @@
 	   (j2s-scheme-id id)
 	   (j2s-scheme-unserialize)
 	   (j2s-scheme-unjson)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-unresolved-put-workspace ...                                 */
+;*---------------------------------------------------------------------*/
+(define j2s-unresolved-put-workspace 'global)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -86,7 +91,7 @@
 ;*    j2s-scheme-id ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-id id)
-   (if (memq id '(raise error eval quote module))
+   (if (memq id '(raise error eval quote module dirname))
        (symbol-append '^ id)
        id))
 
@@ -284,8 +289,7 @@
 				   (format "function:~a:~a"
 				      (cadr loc) (caddr loc)))))
 		   (if (in-eval? return)
-		       (j2s-unresolved-put! '%scope `',ident
-			  value #f 'normal)
+		       (j2s-unresolved-put! `',ident value #f 'normal)
 		       `(begin
 			   (define ,ident ,value)
 			   (js-bind! %this ,global ',id
@@ -306,6 +310,12 @@
 (define-method (j2s-scheme this::J2SDecl mode return conf)
    (with-access::J2SDecl this (loc id writable)
       (j2s-scheme-decl this '(js-undefined) writable mode return)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SLet ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SLet mode return conf)
+   (error "j2s-scheme ::J2SLet" "not implemented yet" (j2s->list this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
@@ -494,10 +504,48 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCond mode return conf)
    (with-access::J2SCond this (loc test then else)
-	 (epairify loc
-	    `(if ,(j2s-test test mode return conf)
-		 ,(j2s-scheme then mode return conf)
-		 ,(j2s-scheme else mode return conf)))))
+      (epairify loc
+	 `(if ,(j2s-test test mode return conf)
+	      ,(j2s-scheme then mode return conf)
+	      ,(j2s-scheme else mode return conf)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SComprehension ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SComprehension mode return conf)
+   (with-access::J2SComprehension this (loc decl test expr iterable)
+      (if (not (eq? mode 'strict))
+	  (match-case loc
+	     ((at ?fname ?loc)
+	      `(with-access::JsGlobalObject %this (js-syntax-error)
+		  (js-raise
+		     (js-new %this js-syntax-error
+			"comprehension only supported in strict mode"
+			,fname ,loc))))
+	     (else
+	      `(with-access::JsGlobalObject %this (js-syntax-error)
+		  (js-raise
+		     (js-new %this js-syntax-error
+			"comprehension only supported in strict mode")))))
+	  (with-access::J2SDecl decl (id name)
+	     (let* ((n (j2s-name name id))
+		    (iter (j2s-scheme iterable mode return conf))
+		    (fun `(js-make-function %this
+			     (lambda (this ,n)
+				,(j2s-scheme expr mode return conf))
+			     1 'comprehension-expr))
+		    (ast (call-with-output-string (lambda (op) (ast->json test op)))))
+		(epairify loc
+		   (if (not (isa? test J2SBool))
+		       (let ((test `(js-make-function %this
+				       (lambda (this ,n)
+					  ,(j2s-scheme test mode return conf))
+				       1 'comprehension-test)))
+			  `(js-comprehension %this ,iter ,fun ,test ',n ,ast))
+		       (with-access::J2SBool test (val)
+			  (if val
+			      `(js-comprehension %this ,iter ,fun #t ',n ,ast)
+			      `(js-vector->jsarray '#() %this))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pcache ...                                                       */
@@ -510,22 +558,22 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved name cache throw)
    (if cache
-       `(js-get-global-object-name/cache %scope ',name
+       `(js-get-global-object-name/cache ,j2s-unresolved-put-workspace ',name
 	   ,(pcache cache)
 	   ,(if (pair? throw) `',throw throw)
 	   %this)
-       `(js-get-global-object-name %scope ',name
+       `(js-get-global-object-name ,j2s-unresolved-put-workspace ',name
 	   ,(if (pair? throw) `',throw throw)
 	   %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-unresolved-put! obj field expr throw::bool mode::symbol)
+(define (j2s-unresolved-put! field expr throw::bool mode::symbol)
    ;; no need to type check obj as we statically know that it is an obj
    (if (eq? mode 'strict)
-       `(js-unresolved-put! ,obj ,field ,expr #t %this)
-       `(js-put! ,obj ,field ,expr ,throw %this)))
+       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t %this)
+       `(js-put! ,j2s-unresolved-put-workspace ,field ,expr ,throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SUnresolvedRef ...                                */
@@ -1188,8 +1236,7 @@
 			 `(let ((,tmp (js-tonumber
 					 ,(j2s-unresolved id cache loc)
 					 %this)))
-			     ,(j2s-unresolved-put! '%scope `',id
-				 `(+ ,inc ,tmp)
+			     ,(j2s-unresolved-put! `',id `(+ ,inc ,tmp)
 				 #t mode)
 			     ,tmp)))))
 	       ((isa? lhs J2SParen)
@@ -1246,7 +1293,7 @@
 					 (js-tonumber ,(j2s-unresolved id cache loc)
 					    %this )
 					 %this)))
-			     ,(j2s-unresolved-put! '%scope `',id tmp #t mode)
+			     ,(j2s-unresolved-put! `',id tmp #t mode)
 			     ,tmp)))))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
@@ -1526,7 +1573,7 @@
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
-		   (j2s-unresolved-put! '%scope `',id name #f mode))))
+		   (j2s-unresolved-put! `',id name #f mode))))
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
@@ -1809,7 +1856,7 @@
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
-		   (j2s-unresolved-put! '%scope `',id
+		   (j2s-unresolved-put! `',id
 		      (j2s-scheme rhs mode return conf) #f mode))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
@@ -1870,7 +1917,7 @@
 		mode return conf))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
-		(j2s-unresolved-put! '%scope `',id
+		(j2s-unresolved-put! `',id
 		   (js-binop loc op
 		      (j2s-scheme lhs mode return conf)
 		      (j2s-scheme rhs mode return conf))

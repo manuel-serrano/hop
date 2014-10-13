@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Oct  2 08:29:58 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:51:16 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -208,6 +208,12 @@
 	     (lambda (x) (js-call1 %this success %this x))
 	     (lambda (x) x))
 	 fail
+	 :parse-json (lambda (obj)
+			(javascript->obj obj
+			   :vector->jsarray
+			   (lambda (l) (js-alist->jsobject l %this))
+			   :plist->jsobject
+			   (lambda (v) (js-vector->jsarray v %this))))
 	 :host host :port port 
 	 :user user :password password :authorization authorization)))
 

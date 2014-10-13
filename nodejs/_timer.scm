@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Fri Oct  3 17:09:21 2014 (serrano)                */
+;*    Last change :  Sun Oct 12 09:37:37 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -72,15 +72,13 @@
 	    :set (js-make-function %this
 		    (lambda (this p)
 		       (with-access::JsTimer this (timer proc worker)
-			  (unless (isa? p JsFunction)
-			     (js-raise-type-error %this
-				"ontimeout: not a function ~s" p))
 			  (set! proc p)
 			  (nodejs-timer-callback-set! timer
 			     (lambda (timer status)
 				(js-worker-push-thunk! worker
 				   (lambda ()
-				      (js-call0 %this p obj)))))))
+				      (when (isa? proc JsFunction)
+					 (js-call0 %this proc obj))))))))
 		    2 "ontimeout"))
 	 ;; returns the newly allocated object
 	 obj)))

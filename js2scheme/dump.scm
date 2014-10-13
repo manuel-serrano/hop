@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Jul 22 09:08:17 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:27:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -213,6 +213,15 @@
       `(,@(call-next-method) ,(j2s->list test)
 	  ,(j2s->list then)
 	  ,(j2s->list else) )))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SComprehension ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SComprehension)
+   (with-access::J2SComprehension this (decl test expr iterable)
+      `(,@(call-next-method) ,(j2s->list expr)
+	  (,(j2s->list decl) of ,(j2s->list iterable))
+	  (if ,(j2s->list test)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWhile ...                                         */

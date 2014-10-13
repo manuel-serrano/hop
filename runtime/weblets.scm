@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Jun 23 13:25:16 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:41:35 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -167,7 +167,8 @@
 	  (let ((pkg (make-file-path wdir "package.json")))
 	     (if (file-exists? pkg)
 		 `((info "package.json")
-		   ,@(normalize-json (call-with-input-file pkg javascript-parser)))
+		   ,@(normalize-json
+			(call-with-input-file pkg javascript->obj)))
 		 '())))))
 
 ;*---------------------------------------------------------------------*/

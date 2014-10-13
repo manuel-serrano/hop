@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Oct  1 07:09:02 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 15:28:52 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -80,6 +80,7 @@
    '("implements"
      "interface"
      "let"
+     "of"
      "package"
      "private"
      "protected"
@@ -117,8 +118,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    token ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-macro (token  type value offset)
+(define-macro (token type value offset)
    `(make-token ,type ,value (the-coord (the-port) ,offset)))
+
+;*---------------------------------------------------------------------*/
+;*    token-string ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (token-string value offset)
+   `(let ((s ,value))
+       (if (utf8-string? s)
+	   (make-token 'STRING s (the-coord (the-port) ,offset))
+	   (make-token 'BAD (cons "wrong UTF8 string" s) (the-coord (the-port) ,offset)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-grammar ...                                                  */
@@ -270,9 +280,9 @@
 
       ;; strings
       ((: #\" (* string_char_quote) #\")
-       (token 'STRING (the-substring 1 (-fx (the-length) 1)) (the-length)))
+       (token-string (the-substring 1 (-fx (the-length) 1)) (the-length)))
       ((: #\' (* string_char_dquote) #\')
-       (token 'STRING (the-substring 1 (-fx (the-length) 1)) (the-length)))
+       (token-string (the-substring 1 (-fx (the-length) 1)) (the-length)))
       ((: #\" (* (or string_char_quote (: #\\ all) line_cont)) #\")
        (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
       ((: #\' (* (or string_char_dquote (: #\\ all) line_cont)) #\')

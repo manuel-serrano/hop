@@ -258,8 +258,9 @@ function onwrite(stream, er) {
     // Check if we're actually ready to finish, but don't emit yet
     var finished = needFinish(stream, state);
 
-    if (!finished && !state.bufferProcessing && state.buffer.length)
+    if (!finished && !state.bufferProcessing && state.buffer.length) {
       clearBuffer(stream, state);
+    }
 
     if (sync) {
       process.nextTick(function() {

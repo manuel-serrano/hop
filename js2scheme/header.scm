@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Sep 28 19:23:12 2014 (serrano)                */
+;*    Last change :  Sat Oct 11 12:51:42 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -50,12 +50,12 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript-header mode id path loc)
    
-   (define (js-def-extern js bind expr)
+   (define (js-def-extern js bind writable expr)
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
 	 (name (j2s-scheme-id js))
-	 (writable #f)
+	 (writable writable)
 	 (global '%scope)
 	 (bind bind)
 	 (val (instantiate::J2SPragma
@@ -63,33 +63,33 @@
 		 (expr expr)))))
 
    (list
-      (js-def-extern 'module #t '%module)
-      (js-def-extern 'exports #t '(js-get %module 'exports %scope))
-      (js-def-extern 'require #t '(nodejs-require %this %module))
-      (js-def-extern 'Worker #t '(nodejs-worker %this %scope %module))
-      (js-def-extern 'global #t '%this)
-      (js-def-extern 'GLOBAL #t '%this)
-      (js-def-extern '__filename #t '(js-get %module 'filename %scope))
-      (js-def-extern '__dirname #t '(dirname (js-get %module 'filename %scope)))
-      (js-def-extern '%__GLOBAL #f
+      (js-def-extern 'module #t #t '%module)
+      (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
+      (js-def-extern 'require #t #f '(nodejs-require %this %module))
+      (js-def-extern 'Worker #t #f '(nodejs-worker %this %scope %module))
+      (js-def-extern 'global #t #f '%this)
+      (js-def-extern 'GLOBAL #t #f '%this)
+      (js-def-extern '__filename #t #f '(js-get %module 'filename %scope))
+      (js-def-extern '__dirname #t #f '(dirname (js-get %module 'filename %scope)))
+      (js-def-extern '%__GLOBAL #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(js-put! GLOBAL 'global GLOBAL #f %this))
-      (js-def-extern 'process #t '(nodejs-process %worker %this))
+      (js-def-extern 'process #t #f '(nodejs-process %worker %this))
       (if (string=? id "console.js")
 	  (instantiate::J2SUndefined
 	     (loc loc))
-	  (js-def-extern 'console #t
+	  (js-def-extern 'console #t #f
 	     '(nodejs-require-core "console" %worker %this)))
-      (js-def-extern '%__INIT #f
+      (js-def-extern '%__INIT #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(begin
-	   (nodejs-eval %this %scope)
-	   (nodejs-function %this %scope)
+	   (nodejs-eval %this GLOBAL)
+	   (nodejs-function %this GLOBAL)
 	   ,(unless (string=? id "buffer.js")
-	       `(nodejs-import! %this %scope
+	       `(nodejs-import! %this GLOBAL
 		   (nodejs-require-core "buffer" %worker %this) 'Buffer))
 	   ,(unless (string=? id "timers.js")
-	       `(nodejs-import! %this %scope
+	       `(nodejs-import! %this GLOBAL
 		   (nodejs-require-core "timers" %worker %this)))))
       (instantiate::J2SUndefined
 	 (loc loc))))

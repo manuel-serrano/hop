@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Oct  2 15:41:20 2014 (serrano)                */
+;*    Last change :  Sun Oct 12 08:51:06 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -260,7 +260,5 @@
 	(write . ,(js-make-function %this write 5 "write"))
 	
 	(open . ,(js-make-function %this open 4 "open"))
-	(read . ,(js-make-function %this read 6 "read"))
-	
-	)
+	(read . ,(js-make-function %this read 6 "read")))
       %this))

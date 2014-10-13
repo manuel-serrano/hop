@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jul 28 17:19:06 2014 (serrano)                */
+;*    Last change :  Sat Oct 11 10:43:31 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -144,6 +144,8 @@
 	    (("--js-show-driver" (help "Set j2s compiler driver"))
 	     (print (js-driver->string))
 	     (exit 0))
+	    (("--no-server" (help "Hop compatibility, ignored"))
+	     #unspecified)
 	    (else
 	     (if (string=? else "--")
 		 (begin

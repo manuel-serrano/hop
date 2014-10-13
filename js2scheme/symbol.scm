@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Oct  1 09:50:35 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 18:27:46 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -164,6 +164,10 @@
 	       (when (find-decl id (cdr args))
 		  (set! id (gensym 'arg)))
 	       (loop (cdr args))))))
+
+   (define (not-in? d::J2SDecl params::pair-nil)
+      (with-access::J2SDecl d (id)
+	 (not (find-decl id params))))
    
    (with-access::J2SFun this (body params loc (fmode mode) params decl)
       (let ((id (j2sfun-id this)))
@@ -178,7 +182,7 @@
 		   (check-strict-mode-eval id "Function name" loc)))
 	     (nonstrict-params! params))
 
-	 (let* ((decls (collect* body))
+	 (let* ((decls (filter (lambda (d) (not-in? d params)) (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
 			      (loc loc)))
@@ -516,7 +520,18 @@
 		(fname (cadr loc))
 		(location (caddr loc))))
 	  (call-default-walker))))
-		
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SComprehension ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (resolve! this::J2SComprehension env mode withs wenvs)
+   (with-access::J2SComprehension this (test expr iterable decl)
+      (set! iterable (resolve! iterable env mode withs wenvs))
+      (let ((nenv (cons decl env)))
+	 (set! test (resolve! test nenv mode withs wenvs))
+	 (set! expr (resolve! expr nenv mode withs wenvs))
+	 this)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    collect ::J2SNode ...                                            */
 ;*    -------------------------------------------------------------    */
@@ -611,3 +626,4 @@
 		  (obj ref)
 		  (field index)))
 	    this))))
+

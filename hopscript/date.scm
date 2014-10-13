@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct  6 13:25:57 2014 (serrano)                */
+;*    Last change :  Mon Oct 13 17:48:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -40,7 +40,7 @@
 	    (obj->javascript-expr o op))))
    (lambda (s)
       (call-with-input-string s
-	 javascript->obj)))
+	 javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDate ...                                     */
@@ -268,7 +268,6 @@
 	     (match-lambda
 		((?- ?day ?month ?year ?hour ?minute)
 		 (make-date
-		    :timezone 0
 		    :year (string->integer year)
 		    :month (string->integer month)
 		    :day (string->integer day)
@@ -278,14 +277,12 @@
 		 (current-seconds))))
 	    ((pregexp-match "^[0-9]{4}$" v)
 	     (make-date
-		:timezone 0
 		:year (string->integer v)))
 	    ((pregexp-match "^([0-9]{4}):([0-9]{2})$" v)
 	     =>
 	     (match-lambda
 		((?- ?yyyy ?mm)
 		 (make-date
-		    :timezone 0
 		    :year (string->integer yyyy)
 		    :min (string->integer mm)))))
 	    ((pregexp-match "^([0-9]{4})-([0-9]{2})$" v)
@@ -293,7 +290,6 @@
 	     (match-lambda
 		((?- ?yyyy ?mm)
 		 (make-date
-		    :timezone 0
 		    :year (string->integer yyyy)
 		    :month (string->integer mm)))))
 	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2})$" v)
@@ -301,10 +297,19 @@
 	     (match-lambda
 		((?- ?yyyy ?mm ?dd)
 		 (make-date
-		    :timezone 0
 		    :year (string->integer yyyy)
 		    :month (string->integer mm)
 		    :day (string->integer dd)))))
+	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2})$" v)
+	     =>
+	     (match-lambda
+		((?- ?yyyy ?mm ?dd ?hh ?min)
+		 (make-date
+		    :year (string->integer yyyy)
+		    :month (string->integer mm)
+		    :day (string->integer dd)
+		    :hour (string->integer hh)
+		    :min (string->integer min)))))
 	    ((pregexp-match "^T([0-9]{2})$" v)
 	     =>
 	     (match-lambda
@@ -549,7 +554,7 @@
       
       (define (date->milliseconds date::date)
 	 (let ((nsec (date->nanoseconds date)))
-	    (llong->fixnum (/llong nsec #l1000000))))
+	    (llong->flonum (/llong nsec #l1000000))))
       
       (with-access::JsDate this (val)
 	 (if (date? val)
