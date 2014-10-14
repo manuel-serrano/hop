@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Sep 29 16:23:37 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 05:58:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -319,6 +319,38 @@
 		  (cons ") : ("
 		     (append (j2s-js else tildec dollarc mode evalp conf)
 			'("))")))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SComprehension ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SComprehension tildec dollarc mode evalp conf)
+   (with-access::J2SComprehension this (decl test expr iterable ast)
+      
+      (define (comprehension name fun cond)
+	 (cons* this "hop_comprehension" "("
+	    (append (j2s-js iterable tildec dollarc mode evalp conf)
+	       `(", " ,fun ", " ,cond ", " ,name
+		   ,(format "~s" (call-with-output-string
+				    (lambda (op) (ast->json test op))))))))
+      
+      (with-access::J2SDecl decl (id)
+	 (let ((name (symbol->string id)))
+	    (if (not (isa? test J2SBool))
+		(comprehension name
+		   (list "function" "(" name ")" "{"
+		      (append (j2s-js expr tildec dollarc mode evalp conf)
+			 (list "}")))
+		   (list "function" "(" name ")" "{"
+		      (append (j2s-js test tildec dollarc mode evalp conf)
+			 (cons* "}"))))
+		(with-access::J2SBool test (val)
+		   (if (eq? val #t)
+		       (comprehension name
+			  (list "function" "(" name ")" "{"
+			     (append (j2s-js expr tildec dollarc mode evalp conf)
+				(list "}")))
+			  "true")
+		       (list "[]"))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLiteralValue ...                                     */
@@ -342,7 +374,7 @@
       (list this (string-append "\"" (string-for-read val) "\""))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SArray ...                                           */
+;*    j2s-js ::J2SArray ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SArray tildec dollarc mode evalp conf)
    (with-access::J2SArray this (exprs)

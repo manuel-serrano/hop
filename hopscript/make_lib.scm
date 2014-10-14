@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Mon Oct 13 18:08:54 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 08:24:43 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -34,8 +34,7 @@
 	   __hopscript_error
 	   __hopscript_json
 	   __hopscript_worker
-	   __hopscript_websocket
-	   __hopscript_comprehension)
+	   __hopscript_websocket)
    
    (eval   (export-all)
 

@@ -1,24 +1,3 @@
-# process not implemented yet
-simple/test-abr
-
-# server not implemented yet
-simple/net-socket-readystate.js 
-simple/test-domain-multi.js
-simple/test-http-set-timeout-server.js
-simple/test-http-set-timeout.js
-simple/test-http-exceptions.js
-simple/test-net-eaddrinuse.js
-simple/test-net-server-bind.js
-simple/test-net-server-listen-remove-callback.js
-simple/test-net-server-max-connections.js
-simple/test-net-server-try-ports.js
-simple/test-net-server-unref.js
-simple/test-http-exit-delay.js
-simple/test-next-tick-starvation.js
-simple/test-http-abort-before-end.js
-simple/test-pipe.js
-simple/test-tls-server-large-request.js
-
 # currently no repl
 simple/test-repl-.save.load.js
 simple/test-repl-autolibs.js

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct 13 18:06:33 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 08:24:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_array
-
+   
    (library hop)
    
    (include "../nodejs/nodejs_debug.sch")
@@ -27,10 +27,12 @@
 	   __hopscript_public
 	   __hopscript_number
 	   __hopscript_worker)
-
+   
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
-	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)))
+	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
+	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
+	      ::obj ::symbol ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
@@ -1254,6 +1256,26 @@
    (js-bind! %this js-array-prototype 'reduceRight
       :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
 		:prototype (js-undefined))
+      :enumerable #f)
+
+   ;; arrayComprehension
+   ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions
+   (define (array-prototype-comprehension this::obj fun test _name _ast)
+      (if (eq? test #t)
+	  ;; a mere map
+	  (with-access::JsGlobalObject %this (js-array-prototype)
+	     (let ((jsmap (js-get js-array-prototype 'map %this)))
+		(js-call1 %this jsmap this fun)))
+	  ;; a map filter
+	  (with-access::JsGlobalObject %this (js-array-prototype)
+	     (let ((jsmap (js-get js-array-prototype 'map %this))
+		   (jsfilter (js-get js-array-prototype 'filter %this)))
+		(let ((i (js-call1 %this jsfilter this test)))
+		   (js-call1 %this jsmap i fun))))))
+
+   (js-bind! %this js-array-prototype 'comprehension
+      :value (js-make-function %this array-prototype-comprehension 4 'comprehension
+		:prototype (js-undefined))
       :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
@@ -1863,3 +1885,16 @@
    (with-access::JsArray o (vec)
       (minfx (vector-length vec)
 	 (uint32->fixnum (js-touint32 (js-get o 'length %this) %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-comprehension ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-comprehension %this iterable fun test _name _ast)
+   (let ((jscomp (js-get iterable 'comprehension %this)))
+      (js-call4 %this jscomp iterable
+	 (js-make-function %this fun 1 "comprehension-expr")
+	 (if (eq? test #t)
+	     #t
+	     (js-make-function %this test 1 "comprehension-test"))
+	 _name _ast)))
+	

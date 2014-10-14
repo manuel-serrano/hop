@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Jul 16 07:39:17 2014 (serrano)                */
+/*    Last change :  Tue Oct 14 05:42:34 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -947,4 +947,15 @@ var hop_id_count = 0;
 /*** META ((export xml-make-id) (arity #t)) */
 function hop_xml_make_id( obj ) {
    return (obj instanceof String ? obj : "id") + hop_id_count++;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_comprehension ...                                            */
+/*---------------------------------------------------------------------*/
+function hop_comprehension( iterable, fun, test, _name, _ast ) {
+   if( test === true ) {
+      return iterable.map( fun );
+   } else {
+      return iterable.filter( test ).map( fun );
+   }
 }

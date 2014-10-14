@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 13 18:06:59 2014                          */
-;*    Last change :  Mon Oct 13 18:15:04 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 08:21:42 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    EcmaScript7 comprehensions                                       */
@@ -28,25 +28,18 @@
 	   __hopscript_number
 	   __hopscript_worker)
 
-   (export (js-comprehension ::JsGlobalObject ::obj ::JsFunction
+   (export (js-comprehension ::JsGlobalObject ::obj ::procedure
 	      ::obj ::symbol ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-comprehension ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-comprehension %this iterable fun test _name _ast)
-   (if (eq? test #t)
-       ;; a mere map
-       (with-access::JsGlobalObject %this (js-array-prototype)
-	  (let ((jsmap (js-get js-array-prototype 'map %this)))
-	     (js-call1 %this jsmap iterable fun)))
-       ;; a map filter
-       (with-access::JsGlobalObject %this (js-array-prototype)
-	  (let ((jsmap (js-get js-array-prototype 'map %this))
-		(jsfilter (js-get js-array-prototype 'filter %this)))
-	     (let ((i (js-call1 %this jsfilter iterable test)))
-		(js-call1 %this jsmap i fun))))))
-
-   
-
+   (let ((jscomp (js-get iterable 'comprehension %this)))
+      (js-call4 %this jscomp iterable
+	 (js-make-function %this fun 1 "comprehension-expr")
+	 (if (eq? test #t)
+	     #t
+	     (js-make-function %this test 1 "comprehension-test"))
+	 _name _ast)))
 	

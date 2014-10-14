@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Oct 13 18:29:21 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 08:22:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -530,21 +530,18 @@
 	  (with-access::J2SDecl decl (id name)
 	     (let* ((n (j2s-name name id))
 		    (iter (j2s-scheme iterable mode return conf))
-		    (fun `(js-make-function %this
-			     (lambda (this ,n)
-				,(j2s-scheme expr mode return conf))
-			     1 'comprehension-expr))
-		    (ast (call-with-output-string (lambda (op) (ast->json test op)))))
+		    (fun `(lambda (this ,n)
+			     ,(j2s-scheme expr mode return conf)))
+		    (ast (call-with-output-string
+			    (lambda (op) (ast->json test op)))))c
 		(epairify loc
 		   (if (not (isa? test J2SBool))
-		       (let ((test `(js-make-function %this
-				       (lambda (this ,n)
-					  ,(j2s-scheme test mode return conf))
-				       1 'comprehension-test)))
-			  `(js-comprehension %this ,iter ,fun ,test ',n ,ast))
+		       (let ((test `(lambda (this ,n)
+				       ,(j2s-scheme test mode return conf))))
+			  `(js-array-comprehension %this ,iter ,fun ,test ',n ,ast))
 		       (with-access::J2SBool test (val)
 			  (if val
-			      `(js-comprehension %this ,iter ,fun #t ',n ,ast)
+			      `(js-array-comprehension %this ,iter ,fun #t ',n ,ast)
 			      `(js-vector->jsarray '#() %this))))))))))
 
 ;*---------------------------------------------------------------------*/
