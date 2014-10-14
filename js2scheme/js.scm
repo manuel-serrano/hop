@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Oct 14 05:58:39 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 09:25:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -329,28 +329,30 @@
       (define (comprehension name fun cond)
 	 (cons* this "hop_comprehension" "("
 	    (append (j2s-js iterable tildec dollarc mode evalp conf)
-	       `(", " ,fun ", " ,cond ", " ,name
+	       `(", " ,@fun ", " ,@cond ", " ,(format "~s" name) ", "
 		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json test op))))))))
+				    (lambda (op) (ast->json test op)))))
+	       '(")"))))
       
       (with-access::J2SDecl decl (id)
 	 (let ((name (symbol->string id)))
 	    (if (not (isa? test J2SBool))
 		(comprehension name
-		   (list "function" "(" name ")" "{"
+		   (cons* "function" "(" name ")" "{" " return "
 		      (append (j2s-js expr tildec dollarc mode evalp conf)
-			 (list "}")))
-		   (list "function" "(" name ")" "{"
+			 '("}")))
+		   (cons* "function" "(" name ")" "{" " return "
 		      (append (j2s-js test tildec dollarc mode evalp conf)
-			 (cons* "}"))))
+			 '("}"))))
 		(with-access::J2SBool test (val)
 		   (if (eq? val #t)
 		       (comprehension name
-			  (list "function" "(" name ")" "{"
-			     (append (j2s-js expr tildec dollarc mode evalp conf)
-				(list "}")))
-			  "true")
-		       (list "[]"))))))))
+			  (cons* "function" "(" name ")" "{" " return "
+			     (append
+				(j2s-js expr tildec dollarc mode evalp conf)
+				'("}")))
+			  '("true"))
+		       '("[]"))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLiteralValue ...                                     */

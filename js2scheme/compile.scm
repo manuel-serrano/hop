@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Oct  1 09:10:40 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 09:48:51 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -154,6 +154,7 @@
 (define (j2s-eval-driver)
    (list
       j2s-syntax-stage
+      j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 25 08:36:20 2014                          */
-/*    Last change :  Thu Jul 10 12:42:24 2014 (serrano)                */
+/*    Last change :  Tue Oct 14 10:36:51 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    This shows how to implement a JavaScript HTTP plugin to the      */

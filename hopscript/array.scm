@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 14 08:24:23 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 10:38:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -679,7 +679,6 @@
 	       res)))
       
       (define (array-splice arr len actualstart actualdeletecount)
-	 (tprint "asplice")
 	 (let* ((els (array-get-elements arr actualstart
 			(+ actualstart actualdeletecount) %this))
 		(res (js-vector->jsarray (list->vector els) %this))

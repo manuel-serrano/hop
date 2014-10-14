@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Fri Oct  3 16:18:40 2014 (serrano)                */
+/*    Last change :  Tue Oct 14 10:13:29 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    TREE widget example                                              */
@@ -27,7 +27,7 @@ function dirToTree( dir ) {
 	 base( dir )
       },
       <TR.TRBODY> {
-	 service() {
+	 service () {
 	    return fs.readdirSync( dir ).map(
 	       function( p ) {
 		  var fp = path.join( dir, p );
@@ -44,8 +44,8 @@ function dirToTree( dir ) {
       } </TR.TRBODY>
    } </TR.TREE>
 }
-	    
-			
+
+
 service tree( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
    return <HTML> {
       <HEAD> {
@@ -59,3 +59,4 @@ service tree( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
 }
 
 console.log( "Go to \"http://%s:%d/hop/tree\"", hop.hostname, hop.port );
+ 

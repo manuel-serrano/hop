@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct 14 08:22:41 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 10:11:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -29,9 +29,10 @@
 	   (j2s-scheme-unjson)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-unresolved-put-workspace ...                                 */
+;*    j2s-unresolved-workspaces ...                                    */
 ;*---------------------------------------------------------------------*/
 (define j2s-unresolved-put-workspace 'global)
+(define j2s-unresolved-get-workspace '%scope)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -288,7 +289,7 @@
 		(let ((fun-name (string->symbol
 				   (format "function:~a:~a"
 				      (cadr loc) (caddr loc)))))
-		   (if (in-eval? return)
+		   (if (and #f (in-eval? return))
 		       (j2s-unresolved-put! `',ident value #f 'normal)
 		       `(begin
 			   (define ,ident ,value)
@@ -538,10 +539,12 @@
 		   (if (not (isa? test J2SBool))
 		       (let ((test `(lambda (this ,n)
 				       ,(j2s-scheme test mode return conf))))
-			  `(js-array-comprehension %this ,iter ,fun ,test ',n ,ast))
+			  `(js-array-comprehension %this ,iter ,fun ,test
+			      ',n ,ast))
 		       (with-access::J2SBool test (val)
 			  (if val
-			      `(js-array-comprehension %this ,iter ,fun #t ',n ,ast)
+			      `(js-array-comprehension %this ,iter ,fun #t
+				  ',n ,ast)
 			      `(js-vector->jsarray '#() %this))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -555,11 +558,11 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved name cache throw)
    (if cache
-       `(js-get-global-object-name/cache ,j2s-unresolved-put-workspace ',name
+       `(js-get-global-object-name/cache ,j2s-unresolved-get-workspace ',name
 	   ,(pcache cache)
 	   ,(if (pair? throw) `',throw throw)
 	   %this)
-       `(js-get-global-object-name ,j2s-unresolved-put-workspace ',name
+       `(js-get-global-object-name ,j2s-unresolved-get-workspace ',name
 	   ,(if (pair? throw) `',throw throw)
 	   %this)))
 

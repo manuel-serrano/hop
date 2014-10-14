@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct 13 18:36:40 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 10:13:07 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -753,7 +753,7 @@
 	     (instantiate::J2SSvc
 		(loc (token-loc token))
 		(params params)
-		(name (cdr id))
+		(name (gensym))
 		(init init)
 		(body body))))))
 
@@ -1360,10 +1360,12 @@
 			  (len (+fx length 1))))
 		      ((for)
 		       (let* ((tok (consume-any!))
-			      (expr (instantiate::J2SSequence
-				       (loc (token-loc tok))
-				       (exprs (reverse!
-						 (cons array-el rev-els))))))
+			      (expr (if (null? rev-els)
+					array-el
+					(instantiate::J2SSequence
+					   (loc (token-loc tok))
+					   (exprs (reverse!
+						     (cons array-el rev-els)))))))
 			  (comprehension-literal (token-loc token) expr)))
 		      (else
 		       (parse-token-error "unexpected token"
@@ -1413,8 +1415,8 @@
 			    (id (cdr id))
 			    (loc (token-loc id))))
 		   (test (instantiate::J2SBool
-					(val #t)
-					(loc (token-loc id))))
+			    (val #t)
+			    (loc (token-loc id))))
 		   (expr expr)
 		   (iterable iterable)))))))
    

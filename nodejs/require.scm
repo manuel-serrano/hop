@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 13 15:00:42 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 09:03:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -252,6 +252,7 @@
 (define (nodejs-new-scope-object global::JsGlobalObject)
    (let ((scope (duplicate::JsGlobalObject global
 		   (cmap (instantiate::JsConstructMap))
+		   (__proto__ global)
 		   (properties '())
 		   (elements '#()))))
       (nodejs-import! global scope global)

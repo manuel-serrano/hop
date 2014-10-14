@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 13 17:49:06 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 09:01:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -731,7 +731,7 @@
       ;; only used with the global object, see nodejs/require.scm
       (js-bind! %this obj 'HEAD
 	 :value (js-html-head %this) :enumerable #f)
-		   
+
       ;; html_head
       (js-bind-tags! %this obj
 	 LINK SCRIPT STYLE)
