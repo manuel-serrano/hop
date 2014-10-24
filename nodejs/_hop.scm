@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Oct 13 17:51:16 2014 (serrano)                */
+;*    Last change :  Wed Oct 22 10:29:34 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -300,7 +300,7 @@
    
    (define (async-proc req)
       (lambda (k)
-	 (js-worker-exec %worker
+	 (js-worker-exec %worker "hopjs-response-async"
 	    (lambda ()
 	       (with-handler
 		  (lambda (e)

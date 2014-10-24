@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Oct 13 18:44:08 2014 (serrano)                */
+;*    Last change :  Wed Oct 15 08:36:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -783,7 +783,7 @@
    (json-parse ip
       :expr #t
       :reviver (lambda (obj key v)
-		   (if (and (string? v) (string=? key "loc"))
+		   (if (and (string? v) (member key '("loc" "endloc")))
 		       (let ((i (string-index-right v #\:)))
 			  (if i
 			      `(at ,(substring v 0 i)
@@ -839,9 +839,10 @@
 ;*    json-resolve! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (json-resolve! ast)
-   (let ((vec (make-vector 16)))
-      (json-mark-decl! ast (make-cell vec))
-      (json-link-decl! ast vec)))
+   (let* ((vec (make-vector 16))
+	  (env (make-cell vec)))
+      (json-mark-decl! ast env)
+      (json-link-decl! ast (cell-ref env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json-mark-decl! ::J2SNode ...                                    */
@@ -855,10 +856,8 @@
 (define-walk-method (json-mark-decl! node::J2SDecl env)
    (with-access::J2SDecl node (key)
       (let ((len (vector-length (cell-ref env))))
-	 (when (>fx key len)
-	    (let ((nvec (make-vector (+fx key 16))))
-	       (vector-copy! nvec 0 (cell-ref env) 0 len)
-	       (cell-set! env nvec)))
+	 (when (>=fx key len)
+	    (cell-set! env (copy-vector (cell-ref env) (+fx key 16))))
 	 (vector-set! (cell-ref env) key node)))
    (call-default-walker))
 

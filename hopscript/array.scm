@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 14 10:38:47 2014 (serrano)                */
+;*    Last change :  Tue Oct 21 09:26:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -31,6 +31,7 @@
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
+	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
 	      ::obj ::symbol ::bstring)))
 
@@ -100,15 +101,34 @@
 	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
       (if (=u32 len (fixnum->uint32 0))
 	  '()
-	  (let loop ((i (fixnum->uint32 0)))
+	  (let loop ((i #u32:0))
 	     (cond
 		((=u32 i len)
 		 '())
 		((js-has-property o (js-toname i %this) %this)
-		 (cons (cons (js-get o i %this) (+u32 i (fixnum->uint32 1)))
-		    (loop (+u32 i (fixnum->uint32 1)))))
+		 (cons (cons (js-get o i %this) i) (loop (+u32 i #u32:1))))
 		(else
-		 (loop (+u32 i (fixnum->uint32 1)))))))))
+		 (loop (+u32 i #u32:1))))))))
+
+;*---------------------------------------------------------------------*/
+;*    jsarray->vector ...                                              */
+;*---------------------------------------------------------------------*/
+(define (jsarray->vector o::JsArray %this)
+   (let* ((%this (js-initial-global-object))
+	  (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
+      (if (=u32 len (fixnum->uint32 0))
+	  '#()
+	  (let ((res (make-vector (uint32->fixnum len) #unspecified)))
+	     (let loop ((i #u32:0))
+		(cond
+		   ((=u32 i len)
+		    res)
+		   ((js-has-property o (js-toname i %this) %this)
+		    (vector-set! res (uint32->fixnum i) (js-get o i %this))
+		    (loop (+u32 i #u32:1)))
+		   (else
+		    (loop (+u32 i #u32:1)))))))))
+   
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray-fields ...                                               */

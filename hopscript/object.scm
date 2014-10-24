@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct 14 09:01:10 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 13:20:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -882,7 +882,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
-   (tprint "TODO, why js-seal need unmap?")
+   (when (>fx (bigloo-debug) 0)
+      (tprint "TODO, why js-seal need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
       ;; 2
@@ -902,7 +903,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
-   (tprint "TODO, why js-freeze need unmap?")
+   (when (>fx (bigloo-debug) 0)
+      (tprint "TODO, why js-freeze need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
       (for-each js-freeze-property! properties)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Oct 14 09:03:13 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 16:23:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -26,6 +26,7 @@
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj)
+	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
 	   (nodejs-new-scope-object ::JsGlobalObject)
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
@@ -144,7 +145,7 @@
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require this::JsGlobalObject %module::JsObject)
-   
+
    ;; require
    (define require
       (js-make-function this
@@ -185,7 +186,7 @@
 			 (js-bind! %this this (string->symbol name) :get fun))
 		      2 "__defineGetter__")
 	    :enumerable #f
-	    :writable #f
+	    :writable #t
 	    :configurable #f)
 	 ;; Dtrace profiling
 	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_REQUEST
@@ -243,6 +244,30 @@
 		      0 "DTRACE_NET_STREAM_END")
 	    :enumerable #f
 	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_NET_SERVER_CONNECTION
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "DTRACE_NET_SERVER_CONNECTION")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_NET_SERVER_CONNECTION")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION_CLOSE
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
+	    :enumerable #f
+	    :writable #f
 	    :configurable #f)))
    %this)
 
@@ -275,20 +300,42 @@
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile filename)
+
+   (define (compile-file filename mod)
+      (with-trace 'require "compile-file"
+	 (trace-item "filename=" filename)
+	 (call-with-input-file filename
+	    (lambda (in)
+	       (let ((m (open-mmap filename read: #t :write #f)))
+		  (unwind-protect
+		     (j2s-compile in
+			:driver (nodejs-driver)
+			:filename filename
+			:mmap-src m
+			:module-main #f
+			:module-name (symbol->string mod))
+		     (close-mmap m)))))))
+
+   (define (compile-url url mod)
+      (with-trace 'require "compile-url"
+	 (trace-item "url=" url)
+	 (call-with-input-file url
+	    (lambda (in)
+	       (j2s-compile in
+		  :driver (nodejs-driver)
+		  :filename filename
+		  :module-main #f
+		  :module-name (symbol->string mod))))))
+
+   (define (compile filename mod)
+      (if (file-exists? filename)
+	  (compile-file filename mod)
+	  (compile-url filename mod)))
+   
    (synchronize compile-mutex
       (or (hashtable-get compile-table filename)
 	  (let* ((mod (gensym))
-		 (expr (call-with-input-file filename
-			  (lambda (in)
-			     (let ((m (open-mmap filename read: #t :write #f)))
-				(unwind-protect
-				   (j2s-compile in
-				      :driver (nodejs-driver)
-				      :filename filename
-				      :mmap-src m
-				      :module-main #f
-				      :module-name (symbol->string mod))
-				   (close-mmap m))))))
+		 (expr (compile filename mod))
 		 (evmod (eval-module)))
 	     (unwind-protect
 		(begin
@@ -304,19 +351,20 @@
 (define (nodejs-load filename worker::WorkerHopThread)
    
    (define (load-module-js)
-      (with-access::WorkerHopThread worker (%this prehook)
-	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((hopscript (nodejs-compile filename))
-		  (this (js-new0 %this js-object))
-		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module (basename filename) filename %this)))
-	       ;; prehooking
-	       (when (procedure? prehook)
-		  (prehook %this this scope mod))
-	       ;; create the module
-	       (hopscript %this this scope mod)
-	       ;; return the newly created module
-	       mod))))
+      (with-trace 'require "require@load-module-js"
+	 (with-access::WorkerHopThread worker (%this prehook)
+	    (with-access::JsGlobalObject %this (js-object)
+	       (let ((hopscript (nodejs-compile filename))
+		     (this (js-new0 %this js-object))
+		     (scope (nodejs-new-scope-object %this))
+		     (mod (nodejs-module (basename filename) filename %this)))
+		  ;; prehooking
+		  (when (procedure? prehook)
+		     (prehook %this this scope mod))
+		  ;; create the module
+		  (hopscript %this this scope mod)
+		  ;; return the newly created module
+		  mod)))))
    
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this)
@@ -354,6 +402,9 @@
 	  (load-module-so))
 	 ((string-suffix? ".dylib" filename)
 	  (load-module-so))
+	 ((or (string-prefix? "http://" filename)
+	      (string-prefix? "https://" filename))
+	  (load-module-js))
 	 (else
 	  (js-raise-error (js-new-global-object)
 	     (format "Don't know how to load module ~s" filename)
@@ -374,7 +425,7 @@
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name worker %this %module)
+(define (nodejs-require-module name worker::WorkerHopThread %this %module)
 
    (define (load-json filename)
       (call-with-input-file filename
@@ -409,8 +460,8 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name worker %this)
-   
-   (define (nodejs-init-core name %this)
+
+   (define (nodejs-init-core name worker %this)
       (with-trace 'require "nodejs-init-core"
 	 (trace-item "name=" name)
 	 (with-access::JsGlobalObject %this (js-object)
@@ -425,9 +476,10 @@
 
    (with-trace 'require "nodejs-require-core"
       (trace-item "name=" name)
+      (trace-item "worker=" worker)
       (let ((mod (or (nodejs-cache-module name worker)
-		     (nodejs-init-core name %this))))
-      (js-get mod 'exports %this))))
+		     (nodejs-init-core name worker %this))))
+	 (js-get mod 'exports %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -439,15 +491,17 @@
 (define (nodejs-resolve name::bstring %this::JsGlobalObject %module)
    
    (define (resolve-file x)
-      (if (and (file-exists? x) (not (directory? x)))
-	  (file-name-canonicalize x)
+      (cond
+	 ((and (file-exists? x) (not (directory? x)))
+	  (file-name-canonicalize x))
+	 (else
 	  (let loop ((suffixes '(".js" ".hop" ".so" ".json")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (file-name-canonicalize src)
-		       (loop (cdr suffixes))))))))
+		       (loop (cdr suffixes)))))))))
    
    (define (resolve-package pkg)
       (call-with-input-file pkg
@@ -519,6 +573,8 @@
 	  (or (resolve-file-or-directory name "/")
 	      (resolve-modules mod name "/")
 	      (resolve-error name)))
+	 ((or (string-prefix? "http://" name) (string-prefix? "https://" name))
+	  name)
 	 (else
 	  (or (resolve-modules mod name (dirname dir))
 	      (resolve-error name))))))
@@ -527,6 +583,8 @@
 ;*    nodejs-env-path ...                                              */
 ;*---------------------------------------------------------------------*/
 (define nodejs-env-path
+   ;; this function should be improved to the content of
+   ;; hop-autoload-directories, which is defined in src/hop_param.scm
    (let* ((sys-path (make-file-path (hop-lib-directory)
 		       "hop" (hop-version) "node_modules"))
 	  (home-path (let ((home (getenv "HOME")))
@@ -537,8 +595,19 @@
 			    (list sys-path)))))
       (let ((env (getenv "NODE_PATH")))
 	 (if (string? env)
-	     (append (unix-path->list env) home-path)
+	     (append (unix-path->list env)
+		(hop-weblets-directory)
+		home-path)
 	     home-path))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-resolve-extend-path! ...                                  */
+;*    -------------------------------------------------------------    */
+;*    This function is used by hop to extend the require search        */
+;*    path                                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-resolve-extend-path! path)
+   (set! nodejs-env-path (append nodejs-env-path path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-cache-module ...                                          */

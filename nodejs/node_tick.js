@@ -128,7 +128,6 @@ function initNodeTick( process ) {
           callback = nextTickQueue[infoBox[index]++].callback;
           threw = true;
           try {
-//#:tprint( "*************** node.js tickback: ", callback );
             callback();
             threw = false;
           } finally {

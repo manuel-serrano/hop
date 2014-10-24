@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Sep 25 08:56:44 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 07:47:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -64,7 +64,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-json-parse %this::JsGlobalObject)
    (lambda (this text reviver)
-      (call-with-input-string text
+      (call-with-input-string (js-tostring text %this)
 	 (lambda (ip)
 	    (js-json-parser ip reviver #f %this)))))
 

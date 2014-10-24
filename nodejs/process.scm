@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Oct 12 09:12:33 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 11:29:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -24,13 +24,17 @@
    (import __nodejs__hop
 	   __nodejs__timer
 	   __nodejs__fs
+	   __nodejs__evals
 	   __nodejs__http
 	   __nodejs__crypto
 	   __nodejs__buffer
+	   __nodejs__process-wrap
+	   __nodejs__tcp-wrap
+	   __nodejs__pipe-wrap
 	   __nodejs_uv
 	   __nodejs_require)
 
-   (static (class JsProcess::JsObject
+   (export (class JsProcess::JsObject
 	      (tcp-proto (default #f))
 	      (fs-event-proto (default #f))
 	      (buffer-binding (default #f))
@@ -56,6 +60,12 @@
 	 (let* ((m (nodejs-require-core "node_stdio" %worker %this))
 		(stdio (js-get m 'initNodeStdio %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
+	 ;; process and exit
+	 (let* ((m (nodejs-require-core "node_proc" %worker %this))
+		(prockillexit (js-get m 'initProcessKillAndExit %this))
+		(procchannel (js-get m 'initProcessChannel %this)))
+	    (js-call1 %this prockillexit (js-undefined) %process)
+	    (js-call1 %this procchannel (js-undefined) %process))
 	 ;; events
 	 (with-access::JsObject %process (__proto__)
 	    (let* ((e (nodejs-require-core "events" %worker %this))
@@ -122,11 +132,23 @@
 	 (define slowbuffer
 	    (make-slowbuffer %this))
 
+	 (define slab
+	    (make-slab-allocator %this slowbuffer))
+
+	 (define (display-value o port)
+	    (if (isa? o JsTypedArray)
+		(with-access::JsTypedArray o (%data byteoffset length)
+		   (display (substring %data
+			       (uint32->fixnum byteoffset)
+			       (uint32->fixnum length))
+		      port))
+		(display o port)))
+
 	 (js-put! proc 'stdout
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
-				 (display o (current-output-port)))
+				 (display-value o (current-output-port)))
 			      1 "write"))
 		 (writable . #t)
 		 (_isStdio . #t)
@@ -137,7 +159,7 @@
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
-				 (display o (current-error-port)))
+				 (display-value o (current-error-port)))
 			      1 "write"))
 		 (writable . #t)
 		 (_isStdio . #t)
@@ -156,7 +178,11 @@
 	       %this)
 	    #f %this)
 	 (js-put! proc 'argv
-	    (js-vector->jsarray (list->vector (command-line)) %this)
+	    (let ((jsargs (member "--" (command-line))))
+	       (if jsargs
+		   (let ((cmdline (cons (car (command-line)) (cdr jsargs))))
+		      (js-vector->jsarray (list->vector cmdline) %this))
+		   (js-vector->jsarray (list->vector (command-line)) %this)))
 	    #f %this)
 	 (js-put! proc 'execPath (car (command-line)) #f %this)
 	 (js-put! proc 'execArgv
@@ -175,7 +201,9 @@
 	 (js-put! proc 'exit
 	    (js-make-function %this
 	       (lambda (this status)
-		  (let ((r (if (eq? status (js-undefined)) 0 status)))
+		  (let ((r (if (eq? status (js-undefined))
+			       0
+			       (js-tointeger status %this))))
 		     (with-access::JsProcess proc (exiting)
 			(unless exiting
 			   (set! exiting #t)
@@ -187,7 +215,7 @@
 	 (js-put! proc 'reallyExit
 	    (js-make-function %this
 	       (lambda (this status)
-		  (exit status))
+		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)
 	 (js-put! proc 'arch (os-arch) #f %this)
@@ -205,17 +233,17 @@
 		     ((string=? module "udp_wrap")
 		      (process-udp-wrap %this))
 		     ((string=? module "tcp_wrap")
-		      (process-tcp-wrap %worker %this proc slowbuffer))
+		      (process-tcp-wrap %worker %this proc slab slowbuffer))
 		     ((string=? module "pipe_wrap")
-		      (process-pipe-wrap %this))
+		      (process-pipe-wrap %worker %this proc slab))
 		     ((string=? module "evals")
-		      (process-evals %this))
+		      (process-evals %worker %this))
 		     ((string=? module "cares_wrap")
 		      (process-cares-wrap %worker %this proc))
 		     ((string=? module "timer_wrap")
-		      (hopjs-process-timer %this))
+		      (hopjs-process-timer %worker %this))
 		     ((string=? module "process_wrap")
-		      (process-process-wrap %this))
+		      (process-process-wrap %worker %this proc))
 		     ((string=? module "crypto")
 		      (process-crypto %this))
 		     ((string=? module "http_parser")
@@ -251,6 +279,33 @@
 		 (tls . #t))
 	       %this)
 	    #f %this)
+	 (let ((check #f)
+	       (idle #f))
+	    (js-bind! %this proc '_needImmediateCallback
+	       :get (js-make-function %this
+		       (lambda (this)
+			  (isa? check UvCheck))
+		       0 '_needImmediateCallback)
+	       :set (js-make-function %this
+		       (lambda (this val)
+			  (let ((v (js-totest val)))
+			     (cond
+				((and v (not (isa? check UvCheck)))
+				 (set! idle
+				    (nodejs-make-idle
+				       %worker %this
+				       (lambda (_) #t)))
+				 (set! check
+				    (nodejs-make-check
+				       %worker %this proc)))
+				((and (not v) (isa? check UvCheck))
+				 (nodejs-idle-stop %worker %this idle)
+				 (set! idle #f)
+				 (nodejs-check-stop %worker %this check)
+				 (set! check #f)))))
+		       1 '_needImmediateCallback)
+	       :configurable #f))
+	    
 	 (js-put! proc 'cwd
 	    (js-make-function %this
 	       (lambda (this) (pwd))
@@ -270,6 +325,16 @@
 	    (js-make-function %this
 	       (lambda (this val) (setuid (js-tointeger val %this)))
 	       1 "setuid")
+	    #f %this)
+	 (js-put! proc 'getgid
+	    (js-make-function %this
+	       (lambda (this) (getgid))
+	       0 "getgid")
+	    #f %this)
+	 (js-put! proc 'setgid
+	    (js-make-function %this
+	       (lambda (this val) (setgid (js-tointeger val %this)))
+	       1 "setgid")
 	    #f %this)
 	 (js-put! proc 'umask
 	    (js-make-function %this
@@ -316,16 +381,21 @@
 			 
 	       1 "hrtime")
 	    #t %this)
+
+	 ;; kill
+	 (js-put! proc '_kill
+	    (js-make-function %this
+	       (lambda (this pid sig)
+		  (nodejs-kill %worker %this proc pid sig))
+	       2 "_kill")
+	    #t %this)
 	 
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
-	      setgid
-	      getgid
 	      getgroups
 	      setgroups
 	      initgroups
-	      _kill
 	      _debugProcess
 	      _debugPause
 	      _debugEnd
@@ -359,7 +429,16 @@
 	(S_IFCHR . ,S_IFCHR)
 	(S_IFLNK . ,S_IFLNK)
 	(S_IFIFO . ,S_IFIFO)
-	(S_IFSOCK . ,S_IFSOCK))
+	(S_IFSOCK . ,S_IFSOCK)
+
+	(SIGINT . ,sigint)
+	(SIGKILL . ,sigkill)
+	(SIGFPE . ,sigfpe)
+	(SIGILL . ,sigill)
+	(SIGBUS . ,sigbus)
+	(SIGSEGV . ,sigsegv)
+	(SIGPIPE . ,sigpipe)
+	(SIGTERM . ,sigterm))
       %this))
 
 ;*---------------------------------------------------------------------*/
@@ -377,7 +456,8 @@
       (js-alist->jsobject
 	 (map (lambda (id)
 		 (cons id (not-implemented id)))
-	    `(bind
+	    `(UDP
+		bind
 		send
 		bind6
 		send6
@@ -393,340 +473,6 @@
 		setTTL
 		ref
 		unref))
-	 %this)))
-
-;*---------------------------------------------------------------------*/
-;*    stream-write-string ...                                          */
-;*---------------------------------------------------------------------*/
-(define (stream-write-string %worker %this this::JsHandle
-	   string::bstring offset::long len::long
-	   encoding callback)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((ipc #f))
-	 (if ipc
-	     (error "stream-write-string" "IPC Not implemented yet" this)
-	     (let ((req (js-new %this js-object)))
-		(js-put! req 'bytes len #f %this)
-		(with-access::JsHandle this (handle)
-		   (js-put! this 'writeQueueSize
-		      (nodejs-stream-write-queue-size handle) #f %this)
-		   (tprint ">>> nodejs-stream-write... len=" len)
-		   (nodejs-stream-write %worker %this handle
-		      string offset len
-		      (lambda (status)
-			 (tprint "<<< nodejs-stream-write CB len=" len
-			    " status=" status)
-			 (let ((oncomp (js-get req 'oncomplete %this)))
-			    (js-call3 %this oncomp req status this req)
-			    (js-put! this 'writeQueueSize
-			       (nodejs-stream-write-queue-size handle) #f %this)
-			    (js-undefined)))))
-		req)))))
-
-;*---------------------------------------------------------------------*/
-;*    ucs2-string->buffer ...                                          */
-;*---------------------------------------------------------------------*/
-(define (ucs2-string->buffer ucs2string)
-   (let* ((len (ucs2-string-length ucs2string))
-	  (buf (make-string (*fx len 2))))
-      (let loop ((i 0))
-	 (if (=fx i len)
-	     buf
-	     (let* ((u (ucs2-string-ref ucs2string i))
-		    (n (ucs2->integer u))
-		    (i2 (*fx i 2)))
-		(string-set! buf i2 (integer->char (bit-rsh n 8)))
-		(string-set! buf (+fx 1 i2) (integer->char (bit-and n #x255)))
-		(loop (+fx i 1)))))))
-		
-;*---------------------------------------------------------------------*/
-;*    process-tcp-wrap ...                                             */
-;*---------------------------------------------------------------------*/
-(define (process-tcp-wrap %worker %this process::JsProcess slowbuffer::JsObject)
-   
-   (define (->fixnum n)
-      (cond
-	 ((fixnum? n) n)
-	 ((flonum? n) (flonum->fixnum n))
-	 (else 0)))
-   
-   (define (connect family)
-      (with-access::JsGlobalObject %this (js-object)
-	 (lambda (this host port callback)
-	    (with-access::JsHandle this (handle)
-	       (let ((req (js-new %this js-object)))
-		  (nodejs-tcp-connect %worker %this handle host
-		     (->fixnum (js-tointeger port %this)) family
-		     (lambda (status handle)
-			(when (<fx status 0)
-			   (js-put! process '_errno
-			      (uv-err-name status) #f %this))
-			(let ((oncomp (js-get req 'oncomplete %this)))
-			   (js-call5 %this oncomp req status
-			      this req #t #t)
-			   (js-undefined))))
-		  req)))))
-
-   (define slab (make-slab-allocator %this slowbuffer))
-   
-   (define (create-tcp-proto)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (js-new %this js-object)))
-	    
-	    (js-put! obj 'close
-	       (js-make-function %this
-		  (lambda (this cb)
-		     (with-access::JsHandle this (handle)
-			(nodejs-close %worker %this handle cb)))
-		  1 "close")
-	       #f %this)
-	    
-	    (js-put! obj 'ref
-	       (js-make-function %this
-		  (lambda (this)
-		     (with-access::JsHandle this (handle)
-			(nodejs-ref handle)))
-		  0 "ref")
-	       #f %this)
-	    
-	    (js-put! obj 'unref
-	       (js-make-function %this
-		  (lambda (this)
-		     (with-access::JsHandle this (handle)
-			(nodejs-unref handle)))
-		  0 "unref")
-	       #f %this)
-	    
-	    (js-put! obj 'connect
-	       (js-make-function %this
-		  (connect 4)
-		  3 "connect")
-	       #f %this)
-	    
-	    (js-put! obj 'connect6
-	       (js-make-function %this
-		  (connect 6)
-		  3 "connect")
-	       #f %this)
-	    
-	    (js-put! obj 'writeBuffer
-	       (js-make-function %this
-		  (lambda (this buffer)
-		     (with-access::JsTypedArray buffer (%data byteoffset length)
-			(stream-write-string %worker %this this
-			   %data
-			   (uint32->fixnum byteoffset)
-			   (uint32->fixnum length)
-			   "ascii" #f)))
-		  1 "writeBuffer")
-	       #f %this)
-	    
-	    (js-put! obj 'writeAsciiString
-	       (js-make-function %this
-		  (lambda (this string)
-		     (stream-write-string %worker %this this
-			string 0 (string-length string)
-			"ascii" #f))
-		  1 "writeAsciiString")
-	       #f %this)
-	    
-	    (js-put! obj 'writeUtf8String
-	       (js-make-function %this
-		  (lambda (this string)
-		     (stream-write-string %worker %this this
-			string 0 (string-length string)
-			"utf8" #f))
-		  1 "writeUtf8String")
-	       #f %this)
-	    
-	    (js-put! obj 'writeUcs2String
-	       (js-make-function %this
-		  (lambda (this string)
-		     (let* ((ucs2string (utf8-string->ucs2-string string))
-			    (buffer (ucs2-string->buffer ucs2string)))
-			(stream-write-string %worker %this this
-			   string 0 (string-length string)
-			   "ascii" #f)))
-		  1 "writeUcs2String")
-	       #f %this)
-	    
-	    (js-put! obj 'readStart
-	       (js-make-function %this
-		  (lambda (this)
-		     (with-access::JsHandle this (handle)
-			(nodejs-stream-read-start %worker %this handle
-			   (lambda (obj size)
-			      (slab-allocate slab obj size))
-			   (lambda (buf offset len)
-			      (cond
-				 ((not (integer? buf))
-				  (let ((b (slab-shrink! slab offset len)))
-				     (let ((onread (js-get this 'onread %this)))
-					(js-call3 %this onread this b offset len)
-					(js-undefined))))
-				 ((=fx buf 0)
-				  (slab-shrink! slab offset 0))
-				 (else
-				  (slab-shrink! slab offset 0)
-				  (js-put! process '_errno
-				     (uv-err-name buf) #f %this)
-				  buf))))))
-		  0 "readStart")
-	       #f %this)
-	    
-	    (js-put! obj 'readStop
-	       (js-make-function %this
-		  (lambda (this)
-		     (with-access::JsHandle this (handle)
-			(nodejs-stream-read-stop %this handle)))
-		  0 "readStop")
-	       #f %this)
-	    
-	    (js-put! obj 'setNoDelay
-	       (js-make-function %this
-		  (lambda (this val)
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-nodelay handle (js-totest val))))
-		  1 "setNoDelay")
-	       #f %this)
-	    
-	    (js-put! obj 'setKeepAlive
-	       (js-make-function %this
-		  (lambda (this val tmt)
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-keepalive handle (js-totest val)
-			   (->fixnum (js-tointeger tmt %this)))))
-		  2 "setKeepAlive")
-	       #f %this)
-	    
-	    (js-put! obj 'setSimultaneousAccepts
-	       (js-make-function %this
-		  (lambda (this val)
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-simultaneous-accepts
-			   handle (js-totest val))))
-		  1 "setSimultaneousAccepts")
-	       #f %this)
-	    
-	    (js-put! obj 'getsockname
-	       (js-make-function %this
-		  (lambda (this val)
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-getsockname %this handle)))
-		  1 "getsockname")
-	       #f %this)
-	    
-	    (js-put! obj 'getpeername
-	       (js-make-function %this
-		  (lambda (this val)
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-getpeername %this handle)))
-		  1 "getpeername")
-	       #f %this)
-	    
-	    (js-put! obj 'shutdown
-	       (js-make-function %this
-		  (lambda (this val)
-		     (with-access::JsHandle this (handle)
-			(let* ((req (js-new %this js-object))
-			       (res (nodejs-stream-shutdown %worker %this handle
-				       (lambda (status handle)
-					  (when (<fx status 0)
-					     (js-put! process '_errno
-						(uv-err-name status) #f %this))
-					  (let ((oncomp (js-get req 'oncomplete %this)))
-					     (js-call3 %this oncomp req status this req))))))
-			   (when (=fx res 0)
-			      req))))
-		  1 "shutdown")
-	       #f %this)
-	    
-	    (js-put! obj 'open
-	       (js-make-function %this
-		  (lambda (this handle fd)
-		     (tprint "UNTESTED, example needed")
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-open %worker %this handle fd)))
-		  2 "open")
-	       #f %this)
-	    
-	    (js-put! obj 'bind
-	       (js-make-function %this
-		  (lambda (this addr port)
-		     (tprint "UNTESTED, example needed")
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-bind %this handle addr (or port 0) 4)))
-		  2 "bind")
-	       #f %this)
-	    
-	    (js-put! obj 'bind6
-	       (js-make-function %this
-		  (lambda (this addr port)
-		     (tprint "UNTESTED, example needed")
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-bind %this handle addr (or port 0) 6)))
-		  2 "bind6")
-	       #f %this)
-	    
-	    (js-put! obj 'listen
-	       (js-make-function %this
-		  (lambda (this backlog)
-		     (tprint "UNTESTED, example needed")
-		     (with-access::JsHandle this (handle)
-			(nodejs-tcp-listen %worker %this process this handle
-			   (->fixnum (js-tointeger backlog %this)))))
-		  1 "listen")
-	       #f %this)
-	    
-	    obj)))
-   
-   (define (get-tcp-proto)
-      (with-access::JsProcess process (tcp-proto)
-	 (unless tcp-proto
-	    (set! tcp-proto (create-tcp-proto)))
-	 tcp-proto))
-   
-   (define (TCP this)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let* ((hdl (nodejs-tcp-handle))
-		(obj (instantiate::JsHandle
-			(handle hdl)
-			(__proto__ (get-tcp-proto)))))
-	    (js-bind! %this obj 'fd
-	       :get (js-make-function %this
-		       (lambda (this)
-			  (nodejs-stream-fd hdl))
-		       0 'getGD)
-	       :writable #f :configurable #f)
-	    (js-put! obj 'writeQueueSize
-	       (nodejs-stream-write-queue-size hdl) #f %this)
-	    obj)))
-   
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (js-put! obj 'TCP
-	    (js-make-function %this TCP 0 "TCP"
-	       :alloc (lambda (o) #unspecified)
-	       :construct TCP)
-	    #f %this)
-	 obj)))
-
-;*---------------------------------------------------------------------*/
-;*    process-pipe-wrap ...                                            */
-;*---------------------------------------------------------------------*/
-(define (process-pipe-wrap %this)
-   
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "pipe_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
-   
-   (with-access::JsGlobalObject %this (js-object)
-      (js-alist->jsobject
-	 (map (lambda (id)
-		 (cons id (not-implemented id)))
-	    `(Pipe))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -751,7 +497,7 @@
 				 (cond
 				    ((not (=fx status 0))
 				     (js-put! process '_errno
-					(uv-err-name status) #f %this))
+					(nodejs-err-name status) #f %this))
 				    ((=fx (uv-fs-event-change)
 					(bit-and events (uv-fs-event-change)))
 				     (set! eventstr "change"))
@@ -764,8 +510,10 @@
 				 (js-call3 %this onchange this
 				    status eventstr path)))
 			   path))
-		     (when (js-totest options)
-			(nodejs-unref this)))
+		     (unless (js-totest options)
+			(with-access::JsHandle this (handle)
+			   (tprint "UNREF because persistent")
+			   (nodejs-unref handle %worker))))
 		  3 "start")
 	       #f %this)
 	    
@@ -774,7 +522,7 @@
 		  (lambda (this)
 		     (js-put! this 'initialized_ #f #f %this)
 		     (with-access::JsHandle this (handle)
-			(nodejs-fs-event-close handle)))
+			(nodejs-fs-event-stop handle)))
 		  1 "close")
 	       #f %this)
 	    
@@ -788,7 +536,7 @@
    
    (define (fs-event this)
       (instantiate::JsHandle
-	 (handle (nodejs-make-fs-event))
+	 (handle (nodejs-make-fs-event %worker))
 	 (__proto__ (get-fs-event-proto process))))
    
    (with-access::JsGlobalObject %this (js-object)
@@ -796,15 +544,6 @@
 	 `((FSEvent . ,(js-make-function %this fs-event 0 "FSEvent"
 			  :alloc (lambda (o) #unspecified)
 			  :construct fs-event)))
-	 %this)))
-
-;*---------------------------------------------------------------------*/
-;*    process-evals ...                                                */
-;*---------------------------------------------------------------------*/
-(define (process-evals %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (js-alist->jsobject
-	 `((NodeScript . ,(js-new %this js-object)))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -878,7 +617,7 @@
 ;*---------------------------------------------------------------------*/
 (define (process-tty-wrap %worker %this)
    
-   (define (not-implemented name)
+   (define (not-implemented name::symbol)
       (js-make-function %this
 	 (lambda (this . l)
 	    (error "tty_wrap" "binding not implemented" name))
@@ -891,14 +630,14 @@
 			   (lambda (this fd)
 			      (nodejs-istty %worker %this fd))
 			   1 'isTTY))
-	      (guessHandleType . (js-make-function %this
-				    (lambda (this fd)
-				       (nodejs-guess-handle-type %worker %this fd))
-				    1 'guessHandleType)))
+	      (guessHandleType . ,(js-make-function %this
+				     (lambda (this fd)
+					(nodejs-guess-handle-type
+					   %worker %this fd))
+				     1 'guessHandleType)))
 	    (map (lambda (id)
 		    (cons id (not-implemented id)))
-	       `(guessHandleType
-		   close
+	       `(close
 		   unref
 		   readStart
 		   readStop
@@ -908,15 +647,6 @@
 		   writeUcs2String
 		   getWindowSize
 		   setRawMode)))
-	 %this)))
-
-;*---------------------------------------------------------------------*/
-;*    process-process-wrap ...                                         */
-;*---------------------------------------------------------------------*/
-(define (process-process-wrap %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (js-alist->jsobject
-	 `((Process . ,(js-new %this js-object)))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

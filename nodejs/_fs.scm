@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sun Oct 12 08:51:06 2014 (serrano)                */
+;*    Last change :  Wed Oct 22 10:29:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -153,13 +153,13 @@
 			      (js-put! obj 'code "ENOTDIR" #f %this)
 			      obj))))
 		(if (isa? cb JsFunction)
-		    (js-worker-push-thunk! %worker
+		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
 			  (js-call2 %this cb this exn (js-undefined))))
 		    (js-raise exn)))
 	     (let ((r (js-vector->jsarray (list->vector l)  %this)))
 		(if (isa? cb JsFunction)
-		    (js-worker-push-thunk! %worker
+		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
 			  (js-call2 %this cb this #f r)))
 		    r)))))

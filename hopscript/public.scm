@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Sep 27 09:51:05 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 18:14:43 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1073,7 +1073,7 @@
 ;*    %js-hss ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-hss ip::input-port %this %worker scope)
-   (js-worker-exec %worker
+   (js-worker-exec %worker "eval-hss"
       (lambda ()
 	 (%js-eval ip 'repl %this (js-get scope 'this %this) scope))))
 
@@ -1131,15 +1131,29 @@
 		(raise e))))
 	 (let ((e (j2s-compile in
 		     :driver (j2s-eval-driver)
-		     :parser parser)))
-	    (with-trace 2 '%js-eval-inner
+		     :parser parser))
+	       (m (js-get scope 'module scope)))
+	    (with-trace 'hopscript-eval "%js-eval-inner"
 	       (trace-item "e=" e)
+	       (trace-item "scope=" (typeof scope))
+	       (trace-item "module=" (typeof (js-get scope 'module %this)))
 	       (let ((r (eval! `(,e ,%this
 				   ,this
 				   ,scope
-				   ,(js-get scope 'module %this)))))
+				   ,(if (eq? m (js-undefined))
+					(eval-dummy-module %this)
+					m)))))
 		  (trace-item "r=" r)
 		  r))))))
+
+;*---------------------------------------------------------------------*/
+;*    eval-dummy-module ...                                            */
+;*---------------------------------------------------------------------*/
+(define (eval-dummy-module %this)
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((obj (js-new %this js-object)))
+	 (js-put! obj 'filename "" #f %this)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise ...                                                     */

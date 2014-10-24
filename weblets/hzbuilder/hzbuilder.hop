@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.5.x/weblets/hzbuilder/hzbuilder.hop       */
+;*    .../prgm/project/hop/3.0.x/weblets/hzbuilder/hzbuilder.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar  5 16:59:57 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 15:09:37 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -41,7 +41,7 @@
 	       ~(define (valid? entry)
 		   (and (string? entry) (> (string-length entry) 0)))
 	       
-	       ~(define (generate-weblet)
+	       ~(define (generate-weblet kind)
 		   (let ((dir (dom-get-element-by-id "hzb-dir"))
 			 (name (dom-get-element-by-id "hzb-name"))
 			 (au (dom-get-element-by-id "hzb-author"))
@@ -85,7 +85,8 @@
 				       mah.value
 				       ho.value
 				       do.value
-				       pu.value)
+				       pu.value
+				       kind)
 			     (lambda (h)
 				(let ((log (dom-get-element-by-id
 					      "hzb-log")))
@@ -475,10 +476,12 @@
 		  "browse")))
 	 (<TR>
 	    (<TD> :colspan 2 :id "hzb-generate"
-	       (<BUTTON> :onclick ~(generate-weblet)
-		  "Generate the Weblet")
+	       (<BUTTON> :onclick ~(generate-weblet 'hopscript)
+		  "Generate HopScript weblet")
+	       (<BUTTON> :onclick ~(generate-weblet 'hop)
+		  "Generate Hop weblet")
 	       (<BUTTON> :onclick ~(test-weblet)
-		  "Test the Weblet"))))))
+		  "Test the weblet"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <AUTOSIZE-IMG> ...                                               */

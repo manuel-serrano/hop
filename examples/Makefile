@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Oct  6 09:49:13 2014 (serrano)                */
+#*    Last change :  Fri Oct 24 19:01:47 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -23,20 +23,21 @@ POPULATION = Makefile \
   arraybuffer/arraybuffer.js \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js \
-  qunit/qunit.js \
-  event/event.js \
   requirec/requirec.js requirec/mod2.js requirec/mod1.js \
+  requirew/requirew.js requirew/provider.js requirew/foo.js \
   js2http/js2http.js js2http/fib.js \
   arraybuffer/arraybuffer.js \
+  qunit/qunit.js \
+  event/event.js \
   fs/fs.js \
   url/url.js \
   file/file.js \
-  svc2/svc2.js \
-  svc2/extern.js \
   websocket/wsserver.js websocket/wsclient.js \
   wsclient/wsclient.js \
   svc/svc.js \
+  svc2/svc2.js svc2/extern.js \
   svc3/svc3.js \
+  svc4/svc4.js \
   html/html.js html/html.hss \
   hss/hss.hss hss/hss.js \
   tree/tree.js \
@@ -47,6 +48,7 @@ POPULATION = Makefile \
   debug/debug.js debug/bugs.js \
   proxy/proxy.js \
   worker/slave.js worker/worker.js worker/bar.js \
+  worker2/slave.js worker2/worker2.js
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js \
   widget/node_modules \
   widget/node_modules/flipcounter \

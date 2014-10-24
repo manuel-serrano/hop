@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Oct  1 08:53:19 2014 (serrano)                */
+;*    Last change :  Wed Oct 22 10:24:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -183,7 +183,7 @@
 			    (do-with-hop
 			       (if (isa? success JsFunction)
 				   (lambda (x)
-				      (js-worker-exec (js-current-worker)
+				      (js-worker-exec (js-current-worker) svc
 					 (lambda ()
 					    (js-call1 %this success %this x))))
 				   (lambda (x) x)))))))

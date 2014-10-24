@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Oct  9 18:26:22 2014 (serrano)                */
+#*    Last change :  Thu Oct 23 18:59:46 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -40,13 +40,13 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS = nodejs require process repl _hop _timer uv _uv _fs _http _crypto \
-  _buffer
+  _buffer _process_wrap _stream_wrap _tcp_wrap _pipe_wrap _evals
 _JS_OBJECTS = console constants util sys path stream events fs \
   punycode assert buffer dgram net timers vm querystring cluster \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls zlib url os hop hophz node \
-  node_tick node_stdio
+  node_tick node_stdio node_proc
 
 OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

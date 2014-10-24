@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Sun Oct 12 09:37:37 2014 (serrano)                */
+;*    Last change :  Thu Oct 23 09:35:51 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -20,98 +20,90 @@
    
    (static (class JsTimer::JsObject
 	      (worker::WorkerHopThread read-only)
-	      (timer read-only)
-	      (count::int (default 0))
-	      (proc (default #f))))
+	      (timer (default #f))
+	      (proc (default #f))
+	      (marked (default #f))))
 
-   (export (hopjs-process-timer ::JsGlobalObject)))
+   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject)))
 
-;*---------------------------------------------------------------------*/
-;*    define-js ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-macro (define-js name arity proc . opt)
-   `(cons ',name
-       (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
-		 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-timer ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hopjs-process-timer %this)
+(define (hopjs-process-timer %worker %this)
    
    (define js-timer-prototype
       (instantiate::JsObject))
    
    (init-timer-prototype! %this js-timer-prototype)
    
+   (define Timer
+      (js-make-function %this 
+	 (lambda (this) this)
+	 0 "Timer"
+	 :prototype js-timer-prototype
+	 :construct (js-timer-construct! %worker %this js-timer-prototype)))
+
+   (js-bind! %this Timer 'now
+      :value (js-make-function %this
+		(lambda (this)
+		   (nodejs-now %worker))
+		0 "now")
+      :writable #f)
+   
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 (list
-	    ;; Timer object
-	    (define-js Timer 0
-	       (lambda (this) this)
-	       :prototype js-timer-prototype
-	       :construct (js-timer-construct! %this js-timer-prototype)))
+	 `((Timer . ,Timer))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-timer-construct! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-timer-construct! %this::JsGlobalObject js-timer-prototype)
+(define (js-timer-construct! %worker %this::JsGlobalObject js-timer-prototype)
    (lambda (_)
       (let ((obj (instantiate::JsTimer
 		    (__proto__ js-timer-prototype)
-		    (worker (js-current-worker))
-		    (timer (nodejs-make-timer)))))
-	 ;; ontimeout
-	 (js-bind! %this obj 'ontimeout
-	    :get (js-make-function %this
-		    (lambda (this)
-		       (with-access::JsTimer this (proc)
-			  proc))
-		    1 "ontimeout")
-	    :set (js-make-function %this
-		    (lambda (this p)
-		       (with-access::JsTimer this (timer proc worker)
-			  (set! proc p)
-			  (nodejs-timer-callback-set! timer
-			     (lambda (timer status)
-				(js-worker-push-thunk! worker
-				   (lambda ()
-				      (when (isa? proc JsFunction)
-					 (js-call0 %this proc obj))))))))
-		    2 "ontimeout"))
-	 ;; returns the newly allocated object
+		    (worker (js-current-worker)))))
+	 (with-access::JsTimer obj (timer)
+	    (set! timer (nodejs-make-timer %worker %this obj)))
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-timer-prototype! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (init-timer-prototype! %this::JsGlobalObject obj)
+   
+   (define (not-implemented name)
+      (js-make-function %this
+	 (lambda (this . l)
+	    (error "timer_wrap" "binding not implemented" name))
+	 0 (symbol->string name)))
+   
    (js-bind! %this obj 'start
       :value (js-make-function %this
 		(lambda (this start rep)
-		   (with-access::JsTimer this (timer worker count)
-		      (set! count (+fx 1 count))
-		      (nodejs-timer-start worker timer count
-			 (js-touint32 start %this) (js-touint32 rep %this))))
+		   (with-access::JsTimer this (timer worker)
+		      (nodejs-timer-start worker timer start rep)))
 		2 "start"))
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer worker count)
-		      (nodejs-timer-close worker timer count)
-		      (set! count 0)))
+		   (with-access::JsTimer this (timer worker)
+		      (nodejs-timer-close worker timer)))
 		0 "close"))
    (js-bind! %this obj 'stop
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer worker count)
-		      (nodejs-timer-stop worker timer count)))
+		   (with-access::JsTimer this (timer worker)
+		      (nodejs-timer-stop worker timer)))
 		0 "stop"))
    (js-bind! %this obj 'unref
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsTimer this (timer worker count)
-		      (nodejs-timer-unref worker timer count)))
-		0 "unref")))
-					
+		   (with-access::JsTimer this (timer worker)
+		      (nodejs-timer-unref worker timer)))
+		0 "unref"))
+
+   (for-each (lambda (id)
+		(js-bind! %this obj id
+		   :value (not-implemented id)))
+      '(setRepeat getRepeat again)))

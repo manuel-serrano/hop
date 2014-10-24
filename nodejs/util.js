@@ -18,7 +18,6 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 var formatRegExp = /%[sdj%]/g;
 exports.format = function(f) {
   if (typeof f !== 'string') {
@@ -32,7 +31,7 @@ exports.format = function(f) {
   var i = 1;
   var args = arguments;
   var len = args.length;
-   var str = String( f ).replace(formatRegExp, function(x) {
+  var str = String(f).replace(formatRegExp, function(x) {
     if (x === '%%') return '%';
     if (i >= len) return x;
     switch (x) {
@@ -68,9 +67,11 @@ exports.deprecate = function(fn, msg) {
       if (process.throwDeprecation) {
         throw new Error(msg);
       } else if (process.traceDeprecation) {
-        console.trace(msg);
+#:tprint( "trace: ", msg );
+//        console.trace(msg);
       } else {
-        console.error(msg);
+#:tprint( "error: ", msg );
+//        console.error(msg);
       }
       warned = true;
     }

@@ -38,7 +38,7 @@
 	    (make-slowbuffer ::JsGlobalObject)
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)
 	    (slab-allocate ::object ::obj ::long)
-	    (slab-shrink! ::obj ::long ::long)))
+	    (slab-shrink! ::obj ::obj ::long ::long)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsSlowBuffer ...                         */
@@ -890,61 +890,59 @@
 	  a
 	  (-fx (+fx a b) r))))
 
-(define count 0)
-(define debug 1)
-
 ;*---------------------------------------------------------------------*/
 ;*    slab-allocate ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    See src/slab_allocator.cc in nodejs                              */
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
-   (set! count (+fx count 1))
-   (with-access::Slab slab (%this js-slowbuffer slowbuffer slice
-			      offset lastoffset)
-      (if (not slowbuffer)
-	  (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
-		 (buf (js-new1 %this js-slowbuffer rsize)))
-	     (set! slowbuffer buf)
-	     (set! slice (js-get buf 'slice %this))
-	     (set! offset size)
-	     (with-access::JsSlowBuffer buf (data)
-		(when (>fx debug 0)
-		   (tprint "SLAB-ALLOC.1(" count ") size=" size
-		      " size_=" rsize " -> offset=" offset))
-		(values buf data 0)))
-	  (with-access::JsSlowBuffer slowbuffer (data)
-	     ;; slowbuffer data are implemented as strings
-	     (let* ((sz (string-length data)))
-		(if (>fx (+ offset size) sz)
-		    ;; not enough space, new buffer required
-		    (let* ((rsize (roundup (max size sz) 16))
-			   (buf::JsSlowBuffer (js-new1 %this js-slowbuffer rsize)))
-		       (set! slowbuffer buf)
-		       (set! offset size)
-		       (when (>fx debug 0)
-			  (tprint "SLAB-ALLOC.2(" count ") size=" size
-			     " size_=" rsize " -> offset=" offset))
-		       (with-access::JsSlowBuffer buf (data)
-			  (values buf data 0)))
-		    (let ((loff offset))
-		       (set! offset (+fx offset size))
-		       (set! lastoffset loff)
-		       (when (>fx debug 0)
-			  (tprint "SLAB-ALLOC.3(" count ") size=" size
-			     " sz=" sz " -> offset=" offset))
-		       (values slowbuffer data loff))))))))
+   (with-trace 'nodejs-buffer "slab-allocate"
+      (trace-item "obj=" (typeof obj) " size=" size)
+      (with-access::Slab slab (%this js-slowbuffer slowbuffer slice
+				 offset lastoffset)
+	 (if (not slowbuffer)
+	     (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
+		    (buf (js-new1 %this js-slowbuffer rsize)))
+		(set! slowbuffer buf)
+		(set! slice (js-get buf 'slice %this))
+		(set! offset size)
+		(with-access::JsSlowBuffer buf (data)
+		   (trace-item "INIT size=" size " size_=" rsize
+		      " -> next offset=" offset)
+		   (values buf data 0)))
+	     (with-access::JsSlowBuffer slowbuffer (data)
+		;; slowbuffer data are implemented as strings
+		(let* ((sz (string-length data)))
+		   (if (>fx (+ offset size) sz)
+		       ;; not enough space, new buffer required
+		       (let* ((rsize (roundup (max size sz) 16))
+			      (buf::JsSlowBuffer (js-new1 %this js-slowbuffer rsize)))
+			  (set! slowbuffer buf)
+			  (set! offset size)
+			  (trace-item
+			     "NEW size=" size " size_=" rsize
+			     " -> next offset=" offset)
+			  (with-access::JsSlowBuffer buf (data)
+			     (values buf data 0)))
+		       (let ((loff offset))
+			  (set! offset (+fx offset size))
+			  (set! lastoffset loff)
+			  (trace-item "FILL size=" size " sz=" sz
+			     " -> next offset=" offset)
+			  (values slowbuffer data loff)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    slab-shrink! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (slab-shrink! slab off size)
-   (with-access::Slab slab (lastoffset js-slowbuffer slowbuffer %this offset)
-      (when (=fx off lastoffset)
-	 (set! offset (+fx lastoffset (roundup size 16))))
-      (when (>fx debug 0)
-	 (tprint "SLAB-SHRINK(" count ") size=" size " -> offset=" offset))
-      (if (>fx size 0)
-	  (js-new %this js-slowbuffer slowbuffer)
-	  (js-undefined))))
+(define (slab-shrink! slab buf off size)
+   (with-trace 'nodejs-buffer "slab-shrink!"
+      (with-access::Slab slab (lastoffset js-slowbuffer slowbuffer %this offset)
+	 (trace-item "off=" off " size=" size
+	    " old-offset=" offset " last-offset=" lastoffset)
+	 (when (and (eq? slowbuffer buf) (=fx off lastoffset))
+	    (set! offset (+fx lastoffset (roundup size 16))))
+	 (trace-item "->offset=" offset)
+	 (if (>fx size 0)
+	     (js-new %this js-slowbuffer buf)
+	     (js-undefined)))))
 

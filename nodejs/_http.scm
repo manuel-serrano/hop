@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Thu Sep 25 10:17:35 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 12:31:57 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -316,7 +316,7 @@
 	 ((: (+ (in ("09"))) SP)
 	  (with-access::JsHttpParser parser (status-code)
 	     (let ((len (the-length)))
-		(set! status-code (the-fixnum))
+		(set! status-code (string->integer (the-substring 0 -1)))
 		(http-message-state (the-port) %this parser
 		   (+fx nread len) (-fx avail len)))))
 	 ((+ (out ("09")))
@@ -363,11 +363,29 @@
 	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) #\:)
 	  (let ((key (the-substring 0 -1))
 		(len (the-length)))
+	     (tprint "key=" key)
 	     (with-access::JsHttpParser parser (headers)
 		(set! headers (cons key headers)))
 	     (http-header-value-state (the-port) %this parser
 		(+fx nread len) (-fx avail len))))
+	 ((: (+ (in " \t"))
+	     (+ (or (out #\Return) (: #\Return (out #\Newline))))
+	     crlf)
+	  ;; multiple line header
+	  (with-access::JsHttpParser parser (headers)
+	     (if (null? headers)
+		 (http-parse-error parser 21
+		    "invalid character in header" nread)
+		 (let* ((len (the-length))
+			(str (the-substring 0 -2))
+			(i (string-skip str " \t")))
+		    (set-car! headers
+		       (string-append (car headers)
+			  (if i (substring str i) str)))
+		    (http-header-state (the-port) %this parser
+		       (+fx nread len) (-fx avail len))))))
 	 (crlf
+	  (tprint "crlf...")
 	  (let ((len (the-length)))
 	     (http-on-header-complete %this parser)
 	     (http-body-state (the-port) %this parser
@@ -460,6 +478,11 @@
 	 ((or all #\Newline)
 	  (with-access::JsHttpParser parser (offset clen)
 	     (cond
+		((= clen -1)
+		 (when (>fx avail 0)
+		    (http-on-body %this parser (+fx offset nread) avail))
+		 (http-on-message-complete %this parser)
+		 (values #f (+fx nread avail)))
 		((>=fx avail clen)
 		 (http-on-body %this parser (+fx offset nread) clen)
 		 (http-on-message-complete %this parser)

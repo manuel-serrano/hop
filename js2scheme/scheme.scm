@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct 14 10:11:23 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 14:16:43 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -92,7 +92,7 @@
 ;*    j2s-scheme-id ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-id id)
-   (if (memq id '(raise error eval quote module dirname))
+   (if (memq id '(raise error eval quote module dirname worker))
        (symbol-append '^ id)
        id))
 
@@ -137,7 +137,7 @@
 ;*    j2s-fast-id ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-id id)
-   (symbol-append '% id))
+   (symbol-append '@ id))
 
 ;*---------------------------------------------------------------------*/
 ;*    epairify-deep ...                                                */
@@ -260,7 +260,7 @@
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
 		 (define %resource (dirname %source))
-		 
+
 		 ,@body))
 	    (main
 	     ;; generate a main hopscript module
@@ -422,13 +422,17 @@
       (let ((scmid (j2s-name name id))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
-	    `(begin
-		(define ,fastid ,(jssvc->scheme val scmid mode return conf))
-		(define ,scmid 
-		   (js-bind! %this ,global ',id
-		      :configurable #f
-		      :writable #f
-		      :value ,fastid)))))))
+	    (if global
+		`(begin
+		    (define ,fastid ,(jssvc->scheme val scmid mode return conf))
+		    (define ,scmid 
+		       (js-bind! %this ,global ',id
+			  :configurable #f
+			  :writable #f
+			  :value ,fastid)))
+		`(begin
+		    (define ,fastid ,(jssvc->scheme val scmid mode return conf))
+		    (define ,scmid ,fastid)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
@@ -678,7 +682,7 @@
 
    (define (lambda-or-labels id args body)
       (if id
-	  (let ((%id (symbol-append '% id)))
+	  (let ((%id (symbol-append '@ id)))
 	     `(labels ((,%id ,(cons 'this args) ,body)) ,%id))
 	  `(lambda ,(cons 'this args)
 	      ,body)))
@@ -751,7 +755,7 @@
 		   (instantiate::JsValueDescriptor
 		      (name 'callee)
 		      (value (js-make-function %this
-				,(symbol-append '% id) 0 ',id))
+				,(symbol-append '@ id) 0 ',id))
 		      (writable #t)
 		      (configurable #t)
 		      (enumerable #f))
@@ -852,7 +856,7 @@
 			     (j2s-scheme body mode return conf)))
 		   (fun `(lambda ,args
 			    (let ((req (current-request)))
-			       (js-worker-exec %worker
+			       (js-worker-exec %worker ,(symbol->string id)
 				  (lambda ()
 				     (thread-request-set! (current-thread) req)
 				     ,(flatten-stmt body)))))))

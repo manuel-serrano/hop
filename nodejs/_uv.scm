@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:50:28 2014                          */
-;*    Last change :  Fri May 16 09:59:39 2014 (serrano)                */
+;*    Last change :  Fri Oct 17 10:55:19 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compatibility kit when libuv is not available.                   */
@@ -39,7 +39,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    %nodejs-make-timer ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (%nodejs-make-timer)
+(define (%nodejs-make-timer proc)
    (instantiate::%JsTimer))
 
 ;*---------------------------------------------------------------------*/

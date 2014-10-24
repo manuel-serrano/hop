@@ -30,6 +30,7 @@ var StringDecoder;
 util.inherits(Readable, Stream);
 
 function console_error() {
+   //console.error.apply( this, arguments );
 }
 
 function ReadableState(options, stream) {
@@ -259,6 +260,7 @@ function howMuchToRead(n, state) {
 
 // you can override either this method, or the async _read(n) below.
 Readable.prototype.read = function(n) {
+   console_error( "--- (_stream_readable.js) Readable.prototype.read n=", n );
   var state = this._readableState;
   state.calledRead = true;
   var nOrig = n;
@@ -468,7 +470,7 @@ function maybeReadMore(stream, state) {
 }
 
 function maybeReadMore_(stream, state) {
-   console.error( "maybeReadMode_ state.readingMore state=", state.buffer.length );
+   console_error( "maybeReadMode_ state.readingMore state=", state.buffer.length );
   var len = state.length;
   while (!state.reading && !state.flowing && !state.ended &&
          state.length < state.highWaterMark) {
@@ -740,8 +742,10 @@ Readable.prototype.unpipe = function(dest) {
 Readable.prototype.on = function(ev, fn) {
   var res = Stream.prototype.on.call(this, ev, fn);
 
-  if (ev === 'data' && !this._readableState.flowing)
-    emitDataEvents(this);
+  if (ev === 'data' && !this._readableState.flowing) {
+     console_error( "Readable.prototype.on, emitDataEvents ev=", ev );
+     emitDataEvents(this);
+  }
 
   if (ev === 'readable' && this.readable) {
     var state = this._readableState;
@@ -766,6 +770,7 @@ Readable.prototype.addListener = Readable.prototype.on;
 // pause() and resume() are remnants of the legacy readable stream API
 // If the user uses them, then switch into old mode.
 Readable.prototype.resume = function() {
+   console_error( "Readable.prototype.on, resume" );
   emitDataEvents(this);
    console_error( "_stream_readable read(0).3");
   this.read(0);
@@ -773,13 +778,14 @@ Readable.prototype.resume = function() {
 };
 
 Readable.prototype.pause = function() {
+   console_error( "Readable.prototype.on, pause" );
   emitDataEvents(this, true);
   this.emit('pause');
 };
 
 function emitDataEvents(stream, startPaused) {
   var state = stream._readableState;
-console_error( "emitDataEvents startPaused=", startPaused );
+console_error( "~~~~~~~~~~~~~ emitDataEvents startPaused=", startPaused );
   if (state.flowing) {
     // https://github.com/isaacs/readable-stream/issues/16
     throw new Error('Cannot switch to old mode now.');

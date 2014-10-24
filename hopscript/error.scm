@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Oct 12 08:58:09 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 08:47:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -47,18 +47,22 @@
    (with-access::JsError exc (name msg stack fname location)
       (if (isa? msg &exception)
 	  (exception-notify msg)
-	  (let ((port (current-error-port)))
-	     (let ((tstack `(,name (at ,fname ,location)))
-		   (stack (cond
-			     ((eq? name 'ReferenceError)
-			      stack)
-			     ((eq? name 'TypeError)
-			      stack)
-			     (else
-			      stack))))
-		(display-trace-stack-source (list tstack) port)
-		(fprint port name ": "msg "\n")
-		(display-trace-stack stack port))))))
+	  (let* ((%this (js-new-global-object))
+		 (stk (js-get exc 'stack %this))
+		 (port (current-error-port))
+		 (tstack `(,name (at ,fname ,location))))
+	     (display-trace-stack-source (list tstack) port)
+	     (fprint port name ": "msg "\n")
+	     (if (string? stk)
+		 (display stk port)
+		 (let ((stack (cond
+				 ((eq? name 'ReferenceError)
+				  stack)
+				 ((eq? name 'TypeError)
+				  stack)
+				 (else
+				  stack))))
+		    (display-trace-stack stack port)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */
@@ -69,11 +73,9 @@
 	  (stack (js-get exc 'stack %this))
 	  (name (js-get exc 'name %this))
 	  (port (current-error-port)))
-      (if (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
-	  (call-next-method)
-	  (begin
-	     (fprint port name ": " msg "\n")
-	     (display stack port)))))
+      (unless (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
+	  (fprint port name ": " msg "\n"))
+      (display stack port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-error! ...                                               */
@@ -114,8 +116,28 @@
 		   (set! location l)))
 	       (js-bind! %this this 'name
 		  :value name
+		  :enumerable #f)
+	       (js-bind! %this this 'stack
+		  :value ""
 		  :enumerable #f))
 	    this)
+
+	 (define (js-error-construct/stack this::JsError . args)
+	    (let ((err (apply js-error-construct this args)))
+	       (capture-stack-trace #f err %this)
+	       err))
+
+	 (define (capture-stack-trace head this %this)
+	    (let ((stk (call-with-output-string
+			  (lambda (op)
+			     (when (string? head)
+				(display head op)
+				(when (isa? this JsObject)
+				   (display (js-get this 'message %this) op)
+				   (newline op)))
+			     (display-trace-stack (get-trace-stack 10)
+				op 1)))))
+	       (js-put! this 'stack stk #f %this)))
 	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
@@ -150,7 +172,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 (init-builtin-error-prototype! %this js-error js-error-prototype)
 	 (set! js-syntax-error
 	    (js-make-function %this (%js-syntax-error %this) 1 'SyntaxError
@@ -159,7 +181,7 @@
 			     (__proto__ js-error-prototype)
 			     (extensible #t))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 (set! js-type-error
 	    (js-make-function %this (%js-type-error %this) 1 'TypeError
 	       :__proto__ js-function-prototype
@@ -167,7 +189,7 @@
 			     (__proto__ js-error-prototype)
 			     (extensible #t))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 (set! js-uri-error
 	    (js-make-function %this (%js-uri-error %this) 1 'URIError
 	       :__proto__ js-function-prototype
@@ -175,7 +197,7 @@
 			     (__proto__ js-error-prototype)
 			     (extensible #t))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 (set! js-eval-error
 	    (js-make-function %this (%js-eval-error %this) 1 'EvalError
 	       :__proto__ js-function-prototype
@@ -183,7 +205,7 @@
 			     (__proto__ js-error-prototype)
 			     (extensible #t))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 (set! js-range-error
 	    (js-make-function %this (%js-range-error %this) 1 'RangeError
 	       :__proto__ js-function-prototype
@@ -199,7 +221,7 @@
 			     (__proto__ js-error-prototype)
 			     (extensible #t))
 	       :alloc js-error-alloc
-	       :construct js-error-construct))
+	       :construct js-error-construct/stack))
 	 ;; bind Error in the global object
 	 (js-bind! %this %this 'Error :configurable #f :enumerable #f
 	    :value js-error)
@@ -219,17 +241,7 @@
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (js-put! this 'stack
-			    (call-with-output-string
-			       (lambda (op)
-				  (display "Trace: " op)
-				  (display (js-get this 'message %this)
-				     op)
-				  (newline op)
-				  (display-trace-stack
-				     (get-trace-stack) op 0)))
-			    #f %this)
-			 this)
+			 (capture-stack-trace "Trace: " this %this))
 		      2 'captureStackTrace)
 	    :enumerable #f)
 	 js-error)))
@@ -321,7 +333,9 @@
 		 (name4 (if (eq? name3 (js-undefined))
 			    "Error"
 			    (js-tostring name3 %this)))
-		 (msg5 (js-get this 'message %this))
+		 (msg5 (if (isa? this JsObject)
+			   (js-get this 'message %this)
+			   (js-undefined)))
 		 (msg6 (if (eq? msg5 (js-undefined))
 			   ""
 			   (js-tostring msg5 %this))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Oct  1 15:41:05 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 09:06:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -141,9 +141,11 @@
 ;*---------------------------------------------------------------------*/
 (define (clone-cmap cmap::JsConstructMap)
    (with-access::JsConstructMap cmap (names descriptors)
-      (duplicate::JsConstructMap cmap
-	 (names (vector-copy names))
-	 (descriptors (vector-copy descriptors)))))
+      (let ((newnames (vector-copy names))
+	    (newdescriptors (vector-copy descriptors)))
+	 (duplicate::JsConstructMap cmap
+	    (names newnames)
+	    (descriptors newdescriptors)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-same-transition? ...                                        */
@@ -481,9 +483,12 @@
    (with-access::JsObject o (cmap properties)
       (apply vector
 	 (filter-map (lambda (p)
-			(with-access::JsPropertyDescriptor p (name enumerable)
-			   (when (or (not enump) enumerable)
-			      (symbol->string! name))))
+			(unless (eq? p (js-undefined))
+			   ;; not a descriptor if deleted property
+			   ;; see cmap case in js-delete!
+			   (with-access::JsPropertyDescriptor p (name enumerable)
+			      (when (or (not enump) enumerable)
+				 (symbol->string! name)))))
 	    (if cmap
 		(with-access::JsConstructMap cmap (descriptors)
 		   (vector->list descriptors))
@@ -951,7 +956,7 @@
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
       (with-access::JsObject o (elements cmap)
-	 (with-access::JsConstructMap cmap (nextmap names descriptors)
+	 (with-access::JsConstructMap cmap (nextmap names)
 	    (let* ((name (js-toname p %this))
 		   (flags (property-flags #t #t #t #f))
 		   (index (vector-length names)))
@@ -1639,6 +1644,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in obj::JsObject proc %this)
    
+   (define env '())
+   
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))
 	 (let loop ((i 0))
@@ -1649,8 +1656,10 @@
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (when (eq? enumerable #t)
-	       (proc (symbol->string! name))))))
+	    (unless (memq name env)
+	       (when (eq? enumerable #t)
+		  (set! env (cons name env))
+		  (proc (symbol->string! name)))))))
    
    (let loop ((o obj))
       (with-access::JsObject o (cmap properties __proto__)

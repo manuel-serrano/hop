@@ -1,0 +1,7 @@
+${ 
+    var config = require( "./config.js" );
+}
+
+table td {
+  background-color: ${ config.bgColor };
+}

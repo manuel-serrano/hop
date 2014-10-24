@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Oct 13 17:45:54 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 16:23:19 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -75,7 +75,9 @@
    (let* ((files (parse-args args))
 	  ;; init javascript global object
 	  (%global (nodejs-new-global-object))
-	  (%worker (js-init-main-worker! %global)))
+	  (%worker (js-init-main-worker! %global (hop-run-server))))
+      ;; extent the require search path to the Hop autoload directories
+      (nodejs-resolve-extend-path! (hop-autoload-directories))
       ;; js loader
       (hop-loader-add! "js"
 	 (lambda (path . test)
@@ -116,7 +118,7 @@
 	    (hello-world)
 	    ;; tune the server socket
 	    (socket-option-set! serv :TCP_NODELAY #t)
-	    ;; start the job (background taks, a la cron) scheduler
+	    ;; start the job (a la cron background tasks) scheduler
 	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
 	    ;; start the hopscript service worker thread
@@ -136,7 +138,9 @@
 				   :filename "repl.js")))))
 		  ((eval! exp) %global %global scope mod)
 		  (hop-hss-foreign-eval-set!
-		     (lambda (ip) (%js-eval-hss ip %global %worker scope)))))
+		     (lambda (ip)
+			(js-put! mod 'filename (input-port-name ip) #f %global)
+			(%js-eval-hss ip %global %worker scope)))))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
 	       ((scm) (hop-repl (hop-scheduler)))
@@ -184,7 +188,6 @@
 	       (current-request-set! #f #f)
 	       ;; start the main loop
 	       (scheduler-accept-loop (hop-scheduler) serv #t))
-	    (js-worker-terminate! %worker nodejs-event-loop-alive?)
 	    (if (thread-join! %worker) 0 1)))))
 
 ;*---------------------------------------------------------------------*/
@@ -241,7 +244,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (js-worker-push-thunk! %worker
+	  (js-worker-push-thunk! %worker "nodejs-load"
 	     (lambda ()
 		(nodejs-load path %worker))))
 	 (else
@@ -307,8 +310,8 @@
 (define (hop-hopscript-worker scd %global %worker)
    (if (>fx (hop-max-threads) 2)
        (begin
-	  (thread-start-joinable! %worker)
-	  (thread-start! (instantiate::hopthread (body nodejs-event-loop))))
+;* 	  (thread-start! (instantiate::hopthread (body nodejs-event-loop))) */
+	  (thread-start-joinable! %worker))
        (error "hop-repl"
 	  "not enough threads to start the main worker (see --threads-max option)"
 	  (hop-max-threads))))

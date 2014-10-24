@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sat Sep 20 19:24:35 2014 (serrano)                */
+;*    Last change :  Thu Oct 23 09:39:56 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
@@ -20,7 +20,8 @@
 	   __nodejs_require
 	   __nodejs_process
 	   __nodejs_repl
-	   (nodejs-event-loop __nodejs_uv)
-	   (nodejs-event-loop-alive? __nodejs_uv))
+	   __nodejs_uv)
+;* 	   (nodejs-event-loop __nodejs_uv)                             */
+;* 	   (nodejs-event-loop-alive? __nodejs_uv))                     */
    
    (eval   (export-all)))

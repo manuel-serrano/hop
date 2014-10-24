@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Oct  3 16:26:49 2014 (serrano)                */
+;*    Last change :  Wed Oct 22 10:25:23 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -123,7 +123,7 @@
 				       (target wss)
 				       (value ws))))
 			   (with-access::JsWebSocketServer wss (conns worker)
-			      (js-worker-push-thunk! worker
+			      (js-worker-push-thunk! worker "wss-onconnect"
 				 (lambda ()
 				    (apply-listeners conns evt))))))))))
 	 
@@ -288,6 +288,7 @@
 						     (data frame)
 						     (value frame))))
 					  (js-worker-push-thunk! worker
+					     "wesbsocket-client"
 					     (lambda ()
 						(apply-listeners onmessages evt)))))))
 			      (loop (websocket-read socket))))))))

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    .../hop/2.0.x/weblets/hzbuilder/etc/skeleton/Makefile            */
+#*    .../hop/3.0.x/weblets/hzbuilder/etc/skeleton/Makefile            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Dec 22 05:46:12 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Fri Oct 24 15:37:03 2014 (serrano)                */
+#*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Generic Makefile to build Hop weblets.                           */
 #*=====================================================================*/
@@ -24,12 +24,12 @@ WEBLETHOME=@HOME@
 DOWNLOAD=@DOWNLOAD@
 PUBLISHER=@PUBLISHER@
 
-CLIENT_SOURCES=@HZ@.hop config.hop.in @HZ@.hss 
+CLIENT_SOURCES=@HZ@@SUFFIX@ config@SUFFIX@.in @HZ@.hss 
 SOURCES=$(CLIENT_SOURCES)
 DASHBOARDPNG=@DASHBOARDPNG@
 
 FILES=$(SOURCES) \
-  etc/logo.png etc/favicon.png etc/$(HZ).wiki.in etc/weblet.info.in \
+  etc/logo.png etc/favicon.png etc/$(HZ).wiki.in @CONFIG@.in \
   etc/doc.png etc/prefs.png \
   etc/homepage/01-homepage.wiki etc/homepage/01-homepage.png \
   $(DASHBOARDPNG) \
@@ -49,7 +49,7 @@ BTAGS=bgltags
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
 #*---------------------------------------------------------------------*/
-.SUFFIXES: .hz .wiki .hop .info
+.SUFFIXES: .hz .wiki @SUFFIX@ .info
 
 #*---------------------------------------------------------------------*/
 #*    Specific rules                                                   */
@@ -59,13 +59,27 @@ hz: $(HOPREPOSITORY)/$(HZ)-$(VERSION).hz
 $(HOPREPOSITORY)/$(HZ)-$(VERSION).hz: .afile .etags \
                                       $(OBJECTS) \
                                       $(FILES) \
-                                      etc/weblet.info \
+                                      @CONFIG@ \
                                       etc/$(HZ).wiki \
                                       etc/logo.png
 	mkdir -p $(HOPREPOSITORY) && \
 	(cd ..; tar cvfz $@ --exclude='$(HZ)/private' --exclude='*~' $(^:%=$(HZ)/%))
 
-etc/weblet.info: etc/weblet.info.in Makefile
+@CONFIG@: @CONFIG@.in Makefile
+	cat $< | sed -e "s|@@HZ@@|$(HZ)|" \
+                     -e "s|@@TITLE@@|$(TITLE)|" \
+                     -e "s|@@VERSION@@|$(VERSION)|" \
+                     -e "s|@@MINHOP@@|$(MINHOP)|" \
+                     -e "s|@@MAXHOP@@|$(MAXHOP)|" \
+                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
+                     -e "s|@@DATE@@|$(DATE)|" \
+                     -e "s|@@HOME@@|$(HOME)|" \
+                     -e "s|@@DOWNLOAD@@|$(DOWNLOAD)|" \
+                     -e "s|@@PUBLISHER@@|$(PUBLISHER)|" \
+                     -e "s|@@CATEGORY@@|$(CATEGORY)|" \
+                     -e "s|@@LICENSE@@|$(LICENSE)|" > $@
+
+package.json: package.json.in Makefile
 	cat $< | sed -e "s|@@HZ@@|$(HZ)|" \
                      -e "s|@@TITLE@@|$(TITLE)|" \
                      -e "s|@@VERSION@@|$(VERSION)|" \
@@ -92,7 +106,7 @@ etc/weblet.info: etc/weblet.info.in Makefile
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" \
                      -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
-config.hop: config.hop.in Makefile
+config@SUFFIX@: config@SUFFIX@.in Makefile
 	cat $< | sed -e "s|@@VERSION@@|$(VERSION)|" \
                      -e "s|@@TITLE@@|$(TITLE)|" \
                      -e "s|@@MINHOP@@|$(MINHOP)|" \
@@ -104,13 +118,13 @@ config.hop: config.hop.in Makefile
                      -e "s|@@CATEGORY@@|$(CATEGORY)|" \
                      -e "s|@@LICENSE@@|$(LICENSE)|" > $@
 
-.afile: $(filter %.scm %.hop %.sch, $(OBJECTS))
+.afile: $(filter %.scm %@SUFFIX@ %.sch, $(OBJECTS))
 	$(AFILE) -w -suffix hop $^ -o $@
 
-.etags: $(filter %.scm %.hop %.sch, $(OBJECTS))
+.etags: $(filter %.scm %@SUFFIX@ %.sch, $(OBJECTS))
 	$(BTAGS) --ignore-error -suffix hop --define-fun define-service $^ -o $@
 
-.hop:
+@SUFFIX@:
 	echo -n "(" > $@
 	for p in $(CLIENT_SOURCES:%.in=%); do \
           echo -n "\"$$p\" " >> $@; \
@@ -118,8 +132,9 @@ config.hop: config.hop.in Makefile
 	echo ")" >> $@
 
 clean:
-	$(RM) -f etc/weblet.info
-	$(RM) -f .afile .etags .hop
+	$(RM) -f @CONFIG@
+	$(RM) -f package.json
+	$(RM) -f .afile .etags @SUFFIX@
 
 getsources: 
-	@echo $(filter %.scm %.hop %.sch, $(FILES))
+	@echo $(filter %.scm %.hop %.sch %.js, $(FILES))

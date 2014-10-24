@@ -3,8 +3,11 @@
 chapters=simple
 rest=
 verb=
+check=
 basedir=/usr/local/src/node-v0.10.31/test
 hop=@BINDIR@/hop
+hopargs="-g --no-zeroconf --no-server"
+hopexec=$PWD/HOP.exe
 
 while : ; do
 
@@ -13,7 +16,7 @@ while : ; do
      break;;
 
   -h|--help)
-    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [subdir0 [subdir1 ...]]";
+    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [--check] [subdir0 [subdir1 ...]]";
     echo "example: $0 simple";
     exit 0;;
 
@@ -32,7 +35,11 @@ while : ; do
 
   --hop)
     shift;
-    hop=$1;;    
+    hop=$1;;   
+
+  --check)
+    shift
+    check=yes;;
 
   *)
     chapters="$chapters $1";;
@@ -50,6 +57,27 @@ failure=0
 blacklist=0
 i=0
 
+rm -rf $basedir/tmp
+mkdir -p $basedir/tmp
+rm -rf $basedir/tmp/a
+rm -f /tmp/TEST-NODEJS.out
+
+touch /tmp/TEST-NODEJS.out
+
+if [ ! -x $hopexec ]; then
+  rm -f $hopexec
+  echo "#!/bin/bash" > $hopexec
+  echo "case $""# in" >> $hopexec
+  echo "  1)" >> $hopexec
+  echo "     exec -a $hopexec $hop $hopargs -- $""1;;" >> $hopexec
+  echo "  2)" >> $hopexec
+  echo "     exec -a $hopexec $hop $hopargs -- $""1 $""2;;" >> $hopexec
+  echo "  3)" >> $hopexec
+  echo "     exec -a $hopexec $hop $hopargs -- $""1 $""2 $""3;;" >> $hopexec
+  echo "esac" >> $hopexec
+  chmod a+rx $hopexec
+fi
+
 for chapter in $chapters; do
   echo "$basedir/$chapter"
 
@@ -57,21 +85,31 @@ for chapter in $chapters; do
     i=`expr $i + 1`
     grep "^$chapter/`basename $path`" BLACKLIST 2> /dev/null > /dev/null
 
-    if [ $? != 0  ]; then
+        if [ $? != 0  ]; then
       echo -n "$i. $chapter/`basename $path` ... "
-      (cd $basedir; $hop -g --no-zeroconf --no-server $path > /tmp/TEST-NODEJS.out 2>&1)
+      echo -n "$i. $chapter/`basename $path` ... " >> /tmp/TEST-NODEJS.out
+      rm -rf $basedir/tmp/a
+      (cd $basedir; $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
   
       if [ $? = 0 ]; then
-        echo "ok.";
         success=`expr $success + 1`
+        echo "ok."
+        echo "ok. ($success)" >> /tmp/TEST-NODEJS.out
       else
-        echo "failure !!!"
-        if [ "$verb " != " " ]; then
-          cat /tmp/TEST-NODEJS.out
-        fi
         failure=`expr $failure + 1`
+        echo "failure !!!"
+        echo "failure !!!" >> /tmp/TEST-NODEJS.out
+        if [ "$verb " != " " ]; then
+          cat /tmp/TEST-NODEJS.out.tmp
+        fi
+        cat /tmp/TEST-NODEJS.out.tmp >> /tmp/TEST-NODEJS.out
       fi
-      /bin/rm -f /tmp/TEST-NODEJS.out
+      rm -f /tmp/TEST-NODEJS.out.tmp
+
+      if [ "$check " = "yes " ]; then
+        echo -n "lsof=" >> /tmp/TEST-NODEJS.out
+        lsof | grep hop | wc -l >> /tmp/TEST-NODEJS.out
+      fi
     else
       echo "$i. $chapter/`basename $path` ### BLACKLISTED"
       blacklist=`expr $blacklist + 1`

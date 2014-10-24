@@ -9,5 +9,5 @@ onmessage = function( e ) {
 
 postMessage( "hi master" );
 
-console.log( "slave: ", bar.count( 100 ) );
-console.log( "slave: ", bar.count( 3 ) );
+console.log( "slave bar=", bar.count( 100 ), " (expect 100)" );
+console.log( "slave bar=", bar.count( 3 ), " (expect 103)" );

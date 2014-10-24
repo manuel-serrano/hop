@@ -246,7 +246,6 @@
 		if (basic < 0) {
 			basic = 0;
 		}
-	   console.log( "decode input=", input, " basic=", basic );
 
 		for (j = 0; j < basic; ++j) {
 			// if it's not a basic code point
@@ -256,12 +255,10 @@
 			output.push(input.charCodeAt(j));
 		}
 
-	   console.log( "decode output=", output );
 		// Main decoding loop: start just after the last delimiter if any basic code
 		// points were copied; start at the beginning otherwise.
 
 		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
-		   console.log( "--------- decode index=", index, output );
 
 			// `index` is the index of the next character to be consumed.
 			// Decode a generalized variable-length integer into `delta`,
@@ -275,7 +272,6 @@
 				}
 
 				digit = basicToDigit(input.charCodeAt(index++));
-			   console.log( "digit=", digit );
 
 				if (digit >= base || digit > floor((maxInt - i) / w)) {
 					error('overflow');
@@ -283,7 +279,6 @@
 
 				i += digit * w;
 				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-			   console.log( "t=", t );
 
 				if (digit < t) {
 					break;
@@ -300,7 +295,6 @@
 
 			out = output.length + 1;
 			bias = adapt(i - oldi, out, oldi == 0);
-		   console.log( "bias=", bias );
 
 			// `i` was supposed to wrap around from `out` to `0`,
 			// incrementing `n` each time, so we'll fix that now:
@@ -311,13 +305,11 @@
 			n += floor(i / out);
 			i %= out;
 
-		   console.log( "n=", n, " i=", i, " output=", output );
 			// Insert `n` at position `i` of the output
 			output.splice(i++, 0, n);
-		   console.log( "splice output=", output );
 
 		}
-	   console.log( "encode output2=", output );
+
 		return ucs2encode(output);
 	}
 
@@ -376,6 +368,7 @@
 		if (basicLength) {
 			output.push(delimiter);
 		}
+
 		// Main encoding loop:
 		while (handledCPCount < inputLength) {
 

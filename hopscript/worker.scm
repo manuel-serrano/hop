@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Oct  5 08:06:46 2014 (serrano)                */
+;*    Last change :  Fri Oct 24 18:52:33 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -34,6 +34,8 @@
 	      data::obj)
 	   
 	   (class WorkerHopThread::hopthread
+	      (%loop (default #f))
+	      (keep-alive::bool (default #t))
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
@@ -41,6 +43,7 @@
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
+	      (onexit::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)
 	      (%process (default #f))
 	      (state::symbol (default 'init))
@@ -51,63 +54,33 @@
 	      (uvfiles::vector (default (make-vector 32)))
 	      (handlers::pair-nil (default '())))
 
-	   (js-current-worker::WorkerHopThread)
 	   (js-init-worker! ::JsGlobalObject)
-	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
+	   
+	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool)
+	   (js-current-worker::WorkerHopThread)
 
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
-	   (generic js-worker-thread-loop ::WorkerHopThread)
-	   (generic js-worker-exec ::WorkerHopThread ::procedure)
-	   (generic js-worker-push-thunk! ::WorkerHopThread ::procedure)
-	   (generic js-worker-alive? ::WorkerHopThread)
-	   (generic js-worker-terminate! ::WorkerHopThread ::obj)
+	   (generic js-worker-loop ::object)
+	   (generic js-worker-exception-handler ::object ::obj ::int)
+	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
+	   (generic js-worker-alive? ::object)
+	   
+	   (generic js-worker-terminate! ::object ::obj)
 	   (generic js-worker-post-slave-message ::JsWorker ::obj)
 	   (generic js-worker-post-master-message ::JsWorker ::obj)
-	   (generic js-worker-add-handler! ::WorkerHopThread ::procedure)
-	   (generic js-worker-remove-handler! ::WorkerHopThread ::procedure)))
+	   (generic js-worker-add-handler! ::object ::JsFunction)
+	   (generic js-worker-remove-handler! ::object ::JsFunction)))
 
 ;*---------------------------------------------------------------------*/
-;*    %main ...                                                        */
+;*    js-valueof ::JsWorker ...                                        */
 ;*---------------------------------------------------------------------*/
-(define %main #f)
-
-;*---------------------------------------------------------------------*/
-;*    js-current-worker ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-current-worker::WorkerHopThread)
-   (let ((th (current-thread)))
-      (if (isa? th WorkerHopThread)
-	  th
-	  %main)))
-
-;*---------------------------------------------------------------------*/
-;*    js-init-main-worker! ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Start the initial WorkerHopThread                                */
-;*---------------------------------------------------------------------*/
-(define (js-init-main-worker! %this::JsGlobalObject)
-   (unless %main
-      (set! %main
-	 (instantiate::WorkerHopThread
-	    (name "%worker")
-	    (%this %this)
-	    (body (lambda ()
-		     (signal sigsegv
-			(lambda (x)
-			   (js-raise-range-error %this
-			      "Maximum call stack size exceeded"
-			      #f)))
-		     (with-handler
-			(lambda (e)
-			   (exception-notify e)
-			   #f)
-			(begin
-			   (js-worker-thread-loop %main)
-			   #t)))))))
-   %main)
+(define-method (js-valueof this::JsWorker %this)
+   (with-access::JsWorker this (thread)
+      thread))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-init-worker! ...                                              */
@@ -144,11 +117,6 @@
 	 js-worker)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-load ...                                               */
-;*---------------------------------------------------------------------*/
-(define-parameter js-worker-load default-worker-load)
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-construct ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-worker-construct %this loader)
@@ -174,10 +142,10 @@
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f)
-
+      
       (with-access::JsWorker worker (thread)
 	 ;; onmessage
-	 (js-bind! %this scope 'onmessage
+	 (js-bind! %this %this 'onmessage
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::WorkerHopThread thread (onmessage)
@@ -185,13 +153,30 @@
 		    0 'onmessage)
 	    :set (js-make-function %this
 		    (lambda (this v)
-		       (with-access::WorkerHopThread thread (onmessage)
+		       (with-access::WorkerHopThread thread (onmessage keep-alive)
+			  (set! keep-alive #t)
 			  (set! onmessage v)))
 		    2 'onmessage)
 	    :configurable #f
 	    :writable #t
+	    :enumerable #t)
+	 
+	 ;; onexit
+	 (js-bind! %this %this 'onexit
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (with-access::WorkerHopThread thread (onexit)
+			  onexit))
+		    0 'onexit)
+	    :set (js-make-function %this
+		    (lambda (this v)
+		       (with-access::WorkerHopThread thread (onexit)
+			  (set! onexit v)))
+		    2 'onexit)
+	    :writable #t
+	    :configurable #t
 	    :enumerable #t)))
-   
+
    (lambda (_ src)
       (letrec* ((parent (js-current-worker))
 		(this (js-new-global-object))
@@ -202,10 +187,11 @@
 			  (loader source thread this)))
 		(thread (instantiate::WorkerHopThread
 			   (parent parent)
-			   (tqueue (list thunk))
+			   (tqueue (list (cons "init" thunk)))
 			   (%this this)
+			   (keep-alive #f)
 			   (body (lambda ()
-				    (js-worker-thread-loop thread)))
+				    (js-worker-loop thread)))
 			   (cleanup (lambda (thread)
 				       (when (isa? parent WorkerHopThread)
 					  (remove-subworker! parent thread)))))))
@@ -248,13 +234,6 @@
 	       worker)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-valueof ::JsWorker ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (js-valueof this::JsWorker %this)
-   (with-access::JsWorker this (thread)
-      thread))
-   
-;*---------------------------------------------------------------------*/
 ;*    init-builtin-worker-prototype! ...                               */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-worker-prototype! %this js-worker obj)
@@ -292,94 +271,6 @@
       :configurable #f))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-thread-loop ...                                        */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-thread-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers
-				       name alivep %this %process handlers)
-      ;; loop unless terminated
-      (with-handler
-	 (lambda (exn)
-	    (if (pair? handlers)
-		(begin
-		   (for-each (lambda (h)
-				(js-call1 %this h %process exn)) handlers)
-		   (js-worker-thread-loop th))
-		(raise exn)))
-	 (unwind-protect
-	    (let loop ()
-	       (let ((thunk (synchronize mutex
-			       (let liip ()
-				  (cond
-				     ((pair? tqueue)
-				      (let ((thunk (car tqueue)))
-					 (set! tqueue (cdr tqueue))
-					 thunk))
-				     ((and (eq? state 'terminated)
-					   (or (not alivep) (not (alivep)))
-					   (null? subworkers))
-				      #f)
-				     (else
-				      (condition-variable-wait! condv mutex)
-				      (liip)))))))
-		  (when (procedure? thunk)
-		     (thunk)
-		     (loop))))
-	    (set! state 'terminated)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-exec ...                                               */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::WorkerHopThread thunk::procedure)
-   (if (eq? (current-thread) th)
-       (thunk)
-       (let ((response #f)
-	     (mutex (make-mutex))
-	     (condv (make-condition-variable)))
-	  (synchronize mutex
-	     (js-worker-push-thunk! th
-		(lambda ()
-		   (set! response
-		      (with-handler
-			 (lambda (e)
-			    (instantiate::WorkerException
-			       (exn e)))
-			 (thunk)))
-		   (synchronize mutex
-		      (condition-variable-signal! condv))))
-	     (condition-variable-wait! condv mutex)
-	     (if (isa? response WorkerException)
-		 (with-access::WorkerException response (exn)
-		    (raise exn))
-		 response)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-push-thunk! ::WorkerHopThread ...                      */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-push-thunk! th::WorkerHopThread thunk::procedure)
-   (with-access::WorkerHopThread th (mutex condv tqueue)
-      (synchronize mutex
-	 (set! tqueue (append! tqueue (list thunk)))
-	 (condition-variable-signal! condv))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-alive? ::WorkerHopThread ...                           */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-alive? th::WorkerHopThread)
-   (with-access::WorkerHopThread th (tqueue state)
-      (and (not (eq? state 'terminated)) (pair? tqueue))))
-
-;*---------------------------------------------------------------------*/
-;*    js-worker-terminate! ::WorkerHopThread ...                       */
-;*---------------------------------------------------------------------*/
-(define-generic (js-worker-terminate! th::WorkerHopThread pred)
-   (with-access::WorkerHopThread th (state mutex condv alivep)
-      (set! alivep pred)
-      (synchronize mutex
-	 (set! state 'terminated)
-	 (condition-variable-signal! condv))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-worker-post-slave-message ::WorkerHopThread ...               */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-slave-message worker::JsWorker data)
@@ -390,7 +281,7 @@
 			(name "message")
 			(target worker)
 			(data data))))
-	       (js-worker-push-thunk! parent
+	       (js-worker-push-thunk! parent "post-slave-message"
 		  (lambda ()
 		     (apply-listeners listeners e))))))))
 
@@ -404,7 +295,7 @@
 		     (name "message")
 		     (target this)
 		     (data data))))
-	    (js-worker-push-thunk! thread
+	    (js-worker-push-thunk! thread "post-master-message"
 	       (lambda ()
 		  (when (isa? onmessage JsFunction)
 		     (js-call1 %this onmessage this e))))))))
@@ -412,8 +303,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::WorkerHopThread ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! obj::JsWorker event proc . capture)
-   (if (string=? event "message")
+(define-method (add-event-listener! obj::JsWorker evt proc . capture)
+   (if (string=? evt "message")
        (with-access::JsWorker obj (thread)
 	  (with-access::WorkerHopThread thread (mutex listeners)
 	     (synchronize mutex
@@ -424,8 +315,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::WorkerHopThread ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (add-event-listener! obj::WorkerHopThread event proc . capture)
-   (if (string=? event "message")
+(define-method (add-event-listener! obj::WorkerHopThread evt proc . capture)
+   (if (string=? evt "message")
        (with-access::WorkerHopThread obj (mutex listeners)
 	  (synchronize mutex
 	     (set! listeners
@@ -435,7 +326,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ::WorkerHopThread ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (remove-event-listener! obj::WorkerHopThread event proc . capture)
+(define-method (remove-event-listener! obj::WorkerHopThread evt proc . capture)
    #t)
 
 ;*---------------------------------------------------------------------*/
@@ -454,15 +345,175 @@
 	    (eval-module-set! m)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-add-handler! ::WorkerHopThread ...                     */
+;*    js-worker-load ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-add-handler! obj::WorkerHopThread fun)
+(define-parameter js-worker-load default-worker-load)
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-add-handler! ::object ...                              */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-add-handler! obj::object fun)
    (with-access::WorkerHopThread obj (handlers)
       (set! handlers (cons fun handlers))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-worker-remove-handler! ::WorkerHopThread ...                  */
+;*    js-worker-remove-handler! ::object ...                           */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-remove-handler! obj::WorkerHopThread fun)
+(define-generic (js-worker-remove-handler! obj::object fun)
    (with-access::WorkerHopThread obj (handlers)
       (set! handlers (remq! fun handlers))))
+
+;*---------------------------------------------------------------------*/
+;*    %worker ...                                                      */
+;*---------------------------------------------------------------------*/
+(define %worker #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-current-worker ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-current-worker::WorkerHopThread)
+   (let ((th (current-thread)))
+      (if (isa? th WorkerHopThread)
+	  th
+	  %worker)))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-main-worker! ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Start the initial WorkerHopThread                                */
+;*---------------------------------------------------------------------*/
+(define (js-init-main-worker! %this::JsGlobalObject keep-alive)
+   (unless %worker
+      (set! %worker
+	 (instantiate::WorkerHopThread
+	    (name "%worker")
+	    (%this %this)
+	    (onexit (js-make-function %this
+		       (lambda (this retval)
+			  (exit retval))
+		       0 'onexit))
+	    (keep-alive keep-alive)
+	    (body (lambda ()
+		     (js-worker-loop %worker))))))
+   %worker)
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exception-handler ...                                  */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-exception-handler th::object exn errval)
+   (with-access::WorkerHopThread th (handlers %this %process)
+      (if (pair? handlers)
+	  (begin
+	     (for-each (lambda (h)
+			  (js-call1 %this h %process exn))
+		(reverse handlers))
+	     0)
+	  (begin
+	     (exception-notify exn)
+	     errval))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-loop ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This code is used only when HopScript is run without LIBUV.      */
+;*    Otherwise, the LIBUV binding (see nodejs directory),             */
+;*    overwrites this definition.                                      */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-loop th::object)
+   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers
+				       name alivep %this)
+      (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+      ;; install the signal handler for that thread
+      (signal sigsegv
+	 (lambda (x)
+	    (js-raise-range-error %this
+	       "Maximum call stack size exceeded"
+	       #f)))
+      ;; loop unless terminated
+      (with-handler
+	 (lambda (exn)
+	    (js-worker-exception-handler th exn 1))
+	 (unwind-protect
+	    (let loop ()
+	       (let ((nthunk (synchronize mutex
+				(let liip ()
+				   (cond
+				      ((pair? tqueue)
+				       (let ((nthunk (car tqueue)))
+					  (set! tqueue (cdr tqueue))
+					  nthunk))
+				      ((and (eq? state 'terminated)
+					    (or (not alivep) (not (alivep)))
+					    (null? subworkers))
+				       #f)
+				      (else
+				       (condition-variable-wait! condv mutex)
+				       (liip)))))))
+		  (when (pair? nthunk)
+		     (with-trace 'hopscript-worker (car nthunk)
+			((cdr nthunk)))
+		     (loop))))
+	    (set! state 'terminated))
+	 #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-exec ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-exec th::object name::bstring thunk::procedure)
+   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+   (if (and (eq? (current-thread) th)
+	    (with-access::WorkerHopThread th (tqueue)
+	       (null? tqueue)))
+       (thunk)
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th name
+		(lambda ()
+		   (set! response
+		      (with-handler
+			 (lambda (e)
+			    (instantiate::WorkerException
+			       (exn e)))
+			 (thunk)))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     (if (isa? response WorkerException)
+		 (with-access::WorkerException response (exn)
+		    (raise exn))
+		 response)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-push-thunk! ::object ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-push-thunk! th::object name::bstring thunk::procedure)
+   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+   (with-access::WorkerHopThread th (mutex condv tqueue)
+      (synchronize mutex
+	 (with-trace 'hopscript-worker "js-worker-push-thunk"
+	    (trace-item "name=" name)
+	    (trace-item "queue=" (map car tqueue)))
+	 (set! tqueue (append! tqueue (list (cons name thunk))))
+	 (condition-variable-signal! condv))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-alive? ::object ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-alive? th::object)
+   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+   (with-access::WorkerHopThread th (tqueue state)
+      (and (not (eq? state 'terminated)) (pair? tqueue))))
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-terminate! ::WorkerHopThread ...                       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-terminate! th::object pred)
+   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+   (with-access::WorkerHopThread th (state mutex condv alivep)
+      (set! alivep pred)
+      (synchronize mutex
+	 (set! state 'terminated)
+	 (condition-variable-signal! condv))))
+

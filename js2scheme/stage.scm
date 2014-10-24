@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Jun 27 12:39:47 2014 (serrano)                */
+;*    Last change :  Tue Oct 14 17:10:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -75,6 +75,9 @@
    (with-access::J2SStageUrl stage (url)
       (driver-debug-post stage tmp count ast args
 	 (lambda (ast args)
+	    (call-with-output-file "/tmp/AST" 
+	       (lambda (op)
+		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
 	       (lambda (obj) obj)
 	       :parse-json json->ast

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/hzbuilder/Makefile        */
+#*    serrano/prgm/project/hop/3.0.x/weblets/hzbuilder/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue Dec  8 08:42:20 2009 (serrano)                */
-#*    Copyright   :  2007-09 Manuel Serrano                            */
+#*    Last change :  Fri Oct 24 15:49:05 2014 (serrano)                */
+#*    Copyright   :  2007-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -26,8 +26,10 @@ SOURCES= hzbuilder.hop generate.hop test.hop hzbuilder.hss config.hop.in
 POPULATION= $(SOURCES) \
   etc/weblet.info.in etc/hzbuilder.wiki.in  \
   etc/logo.png etc/favicon.png etc/doc.png etc/configure.png \
-  etc/skeleton/Makefile etc/skeleton/default.hss \
+  etc/skeleton/Makefile \
+  etc/skeleton/default.hss etc/skeleton/default-hopscript.hss\
   etc/skeleton/main.hop etc/skeleton/config.hop.in \
+  etc/skeleton/main.js etc/skeleton/config.js.in \
   etc/skeleton/doc.wiki.in etc/skeleton/weblet.info.in \
   etc/skeleton/logo.png etc/skeleton/favicon.png etc/skeleton/dashboard.png \
   etc/skeleton/01-homepage.wiki \

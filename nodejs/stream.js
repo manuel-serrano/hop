@@ -47,7 +47,6 @@ Stream.prototype.pipe = function(dest, options) {
   var source = this;
 
   function ondata(chunk) {
-#:tprint( "stream.ondata" );
     if (dest.writable) {
       if (false === dest.write(chunk) && source.pause) {
         source.pause();
@@ -58,7 +57,6 @@ Stream.prototype.pipe = function(dest, options) {
   source.on('data', ondata);
 
   function ondrain() {
-#:tprint( "stream.ondeain" );
     if (source.readable && source.resume) {
       source.resume();
     }
@@ -75,7 +73,6 @@ Stream.prototype.pipe = function(dest, options) {
 
   var didOnEnd = false;
   function onend() {
-#:tprint( "stream.onend" );
     if (didOnEnd) return;
     didOnEnd = true;
 
@@ -84,7 +81,6 @@ Stream.prototype.pipe = function(dest, options) {
 
 
   function onclose() {
-#:tprint( "stream.onclose" );
     if (didOnEnd) return;
     didOnEnd = true;
 

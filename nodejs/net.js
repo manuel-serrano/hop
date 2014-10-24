@@ -32,7 +32,9 @@ function noop() {}
 // constructor for lazy loading
 function createPipe() {
   var Pipe = process.binding('pipe_wrap').Pipe;
-  return new Pipe();
+  var p = new Pipe();
+   return p;
+   
 }
 
 // constructor for lazy loading
@@ -180,10 +182,8 @@ function Socket(options) {
 
   // if we have a handle, then start the flow of data into the
   // buffer.  if not, then this will happen when we connect
-  if (this._handle && options.readable !== false) {
-     debug( "read(0).1");
+  if (this._handle && options.readable !== false)
     this.read(0);
-  }
 }
 util.inherits(Socket, stream.Duplex);
 
@@ -256,7 +256,6 @@ function onSocketEnd() {
       this.readable = false;
       maybeDestroy(this);
     });
-     debug( "read(0).2");
     this.read(0);
   }
 
@@ -386,7 +385,7 @@ Socket.prototype._read = function(n) {
     this.once('connect', this._read.bind(this, n));
   } else if (!this._handle.reading) {
     // not already reading, start the flow
-     debug('Socket._read readStart' );
+    debug('Socket._read readStart');
     this._handle.reading = true;
     var r = this._handle.readStart();
     if (r)
@@ -401,10 +400,9 @@ Socket.prototype.end = function(data, encoding) {
   DTRACE_NET_STREAM_END(this);
 
   // just in case we're waiting for an EOF.
-  if (this.readable && !this._readableState.endEmitted) {
-     debug( "read(0).3" );
+  if (this.readable && !this._readableState.endEmitted)
     this.read(0);
-  } else
+  else
     maybeDestroy(this);
 };
 
@@ -494,15 +492,10 @@ Socket.prototype.destroy = function(exception) {
   this._destroy(exception);
 };
 
-var c = 0;
 
 // This function is called whenever the handle gets a
 // buffer, or when there's an error reading.
 function onread(buffer, offset, length) {
-   debug( "[" + c++ + "] ################## onread.1 buffer=" +
-		typeof( buffer ) + " offset=" + offset
-	  + " length=" + length + 
-	  " buffer-length=" + buffer.length );
   var handle = this;
   var self = handle.owner;
   assert(handle === self._handle, 'handle != self._handle');
@@ -534,12 +527,7 @@ function onread(buffer, offset, length) {
     // Optimization: emit the original buffer with end points
     var ret = true;
     if (self.ondata) self.ondata(buffer, offset, end);
-    else {
-       debug( "slice.0 offset=", offset, " end=", end );
-       var b = buffer.slice(offset, end);
-       debug( "slice.1 offset=", b.offset, " len=", b.length);
-       ret = self.push(buffer.slice(offset, end));
-    }
+    else ret = self.push(buffer.slice(offset, end));
 
     if (handle.reading && !ret) {
       handle.reading = false;
@@ -670,10 +658,6 @@ Socket.prototype._write = function(data, encoding, cb) {
 };
 
 function createWriteReq(handle, data, encoding) {
-   if( handle.constructor.name != "TTY" ) {
-      debug( "%%%%%% createWriteReq handle="
-	     + handle.constructor.name + " encoding=" + encoding );
-   }
   switch (encoding) {
     case 'buffer':
       return handle.writeBuffer(data);
@@ -905,11 +889,9 @@ function afterConnect(status, handle, req, readable, writable) {
 
     // start the first read, or get an immediate EOF.
     // this doesn't actually consume any bytes, because len=0.
-    if (readable) {
-       debug( ">>> read(0).4");
+    if (readable)
       self.read(0);
-       debug( "<<< read(0).4");
-    }
+
   } else {
     self._connecting = false;
     self._destroy(errnoException(process._errno, 'connect'));
