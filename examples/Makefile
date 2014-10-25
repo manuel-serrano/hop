@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Oct 24 19:46:02 2014 (serrano)                */
+#*    Last change :  Sat Oct 25 11:36:28 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -25,7 +25,7 @@ POPULATION = Makefile \
   require/mod1.js \
   requirec/requirec.js requirec/mod2.js requirec/mod1.js \
   requirew/requirew.js requirew/provider.js requirew/foo.js \
-  js2http/js2http.js js2http/fib.js \
+  js2http/js2http.js js2http/fact.js \
   arraybuffer/arraybuffer.js \
   qunit/qunit.js \
   event/event.js \
