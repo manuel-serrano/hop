@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Oct  3 15:19:49 2014 (serrano)                */
+#*    Last change :  Sat Oct 25 10:25:54 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -36,8 +36,15 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
   share-afile scheme2js hopscript js2scheme nodejs \
   android node_modules
 
-build: bindir libdir lib weblets widget nodejs $(BUILDSPECIFIC) bin share \
-  node_modules
+build:
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         $(MAKE) build-in-env)
+
+build-in-env: bindir libdir lib weblets widget nodejs \
+  $(BUILDSPECIFIC) bin share node_modules
 
 bindir:
 	mkdir -p bin
