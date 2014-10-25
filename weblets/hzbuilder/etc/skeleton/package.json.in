@@ -1,0 +1,9 @@
+{
+   "name": "@@HZ@@",
+   "version": "@@VERSION@@",
+   "description": "@DESCRIPTION@"
+   "private: true,
+   "main": "@@HZ@@.js",
+   "author": "@AUTHOR@",
+   "homepage": "@@HOME@@",
+}
