@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Oct 24 19:01:14 2014 (serrano)                */
+;*    Last change :  Sat Oct 25 18:42:16 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -164,14 +164,13 @@
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex tqueue %this keep-alive)
+   (with-access::WorkerHopThread th (mutex tqueue %this keep-alive services)
       (letrec* ((retval 0)
 		(loop (instantiate::JsLoop
 			 (actions tqueue)))
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
-				 (unless keep-alive (uv-unref async))
 				 (with-handler
 				    (lambda (e)
 				       (js-worker-exception-handler th e 8))
@@ -185,9 +184,8 @@
 						(let ((acts actions))
 						   (set! actions '())
 						   acts))))))
-				 ;; executing the action might have changed
-				 ;; the keep-alive property
-				 (when keep-alive (uv-ref async)))))))
+				 (when (and (not keep-alive) (null? services))
+				    (uv-unref async)))))))
 	 (synchronize mutex
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
@@ -205,7 +203,20 @@
 	       (exit (js-worker-exception-handler th e 8)))
 	    (unwind-protect
 	       (uv-run loop)
-	       (with-access::WorkerHopThread th (onexit)
+	       (with-access::WorkerHopThread th (onexit services subworkers)
+		  ;; unregister all the worker services
+		  (for-each unregister-service! services)
+		  ;; tell the subworkers that they will never receive
+		  ;; any message from their parent
+		  (for-each (lambda (w)
+			       (with-access::WorkerHopThread w (mutex keep-alive)
+				  (synchronize mutex
+				     (set! keep-alive #f)
+				     (js-worker-push-thunk! w "ping"
+					(lambda ()
+					   (uv-async-send async))))))
+		     subworkers)
+		  ;; call the cleanup function
 		  (when (isa? onexit JsFunction)
 		     (js-call1 %this onexit (js-undefined) retval))))))))
 

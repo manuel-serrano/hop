@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Tue May 27 15:34:49 2014 (serrano)                */
+;*    Last change :  Sun Oct 26 06:30:50 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */

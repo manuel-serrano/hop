@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Oct 22 10:24:31 2014 (serrano)                */
+;*    Last change :  Sun Oct 26 06:49:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -32,7 +32,7 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::hop-service)
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)
 	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
 	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
 
@@ -44,6 +44,16 @@
       (xml-attribute-encode url)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsService ...                                  */
+;*    -------------------------------------------------------------    */
+;*    See runtime/js_comp.scm in the Hop library for the definition    */
+;*    of the generic.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsService op compile isexpr)
+   (with-access::JsService o (svc)
+      (compile svc op)))
+
+;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsHopFrame ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsHopFrame op compile isexpr)
@@ -51,6 +61,13 @@
       (display "new HopFrame(\"" op)
       (display url op)
       (display "\")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-register-value ::object ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop-register-value o::object register::procedure)
+   (with-access::JsService o (svc)
+      (register svc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */
@@ -66,6 +83,7 @@
 	 (set! js-service-prototype
 	    (instantiate::JsService
 	       (__proto__ js-function-prototype)
+	       (worker (class-nil WorkerHopThread))
 	       (name "service")
 	       (alloc (lambda (_) #unspecified))
 	       (construct (lambda (constructor args)
@@ -197,12 +215,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service %this proc name register arity svc)
+(define (js-make-service %this proc name register arity worker svc)
    (with-access::JsGlobalObject %this (js-service-prototype)
       (when register (register-service! svc))
+      (with-access::WorkerHopThread worker (services)
+	 (set! services (cons svc services)))
       (instantiate::JsService
 	 (procedure proc)
 	 (len arity)
+	 (worker worker)
 	 (__proto__ js-service-prototype)
 	 (name (if (symbol? name) (symbol->string! name) ""))
 	 (alloc (lambda (_)

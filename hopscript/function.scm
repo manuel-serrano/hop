@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct 22 14:02:24 2014 (serrano)                */
+;*    Last change :  Sun Oct 26 06:26:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -88,16 +88,6 @@
 	 :configurable #f :enumerable #f)
       ;; return the js-function object
       js-function))
-
-;*---------------------------------------------------------------------*/
-;*    hop->javascript ::JsFunction ...                                 */
-;*    -------------------------------------------------------------    */
-;*    See runtime/js_comp.scm in the Hop library for the definition    */
-;*    of the generic.                                                  */
-;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsService op compile isexpr)
-   (with-access::JsService o (svc)
-      (compile svc op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */

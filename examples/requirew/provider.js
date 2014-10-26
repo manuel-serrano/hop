@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Oct 24 13:57:08 2014 (serrano)                */
+/*    Last change :  Sat Oct 25 19:02:41 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    URL based require example                                        */
@@ -16,6 +16,5 @@
 var hop = require( "hop" );
 
 service providerGetModule() {
-   return hop.HTTPResponseFile( "foo.js" );
+   return hop.HTTPResponseFile( providerGetModule.resource( "foo.js" ) );
 }
-

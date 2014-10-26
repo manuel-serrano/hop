@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 24 14:16:43 2014 (serrano)                */
+;*    Last change :  Sun Oct 26 06:23:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -856,27 +856,29 @@
 			     (j2s-scheme body mode return conf)))
 		   (fun `(lambda ,args
 			    (let ((req (current-request)))
-			       (js-worker-exec %worker ,(symbol->string id)
+			       (js-worker-exec @worker ,(symbol->string id)
 				  (lambda ()
-				     (thread-request-set! (current-thread) req)
+				     (thread-request-set! @worker req)
 				     ,(flatten-stmt body)))))))
 	       (epairify-deep loc fun))))
       
       (with-access::J2SSvc this (init register)
-	 `(js-make-service %this ,tmp ',id
-	     ,register
-	     ,arity
-	     (instantiate::hop-service
-		(proc ,(service-proc->scheme this))
-		(javascript ,(jscript-funcall init))
-		(path ,path)
-		(id ',id)
-		(wid ',id)
-		(args ',args)
-		(resource %resource)
-		(source %source)
-		(decoder %unserialize)
-		(unjson %unjson)))))
+	 `(let ((@worker (js-current-worker)))
+	     (js-make-service %this ,tmp ',id
+		,register
+		,arity
+		@worker
+		(instantiate::hop-service
+		   (proc ,(service-proc->scheme this))
+		   (javascript ,(jscript-funcall init))
+		   (path ,path)
+		   (id ',id)
+		   (wid ',id)
+		   (args ',args)
+		   (resource %resource)
+		   (source %source)
+		   (decoder %unserialize)
+		   (unjson %unjson))))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)
@@ -2095,34 +2097,6 @@
 			      (apply string-append js-stmt))
 			     (else
 			      `(string-append ,@js-stmt)))))
-;* 		(body #unspecified)                                    */
-;* 		(%js-statement ,(cond                                  */
-;* 				   ((null? js-stmt)                    */
-;* 				    "")                                */
-;* 				   ((null? (cdr js-stmt))              */
-;* 				    (xml-tilde-debug loc               */
-;* 				       (car js-stmt)))                 */
-;* 				   (else                               */
-;* 				    (xml-tilde-debug loc               */
-;* 				       (apply string-append js-stmt))))) */
-;* 		(%js-expression ,(cond                                 */
-;* 				    ((null? js-stmt)                   */
-;* 				     "")                               */
-;* 				    ((null? (cdr js-stmt))             */
-;* 				     (xml-tilde-debug loc              */
-;* 					(car js-stmt)))                */
-;* 				    (else                              */
-;* 				     (xml-tilde-debug loc              */
-;* 					(apply string-append js-stmt))))) */
-;* 		(%js-return ,(cond                                     */
-;* 				((null? js-stmt)                       */
-;* 				 "return")                             */
-;* 				((null? (cdr js-stmt))                 */
-;* 				 (xml-tilde-debug loc                  */
-;* 				    (string-append "return " (car js-stmt)))) */
-;* 				(else                                  */
-;* 				 (xml-tilde-debug loc                  */
-;* 				    (apply string-append "return " js-stmt))))) */
 		(loc ',loc))))))
 
 ;*---------------------------------------------------------------------*/

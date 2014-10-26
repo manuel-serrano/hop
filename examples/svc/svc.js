@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Sep 25 14:45:44 2014 (serrano)                */
+/*    Last change :  Sat Oct 25 19:21:31 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services API.                     */
@@ -15,7 +15,6 @@ var hop = require( "hop" );
 
 service svc() {
    var conn = <DIV> {};
-
    return <HTML> {
       <BUTTON> {
 	 onclick: ~{
@@ -52,7 +51,7 @@ service svc() {
          "add source path twice"
       },
       conn
-   }
+   };
 }
 
 service svc1( { a: 10, b: 11, c: 12 } ) {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 24 16:23:38 2014 (serrano)                */
+;*    Last change :  Sat Oct 25 19:10:49 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -437,6 +437,7 @@
       (if (core-module? name)
 	  (nodejs-require-core name worker %this)
 	  (let ((abspath (nodejs-resolve name %this %module)))
+	     (trace-item "abspath=" abspath)
 	     (if (string-suffix? ".json" abspath)
 		 (load-json abspath)
 		 (let* ((mod (nodejs-load abspath worker))
@@ -561,23 +562,25 @@
 		(append (vector->list vec) nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
-   
-   (let* ((mod %module)
-	  (dir (dirname (js-get mod 'filename %this))))
-      (cond
-	 ((or (string-prefix? "./" name) (string-prefix? "../" name))
-	  (or (resolve-file-or-directory name dir)
-	      (resolve-modules mod name (dirname dir))
-	      (resolve-error name)))
-	 ((string-prefix? "/" name)
-	  (or (resolve-file-or-directory name "/")
-	      (resolve-modules mod name "/")
-	      (resolve-error name)))
-	 ((or (string-prefix? "http://" name) (string-prefix? "https://" name))
-	  name)
-	 (else
-	  (or (resolve-modules mod name (dirname dir))
-	      (resolve-error name))))))
+
+   (with-trace 'require "nodejs-resolve"
+      (let* ((mod %module)
+	     (dir (dirname (js-get mod 'filename %this))))
+	 (trace-item "name=" name " dir=" dir)
+	 (cond
+	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
+	     (or (resolve-file-or-directory name dir)
+		 (resolve-modules mod name (dirname dir))
+		 (resolve-error name)))
+	    ((string-prefix? "/" name)
+	     (or (resolve-file-or-directory name "/")
+		 (resolve-modules mod name "/")
+		 (resolve-error name)))
+	    ((or (string-prefix? "http://" name) (string-prefix? "https://" name))
+	     name)
+	    (else
+	     (or (resolve-modules mod name (dirname dir))
+		 (resolve-error name)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-env-path ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Oct 24 18:52:33 2014 (serrano)                */
+;*    Last change :  Sun Oct 26 07:36:13 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -35,7 +35,7 @@
 	   
 	   (class WorkerHopThread::hopthread
 	      (%loop (default #f))
-	      (keep-alive::bool (default #t))
+	      (keep-alive::bool (default #f))
 	      (mutex::mutex read-only (default (make-mutex)))
 	      (condv::condvar read-only (default (make-condition-variable)))
 	      (prehook (default #f))
@@ -52,7 +52,8 @@
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
 	      (uvfiles::vector (default (make-vector 32)))
-	      (handlers::pair-nil (default '())))
+	      (handlers::pair-nil (default '()))
+	      (services::pair-nil (default '())))
 
 	   (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
@@ -139,6 +140,16 @@
 		   (lambda (this data)
 		      (js-worker-post-slave-message worker data))
 		   1 'postMessage)
+	 :writable #f
+	 :configurable #f
+	 :enumerable #f)
+      
+      ;; terminate
+      (js-bind! %this scope 'terminate
+	 :value (js-make-function %this
+		   (lambda (this)
+		      (js-worker-terminate! worker #f))
+		   0 'terminate)
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f)
