@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 17 11:23:21 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 19:51:42 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -278,6 +278,7 @@
 		 (current-seconds))))
 	    ((pregexp-match "^[0-9]{4}$" v)
 	     (make-date
+		:timezone 0
 		:year (string->integer v)))
 	    ((pregexp-match "^([0-9]{4}):([0-9]{2})$" v)
 	     =>
@@ -496,6 +497,7 @@
       (if (not (isa? this JsDate))
 	  (js-raise-type-error %this "Not a date ~s" (typeof this))
 	  (with-access::JsDate this (val ms)
+	     (tprint "val=" val)
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)

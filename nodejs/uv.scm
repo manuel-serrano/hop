@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Oct 25 18:42:16 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 18:51:29 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -171,21 +171,25 @@
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
-				 (with-handler
-				    (lambda (e)
-				       (js-worker-exception-handler th e 8))
-				    (for-each (lambda (action)
-						 (with-trace 'nodejs-async (car action)
-						    [assert (th) (eq? th (current-thread))]
-						    ((cdr action))))
-				       (with-access::WorkerHopThread th (mutex)
-					  (synchronize mutex
-					     (with-access::JsLoop loop (actions)
+				 (with-access::JsLoop loop (actions)
+				    (with-handler
+				       (lambda (e)
+					  (tprint "E1=" e)
+					  (set! retval
+					     (js-worker-exception-handler th e 8)))
+				       (for-each (lambda (action)
+						    (with-trace 'nodejs-async (car action)
+						       [assert (th) (eq? th (current-thread))]
+						       ((cdr action))))
+					  (with-access::WorkerHopThread th (mutex)
+					     (synchronize mutex
 						(let ((acts actions))
 						   (set! actions '())
-						   acts))))))
-				 (when (and (not keep-alive) (null? services))
-				    (uv-unref async)))))))
+						   acts)))))
+				    (when (and (not keep-alive)
+					       (null? services)
+					       (null? actions))
+				       (uv-unref async))))))))
 	 (synchronize mutex
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
@@ -198,27 +202,32 @@
 		     (js-raise-range-error %this
 			"Maximum call stack size exceeded" #f))))
 	    (when (pair? tqueue) (uv-async-send async)))
-	 (with-handler
-	    (lambda (e)
-	       (exit (js-worker-exception-handler th e 8)))
-	    (unwind-protect
-	       (uv-run loop)
-	       (with-access::WorkerHopThread th (onexit services subworkers)
-		  ;; unregister all the worker services
-		  (for-each unregister-service! services)
-		  ;; tell the subworkers that they will never receive
-		  ;; any message from their parent
-		  (for-each (lambda (w)
-			       (with-access::WorkerHopThread w (mutex keep-alive)
-				  (synchronize mutex
-				     (set! keep-alive #f)
-				     (js-worker-push-thunk! w "ping"
-					(lambda ()
-					   (uv-async-send async))))))
-		     subworkers)
-		  ;; call the cleanup function
+	 (unwind-protect
+	    (with-access::WorkerHopThread th (onexit)
+	       (with-handler
+		  (lambda (e)
+		     (set! retval (js-worker-exception-handler th e 8)))
+		  (uv-run loop))
+	       ;; call the cleanup function
+	       (with-handler
+		  (lambda (e)
+		     (exit (js-worker-exception-handler th e 8)))
 		  (when (isa? onexit JsFunction)
-		     (js-call1 %this onexit (js-undefined) retval))))))))
+		     (js-call1 %this onexit (js-undefined) retval))
+		  (exit retval)))
+	    (with-access::WorkerHopThread th (services subworkers)
+	       ;; unregister all the worker services
+	       (for-each unregister-service! services)
+	       ;; tell the subworkers that they will never receive
+	       ;; any message from their parent
+	       (for-each (lambda (w)
+			    (with-access::WorkerHopThread w (mutex keep-alive)
+			       (synchronize mutex
+				  (set! keep-alive #f)
+				  (js-worker-push-thunk! w "ping"
+				     (lambda ()
+					(uv-async-send async))))))
+		  subworkers))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-terminate! ::WorkerHopThread ...                       */
@@ -1238,11 +1247,13 @@
    [assert (%worker) (eq? (current-thread) %worker)]
    (with-access::JsGlobalObject %this (js-object)
       (let ((wrap (js-new %this js-object)))
+	 (tprint "getaddrinfo...")
 	 (uv-getaddrinfo node #f
 	    :family family
 	    :loop (worker-loop %worker)
 	    :callback
 	    (lambda (res)
+	       (tprint "getaddrinfo...res=" res)
 	       (let ((oncomplete (js-get wrap 'oncomplete %this)))
 		  (if (isa? oncomplete JsFunction)
 		      (if (pair? res)

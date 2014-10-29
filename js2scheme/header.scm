@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Oct 23 21:29:47 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 06:04:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -83,13 +83,13 @@
       (js-def-extern '%__INIT #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(begin
-	   (nodejs-eval %this GLOBAL)
-	   (nodejs-function %this GLOBAL)
+	   (nodejs-eval %this %scope)
+	   (nodejs-function %this %scope)
 	   ,(unless (string=? id "buffer.js")
-	       `(nodejs-import! %this GLOBAL
+	       `(nodejs-import! %this %scope
 		   (nodejs-require-core "buffer" %worker %this) 'Buffer))
 	   ,(unless (string=? id "timers.js")
-	       `(nodejs-import! %this GLOBAL
+	       `(nodejs-import! %this %scope
 		   (nodejs-require-core "timers" %worker %this)))))
       (instantiate::J2SUndefined
 	 (loc loc))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Oct 26 06:26:41 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 06:01:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -43,6 +43,13 @@
 (define thrower-set #f)
 
 ;*---------------------------------------------------------------------*/
+;*    current-loc ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-expander current-loc
+   (lambda (x e)
+      (when (epair? x) `',(cer x))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    js-init-function! ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3       */
@@ -56,7 +63,7 @@
       (set! js-function-prototype
 	 (instantiate::JsFunction
 	    (name "builtin")
-	    (src #f)
+	    (src "[Function.__proto__@function.scm]")
 	    (len -1)
 	    (procedure (lambda l (js-undefined)))
 	    (alloc (lambda (_) #unspecified))
@@ -70,6 +77,7 @@
       (set! js-function
 	 (js-make-function %this
 	    (%js-function %this) 1 "Function"
+	    :src (cons (current-loc) "Function() { /* function.scm */}")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
 	    :construct (js-function-construct %this)))
@@ -138,7 +146,7 @@
       (with-access::JsFunction this (src)
 	 (when (pair? src)
 	    (format "~a:~a" (cadr (car src)) (caddr (car src))))))
-   
+
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))

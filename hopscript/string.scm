@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct 13 17:49:22 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 16:47:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -301,7 +301,7 @@
 		    (u 0)
 		    (r -1))
 	    (cond
-	       ((or (=fx i len) (=fx u start))
+	       ((or (=fx i len) (>fx u start))
 		r)
 	       ((substring-at? s searchstr i)
 		(loop (+fx searchlen i) (+fx u usearchlen) u))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Oct  1 10:08:47 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 08:22:10 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -162,7 +162,8 @@
 				   (not (eq? (hopc-pass) 'object)))
 		  :module-name (or (hopc-js-module-name)
 				   (input-file->module-name in))
-		  :module-path (hopc-js-module-path)))))
+		  :module-path (hopc-js-module-path)
+		  :hopscript-header (hopc-js-header)))))
 
       (define (generate out::output-port lang::symbol)
 	 (case lang
@@ -239,7 +240,8 @@
 					 (not (eq? (hopc-pass) 'object)))
 			:module-name (or (hopc-js-module-name)
 					 (input-file->module-name in))
-			:module-path (hopc-js-module-path))))
+			:module-path (hopc-js-module-path)
+			:hopscript-header (hopc-js-header))))
 	       file)))
       
       (let* ((opts (hopc-bigloo-options))

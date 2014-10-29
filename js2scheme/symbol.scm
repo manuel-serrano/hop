@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Oct 13 18:27:46 2014 (serrano)                */
+;*    Last change :  Mon Oct 27 07:50:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -182,7 +182,12 @@
 		   (check-strict-mode-eval id "Function name" loc)))
 	     (nonstrict-params! params))
 
-	 (let* ((decls (filter (lambda (d) (not-in? d params)) (collect* body)))
+	 (let* ((decls (filter (lambda (d)
+				  ;; see ecma-262-51.html#sec-10.2
+				  (or (isa? d J2SDeclFun)
+				      (isa? d J2SDeclCnstFun)
+				      (not-in? d params)))
+			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
 			      (loc loc)))

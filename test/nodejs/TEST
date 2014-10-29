@@ -95,6 +95,9 @@ for chapter in $chapters; do
         success=`expr $success + 1`
         echo "ok."
         echo "ok. ($success)" >> /tmp/TEST-NODEJS.out
+        if [ "$verb " != " " ]; then
+          cat /tmp/TEST-NODEJS.out.tmp >> /tmp/TEST-NODEJS.out
+        fi
       else
         failure=`expr $failure + 1`
         echo "failure !!!"

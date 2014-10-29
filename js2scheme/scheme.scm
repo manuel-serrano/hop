@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Oct 26 06:23:20 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 11:18:21 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -31,8 +31,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
 ;*---------------------------------------------------------------------*/
-(define j2s-unresolved-put-workspace 'global)
+(define j2s-unresolved-put-workspace '%this)
+(define j2s-unresolved-del-workspace '%this)
 (define j2s-unresolved-get-workspace '%scope)
+(define j2s-unresolved-call-workspace '%this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -234,8 +236,8 @@
 	       (j2s-scheme-unjson)
 	       
 	       `(define (main args)
-		   (define %worker (js-init-main-worker! %this))
-		   (define %scope (js-clone %this))
+		   (define %worker (js-init-main-worker! %this #f))
+		   (define %scope (nodejs-new-scope-object %this))
 		   (define this
 		     (with-access::JsGlobalObject %this (js-object)
 			(js-new0 %this js-object)))
@@ -289,8 +291,9 @@
 		(let ((fun-name (string->symbol
 				   (format "function:~a:~a"
 				      (cadr loc) (caddr loc)))))
-		   (if (and #f (in-eval? return))
-		       (j2s-unresolved-put! `',ident value #f 'normal)
+		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
+		       `(js-decl-eval-put! %scope
+			   ',ident ,value ,(eq? mode 'strict) %this)
 		       `(begin
 			   (define ,ident ,value)
 			   (js-bind! %this ,global ',id
@@ -365,9 +368,9 @@
 ;*    j2s-function-src ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun conf)
-   (let ((m (config-get conf :mmap-src)))
-      (match-case loc
-	 ((at ?path ?start)
+   (match-case loc
+      ((at ?path ?start)
+       (let ((m (config-get conf :mmap-src)))
 	  `'(,loc . ,(when (mmap? m)
 			(with-access::J2SFun val (body)
 			   (with-access::J2SBlock body (endloc)
@@ -573,11 +576,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-unresolved-put! field expr throw::bool mode::symbol)
+(define (j2s-unresolved-put! field expr throw::bool mode::symbol return)
    ;; no need to type check obj as we statically know that it is an obj
-   (if (eq? mode 'strict)
-       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t %this)
-       `(js-put! ,j2s-unresolved-put-workspace ,field ,expr ,throw %this)))
+   (cond
+      ((and (in-eval? return)
+	    (not (eq? j2s-unresolved-put-workspace
+		    j2s-unresolved-get-workspace)))
+       `(js-unresolved-eval-put! %scope ,field ,expr ,(eq? mode 'strict) %this))
+      ((eq? mode 'strict)
+       `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field ,expr #t %this))
+      (else
+       `(js-put! ,j2s-unresolved-put-workspace ,field ,expr ,throw %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SUnresolvedRef ...                                */
@@ -1142,7 +1151,7 @@
 	      (with-access::J2SUnresolvedRef expr (id)
 		 (err id))
 	      (with-access::J2SUnresolvedRef expr (id)
-		 `(js-delete! %scope ',id #f %this))))
+		 `(js-delete! ,j2s-unresolved-del-workspace ',id #f %this))))
 	 ((isa? expr J2SRef)
 	  (if (eq? mode 'strict)
 	      (with-access::J2SRef expr (decl)
@@ -1187,9 +1196,13 @@
 	    ((-)
 	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
 	     (let ((expr (j2s-scheme expr mode return conf)))
-		(if (eqv? expr 0)
-		    `(begin -0.0)
-		    `(js-neg ,expr %this))))
+		(cond
+		   ((eqv? expr 0)
+		    `(begin -0.0))
+		   ((number? expr)
+		    `(begin ,(- expr)))
+		   (else
+		    `(js-neg ,expr %this)))))
 	    ((~)
 	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
 	     `(js-bitnot ,(j2s-scheme expr mode return conf) %this))
@@ -1243,7 +1256,7 @@
 					 ,(j2s-unresolved id cache loc)
 					 %this)))
 			     ,(j2s-unresolved-put! `',id `(+ ,inc ,tmp)
-				 #t mode)
+				 #t mode return)
 			     ,tmp)))))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
@@ -1299,7 +1312,7 @@
 					 (js-tonumber ,(j2s-unresolved id cache loc)
 					    %this )
 					 %this)))
-			     ,(j2s-unresolved-put! `',id tmp #t mode)
+			     ,(j2s-unresolved-put! `',id tmp #t mode return)
 			     ,tmp)))))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
@@ -1579,7 +1592,7 @@
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
-		   (j2s-unresolved-put! `',id name #f mode))))
+		   (j2s-unresolved-put! `',id name #f mode return))))
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field loc)
 		(epairify loc
@@ -1792,10 +1805,13 @@
 		       (string->symbol (format "js-call~a" (length args))))))
 	 (if (> (bigloo-debug) 0)
 	     (with-access::J2SCall this (loc)
-		`(,(symbol-append call '/debug) %this ',loc
+		`(,(symbol-append call '/debug)
+		  ,j2s-unresolved-call-workspace
+		  ',loc
 		  ,(j2s-scheme fun mode return conf) ,thisarg
 		  ,@(j2s-scheme args mode return conf)))
-	     `(,call %this ,(j2s-scheme fun mode return conf) ,thisarg
+	     `(,call ,j2s-unresolved-call-workspace
+		 ,(j2s-scheme fun mode return conf) ,thisarg
 		 ,@(j2s-scheme args mode return conf)))))
 
    (define (call-eval-function fun args)
@@ -1863,7 +1879,7 @@
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
 		   (j2s-unresolved-put! `',id
-		      (j2s-scheme rhs mode return conf) #f mode))))
+		      (j2s-scheme rhs mode return conf) #f mode return))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -1927,7 +1943,7 @@
 		   (js-binop loc op
 		      (j2s-scheme lhs mode return conf)
 		      (j2s-scheme rhs mode return conf))
-		   #t mode)))
+		   #t mode return)))
 	    (else
 	     (j2s-error "j2sscheme" "Illegal assignment" this))))))
 

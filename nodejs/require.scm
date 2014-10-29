@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Oct 25 19:10:49 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 09:53:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -677,6 +677,13 @@
 ;*    nodejs-eval ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    See js2scheme/header.scm                                         */
+;*    -------------------------------------------------------------    */
+;*    tests:                                                           */
+;*      ch7/7.2/S7.2_A1.1_T2.js                                        */
+;*      ch7/7.3/S7.3_A4_T1.js                                          */
+;*      ch8/8.7/8,7.2/8.7.2-1-s.js                                     */
+;*      ch10/10.4/10/4.3/10.4.3-1-19-s.js                              */
+;*      ch11/11.1/11.1.5/11.1.5_6-3-1.js                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-eval %this scope)
    
@@ -685,12 +692,23 @@
 	  str
 	  (call-with-input-string str
 	     (lambda (ip)
-		(%js-eval ip 'eval %this scope %this)))))
+		;; MS CARE, 28oct1024:  I'm not sure which variant is correct
+;* 		(%js-eval ip 'eval %this %this scope)                  */
+;* 		(%js-eval ip 'eval %this %this %this)                  */
+		(%js-eval ip 'eval %this %this scope)
+		))))
 
    (js-bind! %this scope 'eval
       :value (js-make-function %this js-eval 1 'eval :prototype (js-undefined))
       :configurable #f :enumerable #f))
 
+;*---------------------------------------------------------------------*/
+;*    current-loc ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-expander current-loc
+   (lambda (x e)
+      (when (epair? x) `',(cer x))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-function ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -716,6 +734,7 @@
       (with-access::JsGlobalObject %this (js-function-prototype)
 	 (js-make-function %this
 	    js-function-construct 1 "Function"
+	    :src (cons (current-loc) "Function() { /* require.scm */ }")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
 	    :construct js-function-construct)))

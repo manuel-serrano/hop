@@ -60,8 +60,13 @@
  "10.4.3-1-17-s.js"
  "10.4.3-1-17gs.js"
  "10.4.3-1-19gs.js"
+ ;; nodejs module global scope incompatibilities
  "10.4.3-1-63-s.js"
+ "10.4.3-1-64gs.js"
+ "10.4.3-1-65gs.js"
  "10.4.3-1-82-s.js"
+ "10.4.3-1-83gs.js"
+ "10.4.3-1-84gs.js"
  "11.2.3-3_5.js"
  "11.4.1-4.a-7.js"
  ;; callee/caller not supported

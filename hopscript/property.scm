@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 24 09:06:24 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 13:06:02 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -53,6 +53,8 @@
 	   
 	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
+	   (js-unresolved-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
+	   (js-decl-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
@@ -202,29 +204,6 @@
 				   (eq? ,p ,name)))
 			  ,prop)))
 	     (if ,desc (,succeed ,o ,desc) (,fail))))))
-
-;*---------------------------------------------------------------------*/
-;*    jsobject-find ...                                                */
-;*    -------------------------------------------------------------    */
-;*    This is a general macro that walks thru the prototype chains,    */
-;*    looking of a property. It calls on of the successXXX hooks       */
-;*    when found.                                                      */
-;*---------------------------------------------------------------------*/
-;* (define-macro (jsobject-find o name successmap successprop failure) */
-;*    (let ((obj (gensym 'o)))                                         */
-;*       `(let loop ((,obj ,o))                                        */
-;* 	  (with-access::JsObject ,obj (cmap __proto__)                 */
-;* 	     (if cmap                                                  */
-;* 		 (jsobject-map-find ,obj ,name ,successmap             */
-;* 		    (lambda ()                                         */
-;* 		       (if (isa? __proto__ JsObject)                   */
-;* 			   (loop __proto__)                            */
-;* 			   (,failure))))                               */
-;* 		 (jsobject-properties-find ,obj ,name ,successprop     */
-;* 		    (lambda ()                                         */
-;* 		       (if (isa? __proto__ JsObject)                   */
-;* 			   (loop __proto__)                            */
-;* 			   (,failure)))))))))                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-find ...                                               */
@@ -849,6 +828,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-unresolved-put! o::JsObject p value throw::bool %this::JsGlobalObject)
    (js-put-jsobject! o p value throw #f %this))
+
+
+;*---------------------------------------------------------------------*/
+;*    js-unresolved-eval-put! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-unresolved-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
+   (if (eq? (js-get-own-property scope p %this) (js-undefined))
+       (js-put-jsobject! %this p value throw (not throw) %this)
+       (js-put! scope p value throw %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-decl-eval-put! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-decl-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
+   (if (eq? (js-get-own-property scope p %this) (js-undefined))
+       (js-put-jsobject! %this p value throw #t %this)
+       (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ...                                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 24 18:14:43 2014 (serrano)                */
+;*    Last change :  Tue Oct 28 09:34:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1085,13 +1085,16 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-direct-eval ...                                              */
+;*    -------------------------------------------------------------    */
+;*    tests:                                                           */
+;*      ch11/11.13/11.13.2/S11.13.2_A1_T1.js                           */
 ;*---------------------------------------------------------------------*/
 (define (%js-direct-eval s strict %this this scope)
    (if (not (string? s))
        s
        (call-with-input-string (if strict (string-append "'use strict';\n" s) s)
 	  (lambda (ip)
-	     (%js-eval ip 'eval %this
+	     (%js-eval ip 'eval %this ;; (used to be scope)
 		(if strict (js-undefined) this)
 		scope)))))
 
@@ -1101,7 +1104,7 @@
 (define (%js-eval in::input-port parser::symbol %this::JsGlobalObject this scope)
    (library-load 'hopscript lib-hopscript-path)
    ;; bind the global object
-   (with-trace 1 '%js-eval
+   (with-trace 'hopscript-eval '%js-eval
       (trace-item "in=" (input-port-name in))
       (with-handler
 	 (lambda (e)
