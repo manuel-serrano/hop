@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Oct 26 06:49:03 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 14:42:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -66,8 +66,7 @@
 ;*    hop-register-value ::object ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop-register-value o::object register::procedure)
-   (with-access::JsService o (svc)
-      (register svc)))
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */
