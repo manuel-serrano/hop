@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Tue Oct 14 05:42:34 2014 (serrano)                */
+/*    Last change :  Wed Oct 29 15:10:59 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -952,7 +952,7 @@ function hop_xml_make_id( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_comprehension ...                                            */
 /*---------------------------------------------------------------------*/
-function hop_comprehension( iterable, fun, test, _name, _ast ) {
+function hop_comprehension( iterable, fun, test, _name, _astp, _aste ) {
    if( test === true ) {
       return iterable.map( fun );
    } else {

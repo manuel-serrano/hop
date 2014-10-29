@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Oct 14 09:25:38 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:10:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -331,7 +331,9 @@
 	    (append (j2s-js iterable tildec dollarc mode evalp conf)
 	       `(", " ,@fun ", " ,@cond ", " ,(format "~s" name) ", "
 		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json test op)))))
+				    (lambda (op) (ast->json test op))))
+		   ,(format "~s" (call-with-output-string
+				    (lambda (op) (ast->json expr op)))))
 	       '(")"))))
       
       (with-access::J2SDecl decl (id)
