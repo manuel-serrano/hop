@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Oct 29 15:10:35 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:16:45 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -333,7 +333,9 @@
 		   ,(format "~s" (call-with-output-string
 				    (lambda (op) (ast->json test op))))
 		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json expr op)))))
+				    (lambda (op) (ast->json expr op))))
+		   ,(format "~s" (call-with-output-string
+				    (lambda (op) (ast->json decl op)))))
 	       '(")"))))
       
       (with-access::J2SDecl decl (id)

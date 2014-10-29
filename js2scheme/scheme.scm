@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 29 15:04:55 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:16:37 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -543,17 +543,19 @@
 		    (ast-pred (call-with-output-string
 				 (lambda (op) (ast->json test op))))
 		    (ast-expr (call-with-output-string
-				 (lambda (op) (ast->json expr op)))))
+				 (lambda (op) (ast->json expr op))))
+		    (ast-decl (call-with-output-string
+				 (lambda (op) (ast->json decl op)))))
 		(epairify loc
 		   (if (not (isa? test J2SBool))
 		       (let ((test `(lambda (this ,n)
 				       ,(j2s-scheme test mode return conf))))
 			  `(js-array-comprehension %this ,iter ,fun ,test
-			      ',n ,ast-pred ,ast-expr))
+			      ',n ,ast-pred ,ast-expr ,ast-decl))
 		       (with-access::J2SBool test (val)
 			  (if val
 			      `(js-array-comprehension %this ,iter ,fun #t
-				  ',n ,ast-pred ,ast-expr)
+				  ',n ,ast-pred ,ast-expr ,ast-decl)
 			      `(js-vector->jsarray '#() %this))))))))))
 
 ;*---------------------------------------------------------------------*/

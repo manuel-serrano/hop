@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 29 15:06:01 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:17:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1279,7 +1279,8 @@
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions
-   (define (array-prototype-comprehension this::obj fun test _name _astp _aste)
+   (define (array-prototype-comprehension this::obj fun test _name
+	      _astp _aste _astd)
       (if (eq? test #t)
 	  ;; a mere map
 	  (with-access::JsGlobalObject %this (js-array-prototype)
@@ -1293,7 +1294,7 @@
 		   (js-call1 %this jsmap i fun))))))
 
    (js-bind! %this js-array-prototype 'comprehension
-      :value (js-make-function %this array-prototype-comprehension 4 'comprehension
+      :value (js-make-function %this array-prototype-comprehension 5 'comprehension
 		:prototype (js-undefined))
       :enumerable #f))
 
