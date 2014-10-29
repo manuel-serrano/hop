@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 21 09:26:17 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:06:01 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -33,7 +33,7 @@
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
-	      ::obj ::symbol ::bstring)))
+	      ::obj ::symbol ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
@@ -1279,7 +1279,7 @@
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions
-   (define (array-prototype-comprehension this::obj fun test _name _ast)
+   (define (array-prototype-comprehension this::obj fun test _name _astp _aste)
       (if (eq? test #t)
 	  ;; a mere map
 	  (with-access::JsGlobalObject %this (js-array-prototype)
@@ -1908,12 +1908,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-comprehension ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-array-comprehension %this iterable fun test _name _ast)
+(define (js-array-comprehension %this iterable fun test _name _astp _aste)
    (let ((jscomp (js-get iterable 'comprehension %this)))
-      (js-call4 %this jscomp iterable
+      (js-call5 %this jscomp iterable
 	 (js-make-function %this fun 1 "comprehension-expr")
 	 (if (eq? test #t)
 	     #t
 	     (js-make-function %this test 1 "comprehension-test"))
-	 _name _ast)))
+	 _name _astp _aste)))
 	
