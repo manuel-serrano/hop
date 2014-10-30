@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Jun 11 17:09:34 2014 (serrano)                */
+/*    Last change :  Wed Oct 29 17:25:59 2014 (serrano)                */
 /*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -687,6 +687,20 @@ function H6( attrs ) {
 
 function HR( attrs ) {
    return hop_dom_create( "hr", arguments );
+}
+
+/*** META (define-macro (<HEADER> . args)
+     `(hop_dom_create "header" ,@args)) */
+
+function HEADER( attrs ) {
+   return hop_dom_create( "header", arguments );
+}
+
+/*** META (define-macro (<HGROUP> . args)
+     `(hop_dom_create "hgroup" ,@args)) */
+
+function HGROUP( attrs ) {
+   return hop_dom_create( "hgroup", arguments );
 }
 
 /*** META (define-macro (<HTML> . args)

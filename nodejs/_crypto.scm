@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Wed Sep 24 07:44:56 2014 (serrano)                */
+;*    Last change :  Thu Oct 30 07:30:47 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -231,15 +231,19 @@
 	 (__proto__ secure-context-proto)))
    
    (define (connection this jsctx serverp request-cert-or-server-name reject)
-      (with-access::JsSecureContext jsctx (ctx)
-	 (instantiate::JsSSLConnection
-	    (__proto__ connection-proto)
-	    (ssl (instantiate::ssl-connection
-		    (ctx ctx)
-		    (isserver (js-toboolean serverp))
-		    (request-cert (when serverp request-cert-or-server-name))
-		    (server-name (unless serverp request-cert-or-server-name))
-		    (reject-unauthorized reject))))))
+      (cond-expand
+	 (enable-ssl
+	  (with-access::JsSecureContext jsctx (ctx)
+	     (instantiate::JsSSLConnection
+		(__proto__ connection-proto)
+		(ssl (instantiate::ssl-connection
+			(ctx ctx)
+			(isserver (js-toboolean serverp))
+			(request-cert (when serverp
+					 request-cert-or-server-name))
+			(server-name (unless serverp
+					request-cert-or-server-name))
+			(reject-unauthorized reject))))))))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context

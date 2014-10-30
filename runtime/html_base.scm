@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Oct 29 15:21:53 2014 (serrano)                */
+;*    Last change :  Wed Oct 29 15:26:37 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -65,6 +65,7 @@
 	    (<H6> . ::obj)
 	    (<HR> . ::obj)
 	    (<HEADER> . ::obj)
+	    (<HGROUP> . ::obj)
 	    (<I> . ::obj)
 	    (<IFRAME> . ::obj)
 	    (<INPUT> . ::obj)
@@ -161,6 +162,7 @@
 (define-xml-element <H6>)
 (define-xml xml-empty-element #t <HR>)
 (define-xml-element <HEADER>)
+(define-xml-element <HGROUP>)
 (define-xml-element <I>)
 (define-xml-element <IFRAME>)
 (define-xml-element <INS>)
