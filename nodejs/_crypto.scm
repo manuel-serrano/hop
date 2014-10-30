@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Oct 30 07:30:47 2014 (serrano)                */
+;*    Last change :  Thu Oct 30 10:48:20 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -31,6 +31,9 @@
    
    (export  (process-crypto ::JsGlobalObject)))
 
+(cond-expand
+   (enable-ssl
+    
 ;*---------------------------------------------------------------------*/
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -43,36 +46,24 @@
 	 0 name))
 
    (define (secure-context-init this . args)
-      (cond-expand
-	 (enable-ssl
-	  (with-access::JsSecureContext this (ctx)
-	     (let ((met (if (pair? args)
-			    (js-tostring (car args) %this)
-			    "SSLv23_method")))
-		(set! ctx (instantiate::secure-context (method met))))))
-	 (else
-	  #unspecified)))
+      (with-access::JsSecureContext this (ctx)
+	 (let ((met (if (pair? args)
+			(js-tostring (car args) %this)
+			"SSLv23_method")))
+	    (set! ctx (instantiate::secure-context (method met))))))
 
    (define (add-root-certs this)
-      (cond-expand
-	 (enable-ssl
-	  (with-access::JsSecureContext this (ctx)
-	     (secure-context-add-root-certs! ctx)))
-	 (else
-	  #unspecified)))
+      (with-access::JsSecureContext this (ctx)
+	 (secure-context-add-root-certs! ctx)))
    
    (define (add-ca-cert this cert)
-      (cond-expand
-	 (enable-ssl
-	  (with-access::JsSecureContext this (ctx)
-	     (if (string? cert)
-		 (secure-context-add-ca-cert! ctx cert 0 (string-length cert))
-		 (with-access::JsTypedArray cert (%data byteoffset length)
-		    (secure-context-add-ca-cert! ctx %data
-		       (uint32->fixnum byteoffset)
-		       (uint32->fixnum length))))))
-	 (else
-	  #unspecified)))
+      (with-access::JsSecureContext this (ctx)
+	 (if (string? cert)
+	     (secure-context-add-ca-cert! ctx cert 0 (string-length cert))
+	     (with-access::JsTypedArray cert (%data byteoffset length)
+		(secure-context-add-ca-cert! ctx %data
+		   (uint32->fixnum byteoffset)
+		   (uint32->fixnum length))))))
    
    (define secure-context-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
@@ -231,19 +222,17 @@
 	 (__proto__ secure-context-proto)))
    
    (define (connection this jsctx serverp request-cert-or-server-name reject)
-      (cond-expand
-	 (enable-ssl
-	  (with-access::JsSecureContext jsctx (ctx)
-	     (instantiate::JsSSLConnection
-		(__proto__ connection-proto)
-		(ssl (instantiate::ssl-connection
-			(ctx ctx)
-			(isserver (js-toboolean serverp))
-			(request-cert (when serverp
-					 request-cert-or-server-name))
-			(server-name (unless serverp
-					request-cert-or-server-name))
-			(reject-unauthorized reject))))))))
+      (with-access::JsSecureContext jsctx (ctx)
+	 (instantiate::JsSSLConnection
+	    (__proto__ connection-proto)
+	    (ssl (instantiate::ssl-connection
+		    (ctx ctx)
+		    (isserver (js-toboolean serverp))
+		    (request-cert (when serverp
+				     request-cert-or-server-name))
+		    (server-name (unless serverp
+				    request-cert-or-server-name))
+		    (reject-unauthorized reject))))))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
@@ -264,5 +253,11 @@
 	      (Connection . ,conn))
 	    %this))))
 
-
+;*---------------------------------------------------------------------*/
+;*    no ssl support                                                   */
+;*---------------------------------------------------------------------*/
+)
+(else
+ (define (process-crypto %this)
+    #unspecified)))
 
