@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Oct 29 17:32:34 2014 (serrano)                */
+;*    Last change :  Thu Oct 30 14:19:08 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -712,7 +712,7 @@
 	 BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
 	 CANVAS CAPTION CENTER CITE CODE COL COLGROUP
 	 DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET
-	 FONT FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	 FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
 	 HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
 	 LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
 	 OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS

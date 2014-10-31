@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Oct 29 17:25:59 2014 (serrano)                */
+/*    Last change :  Thu Oct 30 14:18:54 2014 (serrano)                */
 /*    Copyright   :  2006-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -617,6 +617,13 @@ function FIELDSET( attrs ) {
 
 function FONT( attrs ) {
    return hop_dom_create( "font", arguments );
+}
+
+/*** META (define-macro (<FOOTER> . args)
+     `(hop_dom_create "footer" ,@args)) */
+
+function FOOTER( attrs ) {
+   return hop_dom_create( "footer", arguments );
 }
 
 /*** META (define-macro (<FORM> . args)
