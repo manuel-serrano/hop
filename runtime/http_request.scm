@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 31 11:15:35 2014 (serrano)                */
+;*    Last change :  Fri Oct 31 14:56:04 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -57,9 +57,9 @@
       (let* ((req (read/rp request-line-grammar port id out))
 	     (localaddr (socket-local-address sock))
 	     (hostaddr (socket-host-address sock))
-	     (localc (or (string=? hostaddr hostaddr)
+	     (localc (or (string=? hostaddr localaddr)
 			 (find (lambda (addr)
-				  (string=? localaddr addr))
+				  (string=? hostaddr addr))
 			    (hop-server-addresses))))
 	     (lanc (or localc
 		       (let ((i (string-index-right localaddr #\.)))
