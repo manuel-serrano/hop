@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 29 15:17:03 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 18:19:37 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -44,8 +44,7 @@
 	 (lambda (op)
 	    (obj->javascript-expr o op))))
    (lambda (s)
-      (call-with-input-string s
-	 javascript->jsobj)))
+      (call-with-input-string s javascript->jsobj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */

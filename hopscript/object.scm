@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Oct 30 14:19:08 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 14:47:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -100,7 +100,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsObject op compile isexpr)
    (with-access::WorkerHopThread (js-current-worker) (%this)
-      (display "{" op)
+      ;; force the literal to be treated as an expression
+      (display "({" op)
       (let ((sep ""))
 	 (js-for-in o
 	    (lambda (p)
@@ -112,7 +113,7 @@
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))
-      (display "}" op)))
+      (display "})" op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %this ...                                                        */

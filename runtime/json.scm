@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Mon Oct 13 17:50:25 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 18:19:07 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -38,22 +38,22 @@
 ;*    init-javascript->jsobj! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (init-javascript->jsobj! #!key plist->jsobject vector->jsarray)
-   (set! vector->jsarray vector->jsarray)
-   (set! plist->jsobject plist->jsobject))
+   (set! %vector->jsarray vector->jsarray)
+   (set! %plist->jsobject plist->jsobject))
 
 ;*---------------------------------------------------------------------*/
 ;*    js_array ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (vector->jsarray v) v)
-(define (plist->jsobject l) l)
+(define %vector->jsarray (lambda (v) v))
+(define %plist->jsobject (lambda (l) l))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript->jsobj ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (javascript->jsobj o)
    (javascript->obj o
-      vector->jsarray: vector->jsarray
-      plist->jsobject: plist->jsobject))
+      vector->jsarray: %vector->jsarray
+      plist->jsobject: %plist->jsobject))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ...                                                    */

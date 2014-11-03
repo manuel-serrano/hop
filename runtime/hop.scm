@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Oct 13 17:43:11 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 16:01:26 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -246,53 +246,56 @@
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback proc::symbol req success fail parse-json)
    (lambda (p status header clength tenc)
-      (when (and (input-port? p) (>elong clength #e0))
-	 (input-port-fill-barrier-set! p (elong->fixnum clength)))
-      (case status
-	 ((200)
-	  ;; see hop-json-mime-type and hop-bigloo-mime-type
-	  (let ((obj (case (header-content-type header)
-			((application/x-hop)
-			 (string->obj (read-chars clength p)))
-			((application/x-url-hop)
-			 (string->obj (url-decode (read-chars clength p))))
-			((application/x-json-hop)
-			 (string->obj
-			    (byte-array->string 
-			       (javascript->obj (read-chars clength p)))))
-			((application/json)
-			 ((or parse-json javascript->obj) p))
-			((application/x-javascript)
-			 (or parse-json javascript->obj p))
-			((text/html application/xhtml+xml)
-			 (car (last-pair (parse-html p (elong->fixnum clength)))))
-			(else
-			 (read-string p)))))
-	     (success obj)))
-	 ((201 204 304)
-	  ;; no message body
-	  (success (instantiate::xml-http-request
-		      (status status)
-		      (header header)
-		      (input-port p))))
-	 ((401 407)
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise (user-access-denied req))))
-	 (else
-	  (if (procedure? fail)
-	      (fail (instantiate::xml-http-request
-		       (status status)
-		       (header header)
-		       (input-port p)))
-	      (raise
-		 (instantiate::&error
-		    (proc proc)
-		    (msg (format "Illegal status `~a'" status))
-		    (obj (when (input-port? p) (read-string p))))))))))
+      (with-trace 'with-hop "make-http-callback"
+	 (trace-item "status=" status)
+	 (when (and (input-port? p) (>elong clength #e0))
+	    (input-port-fill-barrier-set! p (elong->fixnum clength)))
+	 (case status
+	    ((200)
+	     (trace-item "ctype=" (header-content-type header))
+	     ;; see hop-json-mime-type and hop-bigloo-mime-type
+	     (let ((obj (case (header-content-type header)
+			   ((application/x-hop)
+			    (string->obj (read-chars clength p)))
+			   ((application/x-url-hop)
+			    (string->obj (url-decode (read-chars clength p))))
+			   ((application/x-json-hop)
+			    (string->obj
+			       (byte-array->string 
+				  (javascript->obj (read-chars clength p)))))
+			   ((application/json)
+			    ((or parse-json javascript->obj) p))
+			   ((application/x-javascript)
+			    (or parse-json javascript->obj p))
+			   ((text/html application/xhtml+xml)
+			    (car (last-pair (parse-html p (elong->fixnum clength)))))
+			   (else
+			    (read-string p)))))
+		(success obj)))
+	    ((201 204 304)
+	     ;; no message body
+	     (success (instantiate::xml-http-request
+			 (status status)
+			 (header header)
+			 (input-port p))))
+	    ((401 407)
+	     (if (procedure? fail)
+		 (fail (instantiate::xml-http-request
+			  (status status)
+			  (header header)
+			  (input-port p)))
+		 (raise (user-access-denied req))))
+	    (else
+	     (if (procedure? fail)
+		 (fail (instantiate::xml-http-request
+			  (status status)
+			  (header header)
+			  (input-port p)))
+		 (raise
+		    (instantiate::&error
+		       (proc proc)
+		       (msg (format "Illegal status `~a'" status))
+		       (obj (when (input-port? p) (read-string p)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */
@@ -316,7 +319,7 @@
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
-   (with-trace 2 "with-url"
+   (with-trace 'with-hop "with-url"
       (trace-item "url=" url)
       (trace-item "header=" header)
       (cond
@@ -385,7 +388,7 @@
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
       " http://" host ":" port path "\n")
-   (with-trace 2 "with-hop"
+   (with-trace 'with-hop "with-hop"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)
       (cond

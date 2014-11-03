@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Oct 13 17:46:03 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 15:46:47 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -33,9 +33,9 @@
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsArray ...                                  */
+;*    object-serializer ::JsArguments ...                              */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArray
+(register-class-serialization! JsArguments
    (lambda (o)
       (call-with-output-string
 	 (lambda (op)

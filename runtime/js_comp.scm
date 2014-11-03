@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sun Oct 26 06:48:06 2014 (serrano)                */
+;*    Last change :  Mon Nov  3 15:32:03 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -172,7 +172,7 @@
 		  (else 
 		   (compile ((class-field-accessor f) obj) op))))))
       (display "}" op))
-   
+
    (let ((klass (object-class obj)))
       (if (nil? obj)
 	  (begin
