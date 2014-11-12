@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Oct 10 17:01:01 2014 (serrano)                */
+;*    Last change :  Thu Nov  6 07:55:52 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -320,15 +320,17 @@
 (define (js-slow+ left right %this)
    (let ((left (js-toprimitive left 'any %this))
 	 (right (js-toprimitive right 'any %this)))
-      (if (or (string? left) (string? right))
-	  (js-string-append
-	     (js-tostring left %this)
-	     (js-tostring right %this))
+      (cond
+	 ((string? left)
+	  (js-string-append left (js-tostring right %this)))
+	 ((string? right)
+	  (js-string-append (js-tostring left %this) right))
+	 (else
 	  (let* ((left (js-tonumber left %this))
 		 (right (js-tonumber right %this)))
 	     (if (or (not (= left left)) (not (= right right)))
 		 +nan.0
-		 (+ left right))))))
+		 (+ left right)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js- ...                                                          */

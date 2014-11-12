@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 29 15:16:37 2014 (serrano)                */
+;*    Last change :  Wed Nov  5 11:36:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -640,8 +640,25 @@
 ;*    j2s-scheme ::J2SString ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SString mode return conf)
+   
+   (define (utf8-index str)
+      (let ((len (string-length str)))
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (if (>fx (char->integer (string-ref str i)) 127)
+		   i
+		   (loop (+fx i 1)))))))
+   
    (with-access::J2SString this (loc val)
-      val))
+      (let ((ui (utf8-index val)))
+	 (if (not ui)
+	     ;; this is an ascii string
+	     val
+	     ;; this is an utf8 string
+	     (epairify loc
+		`(let ((s ,val))
+		    (string-ascii-sentinel-set! s ,ui)
+		    s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRegExp ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Oct 28 18:51:29 2014 (serrano)                */
+;*    Last change :  Fri Nov  7 06:55:42 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -174,7 +174,6 @@
 				 (with-access::JsLoop loop (actions)
 				    (with-handler
 				       (lambda (e)
-					  (tprint "E1=" e)
 					  (set! retval
 					     (js-worker-exception-handler th e 8)))
 				       (for-each (lambda (action)

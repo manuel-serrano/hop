@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Oct 22 10:25:23 2014 (serrano)                */
+;*    Last change :  Thu Nov  6 16:11:57 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -47,7 +47,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! this::JsWebSocket name proc . l)
    (with-access::JsWebSocket this (ws)
-      (add-event-listener! ws name proc)))
+      (add-event-listener! ws name
+	 (lambda (evt)
+	    (proc (duplicate::websocket-event evt
+		     (target this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWebSOcketServer ...                      */

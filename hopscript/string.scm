@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Oct 28 16:47:57 2014 (serrano)                */
+;*    Last change :  Wed Nov  5 11:39:16 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -33,7 +33,7 @@
 
    (export (js-init-string! ::JsGlobalObject)
 	   
-	   (inline js-string-append ::bstring ::bstring)
+	   (inline js-string-append::bstring ::bstring ::bstring)
 
 	   (utf8-codepoint-length::long ::bstring)))
 
@@ -106,7 +106,7 @@
 			     (enumerable #f)
 			     (value (utf8-codepoint-length v)))))
 		  (with-access::JsString o (val properties)
-		     (set! val v)
+		     (set! val (string-ascii-sentinel-mark! v))
 		     (set! properties (list len)))))
 	    
 	    (if (null? arg)
@@ -137,7 +137,8 @@
 	    (ucs2-string->utf8-string
 	       (apply ucs2-string
 		  (map (lambda (c)
-			  (integer->ucs2 (uint16->fixnum (js-touint16 c %this))))
+			  (integer->ucs2
+			     (uint16->fixnum (js-touint16 c %this))))
 		     l))))
 	 (js-bind! %this js-string 'fromCharCode
 	    :value (js-make-function %this
@@ -246,8 +247,14 @@
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
    (define (concat this . rest)
-      (apply string-append (js-tostring (js-cast-string %this this) %this)
-	 (map! (lambda (a) (js-tostring a %this)) rest)))
+      (let ((left (js-tostring (js-cast-string %this this) %this)))
+	 (match-case rest
+	    (()
+	     left)
+	    ((?right)
+	     (js-string-append left (js-tostring right %this)))
+	    (else
+	     (js-string-appendN left rest %this)))))
    
    (js-bind! %this obj 'concat
       :value (js-make-function %this concat 1 'concat)
@@ -387,8 +394,8 @@
 		       (segments '()))
 	       (cond
 		  ((>=fx i stop)
-		   (apply string-append
-		      (reverse (cons (substring fmt j (+fx stop 1)) segments))))
+		   (let ((strs (reverse (cons (substring fmt j (+fx stop 1)) segments))))
+		      (js-string-appendN (car strs) (cdr strs) %this)))
 		  ((not (char=? (string-ref fmt i) #\$))
 		   (loop (+fx i 1) j segments))
 		  (else
@@ -461,7 +468,7 @@
 		      ((not i)
 		       string)
 		      ((isa? replacevalue JsFunction)
-		       (string-append (substring string 0 i)
+		       (js-string-append3 (substring string 0 i)
 			  (js-tostring (js-call3 %this replacevalue (js-undefined)
 					  searchstr i string) %this)
 			  (substring string (+fx i (string-length searchstr)))))
@@ -470,7 +477,7 @@
 			     (a (js-new %this js-array 1)))
 			  (js-put! a 'input string #f %this)
 			  (js-put! a (js-toname 0 %this) searchstr #f %this)
-			  (string-append (substring string 0 i)
+			  (js-string-append3 (substring string 0 i)
 			     (table22 newstring a string)
 			     (substring string (+fx i (string-length searchstr)))))))))
 	       ((not (js-get searchvalue 'global %this))
@@ -482,7 +489,7 @@
 		       string)
 		      ((isa? replacevalue JsFunction)
 		       (let ((i (js-get res 'index %this)))
-			  (string-append (substring string 0 i)
+			  (js-string-append3 (substring string 0 i)
 			     (js-tostring
 				(js-apply %this replacevalue (js-undefined)
 				   (cons (js-get res (js-toname 0 %this) %this)
@@ -493,7 +500,7 @@
 		      (else
 		       (let ((newstring (js-tostring replacevalue %this))
 			     (i (js-get res 'index %this)))
-			  (string-append (substring string 0 i)
+			  (js-string-append3 (substring string 0 i)
 			     (table22 newstring res string)
 			     (substring string
 				(+fx i (string-length (js-get res (js-toname 0 %this) %this))))))))))
@@ -528,7 +535,7 @@
 							      (list i string))))
 						     %this)))
 					   (loop (cdr matches)
-					      (string-append (substring res 0 (+fx offset i))
+					      (js-string-append3 (substring res 0 (+fx offset i))
 						 v
 						 (substring res (+fx offset (+fx i l))))
 					      (+fx offset (-fx (string-length v) l)))))))
@@ -544,7 +551,7 @@
 						  (l (string-length (js-get m (js-toname 0 %this) %this)))
 						  (v (table22 newstring m string)))
 					      (loop (cdr matches)
-						 (string-append (substring res 0 (+fx offset i))
+						 (js-string-append3 (substring res 0 (+fx offset i))
 						    v
 						    (substring res (+fx offset (+fx i l))))
 						 (+fx offset (-fx (string-length v) l)))))))))
@@ -926,7 +933,24 @@
 		(if (<=fx len index)
 		    (call-next-method)
 		    (utf8-string-ref val index)))))))
-       
+
+;*---------------------------------------------------------------------*/
+;*    js-string-append3 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-string-append3 left middle right)
+   (js-string-append left (js-string-append middle right)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-appendN ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-string-appendN left rest %this)
+   (let loop ((s left)
+	      (rest rest))
+      (if (null? rest)
+	  s
+	  (let ((right (js-tostring (car rest) %this)))
+	     (loop (js-string-append s right) (cdr rest))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-string-append ...                                             */
 ;*---------------------------------------------------------------------*/

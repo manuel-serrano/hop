@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Sun Oct 26 07:00:54 2014 (serrano)                */
+/*    Last change :  Thu Nov  6 14:12:03 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Services in workers example                                      */
@@ -16,7 +16,7 @@ var hop = require( "hop" );
 var w = new Worker( "./slave.js" );
 
 service worker4() {
-   var count = <SPAN> { id: "counter", "-" };
+   var count = <SPAN> { "-" };
    
    return <HTML> {
       <DIV> {

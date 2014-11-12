@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 15 08:36:53 2014 (serrano)                */
+;*    Last change :  Fri Nov  7 19:39:42 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -688,7 +688,7 @@
        (display this op)
        (display "\" }" op))
       (#unspecified
-       (display "null" op))
+       (display "undefined" op))
       (#t
        (display "true" op))
       (#f
@@ -782,6 +782,7 @@
 
    (json-parse ip
       :expr #t
+      :undefined #t
       :reviver (lambda (obj key v)
 		   (if (and (string? v) (member key '("loc" "endloc")))
 		       (let ((i (string-index-right v #\:)))
@@ -881,7 +882,9 @@
 (define-walk-method (json-link-decl! node::J2SRef env)
    (with-access::J2SRef node (decl)
       (with-access::%JSONDecl decl (%id)
-	 (set! decl (vector-ref env %id))
+	 (if (or (<fx %id 0) (>fx %id (vector-length env)))
+	     (error "json->ast" "Illegal reference" %id)
+	     (set! decl (vector-ref env %id)))
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
