@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/weblets/shutdown/shutdown.hop     */
+;*    serrano/prgm/project/hop/3.0.x/weblets/shutdown/shutdown.hop     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Mar 27 12:04:39 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 17:59:56 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -27,7 +27,7 @@
 	      (authorized-service? req 'shutdown))
 	  (<SHUTDOWN> req exitval restart
 		      (<SPAN> "Shutdown the serving HOP broker..."))
-	  (user-access-denied req))))
+	  (access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shutdown/kill ...                                                */

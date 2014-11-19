@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/weblets.hop       */
+;*    serrano/prgm/project/hop/3.0.x/weblets/weblets/weblets.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed Nov 16 16:51:36 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 17:58:32 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
 ;*    -------------------------------------------------------------    */
@@ -105,7 +105,7 @@
 	 (req (current-request)))
       (cond
 	 ((not (authorized-path? req path))
-	  (user-access-denied req))
+	  (access-denied req))
 	 ((not (file-exists? path))
 	  (http-file-not-found weblet))
 	 (else
@@ -179,7 +179,7 @@
 					 (newline op))))
 				(get-weblets repo))
 		      (display ")\n" op))))
-	  (user-access-denied req))))
+	  (access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblets/rss ...                                                  */

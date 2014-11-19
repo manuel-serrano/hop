@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/home/home.hop             */
+;*    serrano/prgm/project/hop/3.0.x/weblets/home/home.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:18:48 2006                          */
-;*    Last change :  Thu May 10 05:53:19 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 17:59:25 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP home page weblet.                                            */
 ;*=====================================================================*/
@@ -112,7 +112,7 @@
        (begin
 	  (home-hop-devel-version-set! ver)
 	  "done")
-       (user-access-denied (current-request))))
+       (access-denied (current-request))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home-main ...                                                    */

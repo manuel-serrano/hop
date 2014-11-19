@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Wed Apr  9 13:02:18 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 18:00:04 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP wiki                                                         */
@@ -48,7 +48,7 @@
 			      (backend be)
 			      (content-type mime-type)
 			      (xml res))))))
-	      (user-access-denied))
+	      (access-denied))
 	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
@@ -64,7 +64,7 @@
 		       (backend be)
 		       (content-type mime-type)
 		       (xml (wiki-view req path #f #t)))))
-	      (user-access-denied))
+	      (access-denied))
 	  (wiki-query req xml))))
 
 ;*---------------------------------------------------------------------*/
@@ -137,7 +137,7 @@
 		       (<DIV> :align "center"
 			  editor))))
 	      (http-file-not-found file))
-	  (user-access-denied))))
+	  (access-denied))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki/edit/editor ...                                             */
@@ -149,7 +149,7 @@
 	  (begin
 	     (run-process editor file :wait #f)
 	     #f)
-	  (user-access-denied))))
+	  (access-denied))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI:BODY> ...                                                  */

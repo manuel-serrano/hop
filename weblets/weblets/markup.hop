@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/weblets/markup.hop        */
+;*    serrano/prgm/project/hop/3.0.x/weblets/weblets/markup.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec  7 09:54:35 2007                          */
-;*    Last change :  Fri Jun  1 08:17:25 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 17:56:33 2014 (serrano)                */
+;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    weblets markups                                                  */
 ;*=====================================================================*/
@@ -23,7 +23,7 @@
 	   (<WEBLETS-LIST> req category)
 	   (<WEBLETS-PUBLISHER>)
 	   (<WEBLETS-CATEGORIES>)
-	   (<WEBLET> path auth)
+	   (<WEBLET> path auth req)
 	   (<WEBLET-INSTALL> url)))
 
 ;*---------------------------------------------------------------------*/
@@ -46,7 +46,7 @@
    (with-access::http-server-request req (authorization)
       (let ((authe (if authorization (http-decode-authentication authorization) #f)))
 	 (<DIV>
-	    (filter-map (lambda (w) (<WEBLET> w authe category))
+	    (filter-map (lambda (w) (<WEBLET> w authe category req))
 	       (sort string<? (get-weblets (weblets-repository))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -90,8 +90,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBLET> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLET> path auth category)
-   (with-access::http-request (current-request) (host port)
+(define (<WEBLET> path auth category req)
+   (with-access::http-request req (host port)
       (let* ((pinfo (package-info path))
 	     (info (if (string? pinfo)
 		       (with-input-from-string (package-info path) read)

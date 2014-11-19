@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct 24 15:09:37 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 17:59:48 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZBUILDER weblet                                                 */
@@ -320,7 +320,7 @@
 		 (default-previewer base path)
 		 (let ((preview ((car previewers) base path)))
 		    (or preview (loop (cdr previewers)))))))
-       (user-access-denied)))
+       (access-denied)))
 
 ;*---------------------------------------------------------------------*/
 ;*    default-previewer ...                                            */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/weblets/doc/services.hop          */
+;*    serrano/prgm/project/hop/3.0.x/weblets/doc/services.hop          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Wed Jan 11 15:24:20 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 17:59:14 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
 ;*=====================================================================*/
@@ -65,7 +65,7 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied
+       (access-denied
 	(current-request)
 	"Executing user code source is prohibited on this server")))
    
@@ -90,7 +90,7 @@
 			      (if (eof-object? e)
 				  v
 				  (loop (eval e))))))))))
-       (user-access-denied
+       (access-denied
 	(current-request)
 	"Executing user code source is prohibited on this server")))
    
