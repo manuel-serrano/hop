@@ -13,8 +13,8 @@ declarations.
 
 === server parameters ===
 
-  (hop-enable-proxing)
-  (hop-enable-proxing-set! arg)
+  (hop-enable-proxying)
+  (hop-enable-proxying-set! arg)
   (hop-proxy-authentication)
   (hop-proxy-authentication-set! arg)
   (hop-proxy-remote-authentication)
@@ -62,8 +62,8 @@ declarations.
 <server>
 
 === ++hop-enable-proxing++ ===
-<parameter> hop-enable-proxing
-<parameter> hop-enable-proxing-set!
+<parameter> hop-enable-proxying
+<parameter> hop-enable-proxying-set!
 
 <arguments>
 ^  access  ^   type    ^  current value                    ^  short description            ^

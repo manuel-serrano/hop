@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Sep 17 11:46:07 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 14:29:37 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -145,7 +145,7 @@
       (hop-verb 2 ": " (with-access::&error e (obj) obj) "\n")
       (scheduler-load-add! scd -1)
       (exception-notify e)
-      (raise (instantiate::&ignore-exception)))
+      #unspecified)
    
    (define (connect-stage scd thread)
       ;; We need to install our own handler (in addition to the one
@@ -155,8 +155,7 @@
 	 (make-scheduler-error-handler thread)
 	 (let loop ()
 	    (scheduler-load-add! scd 1)
-	    (with-stage-handler
-	       accept-error-handler (scd)
+	    (with-stage-handler accept-error-handler (scd)
 	       (with-access::scdthread thread (inbuf outbuf flushbuf)
 		  (let ((sock (socket-accept serv
 				 :inbuf inbuf

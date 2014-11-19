@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Jul 23 16:31:57 2014 (serrano)                */
+/*    Last change :  Tue Nov 18 16:13:13 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing how to implement keep-alive HTTP          */
@@ -31,7 +31,7 @@ service keepalive() {
 	    },
 	    3000 );
       },
-   hop.currentRequest() );
+   this );
 }
 
 console.log( "Go to \"http://%s:%d/hop/keepalive\" (and wait 3 sec).", hop.hostname, hop.port );

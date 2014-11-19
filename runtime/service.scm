@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jul 13 06:35:17 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 13:36:38 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -254,7 +254,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
    
-   (define (invoke proc vals)
+   (define (invoke proc req vals)
       (with-access::hop-service svc (id)
 	 (hop-verb 2 (hop-color req req " INVOKE.svc")
 	    " "
@@ -267,34 +267,46 @@
 	     (error id
 		"Illegal service arguments encoding"
 		`(,id ,vals)))
-	    ((correct-arity? proc (length vals))
-	     (apply proc vals))
+	    ((correct-arity? proc (+fx 1 (length vals)))
+	     (let ((env (current-dynamic-env))
+		   (name id))
+		($env-push-trace env name #f)
+		(let ((aux (apply proc req vals)))
+		   ($env-pop-trace env)
+		   aux)))
 	    (else
 	     (error id
 		(format "Wrong number of arguments (~a/~a)" (length vals)
-		   (procedure-arity proc))
+		   (-fx (procedure-arity proc) 1))
 		`(,id ,@vals))))))
+
    (with-access::hop-service svc (proc id decoder unjson)
-      (let ((ca (http-request-cgi-args req unjson)))
+      (multiple-value-bind (path args)
+	 (http-request-cgi-args req unjson)
 	 (cond
-	    ((null? (cdr ca))
-	     (invoke proc '()))
-	    ((equal? (cgi-arg "hop-encoding" ca) "hop")
+	    ((null? args)
+	     (let ((env (current-dynamic-env))
+		   (name id))
+		($env-push-trace env name #f)
+		(let ((aux (invoke proc req '())))
+		   ($env-pop-trace env)
+		   aux)))
+	    ((equal? (cgi-arg "hop-encoding" args) "hop")
 	     (with-access::http-request req (charset)
 		(set! charset 'UTF-8))
-	     (let ((vals (serialized-cgi-arg "vals" ca decoder)))
+	     (let ((vals (serialized-cgi-arg "vals" args decoder)))
 		(if (or (null? vals) (pair? vals))
-		    (invoke proc vals)
+		    (invoke proc req vals)
 		    (error id "Illegal arguments" vals))))
-	    ((equal? (cgi-arg "hop-encoding" ca) "json")
+	    ((equal? (cgi-arg "hop-encoding" args) "json")
 	     (with-access::http-request req (charset)
 		(set! charset 'UTF-8))
-	     (invoke proc (cgi-arg "json" ca)))
+	     (invoke proc req (cgi-arg "json" args)))
 	    (else
-	     (invoke proc
+	     (invoke proc req
 		(append-map (lambda (p)
 			       (list (string->keyword (car p)) (cdr p)))
-		   (cdr ca))))))))
+		   args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -401,25 +413,29 @@
 	  (loaded (synchronize *service-mutex*
 		     (hashtable-get *service-table* abspath))))
       (or loaded
-	  (let ((creq (current-request))
-		(th (current-thread)))
-	     (unwind-protect
-		(let ((req (instantiate::http-server-request
-			      (user (anonymous-user))
-			      (localclientp #t)
-			      (lanclientp #t)
-			      (abspath abspath)
-			      (method 'GET))))
-		   (current-request-set! th req)
-		   (autoload-filter req))
-		(current-request-set! th creq))))))
+	  (let ((req (instantiate::http-server-request
+			(abspath abspath)
+			(method 'GET))))
+	     (autoload-filter req)))))
+;* 	  (let (#;(creq (current-request))                             */
+;* 		(th (current-thread)))                                 */
+;* 	     (unwind-protect                                           */
+;* 		(let ((req (instantiate::http-server-request           */
+;* {* 			      (user (anonymous-user))                  *} */
+;* {* 			      (localclientp #t)                        *} */
+;* {* 			      (lanclientp #t)                          *} */
+;* 			      (abspath abspath)                        */
+;* 			      (method 'GET))))                         */
+;* 		   (current-request-set! th req)                       */
+;* 		   (autoload-filter req))                              */
+;* 		(current-request-set! th creq))))))                   */
    
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
    (when (isa? req http-server-request)
-      (with-access::http-server-request req (abspath user service method)
+      (with-access::http-server-request req (abspath service method)
 	 (when (hop-service-path? abspath)
 	    (let loop ((svc (synchronize *service-mutex*
 			       (hashtable-get *service-table* abspath))))
@@ -440,14 +456,16 @@
 			      (instantiate::http-response-string))
 			     ((>fx ttl 0)
 			      (unwind-protect
-				 (scheme->response (service-handler svc req) req)
+				 (scheme->response
+				    (service-handler svc req) req)
 				 (if (=fx ttl 1)
 				     (unregister-service! svc)
 				     (set! ttl (-fx ttl 1)))))
 			     (else
-			      (scheme->response (service-handler svc req) req))))
+			      (scheme->response
+				 (service-handler svc req) req))))
 			 (else
-			  (user-service-denied req user id)))))
+			  (service-denied req id)))))
 		  (else
 		   (let ((ini (hop-initial-weblet)))
 		      (cond
@@ -469,13 +487,14 @@
 			  (lambda (o)
 			     (if (eq? o #t)
 				 (let ((s (synchronize *service-mutex*
-					     (hashtable-get *service-table* abspath))))
+					     (hashtable-get *service-table*
+						abspath))))
 				    (if (not s)
-					(http-service-not-found abspath)
+					(http-service-not-found abspath req)
 					(loop s)))
-				 (http-error o))))
+				 (http-error o req))))
 			 (else
-			  (http-service-not-found abspath)))))))))))
+			  (http-service-not-found abspath req)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-reload-service ...                                         */
@@ -535,20 +554,19 @@
 (define (service-expired? svc)
    (with-access::hop-service svc (creation timeout path)
       (and (>fx timeout 0)
-	   (>elong (date->seconds (current-date))
-		   (+elong creation timeout)))))
+	   (>elong (current-seconds) (+elong creation timeout)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flush-expired-services! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (flush-expired-services!)
    (hashtable-filter! *service-table*
-		      (lambda (key svc)
-			 (if (service-expired? svc)
-			     (with-access::hop-service svc (path)
-				(mark-service-path-expired! path)
-				#f)
-			     #t))))
+      (lambda (key svc)
+	 (if (service-expired? svc)
+	     (with-access::hop-service svc (path)
+		(mark-service-path-expired! path)
+		#f)
+	     #t))))
 			 
 ;*---------------------------------------------------------------------*/
 ;*    unregister-service! ...                                          */

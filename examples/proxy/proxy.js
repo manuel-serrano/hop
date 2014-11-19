@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Mon Nov  3 14:51:20 2014 (serrano)                */
+/*    Last change :  Tue Nov 18 16:11:59 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Proxied server-to-server requests                                */
@@ -39,19 +39,19 @@ function hostId( req ) {
 }
 
 service proxysvc( name, path ) {
+   var req = this;
    return hop.HTTPResponseAsync(
       function( reply ) {
-	 svc( name, path + " via " + hostId( hop.currentRequest() ) )
+	 svc( name, path + " via " + hostId( req ) )
 	    .post( function( el ) {
 	       reply( el.map( function( e ) { return <DIV> { e } } ) );
-	    }, { host: hop.currentRequest().host, port: 8888 } );
-      } );
+	    }, { host: req.host, port: 8888 } );
+      }, this );
 }
 
 service svc( name, path ) {
    return [ name, name.toUpperCase(), name.toLowerCase(),
-	    path + " answered by "
-	    + hostId( hop.currentRequest() ) ];
+	    path + " answered by " + hostId( this ) ];
 }
 
 console.log( "Go to \"http://%s:%d/hop/proxy\"", hop.hostname, hop.port );

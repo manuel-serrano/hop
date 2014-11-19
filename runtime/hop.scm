@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Nov  3 16:01:26 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:04:32 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -36,8 +36,8 @@
    
    (export  (generic thread-request ::obj)
 	    (generic thread-request-set! ::obj ::obj)
-	    (inline current-request::obj)
-	    (inline current-request-set! ::thread ::obj)
+;* 	    (inline current-request::obj)                              */
+;* 	    (inline current-request-set! ::thread ::obj)               */
 	    (anonymous-request::http-request)
 	    (request-get::obj ::symbol)
 	    (request->response::%http-response ::http-request ::obj)
@@ -77,7 +77,8 @@
 	    (instantiate::http-server-request
 	       (http 'HTTP/1.0)
 	       (connection 'close)
-	       (user (anonymous-user)))))
+	       #;(user (anonymous-user))
+	       )))
    *anonymous-request*)
 
 ;*---------------------------------------------------------------------*/
@@ -153,10 +154,11 @@
 	      (filters (hop-filters)))
       (if (null? filters)
 	  (with-access::http-request m (content-length method path host port
-					  user header userinfo scheme http)
+					  header userinfo scheme http)
 	     (if (or (not (isa? req http-proxy-request))
 		     (not (hop-enable-proxying)))
-		 (hop-request-hook m (http-file-not-found path))
+		 (http-file-not-found path)
+;* 		 (hop-request-hook m (http-file-not-found path))       */
 		 (let* ((n (instantiate::http-response-proxy
 			      (scheme scheme)
 			      (method method)
@@ -168,16 +170,18 @@
 			      (header header)
 			      (bodyp (not (eq? method 'HEAD)))
 			      (content-length content-length)
-			      (request m)
+			      #;(request m)
 			      (remote-timeout (hop-read-timeout))
 			      (connection-timeout (hop-connection-timeout))))
 			(r (hop-run-hook (hop-http-response-proxy-hooks) m n)))
-		    (hop-request-hook m r))))
+;* 		    (hop-request-hook m r)                             */
+		    r)))
 	  (let ((n ((cdar filters) m)))
 	     (cond
 		((isa? n %http-response)
 		 (let ((r (hop-run-hook (hop-http-response-server-hooks) m n)))
-		    (hop-request-hook m r)))
+;* 		    (hop-request-hook m r)                             */
+		    r))
 		((eq? n m)
 		 (loop m (cdr filters)))
 		((isa? n http-request)
@@ -203,19 +207,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    Execute the request hook and set the response's request field.   */
 ;*---------------------------------------------------------------------*/
-(define (hop-request-hook::%http-response req rep)
-   (cond
-      ((not (isa? req http-request))
-       (error "hop-request-hook" "Illegal request" req))
-      ((not (isa? rep %http-response))
-       (error "hop-request-hook" "Illegal response" rep))
-      (else
-       (with-access::http-request req (hook)
-	  (let* ((rep2 (hook rep))
-		 (res (if (isa? rep2 %http-response) rep2 rep)))
-	     (with-access::%http-response res (request)
-		(set! request req))
-	     res)))))
+;* (define (hop-request-hook::%http-response req rep)                  */
+;*    (cond                                                            */
+;*       ((not (isa? req http-request))                                */
+;*        (error "hop-request-hook" "Illegal request" req))            */
+;*       ((not (isa? rep %http-response))                              */
+;*        (error "hop-request-hook" "Illegal response" rep))           */
+;*       (else                                                         */
+;*        (with-access::http-request req (hook)                        */
+;* 	  (let* ((rep2 (hook rep))                                     */
+;* 		 (res (if (isa? rep2 %http-response) rep2 rep)))       */
+;* 	     #;(with-access::%http-response res (request)              */
+;* 		(set! request req))                                    */
+;* 	     res)))))                                                  */
 
 ;*---------------------------------------------------------------------*/
 ;*    header-content-type ...                                          */
@@ -284,7 +288,7 @@
 			  (status status)
 			  (header header)
 			  (input-port p)))
-		 (raise (user-access-denied req))))
+		 (raise (access-denied req))))
 	    (else
 	     (if (procedure? fail)
 		 (fail (instantiate::xml-http-request
@@ -354,7 +358,7 @@
 		(else
 		 (let* ((s (string->symbol scheme))
 			(r (instantiate::http-server-request
-			      (user (class-nil user))
+;* 			      (user (class-nil user))                  */
 			      (scheme s)
 			      (id hop-to-hop-id)
 			      (userinfo userinfo)
@@ -400,7 +404,7 @@
 	  (let* ((req (instantiate::http-server-request
 			 (userinfo (when (and (string? user) (string? password))
 				      (string-append user ":" password)))
-			 (user (anonymous-user))
+;* 			 (user (anonymous-user))                       */
 			 (id hop-to-hop-id)
 			 (host host)
 			 (port port)
@@ -576,11 +580,11 @@
 (define (hop-get-file path thread)
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
-		  (localclientp #t)
-		  (lanclientp #t)
-		  (user (if (isa? reqi http-request)
-			    (with-access::http-request reqi (user) user)
-			    (anonymous-user)))
+;* 		  (localclientp #t)                                    */
+;* 		  (lanclientp #t)                                      */
+;* 		  (user (if (isa? reqi http-request)                   */
+;* 			    (with-access::http-request reqi (user) user) */
+;* 			    (anonymous-user)))                         */
 		  (path path)))
 	  (rep (request->response req thread)))
       (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Jul 13 15:57:44 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 10:10:14 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -105,7 +105,6 @@
       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">")
 ;*       (doctype "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">") */
       (html-attributes '())
-      (header-format "")
       (no-end-tags-elements '(link))
       (empty-end-tag #f)
       ;; the meta-format contains the closing >
@@ -120,7 +119,6 @@
       (mime-type "text/html")
       (doctype "<!DOCTYPE html>")
       (html-attributes '())
-      (header-format "")
       (no-end-tags-elements '(link))
       ;; the meta-format contains the closing >
       (meta-delimiter ">")))
@@ -507,10 +505,17 @@
       (display tag p)
       (xml-write-attributes attributes p backend)
       (with-access::xml-backend backend (mime-type meta-delimiter)
-	 (when content
-	    (display " content='" p)
-	    (fprintf p content mime-type (hop-charset))
-	    (display "'" p))
+	 (cond
+	    ((string? content)
+	     (display " content='" p)
+	     (fprintf p content mime-type (hop-charset))
+	     (display "'" p))
+	    (content
+	     (display " content='" p)
+	     (display mime-type p)
+	     (display "; charset=" p)
+	     (display (hop-charset) p)
+	     (display "'" p)))
 	 (display meta-delimiter p))
       (newline p)))
 
@@ -626,7 +631,8 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-write-html obj::xml-html p backend)	    
    (with-access::xml-backend backend (header-format doctype html-attributes)
-      (fprintf p header-format (hop-charset))
+      (when header-format
+	 (fprintf p header-format (hop-charset)))
       (display doctype p)
       (newline p)
       (with-access::xml-html obj (tag attributes body)
@@ -1040,13 +1046,11 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 ;*---------------------------------------------------------------------*/
 (define-tag <DELAY> ((id #unspecified string)
 		     body)
-   (if (and (pair? body)
-	    (procedure? (car body))
-	    (correct-arity? (car body) 0))
+   (if (and (pair? body) (procedure? (car body)) (correct-arity? (car body) 0))
        (instantiate::xml-delay
 	  (id (xml-make-id id))
 	  (thunk (car body)))
-       (error "<DELAY>" "Illegal delay's thunk" (car body))))
+       (error "<DELAY>" "Illegal thunk" (car body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PRAGMA> ...                                                     */

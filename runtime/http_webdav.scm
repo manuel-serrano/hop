@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/http_webdav.scm           */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_webdav.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
-;*    Last change :  Wed Jan 11 15:27:08 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Tue Nov 18 09:48:12 2014 (serrano)                */
+;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -215,7 +215,7 @@
 ;*    webdav-propfind ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (webdav-propfind req::http-request)
-   (with-access::http-request req (content-length socket abspath user header)
+   (with-access::http-request req (content-length socket abspath header)
       (let ((depth (get-header header depth: "infinity"))
 	    (props (if (<=elong content-length 0)
 		       (webdav-propfind-all-properties)
@@ -223,13 +223,13 @@
 			  content-length (socket-input socket)))))
 	 (cond
 	    ((not (authorized-service? req 'webdav))
-	     (user-service-denied req user 'webdav))
+	     (service-denied req 'webdav))
 	    ((not (authorized-path? req abspath))
-	     (user-access-denied req))
+	     (access-denied req))
 	    (else
 	     (with-access::xml-backend *webdav-backend* (mime-type)
 		(instantiate::http-response-xml
-		   (request req)
+		   #;(request req)
 		   (start-line "HTTP/1.1 207 Multi-Status")
 		   (backend *webdav-backend*)
 		   (content-type mime-type)
@@ -243,7 +243,7 @@
 ;*---------------------------------------------------------------------*/
 (define (webdav-proppatch req::http-request)
    (instantiate::http-response-string
-      (request req)
+      #;(request req)
       (charset (hop-locale))
       (start-line "HTTP/1.1 403 Forbidden")))
 
@@ -348,39 +348,39 @@
 ;*    webdav-mkcol ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (webdav-mkcol req::http-request)
-   (with-access::http-request req (abspath content-length user)
+   (with-access::http-request req (abspath content-length)
       (let* ((dir (dirname abspath))
 	     (parent (dirname dir)))
 	 (cond
 	    ((not (authorized-service? req 'webdav-write))
-	     (user-service-denied req user 'webdav-write))
+	     (service-denied req 'webdav-write))
 	    ((not (authorized-path? req dir))
-	     (user-access-denied req))
+	     (access-denied req))
 	    (else
 	     (cond
 		((not (directory? parent))
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 409 Conflict")))
 		((directory? dir)
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 405 Not allowed")))
 		((not (make-directory dir))
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 507 Insufficient Storage")))
 		((>=elong content-length #e0)
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 415 Unsupported Media Type")))
 		(else
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 201 Created")))))))))
 
@@ -393,7 +393,7 @@
 	 (cond
 	    ((not (file-exists? abspath))
 	     (instantiate::http-response-string
-		(request req)
+		#;(request req)
 		(charset (hop-locale))
 		(start-line "HTTP/1.1 404 File Not Found")))
 	    ((directory? abspath)
@@ -401,22 +401,22 @@
 		 (http-bad-request (format "Illegal depth: ~a" (cadr depth)))
 		 (if (delete-path abspath)
 		     (instantiate::http-response-string
-			(request req)
+			#;(request req)
 			(charset (hop-locale))
 			(start-line "HTTP/1.1 200 Ok"))
 		     (instantiate::http-response-string
-			(request req)
+			#;(request req)
 			(charset (hop-locale))
 			(start-line "HTTP/1.1 424 Failed Dependency")))))
 	    
 	    (else
 	     (if (delete-file abspath)
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 200 Ok"))
 		 (instantiate::http-response-string
-		    (request req)
+		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 424 Failed Dependency"))))))))
    
@@ -427,7 +427,7 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 (request req)
+	 #;(request req)
 	 (charset (hop-locale))
 	 (start-line status)))
    
@@ -455,7 +455,7 @@
 	  (resp "HTTP/1.1 201 Created")
 	  (with-access::xml-backend *webdav-backend* (mime-type)
 	     (instantiate::http-response-xml
-		(request req)
+		#;(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")
 		(backend *webdav-backend*)
 		(content-type mime-type)
@@ -512,8 +512,9 @@
    
    (with-access::http-request req (header
 				   abspath content-length
-				   scheme host port user)
-      (let* ((destination (get-header header destination: #f))
+				   scheme host port)
+      (let* ((user (http-request-user req))
+	     (destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
 	     (i (string-index destination #\:))
 	     (dest (when destination
@@ -534,7 +535,7 @@
 	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user (dirname dest)))
 		 (not (user-authorized-path? user abspath)))
-	     (user-access-denied req))
+	     (access-denied req))
 	    ((directory? abspath)
 	     (let ((depth (get-header header depth: "infinity")))
 		(cp-dir overwrite depth abspath dest)))
@@ -548,7 +549,7 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 (request req)
+	 #;(request req)
 	 (charset (hop-locale))
 	 (start-line status)))
    
@@ -591,8 +592,9 @@
    
    (with-access::http-request req (header
 				   abspath
-				   content-length scheme host port user)
-      (let* ((destination (get-header header destination: #f))
+				   content-length scheme host port)
+      (let* ((user (http-request-user req))
+	     (destination (get-header header destination: #f))
 	     (overwrite (get-header header overwrite: "T"))
 	     (i (string-index destination #\:))
 	     (dest (when destination
@@ -613,7 +615,7 @@
 	     (resp "HTTP/1.1 403 Forbidden"))
 	    ((or (not (user-authorized-path? user dest))
 		 (not (user-authorized-path? user abspath)))
-	     (user-access-denied req))
+	     (access-denied req))
 	    ((directory? abspath)
 	     (let ((depth (get-header header depth: "infinity")))
 		(if (and (string? depth) (string=? depth "infinity"))
@@ -635,21 +637,21 @@
 	 (cond
 	    ((not (output-port? p))
 	     (instantiate::http-response-string
-		(request req)
+		#;(request req)
 		(charset (hop-locale))
 		(start-line (if (directory? (dirname abspath))
 				"HTTP/1.1 507 Insufficient Storage"
 				"HTTP/1.1 409 Conflict"))))
 	    ((<=fx len (send-chars (socket-input socket) p len))
 	     (instantiate::http-response-string
-		(request req)
+		#;(request req)
 		(charset (hop-locale))
 		(start-line status)))
 	    (else
 	     (close-output-port p)
 	     (delete-file abspath)
 	     (instantiate::http-response-string
-		(request req)
+		#;(request req)
 		(charset (hop-locale))
 		(start-line "HTTP/1.1 507 Insufficient Storage")))))))
    

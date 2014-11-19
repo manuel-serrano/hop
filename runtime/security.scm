@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/security.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/security.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sat Oct 13 07:47:56 2012 (serrano)                */
-;*    Copyright   :  2009-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 07:54:05 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -36,7 +36,7 @@
 	    (hop-security-manager::obj)
 	    (hop-security-manager-set! ::obj)
 
-	    (xml-tree-compare::obj ::obj ::xml-backend)
+	    (xml-tree-compare::obj ::obj ::xml-backend ::http-request)
 	    (generic xml-compare a1::obj a2::obj)
 	    (xml-string-sanitize::bstring ::bstring)
 	    (xml-attribute-sanitize::obj ::obj ::keyword)))
@@ -67,7 +67,7 @@
 (define security-manager-default 
    (instantiate::security-manager
       (name "Unsecure")
-      (xml-sanitize (lambda (xml be) xml))
+      (xml-sanitize (lambda (xml be req) xml))
       (string-sanitize (lambda (s) s))
       (attribute-sanitize (lambda (a id) a))
       (inline-sanitize (lambda (n) n))
@@ -82,6 +82,7 @@
       (name "Secure tree")
       (xml-sanitize xml-tree-compare)
       (string-sanitize (lambda (s) s))
+      (attribute-sanitize (lambda (a id) a))
       (inline-sanitize (lambda (n) n))
       (script-sanitize (lambda (n) n))
       (runtime '())))
@@ -133,7 +134,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-tree-compare ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (xml-tree-compare::obj xml backend)
+(define (xml-tree-compare::obj xml backend req)
    (let ((p (open-output-string)))
       (xml-write xml p (duplicate::xml-backend backend
 			  (security security-manager-tree-compare)))
@@ -141,7 +142,7 @@
 	     (ast (skip-declaration (string->html s))))
 	 (with-handler
 	    (lambda (e)
-	       (let ((rep (http-error e)))
+	       (let ((rep (http-error e req)))
 		  (if (isa? rep http-response-xml)
 		      (begin
 			 (exception-notify e)

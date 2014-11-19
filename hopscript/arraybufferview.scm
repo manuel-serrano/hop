@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Oct  9 21:51:15 2014 (serrano)                */
+;*    Last change :  Fri Nov 14 08:41:52 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -69,19 +69,19 @@
    (js-init-typedarray! %this 'Int16Array
       2
       (lambda (buf o)
-	 (int16->fixnum ($s16/u8vector-ref buf o)))
+	 (int16->fixnum ($s16/u8vector-ref buf (*fx 2 o))))
       (lambda (buf o v)
 	 (let ((val (js-tointeger v %this)))
-	    ($s16/u8vector-set! buf o
+	    ($s16/u8vector-set! buf (*fx 2 o)
 	       (fixnum->int16 (if (flonum? val) (flonum->fixnum val) val))))))
    ;; Uint16Array
    (js-init-typedarray! %this 'Uint16Array
       2
       (lambda (buf o)
-	 (uint16->fixnum ($u16/u8vector-ref buf o)))
+	 (uint16->fixnum ($u16/u8vector-ref buf (*fx 2 o))))
       (lambda (buf o v)
 	 (let ((val (js-tointeger v %this)))
-	    ($u16/u8vector-set! buf o
+	    ($u16/u8vector-set! buf (*fx 2 o)
 	       (fixnum->uint16 (if (flonum? val) (flonum->fixnum val) val))))))
    ;; Int32Array
    (js-init-typedarray! %this 'Int32Array
@@ -89,16 +89,16 @@
       (lambda (buf o)
 	 (cond-expand
 	    (bint61
-	     (int32->fixnum ($s32/u8vector-ref buf o)))
+	     (int32->fixnum ($s32/u8vector-ref buf (*fx 4 o))))
 	    (else
-	     (let ((v::int32 ($s32/u8vector-ref buf o)))
+	     (let ((v::int32 ($s32/u8vector-ref buf (*fx 4 o))))
 		(if (or (>s32 v (bit-lshs32 #s32:1 28))
 			(<s32 v (negs32 (bit-lshs32 #s32:1 28))))
 		    (fixnum->flonum (int32->fixnum v))
 		    (int32->fixnum v))))))
       (lambda (buf o v)
 	 (let ((val (js-tointeger v %this)))
-	    ($s32/u8vector-set! buf o
+	    ($s32/u8vector-set! buf (*fx 4 o)
 	       (fixnum->int32 (if (flonum? val) (flonum->fixnum val) val))))))
    ;; Uint32Array
    (js-init-typedarray! %this 'Uint32Array
@@ -106,33 +106,33 @@
       (lambda (buf o)
 	 (cond-expand
 	    (bint61
-	     (uint32->fixnum ($s32/u8vector-ref buf o)))
+	     (uint32->fixnum ($s32/u8vector-ref buf (*fx 4 o))))
 	    (else
-	     (let ((v::uint32 ($s32/u8vector-ref buf o)))
+	     (let ((v::uint32 ($s32/u8vector-ref buf (*fx 4 o))))
 		(if (>u32 v (bit-lshu32 #u32:1 29))
-		    (uint32->flonum ($s32/u8vector-ref buf o))
-		    (uint32->fixnum ($s32/u8vector-ref buf o)))))))
+		    (uint32->flonum ($s32/u8vector-ref buf (*fx 4 o)))
+		    (uint32->fixnum ($s32/u8vector-ref buf (*fx 4 o))))))))
       (lambda (buf o v)
 	 (let ((val (js-tointeger v %this)))
-	    ($s32/u8vector-set! buf o
+	    ($s32/u8vector-set! buf (*fx 4 o)
 	       (if (flonum? val) (flonum->uint32 val) (fixnum->uint32 val))))))
    ;; Float32Array
    (js-init-typedarray! %this 'Float32Array
       4
       (lambda (buf o)
-	 ($f32/u8vector-ref buf o))
+	 ($f32/u8vector-ref buf (*fx 4 o)))
       (lambda (buf o v)
 	 (let ((val (js-tonumber v %this)))
-	    ($f32/u8vector-set! buf o
+	    ($f32/u8vector-set! buf (*fx 4 o)
 	       (if (fixnum? val) (fixnum->flonum val) val)))))
    ;; Float64Array
    (js-init-typedarray! %this 'Float64Array
       8
       (lambda (buf o)
-	 ($f64/u8vector-ref buf o))
+	 ($f64/u8vector-ref buf (*fx 8 o)))
       (lambda (buf o v)
 	 (let ((val (js-tonumber v %this)))
-	    ($f64/u8vector-set! buf o
+	    ($f64/u8vector-set! buf (*fx 8 o)
 	       (if (fixnum? val) (fixnum->flonum val) val)))))
    ;; DataView
    (js-init-dataview! %this))
@@ -585,96 +585,96 @@
 		     
 		     ;; Int8
 		     (js-bind! %this this 'getInt8
-			:value (js-make-function %this js-getInt8 1 "getInt8")
+			:value (js-make-function %this js-getInt8 2 "getInt8")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setInt8
-			:value (js-make-function %this js-setInt8 2 "setInt8")
+			:value (js-make-function %this js-setInt8 3 "setInt8")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Uint8
 		     (js-bind! %this this 'getUint8
-			:value (js-make-function %this js-getInt8 1 "getUint8")
+			:value (js-make-function %this js-getInt8 2 "getUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setUint8
-			:value (js-make-function %this js-setInt8 2 "setUint8")
+			:value (js-make-function %this js-setInt8 3 "setUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Int16
 		     (js-bind! %this this 'getInt16
-			:value (js-make-function %this js-getInt16 1 "getInt16")
+			:value (js-make-function %this js-getInt16 2 "getInt16")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setInt16
-			:value (js-make-function %this js-setInt16 2 "setInt16")
+			:value (js-make-function %this js-setInt16 3 "setInt16")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Uint16
 		     (js-bind! %this this 'getUint16
-			:value (js-make-function %this js-getUint16 1 "getUint16")
+			:value (js-make-function %this js-getUint16 2 "getUint16")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setUint16
-			:value (js-make-function %this js-setInt16 2 "setUint16")
+			:value (js-make-function %this js-setInt16 3 "setUint16")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Int32
 		     (js-bind! %this this 'getInt32
-			:value (js-make-function %this js-getInt32 1 "getInt32")
+			:value (js-make-function %this js-getInt32 2 "getInt32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setInt32
-			:value (js-make-function %this js-setInt32 2 "setInt32")
+			:value (js-make-function %this js-setInt32 3 "setInt32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Uint32
 		     (js-bind! %this this 'getUint32
-			:value (js-make-function %this js-getUint32 1 "getUint32")
+			:value (js-make-function %this js-getUint32 2 "getUint32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setUint32
-			:value (js-make-function %this js-setInt32 2 "setUint32")
+			:value (js-make-function %this js-setInt32 3 "setUint32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Float32
 		     (js-bind! %this this 'getFloat32
-			:value (js-make-function %this js-getFloat32 1 "getFloat32")
+			:value (js-make-function %this js-getFloat32 2 "getFloat32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setFloat32
-			:value (js-make-function %this js-setFloat32 2 "setFloat32")
+			:value (js-make-function %this js-setFloat32 3 "setFloat32")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     
 		     ;; Float64
 		     (js-bind! %this this 'getFloat64
-			:value (js-make-function %this js-getFloat64 1 "getFloat64")
+			:value (js-make-function %this js-getFloat64 2 "getFloat64")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
 		     (js-bind! %this this 'setFloat64
-			:value (js-make-function %this js-setFloat64 2 "setFloat64")
+			:value (js-make-function %this js-setFloat64 3 "setFloat64")
 			:configurable #t
 			:writable #t
 			:enumerable #t)
@@ -806,7 +806,7 @@
 	       (+fx (bit-lsh (int8->fixnum (uint8->int8 b0)) 8)
 		  (uint8->fixnum b1)))
 	    (js-get16 this offset lendian add))
-	 
+	  
 	 (define (js-getUint16 this::JsDataView offset lendian)
 	    (define (add b0 b1)
 	       (+fx (bit-lsh (uint8->fixnum b0) 8) (uint8->fixnum b1)))
@@ -816,7 +816,7 @@
 	    (js-dataview-set this offset value (js-totest lendian)
 	       (lambda (vec off value lendian)
 		  (if (eq? host-lendian lendian)
-		      ($s16/u8vector-set! vec (/fx off 2) value)
+		      ($s16/u8vector-set! vec off value)
 		      (let ((b0 (bit-and (bit-rsh value 8) #xff))
 			    (b1 (bit-and value #xff)))
 			 (if lendian
@@ -856,7 +856,7 @@
 	    (js-dataview-set this offset value (js-totest lendian)
 	       (lambda (vec off value lendian)
 		  (if (eq? host-lendian lendian)
-		      ($s32/u8vector-set! vec (/fx off 4) value)
+		      ($s32/u8vector-set! vec off value)
 		      (let ((b0 (bit-and (bit-rsh value 24) #xff))
 			    (b1 (bit-and (bit-rsh value 16) #xff))
 			    (b2 (bit-and (bit-rsh value 8) #xff))
@@ -883,7 +883,7 @@
 		     ((>=fx offset len)
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f32/u8vector-ref %data (/fx offset 4)))
+		      ($f32/u8vector-ref %data (->fixnum offset)))
 		     (else
 		      (u8vector-set! buf 0 (u8vector-ref %data (+fx offset 3)))
 		      (u8vector-set! buf 1 (u8vector-ref %data (+fx offset 2)))
@@ -903,7 +903,7 @@
 		     ((>=fx offset len)
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f32/u8vector-set! %data (/fx offset 4) v))
+		      ($f32/u8vector-set! %data (->fixnum offset) v))
 		     (else
 		      ($f32/u8vector-set! buf 0 v)
 		      (u8vector-set! %data offset (u8vector-ref buf 3))
@@ -922,8 +922,7 @@
 		     ((>=u32 offset (fixnum->uint32 len))
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f64/u8vector-ref %data
-			 (uint32->fixnum (/u32 offset 8))))
+		      ($f64/u8vector-ref %data (uint32->fixnum offset)))
 		     (else
 		      (let ((offset (uint32->fixnum offset)))
 			 (u8vector-set! buf 0 (u8vector-ref %data (+fx offset 7)))
@@ -933,7 +932,7 @@
 			 (u8vector-set! buf 4 (u8vector-ref %data (+fx offset 3)))
 			 (u8vector-set! buf 5 (u8vector-ref %data (+fx offset 2)))
 			 (u8vector-set! buf 6 (u8vector-ref %data (+fx offset 1)))
-			 (u8vector-set! buf 7 (u8vector-ref %data offset))
+			 (u8vector-set! buf 7 (u8vector-ref %data (+fx offset 0)))
 			 ($f64/u8vector-ref buf 0)))))))
 
 	 (define (js-setFloat64 this::JsDataView offset value lendian)
@@ -949,12 +948,11 @@
 		     ((>=u32 offset (fixnum->uint32 len))
 		      (js-undefined))
 		     ((eq? host-lendian lendian)
-		      ($f64/u8vector-set! %data
-			 (uint32->fixnum (/u32 offset 8)) v))
+		      ($f64/u8vector-set! %data (uint32->fixnum offset) v))
 		     (else
 		      ($f64/u8vector-set! buf 0 v)
 		      (let ((offset (uint32->fixnum offset)))
-			 (u8vector-set! %data offset (u8vector-ref buf 7))
+			 (u8vector-set! %data (+fx offset 0) (u8vector-ref buf 7))
 			 (u8vector-set! %data (+fx offset 1) (u8vector-ref buf 6))
 			 (u8vector-set! %data (+fx offset 2) (u8vector-ref buf 5))
 			 (u8vector-set! %data (+fx offset 3) (u8vector-ref buf 4))

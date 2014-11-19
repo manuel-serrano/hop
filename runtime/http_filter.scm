@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_filter.scm           */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_filter.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 24 13:19:41 2006                          */
-;*    Last change :  Sat Aug 18 07:43:04 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Sun Nov 16 07:59:10 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP response filtering                                          */
 ;*=====================================================================*/
@@ -29,19 +29,23 @@
 	    __hop_http-response
 	    __hop_http-proxy)
 	    
-   (export  (generic http-filter::symbol ::%http-response ::http-response-filter ::socket)))
+   (export  (generic http-filter::symbol ::%http-response ::http-response-filter ::obj ::socket)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-filter ::%http-response ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (http-filter::symbol r::%http-response f socket)
-   (http-response r socket))
+(define-generic (http-filter::symbol r::%http-response f request socket)
+   (http-response r request socket))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-filter ::http-response-proxy ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (http-filter r::http-response-proxy f socket)
-   (with-access::http-response-proxy r (scheme host port header content-length timeout request)
+(define-method (http-filter r::http-response-proxy f request socket)
+   (with-access::http-response-proxy r (scheme
+					  host port
+					  header content-length
+					  #;request
+					  timeout)
       (trace-item "remotehost=" host
 		  " remoteport=" port
 		  " timeout=" timeout)
@@ -111,7 +115,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Compose two filters                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (http-filter r::http-response-filter f socket)
+(define-method (http-filter r::http-response-filter f request socket)
    (with-access::http-response-filter r ((sr statusf)
 					 (hr headerf)
 					 (br bodyf)
@@ -122,7 +126,7 @@
 					    (bf bodyf))
 	 (let ((f (instantiate::http-response-filter
 		     (response rr)
-		     (request rq)
+		     #;(request rq)
 		     (statusf (lambda (s)
 				 (sf (sr s))))
 		     (headerf (lambda (h)
@@ -139,7 +143,7 @@
 				     (unwind-protect
 					(bf ip op status header cl)
 					(close-input-port ip)))))))))
-	    (http-response f socket)))))
+	    (http-response f request socket)))))
 
 				  
 			    

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Wed Jul 24 14:56:18 2013 (serrano)                */
-;*    Copyright   :  2008-13 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 14:30:21 2014 (serrano)                */
+;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -270,25 +270,23 @@
       (if (procedure? onerror)
 	  (let ((onerr onerror))
 	     (set! onerror #f)
-	     (with-handler
-		scheduler-default-handler
-		(case error-args-length
-		   ((0)
-		    (onerr e))
-		   ((1)
-		    (onerr e
-			   (vector-ref error-args 0)))
-		   ((2)
-		    (onerr e
-			   (vector-ref error-args 0)
-			   (vector-ref error-args 1)))
-		   ((3)
-		    (onerr e
-			   (vector-ref error-args 0)
-			   (vector-ref error-args 1)
-			   (vector-ref error-args 2)))
-		   (else
-		    (onerr e)))))
+	     (case error-args-length
+		((0)
+		 (onerr e))
+		((1)
+		 (onerr e
+		    (vector-ref error-args 0)))
+		((2)
+		 (onerr e
+		    (vector-ref error-args 0)
+		    (vector-ref error-args 1)))
+		((3)
+		 (onerr e
+		    (vector-ref error-args 0)
+		    (vector-ref error-args 1)
+		    (vector-ref error-args 2)))
+		(else
+		 (onerr e))))
 	  (scheduler-default-handler e))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Sat Oct 11 09:53:01 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:31:44 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
@@ -66,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-proxy ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-proxy socket)
+(define-method (http-response r::http-response-proxy request socket)
    (let ((count (+ 1 *debug-count*)))
       (synchronize *debug-mutex*
 	 (set! *debug-open* (cons count *debug-open*))
@@ -74,7 +74,10 @@
       (unwind-protect
 	 (with-trace 3 "http-response::http-response-proxy"
 	    (let loop ()
-	       (with-access::http-response-proxy r (scheme host port header content-length remote-timeout request connection-timeout)
+	       (with-access::http-response-proxy r (scheme host port header
+						      content-length remote-timeout
+						      #;request
+						      connection-timeout)
 		  (trace-item "remotehost=" host
 		     " remoteport=" port
 		     " connection-timeout=" connection-timeout)
@@ -91,10 +94,13 @@
 				 (connection-close! remote)))
 			   (cond
 			      ((isa? e &io-unknown-host-error)
-			       (http-response (http-error e) socket))
+			       (http-response (http-error e request)
+				  request socket))
 			      ((not remote)
 			       (if (isa? e &io-error)
-				   (http-response (http-remote-error host e) socket)
+				   (http-response
+				      (http-remote-error host e request)
+				      request socket)
 				   (raise e)))
 			      ((with-access::connection remote (wstart?) wstart?)
 			       ;; If we have already sent characters to the client
@@ -111,10 +117,11 @@
 				  (with-access::connection remote (request-id)
 				     request-id)
 				  ") " host ":" port "\n")
-			       (http-response r socket))
+			       (http-response r request socket))
 			      (else
 			       ;; This is an unrecoverable error
-			       (http-response (http-remote-error host e) socket))))
+			       (http-response (http-remote-error host e request)
+				  request socket))))
 			(begin
 			   (set! remote (remote-get-socket host port connection-timeout request ssl))
 			   ;; verb
@@ -157,8 +164,8 @@
 					   (when (output-port? (hop-capture-port))
 					      (log-capture request r))
 					   (if (assq :xhr-multipart header)
-					       (remote-multipart-body r socket remote)
-					       (remote-body r socket remote)))))))))))))
+					       (remote-multipart-body r request socket remote)
+					       (remote-body r request socket remote)))))))))))))
 	 (synchronize *debug-mutex*
 	    (set! *debug-open* (delete! count *debug-open*))))))
 
@@ -195,17 +202,17 @@
 ;*    is used for long polling).                                       */
 ;*    timeout does not make sense).                                    */
 ;*---------------------------------------------------------------------*/
-(define (remote-multipart-body r socket remote)
+(define (remote-multipart-body r request socket remote)
    (with-handler
       (lambda (e) 'close)
       (input-timeout-set! (connection-input remote) 0)
-      (remote-body r socket remote)))
+      (remote-body r request socket remote)))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-body ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (remote-body r::http-response-proxy socket remote::connection)
-   (with-access::http-response-proxy r (host port timeout request)
+(define (remote-body r::http-response-proxy request socket remote::connection)
+   (with-access::http-response-proxy r (host port #;request timeout)
       ;; the body
       (with-trace 4 "http-response-body"
 	 (let* ((wstart #f)

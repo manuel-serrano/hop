@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Aug 19 10:48:43 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:57:58 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -112,7 +112,7 @@
 	       (websocket-proxy-request? header))
 	  (websocket-proxy-response req))
 	 ((not (authorized-path? req abspath))
-	  (user-access-denied req))
+	  (access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))
@@ -133,7 +133,7 @@
    (with-access::http-request req (abspath query)
       (cond
 	 ((not (authorized-path? req abspath))
-	  (user-access-denied req))
+	  (access-denied req))
 	 ((not (file-exists? abspath))
 	  ;; an error
 	  (http-get-file-not-found req))
@@ -159,7 +159,7 @@
 	  (websocket-proxy-connect! host port req)
 	  ;; refused
 	  (instantiate::http-response-abort
-	     (request req)))))
+	     #;(request req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -168,7 +168,7 @@
    (with-access::http-request req (abspath timeout connection)
       (cond
 	 ((hop-service-path? abspath)
-	  (http-service-not-found abspath))
+	  (http-service-not-found abspath req))
 	 ((string=? abspath "/crossdomain.xml")
 	  (set! connection 'close)
 	  (let ((s (format "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -177,7 +177,7 @@
  <allow-access-from domain=\"*\" />
 </cross-domain-policy>" (hop-port))))
 	     (instantiate::http-response-string
-		(request req)
+		#;(request req)
 		(timeout timeout)
 		(content-type "application/xml")
 		(body s))))
@@ -198,7 +198,7 @@
 	  (hss-response req abspath))
 	 (else
 	  (instantiate::http-response-file
-	     (request req)
+	     #;(request req)
 	     (timeout timeout)
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
@@ -218,7 +218,7 @@
 	    ((isa? rep xml)
 	     (instantiate::http-response-xml
 		(backend (hop-xml-backend))
-		(request req)
+		#;(request req)
 		(timeout timeout)
 		(content-type (mime-type abspath "text/plain"))
 		(charset (hop-charset))
@@ -265,7 +265,7 @@
 		   ((and im (string<=? lm im))
 		    ;; not modified
 		    (instantiate::http-response-string
-		       (request req)
+		       #;(request req)
 		       (start-line "HTTP/1.1 304 Not Modified")
 		       (content-type (mime-type (prefix abspath) "text/plain"))
 		       (header `((Last-Modified: . ,lm)))
@@ -291,7 +291,7 @@
 	  ;; send a gzipped file with a mime type corresponding
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
-	     (request req)
+	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -305,7 +305,7 @@
 	       (accept-gzip? header))
 	  ;; send a gzipped version of the file
 	  (instantiate::http-response-file
-	     (request req)
+	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -318,7 +318,7 @@
 	  =>
 	  (lambda (icy)
 	     (instantiate::http-response-shoutcast
-		(request req)
+		#;(request req)
 		(timeout -1)
 		(start-line "ICY 200 OK")
 		(header `((Last-Modified: . ,last-modified)
@@ -328,7 +328,7 @@
 	 (else
 	  ;; send a regular file
 	  (instantiate::http-response-file
-	     (request req)
+	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Accept-Ranges: . "bytes")))
@@ -365,7 +365,7 @@
       (when (hop-enable-webdav)
 	 (set! options (add-options! options (webdav-options))))
       (instantiate::http-response-string
-	 (request req)
+	 #;(request req)
 	 (charset (hop-locale))
 	 (header options)
 	 (bodyp #f))))
@@ -380,11 +380,12 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (u user) method abspath http header)
+   (with-access::http-request req (socket host method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
-	       (socket-host-address socket)
-	       (if (isa? u user) (with-access::user u (name) name)) "-")
+	 (socket-host-address socket)
+	 (with-access::user (http-request-user req) (name)
+	    name))
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -451,11 +452,11 @@
 	 (display #\0 port))
       (display n port))
    
-   (with-access::http-request req (socket host (p port) (u user) method abspath http header)
+   (with-access::http-request req (socket host (p port) method abspath http header)
       ;; distant host address and user
       (fprintf port "~a - ~a "
-	       (socket-host-address socket)
-	       (if (isa? u user) (with-access::user u (name) name)) "-")
+	 (socket-host-address socket)
+	 (with-access::user (http-request-user req) (name) name)) 
       ;; date
       (display "[" port)
       (let* ((d   (current-date))
@@ -547,25 +548,31 @@
    
    ;; proxy hooks
    (hop-http-response-proxy-hook-add!
-    (lambda (req resp)
-       (with-access::http-request req (localclientp)
-	  (cond
-	     ((and (not localclientp)
-		   (or (not (hop-proxy-allow-remote-client))
-		       (not (hop-proxy-ip-allowed? req))))
-	      (instantiate::http-response-abort
-		 (request req)))
-	     ((and localclientp (not (hop-proxy-authentication)))
-	      resp)
-	     ((and (not localclientp)
-		   (not (hop-proxy-remote-authentication))
-		   (not (hop-proxy-authentication)))
-	      resp)
-	     (else
-	      (with-access::http-request req (user host port path header)
-		 (if (user-authorized-service? user 'proxy)
-		     resp
-		     (proxy-denied req user host))))))))
+      (lambda (req resp)
+	 (with-access::http-request req (socket)
+	    (if (not socket)
+		;; a inner request
+		resp
+		(let ((localclientp (http-request-local? req)))
+		   (cond
+		      ((and (not localclientp)
+			    (or (not (hop-proxy-allow-remote-client))
+				(not (hop-proxy-ip-allowed? req))))
+		       (instantiate::http-response-abort
+			  #;(request req)
+			  ))
+		      ((and localclientp (not (hop-proxy-authentication)))
+		       resp)
+		      ((and (not localclientp)
+			    (not (hop-proxy-remote-authentication))
+			    (not (hop-proxy-authentication)))
+		       resp)
+		      (else
+		       (with-access::http-request req (host port path header)
+			  (let ((user (http-request-user req)))
+			     (if (user-authorized-service? user 'proxy)
+				 resp
+				 (proxy-denied req user host)))))))))))
    
    ;; logging
    (when (output-port? (hop-log-file))

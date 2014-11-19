@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Oct  3 16:10:41 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:49:10 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -153,7 +153,8 @@
 (define *close-service* #f)
 (define *client-key* 0)
 (define *default-request* (instantiate::http-server-request
-			     (user (class-nil user))))
+			     #;(user (class-nil user))
+			     ))
 (define *ping* (symbol->string (gensym 'ping)))
 (define *clients-number* 0)
 
@@ -428,7 +429,6 @@
 		  (trace-item "socket=" socket )
 		  (trace-item "connected clients=" *websocket-response-list*))
 	       resp)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -481,7 +481,8 @@
 		     (let ((req (current-request)))
 			;; read the Flash's ending zero byte
 			(read-byte
-			   (socket-input (with-access::http-request req (socket) socket)))
+			   (socket-input
+			      (with-access::http-request req (socket) socket)))
 			(set! *flash-request-list*
 			   (cons (list (string->symbol key)
 				    req
@@ -490,7 +491,7 @@
 			;; increments the number of connected clients
 			(set! *clients-number* (+fx *clients-number* 1))
 			(instantiate::http-response-event
-			   (request req)
+			   #;(request req)
 			   (name key)))))))
 	 
 	 (set! *policy-file-service
@@ -499,7 +500,7 @@
 	       :timeout 0
 	       (#!key port key)
 	       (instantiate::http-response-string
-		  (request (current-request))
+		  #;(request (current-request))
 		  (content-type "application/xml")
 		  (body (hop-event-policy port)))))
 	 
@@ -527,7 +528,7 @@
 	       :id server-event
 	       :timeout 0
 	       (#!key event key mode padding)
-	       (server-event-register event key mode padding))))))
+	       (server-event-register event key mode padding (current-request)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-ajax-table ...                                              */
@@ -620,7 +621,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (server-event-register event key mode padding)
+(define (server-event-register event key mode padding req)
    
    (define (ajax-register-event! req key name padding)
       (with-trace 3 "ajax-register-event!"
@@ -666,7 +667,7 @@
 			       (lambda (l) (cons req l))
 			       (list req))
 	    (instantiate::http-response-string
-	       (request req)))))
+	       #;(request req)))))
 
    (define (multipart-register-event! req key name)
       (with-trace 3 "multipart-register-event!"
@@ -685,7 +686,7 @@
 		   ;; that's the way we have configured the xhr
 		   ;; on the client side but we must close the connection
 		   (instantiate::http-response-string
-		      (request req)
+		      #;(request req)
 		      (header '((Transfer-Encoding: . "chunked")))
 		      (content-length #e-2)
 		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
@@ -725,7 +726,8 @@
 				      name
 				      (lambda (l) (cons resp l))
 				      (list resp))
-		   (with-access::http-response-websocket resp (request)
+		   (instantiate::http-response-string)
+		   #;(with-access::http-response-websocket resp (request)
 		      (instantiate::http-response-string
 			 (request request))))
 		(error "server-event-register" "Illegal websocket entry" key)))))
@@ -738,8 +740,7 @@
 	    (trace-item "mode=" mode)
 	    (trace-item "padding=" padding))
 	 (if (<fx *clients-number* (hop-event-max-clients))
-	     (let ((req (current-request))
-		   (key (string->symbol key)))
+	     (let ((key (string->symbol key)))
 		;; set an output timeout on the socket
 		(with-access::http-request req (socket) 
 		   (output-timeout-set!
@@ -948,7 +949,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-event socket)
+(define-method (http-response r::http-response-event request socket)
    (let ((p (socket-output socket)))
       (with-access::http-response-event r (name)
 	 (fprintf p "<acknowledge name='~a'/>" name))
@@ -968,15 +969,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    ajax-signal-value ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (ajax-signal-value req resp)
-   (with-access::http-request req (socket)
+(define (ajax-signal-value request resp)
+   (with-access::http-request request (socket)
       (with-handler
 	 (lambda (e)
 	    (when debug-ajax
 	       (tprint "AJAX EVENT ERROR: " e))
 	    (unless (isa? e &io-error) (raise e))
 	    #f)
-	 (http-response resp socket)
+	 (http-response resp request socket)
 	 (socket-close socket)
 	 #t)))
 
@@ -1338,7 +1339,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-policy-file req)
    (instantiate::http-response-raw
-      (request req)
+      #;(request req)
       (connection 'close)
       (proc (lambda (p)
 	       (with-access::http-request req (port)

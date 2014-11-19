@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Nov  3 18:19:57 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:58:14 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -157,7 +157,8 @@
 	       (let ((req (instantiate::http-server-request
 			     (host "localhost")
 			     (port (hop-port))
-			     (user (anonymous-user)))))
+			     #;(user (anonymous-user))
+			     )))
 		  ;; set a dummy request
 		  (thread-request-set! #unspecified req)
 		  ;; preload the user files
@@ -171,8 +172,8 @@
 	       (for-each (lambda (svc)
 			    (let* ((path (string-append (hop-service-base) "/" svc))
 				   (req (instantiate::http-server-request
-					   (user (anonymous-user))
-					   (localclientp #t)
+;* 					   (user (anonymous-user))     */
+;* 					   (localclientp #t)           */
 					   (path path)
 					   (abspath path)
 					   (port (hop-port))
@@ -182,10 +183,10 @@
 				     (exception-notify err)
 				     (fprintf (current-error-port)
 					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-				  (current-request-set! #f req)
+				  #;(current-request-set! #f req)
 				  (service-filter req))))
 		  (hop-preload-services))
-	       (current-request-set! #f #f)
+	       #;(current-request-set! #f #f)
 	       ;; start the main loop
 	       (scheduler-accept-loop (hop-scheduler) serv #t))
 	    (if (thread-join! %worker) 0 1)))))

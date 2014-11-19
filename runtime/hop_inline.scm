@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/hop_inline.scm            */
+;*    serrano/prgm/project/hop/3.0.x/runtime/hop_inline.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Thu Jan 12 09:30:45 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 07:47:32 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -44,11 +44,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <INLINE> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <INLINE> ((id #unspecified string)
-			       (src #f string)
-			       (early #t boolean)
-			       (resource #unspecified list)
-			       (unsafe #f boolean))
+(define-tag <INLINE> ((id #unspecified string)
+		      (src #f string)
+		      (early #t boolean)
+		      (resource #unspecified list)
+		      (authorization #f string)
+		      (unsafe #f boolean))
    (cond
       ((not (string? src))
        (error "<INLINE>" "Missing :src attribute" src))
@@ -64,23 +65,19 @@
       (else
        (multiple-value-bind (_ userinfo host port path)
 	  (url-parse src)
-	  (let* ((req (current-request))
-		 (auth (and (isa? req http-server-request)
-			    (with-access::http-server-request req (authorization)
-			       authorization))))
-	     (if early
-		 (xml-inline (or host (hostname))
-			     (or port (hop-port))
-			     path userinfo auth id)
-		 (instantiate::xml-inline-element
-		    (tag '_)
-		    (eid id)
-		    (body '())
-		    (host host)
-		    (port port)
-		    (path path)
-		    (userinfo userinfo)
-		    (authorization auth))))))))
+	  (if early
+	      (xml-inline (or host (hostname))
+		 (or port (hop-port))
+		 path userinfo authorization id)
+	      (instantiate::xml-inline-element
+		 (tag '_)
+		 (eid id)
+		 (body '())
+		 (host host)
+		 (port port)
+		 (path path)
+		 (userinfo userinfo)
+		 (authorization authorization)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-inline-element ...                               */
@@ -103,7 +100,7 @@
        (host host)
        (port port)
        (path path)
-       (user (class-nil user))
+       #;(user (class-nil user))
        (userinfo userinfo)
        (authorization authorization))
     (lambda (p status header clength tenc)

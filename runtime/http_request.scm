@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri Oct 31 14:56:04 2014 (serrano)                */
+;*    Last change :  Tue Nov 18 18:05:07 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -30,7 +30,8 @@
 	    __hop_websocket
 	    __hop_event)
    
-   (export  (http-parse-request::http-request ::socket ::int ::int)))
+   (export  (http-parse-request::http-request ::socket ::int ::int)
+	    (http-request-local?::bool ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-error ...                                                  */
@@ -54,21 +55,45 @@
    (let ((port (socket-input sock))
 	 (out (socket-output sock)))
       (socket-timeout-set! sock timeout timeout)
-      (let* ((req (read/rp request-line-grammar port id out))
-	     (localaddr (socket-local-address sock))
-	     (hostaddr (socket-host-address sock))
-	     (localc (or (string=? hostaddr localaddr)
-			 (find (lambda (addr)
-				  (string=? hostaddr addr))
-			    (hop-server-addresses))))
-	     (lanc (or localc
-		       (let ((i (string-index-right localaddr #\.)))
-			  (substring=? localaddr hostaddr i)))))
-	 (with-access::http-request req (socket localclientp lanclientp)
+      (let ((req (read/rp request-line-grammar port id out)))
+;* 	     (localaddr (socket-local-address sock))                   */
+;* 	     (hostaddr (socket-host-address sock))                     */
+;* 	     (localc (or (socket-local? sock)                          */
+;* 			 (find (lambda (addr)                          */
+;* 				  (socket-host-address=? sock addr))   */
+;* 			    (hop-server-addresses))))                  */
+;* 	     (lanc (or localc                                          */
+;* 		       (let ((i (string-index-right localaddr #\.)))   */
+;* 			  (substring=? localaddr hostaddr i)))))       */
+	 (with-access::http-request req (socket) ;;localclientp #;lanclientp
 	    (set! socket sock)
-	    (set! localclientp localc)
-	    (set! lanclientp lanc)
+	    #;(set! localclientp localc)
+	    #;(set! lanclientp lanc)
 	    req))))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-local? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Is the request initiated by the local host ?                     */
+;*---------------------------------------------------------------------*/
+(define (http-request-local? req::http-request)
+   (with-access::http-request req (socket)
+      ;; assume socket to be a real socket
+      [assert () (let ((localc (or (socket-local? socket)
+				   (find (lambda (addr)
+					    (socket-host-address=? socket addr))
+				      (hop-server-addresses))))
+		       (localaddr (socket-local-address socket))
+		       (hostaddr (socket-host-address socket)))
+		    (equal? localc
+		       (or (string=? hostaddr localaddr)
+			   (find (lambda (addr)
+				    (string=? hostaddr addr))
+			      (hop-server-addresses)))))]
+      (or (socket-local? socket)
+	  (find (lambda (addr)
+		   (socket-host-address=? socket addr))
+	     (hop-server-addresses)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    request-eof ...                                                  */
@@ -105,6 +130,17 @@
 	      (raise request-eof-exception)
 	      (parse-error "request-line-grammar" "Illegal method"
 		 o (the-port)))))))
+
+;*---------------------------------------------------------------------*/
+;*    http-parse-error-msg ...                                         */
+;*---------------------------------------------------------------------*/
+(define (http-parse-error-msg c port)
+   (if (char? c)
+       (let ((line (http-read-line port)))
+	  (string-for-read
+	     (string-append "{" (string c) "}" (if (string? line) line ""))))
+       c))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-method-request ...                                    */
@@ -182,7 +218,8 @@
 			 (transfer-encoding te)
 			 (authorization pauth)
 			 (connection connection)
-			 (user user)))
+;* 			 (user user)                                   */
+			 ))
 		     (else
 		      (instantiate::http-server-request
 			 (id id)
@@ -191,7 +228,8 @@
 			 (scheme scheme)
 			 (userinfo userinfo)
 			 (path path)
-			 (abspath (charset-convert abspath (hop-charset) (hop-locale)))
+			 (abspath (charset-convert! abspath
+				     (hop-charset) (hop-locale)))
 			 (query query)
 			 (header header)
 			 (port port)
@@ -200,7 +238,8 @@
 			 (transfer-encoding te)
 			 (authorization auth)
 			 (connection connection)
-			 (user user))))))))))
+;* 			 (user user)                                   */
+			 )))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */
@@ -222,7 +261,8 @@
 	  (port (hop-port))
 	  (host "localhost")
 	  (content-length 10)
-	  (user (anonymous-user)))
+	  #;(user (anonymous-user))
+	  )
        (raise (instantiate::&hop-method-error
 		 (proc "request-line-grammar")
 		 (msg "policy file request not understood")

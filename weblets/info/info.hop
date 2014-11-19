@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Sep 20 07:04:13 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 09:37:54 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
@@ -60,20 +60,21 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path (u user) seconds)
-	    (hop-event-broadcast! info-event
-				  (<TR> :class "remote"
-				     (<TD> :nowrap #t
-					host ":" port)
-				     (<TD> :nowrap #t
-					path)
-				     (<TD> :nowrap #t
-					(if (isa? u user)
-					    (with-access::user u (name)
-					       name)
-					    ""))
-				     (<TD> :nowrap #t
-					(seconds->date seconds))))))
+	 (with-access::http-request req (http host port path seconds)
+	    (let ((u (http-request-user req)))
+	       (hop-event-broadcast! info-event
+		  (<TR> :class "remote"
+		     (<TD> :nowrap #t
+			host ":" port)
+		     (<TD> :nowrap #t
+			path)
+		     (<TD> :nowrap #t
+			(if (isa? u user)
+			    (with-access::user u (name)
+			       name)
+			    ""))
+		     (<TD> :nowrap #t
+			(seconds->date seconds)))))))
       rep))
 
 ;*---------------------------------------------------------------------*/
@@ -202,7 +203,7 @@
 					      (<NPTABHEAD> "Config")
 					      (<DELAY>
 						 (lambda ()
-						    (<CONFIG>))))
+						    (<CONFIG> req))))
 					   (<NPTAB>
 					      (<NPTABHEAD> "Server")
 					      (<DELAY>
@@ -239,7 +240,7 @@
 						 (lambda ()
 						    (<PERFS>)))))))))))))
 		(<FOOT>)))
-	  (user-access-denied req))))
+	  (access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    info/documentation ...                                           */
@@ -260,8 +261,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    <CONFIG> ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (<CONFIG>)
-   (with-access::http-request (current-request) (socket)
+(define (<CONFIG> req)
+   (with-access::http-request req (socket)
       (list
 	 (<H1> "Uptime")
 	 (set! traffic-hookingp #f)
@@ -580,7 +581,7 @@ mmmmmmmmmmlil"))))
       (with-access::http-request req (connection)
 	 (set! connection 'close))
       (instantiate::http-response-string
-	 (request req)
+;* 	 (request req)                                                 */
 	 (content-type (mime-type "hop-16x16.png" "image/png"))
 	 (body perfs-network-image))))
 

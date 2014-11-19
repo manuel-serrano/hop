@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Tue Oct 14 09:04:26 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:11:45 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -149,13 +149,13 @@
 		      (if (and (string? etag)
 			       (=elong (string->elong etag) signature))
 			  (instantiate::http-response-string
-			     (request req)
+			     #;(request req)
 			     (start-line "HTTP/1.1 304 Not Modified")
 			     (content-type mime)
 			     (header hd)
 			     (charset (hop-locale)))
 			  (instantiate::http-response-file
-			     (request req)
+			     #;(request req)
 			     (charset (hop-locale))
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))
@@ -171,7 +171,7 @@
 				(compile-client path name value '())
 				;; sent the file response
 				(instantiate::http-response-file
-				   (request req)
+				   #;(request req)
 				   (charset (hop-locale))
 				   (content-type mime)
 				   (bodyp (eq? method 'GET))
@@ -180,7 +180,7 @@
 				   (file value)))
 			     ;; no cache, use a string
 			     (instantiate::http-response-string
-				(request req)
+				#;(request req)
 				(charset (hop-locale))
 				(content-type mime)
 				(bodyp (eq? method 'GET))
@@ -212,14 +212,13 @@
 ;*    dummy-request ...                                                */
 ;*---------------------------------------------------------------------*/
 (define dummy-request
-   (instantiate::http-request
-      (user (class-nil user))))
+   (instantiate::http-request))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-clientc-compiled-file ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (get-clientc-compiled-file path name)
-   (let* ((req (or (current-request) dummy-request))
+   (let* ((req dummy-request)
 	  (rep (clientc-response req path name)))
       (cond
 	 ((isa? rep http-response-file)

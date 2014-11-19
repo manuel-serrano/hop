@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Feb 21 13:47:10 2014 (serrano)                */
+;*    Last change :  Tue Nov 18 10:25:22 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -33,13 +33,15 @@
 	    (find-authenticated-user ::bstring ::bstring ::symbol ::bstring)
 	    (find-user ::bstring ::bstring)
 	    (find-user/encrypt ::bstring ::bstring ::procedure)
+	    (http-request-user::user ::http-request)
 	    (user-authorized-request?::bool ::user ::http-request)
 	    (user-authorized-path?::bool ::user ::bstring)
 	    (authorized-path?::bool ::http-request ::bstring)
 	    (user-authorized-service?::bool ::user ::symbol)
 	    (authorized-service?::bool ::http-request ::symbol)
-	    (user-access-denied ::http-request #!optional message)
-	    (user-service-denied ::http-request ::user ::symbol)
+	    (access-denied ::http-request #!optional message)
+	    (user-service-denied ::user ::http-request ::symbol)
+	    (service-denied ::http-request ::symbol)
 	    (proxy-denied ::http-request ::user ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -410,7 +412,8 @@
 (define (find-authenticated-user auth path method ip)
    (and (string? auth)
 	(or (find-cached-user auth)
-	    (find-authorized-user auth (http-parse-authentication auth) path method ip))))
+	    (find-authorized-user auth (http-parse-authentication auth)
+	       path method ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-unauthenticated-user ...                                    */
@@ -439,6 +442,20 @@
       (when (string? name)
 	 (hashtable-get *users* name))))
 
+;*---------------------------------------------------------------------*/
+;*    http-request-user ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-request-user req::http-request)
+   (with-access::http-request req (authorization userinfo method abspath socket)
+      (if (not socket)
+	  (anonymous-user)
+	  (let ((ip (input-port-name (socket-input socket))))
+	     (or (and (string? authorization)
+		      (find-authenticated-user authorization abspath method ip))
+		 (and (string? userinfo)
+		      (find-authenticated-user userinfo abspath method ip))
+		 (anonymous-user))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    hopaccess-cache ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -510,8 +527,7 @@
 ;*---------------------------------------------------------------------*/
 (define (authorized-path? req path)
    (or ((hop-path-access-control) req path)
-       (with-access::http-request req (user)
-	  (user-authorized-path? user path))))
+       (user-authorized-path? (http-request-user req) path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-service? ...                                     */
@@ -526,8 +542,7 @@
 ;*---------------------------------------------------------------------*/
 (define (authorized-service? req service)
    (or ((hop-service-access-control) req service)
-       (with-access::http-request req (user)
-	  (user-authorized-service? user service))))
+       (user-authorized-service? (http-request-user req) service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-authorized-request? ...                                     */
@@ -588,9 +603,9 @@
 	    (hop-session: . ,(hop-session))))))
 
 ;*---------------------------------------------------------------------*/
-;*    user-access-denied ...                                           */
+;*    access-denied ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (user-access-denied req #!optional message)
+(define (access-denied req #!optional message)
    (with-access::http-request req (host port path)
       (hop-verb 1 (hop-color req req " ACCESS DENIED")
 	 ": "
@@ -599,7 +614,7 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      (request req)
+      #;(request req)
       (body (cond
 	       (message
 		(with-output-to-string
@@ -615,20 +630,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    user-service-denied ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (user-service-denied req user svc)
+(define (user-service-denied user req svc)
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      (request req)
+      #;(request req)
       (body (format "User \"~a\" is not allowed to execute service \"~a\"."
 	       (with-access::user user (name) name) svc))))
+
+;*---------------------------------------------------------------------*/
+;*    service-denied ...                                               */
+;*---------------------------------------------------------------------*/
+(define (service-denied req svc)
+   (user-service-denied (http-request-user req) req svc))
 
 ;*---------------------------------------------------------------------*/
 ;*    proxy-denied ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (proxy-denied req user host)
    (instantiate::http-response-authentication
-      (request req)
+      #;(request req)
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
 		 .

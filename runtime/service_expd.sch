@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed May 21 11:28:18 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 13:48:15 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -99,6 +99,8 @@
 	  (path (gensym 'path))
 	  (fun (gensym 'fun))
 	  (file (gensym 'file))
+	  (req (gensym 'req))
+	  (req-for-eval (gensym 'req-for-eval))
 	  (actuals (call args))
 	  (mkurl (if (and (pair? args)
 			  (list? args)
@@ -109,20 +111,32 @@
       `(let* ((,path ,url)
 	      (,file (the-loading-file))
 	      (,fun (lambda ,args ,mkurl))
+	      (,req-for-eval #f)
+	      (current-request (lambda () ,req-for-eval))
 	      (,proc ,(if (pair? body)
-			  `(lambda ,args ,@body)
+			  `(lambda ,(cons req args)
+			      (cond-expand
+				 (bigloo-compile
+				  (let ((current-request (lambda () ,req)))
+				     ,@body))
+				 (else
+				  ;; don't bind curent-request inside the procedure
+				  ;; when evaluating as eval create a closure for
+				  ;; all functions
+				  (set! ,req-for-eval ,req)
+				  ,@body)))
 			  `(if (substring-at? ,path (hop-service-base) 0)
 			       ;; this is a local service, thus an autoload
 			       ;; that must replace the current service
-			       ,(let ((autoload (gensym))
-				      (loop (gensym)))
+			       ,(let ((autoload (gensym 'autoload))
+				      (loop (gensym 'loop)))
 				   `(let ((,autoload #unspecified))
-				       (lambda ,args
+				       (lambda ,(cons req args)
 					   (let ,loop ()
 						(cond
 						   ((eq? ,autoload #t)
 						    (instantiate::http-response-autoload
-						       (request (duplicate::http-server-request (current-request)
+						       (request (duplicate::http-server-request ,req
 								   (query (substring ,mkurl (+fx 1 (string-length ,path))))
 								   (abspath ,mkurl)
 								   (path ,mkurl)))))
@@ -133,16 +147,11 @@
 						    (,loop))
 						   (else
 						    (error "with-hop" "Not autoload found for local service" ,path)))))))
-			       ,(let ((url (gensym)))
-				   `(lambda ,args
+			       ,(let ((url (gensym 'url)))
+				   `(lambda ,(cons req args)
 				       (let ((,url ,mkurl))
 					  ;; a remote wrapper service
 					  (instantiate::http-response-remote
-					     (request (instantiate::http-request
-							 (user (class-nil user))
-							 (port (hop-port))
-							 (path ,path)
-							 (abspath ,path)))
 					     (port (hop-port))
 					     (path ,url))))))))
 	      (,svc (instantiate::hop-service
@@ -254,7 +263,9 @@
    
    (define (with-hop-local svc args success failure auth)
       `(with-access::hop-service (procedure-attr ,svc) (proc)
-	  (with-hop-local (proc ,@args) ,success ,failure ,auth)))
+	  (let ((req (instantiate::http-request
+			(authorization ,auth))))
+	     (with-hop-local (proc req ,@args) ,success ,failure ,auth))))
    
    (define (with-hop-remote svc args success fail opts)
       `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))

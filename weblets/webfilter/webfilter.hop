@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.5.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/3.0.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Dec  8 06:21:43 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 08:14:57 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -83,13 +83,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    <WEBFILTER:HTML> ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (<WEBFILTER:HTML> body)
+(define (<WEBFILTER:HTML> base body)
    (<HTML>
       (<HEAD>
 	 :favicon (service-resource webfilter "etc/favicon.png")
 	 :title "Hop Webfilter"
 	 :include "hop-notepad" "hop-sorttable" "hop-prefs" "hop-foot"
-	 :base (service-base-url webfilter (current-request))
+	 :base base
 	 :css "webfilter.hss")
       (<BODY>
 	 (<DIV> :align "center"
@@ -332,7 +332,7 @@ Google, each containing a forward pointer to the actual URL.])))
 (define-service (webfilter)
    (let ((req (current-request)))
       (if (authorized-service? req 'admin)
-	  (<WEBFILTER:HTML>
+	  (<WEBFILTER:HTML> (service-base-url webfilter req)
 	     (<DIV>
 		(<NOTEPAD>
 		   (<NPHEAD> "")
@@ -348,7 +348,7 @@ Google, each containing a forward pointer to the actual URL.])))
 		   (<NPTAB>
 		      (<NPTABHEAD> "Flash")
 		      (<FLASH>)))))
-	  (user-access-denied req))))
+	  (access-denied req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    webfilter/documentation ...                                      */
@@ -465,10 +465,10 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter/preferences)
    (let ((req (current-request)))
-      (with-access::http-request req (user)
+      (let ((user (http-request-user req)))
 	 (if (not (user-authorized-service? user 'admin))
-	     (user-access-denied req)
-	     (<WEBFILTER:HTML>
+	     (access-denied req)
+	     (<WEBFILTER:HTML> (service-base-url webfilter req)
 		(<PREFERENCES>))))))
 
 ;*---------------------------------------------------------------------*/

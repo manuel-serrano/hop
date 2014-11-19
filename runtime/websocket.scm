@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon Oct 13 17:43:27 2014 (serrano)                */
+;*    Last change :  Sun Nov 16 08:04:46 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -131,6 +131,7 @@
 		(format "~a:~a" host port) #t))
 	  (websocket-connect-tunnel host port req)
 	  (instantiate::http-response-persistent
+	     (request req)
 	     (body "200 Connection established\r\n")))
        (instantiate::http-response-abort)))
    
@@ -313,7 +314,7 @@
 ;*    They impose a strict ordering and case for the reply. Thus Hop   */
 ;*    uses a dedicated class instead of a generic response-string.     */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-websocket socket)
+(define-method (http-response r::http-response-websocket request socket)
    (with-trace 'websocket "http-response::http-response-websocket"
       (with-access::http-response-websocket r (start-line
 					       connection
@@ -360,7 +361,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-proxy-websocket ...                */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-proxy-websocket socket)
+(define-method (http-response r::http-response-proxy-websocket request socket)
    (with-trace 'websocket "http-response::http-response-proxy-websocket"
       (cond-expand
 	 (enable-threads

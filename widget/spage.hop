@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/3.0.x/widget/spage.hop                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Mon Aug 19 06:40:57 2013 (serrano)                */
-;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 10:16:23 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -126,7 +126,9 @@
 			(<DIV> :data-hss-tag "hop-spbody"
 			   :class class
 			   attr
-			   (<DELAY> (service-proc (car body)))))))
+			   (<DELAY>
+			      (lambda ()
+				 ((service-proc (car body)) (current-request))))))))
 	     (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		:onclick ~(begin
 			     (stop-event-propagation event #f)

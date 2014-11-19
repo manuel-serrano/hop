@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Aug  8 06:09:00 2014 (serrano)                */
+/*    Last change :  Tue Nov 18 17:27:36 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -43,14 +43,12 @@ exports.hostname = hop.hostname;
 /*    withHOP                                                          */
 /*---------------------------------------------------------------------*/
 exports.withURL = hop.withURL;
-exports.withHOP = hop.withHOP;
-
-exports.currentRequest = hop.currentRequest;
 
 /*---------------------------------------------------------------------*/
 /*    Responses                                                        */
 /*---------------------------------------------------------------------*/
 exports.HTTPResponseHop = hop.HTTPResponseHop;
+exports.HTTPResponseXml = hop.HTTPResponseXml;
 exports.HTTPResponseFile = hop.HTTPResponseFile;
 exports.HTTPResponseString = hop.HTTPResponseString;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;

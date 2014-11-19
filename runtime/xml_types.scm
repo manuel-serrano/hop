@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/xml_types.scm             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/xml_types.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Thu May 10 07:05:09 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Wed Nov 19 07:53:48 2014 (serrano)                */
+;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -18,7 +18,7 @@
 	      (id::symbol read-only)
 	      (mime-type::bstring read-only)
 	      (doctype::bstring read-only)
-	      (header-format::bstring read-only)
+	      (header-format::obj read-only (default #f))
 	      (html-attributes::pair-nil read-only (default '()))
 	      (no-end-tags-elements::pair-nil read-only (default '()))
 	      (cdata-start (default #f))
@@ -32,11 +32,11 @@
 
 	    (class security-manager
 	       (name::bstring read-only (default "*"))
-	       (xml-sanitize::procedure read-only (default (lambda (xml) xml)))
-	       (string-sanitize::procedure read-only (default (lambda (s) s)))
-	       (attribute-sanitize::procedure read-only (default (lambda (a i) a)))
-	       (inline-sanitize::procedure read-only (default (lambda (n) n)))
-	       (script-sanitize::procedure read-only (default (lambda (n) n)))
+	       (xml-sanitize::procedure read-only)
+	       (string-sanitize::procedure read-only)
+	       (attribute-sanitize::procedure read-only)
+	       (inline-sanitize::procedure read-only)
+	       (script-sanitize::procedure read-only)
 	       (runtime::pair-nil read-only (default '())))
 
 	    (class xml

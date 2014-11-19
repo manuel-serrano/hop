@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jun 25 09:34:54 2014 (serrano)                */
+;*    Last change :  Tue Nov 18 09:08:46 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -28,7 +28,7 @@
 	      (preferences::pair-nil (default '()))
 	      (data::obj (default #unspecified))
 	      (authentication::symbol read-only (default 'basic)))
-
+	   
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
 	   (class &hop-security-error::&error)
@@ -44,10 +44,10 @@
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))
-	      (user::user read-only)
-	      (localclientp::bool (default #f))
-	      (lanclientp::bool (default #f))
-	      (hook::procedure (default (lambda (rep) rep)))
+;* 	      (user::user read-only)                                   */
+;* 	      (localclientp::bool (default #f))                        */
+;* 	      (lanclientp::bool (default #f))                          */
+;* 	      (hook::procedure (default (lambda (rep) rep)))           */
 	      (transfer-encoding (default #f))
 	      (http::symbol (default 'HTTP/1.1))
 	      (host::bstring (default "localhost"))
@@ -61,15 +61,15 @@
 	      (connection::symbol (default 'keep-alive))
 	      (authorization (default #f))
 	      (connection-timeout::int (default 0)))
-
+	   
 	   (final-class http-server-request::http-request
 	      (service::obj (default #unspecified)))
-
+	   
 	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
-
+	   
 	   (class http-proxy-request::http-request)
-
+	   
 	   (class xml-http-request
 	      (status::int read-only)
 	      (header::pair-nil read-only (default '()))
@@ -77,9 +77,9 @@
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::obj read-only (default #f))
-	      (request::http-request (default (class-nil http-request)))
+	      #;(request::http-request (default (class-nil http-request)))
 	      (bodyp::bool read-only (default #t)))
-
+	   
 	   (class http-response-abort::%http-response)
 	   
 	   (class http-response-proxy::%http-response
@@ -92,24 +92,26 @@
 	      (userinfo read-only (default #f))
 	      (remote-timeout read-only (default (hop-read-timeout)))
 	      (connection-timeout read-only (default (hop-connection-timeout))))
-
+	   
 	   ;; http-response-remote is a weblet backward compatibiilty type
 	   (class http-response-remote::http-response-proxy)
-
-	   (class http-response-proxy-websocket::http-response-proxy)
+	   
+	   (class http-response-proxy-websocket::http-response-proxy
+	      (request::http-request read-only))
 	   
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
 	      (statusf::procedure (default (lambda (x) x)))
 	      (headerf::procedure (default (lambda (x) x)))
 	      bodyf::procedure)
-
+	   
 	   (abstract-class %http-response-server::%http-response
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
-
-	   (class http-response-autoload::%http-response-server)
-
+	   
+	   (class http-response-autoload::%http-response-server
+	      (request::http-request read-only))
+	   
 	   (class http-response-xml::%http-response-server
 	      (backend read-only)
 	      (xml read-only))
@@ -125,7 +127,7 @@
 	   (class http-response-raw::%http-response-server
 	      (connection::obj read-only (default #f))
 	      (proc::procedure read-only))
-
+	   
 	   (class http-response-file::%http-response-server
 	      (file::bstring read-only))
 	   
@@ -133,10 +135,11 @@
 	   
 	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
-
+	   
 	   (class http-response-authentication::http-response-string)
-
+	   
 	   (class http-response-websocket::%http-response-server
+	      (request::http-request read-only)
 	      (connection::symbol read-only (default 'Upgrade))
 	      (origin::obj read-only (default #f))
 	      (location::obj read-only (default #f))
@@ -144,16 +147,18 @@
 	      (sec read-only (default #f))
 	      (accept read-only (default #f))
 	      (onconnect read-only (default #f)))
-
+	   
 	   (class http-response-error::http-response-string)
-
+	   
 	   (class http-response-cgi::%http-response-server
 	      (cgibin::bstring read-only))
-
+	   
 	   (class http-response-persistent::%http-response
+	      (request::http-request read-only)
 	      (body (default #f)))
 	   
 	   (class http-response-async::%http-response
+	      #;(request::http-request read-only)
 	      (async::procedure read-only))
 	   
 	   (class http-response-chunked::%http-response
@@ -161,7 +166,7 @@
 	   
 	   (class http-response-put::%http-response-server
 	      (uri::bstring read-only))
-
+	   
 	   (class hop-service
 	      ;; the service identifier (e.g., doc/example)
 	      (id::symbol read-only)
@@ -188,10 +193,8 @@
 	      ;; the argument decoder (currently only used for json encoding)
 	      (decoder::procedure read-only (default (lambda (enc args) #f)))
 	      ;; jsparser used to extrac JSON value from POST body content
-	      (unjson::procedure read-only (default (lambda (s) s))))
+	      (unjson::procedure read-only (default (lambda (s) s))))))
 
-	   (http-request-hook-add! ::http-request ::procedure)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -240,19 +243,6 @@
 	    (print "id  : " id)
 	    (print "path: " path)
 	    (print "args: " args)))))
-
-;*---------------------------------------------------------------------*/
-;*    http-request-hook-add! ...                                       */
-;*---------------------------------------------------------------------*/
-(define (http-request-hook-add! req h)
-   (with-access::http-request req (hook)
-      (let ((old-hook hook))
-	 (set! hook (lambda (rep)
-		       (let* ((rep2 (h rep))
-			      (res (if (isa? rep2 %http-response)
-				       rep2
-				       rep)))
-			  (old-hook res)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::&hop-autoload-error ...                       */

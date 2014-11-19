@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Oct 14 10:13:07 2014 (serrano)                */
+;*    Last change :  Tue Nov 18 14:11:06 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -467,19 +467,29 @@
    
    (define (return)
       (let ((loc (token-loc (consume-token! 'return))))
-	 (if (or (case (peek-token-type) ((EOF ERROR SEMICOLON) #t) (else #f))
+	 (cond
+	    ((or (case (peek-token-type)
+		    ((EOF ERROR SEMICOLON) #t)
+		    (else #f))
 		 (at-new-line-token?))
-	     (begin
-		(consume-statement-semicolon! "return")
-		(instantiate::J2SReturn
-		   (loc loc)
-		   (expr (instantiate::J2SUndefined
-			    (loc loc)))))
+	     (consume-statement-semicolon! "return")
+	     (instantiate::J2SReturn
+		(loc loc)
+		(expr (instantiate::J2SUndefined
+			 (loc loc)))))
+	    ((eq? (peek-token-type) 'RBRACE)
+	     ;; many javascript libs use the pattern "return}", so hopc
+	     ;; accepts it.
+	     (instantiate::J2SReturn
+		(loc loc)
+		(expr (instantiate::J2SUndefined
+			 (loc loc)))))
+	    (else
 	     (let ((expr (expression #f)))
 		(consume-statement-semicolon! "return")
 		(instantiate::J2SReturn
 		   (loc loc)
-		   (expr expr))))))
+		   (expr expr)))))))
    
    (define (with)
       (let ((token (consume-token! 'with)))

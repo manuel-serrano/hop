@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Thu Oct 30 14:18:38 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:55:17 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -19,7 +19,8 @@
 
    (import  __hop_xml-types
 	    __hop_xml
-	    __hop_security)
+	    __hop_security
+	    __hop_types)
 
    (export  (<A> . ::obj)
 	    (<ABBR> . ::obj)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/http_shoutcast.scm        */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_shoutcast.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jan 25 17:17:59 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Tue Nov 18 09:47:31 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -28,12 +28,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-shoutcast ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (http-response r::http-response-shoutcast socket)
+(define-method (http-response r::http-response-shoutcast request socket)
    (with-trace 3 "http-response::http-response-shoutcast"
-      (with-access::http-response-shoutcast r (request file)
+      (with-access::http-response-shoutcast r (#;request file)
 	 (if (authorized-path? request file)
 	     (shoutcast r socket)
-	     (http-response (user-access-denied request) socket)))))
+	     (http-response (access-denied request) request socket)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    shoutcast ...                                                    */

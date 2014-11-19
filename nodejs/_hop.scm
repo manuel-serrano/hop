@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Oct 22 10:29:34 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:56:51 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -64,16 +64,9 @@
 	    `(hostname . ,(hostname))
 	       
 	    ;; requests
-	    (define-js currentRequest 0
-	       (lambda (this) (current-request)))
-	    
 	    (define-js withURL 3
 	       (lambda (this url success opt)
 		  (hopjs-with-url url success opt %this)))
-	    
-	    (define-js withHOP 3
-	       (lambda (this svc success opt)
-		  (hopjs-with-hop svc success opt %this)))
 	    
 	    ;; charset
 	    (define-js charsetConvert 3
@@ -91,6 +84,10 @@
 	    (define-js HTTPResponseHop 2
 	       (lambda (this obj req)
 		  (hopjs-response-hop this obj req %this)))
+	    
+	    (define-js HTTPResponseXml 2
+	       (lambda (this obj req)
+		  (hopjs-response-xml this obj req %this)))
 	    
 	    (define-js HTTPResponseFile 2
 	       (lambda (this file req)
@@ -231,16 +228,35 @@
    (if (isa? req JsObject)
        (instantiate::http-response-hop
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  (request (get/default req 'currentRequest %this (current-request)))
+	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (content-type (get/default req 'contentType %this "application/x-javascript"))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
-	  (request (if (eq? req (js-undefined)) (current-request) req))
+	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (content-type "application/x-javascript")
 	  (value obj))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-response-xml ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hopjs-response-xml this obj req %this)
+   (if (isa? req JsObject)
+       (instantiate::http-response-xml
+	  (backend (get/default req 'backend %this (hop-xml-backend)))
+	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
+	  (content-type (get/default req 'contentType %this "application/x-javascript"))
+	  (charset (get/default req 'charset %this (hop-charset)))
+	  (header (get/default req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
+	  (xml obj))
+       (instantiate::http-response-xml
+	  (backend (hop-xml-backend))
+	  (charset (hop-charset))
+	  (content-type "text/html")
+	  (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+	  (xml obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-file ...                                          */
@@ -248,12 +264,12 @@
 (define (hopjs-response-file this file req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-file
-	  (request (get/default req 'currentRequest %this (current-request)))
+	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
 	  (file (js-tostring file %this)))
        (instantiate::http-response-file
-	  (request (if (eq? req (js-undefined)) (current-request) req))
+	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (file (js-tostring file %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -262,22 +278,20 @@
 (define (hopjs-response-string this string req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-string
-	  (request (get/default req 'currentRequest %this (current-request)))
+	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
-	  (request (if (eq? req (js-undefined)) (current-request) req))
+	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (body (js-tostring string %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-authentication ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-authentication this msg req %this)
-   (user-access-denied
-      (if (eq? req (js-undefined)) (current-request) req)
-      (js-tostring msg %this)))
+   (access-denied req (js-tostring msg %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-proxy ...                                         */
@@ -291,7 +305,7 @@
 	    (port port)
 	    (path abspath)
 	    (header `((Host: . ,host)))
-	    (request (if (eq? req (js-undefined)) (current-request) req))))))
+	    #;(request (if (eq? req (js-undefined)) (current-request) req))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-async ...                                         */
@@ -299,33 +313,33 @@
 (define (hopjs-response-async this proc req %this %worker)
    
    (define (async-proc req)
-      (lambda (k)
-	 (js-worker-exec %worker "hopjs-response-async"
-	    (lambda ()
-	       (with-handler
-		  (lambda (e)
-		     (tprint "ASYNC ERR: " e)
-		     (cond
-			((isa? e JsError) (exception-notify e))
-			((isa? e &error) (error-notify e)))
-		     #f)
-		  (js-call1 %this proc %this
-		     (js-make-function %this
-			(lambda (this resp)
-			   (k (scheme->response resp req)))
-			1 "reply")))))))
+      (if (isa? req http-request)
+	  (lambda (k)
+	     (js-worker-exec %worker "hopjs-response-async"
+		(lambda ()
+		   (with-handler
+		      (lambda (e)
+			 (cond
+			    ((isa? e JsError) (exception-notify e))
+			    ((isa? e &error) (error-notify e)))
+			 #f)
+		      (js-call1 %this proc %this
+			 (js-make-function %this
+			    (lambda (this resp)
+			       (k (scheme->response resp req)))
+			    1 "reply"))))))
+	  (js-raise-type-error %this "not a request" req)))
    
    (if (isa? req JsObject)
-       (let ((req (get/default req 'currentRequest %this (current-request))))
+       (let ((req (get/default req 'currentRequest %this #f)))
 	  (instantiate::http-response-async
-	     (request req)
+	     #;(request req)
 	     (charset (get/default req 'charset %this (hop-charset)))
 	     (content-type (get/default req 'contentType %this #f))
 	     (async (async-proc req))))
-       (let ((req (if (eq? req (js-undefined)) (current-request) req)))
-	  (instantiate::http-response-async
-	     (request req)
-	     (async (async-proc req))))))
+       (instantiate::http-response-async
+	  #;(request req)
+	  (async (async-proc req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-parse-web-color ...                                        */

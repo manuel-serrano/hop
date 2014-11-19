@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun 20 18:38:17 2014                          */
-/*    Last change :  Tue Jul 22 17:14:08 2014 (serrano)                */
+/*    Last change :  Fri Nov 14 08:43:06 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    ArrayBuffer example                                              */
@@ -66,24 +66,24 @@ console.log( "0=%s 1=%s", dv.getInt16( 0, true ), dv.getInt16( 1, true ) );
 console.log( "0=%s 1=%s", dv.getInt16( 0, false ), dv.getInt16( 1, false ) );
 
 dv.setInt16( 1, 0x1234 );
-console.log( "1=%s", dv.getInt16( 1, true ) );
-console.log( "1=%s", dv.getInt16( 1, false ) );
+console.log( "1a=%s", dv.getInt16( 1, true ) );
+console.log( "1b=%s", dv.getInt16( 1, false ) );
 
 dv.setInt16( 1, 0x1234, true );
-console.log( "1=%s", dv.getInt16( 1, true ) );
-console.log( "1=%s", dv.getInt16( 1, false ) );
+console.log( "1c=%s", dv.getInt16( 1, true ) );
+console.log( "1d=%s", dv.getInt16( 1, false ) );
 
 dv.setInt16( 1, 0x1234, false );
-console.log( "1=%s", dv.getInt16( 1, true ) );
-console.log( "1=%s", dv.getInt16( 1, false ) );
+console.log( "1e=%s", dv.getInt16( 1, true ) );
+console.log( "1f=%s", dv.getInt16( 1, false ) );
 
 dv.setInt16( 1, -0x1234, true );
-console.log( "1=%s", dv.getInt16( 1, true ) );
-console.log( "1=%s", dv.getInt16( 1, false ) );
+console.log( "1g=%s", dv.getInt16( 1, true ) );
+console.log( "1h=%s", dv.getInt16( 1, false ) );
 
 dv.setInt16( 1, -0x1234, false );
-console.log( "1=%s", dv.getInt16( 1, true ) );
-console.log( "1=%s", dv.getInt16( 1, false ) );
+console.log( "1i=%s", dv.getInt16( 1, true ) );
+console.log( "1j=%s", dv.getInt16( 1, false ) );
 
 console.log( "9 ===================================" );
 
@@ -92,24 +92,24 @@ console.log( "0=%s 1=%s", dv.getInt32( 0, true ), dv.getInt32( 4, true ) );
 console.log( "0=%s 1=%s", dv.getInt32( 0, false ), dv.getInt32( 4, false ) );
 
 dv.setInt32( 4, 0x1234 );
-console.log( "1=%s", dv.getInt32( 4, true ) );
-console.log( "1=%s", dv.getInt32( 4, false ) );
+console.log( "1a=%s", dv.getInt32( 4, true ) );
+console.log( "1b=%s", dv.getInt32( 4, false ) );
 
 dv.setInt32( 4, 0x1234, true );
-console.log( "1=%s", dv.getInt32( 4, true ) );
-console.log( "1=%s", dv.getInt32( 4, false ) );
+console.log( "1c=%s", dv.getInt32( 4, true ) );
+console.log( "1d=%s", dv.getInt32( 4, false ) );
 
 dv.setInt32( 4, 0x1234, false );
-console.log( "1=%s", dv.getInt32( 4, true ) );
-console.log( "1=%s", dv.getInt32( 4, false ) );
+console.log( "1e=%s", dv.getInt32( 4, true ) );
+console.log( "1f=%s", dv.getInt32( 4, false ) );
 
 dv.setInt32( 4, -0x1234, true );
-console.log( "1=%s", dv.getInt32( 4, true ) );
-console.log( "1=%s", dv.getInt32( 4, false ) );
+console.log( "1g=%s", dv.getInt32( 4, true ) );
+console.log( "1h=%s", dv.getInt32( 4, false ) );
 
 dv.setInt32( 4, -0x1234, false );
-console.log( "1=%s", dv.getInt32( 4, true ) );
-console.log( "1=%s", dv.getInt32( 4, false ) );
+console.log( "1i=%s", dv.getInt32( 4, true ) );
+console.log( "1j=%s", dv.getInt32( 4, false ) );
 
 console.log( "10 ===================================" );
 
@@ -145,22 +145,25 @@ console.log( "0=%s 1=%s", dv.getFloat64( 0 ), dv.getFloat64( 1 ) );
 console.log( "0=%s 1=%s", dv.getFloat64( 0, true ), dv.getFloat64( 1, true ) );
 console.log( "0=%s 1=%s", dv.getFloat64( 0, false ), dv.getFloat64( 1, false ) );
 
-dv.setFloat64( 1, 0x1234 );
-console.log( "1=%s", dv.getFloat64( 1, true ) );
-console.log( "1=%s", dv.getFloat64( 1, false ) );
+dv.setFloat64( 1, 0x123456789ab );
+console.log( b );
+dv.setFloat64( 1, 0x123456789ab, true );
+console.log( b );
+console.log( "1a=%s", dv.getFloat64( 1, true ) );
+console.log( "1b=%s", dv.getFloat64( 1, false ) );
 
 dv.setFloat64( 1, 0x1234, true );
-console.log( "1=%s", dv.getFloat64( 1, true ) );
-console.log( "1=%s", dv.getFloat64( 1, false ) );
+console.log( "1c=%s", dv.getFloat64( 1, true ) );
+console.log( "1d=%s", dv.getFloat64( 1, false ) );
 
 dv.setFloat64( 1, 0x1234, false );
-console.log( "1=%s", dv.getFloat64( 1, true ) );
-console.log( "1=%s", dv.getFloat64( 1, false ) );
+console.log( "1e=%s", dv.getFloat64( 1, true ) );
+console.log( "1f=%s", dv.getFloat64( 1, false ) );
 
 dv.setFloat64( 1, -0x1234, true );
-console.log( "1=%s", dv.getFloat64( 1, true ) );
-console.log( "1=%s", dv.getFloat64( 1, false ) );
+console.log( "1g=%s", dv.getFloat64( 1, true ) );
+console.log( "1h=%s", dv.getFloat64( 1, false ) );
 
 dv.setFloat64( 1, -0x1234, false );
-console.log( "1=%s", dv.getFloat64( 1, true ) );
-console.log( "1=%s", dv.getFloat64( 1, false ) );
+console.log( "1i=%s", dv.getFloat64( 1, true ) );
+console.log( "1j=%s", dv.getFloat64( 1, false ) );

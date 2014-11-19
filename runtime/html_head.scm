@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Oct 14 08:42:26 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:10:42 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -120,21 +120,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    preload-css ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (preload-css p::bstring base::obj)
-   
-   (define (preload-http p)
-      (with-access::http-request (current-request) (scheme host port)
-	 (let ((pref (format "~a://~a:~a"
-			     (if (eq? scheme '*) "http" scheme)
-			     host port)))
-	    (when (substring-at? p pref 0)
-	       (preload-css
-		(substring p (string-length pref) (string-length p)) #f)))))
-
    (cond
-      ((and (isa? (current-request) http-request)
-	    (or (substring-at? p "http://" 0) (substring-at? p "https://" 0)))
-       (preload-http p)
-       #unspecified)
       ((and (file-exists? p) (char=? (string-ref p 0) (file-separator)))
        (hop-get-hss p)
        #unspecified)
@@ -540,7 +526,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 				       (dom-get-attribute x "http-equiv")))
 			     body0))
 		     (let ((meta (<META> :http-equiv "Content-Type"
-				    :content "~a; charset=~a")))
+				    :content #t)))
 			(cons meta body1))
 		     body1)))
       (instantiate::xml-markup
@@ -581,27 +567,21 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		    (body '())))
 		(else
 		 (default href))))))
-
+   
    (if (string-suffix? ".hss" href)
-       ;; this is a file that need compilation
+       ;; this is a file that needs compilation
        (if (and inline (null? body) (file-exists? href))
-	   (let ((req (current-request)))
-	      (if (or (not req) (authorized-path? req href))
-		  (let ((body (hss->css href)))
- 		     (if body
-			 (inl body)
-			 (default (hss->css-url href))))
+	   (let ((body (hss->css href)))
+	      (if body
+		  (inl body)
 		  (default (hss->css-url href))))
 	   (default (hss->css-url href)))
        ;; this is a plain css file
        (if (and inline (null? body) (file-exists? href))
-	   (let ((req (current-request)))
-	      (if (or (not req) (authorized-path? req href))
-		  (let ((body (with-input-from-file href read-string)))
-		     (if body
-			 (inl body)
-			 (default href)))
-		  (user-access-denied req)))
+	   (let ((body (with-input-from-file href read-string)))
+	      (if body
+		  (inl body)
+		  (default href)))
 	   (default href))))
    
 ;*---------------------------------------------------------------------*/

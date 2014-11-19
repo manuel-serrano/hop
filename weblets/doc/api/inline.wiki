@@ -29,10 +29,11 @@ to clients in a respond.
 <markup> <INLINE>
 
 <arguments>
-^  arguments    ^   type     ^   default    ^  short description                      ^
-| :id           |  string    |  //random//  | the element identifier to fetch.        |
-| :src          |  string    |     _        | a URL.                                  |
-| :early        |  boolean   |     #t       | specifies the remote URL parsing time.  |
+^  arguments      ^   type              ^   default    ^  short description                      ^
+| :id             |  string             |  //random//  | the element identifier to fetch.        |
+| :authorization  |  string or boolean  |     #f       | the http authorization.                 |
+| :src            |  string             |     _        | a URL.                                  |
+| :early          |  boolean            |     #t       | specifies the remote URL parsing time.  |
 </arguments>
 
   * If the attribute :early is ++#t++ then the distant URL specified by

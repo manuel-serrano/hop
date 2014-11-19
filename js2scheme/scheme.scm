@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov  5 11:36:11 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:01:39 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -884,12 +884,10 @@
 				   (return-body
 				      (j2s-scheme body mode return conf))))
 			     (j2s-scheme body mode return conf)))
-		   (fun `(lambda ,args
-			    (let ((req (current-request)))
-			       (js-worker-exec @worker ,(symbol->string id)
-				  (lambda ()
-				     (thread-request-set! @worker req)
-				     ,(flatten-stmt body)))))))
+		   (fun `(lambda ,(cons 'this args)
+			    (js-worker-exec @worker ,(symbol->string id)
+			       (lambda ()
+				  ,(flatten-stmt body))))))
 	       (epairify-deep loc fun))))
       
       (with-access::J2SSvc this (init register)

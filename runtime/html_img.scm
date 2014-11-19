@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/html_img.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/html_img.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Feb 21 13:39:18 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 07:11:16 2014 (serrano)                */
 ;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -178,15 +178,9 @@
 	   (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
 	      (cond
 		 ((and (pair? body) (string? (car body)) (null? (cdr body)))
-		  (let ((req (current-request)))
-		     (if (or (not req) (authorized-path? (current-request) src))
-			 (inline-img src cssrc (inline-base64 src (car body)))
-			 (plain-img src cssrc))))
+		  (inline-img src cssrc (inline-base64 src (car body))))
 		 (inline
-		  (let ((req (current-request)))
-		     (if (or (not req) (authorized-path? (current-request) src))
-			 (inline-img src cssrc (inline-image src))
-			 (plain-img src cssrc))))
+		  (inline-img src cssrc (inline-image src)))
 		 (else
 		  (plain-img src cssrc))))))
       ((eq? src #unspecified)
