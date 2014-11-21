@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Nov  3 14:47:10 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 16:45:03 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -21,6 +21,7 @@
    
    (import __hopscript_types
 	   __hopscript_string
+	   __hopscript_stringliteral
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -623,24 +624,25 @@
       (define (js-object-prototype-tostring this)
 	 (cond
 	    ((eq? this (js-undefined))
-	     "[object Undefined]")
+	     (string->js-string "[object Undefined]"))
 	    ((eq? this (js-null))
-	     "[object Null]")
+	     (string->js-string "[object Null]"))
 	    (else
 	     (let* ((obj (js-toobject %this this))
 		    (name (symbol->string! (class-name (object-class obj)))))
-		(format "[object ~a]"
-		   (cond
-		      ((not (string-prefix? "Js" name))
-		       name)
-		      ((string=? name "JsGlobalObject")
-		       "Object")
-		      ((isa? obj JsArrayBufferView)
-		       (let ((ctor (js-get obj 'constructor %this)))
-			  (with-access::JsFunction ctor (name)
-			     name)))
-		      (else
-		       (substring name 2))))))))
+		(string->js-string
+		   (format "[object ~a]"
+		      (cond
+			 ((not (string-prefix? "Js" name))
+			  name)
+			 ((string=? name "JsGlobalObject")
+			  "Object")
+			 ((isa? obj JsArrayBufferView)
+			  (let ((ctor (js-get obj 'constructor %this)))
+			     (with-access::JsFunction ctor (name)
+				name)))
+			 (else
+			  (substring name 2)))))))))
       
       (js-bind! %this obj 'toString
 	 :value (js-make-function %this

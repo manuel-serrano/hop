@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Thu Nov  6 16:11:57 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 16:41:24 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -251,6 +251,12 @@
 ;*    init-builtin-websocket-server-prototype! ...                     */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-server-prototype! %this obj)
+   ;; close
+   (js-bind! %this obj 'close
+      :value (js-make-function %this
+		(lambda (this)
+		   (tprint "TODO websocket-server-close"))
+		0 'close))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
@@ -301,6 +307,14 @@
 ;*    init-builtin-websocket-client-prototype! ...                     */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-client-prototype! %this obj)
+   ;; close
+   (js-bind! %this obj 'close
+      :value (js-make-function %this
+		(lambda (this)
+		   (with-access::JsWebSocketClient this (socket)
+		      (socket-close socket))
+		   (tprint "TODO websocket-client-close"))
+		0 'close))
    ;; client
    (js-bind! %this obj 'socket
       :get (js-make-function %this
