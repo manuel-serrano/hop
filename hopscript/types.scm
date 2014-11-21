@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Oct 26 06:47:49 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:20:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -20,6 +20,7 @@
    
    (use __hopscript_object
 	__hopscript_string
+	__hopscript_stringliteral
 	__hopscript_number
 	__hopscript_error
 	__hopscript_boolean
@@ -115,9 +116,16 @@
 	   
 	   (class JsArguments::JsObject
 	      vec::vector)
+
+	   (final-class JsStringLiteral
+	      ;; Not a jsobject. This class is used to implement
+	      ;; JS string literal which are not plain Scheme string
+	      ;; for the sake of concat performance
+	      state::int
+	      val::obj)
 	   
 	   (class JsString::JsObject
-	      (val::bstring (default "")))
+	      (val::JsStringLiteral read-only))
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
@@ -166,7 +174,7 @@
 	   (inline js-null)
 	   (js-absent)
 
-	   (generic js-typeof obj)
+	   (generic js-typeof::JsStringLiteral obj)
 
 	   (generic js-arraybuffer-length ::JsArrayBuffer)
 	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)
@@ -300,6 +308,16 @@
    absent-value)
 
 ;*---------------------------------------------------------------------*/
+;*    Constant strings ...                                             */
+;*---------------------------------------------------------------------*/
+(define js-string-undefined (string->js-string "undefined"))
+(define js-string-object (string->js-string "object"))
+(define js-string-number (string->js-string "number"))
+(define js-string-boolean (string->js-string "boolean"))
+(define js-string-string (string->js-string "string"))
+(define js-string-function (string->js-string "function"))
+
+;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
@@ -307,21 +325,21 @@
 (define-generic (js-typeof obj)
    (cond
       ((isa? obj JsFunction)
-       "function")
+       js-string-function)
       ((isa? obj JsObject)
-       "object")
+       js-string-object)
       ((or (real? obj) (integer? obj))
-       "number")
+       js-string-number)
       ((boolean? obj)
-       "boolean")
+       js-string-boolean)
       ((eq? obj (js-undefined))
-       "undefined")
-      ((string? obj)
-       "string")
+       js-string-undefined)
+      ((or (string? obj) (js-string? obj))
+       js-string-string)
       ((eq? obj (js-null))
-       "object")
+       js-string-object)
       (else
-       (typeof obj))))
+       (string->js-string (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsArrayBuffer ...                        */

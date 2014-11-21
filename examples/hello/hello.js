@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Nov  7 15:09:55 2014 (serrano)                */
+/*    Last change :  Fri Nov 21 13:42:49 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    basic example that shows client/server interaction               */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g hello.js                                          */
 /*    browser: http://localhost:8080/hop/hello                         */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 
 service helloServerDate() {

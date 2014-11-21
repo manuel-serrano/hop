@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct 13 17:49:14 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 16:20:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -23,6 +23,8 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_string
+	   __hopscript_stringliteral
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)))
@@ -101,7 +103,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.8.5        */
 ;*---------------------------------------------------------------------*/
-(define (make-js-regexp-pattern %this str)
+(define (make-js-regexp-pattern %this str::bstring)
    
    (define (err fmt str)
       (js-raise-syntax-error %this fmt str))
@@ -191,7 +193,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-construct %this::JsGlobalObject)
    (lambda (_ . l)
-      (let ((pattern (if (null? l) "" (car l)))
+      (let ((pattern (if (null? l) (js-undefined) (car l)))
 	    (flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
 	    (i #f)
 	    (m #f)
@@ -237,7 +239,7 @@
 			 (value (fixnum? m))))
 	       (source (instantiate::JsValueDescriptor
 			  (name 'source)
-			  (value pattern))))
+			  (value (string->js-string pattern)))))
 	    (with-handler
 	       (lambda (e)
 		  (if (isa? e &io-parse-error)
@@ -375,7 +377,7 @@
 			     (js-define-own-property a 'input
 				(instantiate::JsValueDescriptor
 				   (name 'input)
-				   (value s)
+				   (value (string->js-string s))
 				   (writable #t)
 				   (enumerable #t)
 				   (configurable #t))
@@ -393,7 +395,8 @@
 			     (js-define-own-property a 0
 				(instantiate::JsValueDescriptor
 				   (name (js-toname 0 %this))
-				   (value (substring s (caar r) (cdar r)))
+				   (value (string->js-string
+					     (substring s (caar r) (cdar r))))
 				   (writable #f)
 				   (enumerable #t)
 				   (configurable #t))
@@ -404,7 +407,8 @@
 				(when (pair? c)
 				   (let* ((r (car c))
 					  (v (if (pair? r)
-						 (substring s (car r) (cdr r))
+						 (string->js-string
+						    (substring s (car r) (cdr r)))
 						 (js-undefined))))
 				      (js-define-own-property a i
 					 (instantiate::JsValueDescriptor
@@ -418,11 +422,7 @@
 			     a))))
 		   (else
 		    (js-put! this 'lastIndex 0 #f %this)
-		    (js-null))
-		   ))))))
-;* 		    (set! i (+fx i 1))                                 */
-;* 		    (tprint "i=i+1 " i " " rx)                         */
-;* 		    (loop))))))))                                      */
+		    (js-null))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-regexp-prototype-test ...                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Nov  3 18:19:37 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:20:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -26,7 +26,9 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_number
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_string
+	   __hopscript_stringliteral)
    
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
@@ -211,7 +213,7 @@
 	     (func (js-get this 'join %this)))
 	 (if (isa? func JsFunction)
 	     (js-call1 %this func this (js-undefined))
-	     (js-tostring this %this))))
+	     (js-tojsstring this %this))))
    
    (js-bind! %this js-array-prototype 'toString
       :value (js-make-function %this array-prototype-tostring 0 'toString
@@ -226,9 +228,12 @@
 	 (if (or (eq? el (js-undefined)) (eq? el (js-null)))
 	     ""
 	     (let ((obj (js-toobject %this el)))
-		;; MS CARE: I'm not sure that the conversion js-tostring is %this
-		;; correct as I don't see where it is demanded by the spec
-		(js-tostring (js-call0 %this (js-get obj 'toLocaleString %this) obj) %this))))
+		;; MS CARE: I'm not sure that the conversion js-tojsstring
+		;; is %this correct as I don't see where it is
+		;; demanded by the spec
+		(js-tojsstring
+		   (js-call0 %this (js-get obj 'toLocaleString %this) obj)
+		   %this))))
       
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this)))
@@ -321,14 +326,16 @@
       
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this))
-	     (sep (if (eq? separator (js-undefined)) "," (js-tostring separator %this))))
+	     (sep (if (eq? separator (js-undefined))
+		      ","
+		      (js-tostring separator %this))))
 	 (if (=u32 lenval #u32:0)
-	     ""
+	     (string->js-string "")
 	     (let* ((el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
 			   (i #u32:1))
 		   (if (=u32 i lenval)
-		       (apply string-append (reverse! r))
+		       (string-list->js-string (reverse! r))
 		       (loop (cons* (el->string (js-get o i %this)) sep r)
 			  (+u32 i #u32:1))))))))
    

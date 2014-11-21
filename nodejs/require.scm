@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Oct 28 09:53:18 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 09:52:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -477,7 +477,7 @@
 
    (with-trace 'require "nodejs-require-core"
       (trace-item "name=" name)
-      (trace-item "worker=" worker)
+      (trace-item "worker=" (typeof worker))
       (let ((mod (or (nodejs-cache-module name worker)
 		     (nodejs-init-core name worker %this))))
 	 (js-get mod 'exports %this))))

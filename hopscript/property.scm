@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 28 13:06:02 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 16:05:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -616,6 +616,13 @@
    (js-get-jsobject o o prop %this))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get ::JsStringLiteral ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsStringLiteral prop %this)
+   (let ((obj (js-toobject %this o)))
+      (js-get-jsobject obj o prop %this)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get ::object ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Accessing Bigloo objects from hopscript                          */
@@ -627,9 +634,7 @@
       (if (not field)
 	  (case name
 	     ((inspect)
-	      (js-make-function %this js-inspect
-		 1
-		 'inspect))
+	      (js-make-function %this js-inspect 1 'inspect))
 	     ((constructor)
 	      (js-undefined))
 	     ((toString)
@@ -858,6 +863,13 @@
 	  (if o
 	      (js-put! o prop v throw %this)
 	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put! ::JsStringLiteral ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! _o::JsStringLiteral prop v throw %this)
+   (let ((o (js-toobject %this _o)))
+      (js-put! o prop v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::object ...                                             */
@@ -1675,4 +1687,10 @@
 	 (when (<fx i (vector-length fields))
 	    (proc (symbol->string (class-field-name (vector-ref-ur fields i))))
 	    (loop (+fx i 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-in ::Object ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-in obj::object proc %this)
+   (js-for-in (js-toobject %this obj) proc %this))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Nov  6 07:55:52 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:20:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -20,6 +20,7 @@
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_string
+	   __hopscript_stringliteral
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
@@ -186,15 +187,15 @@
 		   ((or (< r 2) (> r 36))
 		    (js-raise-range-error %this "Radix out of range: ~a" r))
 		   ((and (flonum? val) (nanfl? val))
-		    "NaN")
+		    (string->js-string "NaN"))
 		   ((= val +inf.0)
-		    "Infinity")
+		    (string->js-string "Infinity"))
 		   ((= val -inf.0)
-		    "-Infinity")
+		    (string->js-string "-Infinity"))
 		   ((or (= r 10) (= r 0))
-		    (js-tostring val %this))
+		    (js-tojsstring val %this))
 		   (else
-		    (number->string val r)))))))
+		    (string->js-string (number->string val r))))))))
 
    (js-bind! %this obj 'toString
       :value (js-make-function %this js-number-to-string 2 'toString)
@@ -234,8 +235,8 @@
       
       (define (signed val s)
 	 (if (>= val 0)
-	     s
-	     (string-append "-" s)))
+	     (string->js-string s)
+	     (string->js-string (string-append "-" s))))
       
       (if (not (isa? this JsNumber))
 	  (js-raise-type-error %this
@@ -321,10 +322,10 @@
    (let ((left (js-toprimitive left 'any %this))
 	 (right (js-toprimitive right 'any %this)))
       (cond
-	 ((string? left)
-	  (js-string-append left (js-tostring right %this)))
-	 ((string? right)
-	  (js-string-append (js-tostring left %this) right))
+	 ((js-string? left)
+	  (js-string-append left (js-tojsstring right %this)))
+	 ((js-string? right)
+	  (js-string-append (js-tojsstring left %this) right))
 	 (else
 	  (let* ((left (js-tonumber left %this))
 		 (right (js-tonumber right %this)))

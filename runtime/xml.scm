@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Nov 19 10:10:14 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:30:57 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -39,7 +39,7 @@
 
 	    (xml-markup-is? ::obj ::symbol)
 
-	    (xml-make-id::bstring #!optional id tag)
+	    (xml-make-id::obj #!optional id tag)
 
 	    (xml-event-handler-attribute?::bool ::keyword)
 	    
@@ -57,6 +57,8 @@
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
+	    (generic xml-write-id ::obj ::output-port)
+	    (generic xml-id?::bool ::obj)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 	    (generic xml-attribute-encode ::obj)
@@ -248,7 +250,7 @@
 	     ((not (pair? (cdr a)))
 	      (error (el->string el) "Illegal attribute" (car a)))
 	     ((eq? (car a) :id)
-	      (if (or (string? (cadr a)) (not (cadr a)))
+	      (if (or (or (string? (cadr a)) (xml-id? (cadr a))) (not (cadr a)))
 		  (loop (cddr a) attr body (cadr a))
 		  (bigloo-type-error el "string" (cadr a))))
 	     (else
@@ -285,12 +287,6 @@
 (define (xml-make-id #!optional id tag)
    (if (string? id)
        id
-       ;; CARE, MS 24 apr 2010 !!!
-       ;; I don't think we need a lock here because
-       ;; I don't think it's important to have a really unique ID generator.
-       ;; I think we are only interested in uniqueness inside a single
-       ;; thread. If two threads call xml-make-id in parallel it's unlikely
-       ;; that they are constructing a shared tree.
        (let ((n (fixnum->string id-count)))
 	  (set! id-count (+fx 1 id-count))
 	  (cond
@@ -372,7 +368,8 @@
 		   'UTF-8 (hop-charset))))
 	  (xml-write s p backend)))
       (else
-       (error "xml-write" "Illegal xml object" obj))))
+       (error "xml-write" (format "Illegal xml object (~s)" (typeof obj))
+	  obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
@@ -530,7 +527,7 @@
 	     (display "<" p)
 	     (display tag p)
 	     (display " id='" p)
-	     (display id p)
+	     (xml-write-id id p)
 	     (display "'" p)
 	     (if abbrev-emptyp
 		 (display "/>" p)
@@ -667,6 +664,18 @@
 	    (error "xml-write-attributes" "Illegal attributes" attr))
 	 (xml-write-attribute (cadr a) (car a) p backend)
 	 (loop (cddr a)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-id ::obj ...                                           */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-write-id id::obj p)
+   (display id p))
+
+;*---------------------------------------------------------------------*/
+;*    xml-id? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-id? obj)
+   (string? obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-attribute ::obj ...                                    */

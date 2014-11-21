@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sat Oct 11 15:16:27 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 08:14:50 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -326,14 +326,15 @@
 			     :writable #f
 			     :enumerable #t)
 			  this))))))
-	    ((string? a0)
+	    ((js-string? a0)
 	     (with-access::JsGlobalObject %this (js-object)
-		(let ((this (instantiate::JsSlowBuffer
-			       (__proto__ slowbuffer-proto)
-			       (data a0))))
+		(let* ((data (js-string->string a0))
+		       (this (instantiate::JsSlowBuffer
+				(__proto__ slowbuffer-proto)
+				(data data))))
 		   ;; length
 		   (js-bind! %this this 'length
-		      :value (string-length a0)
+		      :value (string-length data)
 		      :configurable #f
 		      :writable #f
 		      :enumerable #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct 28 09:34:11 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:20:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -21,6 +21,7 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_string
+	   __hopscript_stringliteral
 	   __hopscript_boolean
 	   __hopscript_number
 	   __hopscript_property
@@ -37,7 +38,7 @@
 	   
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 	   
-	   (js-apply ::JsGlobalObject fun::obj this args)
+	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)
@@ -82,6 +83,8 @@
 	   (js-isindex?::bool ::uint32)
 	   
 	   (js-tostring::bstring ::obj ::JsGlobalObject)
+	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
+	   
 	   (generic js-object-tostring::bstring ::object ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
@@ -120,7 +123,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-new/function %this::JsGlobalObject f::JsFunction args)
+(define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
    (with-access::JsFunction f (construct arity alloc name)
       (let ((o (alloc f)))
 	 ;; CARE ARITY
@@ -228,7 +231,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-apply %this fun obj args)
+(define (js-apply %this fun obj args::pair-nil)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error %this "apply: argument not a function ~s" fun)
        (with-access::JsFunction fun (procedure arity name)
@@ -238,7 +241,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-apply% proc::procedure arity::int obj args)
+(define (js-apply% proc::procedure arity::int obj args::pair-nil)
    (let ((len (+fx 1 (length args))))
       (if (<fx arity 0)
           (let ((-arity (-fx (negfx arity) 1)))
@@ -603,7 +606,7 @@
       ((eq? obj (js-undefined)) #f)
       ((eq? obj (js-null)) #f)
       ((number? obj) (not (or (= obj 0) (and (flonum? obj) (nanfl? obj)))))
-      ((string? obj) (>fx (string-length obj) 0))
+      ((js-string? obj) (js-string->bool obj))
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -624,8 +627,9 @@
 	  1)
 	 ((eq? obj #f)
 	  0)
-	 ((string? obj)
-	  (let ((str (trim-whitespaces+ obj :left #t :right #t :plus #t)))
+	 ((js-string? obj)
+	  (let ((str (trim-whitespaces+ (js-string->string obj)
+			:left #t :right #t :plus #t)))
 	     (cond
 		((string=? str "Infinity")
 		 +inf.0)
@@ -666,7 +670,7 @@
 	   (*fl -1. (floor (abs obj))))
 	  (else
 	   (floor obj))))
-      ((or (string? obj) (symbol? obj))
+      ((or (js-string? obj) (symbol? obj))
        (js-tointeger (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
@@ -871,12 +875,12 @@
 	   false))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
-      ((string? p)
-       (string->index p))
+      ((js-string? p)
+       (string->index (js-string->string p)))
       ((symbol? p)
        (string->index (symbol->string! p)))
       ((isa? p JsString)
-       (with-access::JsString p (val) (string->index val)))
+       (with-access::JsString p (val) (string->index (js-string->string val))))
       (else
        false)))
 
@@ -887,6 +891,14 @@
    (<u32 u32 (-u32 (fixnum->uint32 0) (fixnum->uint32 1))))
 
 ;*---------------------------------------------------------------------*/
+;*    Constant strings ...                                             */
+;*---------------------------------------------------------------------*/
+;* (define js-string-undefined (string->js-string "undefined"))        */
+;* (define js-string-true (string->js-string "true"))                  */
+;* (define js-string-false (string->js-string "false"))                */
+;* (define js-string-null (string->js-string "null"))                  */
+
+;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8          */
@@ -895,8 +907,8 @@
    (cond
       ((isa? obj JsObject)
        (js-tostring (js-toprimitive obj 'string %this) %this))
-      ((string? obj)
-       obj)
+      ((js-string? obj)
+       (js-string->string obj))
       ((eq? obj (js-undefined))
        "undefined")
       ((eq? obj #t)
@@ -906,26 +918,42 @@
       ((eq? obj (js-null))
        "null")
       ((number? obj)
-       (js-number->string obj))
+       (number->string obj))
       ((symbol? obj)
        (symbol->string! obj))
       ((object? obj)
        (js-object-tostring obj %this))
+      ((string? obj)
+       (error "js-tostring" "internal error" obj))
       (else
        (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tojsstring ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-tojsstring obj %this)
+   (if (js-string? obj)
+       obj
+       (string->js-string (js-tostring obj %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-tostring ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-tostring obj %this::JsGlobalObject)
+(define-generic (js-object-tostring::bstring obj::object %this::JsGlobalObject)
    (typeof obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-tostring::bstring ::JsStringLiteral ...                */
+;*---------------------------------------------------------------------*/
+(define-method (js-object-tostring::bstring obj::JsStringLiteral %this)
+   (js-string->string obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
-      ((string? o)
+      ((js-string? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
       ((number? o)
@@ -994,27 +1022,27 @@
 	  (cond
 	     ((number? y)
 	      (= x y))
-	     ((string? y)
+	     ((js-string? y)
 	      (if (= x 0)
-		  (or (string-null? y) (equality? x (js-tonumber y %this)))
+		  (or (js-string-null? y) (equality? x (js-tonumber y %this)))
 		  (equality? x (js-tonumber y %this))))
 	     ((isa? y JsObject)
 	      (equality? x (js-toprimitive y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
-	 ((string? x)
+	 ((js-string? x)
 	  (cond
-	     ((string? y)
-	      (string=? x y))
+	     ((js-string? y)
+	      (js-string=? x y))
 	     ((number? y)
 	      (if (= y 0)
-		  (or (string-null? x) (equality? (js-tonumber x %this) y))
+		  (or (js-string-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
 	     ((isa? y JsObject)
 	      (equality? x (js-toprimitive y 'any %this)))
 	     ((eq? y #f)
-	      (string-null? x))
+	      (js-string-null? x))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
@@ -1028,7 +1056,7 @@
 	  (equality? x (js-tonumber y %this)))
 	 ((isa? x JsObject)
 	  (cond
-	     ((string? y) (equality? (js-toprimitive x 'any %this) y))
+	     ((js-string? y) (equality? (js-toprimitive x 'any %this) y))
 	     ((number? y) (equality? (js-toprimitive x 'any %this) y))
 	     (else #f)))
 	 (else
@@ -1048,7 +1076,7 @@
 (define (js-eq? x y)
    (cond
       ((number? x) (and (number? y) (= x y)))
-      ((string? x) (and (string? y) (string=? x y)))
+      ((js-string? x) (and (js-string? y) (js-string=? x y)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -1090,13 +1118,15 @@
 ;*      ch11/11.13/11.13.2/S11.13.2_A1_T1.js                           */
 ;*---------------------------------------------------------------------*/
 (define (%js-direct-eval s strict %this this scope)
-   (if (not (string? s))
+   (if (not (js-string? s))
        s
-       (call-with-input-string (if strict (string-append "'use strict';\n" s) s)
-	  (lambda (ip)
-	     (%js-eval ip 'eval %this ;; (used to be scope)
-		(if strict (js-undefined) this)
-		scope)))))
+       (let* ((s (js-string->string s))
+	      (evals (if strict (string-append "'use strict';\n" s) s)))
+	  (call-with-input-string evals
+	     (lambda (ip)
+		(%js-eval ip 'eval %this ;; (used to be scope)
+		   (if strict (js-undefined) this)
+		   scope))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */
@@ -1169,7 +1199,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    error-obj->string ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (error-obj->string %this obj)
+(define (error-obj->string::bstring %this obj)
    (cond
       ((isa? obj JsObject)
        (with-handler
@@ -1182,6 +1212,8 @@
        "false")
       ((eq? obj #t)
        "true")
+      ((js-string? obj)
+       (js-string->string obj))
       (else
        obj)))
 

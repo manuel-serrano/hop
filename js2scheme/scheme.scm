@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 19 07:01:39 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 09:45:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -637,9 +637,9 @@
 	 (else val))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SString ...                                       */
+;*    j2s-scheme-string ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SString mode return conf)
+(define (j2s-scheme-string val loc)
    
    (define (utf8-index str)
       (let ((len (string-length str)))
@@ -649,16 +649,21 @@
 		   i
 		   (loop (+fx i 1)))))))
    
+   (let ((ui (utf8-index val)))
+      (if (not ui)
+	  ;; this is an ascii string
+	  (epairify loc `(string->js-string ,val))
+	  ;; this is an utf8 string
+	  (epairify loc
+	     `(string->js-string
+		 (string-ascii-sentinel-set! ,val ,ui))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SString ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SString mode return conf)
    (with-access::J2SString this (loc val)
-      (let ((ui (utf8-index val)))
-	 (if (not ui)
-	     ;; this is an ascii string
-	     val
-	     ;; this is an utf8 string
-	     (epairify loc
-		`(let ((s ,val))
-		    (string-ascii-sentinel-set! s ,ui)
-		    s))))))
+      (j2s-scheme-string val loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRegExp ...                                       */
@@ -669,8 +674,9 @@
 	 `(with-access::JsGlobalObject %this (js-regexp)
 	     ,(j2s-new loc 'js-regexp 
 		 (if (string-null? flags)
-		     (list val)
-		     (list val flags)))))))
+		     (list (j2s-scheme-string val loc))
+		     (list (j2s-scheme-string val loc)
+			(j2s-scheme-string flags loc))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SArray ...                                        */

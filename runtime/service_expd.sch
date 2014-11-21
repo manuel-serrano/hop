@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Nov 19 13:48:15 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 15:20:47 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -263,12 +263,12 @@
    
    (define (with-hop-local svc args success failure auth)
       `(with-access::hop-service (procedure-attr ,svc) (proc)
-	  (let ((req (instantiate::http-request
+	  (let ((req (instantiate::http-server-request
 			(authorization ,auth))))
 	     (with-hop-local (proc req ,@args) ,success ,failure ,auth))))
    
-   (define (with-hop-remote svc args success fail opts)
-      `(with-hop-remote (,svc ,@args) ,success ,fail ,@(reverse! opts)))
+   (define (with-hop-remote svc args success failure auth opts)
+      `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! opts)))
    
    (match-case x
       ((?- (?svc . ?a) . ?opts)
@@ -285,7 +285,7 @@
 	     ((null? opts)
 	      (let ((nx (let ((wh (if (and (not host) (not port))
 				      (with-hop-local svc a success fail auth)
-				      (with-hop-remote svc a success fail args))))
+				      (with-hop-remote svc a success fail auth args))))
 			   (if sync
 			       wh
 			       `(begin ,wh #unspecified)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Oct 24 11:29:09 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 08:17:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -223,45 +223,46 @@
 	 (js-put! proc 'binding
 	    (js-make-function %this
 	       (lambda (this module)
-		  (cond
-		     ((string=? module "constants")
-		      (process-constants %this))
-		     ((string=? module "fs")
-		      (process-fs %worker %this))
-		     ((string=? module "buffer")
-		      (process-buffer %this slowbuffer))
-		     ((string=? module "udp_wrap")
-		      (process-udp-wrap %this))
-		     ((string=? module "tcp_wrap")
-		      (process-tcp-wrap %worker %this proc slab slowbuffer))
-		     ((string=? module "pipe_wrap")
-		      (process-pipe-wrap %worker %this proc slab))
-		     ((string=? module "evals")
-		      (process-evals %worker %this))
-		     ((string=? module "cares_wrap")
-		      (process-cares-wrap %worker %this proc))
-		     ((string=? module "timer_wrap")
-		      (hopjs-process-timer %worker %this))
-		     ((string=? module "process_wrap")
-		      (process-process-wrap %worker %this proc))
-		     ((string=? module "crypto")
-		      (process-crypto %this))
-		     ((string=? module "http_parser")
-		      (process-http-parser %this))
-		     ((string=? module "zlib")
-		      (process-zlib %this))
-		     ((string=? module "os")
-		      (process-os %this))
-		     ((string=? module "tty_wrap")
-		      (process-tty-wrap %worker %this))
-		     ((string=? module "fs_event_wrap")
-		      (process-fs-event-wrap %worker %this proc))
-		     ((string=? module "hop")
-		      (hopjs-process-hop %worker %this))
-		     (else
-		      (warning "%nodejs-process"
-			 "binding not implemented: " module)
-		      (js-new %this js-object))))
+		  (let ((mod (js-string->string module)))
+		     (cond
+			((string=? mod "constants")
+			 (process-constants %this))
+			((string=? mod "fs")
+			 (process-fs %worker %this))
+			((string=? mod "buffer")
+			 (process-buffer %this slowbuffer))
+			((string=? mod "udp_wrap")
+			 (process-udp-wrap %this))
+			((string=? mod "tcp_wrap")
+			 (process-tcp-wrap %worker %this proc slab slowbuffer))
+			((string=? mod "pipe_wrap")
+			 (process-pipe-wrap %worker %this proc slab))
+			((string=? mod "evals")
+			 (process-evals %worker %this))
+			((string=? mod "cares_wrap")
+			 (process-cares-wrap %worker %this proc))
+			((string=? mod "timer_wrap")
+			 (hopjs-process-timer %worker %this))
+			((string=? mod "process_wrap")
+			 (process-process-wrap %worker %this proc))
+			((string=? mod "crypto")
+			 (process-crypto %this))
+			((string=? mod "http_parser")
+			 (process-http-parser %this))
+			((string=? mod "zlib")
+			 (process-zlib %this))
+			((string=? mod "os")
+			 (process-os %this))
+			((string=? mod "tty_wrap")
+			 (process-tty-wrap %worker %this))
+			((string=? mod "fs_event_wrap")
+			 (process-fs-event-wrap %worker %this proc))
+			((string=? mod "hop")
+			 (hopjs-process-hop %worker %this))
+			(else
+			 (warning "%nodejs-process"
+			    "binding not implemented: " mod)
+			 (js-new %this js-object)))))
 	       2 "binding")
 	    #f %this)
 	 (js-put! proc 'env

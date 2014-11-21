@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Nov 19 07:56:51 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 11:40:57 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -50,18 +50,18 @@
 	    ;; misc
 	    (define-js srcDir 0
 	       (lambda (this)
-		  (the-loading-dir)))
+		  (string->js-string (the-loading-dir))))
 	    
 	    (define-js srcFile 0
 	       (lambda (this code)
-		  (the-loading-file)))
+		  (string->js-string (the-loading-file))))
 
 	    (define-js currentThread 0
 	       (lambda (this) (current-thread)))
 	    
 	    ;; info
 	    `(port . ,(hop-port))
-	    `(hostname . ,(hostname))
+	    `(hostname . ,(string->js-string (hostname)))
 	       
 	    ;; requests
 	    (define-js withURL 3
@@ -71,10 +71,13 @@
 	    ;; charset
 	    (define-js charsetConvert 3
 	       (lambda (this text from to)
-		  (hopjs-charset-convert this text from to %this)))
+		  (string->js-string 
+		     (hopjs-charset-convert this (js-string->string text)
+			from to %this))))
 	    
 	    (define-js charset 0
-	       (lambda (this) (hop-charset)))
+	       (lambda (this)
+		  (string->js-string (symbol->string! (hop-charset)))))
 	    
 	    (define-js charsetSet 1
 	       (lambda (this cs)
@@ -121,7 +124,7 @@
 	    ;; lib
 	    (define-js parseWebColor 1
 	       (lambda (this color)
-		  (hopjs-parse-web-color color %this)))
+		  (hopjs-parse-web-color (js-tostring color %this) %this)))
 	    
 	    (define-js makeWebColor 3 
 	       (lambda (this r g b)

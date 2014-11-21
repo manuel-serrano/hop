@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 10 14:56:59 2014 (serrano)                */
+;*    Last change :  Thu Nov 20 21:18:49 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -32,7 +32,7 @@
 	   (js-cast-object ::JsGlobalObject obj ::bstring)
 	   (expander js-toprimitive)
 
-	   (trim-whitespaces+ ::bstring #!key (left #t) (right #f) (plus #f))
+	   (trim-whitespaces+::bstring ::bstring #!key (left #t) (right #f) (plus #f))
 	   
 	   (=uint32 ::uint32 ::obj)
 	   (<uint32 ::uint32 ::obj)
@@ -418,7 +418,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    trim-whitespaces+ ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f))
+(define (trim-whitespaces+::bstring s::bstring #!key (left #t) (right #f) (plus #f))
    
    (define (byte-ref s i)
       (char->integer (string-ref-ur s i)))

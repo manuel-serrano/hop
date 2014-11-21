@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Nov 19 07:04:32 2014 (serrano)                */
+;*    Last change :  Wed Nov 19 21:39:37 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -392,7 +392,7 @@
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
       " http://" host ":" port path "\n")
-   (with-trace 'with-hop "with-hop"
+   (with-trace 'with-hop "with-hop-remote"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)
       (cond

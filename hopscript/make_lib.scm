@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Oct 14 08:24:43 2014 (serrano)                */
+;*    Last change :  Fri Nov 21 14:20:30 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -26,6 +26,7 @@
 	   __hopscript_service
 	   __hopscript_array
 	   __hopscript_string
+	   __hopscript_stringliteral
 	   __hopscript_number 
 	   __hopscript_math
 	   __hopscript_boolean
@@ -38,6 +39,8 @@
    
    (eval   (export-all)
 
+           (class JsStringLiteral)
+      
            (class JsObject)
 	   (class JsGlobalObject)
 	   (class JsFunction)
