@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Oct 26 07:36:13 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:09:09 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -17,6 +17,8 @@
 (module __hopscript_worker
    
    (library web hop js2scheme)
+   
+   (include "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -75,6 +77,11 @@
 	   (generic js-worker-post-master-message ::JsWorker ::obj)
 	   (generic js-worker-add-handler! ::object ::JsFunction)
 	   (generic js-worker-remove-handler! ::object ::JsFunction)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsWorker ...                                        */
@@ -255,7 +262,7 @@
    ;; toString
    (js-bind! %this obj 'toString
       :value (js-make-function %this
-		(lambda (this) "[object Worker]")
+		(lambda (this) (string->js-string "[object Worker]"))
 		0 'toString)
       :writable #t
       :configurable #t
@@ -527,4 +534,9 @@
       (synchronize mutex
 	 (set! state 'terminated)
 	 (condition-variable-signal! condv))))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)
 

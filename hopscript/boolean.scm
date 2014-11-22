@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct 13 17:48:56 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:03:46 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -17,6 +17,8 @@
 (module __hopscript_boolean
 
    (library hop)
+
+   (include "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_private
@@ -28,6 +30,11 @@
 	   __hopscript_error)
 
    (export (js-init-boolean! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsBoolean ...                                */
@@ -124,7 +131,9 @@
 		(lambda (this)
 		   (if (isa? this JsBoolean)
 		       (with-access::JsBoolean this (val)
-			  (if val "true" "false"))
+			  (if val
+			      (string->js-string "true")
+			      (string->js-string "false")))
 		       (js-raise-type-error %this "not a boolean"
 			  (typeof this))))
 		0
@@ -141,3 +150,8 @@
 		0 'valueOf)
       :enumerable #f))
       
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)
+

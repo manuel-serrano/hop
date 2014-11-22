@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Nov 21 14:20:28 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:12:35 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -16,11 +16,12 @@
    
    (library hop)
    
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_string
-	   __hopscript_stringliteral
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
@@ -46,6 +47,11 @@
 	   (js-bitor left right ::JsGlobalObject)
 	   (js-bitxor left right ::JsGlobalObject)
 	   (js-bitnot expr ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */
@@ -499,8 +505,8 @@
        (< left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (string? px) (string? py))
-	      (string<? px py)
+	  (if (and (js-string? px) (js-string? py))
+	      (js-string<? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (< nx ny))))))
@@ -515,8 +521,8 @@
        (> left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (string? px) (string? py))
-	      (string>? px py)
+	  (if (and (js-string? px) (js-string? py))
+	      (js-string>? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (> nx ny))))))
@@ -531,8 +537,8 @@
        (<= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (string? px) (string? py))
-	      (string<=? px py)
+	  (if (and (js-string? px) (js-string? py))
+	      (js-string<=? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (<= nx ny))))))
@@ -547,8 +553,8 @@
        (>= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (string? px) (string? py))
-	      (string>=? px py)
+	  (if (and (js-string? px) (js-string? py))
+	      (js-string>=? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
@@ -591,3 +597,8 @@
 (define (js-bitnot expr %this)
    (let ((num (int32->elong (js-toint32 expr %this))))
       (int32->integer (elong->int32 (bit-notelong num)))))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

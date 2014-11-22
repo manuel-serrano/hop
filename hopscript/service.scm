@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Oct 29 14:42:32 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:09:44 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -16,6 +16,8 @@
 
    (library hop)
 
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_rts
 	   __hopscript_object
@@ -35,6 +37,11 @@
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)
 	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
 	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsHopFrame ...                            */
@@ -119,7 +126,7 @@
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (with-access::JsHopFrame this (url)
-			    url))
+			    (string->js-string url)))
 		      0 'toString))
 	 
 	 ;; HopFrame constructor 
@@ -302,3 +309,9 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-service-unjson ip %this::JsGlobalObject)
    (js-json-parser ip (js-undefined) #t %this))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Nov 21 09:52:05 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:45:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -688,15 +688,11 @@
 (define (nodejs-eval %this scope)
    
    (define (js-eval this str)
-      (if (not (string? str))
+      (if (not (js-string? str))
 	  str
-	  (call-with-input-string str
+	  (call-with-input-string (js-string->string str)
 	     (lambda (ip)
-		;; MS CARE, 28oct1024:  I'm not sure which variant is correct
-;* 		(%js-eval ip 'eval %this %this scope)                  */
-;* 		(%js-eval ip 'eval %this %this %this)                  */
-		(%js-eval ip 'eval %this %this scope)
-		))))
+		(%js-eval ip 'eval %this %this scope)))))
 
    (js-bind! %this scope 'eval
       :value (js-make-function %this js-eval 1 'eval :prototype (js-undefined))

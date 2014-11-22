@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Nov 21 14:20:18 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:17:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -16,7 +16,8 @@
    
    (library hop)
    
-   (include "../nodejs/nodejs_debug.sch")
+   (include "../nodejs/nodejs_debug.sch"
+	    "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -27,8 +28,7 @@
 	   __hopscript_public
 	   __hopscript_number
 	   __hopscript_worker
-	   __hopscript_string
-	   __hopscript_stringliteral)
+	   __hopscript_string)
    
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
@@ -36,6 +36,11 @@
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
 	      ::obj ::symbol ::bstring ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
@@ -231,20 +236,20 @@
 		;; MS CARE: I'm not sure that the conversion js-tojsstring
 		;; is %this correct as I don't see where it is
 		;; demanded by the spec
-		(js-tojsstring
+		(js-tostring
 		   (js-call0 %this (js-get obj 'toLocaleString %this) obj)
 		   %this))))
       
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this)))
 	 (if (=u32 lenval #u32:0)
-	     ""
+	     (string->js-string "")
 	     (let* ((sep ",")
 		    (el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
 			   (i 1))
 		   (if (=u32 i lenval)
-		       (apply string-append (reverse! r))
+		       (string-list->js-string (reverse! r))
 		       (loop (cons* (el->string (js-get o (uint32->fixnum i) %this))
 				sep r)
 			  (+u32 i #u32:1))))))))
@@ -1120,7 +1125,7 @@
 			       #f %this))
 			 (loop (+ i 1)))
 		      a))))
-	 
+
 	 (array-prototype-iterator %this this proc t array-map vector-map)))
    
    (js-bind! %this js-array-prototype 'map
@@ -1196,7 +1201,7 @@
 				    (loop (+ i 1) (+ j 1)))
 				 (loop (+ i 1) j)))))
 		   a))))
-      
+
       (array-prototype-iterator %this this proc t array-filter vector-filter))
    
    (js-bind! %this js-array-prototype 'filter
@@ -1377,6 +1382,7 @@
 ;*    js-properties-name ::JsArray ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-name obj::JsArray enump %this)
+   (tprint "js-properties-name ::JsArray o=" (typeof obj))
    (with-access::JsArray obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (let loop ((i (-fx (uint32->fixnum (minu32 len (u32vlen vec))) 1))
@@ -1386,7 +1392,7 @@
 		(let ((v (vector-ref vec i)))
 		   (if (eq? v (js-absent))
 		       (loop (-fx i 1) acc)
-		       (loop (-fx i 1) (cons (integer->string i) acc)))))))))
+		       (loop (-fx i 1) (cons (integer->js-string i) acc)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-vector-properties ...                                   */
@@ -1899,7 +1905,7 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (integer->string i))
+		       (proc (integer->js-string i))
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))
@@ -1924,3 +1930,7 @@
 	     (js-make-function %this test 1 "comprehension-test"))
 	 _name _astp _aste)))
 	
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

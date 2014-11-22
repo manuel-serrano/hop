@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Nov 21 16:42:40 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 10:11:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -506,7 +506,7 @@
 	 (lambda (k)
 	    (set! acc
 	       (cons* (js-get obj k %this)
-		  (string->keyword k)
+		  (string->keyword (js-string->string k))
 		  acc)))
 	 %this)
       (reverse! acc)))
@@ -877,6 +877,8 @@
        (with-access::JsNumber p (val) (js-toindex val)))
       ((js-string? p)
        (string->index (js-string->string p)))
+      ((string? p)
+       (string->index p))
       ((symbol? p)
        (string->index (symbol->string! p)))
       ((isa? p JsString)
@@ -889,14 +891,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-isindex? u32::uint32)
    (<u32 u32 (-u32 (fixnum->uint32 0) (fixnum->uint32 1))))
-
-;*---------------------------------------------------------------------*/
-;*    Constant strings ...                                             */
-;*---------------------------------------------------------------------*/
-;* (define js-string-undefined (string->js-string "undefined"))        */
-;* (define js-string-true (string->js-string "true"))                  */
-;* (define js-string-false (string->js-string "false"))                */
-;* (define js-string-null (string->js-string "null"))                  */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */
@@ -918,7 +912,7 @@
       ((eq? obj (js-null))
        "null")
       ((number? obj)
-       (number->string obj))
+       (js-number->string obj))
       ((symbol? obj)
        (symbol->string! obj))
       ((object? obj)
@@ -1204,8 +1198,9 @@
       ((isa? obj JsObject)
        (with-handler
 	  (lambda (e)
-	     (js-typeof obj))
-	  (js-call0 %this (js-get obj 'toString %this) obj)))
+	     (js-string->string (js-typeof obj)))
+	  (js-string->string
+	     (js-call0 %this (js-get obj 'toString %this) obj))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1214,6 +1209,8 @@
        "true")
       ((js-string? obj)
        (js-string->string obj))
+      ((symbol? obj)
+       (symbol->string! obj))
       (else
        obj)))
 
@@ -1224,7 +1221,8 @@
    (with-access::JsGlobalObject %this (js-type-error)
       (js-raise
 	 (js-new %this js-type-error
-	    (format fmt (error-obj->string %this obj))))))
+	    (string->js-string
+	       (format fmt (error-obj->string %this obj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error/loc ...                                      */
@@ -1235,7 +1233,7 @@
        (with-access::JsGlobalObject %this (js-type-error)
 	  (js-raise
 	     (js-new %this js-type-error
-		(format fmt (error-obj->string %this obj))
+		(string->js-string (format fmt (error-obj->string %this obj)))
 		fname
 		loc))))
       (else
@@ -1246,35 +1244,45 @@
 ;*---------------------------------------------------------------------*/
 (define (js-raise-range-error %this::JsGlobalObject fmt::bstring obj)
    (with-access::JsGlobalObject %this (js-range-error)
-      (js-raise (js-new %this js-range-error (format fmt obj)))))
+      (js-raise
+	 (js-new %this js-range-error
+	    (string->js-string (format fmt obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-uri-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-uri-error %this::JsGlobalObject fmt::bstring obj)
    (with-access::JsGlobalObject %this (js-uri-error)
-      (js-raise (js-new %this js-uri-error (format fmt obj)))))
+      (js-raise
+	 (js-new %this js-uri-error
+	    (string->js-string (format fmt obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-syntax-error ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-syntax-error %this::JsGlobalObject fmt::bstring obj . args)
    (with-access::JsGlobalObject %this (js-syntax-error)
-      (js-raise (apply js-new %this js-syntax-error (format fmt obj) args))))
+      (js-raise
+	 (apply js-new %this js-syntax-error
+	    (string->js-string (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-reference-error ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-reference-error %this::JsGlobalObject fmt::bstring obj . args)
    (with-access::JsGlobalObject %this (js-reference-error)
-      (js-raise (apply js-new %this js-reference-error (format fmt obj) args))))
+      (js-raise
+	 (apply js-new %this js-reference-error
+	    (string->js-string (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-error ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-error %this::JsGlobalObject fmt::bstring obj . args)
    (with-access::JsGlobalObject %this (js-error)
-      (js-raise (apply js-new %this js-error (format fmt obj) args))))
+      (js-raise
+	 (apply js-new %this js-error
+	    (string->js-string (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ...                                                   */

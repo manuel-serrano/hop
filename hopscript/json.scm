@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 24 07:47:18 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:02:19 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -18,6 +18,8 @@
 
    (library web hop)
    
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_property
@@ -29,6 +31,11 @@
 
    (export (js-init-json! ::JsObject)
 	   (js-json-parser ::input-port ::obj ::bool ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */
@@ -138,18 +145,19 @@
 			     (else
 			      (loop (+fx i 1) (+fx n 1)))))))))))
       
-      (define (string-quote str)
-	 (let ((len (string-length str))
-	       (count (string-count str)))
+      (define (string-quote::JsStringLiteral jstr::JsStringLiteral)
+	 (let* ((str (js-string->string jstr))
+		(len (string-length str))
+		(count (string-count str)))
 	    (if (=fx len count)
-		(string-append "\"" str "\"")
+		(string-list->js-string (list "\"" str "\""))
 		(let ((nstr (make-string (+fx count 2))))
 		   (string-set! nstr 0 #\")
 		   (string-set! nstr (+fx count 1) #\")
 		   (let loop ((r 0)
 			      (w 1))
 		      (if (=fx r len)
-			  nstr
+			  (string->js-string nstr)
 			  (let ((c (string-ref-ur str r)))
 			     (case c
 				((#a008)
@@ -229,33 +237,35 @@
       
       (define gap "")
       
-      (define (lst key holder value mind opar cpar proc)
+      (define (lst::JsStringLiteral key::symbol holder value mind
+		 opar::bstring cpar::bstring proc)
 	 (let ((len (js-get value 'length %this)))
-	    (if (= len 0)
-		(string-append opar cpar)
-		(call-with-output-string
-		   (lambda (op)
-		      (display opar op)
-		      (unless (string-null? gap)
-			 (newline op)
-			 (display gap op))
-		      (display (proc 0) op)
-		      (let liip ((i 1))
-			 (if (= i len)
-			     (begin
-				(unless (string-null? gap)
-				   (display "\n" op)
-				   (display mind op))
-				(display cpar op))
-			     (begin
-				(if (string-null? gap)
-				    (display "," op)
-				    (begin
-				       (display ",\n" op)
-				       (display gap op)))
-				(display (proc i) op)
-				(liip (+fx i 1)))))
-		      (set! gap mind))))))
+	    (string->js-string 
+	       (if (= len 0)
+		   (string-append opar cpar)
+		   (call-with-output-string
+		      (lambda (op)
+			 (display opar op)
+			 (unless (string-null? gap)
+			    (newline op)
+			    (display gap op))
+			 (display (proc 0) op)
+			 (let liip ((i 1))
+			    (if (= i len)
+				(begin
+				   (unless (string-null? gap)
+				      (display "\n" op)
+				      (display mind op))
+				   (display cpar op))
+				(begin
+				   (if (string-null? gap)
+				       (display "," op)
+				       (begin
+					  (display ",\n" op)
+					  (display gap op)))
+				   (display (proc i) op)
+				   (liip (+fx i 1)))))
+			 (set! gap mind)))))))
 
       (define (for-in obj::JsObject proc)
 	 
@@ -269,7 +279,7 @@
 	 (define (in-property p)
 	    (when (isa? p JsPropertyDescriptor)
 	       (with-access::JsPropertyDescriptor p (name)
-		  (proc (symbol->string! name)))))
+		  (proc (string->js-string (symbol->string! name))))))
 	 
 	 (let loop ((o obj))
 	    (with-access::JsObject o (cmap properties __proto__)
@@ -290,16 +300,16 @@
 		(js-raise-type-error %this
 		   "Converting circular structure to JSON ~s"
 		   (js-tostring value %this)))
-	       ((string? value)
+	       ((js-string? value)
 		(string-quote value))
 	       ((number? value)
-		(number->string value))
+		(string->js-string (number->string value)))
 	       ((eq? (js-null) value)
-		"null")
+		(string->js-string "null"))
 	       ((eq? value #t)
-		"true")
+		(string->js-string "true"))
 	       ((eq? value #f)
-		"false")
+		(string->js-string "false"))
 	       ((eq? value (js-undefined))
 		value)
 	       (else
@@ -318,55 +328,65 @@
 		    (let ((res (lst key holder value mind "{" "}"
 				  (lambda (i)
 				     (let ((k (js-get rep i %this)))
-					(if (string? k)
-					    (let ((v (str k value stack)))
-					       (when (js-totest v)
-						  (format "~a~a~a"
-						     (string-quote k)
-						     (if gap ": " ":")
-						     v)))))))))
+					(when (js-string? k)
+					   (let ((v (str k value stack)))
+					      (when (js-totest v)
+						 (js-string-append
+						    (string-quote k)
+						    (js-string-append
+						       (if gap
+							   (string->js-string
+							      ": ")
+							   (string->js-string
+							      ":"))
+						       v))))))))))
 		       (set! gap mind)
 		       res))
 		   (else
 		    (let ((i 0)
 			  (nstack (cons value stack)))
-		       (call-with-output-string
-			  (lambda (op)
-			     (for-in value
-				(lambda (k)
-				   (let ((v (str k value nstack)))
-				      (when (js-totest v)
-					 (if (=fx i 0)
-					     (begin
-						(set! i (+fx i 1))
+		       (string->js-string
+			  (call-with-output-string
+			     (lambda (op)
+				(for-in value
+				   (lambda (k)
+				      (let ((v (str k value nstack)))
+					 (when (js-totest v)
+					    (if (=fx i 0)
+						(begin
+						   (set! i (+fx i 1))
+						   (if (string-null? gap)
+						       (display "{" op)
+						       (begin
+							  (display "{\n" op)
+							  (display gap op))))
 						(if (string-null? gap)
-						    (display "{" op)
+						    (display "," op)
 						    (begin
-						       (display "{\n" op)
+						       (display ",\n" op)
 						       (display gap op))))
-					     (if (string-null? gap)
-						 (display "," op)
-						 (begin
-						    (display ",\n" op)
-						    (display gap op))))
-					 (display (string-quote k) op)
-					 (display
-					    (if (string-null? gap) ":" ": ")
-					    op)
-					 (display v op)))))
-			     (cond
-				((=fx i 0)
-				 (display "{}" op))
-				((string-null? gap)
-				 (display "}" op))
-				(else
-				 (display "\n" op)
-				 (display mind op)
-				 (display "}" op)))
-			     (set! gap mind))))))))))
+					    (display (string-quote k) op)
+					    (display
+					       (if (string-null? gap) ":" ": ")
+					       op)
+					    (display v op)))))
+				(cond
+				   ((=fx i 0)
+				    (display "{}" op))
+				   ((string-null? gap)
+				    (display "}" op))
+				   (else
+				    (display "\n" op)
+				    (display mind op)
+				    (display "}" op)))
+				(set! gap mind)))))))))))
 
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new %this js-object)))
 	    (js-put! holder '|| value #f %this)
 	    (str '|| holder '())))))
 
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

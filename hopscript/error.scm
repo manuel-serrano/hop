@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 24 08:47:18 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:45:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -18,6 +18,8 @@
 
    (library hop)
    
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_property
@@ -26,6 +28,11 @@
 	   __hopscript_public)
 
    (export (js-init-error! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::JsError ...                                     */
@@ -108,17 +115,22 @@
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f)
 		      (set! msg m)))
-		  ((?m ?f ?l)
+		  ((?m (and (? string?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f))
 		   (set! msg m)
-		   (set! fname f)
-		   (set! location l)))
+		   (set! fname (if (string? f) (string->js-string f) f))
+		   (set! location l))
+		  ((?m . ?-)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (set! msg m))))
+
 	       (js-bind! %this this 'name
-		  :value name
+		  :value (string->js-string name)
 		  :enumerable #f)
 	       (js-bind! %this this 'stack
-		  :value ""
+		  :value (string->js-string "")
 		  :enumerable #f))
 	    this)
 
@@ -340,9 +352,9 @@
 			   ""
 			   (js-tostring msg5 %this))))
 	     (cond
-		((string=? name4 "") msg6)
-		((string=? msg6 "") name4)
-		(else (string-append name4 ": " msg6))))))
+		((string=? name4 "") (string->js-string msg6))
+		((string=? msg6 "") (string->js-string name4))
+		(else (string->js-string (string-append name4 ": " msg6)))))))
       
    (js-bind! %this obj 'toString
       :value (js-make-function %this error-prototype-tostring 1 'toString)
@@ -350,3 +362,7 @@
    
    (set! *js-builtin-error-prototype* obj))
    
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

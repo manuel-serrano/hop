@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Wed Oct  1 15:38:12 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:49:21 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -16,6 +16,8 @@
 
    (library hop)
 
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_error
@@ -33,12 +35,17 @@
 	    (js-put-pair! ::pair ::symbol v throw::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
+
+;*---------------------------------------------------------------------*/
 ;*    js-properties-name-pair ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-properties-name-pair::vector o::pair %this)
    (if (epair? o)
-       '#("car" "cdr" "cer")
-       '#("car" "cdr")))
+       `#(,(string->js-string "car") ,(string->js-string "cdr") ,(string->js-string "cer"))
+       `#(,(string->js-string "car") ,(string->js-string "car"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-pair ...                                     */
@@ -193,3 +200,7 @@
 	      "[[PUT]], read-only or unbound ~~s" (js-toname prop %this))
 	   v))))
       
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

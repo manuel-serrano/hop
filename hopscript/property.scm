@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Nov 21 16:05:53 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:57:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -16,7 +16,9 @@
 (module __hopscript_property
 
    (library hop)
-	    
+
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_error
@@ -286,6 +288,8 @@
       (cond
 	 ((string? p)
 	  (string->symbol p))
+	 ((js-string? p)
+	  (string->symbol (js-string->string p)))
 	 ((symbol? p)
 	  p)
 	 ((fixnum? p)
@@ -467,7 +471,8 @@
 			   ;; see cmap case in js-delete!
 			   (with-access::JsPropertyDescriptor p (name enumerable)
 			      (when (or (not enump) enumerable)
-				 (symbol->string! name)))))
+				 (string->js-string
+				    (symbol->string! name))))))
 	    (if cmap
 		(with-access::JsConstructMap cmap (descriptors)
 		   (vector->list descriptors))
@@ -1667,7 +1672,7 @@
 	    (unless (memq name env)
 	       (when (eq? enumerable #t)
 		  (set! env (cons name env))
-		  (proc (symbol->string! name)))))))
+		  (proc (string->js-string (symbol->string! name))))))))
    
    (let loop ((o obj))
       (with-access::JsObject o (cmap properties __proto__)
@@ -1685,7 +1690,9 @@
    (let ((fields (class-all-fields (object-class obj))))
       (let loop ((i 0))
 	 (when (<fx i (vector-length fields))
-	    (proc (symbol->string (class-field-name (vector-ref-ur fields i))))
+	    (proc
+	       (string->js-string
+		  (symbol->string (class-field-name (vector-ref-ur fields i)))))
 	    (loop (+fx i 1))))))
 
 ;*---------------------------------------------------------------------*/

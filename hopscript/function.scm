@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct 28 06:01:23 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:53:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -18,6 +18,8 @@
 
    (library hop)
 
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_property
 	   __hopscript_object
@@ -35,6 +37,11 @@
 	      ::procedure ::int ::obj
 	      #!key
 	      __proto__ prototype construct alloc strict arity src)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
@@ -229,13 +236,14 @@
 	     (cond
 		((pair? src)
 		 (if (string? (cdr src))
-		     (string-append "function " (cdr src))
-		     (format "[Function ~a~a]"
-			(cadr (car src)) (caddr (car src)))))
+		     (string-list->js-string (list "function " (cdr src)))
+		     (string->js-string
+			(format "[Function ~a~a]"
+			   (cadr (car src)) (caddr (car src))))))
 		((>fx (string-length name) 0)
-		 (format "[Function ~a]" name))
+		 (string->js-string (format "[Function ~a]" name)))
 		(else
-		 "[Function]"))))
+		 (string->js-string "[Function]")))))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
@@ -334,3 +342,7 @@
       :set thrower-set
       :enumerable #f :configurable #f))
 
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

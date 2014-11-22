@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Nov 21 14:20:40 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 06:31:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -54,6 +54,17 @@
 	      (names::vector read-only (default '#()))
 	      (descriptors::vector read-only (default '#())))
 
+	   ;; Not a jsobject. This class is used to implement
+	   ;; JS string literal which are not plain Scheme string
+	   ;; for the sake of concat performance
+	   (final-class JsStringLiteral
+	      ;; the actual characters (string, tree, list)
+	      val::obj
+	      ;; state=0, normalize string
+	      ;; state=1, tree based string
+	      ;; state=2, list based string
+	      state::uint8)
+	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
 	      (extensible::bool read-only (default #t))
@@ -117,13 +128,6 @@
 	   (class JsArguments::JsObject
 	      vec::vector)
 
-	   (final-class JsStringLiteral
-	      ;; Not a jsobject. This class is used to implement
-	      ;; JS string literal which are not plain Scheme string
-	      ;; for the sake of concat performance
-	      state::int
-	      val::obj)
-	   
 	   (class JsString::JsObject
 	      (val::JsStringLiteral read-only))
 	   

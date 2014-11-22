@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Nov 21 16:04:47 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:24:45 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -20,6 +20,8 @@
    
    (library hop)
    
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
@@ -29,7 +31,6 @@
 	   __hopscript_regexp
 	   __hopscript_array
 	   __hopscript_error
-	   __hopscript_stringliteral
 	   __hopscript_worker)
 
    (export (js-init-string! ::JsGlobalObject)))
@@ -45,6 +46,11 @@
    (lambda (s)
       (call-with-input-string s
 	 javascript->jsobj)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */
@@ -315,7 +321,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10
    (define (match this::obj regexp)
       (with-access::JsGlobalObject %this (js-regexp js-array)
-	 (let* ((s (js-tostring (js-cast-string %this this) %this))
+	 (let* ((s (js-tojsstring (js-cast-string %this this) %this))
 		(rx (if (isa? regexp JsRegExp)
 			regexp
 			(js-new %this js-regexp regexp)))
@@ -965,8 +971,12 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (integer->string i))
+		       (proc (integer->js-string i))
 		       (loop (+fx i 1)))
 		    (call-next-method)))
 	     (call-next-method)))))
   
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

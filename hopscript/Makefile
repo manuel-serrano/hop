@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Nov 21 14:13:45 2014 (serrano)                */
+#*    Last change :  Sat Nov 22 06:53:48 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -49,7 +49,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm)
 
-INCLUDES = 
+INCLUDES = stringliteral.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

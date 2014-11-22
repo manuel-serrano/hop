@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Nov 21 16:45:03 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 10:01:09 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -18,6 +18,8 @@
 (module __hopscript_object
 
    (library hop)
+   
+   (include "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_string
@@ -50,6 +52,11 @@
 	   (inline js-get-global-object-name/cache
 	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
 	   ))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -186,9 +193,9 @@
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1
 	    ;; not used, see nodejs/require.scm
 	    (define (js-eval _ string)
-	       (if (not (string? string))
+	       (if (not (js-string? string))
 		   string
-		   (call-with-input-string string
+		   (call-with-input-string (js-string->string string)
 		      (lambda (ip)
 			 (%js-eval ip 'eval %this %this %this)))))
 	    
@@ -980,3 +987,8 @@
        (primitive-as-string))
       (else
        (primitive-as-number))))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

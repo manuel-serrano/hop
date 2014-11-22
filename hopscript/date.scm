@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Oct 28 19:51:42 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:15:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -18,6 +18,8 @@
    
    (library hop)
    
+   (include "stringliteral.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
@@ -29,6 +31,11 @@
    
    (export (js-init-date! ::JsObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsDate ...                                   */
@@ -398,8 +405,9 @@
    (define (date-prototype-tostring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->rfc2822-date (seconds->date (date->seconds val)))
-	     "Invalid date")))
+	     (string->js-string
+		(date->rfc2822-date (seconds->date (date->seconds val))))
+	     (string->js-string "Invalid date"))))
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this date-prototype-tostring 0 'toString)
@@ -412,15 +420,17 @@
    (define (date-prototype-todatestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (format "~a ~a ~2,0d ~d"
-		(day-aname (date-wday val))
-		(month-aname (date-month val))
-		(date-day val)
-		(date-year val))
-	     "Invalid date")))
+	     (string->js-string
+		(format "~a ~a ~2,0d ~d"
+		   (day-aname (date-wday val))
+		   (month-aname (date-month val))
+		   (date-day val)
+		   (date-year val)))
+	     (string->js-string "Invalid date"))))
 
    (js-bind! %this obj 'toDateString
-      :value (js-make-function %this date-prototype-todatestring 0 'toDateString)
+      :value (js-make-function %this date-prototype-todatestring
+		0 'toDateString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -430,15 +440,17 @@
    (define (date-prototype-totimestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (format "~2,0d:~2,0d:~2,0d ~a"
-		(date-hour val)
-		(date-minute val)
-		(date-second val)
-		(date-timezone val))
-	     "Invalid date")))
+	     (string->js-string
+		(format "~2,0d:~2,0d:~2,0d ~a"
+		   (date-hour val)
+		   (date-minute val)
+		   (date-second val)
+		   (date-timezone val)))
+	     (string->js-string "Invalid date"))))
 
    (js-bind! %this obj 'toTimeString
-      :value (js-make-function %this date-prototype-totimestring 0 'toTimeString)
+      :value (js-make-function %this date-prototype-totimestring
+		0 'toTimeString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -449,7 +461,8 @@
       (date-prototype-tostring this))
 
    (js-bind! %this obj 'toLocaleString
-      :value (js-make-function %this date-prototype-tolocalestring 0 'toLocaleString)
+      :value (js-make-function %this date-prototype-tolocalestring
+		0 'toLocaleString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -460,7 +473,8 @@
       date-prototype-todatestring this)
 
    (js-bind! %this obj 'toLocaleDateString
-      :value (js-make-function %this date-prototype-tolocaledatestring 0 'toLocaleDateString)
+      :value (js-make-function %this date-prototype-tolocaledatestring
+		0 'toLocaleDateString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -471,7 +485,8 @@
       (date-prototype-totimestring this))
 
    (js-bind! %this obj 'toLocaleTimeString
-      :value (js-make-function %this date-prototype-tolocaletimestring 0 'toLocaleTimeString)
+      :value (js-make-function %this date-prototype-tolocaletimestring
+		0 'toLocaleTimeString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -497,18 +512,18 @@
       (if (not (isa? this JsDate))
 	  (js-raise-type-error %this "Not a date ~s" (typeof this))
 	  (with-access::JsDate this (val ms)
-	     (tprint "val=" val)
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
-			(format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
-			   (date-year val)
-			   (date-month val)
-			   (date-day val)
-			   (date-hour val)
-			   (date-minute val)
-			   (date-second val)
-			   (/fx (date-nanosecond val) 1000))
+			(string->js-string
+			   (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
+			      (date-year val)
+			      (date-month val)
+			      (date-day val)
+			      (date-hour val)
+			      (date-minute val)
+			      (date-second val)
+			      (/fx (date-nanosecond val) 1000)))
 			(loop (date->utc-date val))))
 		 (js-raise-range-error %this "Invalide date ~s" val)))))
    
@@ -1121,3 +1136,8 @@
 	 (with-access::JsDate dt (val)
 	    (set! val date)
 	    dt))))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

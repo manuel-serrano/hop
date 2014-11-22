@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Nov 21 16:20:31 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 09:04:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -15,6 +15,8 @@
 (module __hopscript_regexp
 
    (library hop)
+   
+   (include "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -28,6 +30,11 @@
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
@@ -271,11 +278,12 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this
 		(lambda (this)
-		   (string-append "/"
-		      (js-tostring (js-get this 'source %this) %this) "/"
-		      (if (js-totest (js-get this 'global %this)) "g" "")
-		      (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
-		      (if (js-totest (js-get this 'multiline %this)) "m" "")))
+		   (string->js-string
+		      (string-append "/"
+			 (js-tostring (js-get this 'source %this) %this) "/"
+			 (if (js-totest (js-get this 'global %this)) "g" "")
+			 (if (js-totest (js-get this 'ignoreCase %this)) "i" "")
+			 (if (js-totest (js-get this 'multiline %this)) "m" ""))))
 
 		0 'toString)
       :writable #t
@@ -439,5 +447,8 @@
 (define (regexp-prototype-compile this)
    (tprint "CANNOT FIND THE SPEC..."))
 
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)
 	 
-

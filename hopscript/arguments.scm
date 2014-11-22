@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Nov  3 15:46:47 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 10:00:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -17,6 +17,8 @@
 (module __hopscript_arguments
 
    (library hop)
+
+   (include "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -241,7 +243,7 @@
    (with-access::JsArguments obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (vector-append
-	    (apply vector (map! integer->string (iota (uint32->fixnum len))))
+	    (apply vector (map! integer->js-string (iota (uint32->fixnum len))))
 	    (call-next-method))	 )))
 
 ;*---------------------------------------------------------------------*/
@@ -395,7 +397,7 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (integer->string i))
+		       (proc (integer->js-string i))
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))

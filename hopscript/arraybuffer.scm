@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Oct 24 11:12:39 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 07:55:17 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -15,6 +15,8 @@
 (module __hopscript_arraybuffer
 
    (library hop)
+
+   (include "stringliteral.sch")
 
    (import __hopscript_types
 	   __hopscript_object
@@ -140,7 +142,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-name obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (vector-append (apply vector (iota len)) (call-next-method))))
+      (vector-append (apply vector (map integer->js-string (iota len)))
+	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArrayBuffer ...                              */
