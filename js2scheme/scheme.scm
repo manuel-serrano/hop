@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 26 09:24:53 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 11:26:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1135,29 +1135,12 @@
 ;*    j2s-scheme ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBinary mode return conf)
-   
-   (define (left-addition? op lhs)
-      (when (and (eq? op '+) (isa? lhs J2SBinary))
-	 (with-access::J2SBinary lhs (op)
-	    (eq? op '+))))
-   
    (with-access::J2SBinary this (loc)
       (epairify-deep loc
 	 (with-access::J2SBinary this (lhs rhs op)
-	    (let loop ((op op)
-		       (lhs lhs)
-		       (rhs rhs))
-	       (if (left-addition? op lhs)
-		   ;; we replace left-associative additions with
-		   ;; right-associative additions (which is correct as the
-		   ;; addition is fully associative) for string concanetations
-		   (with-access::J2SBinary lhs ((llhs lhs) (lrhs rhs))
-		      (js-binop loc op
-			 (j2s-scheme llhs mode return conf)
-			 (loop op lrhs rhs)))
-		   (js-binop loc op
-		      (j2s-scheme lhs mode return conf)
-		      (j2s-scheme rhs mode return conf))))))))
+	    (js-binop loc op
+	       (j2s-scheme lhs mode return conf)
+	       (j2s-scheme rhs mode return conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SParen ...                                        */
