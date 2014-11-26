@@ -162,7 +162,6 @@ function validChunk(stream, state, chunk, cb) {
 Writable.prototype.write = function(chunk, encoding, cb) {
   var state = this._writableState;
   var ret = false;
-
   if (typeof encoding === 'function') {
     cb = encoding;
     encoding = null;

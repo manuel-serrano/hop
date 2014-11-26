@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 22 07:15:40 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 15:10:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -185,8 +185,9 @@
 		   ((?value)
 		    (let ((v (js-toprimitive value 'any %this)))
 		       (cond
-			  ((string? v)
-			   (js-date->jsdate (parse-date v)))
+			  ((js-string? v)
+			   (js-date->jsdate
+			      (parse-date (js-string->string v))))
 			  ((number? v)
 			   (if (flonum? v)
 			       (js-date->jsdate 
@@ -267,7 +268,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15    */
 ;*---------------------------------------------------------------------*/
-(define (parse-date v)
+(define (parse-date v::bstring)
    (with-handler
       (lambda (e)
 	 (cond
@@ -496,7 +497,7 @@
    (define (date-prototype-toutcstring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->utc-string val)
+	     (string->js-string (date->utc-string val))
 	     "Invalid date")))
 
    (js-bind! %this obj 'toUTCString
@@ -525,7 +526,7 @@
 			      (date-second val)
 			      (/fx (date-nanosecond val) 1000)))
 			(loop (date->utc-date val))))
-		 (js-raise-range-error %this "Invalide date ~s" val)))))
+		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
    (js-bind! %this obj 'toISOString
       :value (js-make-function %this date-prototype-toisostring 0 'toISOString)

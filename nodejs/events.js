@@ -56,9 +56,15 @@ EventEmitter.prototype.emit = function emit(type) {
   if (!this._events)
     this._events = {};
 
-  // If there is no 'error' event listener then throw.
+   // If there is no 'error' event listener then throw.
   if (type === 'error') {
-    if (!this._events.error ||
+/*       console.error( "event.js type==error" );                      */
+/*       console.error( "this._events.error=", this._events.error );   */
+/*       console.error( "typeof this._events.error=",                  */
+/* 		     typeof this._events.error );                      */
+/*       console.error( "this._events.error.length=",                  */
+/* 		     this._events.error.length );                      */
+     if (!this._events.error ||
         (typeof this._events.error === 'object' &&
          !this._events.error.length)) {
       er = arguments[1];

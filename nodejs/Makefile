@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Oct 23 18:59:46 2014 (serrano)                */
+#*    Last change :  Tue Nov 25 14:54:10 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -46,7 +46,7 @@ _JS_OBJECTS = console constants util sys path stream events fs \
   child_process string_decoder _linklist _stream_readable _stream_writable \
   _stream_duplex _stream_transform _stream_passthrough crypto dns domain \
   freelist http https tls zlib url os hop hophz node \
-  node_tick node_stdio node_proc
+  node_tick node_stdio node_proc node_timers
 
 OBJECTS = $(_OBJECTS:%=o/%.o) $(_JS_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

@@ -38,7 +38,7 @@ var assert = module.exports = ok;
 //                             expected: expected })
 
 assert.AssertionError = function AssertionError(options) {
-  this.name = 'AssertionError';
+   this.name = 'AssertionError';
   this.actual = options.actual;
   this.expected = options.expected;
   this.operator = options.operator;
@@ -281,7 +281,6 @@ function expectedException(actual, expected) {
 
 function _throws(shouldThrow, block, expected, message) {
   var actual;
-
   if (typeof expected === 'string') {
     message = expected;
     expected = null;

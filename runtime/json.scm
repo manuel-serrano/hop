@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Mon Nov  3 18:19:07 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 11:15:09 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -468,7 +468,7 @@
       (if (=fx hash (class-hash clazz))
 	  (let* ((create (class-creator clazz))
 		 (constr (class-constructor clazz))
-		 (o (apply create (map cadr fields))))
+		 (o (apply create (map cdr fields))))
 	     (when (procedure? constr) (constr o))
 	     o)
 	  (error "javascript->obj" "corrupted class" name))))

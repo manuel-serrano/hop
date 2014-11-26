@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Aug  7 19:20:10 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 17:24:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -21,7 +21,8 @@
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_public
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_stringliteral)
 
    (export (js-alist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)))
@@ -35,10 +36,14 @@
 	 (for-each (lambda (e)
 		      (js-put! obj (car e)
 			 (cond
+			    ((string? (cdr e))
+			     (string->js-string (cdr e)))
 			    ((keyword? (cdr e))
-			     (keyword->string (cdr e)))
+			     (string->js-string
+				(keyword->string (cdr e))))
 			    ((symbol? (cdr e))
-			     (symbol->string (cdr e)))
+			     (string->js-string
+				(symbol->string (cdr e))))
 			    ((pair? (cdr e))
 			     (js-alist->jsobject (cdr e) %this))
 			    ((int64? (cdr e))
@@ -68,7 +73,9 @@
 		   (if (keyword? (car plist))
 		       (keyword->symbol (car plist))
 		       (car plist))
-		   (cadr plist)
+		   (if (string? (cadr plist))
+		       (string->js-string (cadr plist))
+		       (cadr plist))
 		   #f %this)
 		(loop (cddr plist))))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Nov 22 10:11:36 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 16:23:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -105,6 +105,7 @@
 	   (%js-eval ::input-port ::symbol ::JsGlobalObject ::obj ::JsObject)
 	   
 	   (js-raise ::JsError)
+	   (js-throw ::obj ::JsStringLiteral ::long)
 
 	   (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
 	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
@@ -377,9 +378,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call0: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call0% %this procedure arity this)))
 		($env-pop-trace env)
@@ -390,7 +391,7 @@
 	  (format "call1: not a function ~~s ~a" loc) fun)
        (with-access::JsFunction fun (procedure (fname name) arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call1% %this procedure arity this a0)))
 		($env-pop-trace env)
@@ -399,9 +400,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call2: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call2% %this procedure arity this a0 a1)))
 		($env-pop-trace env)
@@ -410,9 +411,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call3: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call3% %this procedure arity this a0 a1 a2)))
 		($env-pop-trace env)
@@ -421,9 +422,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call4: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call4% %this procedure arity this a0 a1 a2 a3)))
 		($env-pop-trace env)
@@ -432,9 +433,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call5: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call5% %this procedure arity this a0 a1 a2 a3 a4)))
 		($env-pop-trace env)
@@ -443,9 +444,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call6: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call6% %this procedure arity this a0 a1 a2 a3 a4 a5)))
 		($env-pop-trace env)
@@ -454,9 +455,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call7: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call7% %this procedure arity this a0 a1 a2 a3 a4 a5 a6)))
 		($env-pop-trace env)
@@ -465,9 +466,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call8: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (js-call8% %this procedure arity this a0 a1 a2 a3 a4 a5 a6 a7)))
 		($env-pop-trace env)
@@ -476,9 +477,9 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure arity)
 	  (let ((env (current-dynamic-env))
-		(name fname))
+		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (if (<fx arity 0)
 			   (apply procedure this args)
@@ -1132,6 +1133,7 @@
       (trace-item "in=" (input-port-name in))
       (with-handler
 	 (lambda (e)
+	    (exception-notify e)
 	    (cond
 	       ((isa? e &io-parse-error)
 		(with-access::&io-parse-error e (proc msg obj fname location)
@@ -1179,7 +1181,7 @@
 (define (eval-dummy-module %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((obj (js-new %this js-object)))
-	 (js-put! obj 'filename "" #f %this)
+	 (js-put! obj 'filename (string->js-string "") #f %this)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -1189,6 +1191,19 @@
    (with-access::JsError err (stack)
       (set! stack (get-trace-stack))
       (raise err)))
+
+;*---------------------------------------------------------------------*/
+;*    js-throw ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    This function is called by the compiled form of "throw".         */
+;*---------------------------------------------------------------------*/
+(define (js-throw err f l)
+   (when (isa? err JsError)
+      (with-access::JsError err (stack fname location)
+	 (set! stack (get-trace-stack))
+	 (set! fname f)
+	 (set! location l)))
+   (raise err))
 
 ;*---------------------------------------------------------------------*/
 ;*    error-obj->string ...                                            */
@@ -1212,7 +1227,7 @@
       ((symbol? obj)
        (symbol->string! obj))
       (else
-       obj)))
+       (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

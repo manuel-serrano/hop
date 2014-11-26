@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Thu Oct 23 09:53:35 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 10:50:59 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -115,7 +115,7 @@
 	       (cond
 		  ((eof-object? status)
 		   ;; eof
-		   (js-put! process '_errno "EOF" #f %this)
+		   (js-put! process '_errno (string->js-string "EOF") #f %this)
 		   (let ((onread (js-get this 'onread %this)))
 		      (js-call3 %this onread this
 			 (js-undefined) (js-undefined) +nan.0)))

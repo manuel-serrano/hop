@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Nov 22 09:57:34 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 13:43:52 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -649,7 +649,10 @@
 		 0
 		 'toString))
 	     (else
-	      (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o)))
+;* 	      (when (isa? o &exception)                                */
+;* 		 (exception-notify o))                                 */
+	      (js-raise-type-error %this
+		 (format "no such field \"~a\" ~~a" name) o)))
 	  ((class-field-accessor field) o))))
 
 ;*---------------------------------------------------------------------*/
@@ -1522,7 +1525,6 @@
 	     #t)
 	    ((equal? current desc)
 	     ;; 5 & 6
-	     (tprint "WRONG...." (typeof o) " name=" name " current=" current " desc=" desc)
 	     (error "define-property" "equal but not same" name)
 	     #t)
 	    (else

@@ -21,7 +21,7 @@
 21. simple/test-child-process-exec-cwd.js ... ok.
 22. simple/test-child-process-exec-env.js ... ok.
 23. simple/test-child-process-exec-error.js ... ok.
-24. simple/test-child-process-exit-code.js ... failure !!!
+24. simple/test-child-process-exit-code.js ... ok.
 25. simple/test-child-process-fork-and-spawn.js ... ok.
 26. simple/test-child-process-fork-close.js ### BLACKLISTED
 27. simple/test-child-process-fork-dgram.js ... failure !!!
@@ -44,23 +44,23 @@
 44. simple/test-child-process-silent.js ### BLACKLISTED
 45. simple/test-child-process-spawn-typeerror.js ... ok.
 46. simple/test-child-process-stdin.js ... ok.
-47. simple/test-child-process-stdio-big-write-end.js ### BLACKLISTED
+47. simple/test-child-process-stdio-big-write-end.js ... failure !!!
 48. simple/test-child-process-stdio-inherit.js ... ok.
 49. simple/test-child-process-stdio.js ... ok.
-50. simple/test-child-process-stdout-flush.js ### BLACKLISTED
+50. simple/test-child-process-stdout-flush.js ... ok.
 51. simple/test-cli-eval.js ### BLACKLISTED
 52. simple/test-cluster-basic.js ... failure !!!
 53. simple/test-cluster-bind-twice-v1.js ... failure !!!
 54. simple/test-cluster-bind-twice-v2.js ... failure !!!
-55. simple/test-cluster-dgram-1.js ... ok.
+55. simple/test-cluster-dgram-1.js ... failure !!!
 56. simple/test-cluster-dgram-2.js ... failure !!!
 57. simple/test-cluster-disconnect-with-no-workers.js ... failure !!!
 58. simple/test-cluster-disconnect.js ... failure !!!
 59. simple/test-cluster-eaccess.js ... failure !!!
 60. simple/test-cluster-eaddrinuse.js ### BLACKLISTED
 61. simple/test-cluster-fork-env.js ... failure !!!
-62. simple/test-cluster-http-pipe.js ### BLACKLISTED
-63. simple/test-cluster-listening-port.js ... ok.
+62. simple/test-cluster-http-pipe.js ... failure !!!
+63. simple/test-cluster-listening-port.js ... failure !!!
 64. simple/test-cluster-master-error.js ### BLACKLISTED
 65. simple/test-cluster-master-kill.js ### BLACKLISTED
 66. simple/test-cluster-message.js ... failure !!!
@@ -118,7 +118,7 @@
 118. simple/test-domain-http-server.js ### BLACKLISTED
 119. simple/test-domain-implicit-fs.js ... failure !!!
 120. simple/test-domain-multi.js ### BLACKLISTED
-121. simple/test-domain-nested-throw.js ### BLACKLISTED
+121. simple/test-domain-nested-throw.js ... failure !!!
 122. simple/test-domain-nested.js ... failure !!!
 123. simple/test-domain-safe-exit.js ... ok.
 124. simple/test-domain-stack.js ... failure !!!
@@ -174,7 +174,7 @@
 174. simple/test-fs-read.js ... ok.
 175. simple/test-fs-readfile-empty.js ... ok.
 176. simple/test-fs-readfile-error.js ### BLACKLISTED
-177. simple/test-fs-readfile-pipe.js ### BLACKLISTED
+177. simple/test-fs-readfile-pipe.js ... failure !!!
 178. simple/test-fs-readfile-unlink.js ... ok.
 179. simple/test-fs-readfile-zero-byte-liar.js ... ok.
 180. simple/test-fs-realpath.js ... ok.
@@ -241,12 +241,12 @@
 241. simple/test-http-default-encoding.js ... failure !!!
 242. simple/test-http-destroyed-socket-write.js ... failure !!!
 243. simple/test-http-dns-error.js ... failure !!!
-244. simple/test-http-end-throw-socket-handling.js ... failure !!!
+244. simple/test-http-end-throw-socket-handling.js ... ok.
 245. simple/test-http-eof-on-connect.js ... ok.
 246. simple/test-http-exceptions.js ### BLACKLISTED
 247. simple/test-http-exit-delay.js ### BLACKLISTED
 248. simple/test-http-expect-continue.js ... failure !!!
-249. simple/test-http-extra-response.js ... ok.
+249. simple/test-http-extra-response.js ... failure !!!
 250. simple/test-http-full-response.js ### BLACKLISTED
 251. simple/test-http-get-pipeline-problem.js ... failure !!!
 252. simple/test-http-head-request.js ... failure !!!
@@ -266,7 +266,7 @@
 266. simple/test-http-many-ended-pipelines.js ### BLACKLISTED
 267. simple/test-http-many-keep-alive-connections.js ... failure !!!
 268. simple/test-http-max-headers-count.js ... failure !!!
-269. simple/test-http-multi-line-headers.js ... ok.
+269. simple/test-http-multi-line-headers.js ... failure !!!
 270. simple/test-http-mutable-headers.js ... failure !!!
 271. simple/test-http-no-content-length.js ... ok.
 272. simple/test-http-parser-bad-ref.js ... failure !!!
@@ -318,7 +318,7 @@
 318. simple/test-https-client-get-url.js ... failure !!!
 319. simple/test-https-client-reject.js ... failure !!!
 320. simple/test-https-client-resume.js ... failure !!!
-321. simple/test-https-connecting-to-http.js ... failure !!!
+321. simple/test-https-connecting-to-http.js ### BLACKLISTED
 322. simple/test-https-drain.js ... failure !!!
 323. simple/test-https-eof-for-eom.js ... failure !!!
 324. simple/test-https-foafssl.js ... ok.
@@ -356,19 +356,19 @@
 356. simple/test-net-connect-handle-econnrefused.js ... ok.
 357. simple/test-net-connect-immediate-finish.js ... ok.
 358. simple/test-net-connect-options.js ... ok.
-359. simple/test-net-create-connection.js ... ok.
+359. simple/test-net-create-connection.js ### BLACKLISTED
 360. simple/test-net-dns-error.js ... failure !!!
 361. simple/test-net-during-close.js ... ok.
 362. simple/test-net-eaddrinuse.js ### BLACKLISTED
 363. simple/test-net-end-without-connect.js ... ok.
 364. simple/test-net-error-twice.js ... ok.
-365. simple/test-net-isip.js ... failure !!!
+365. simple/test-net-isip.js ... ok.
 366. simple/test-net-keepalive.js ... ok.
 367. simple/test-net-large-string.js ... failure !!!
 368. simple/test-net-listen-error.js ... ok.
 369. simple/test-net-listen-fd0.js ... ok.
 370. simple/test-net-local-address-port.js ... ok.
-371. simple/test-net-pause-resume-connecting.js ... ok.
+371. simple/test-net-pause-resume-connecting.js ### BLACKLISTED
 372. simple/test-net-pingpong.js ### BLACKLISTED
 373. simple/test-net-pipe-connect-errors.js ... failure !!!
 374. simple/test-net-reconnect.js ... failure !!!
@@ -413,7 +413,7 @@
 413. simple/test-process-env.js ... ok.
 414. simple/test-process-exec-argv.js ... failure !!!
 415. simple/test-process-exit-recursive.js ... failure !!!
-416. simple/test-process-exit.js ... failure !!!
+416. simple/test-process-exit.js ... ok.
 417. simple/test-process-getgroups.js ... failure !!!
 418. simple/test-process-hrtime.js ... ok.
 419. simple/test-process-kill-null.js ... ok.
@@ -436,7 +436,7 @@
 436. simple/test-regress-GH-1899.js ... ok.
 437. simple/test-regress-GH-3542.js ... failure !!!
 438. simple/test-regress-GH-3739.js ... ok.
-439. simple/test-regress-GH-4015.js ... ok.
+439. simple/test-regress-GH-4015.js ### BLACKLISTED
 440. simple/test-regress-GH-4027.js ... failure !!!
 441. simple/test-regress-GH-4256.js ... ok.
 442. simple/test-regress-GH-4948.js ### BLACKLISTED
@@ -463,7 +463,7 @@
 463. simple/test-require-resolve.js ... ok.
 464. simple/test-script-context.js ... failure !!!
 465. simple/test-script-new.js ... failure !!!
-466. simple/test-script-static-context.js ... failure !!!
+466. simple/test-script-static-context.js ... ok.
 467. simple/test-script-static-new.js ... failure !!!
 468. simple/test-script-static-this.js ... failure !!!
 469. simple/test-script-this.js ... failure !!!
@@ -485,7 +485,7 @@
 485. simple/test-stdout-close-catch.js ### BLACKLISTED
 486. simple/test-stdout-close-unref.js ... failure !!!
 487. simple/test-stdout-stderr-reading.js ... failure !!!
-488. simple/test-stdout-to-file.js ### BLACKLISTED
+488. simple/test-stdout-to-file.js ... ok.
 489. simple/test-stream-big-packet.js ... ok.
 490. simple/test-stream-big-push.js ... ok.
 491. simple/test-stream-pipe-after-end.js ... ok.
@@ -521,7 +521,7 @@
 521. simple/test-stream2-readable-wrap.js ... ok.
 522. simple/test-stream2-set-encoding.js ... ok.
 523. simple/test-stream2-stderr-sync.js ... failure !!!
-524. simple/test-stream2-transform.js ... failure !!!
+524. simple/test-stream2-transform.js ... ok.
 525. simple/test-stream2-unpipe-drain.js ... failure !!!
 526. simple/test-stream2-unpipe-leak.js ... ok.
 527. simple/test-stream2-writable.js ... ok.
@@ -613,7 +613,7 @@
 613. simple/test-zlib-write-after-flush.js ... failure !!!
 614. simple/test-zlib-zero-byte.js ... failure !!!
 615. simple/test-zlib.js ... failure !!!
-538 executed
-   247 success
-   291 failure
-   77 blacklist
+540 executed
+   248 success
+   292 failure
+   75 blacklist

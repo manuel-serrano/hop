@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Nov 22 09:17:57 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 10:56:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -328,7 +328,7 @@
 	 (if (or (eq? el (js-undefined)) (eq? el (js-null)))
 	     ""
 	     (js-tostring el %this)))
-      
+
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this))
 	     (sep (if (eq? separator (js-undefined))
@@ -1382,7 +1382,6 @@
 ;*    js-properties-name ::JsArray ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-name obj::JsArray enump %this)
-   (tprint "js-properties-name ::JsArray o=" (typeof obj))
    (with-access::JsArray obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (let loop ((i (-fx (uint32->fixnum (minu32 len (u32vlen vec))) 1))

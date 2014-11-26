@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Nov 22 07:12:35 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 09:09:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -255,7 +255,7 @@
 		    "Fraction digits out of range: ~a" f)
 		 (with-access::JsNumber this (val)
 		    (if (and (flonum? val) (nanfl? val))
-			"NaN"
+			(string->js-string "NaN")
 			(let ((x (abs val))
 			      (f (->fixnum f)))
 			   (if (>= x (exptfl 10. 21.))

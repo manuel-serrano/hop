@@ -46,11 +46,15 @@ simple/test-net-server-try-ports.js
 simple/test-net-server-unref.js
 simple/test-net-server-adress.js
 simple/test-net-can-reset-timeout.js
+simple/test-net-create-connection.js
 simple/test-net-bind-twice.js
 simple/test-net-pingpong.js
+simple/test-net-pause-resume-connecting.js
+
 simple/test-net-server-address.js
 simple/test-http-exit-delay.js
 simple/test-http-upgrade-server.js
+simple/test-https-connecting-to-http.js
 
 simple/test-pipe.js
 simple/test-tls-server-large-request.js
@@ -62,6 +66,7 @@ simple/test-cluster-master-kill.js
 simple/test-socket-write-after-fin.js
 
 simple/test-regress-GH-4948.js 
+simple/test-regress-GH-4015.js
 
 #*---------------------------------------------------------------------*/
 #*    bad javascript tests                                             */
@@ -72,10 +77,10 @@ simple/test-executable-path.js
 simple/test-regress-GH-1697.js
 
 # illegal returns
-simple/test-child-process-stdio-big-write-end.js
-simple/test-cluster-http-pipe.js 
-simple/test-fs-readfile-pipe.js
-simple/test-domain-nested-throw.js
+#* simple/test-child-process-stdio-big-write-end.js                    */
+#* simple/test-cluster-http-pipe.js                                    */
+#* simple/test-fs-readfile-pipe.js                                     */
+#* simple/test-domain-nested-throw.js                                  */
 
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
@@ -124,5 +129,5 @@ simple/test-repl.js
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */
 #*---------------------------------------------------------------------*/
-simple/test-child-process-stdout-flush.js
-simple/test-stdout-to-file.js
+#* simple/test-child-process-stdout-flush.js                           */
+#* simple/test-stdout-to-file.js                                       */

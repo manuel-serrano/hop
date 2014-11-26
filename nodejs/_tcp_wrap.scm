@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Oct 24 09:44:23 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 20:23:53 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -102,7 +102,7 @@
 	       (js-make-function %this
 		  (lambda (this string)
 		     (stream-write-string %worker %this this
-			string 0 (string-length string)
+			(js-string->string string) 0 (js-string-length string)
 			"ascii" #f))
 		  1 "writeAsciiString")
 	       #f %this)
@@ -111,7 +111,7 @@
 	       (js-make-function %this
 		  (lambda (this string)
 		     (stream-write-string %worker %this this
-			string 0 (string-length string)
+			(js-string->string string) 0 (js-string-length string)
 			"utf8" #f))
 		  1 "writeUtf8String")
 	       #f %this)
@@ -122,7 +122,7 @@
 		     (let* ((ucs2string (utf8-string->ucs2-string string))
 			    (buffer (ucs2-string->buffer ucs2string)))
 			(stream-write-string %worker %this this
-			   string 0 (string-length string)
+			   (js-string->string string) 0 (js-string-length string)
 			   "ascii" #f)))
 		  1 "writeUcs2String")
 	       #f %this)

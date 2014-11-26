@@ -110,7 +110,7 @@ SlowBuffer.prototype.write = function(string, offset, length, encoding) {
       length = remaining;
     }
   }
-  encoding = String(encoding || 'utf8').toLowerCase();
+   encoding = String(encoding || 'utf8').toLowerCase();
   switch (encoding) {
     case 'hex':
       return this.hexWrite(string, offset, length);

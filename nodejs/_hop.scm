@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov 21 11:40:57 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 12:38:30 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -148,7 +148,7 @@
 (define (hopjs-with-url url success opt %this)
    
    (define (unjson in)
-      (js-json-parser in (js-undefined) #f %this))
+      (js-json-parser in (js-undefined) #f #t %this))
    
    (let ((url (js-tostring url %this))
 	 (fail #f)
@@ -220,9 +220,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    get/default ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (get/default obj key this def)
+(define (get/default::obj obj key this def)
    (let ((v (js-get obj key this)))
-      (if (eq? v (js-undefined)) def v)))
+      (cond
+	 ((eq? v (js-undefined)) def)
+	 ((js-string? v) (js-string->string v))
+	 (else v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-hop ...                                           */
@@ -231,14 +234,12 @@
    (if (isa? req JsObject)
        (instantiate::http-response-hop
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (content-type (get/default req 'contentType %this "application/x-javascript"))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
-	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (content-type "application/x-javascript")
 	  (value obj))))
 
@@ -267,12 +268,10 @@
 (define (hopjs-response-file this file req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-file
-	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
 	  (file (js-tostring file %this)))
        (instantiate::http-response-file
-	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (file (js-tostring file %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -281,13 +280,11 @@
 (define (hopjs-response-string this string req %this)
    (if (isa? req JsObject)
        (instantiate::http-response-string
-	  #;(request (get/default req 'currentRequest %this (current-request)))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
-	  #;(request (if (eq? req (js-undefined)) (current-request) req))
 	  (body (js-tostring string %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -307,8 +304,7 @@
 	    (host host)
 	    (port port)
 	    (path abspath)
-	    (header `((Host: . ,host)))
-	    #;(request (if (eq? req (js-undefined)) (current-request) req))))))
+	    (header `((Host: . ,host)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-async ...                                         */
@@ -336,12 +332,10 @@
    (if (isa? req JsObject)
        (let ((req (get/default req 'currentRequest %this #f)))
 	  (instantiate::http-response-async
-	     #;(request req)
 	     (charset (get/default req 'charset %this (hop-charset)))
 	     (content-type (get/default req 'contentType %this #f))
 	     (async (async-proc req))))
        (instantiate::http-response-async
-	  #;(request req)
 	  (async (async-proc req)))))
 
 ;*---------------------------------------------------------------------*/

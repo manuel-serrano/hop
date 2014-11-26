@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Oct 28 06:04:24 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 15:06:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -70,7 +70,7 @@
       (js-def-extern 'require #t #f '(nodejs-require %this %module))
       (js-def-extern 'Worker #t #f '(nodejs-worker %this %scope %module))
       (js-def-extern '__filename #t #f '(js-get %module 'filename %scope))
-      (js-def-extern '__dirname #t #f '(dirname (js-get %module 'filename %scope)))
+      (js-def-extern '__dirname #t #f '(string->js-string (dirname (js-string->string (js-get %module 'filename %scope)))))
       (js-def-extern '%__GLOBAL #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(js-put! GLOBAL 'global GLOBAL #f %this))

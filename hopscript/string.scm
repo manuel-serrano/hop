@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 22 09:24:45 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 10:44:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -239,8 +239,26 @@
 	     left)
 	    ((?right)
 	     (js-string-append left (js-tojsstring right %this)))
+	    ((?r1 ?r2)
+	     (js-string-append left
+		(js-string-append
+		   (js-tojsstring r1 %this)
+		   (js-tojsstring r2 %this))))
+	    ((?r1 ?r2 ?r3)
+	     (js-string-append left
+		(js-string-append
+		   (js-tojsstring r1 %this)
+		   (js-string-append
+		      (js-tojsstring r2 %this)
+		      (js-tojsstring r3 %this)))))
 	    (else
-	     (js-string-appendN left rest %this)))))
+	     (let loop ((str left)
+			(rest rest))
+		(if (null? rest)
+		    str
+		    (loop (js-string-append str
+			     (js-tojsstring (car rest) %this))
+		       (cdr rest))))))))
    
    (js-bind! %this obj 'concat
       :value (js-make-function %this concat 1 'concat)
@@ -377,11 +395,10 @@
 	 (let ((stop (-fx (string-length fmt) 1)))
 	    (let loop ((i 0)
 		       (j 0)
-		       (segments (list init)))
+		       (segments '()))
 	       (cond
 		  ((>=fx i stop)
-		   (let ((strs (cons (substring fmt j (+fx stop 1)) segments)))
-		      (reverse! strs)))
+		   (reverse (cons* init (substring fmt j (+fx stop 1)) segments)))
 		  ((not (char=? (string-ref fmt i) #\$))
 		   (loop (+fx i 1) j segments))
 		  (else
@@ -393,7 +410,7 @@
 			 ((#\&)
 			  (let ((seg (js-get match (js-toname 0 %this) %this)))
 			     (loop (+fx i 2) (+fx i 2)
-				(cons seg segments))))
+				(cons (js-string->string seg) segments))))
 			 ((#\`)
 			  (let* ((k (js-get match 'index %this))
 				 (portion (substring string 0 k)))
@@ -449,16 +466,16 @@
 		   (reverse! l)
 		   (let ((v (js-get a (js-toname i %this) %this)))
 		      (loop (+fx i 1)
-			 (cons (if (js-string? v) v (string->js-string ""))
+			 (cons (if (eq? v (js-undefined)) (string->js-string "") v)
 			    l)))))))
       
       (with-access::JsGlobalObject %this (js-regexp js-array)
 	 (let ((string (js-tojsstring (js-cast-string %this this) %this)))
 	    (cond
 	       ((not (isa? searchvalue JsRegExp))
-		(let* ((searchstr (js-tostring searchvalue %this))
+		(let* ((searchstr (js-tojsstring searchvalue %this))
 		       (i (string-contains (js-string->string string)
-			     searchstr 0)))
+			     (js-string->string searchstr) 0)))
 		   (cond
 		      ((not i)
 		       string)
@@ -471,7 +488,7 @@
 				   (js-call3 %this replacevalue (js-undefined)
 				      searchstr i string) %this)
 				(substring str
-				   (+fx i (string-length searchstr)))))))
+				   (+fx i (js-string-length searchstr)))))))
 		      (else
 		       (let ((newstring (js-tostring replacevalue %this))
 			     (a (js-new %this js-array 1))
@@ -481,7 +498,7 @@
 			  (string-list->js-string
 			     (cons (substring str 0 i)
 				(table22 newstring a str
-				   (substring str (+fx i (string-length searchstr)))))))))))
+				   (substring str (+fx i (js-string-length searchstr)))))))))))
 	       ((not (js-get searchvalue 'global %this))
 		(let* ((exec (js-get (js-get js-regexp 'prototype %this)
 				'exec %this))
@@ -549,7 +566,8 @@
 						       (substring str (+fx offset (+fx i l)))))
 						 (+fx offset (-fx (string-length v) l))))))))
 				(else
-				 (let ((newstring (js-tostring replacevalue %this)))
+				 (let ((newstring (js-tostring replacevalue %this))
+				       (str (js-string->string string)))
 				    (let loop ((matches (reverse! ms))
 					       (res string)
 					       (offset 0))
@@ -558,13 +576,13 @@
 					   (let* ((m (car matches))
 						  (i (js-get m 'index %this))
 						  (l (js-string-length (js-get m (js-toname 0 %this) %this)))
-						  (str (js-string->string string))
 						  (sres (js-string->string res))
-						  (v (substring sres (+fx offset (+fx i l)))))
+						  (v (apply utf8-string-append* (table22 newstring m str ""))))
 					      (loop (cdr matches)
 						 (string-list->js-string
 						    (list (substring sres 0 (+fx offset i))
-						       (table22 newstring m str v)))
+						       v
+						       (substring sres (+fx offset (+fx i l)))))
 						 (+fx offset (-fx (string-length v) l)))))))))
 			     (let ((thisIndex (js-get searchvalue 'lastIndex %this)))
 				(if (= thisIndex previousLastIndex)
@@ -885,7 +903,7 @@
    (with-access::JsString obj (val)
       (vector-append
 	 (apply vector
-	    (map! integer->string
+	    (map! integer->js-string
 	       (iota (utf8-string-length (js-string->string val)))))
 	 (call-next-method))))
 
@@ -922,7 +940,7 @@
 		    (call-next-method)
 		    (instantiate::JsValueDescriptor
 		       (name (js-toname p %this))
-		       (value (utf8-string-ref val index))
+		       (value (string->js-string (utf8-string-ref val index)))
 		       (enumerable #t)
 		       (writable #f)
 		       (configurable #f)))))

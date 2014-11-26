@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 18 16:19:42 2013                          */
-;*    Last change :  Thu Oct 23 19:00:11 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 14:56:46 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    nodejs boot                                                      */
@@ -60,7 +60,8 @@
 	   (__nodejs_hophz "| echo \"(module __nodejs_hophz (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_tick "| echo \"(module __nodejs_node_tick (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
 	   (__nodejs_node_stdio "| echo \"(module __nodejs_node_stdio (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
-	   (__nodejs_node_proc "| echo \"(module __nodejs_node_proc (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
+	   (__nodejs_node_proc "| echo \"(module __nodejs_node_proc (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\"")
+	   (__nodejs_node_timers "| echo \"(module __nodejs_node_timers (library hop hopscript js2scheme) (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))\""))
 
    (export (core-module-table)))
 
@@ -121,7 +122,8 @@
 	 "hophz"
 	 "node_tick"
 	 "node_stdio"
-	 "node_proc")))
+	 "node_proc"
+	 "node_timers")))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module-table ...                                            */

@@ -27,7 +27,7 @@
 
 // This is an excerpt an node.js that initialize tick counters.
 function initNodeTick( process ) {
-  processNextTick = function() {
+  var processNextTick = function() {
     var _needTickCallback = process._needTickCallback;
     var nextTickQueue = [];
     var needSpinner = true;

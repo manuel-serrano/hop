@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Nov 21 08:14:50 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 18:18:25 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -100,7 +100,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Return the number of characters of an UTF8 string.               */
 ;*---------------------------------------------------------------------*/
-(define (utf8-substring-length str len)
+(define (utf8-substring-length str::bstring len)
    (let ((len (minfx (string-length str) len)))
       (let loop ((r 0)
 		 (l 0))
@@ -111,7 +111,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    string-force-ascii! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (string-force-ascii! str)
+(define (string-force-ascii! str::bstring)
    (let ((len (string-length str)))
       (let loop ((i 0))
 	 (if (=fx i len)
@@ -124,7 +124,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    string-encode-utf8 ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (string-encode-utf8 str start end)
+(define (string-encode-utf8 str::bstring start end)
    (let ((s (substring str start end)))
       (if (utf8-string? str #t)
 	  s
@@ -136,7 +136,7 @@
 ;*    Decode the UTF8 character start at index i, b0 is s[ i ].        */
 ;*    Returns the UCS2 encoding of that character.                     */
 ;*---------------------------------------------------------------------*/
-(define (utf8-string-get string i b0)
+(define (utf8-string-get string::bstring i b0)
    (let loop ((byte (char->integer b0))
 	      (ucs2 (char->integer b0))
 	      (bits 6)
@@ -155,7 +155,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    blit-string-ascii-clamp! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (blit-string-ascii-clamp! string1 o1 string2 o2 len)
+(define (blit-string-ascii-clamp! string1::bstring o1 string2::bstring o2 len)
    (let loop ((i 0))
       (when (<fx i len)
          (let ((n (char->integer (string-ref-ur string1 (+fx o1 i)))))
@@ -165,7 +165,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    blit-string-ascii-decode! ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (blit-string-ascii-decode! string1 o1 string2 o2 len)
+(define (blit-string-ascii-decode! string1::bstring o1 string2::bstring o2 len)
    (let ((len1 (string-length string1)))
       (let loop ((i o1)
 		 (j 0)
@@ -187,13 +187,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    blit-string-binary-decode! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (blit-string-binary-decode! string1 o1 string2 o2 len)
-   (blit-string-ascii-decode!  string1 o1 string2 o2 len))
+(define (blit-string-binary-decode! string1::bstring o1 string2::bstring o2 len)
+   (blit-string-ascii-decode! string1 o1 string2 o2 len))
 
 ;*---------------------------------------------------------------------*/
 ;*    blit-string-utf8! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (blit-string-utf8! string1 o1 string2 o2 len)
+(define (blit-string-utf8! string1::bstring o1 string2::bstring o2 len)
    (if (ascii-string? string1)
        (begin
 	  (blit-string! string1 o1 string2 o2 len)
@@ -276,7 +276,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Convert a LE 8bits strings into an equivalent UCS2 string.       */
 ;*---------------------------------------------------------------------*/
-(define (string->ucs2-string string start end)
+(define (string->ucs2-string string::bstring start end)
    (let* ((len (*fx (/fx (-fx end start) 2) 2))
 	  (res (make-ucs2-string (/fx len 2))))
       (let loop ((i 0))
@@ -326,6 +326,19 @@
 			     :writable #f
 			     :enumerable #t)
 			  this))))))
+	    ((string? a0)
+	     (with-access::JsGlobalObject %this (js-object)
+		(let* ((data a0)
+		       (this (instantiate::JsSlowBuffer
+				(__proto__ slowbuffer-proto)
+				(data data))))
+		   ;; length
+		   (js-bind! %this this 'length
+		      :value (string-length data)
+		      :configurable #f
+		      :writable #f
+		      :enumerable #t)
+		   this)))
 	    ((js-string? a0)
 	     (with-access::JsGlobalObject %this (js-object)
 		(let* ((data (js-string->string a0))
@@ -341,6 +354,8 @@
 		   this)))
 	    ((isa? a0 JsSlowBuffer)
 	     (with-access::JsSlowBuffer a0 (data)
+		;; MS: 25 nov 2014, should the length be set to
+		;; (string-length data) or (js-get a0 'length %this)?
 		(loop data)))
 	    (else
 	     (error "buffer" "Illegal constructor call" a0)))))
@@ -351,17 +366,18 @@
 	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto))
 
-   (define (check-offset data offset fxoffset sizeof action)
+   (define (check-offset data::bstring offset fxoffset sizeof action)
       ;; the error messages (case sensitive) are imposed by node_buffer.cc
       (cond
 	 ((or (not (integer? offset)) (< offset 0) (<fx fxoffset 0))
 	  (js-raise-type-error %this "offset is not uint" offset))
 	 ((and (flonum? offset) (>fl offset (exptfl 2. 31.)))
 	  (js-raise-type-error %this "Trying to ~a beyond buffer length"
-	     action))
+	     (string->js-string action)))
 	 ((>fx (->fixnum offset) (-fx (string-length data) sizeof))
 	  (js-raise-range-error %this
-	     "Trying to ~s beyond buffer length" action))))
+	     "Trying to ~s beyond buffer length"
+	     (string->js-string action)))))
 
    (define (byte-ref str i)
       (fixnum->uint8 (char->integer (string-ref-ur str i))))
@@ -477,7 +493,7 @@
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string! data start string 0 len))
-		  string)))
+		  (string->js-string string))))
 	 2 "binarySlice")
       #f %this)
    
@@ -486,7 +502,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (string-encode-utf8 data start end)))
+	       (string->js-string (string-encode-utf8 data start end))))
 	 2 "utf8Slice")
       #f %this)
    
@@ -499,7 +515,7 @@
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string-ascii-clamp! data start string 0 len))
-		  string)))
+		  (string->js-string string))))
 	 2 "asciiSlice")
       #f %this)
 
@@ -511,7 +527,7 @@
 	       (let ((ip (open-input-string! data start end))
 		     (op (open-output-string)))
 		  (base64-encode-port ip op 0)
-		  (close-output-port op))))
+		  (string->js-string (close-output-port op)))))
 	 2 "utf8Slice")
       #f %this)
    
@@ -520,7 +536,8 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (ucs2-string->utf8-string (string->ucs2-string data start end))))
+	       (string->js-string
+		  (ucs2-string->utf8-string (string->ucs2-string data start end)))))
 	 2 "ucs2Slice")
       #f %this)
 
@@ -529,7 +546,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (string-hex-extern data start end)))
+	       (string->js-string (string-hex-extern data start end))))
 	 2 "hexSlice")
       #f %this)
 
@@ -537,14 +554,16 @@
    ;; http://nodejs.org/api/buffer.html#buffer_buf_write_string_offset_length_encoding
    (js-put! slowbuffer-proto 'binaryWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (string-length string)
+			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
+		  (tprint "binWrite")
 		  (if (>fx n 0)
-		      (let ((l (blit-string-binary-decode! string 0 data offset n)))
+		      (let ((l (blit-string-binary-decode!
+				  (js-string->string string) 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
 			 l)
 		      n))))
@@ -553,16 +572,17 @@
 
    (js-put! slowbuffer-proto 'utf8Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (string-length string)
+			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
+		  (tprint "utf8Write")
 		  (if (>fx n 0)
 		      (multiple-value-bind (m c)
-			 (blit-string-utf8! string 0 data offset n)
+			 (blit-string-utf8! (js-string->string string) 0 data offset n)
 			 (js-put! js-slowbuffer '_charsWritten c #t %this)
 			 m)
 		      (begin
@@ -573,14 +593,16 @@
 
    (js-put! slowbuffer-proto 'asciiWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (string-length string)
+			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
+		  (tprint "aciiWrite")
 		  (if (>fx n 0)
-		      (let ((l (blit-string-ascii-decode! string 0 data offset n)))
+		      (let ((l (blit-string-ascii-decode!
+				  (js-string->string string) 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
 			 l)
 		      n))))
@@ -589,9 +611,9 @@
 
    (js-put! slowbuffer-proto 'base64Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let ((ip (open-input-string! string))
+	       (let ((ip (open-input-string! (js-string->string string)))
 		     (op (open-output-string)))
 		  (base64-decode-port ip op #t)
 		  (close-input-port ip)
@@ -609,9 +631,9 @@
 
    (js-put! slowbuffer-proto 'ucs2Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (utf8-string->ucs2-string string))
+	       (let* ((s (utf8-string->ucs2-string (js-string->string string)))
 		      (n (maxfx 0
 			    (minfx (*fx 2 (ucs2-string-length s))
 			       (minfx length
@@ -627,9 +649,9 @@
 
    (js-put! slowbuffer-proto 'hexWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::bstring offset length)
+	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (string-hex-intern string))
+	       (let* ((s (string-hex-intern (js-string->string string)))
 		      (n (maxfx 0
 			    (minfx (*fx 2 (string-length s))
 			       (minfx length
@@ -791,22 +813,22 @@
 	 (lambda (this string encoding)
 	    (cond
 	       ((or (eq? encoding (js-undefined))
-		    (string=? encoding "utf8")
-		    (string=? encoding "utf-8"))
-		(string-length string))
-	       ((or (string=? encoding "ucs2")
-		    (string=? encoding "ucs-2")
-		    (string=? encoding "utf16le")
-		    (string=? encoding "utf-16le"))
-		(*fx (utf8-codepoint-length string) 2))
-	       ((string=? encoding "hex")
-		(/fx (utf8-codepoint-length string) 2))
-	       ((string=? encoding "base64")
-		(string-length (base64-decode string #t)))
-	       ((or (string=? encoding "ascii")
-		    (string=? encoding "binary")
-		    (string=? encoding "buffer"))
-		(utf8-string-length string))
+		    (string=? (js-string->string encoding) "utf8")
+		    (string=? (js-string->string encoding) "utf-8"))
+		(js-string-length string))
+	       ((or (string=? (js-string->string encoding) "ucs2")
+		    (string=? (js-string->string encoding) "ucs-2")
+		    (string=? (js-string->string encoding) "utf16le")
+		    (string=? (js-string->string encoding) "utf-16le"))
+		(*fx (utf8-codepoint-length (js-string->string string)) 2))
+	       ((string=? (js-string->string encoding) "hex")
+		(/fx (utf8-codepoint-length (js-string->string string)) 2))
+	       ((string=? (js-string->string encoding) "base64")
+		(string-length (base64-decode (js-string->string string) #t)))
+	       ((or (string=? (js-string->string encoding) "ascii")
+		    (string=? (js-string->string encoding) "binary")
+		    (string=? (js-string->string encoding) "buffer"))
+		(utf8-string-length (js-string->string string)))
 	       (else
 		(error "buffer" "byteLength encoding not implemented"
 		   encoding))))
@@ -909,7 +931,7 @@
 		(set! offset size)
 		(with-access::JsSlowBuffer buf (data)
 		   (trace-item "INIT size=" size " size_=" rsize
-		      " -> next offset=" offset)
+		      " -> next offset=" offset " data=" (string-length data))
 		   (values buf data 0)))
 	     (with-access::JsSlowBuffer slowbuffer (data)
 		;; slowbuffer data are implemented as strings

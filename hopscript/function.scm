@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Nov 22 09:53:28 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 09:49:33 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -32,7 +32,8 @@
 
 	   thrower-get
 	   thrower-set
-	   
+
+	   (js-function-debug-name::bstring ::JsFunction)
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
@@ -138,6 +139,19 @@
 		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-debug-name ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-function-debug-name::bstring obj::JsFunction)
+   (with-access::JsFunction obj (name src)
+      (cond
+	 ((and (string? name) (not (string-null? name)))
+	  name)
+	 ((pair? src)
+	  (format "~a:~a" (cadr (car src)) (caddr (car src))))
+	 (else
+	  "function"))))
+	  
+;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
@@ -152,7 +166,8 @@
    (define (get-source this::JsFunction)
       (with-access::JsFunction this (src)
 	 (when (pair? src)
-	    (format "~a:~a" (cadr (car src)) (caddr (car src))))))
+	    (string->js-string
+	       (format "~a:~a" (cadr (car src)) (caddr (car src)))))))
 
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
@@ -201,7 +216,7 @@
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f))
 	    (js-bind! %this fun 'name
-	       :value fname
+	       :value (string->js-string fname)
 	       :writable #f
 	       :enumerable #f :configurable #f)
 	    ;; source is an hop extension

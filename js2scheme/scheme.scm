@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Nov 21 09:45:34 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 09:24:53 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -528,13 +528,15 @@
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
 		  (js-raise
 		     (js-new %this js-syntax-error
-			"comprehension only supported in strict mode"
+			(string->js-string
+			   "comprehension only supported in strict mode")
 			,fname ,loc))))
 	     (else
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
 		  (js-raise
 		     (js-new %this js-syntax-error
-			"comprehension only supported in strict mode")))))
+			(string->js-string
+			   "comprehension only supported in strict mode"))))))
 	  (with-access::J2SDecl decl (id name)
 	     (let* ((n (j2s-name name id))
 		    (iter (j2s-scheme iterable mode return conf))
@@ -891,6 +893,19 @@
 				      (j2s-scheme body mode return conf))))
 			     (j2s-scheme body mode return conf)))
 		   (fun `(lambda ,(cons 'this args)
+			    ,@(filter-map
+				 (lambda (a)
+				    (cond
+				       ((symbol? a)
+					`(when (string? ,a)
+					    (set! ,a
+					       (string->js-string ,a))))
+				       ((pair? a)
+					`(when (string? ,(car a))
+					    (set! ,(car a)
+					       (string->js-string
+						  ,(car a)))))))
+				 args)
 			    (js-worker-exec @worker ,(symbol->string id)
 			       (lambda ()
 				  ,(flatten-stmt body))))))
@@ -996,7 +1011,8 @@
 (define-method (j2s-scheme this::J2SThrow mode return conf)
    (with-access::J2SThrow this (loc expr)
       (epairify loc
-	 `(raise ,(j2s-scheme expr mode return conf)))))
+	 `(js-throw ,(j2s-scheme expr mode return conf)
+	     (string->js-string ,(cadr loc)) ,(caddr loc)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STry ...                                          */
@@ -1071,7 +1087,7 @@
 		  ((-)
 		   `(js- ,lhs ,rhs %this))
 		  ((*)
-		   `(js* ,lhs ,rhs %this ))
+		   `(js* ,lhs ,rhs %this))
 		  ((/)
 		   `(js/ ,lhs ,rhs %this))
 		  ((%)
@@ -1119,10 +1135,29 @@
 ;*    j2s-scheme ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBinary mode return conf)
-   (with-access::J2SBinary this (loc lhs rhs op)
+   
+   (define (left-addition? op lhs)
+      (when (and (eq? op '+) (isa? lhs J2SBinary))
+	 (with-access::J2SBinary lhs (op)
+	    (eq? op '+))))
+   
+   (with-access::J2SBinary this (loc)
       (epairify-deep loc
-	 (js-binop loc op
-	    (j2s-scheme lhs mode return conf) (j2s-scheme rhs mode return conf)))))
+	 (with-access::J2SBinary this (lhs rhs op)
+	    (let loop ((op op)
+		       (lhs lhs)
+		       (rhs rhs))
+	       (if (left-addition? op lhs)
+		   ;; we replace left-associative additions with
+		   ;; right-associative additions (which is correct as the
+		   ;; addition is fully associative) for string concanetations
+		   (with-access::J2SBinary lhs ((llhs lhs) (lrhs rhs))
+		      (js-binop loc op
+			 (j2s-scheme llhs mode return conf)
+			 (loop op lrhs rhs)))
+		   (js-binop loc op
+		      (j2s-scheme lhs mode return conf)
+		      (j2s-scheme rhs mode return conf))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SParen ...                                        */
@@ -1143,13 +1178,15 @@
 	     `(with-access::JsGlobalObject %this (js-syntax-error)
 		 (js-raise
 		    (js-new %this js-syntax-error
-		       ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+		       (string->js-string
+			  ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id))
 		       ,fname ,loc))))
 	    (else
 	     `(with-access::JsGlobalObject %this (js-syntax-error)
 		 (js-raise
 		    (js-new %this js-syntax-error
-		       ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id))))))))
+		       (string->js-string
+			  ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)))))))))
 
    (define (delete->scheme expr)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7
@@ -1976,21 +2013,24 @@
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj prop cache)
-   (cond
-      ((> (bigloo-debug) 0)
-       (if (string? prop)
-	   `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
-	   `(js-get/debug ,obj ,prop %this ',loc)))
-      (cache
-       (cond
-	  ((string? prop)
-	   `(js-get-name/cache ,obj ',(string->symbol prop) ,(pcache cache) %this))
-	  ((number? prop)
-	   `(js-get ,obj ,prop %this))
-	  (else
-	   `(js-get/cache ,obj ,prop ,(pcache cache) %this))))
-      (else
-       `(js-get ,obj ,prop %this))))
+   (let ((prop (match-case prop
+		  ((string->js-string ?str) str)
+		  (else prop))))
+      (cond
+	 ((> (bigloo-debug) 0)
+	  (if (string? prop)
+	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
+	      `(js-get/debug ,obj ,prop %this ',loc)))
+	 (cache
+	  (cond
+	     ((string? prop)
+	      `(js-get-name/cache ,obj ',(string->symbol prop) ,(pcache cache) %this))
+	     ((number? prop)
+	      `(js-get ,obj ,prop %this))
+	     (else
+	      `(js-get/cache ,obj ,prop ,(pcache cache) %this))))
+	 (else
+	  `(js-get ,obj ,prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */

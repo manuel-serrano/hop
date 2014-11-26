@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 22 10:31:27 2014 (serrano)                */
+;*    Last change :  Sat Nov 22 14:43:59 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -79,8 +79,6 @@
 (define (http-request-local? req::http-request)
    (with-access::http-request req (socket)
       ;; assume socket to be a real socket
-      (tprint "http-request-local socket-local="
-	 (socket-local? socket))
       (or (socket-local? socket)
 	  (find (lambda (addr)
 		   (socket-host-address=? socket addr))

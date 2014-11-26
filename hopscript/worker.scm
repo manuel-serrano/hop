@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Nov 22 07:09:09 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 09:44:30 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -174,7 +174,7 @@
 		       (with-access::WorkerHopThread thread (onmessage keep-alive)
 			  (set! keep-alive #t)
 			  (set! onmessage v)))
-		    2 'onmessage)
+		    1 'onmessage)
 	    :configurable #f
 	    :writable #t
 	    :enumerable #t)
@@ -190,7 +190,7 @@
 		    (lambda (this v)
 		       (with-access::WorkerHopThread thread (onexit)
 			  (set! onexit v)))
-		    2 'onexit)
+		    1 'onexit)
 	    :writable #t
 	    :configurable #t
 	    :enumerable #t)))
@@ -409,7 +409,7 @@
 	    (onexit (js-make-function %this
 		       (lambda (this retval)
 			  (exit retval))
-		       0 'onexit))
+		       1 'onexit))
 	    (keep-alive keep-alive)
 	    (body (lambda ()
 		     (js-worker-loop %worker))))))

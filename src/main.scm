@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Nov 19 07:58:14 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 15:07:52 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -139,7 +139,8 @@
 		  ((eval! exp) %global %global scope mod)
 		  (hop-hss-foreign-eval-set!
 		     (lambda (ip)
-			(js-put! mod 'filename (input-port-name ip) #f %global)
+			(js-put! mod 'filename
+			   (string->js-string (input-port-name ip)) #f %global)
 			(%js-eval-hss ip %global %worker scope)))))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
@@ -172,8 +173,6 @@
 	       (for-each (lambda (svc)
 			    (let* ((path (string-append (hop-service-base) "/" svc))
 				   (req (instantiate::http-server-request
-;* 					   (user (anonymous-user))     */
-;* 					   (localclientp #t)           */
 					   (path path)
 					   (abspath path)
 					   (port (hop-port))

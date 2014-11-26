@@ -683,7 +683,7 @@ exports.execFile = function(file /* args, options, callback */) {
   child.stdout.setEncoding(options.encoding);
   child.stderr.setEncoding(options.encoding);
 
-  child.stdout.addListener('data', function(chunk) {
+   child.stdout.addListener('data', function(chunk) {
     stdout += chunk;
     if (stdout.length > options.maxBuffer) {
       err = new Error('stdout maxBuffer exceeded.');

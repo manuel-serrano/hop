@@ -222,7 +222,8 @@ SlabBuffer.prototype.create = function create() {
 
 
 SlabBuffer.prototype.use = function use(context, fn, size) {
-   debug( ">>> +++++++++++++++++ SlabBuffer.prototype.use size=" + size + " offset=" + this.offset + " remaining=" + this.remaining );
+   debug( ">>> +++++++++++++++++ SlabBuffer.prototype.use size="
+	  + size + " offset=" + this.offset + " remaining=" + this.remaining );
   if (this.remaining === 0) {
     this.isFull = true;
     return 0;
@@ -236,8 +237,9 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   var bytes = fn.call(context, this.pool, this.offset, actualSize);
    debug( "SlabBuffer.prototype.use bytes=" + bytes);
-  if (bytes > 0) {
+   if (bytes > 0) {
     this.offset += bytes;
+#:tprint( "this.offset += -> ", this.offset, " bytes=", bytes );
     this.remaining -= bytes;
   }
 
@@ -840,6 +842,7 @@ function onhandshakestart() {
     // callback to destroy the connection right now, it would crash and burn.
     setImmediate(function() {
       var err = new Error('TLS session renegotiation attack detected.');
+#:tprint( "emit error er=", err );
       if (self.cleartext) self.cleartext.emit('error', err);
     });
   }
@@ -1047,14 +1050,20 @@ SecurePair.prototype.error = function(returnOnly) {
       err = connReset;
     }
     this.destroy();
-    if (!returnOnly) this.emit('error', err);
+     if (!returnOnly) {
+#:tprint( "emit error er=", er );
+	this.emit('error', err);
+     }
   } else if (this._isServer &&
              this._rejectUnauthorized &&
              /peer did not return a certificate/.test(err.message)) {
     // Not really an error.
     this.destroy();
   } else {
-    if (!returnOnly) this.cleartext.emit('error', err);
+     if (!returnOnly) {
+#:tprint( "emit error er=", er );
+	this.cleartext.emit('error', err);
+     }
   }
   return err;
 };

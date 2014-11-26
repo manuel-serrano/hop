@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 22 09:45:10 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 10:46:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -41,8 +41,8 @@
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
 	 (with-access::JsError o (name msg fname)
-	    (display* "#<" (class-name (object-class o)) ": " name ", " msg
-	       ">")))))
+	    (display* "#<"
+	       (class-name (object-class o)) ": " name ", " msg ">")))))
 
 (define-method (object-print o::JsError port pslot)
    (object-display o port))
@@ -54,18 +54,26 @@
    (with-access::JsError exc (name msg stack fname location)
       (if (isa? msg &exception)
 	  (exception-notify msg)
-	  (let* ((%this (js-new-global-object))
+	  (let* ((name (js-string->string name))
+		 (%this (js-new-global-object))
 		 (stk (js-get exc 'stack %this))
-		 (port (current-error-port))
-		 (tstack `(,name (at ,fname ,location))))
-	     (display-trace-stack-source (list tstack) port)
-	     (fprint port name ": "msg "\n")
+		 (port (current-error-port)))
+	     (cond
+		((js-string? fname)
+		 (display-trace-stack-source
+		    (list `(,name (at ,(js-string->string fname) ,location)))
+		    port))
+		((string? fname)
+		 (display-trace-stack-source
+		    (list `(,name (at ,fname ,location)))
+		    port)))
+	     (fprint port name ": " msg "\n")
 	     (if (string? stk)
 		 (display stk port)
 		 (let ((stack (cond
-				 ((eq? name 'ReferenceError)
+				 ((string=? name "ReferenceError")
 				  stack)
-				 ((eq? name 'TypeError)
+				 ((string=? name "TypeError")
 				  stack)
 				 (else
 				  stack))))
@@ -98,12 +106,14 @@
 	 (define js-error-prototype
 	    (instantiate::JsError
 	       (__proto__ __proto__)
+	       (msg (string->js-string ""))
 	       (extensible #t)))
 	 
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
 	       (instantiate::JsError
-		  (name name)
+		  (name (string->js-string name))
+		  (msg (string->js-string ""))
 		  (__proto__ (js-get constructor 'prototype %this))
 		  (stack '()))))
 	 
@@ -117,9 +127,15 @@
 		      (set! msg m)))
 		  ((?m (and (? string?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f))
-		   (set! msg m)
-		   (set! fname (if (string? f) (string->js-string f) f))
+		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (set! msg m))
+		   (set! fname (string->js-string f))
+		   (set! location l))
+		  ((?m (and (? js-string?) ?f) ?l)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (set! msg m))
+		   (set! fname f)
 		   (set! location l))
 		  ((?m . ?-)
 		   (unless (eq? m (js-undefined))
@@ -127,7 +143,7 @@
 		      (set! msg m))))
 
 	       (js-bind! %this this 'name
-		  :value (string->js-string name)
+		  :value name
 		  :enumerable #f)
 	       (js-bind! %this this 'stack
 		  :value (string->js-string "")
@@ -149,7 +165,7 @@
 				   (newline op)))
 			     (display-trace-stack (get-trace-stack 10)
 				op 1)))))
-	       (js-put! this 'stack stk #f %this)))
+	       (js-put! this 'stack (string->js-string stk) #f %this)))
 	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
@@ -191,6 +207,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -199,6 +216,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -207,6 +225,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -215,6 +234,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -223,6 +243,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
@@ -231,6 +252,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
+			     (msg (string->js-string ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -343,8 +365,8 @@
 	  (bigloo-type-error "toString" "JsObject" this)
 	  (let* ((name3 (js-get this 'name %this))
 		 (name4 (if (eq? name3 (js-undefined))
-			    "Error"
-			    (js-tostring name3 %this)))
+			    (string->js-string "Error")
+			    (js-tojsstring name3 %this)))
 		 (msg5 (if (isa? this JsObject)
 			   (js-get this 'message %this)
 			   (js-undefined)))
@@ -352,9 +374,11 @@
 			   ""
 			   (js-tostring msg5 %this))))
 	     (cond
-		((string=? name4 "") (string->js-string msg6))
-		((string=? msg6 "") (string->js-string name4))
-		(else (string->js-string (string-append name4 ": " msg6)))))))
+		((js-string-null? name4) (string->js-string msg6))
+		((string=? msg6 "") name4)
+		(else
+		 (string-list->js-string
+		    (list (js-string->string name4) ": " msg6)))))))
       
    (js-bind! %this obj 'toString
       :value (js-make-function %this error-prototype-tostring 1 'toString)

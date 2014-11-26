@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Nov 22 06:31:27 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 18:19:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -158,8 +158,8 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name::bstring (default "Error"))
-	      (msg (default ""))
+	      (name::JsStringLiteral (default (string->js-string "Error")))
+	      msg
 	      (stack (default #f))
 	      (fname (default #f))
 	      (location (default #f)))

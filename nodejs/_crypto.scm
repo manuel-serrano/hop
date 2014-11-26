@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Oct 30 10:48:20 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 16:09:58 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -123,6 +123,9 @@
 	    " len=" len))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%data byteoffset length)
+	    (tprint "ssl-connection-clear-in "
+	       (+fx (uint32->fixnum byteoffset) offset)
+	       " len=" len)
 	    (ssl-connection-clear-in ssl %data
 	       (+fx (uint32->fixnum byteoffset) offset) len))))
    

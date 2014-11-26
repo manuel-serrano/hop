@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Nov 22 07:09:44 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 12:38:18 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -103,7 +103,8 @@
 	 (js-bind! %this js-function-prototype 'resource
 	    :value (js-make-function %this
 		      (lambda (this file)
-			 (service-resource this file))
+			 (string->js-string
+			    (service-resource this (js-string->string file))))
 		      1 'resource)
 	    :writable #t
 	    :configurable #t
@@ -308,7 +309,7 @@
 ;*    js-service-unjson ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-service-unjson ip %this::JsGlobalObject)
-   (js-json-parser ip (js-undefined) #t %this))
+   (js-json-parser ip (js-undefined) #t #t %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

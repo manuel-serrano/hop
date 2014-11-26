@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Nov 22 07:59:33 2014 (serrano)                */
+;*    Last change :  Wed Nov 26 10:46:48 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -34,9 +34,53 @@
 	   (js-string->bool::bool ::JsStringLiteral)
 	   (js-string-normalize!::bstring ::JsStringLiteral)
 	   
-	   (js-string-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
-	   (js-string-appendN::JsStringLiteral ::JsStringLiteral ::pair-nil ::JsGlobalObject)))
+	   (js-string-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)))
 
+
+;*---------------------------------------------------------------------*/
+;*    js-string-normalize! ...                                         */
+;*    -------------------------------------------------------------    */
+;*    0: S     ;; "foo" = "foo"                                        */
+;*    1: L     ;; "foobar" = ("foo" "bar")                             */
+;*    2: R     ;; "foobar" = ("bar" "foo")                             */
+;*    3: S*    ;; utf8-left-replacement                                */
+;*    4: S*    ;; utf8-right-replacement                               */
+;*---------------------------------------------------------------------*/
+(define (js-string-normalize!::bstring js::JsStringLiteral)
+   (with-access::JsStringLiteral js (state val)
+      (case (uint8->fixnum state)
+	 ((0)
+	  val)
+	 ((1)
+	  (let ((v (apply utf8-string-append* val)))
+	     (set! state #u8:0)
+	     (set! val v)
+	     v))
+	 ((2)
+	  (let ((v (apply utf8-string-append* (reverse val))))
+	     (set! state #u8:0)
+	     (set! val v)
+	     v))
+	 (else
+	  (error "js-string-normalize!" "internal error" state)))))
+
+;*---------------------------------------------------------------------*/
+;*    display-js-string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (display-js-string jstr::JsStringLiteral op)
+   (with-access::JsStringLiteral jstr (state val)
+;*       (tprint "display-js-string state=" state " val=" (format "~s" val)) */
+      (case (uint8->fixnum state)
+	 ((0)
+	  (display-string val op))
+	 ((1)
+	  (for-each (lambda (str) (display-string str op)) val))
+	 ((2)
+	  (with-access::JsStringLiteral jstr (state val)
+	     (let ((v (reverse val)))
+		(set! state #u8:1)
+		(set! val v)
+		(for-each (lambda (str) (display-string str op)) v)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string->js-string ...                                            */
@@ -55,7 +99,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (string-list->js-string::JsStringLiteral val::pair-nil)
    (instantiate::JsStringLiteral
-      (state #u8:2)
+      (state #u8:1)
       (val val)))
 
 ;*---------------------------------------------------------------------*/
@@ -93,19 +137,19 @@
 ;*    xml-write-id ::JsStringLiteral ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write-id obj::JsStringLiteral op)
-   (display (js-string->string obj) op))
+   (display-js-string obj op))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsStringLiteral ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::JsStringLiteral op backend)
-   (display (js-string->string obj) op))
+   (display-js-string obj op))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsStringLiteral ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print obj::JsStringLiteral op proc)
-   (display (js-string->string obj) op))
+   (display-js-string obj op))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::JsStringLiteral ...                                 */
@@ -168,28 +212,6 @@
    (string<=? (js-string->string left) (js-string->string right)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-normalize! ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-string-normalize! js::JsStringLiteral)
-   ;; assumed a unnormalized string
-   (with-access::JsStringLiteral js (state val)
-      (case (uint8->fixnum state)
-	 ((1)
-	  (let ((nval (utf8-string-append
-			 (js-string->string (car val))
-			 (js-string->string (cdr val)))))
-	     (set! state #u8:0)
-	     (set! val nval)
-	     nval))
-	 ((2)
-	  (let ((nval (apply utf8-string-append* val)))
-	     (set! state #u8:0)
-	     (set! val nval)
-	     nval))
-	 (else
-	  (error "js-string-normalize!" "internal error" state)))))
-
-;*---------------------------------------------------------------------*/
 ;*    make-integer-table ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-macro (make-integer-table num)
@@ -220,27 +242,77 @@
    (>fx (string-length (js-string->string s)) 0))
 
 ;*---------------------------------------------------------------------*/
-;*    string-append3 ...                                               */
-;*---------------------------------------------------------------------*/
-(define (string-append3::JsStringLiteral left::bstring middle::bstring right::bstring)
-   (instantiate::JsStringLiteral
-      (state #u8:0)
-      (val (string-append left middle right))))
-
-;*---------------------------------------------------------------------*/
-;*    js-string-appendN ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-string-appendN::JsStringLiteral left::JsStringLiteral rest::pair-nil %this)
-   (instantiate::JsStringLiteral
-      (state #u8:1)
-      (val (cons left (map (lambda (r) (js-tojsstring r %this)) rest)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-string-append ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This append function optimizes the case where either the         */
+;*    two strings are normalized or when the left string is            */
+;*    normalized and the right string is a string list.                */
+;*    -------------------------------------------------------------    */
+;*    Abandon optimization if the consed string is a utf8 replacement. */
 ;*---------------------------------------------------------------------*/
 (define (js-string-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (instantiate::JsStringLiteral
-      (state #u8:1)
-      (val (cons left right))))
-
-
+   (with-access::JsStringLiteral left ((lstate state) (lval val))
+      (with-access::JsStringLiteral right ((rstate state) (rval val))
+;* 	 (tprint "append left " lstate "=" (format "~s" lval)          */
+;* 	    " right " rstate "=" (format "~s" rval))                   */
+	 (case (uint8->fixnum lstate)
+	    ((0)
+	     (case (uint8->fixnum rstate)
+		((0)
+		 (instantiate::JsStringLiteral
+		    (state #u8:1)
+		    (val (list lval rval))))
+		((1)
+		 (instantiate::JsStringLiteral
+		    (state #u8:1)
+		    (val (cons lval rval))))
+		((2)
+		 (instantiate::JsStringLiteral
+		    (state #u8:1)
+		    (val (cons lval (reverse rval)))))
+		(else
+		 left)))
+	    ((1)
+	     (case (uint8->fixnum rstate)
+		((0)
+		 (instantiate::JsStringLiteral
+		    (state #u8:2)
+		    (val (cons rval (reverse lval)))))
+		((1)
+		 (instantiate::JsStringLiteral
+		    (state #u8:1)
+		    (val (append lval rval))))
+		((2)
+		 ;; reverse the smallest list
+		 (if (<fx (length lval) (length rval))
+		     (instantiate::JsStringLiteral
+			(state #u8:2)
+			(val (append rval (reverse lval))))
+		     (instantiate::JsStringLiteral
+			(state #u8:1)
+			(val (append lval (reverse rval))))))
+		(else
+		 left)))
+	    ((2)
+	     (case (uint8->fixnum rstate)
+		((0)
+		 (instantiate::JsStringLiteral
+		    (state #u8:2)
+		    (val (cons rval lval))))
+		((1)
+		 ;; reverse the smallest list
+		 (if (<fx (length lval) (length rval))
+		     (instantiate::JsStringLiteral
+			(state #u8:1)
+			(val (append (reverse lval) rval)))
+		     (instantiate::JsStringLiteral
+			(state #u8:2)
+			(val (append (reverse rval) lval)))))
+		((2)
+		 (instantiate::JsStringLiteral
+		    (state #u8:2)
+		    (val (append rval lval))))
+		(else
+		 left)))
+	    (else
+	     left)))))

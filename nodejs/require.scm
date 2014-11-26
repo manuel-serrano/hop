@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Nov 22 07:45:24 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 14:16:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -36,7 +36,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file ifile name ofile)
+(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename id op compile isexpr srcmap)
+(define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
       (fprintf op "hop_requires[ ~s ] = function() { " id)
       (display "var exports = {}; " op)
@@ -105,9 +105,11 @@
 		     (acc '()))
 	     (if (string=? dir "/")
 		 (list->vector
-		    (reverse! (cons "/node_modules" acc)))
+		    (reverse! (cons (string->js-string "/node_modules") acc)))
 		 (loop (dirname dir)
-		    (cons (make-file-name dir "node_modules") acc))))
+		    (cons
+		       (string->js-string (make-file-name dir "node_modules"))
+		       acc))))
 	  '#()))
    
    (define (module-init! m exports)
@@ -116,7 +118,7 @@
       ;; exports
       (js-put! m 'exports exports #f %this)
       ;; filename
-      (js-put! m 'filename filename #f %this)
+      (js-put! m 'filename (string->js-string filename) #f %this)
       ;; loaded
       (js-put! m 'loaded #t #f %this)
       ;; parent
@@ -139,6 +141,7 @@
 	    ;; reqgister the module in the current worker thread
 	    (nodejs-cache-module-put! filename (js-current-worker) m)
 	    ;; return the newly allocated module
+	    (trace-item "module=" (typeof m))
 	    m))))
 
 ;*---------------------------------------------------------------------*/
@@ -160,8 +163,9 @@
 	 (lambda (_ name)
 	    (let ((name (js-tostring name this)))
 	       (if (core-module? name)
-		   name
-		   (nodejs-resolve name this %module))))
+		   (string->js-string name)
+		   (string->js-string
+		      (nodejs-resolve name this %module)))))
 	 1 "resolve")
       #f this)
 
@@ -183,7 +187,8 @@
 	 (js-bind! %this proto '__defineGetter__
 	    :value (js-make-function %this
 		      (lambda (this name fun)
-			 (js-bind! %this this (string->symbol name) :get fun))
+			 (js-bind! %this this
+			    (string->symbol (js-string->string name)) :get fun))
 		      2 "__defineGetter__")
 	    :enumerable #f
 	    :writable #t
@@ -202,6 +207,14 @@
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_SERVER_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_RESPONSE
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "COUNTER_HTTP_SERVER_RESPONSE")
 	    :enumerable #f
 	    :writable #f
 	    :configurable #f)
@@ -299,9 +312,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename)
+(define (nodejs-compile filename::bstring)
 
-   (define (compile-file filename mod)
+   (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
 	 (trace-item "filename=" filename)
 	 (call-with-input-file filename
@@ -316,9 +329,10 @@
 			:module-name (symbol->string mod))
 		     (close-mmap m)))))))
 
-   (define (compile-url url mod)
+   (define (compile-url url::bstring mod)
       (with-trace 'require "compile-url"
 	 (trace-item "url=" url)
+	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
 	       (j2s-compile in
@@ -327,7 +341,7 @@
 		  :module-main #f
 		  :module-name (symbol->string mod))))))
 
-   (define (compile filename mod)
+   (define (compile filename::bstring mod)
       (if (file-exists? filename)
 	  (compile-file filename mod)
 	  (compile-url filename mod)))
@@ -364,6 +378,7 @@
 		  ;; create the module
 		  (hopscript %this this scope mod)
 		  ;; return the newly created module
+		  (trace-item "mod=" (typeof mod))
 		  mod)))))
    
    (define (load-module-hop)
@@ -425,12 +440,12 @@
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name worker::WorkerHopThread %this %module)
+(define (nodejs-require-module name::bstring worker::WorkerHopThread %this %module)
 
    (define (load-json filename)
       (call-with-input-file filename
 	 (lambda (ip)
-	    (js-json-parser ip #f #f %this))))
+	    (js-json-parser ip #f #f #f %this))))
    
    (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
@@ -460,7 +475,7 @@
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-core name worker %this)
+(define (nodejs-require-core name::bstring worker %this)
 
    (define (nodejs-init-core name worker %this)
       (with-trace 'require "nodejs-init-core"
@@ -473,6 +488,7 @@
 	       ;; initialize the core module
 	       (init %this this scope mod)
 	       ;; return the module
+	       (trace-item "mod=" (typeof mod))
 	       mod))))
 
    (with-trace 'require "nodejs-require-core"
@@ -556,18 +572,30 @@
       (let ((paths (js-get mod 'paths %this)))
 	 (cond
 	    ((pair? paths)
-	     (append paths nodejs-env-path))
+	     (append (map js-string->string paths) nodejs-env-path))
 	    ((isa? paths JsArray)
 	     (with-access::JsArray paths (vec)
-		(append (vector->list vec) nodejs-env-path)))
+		(append (map! js-string->string (vector->list vec))
+		   nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
 
    (with-trace 'require "nodejs-resolve"
       (let* ((mod %module)
-	     (dir (dirname (js-get mod 'filename %this))))
+	     (filename (js-string->string (js-get mod 'filename %this)))
+	     (dir (dirname filename)))
 	 (trace-item "name=" name " dir=" dir)
 	 (cond
+	    ((or (string-prefix? "http://" name)
+		 (string-prefix? "https://" name))
+	     name)
+	    ((or (string-prefix? "http://" dir)
+		 (string-prefix? "https://" dir))
+	     (multiple-value-bind (scheme uinfo host port path)
+		(url-parse dir)
+		(if uinfo
+		    (format "~a://~a:~a~@a~a~a" host port uinfo (dirname path) name)
+		    (format "~a://~a:~a~a~a" host port (dirname path) name))))
 	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
 	     (or (resolve-file-or-directory name dir)
 		 (resolve-modules mod name (dirname dir))
@@ -576,8 +604,6 @@
 	     (or (resolve-file-or-directory name "/")
 		 (resolve-modules mod name "/")
 		 (resolve-error name)))
-	    ((or (string-prefix? "http://" name) (string-prefix? "https://" name))
-	     name)
 	    (else
 	     (or (resolve-modules mod name (dirname dir))
 		 (resolve-error name)))))))

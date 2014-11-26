@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Oct 23 19:29:05 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 10:50:54 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -101,7 +101,7 @@
       (js-make-function %this 
 	 (lambda (this string)
 	    (stream-write-string %worker %this this
-	       string 0 (string-length string)
+	       (js-string->string string) 0 (js-string-length string)
 	       "ascii" #f))
 	 0 'writeAsciiString)
       #f %this)
@@ -111,7 +111,7 @@
       (js-make-function %this
 	 (lambda (this string)
 	    (stream-write-string %worker %this this
-	       string 0 (string-length string)
+	       (js-string->string string) 0 (js-string-length string)
 	       "utf8" #f))
 	 1 "writeUtf8String")
       #f %this)
@@ -123,7 +123,7 @@
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
 		   (buffer (ucs2-string->buffer ucs2string)))
 	       (stream-write-string %worker %this this
-		  string 0 (string-length string)
+		  (js-string->string string) 0 (js-string-length string)
 		  "ascii" #f)))
 	 1 "writeUcs2String")
       #f %this)

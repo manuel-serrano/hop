@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Wed Oct 22 14:28:28 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 14:23:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -48,9 +48,10 @@
    (define runInContext
       (js-make-function %this
 	 (lambda (this obj ctx)
-	    (call-with-input-string obj
+	    (call-with-input-string (js-string->string obj)
 	       (lambda (ip)
-		  (%js-eval ip 'eval %this this %this))))
+		  (%js-eval ip 'eval %this this
+		     (if (eq? ctx (js-undefined)) %this ctx)))))
 	 2 "runInContext"))
    
    (define NodeScript

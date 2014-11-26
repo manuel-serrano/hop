@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Nov 21 08:17:36 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 15:32:22 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -66,6 +66,10 @@
 		(procchannel (js-get m 'initProcessChannel %this)))
 	    (js-call1 %this prockillexit (js-undefined) %process)
 	    (js-call1 %this procchannel (js-undefined) %process))
+	 ;; timers
+	 (let* ((m (nodejs-require-core "node_timers" %worker %this))
+		(timers (js-get m 'initNodeTimers %this)))
+	    (js-call0 %this timers (js-undefined)))
 	 ;; events
 	 (with-access::JsObject %process (__proto__)
 	    (let* ((e (nodejs-require-core "events" %worker %this))
@@ -78,28 +82,41 @@
 	       (set! __proto__ proto)
 	       
 	       (define (on this signal proc)
-		  (cond
-		     ((equal? signal "uncaughtException")
-		      (js-worker-add-handler! %worker proc))
-		     ((and (equal? signal "exit") (not exitarmed))
-		      (set! exitarmed #t)
-		      (register-exit-function!
-			 (lambda (status)
-			    (with-access::JsProcess %process (exiting)
-			       (unless exiting
-				  (set! exiting #t)
-				  (let ((emit (js-get %process 'emit %this)))
-				     (js-call2 %this emit %process "exit" status))))
-			    status)))
-		     (else
-		      (js-call2 %this add this signal proc))))
+		  (let ((sig (js-tostring signal %this)))
+		     (cond
+			((string=? sig "uncaughtException")
+			 (js-worker-add-handler! %worker proc))
+			((and (string=? sig "exit") (not exitarmed))
+			 (with-access::WorkerHopThread %worker (onexit)
+			    (set! onexit proc)))
+;* 			;; MS 25 Nov 2014: commented out below...      */
+;* 			 (set! exitarmed #t)                           */
+;* 			       (js-make-function %this                 */
+;* 				  (lambda (this retval)                */
+;* 				     (js-call1                         */
+;* 			 (register-exit-function!                      */
+;* 			    (lambda (status)                           */
+;* 			       (with-access::JsProcess %process (exiting) */
+;* 				  (unless exiting                      */
+;* 				     (set! exiting #t)                 */
+;* 				     (let ((emit (js-get %process 'emit %this))) */
+;* 					(js-call2 %this emit %process  */
+;* 					   (string->js-string "exit")  */
+;* 					   status))))                  */
+;* 			       status)))                               */
+			(else
+			 (js-call2 %this add this signal proc)))))
 	       
 	       (define (remove this signal proc)
-		  (cond
-		     ((equal? signal "uncaughtException")
-		      (js-worker-remove-handler! %worker proc))
-		     (else
-		      (js-call2 %this rem this signal proc))))
+		  (let ((sig (js-tostring signal %this)))
+		     (cond
+			((string=? sig "uncaughtException")
+			 (js-worker-remove-handler! %worker proc))
+			((string=? sig "exit")
+			 (with-access::WorkerHopThread %worker (onexit)
+			    (set! onexit #f)))
+			(else
+			 (js-call2 %this rem this signal proc)))))
 	       
 	       ;; on
 	       (let ((add (js-make-function %this on 2 "")))
@@ -180,13 +197,19 @@
 	 (js-put! proc 'argv
 	    (let ((jsargs (member "--" (command-line))))
 	       (if jsargs
-		   (let ((cmdline (cons (car (command-line)) (cdr jsargs))))
+		   (let ((cmdline (cons (string->js-string (car (command-line)))
+				     (map string->js-string (cdr jsargs)))))
 		      (js-vector->jsarray (list->vector cmdline) %this))
-		   (js-vector->jsarray (list->vector (command-line)) %this)))
+		   (js-vector->jsarray
+		      (list->vector (map string->js-string (command-line)))
+		      %this)))
 	    #f %this)
-	 (js-put! proc 'execPath (car (command-line)) #f %this)
+	 (js-put! proc 'execPath
+	    (string->js-string (car (command-line))) #f %this)
 	 (js-put! proc 'execArgv
-	    (js-vector->jsarray (list->vector (cdr (command-line))) %this)
+	    (js-vector->jsarray
+	       (list->vector (map string->js-string (cdr (command-line))))
+	       %this)
 	    #f %this)
 	 (js-put! proc 'abort
 	    (js-make-function %this
@@ -195,8 +218,8 @@
 	       0 "abort")
 	    #f %this)
 	 
-	 (js-put! proc 'title (hop-name) #f %this)
-	 (js-put! proc 'version (hop-version) #f %this)
+	 (js-put! proc 'title (string->js-string (hop-name)) #f %this)
+	 (js-put! proc 'version (string->js-string (hop-version)) #f %this)
 	 
 	 (js-put! proc 'exit
 	    (js-make-function %this
@@ -218,8 +241,8 @@
 		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)
-	 (js-put! proc 'arch (os-arch) #f %this)
-	 (js-put! proc 'platform (os-name) #f %this)
+	 (js-put! proc 'arch (string->js-string (os-arch)) #f %this)
+	 (js-put! proc 'platform (string->js-string (os-name)) #f %this)
 	 (js-put! proc 'binding
 	    (js-make-function %this
 	       (lambda (this module)
@@ -309,12 +332,14 @@
 	    
 	 (js-put! proc 'cwd
 	    (js-make-function %this
-	       (lambda (this) (pwd))
+	       (lambda (this)
+		  (string->js-string (pwd)))
 	       0 "cwd")
 	    #f %this)
 	 (js-put! proc 'chdir
 	    (js-make-function %this
-	       (lambda (this path) (chdir path))
+	       (lambda (this path)
+		  (chdir (js-string->string path)))
 	       1 "chdir")
 	    #f %this)
 	 (js-put! proc 'getuid
@@ -343,8 +368,8 @@
 		  (cond
 		     ((eq? val (js-undefined))
 		      (umask))
-		     ((string? val)
-		      (umask (string->integer val 8)))
+		     ((js-string? val)
+		      (umask (string->integer (js-string->string val) 8)))
 		     (else
 		      (umask (js-tointeger val %this)))))
 	       1 "umask")
@@ -498,22 +523,25 @@
 				 (cond
 				    ((not (=fx status 0))
 				     (js-put! process '_errno
-					(nodejs-err-name status) #f %this))
+					(nodejs-err-name status)
+					#f %this))
 				    ((=fx (uv-fs-event-change)
 					(bit-and events (uv-fs-event-change)))
-				     (set! eventstr "change"))
+				     (set! eventstr
+					(string->js-string "change")))
 				    ((=fx (uv-fs-event-rename)
 					(bit-and events (uv-fs-event-rename)))
-				     (set! eventstr "rename"))
+				     (set! eventstr
+					(string->js-string "rename")))
 				    (else
 				     (error "process-fs-event-wrap"
 					"bad event" eventstr)))
 				 (js-call3 %this onchange this
-				    status eventstr path)))
-			   path))
+				    status eventstr
+				    (string->js-string path))))
+			   (js-string->string path)))
 		     (unless (js-totest options)
 			(with-access::JsHandle this (handle)
-			   (tprint "UNREF because persistent")
 			   (nodejs-unref handle %worker))))
 		  3 "start")
 	       #f %this)
@@ -598,7 +626,7 @@
       (js-alist->jsobject
 	 `((isIP . ,(js-make-function %this
 		       (lambda (this domain)
-			  (nodejs-isip domain))
+			  (nodejs-isip (js-tojsstring domain %this)))
 		       1 'isIP))
 	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
 	   (queryA . ,(js-make-function %this query4 2 "queryA"))
@@ -688,20 +716,20 @@
       `((getEndianness . ,(js-make-function %this
 			     (lambda (this)
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
-				    "LE"
-				    "BE"))
+				    (string->js-string "LE")
+				    (string->js-string "BE")))
 			     0 "endianess"))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)
-			      (hostname))
+			      (string->js-string (hostname)))
 			   0 "getHostname"))
 	(getOSType . ,(js-make-function %this
 			 (lambda (this)
-			    (os-name))
+			    (string->js-string (os-name)))
 			 0 "getOSType"))
 	(getOSRelease . ,(js-make-function %this
 			    (lambda (this)
-			       (os-version))
+			       (string->js-string (os-version)))
 			    0 "getOSRelease"))
 	(getInterfaceAddresses . ,(js-make-function %this
 				     (lambda (this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 22 09:02:19 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 12:37:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -30,7 +30,7 @@
 	   __hopscript_array)
 
    (export (js-init-json! ::JsObject)
-	   (js-json-parser ::input-port ::obj ::bool ::JsGlobalObject)))
+	   (js-json-parser ::input-port ::obj ::bool ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -73,14 +73,16 @@
    (lambda (this text reviver)
       (call-with-input-string (js-tostring text %this)
 	 (lambda (ip)
-	    (js-json-parser ip reviver #f %this)))))
+	    (js-json-parser ip reviver #f #f %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-json-parser ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-json-parser ip::input-port reviver expr %this::JsGlobalObject)
+(define (js-json-parser ip::input-port reviver expr undefined %this::JsGlobalObject)
    (json-parse ip
       :expr expr
+      :undefined undefined
+      :string-alloc string->js-string
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
 			 (js-new %this js-array 10)))
@@ -145,9 +147,8 @@
 			     (else
 			      (loop (+fx i 1) (+fx n 1)))))))))))
       
-      (define (string-quote::JsStringLiteral jstr::JsStringLiteral)
-	 (let* ((str (js-string->string jstr))
-		(len (string-length str))
+      (define (string-quote::JsStringLiteral str::bstring)
+	 (let* ((len (string-length str))
 		(count (string-count str)))
 	    (if (=fx len count)
 		(string-list->js-string (list "\"" str "\""))
@@ -216,17 +217,18 @@
 		   (else
 		    (make-string
 		       (->fixnum (js-tointeger space %this)) #\space))))
-	       ((string? space)
-		(if (>fx (string-length space) 10)
-		    (substring space 0 10)
-		    space))
+	       ((js-string? space)
+		(let ((space (js-string->string space)))
+		   (if (>fx (string-length space) 10)
+		       (substring space 0 10)
+		       space)))
 	       ((isa? space JsNumber)
 		(loop (js-valueof space %this)))
 	       ((isa? space JsString)
 		(loop (js-valueof space %this)))
 	       (else
 		""))))
-      
+
       (define rep
 	 (cond
 	    ((isa? replacer JsFunction) replacer)
@@ -279,7 +281,7 @@
 	 (define (in-property p)
 	    (when (isa? p JsPropertyDescriptor)
 	       (with-access::JsPropertyDescriptor p (name)
-		  (proc (string->js-string (symbol->string! name))))))
+		  (proc name))))
 	 
 	 (let loop ((o obj))
 	    (with-access::JsObject o (cmap properties __proto__)
@@ -301,7 +303,7 @@
 		   "Converting circular structure to JSON ~s"
 		   (js-tostring value %this)))
 	       ((js-string? value)
-		(string-quote value))
+		(string-quote (js-string->string value)))
 	       ((number? value)
 		(string->js-string (number->string value)))
 	       ((eq? (js-null) value)
@@ -332,7 +334,8 @@
 					   (let ((v (str k value stack)))
 					      (when (js-totest v)
 						 (js-string-append
-						    (string-quote k)
+						    (string-quote 
+						       (js-string->string k))
 						    (js-string-append
 						       (if gap
 							   (string->js-string
@@ -365,7 +368,8 @@
 						    (begin
 						       (display ",\n" op)
 						       (display gap op))))
-					    (display (string-quote k) op)
+					    (let ((s (symbol->string! k)))
+					       (display (string-quote s) op))
 					    (display
 					       (if (string-null? gap) ":" ": ")
 					       op)

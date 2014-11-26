@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Sat Nov 22 07:49:21 2014 (serrano)                */
+;*    Last change :  Tue Nov 25 11:25:21 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -180,6 +180,7 @@
       ((inspect)
        (js-undefined))
       (else
+       (tprint "js-get-null raise prop=" prop " " (typeof prop))
        (js-raise-type-error %this
 	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))
    

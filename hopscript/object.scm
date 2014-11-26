@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Nov 22 10:01:09 2014 (serrano)                */
+;*    Last change :  Mon Nov 24 15:14:41 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -257,7 +257,7 @@
 	    ;; check-utfi-validity
 	    (define (check-utf8-validity str)
 	       (if (utf8-string? str)
-		   str
+		   (string->js-string str)
 		   (js-raise-uri-error %this "Not a utf8 string ~s" string)))
 	    
 	    ;; decodeURI
@@ -292,7 +292,7 @@
 	    (define (encodeuri this string)
 	       (let ((str (js-tostring string %this)))
 		  (if (utf8-string? str #t)
-		      (uri-encode str)
+		      (string->js-string (uri-encode str))
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this 'encodeURI
@@ -305,7 +305,7 @@
 	    (define (encodeuricomponent this string)
 	       (let ((str (js-tostring string %this)))
 		  (if (utf8-string? str #t)
-		      (uri-encode-component str)
+		      (string->js-string (uri-encode-component str))
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this 'encodeURIComponent
@@ -317,7 +317,7 @@
 	    ;; escape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (escape this string)
-	       (url-path-encode (js-tostring string %this)))
+	       (string->js-string (url-path-encode (js-tostring string %this))))
 	    
 	    (js-bind! %this %this 'escape
 	       :value (js-make-function %this escape 1 'escape
@@ -786,7 +786,7 @@
 		   ((isa? value JsObject)
 		    ;; 1.a
 		    value)
-		   ((string? value)
+		   ((js-string? value)
 		    ;; 1.b
 		    (js-new %this js-string value))
 		   ((boolean? value)
@@ -892,7 +892,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
-   (when (>fx (bigloo-debug) 0)
+   (when (>fx (bigloo-debug) 1)
       (tprint "TODO, why js-seal need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
@@ -913,7 +913,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
-   (when (>fx (bigloo-debug) 0)
+   (when (>fx (bigloo-debug) 1)
       (tprint "TODO, why js-freeze need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)

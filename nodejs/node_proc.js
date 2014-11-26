@@ -70,7 +70,7 @@ function initProcessKillAndExit( process ) {
   };
 }
 
-initProcessChannel = function() {
+var initProcessChannel = function() {
   // If we were spawned with env NODE_CHANNEL_FD then load that up and
   // start parsing data from that stream.
   if (process.env.NODE_CHANNEL_FD) {
