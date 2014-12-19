@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun  4 07:54:50 2014                          */
-/*    Last change :  Thu Jul  3 15:08:34 2014 (serrano)                */
+/*    Last change :  Fri Dec 19 10:30:36 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Foreign widget binding example                                   */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g widget.js                                         */
 /*    browser: http://localhost:8080/hop/widget                        */
 /*=====================================================================*/
-
 var hop = require( 'hop' );
 
 var flipcounter = require( "flipcounter" );
@@ -37,6 +36,5 @@ service widget() {
       }
    }
 }
-      
       
 console.log( "Go to \"http://%s:%d/hop/widget\"", hop.hostname, hop.port );

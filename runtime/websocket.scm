@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Nov 26 11:15:43 2014 (serrano)                */
+;*    Last change :  Tue Dec 16 18:11:05 2014 (serrano)                */
 ;*    Copyright   :  2012-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -74,10 +74,9 @@
 	   (websocket-proxy-connect! ::bstring ::int ::http-request)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
 	   (websocket-server-response ::http-request key #!optional onconnect protocol)
-	   (websocket-debug)
-	   (websocket-debug-level::int)
-	   
+
 	   (websocket-connect! ::websocket)
+	   (websocket-close ::websocket)
 	   (websocket-send-text ::socket ::bstring #!key (mask #t) (final #t))
 	   (websocket-send ::socket ::obj #!key (mask #t) (final #t))
 
@@ -399,7 +398,7 @@
 				      (let ((c (read-char ip)))
 					 (if (eof-object? c)
 					     (begin
-						(socket-close socket)
+						(socket-shutdown socket)
 						(socket-close rsocket)
 						(set! websocket-proxy-tunnel-count
 						   (-fx websocket-proxy-tunnel-count 1))
@@ -417,7 +416,7 @@
 					 (if (eof-object? c)
 					     (begin
 						(socket-close rsocket)
-						(socket-close socket)
+						(socket-shutdown socket)
 						(thread-terminate! th1))
 					     (begin
 						(display c rop)
@@ -453,7 +452,7 @@
 	       (let loop ()
 		  (let ((c (read-char rip)))
 		     (if (eof-object? c)
-			 (socket-close socket)
+			 (socket-shutdown socket)
 			 (begin
 			    (display c op)
 			    (flush-output-port op)
@@ -568,8 +567,9 @@
 			       (value ws))))
 		     (apply-listeners oncloses se)))
 	       (set! state 'closed)
-	       (socket-close %socket)
-	       (set! %socket #f)))))
+	       (when (socket? %socket)
+		  (socket-shutdown %socket)
+		  (set! %socket #f))))))
    
    (define (abort)
       (with-access::websocket ws (%mutex %socket onerrors)
@@ -668,6 +668,14 @@
 							     (synchronize %mutex
 								(condition-variable-wait! %condvar %mutex))
 							     (loop))))))))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-close ...                                              */
+;*---------------------------------------------------------------------*/
+(define (websocket-close ws::websocket)
+   (with-access::websocket ws (%socket)
+      (socket-shutdown %socket)
+      (set! %socket #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-envelope-parse ...                                     */
@@ -894,7 +902,8 @@
 	 (bit-or (bit-lsh wh 16) wl)))
    
    (define (read-check-byte in val)
-      (=fx (read-byte in) val))
+      (let ((b (read-byte in)))
+	 (and (integer? b) (=fx b val))))
    
    (define (read-payload in l)
       (cond

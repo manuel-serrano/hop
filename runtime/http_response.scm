@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Nov 19 07:52:56 2014 (serrano)                */
+;*    Last change :  Mon Dec 15 21:31:05 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -60,13 +60,12 @@
 ;*    http-response ::http-response-string ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-string request socket)
-   (with-trace 3 "http-response::http-response-string"
+   (with-trace 'hop-response "http-response::http-response-string"
       (with-access::http-response-string r (start-line
 					    header
 					    content-type charset
 					    server content-length
 					    bodyp body
-					    #;request
 					    timeout)
 	 (let* ((p (socket-output socket))
 		(body body)
@@ -93,14 +92,13 @@
 ;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop request socket)
-   (with-trace 3 "http-response::http-response-hop"
+   (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
 					   header
 					   content-type charset
 					   server content-length
 					   value padding
 					   bodyp 
-					   #;request
 					   timeout)
 	 (with-access::http-request request (connection hop-serialize)
 	    (let ((p (socket-output socket))
@@ -209,7 +207,7 @@
 ;*    dynamic responses.                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-xml request socket)
-   (with-trace 3 "http-response-xml"
+   (with-trace 'hop-response "http-response-xml"
       (with-access::http-response-xml r (#;request
 					 start-line header
 					 content-type charset server
@@ -241,7 +239,7 @@
 		   (output-port-flush-hook-set! p chunked-flush-hook))
 		(http-write-line p))
 	    ;; the body
-	    (with-trace 4 "http-response-xml"
+	    (with-trace 'hop-respponse "http-response-xml"
 	       (when bodyp
 		  (with-access::xml-backend backend (security)
 		     (if (isa? security security-manager)
@@ -261,7 +259,7 @@
 ;*    http-response ::http-response-procedure ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-procedure request socket)
-   (with-trace 3 "http-response::http-response-procedure"
+   (with-trace 'hop-response "http-response::http-response-procedure"
       (with-access::http-response-procedure r (start-line header content-type
 						 charset server content-length
 						 proc bodyp
@@ -284,7 +282,7 @@
 	    (http-write-line p)
 	    (flush-output-port p)
 	    ;; the body
-	    (with-trace 4 "http-response-procedure"
+	    (with-trace 'hop-response "http-response-procedure"
 	       (when bodyp
 		  (proc p)
 		  (flush-output-port p)))
@@ -294,7 +292,7 @@
 ;*    http-response ::http-response-raw ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-raw request socket)
-   (with-trace 3 "http-response::http-response-raw"
+   (with-trace 'hop-response "http-response::http-response-raw"
       (with-access::http-response-raw r (bodyp proc timeout #;request connection)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -314,7 +312,6 @@
    (define (response-error status-line request socket header)
       (http-response
        (instantiate::http-response-error
-	  #;(request request)
 	  (start-line status-line)
 	  (charset (hop-locale))
 	  (header header))
@@ -387,7 +384,7 @@
 			       (response-header connection beg end size cp r file)
 			       (flush-output-port cp)))
 			 ;; the body
-			 (with-trace 4 "http-response-file"
+			 (with-trace 'hop-response "http-response-file"
 			    (when bodyp
 			       (send-file file p (+elong #e1 (-elong end beg)) beg)
 			       (flush-output-port p)))
@@ -434,7 +431,6 @@
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
 	 (charset (hop-charset))
-	 #;(request request)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (xml (if bodyp
 		  (<HTML>
@@ -466,7 +462,7 @@
 ;*    http-response ::http-response-file ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file request socket)
-   (with-trace 3 "http-response::http-response-file"
+   (with-trace 'hop-response "http-response::http-response-file"
       (with-access::http-response-file r (start-line header #;request file)
 	 (with-access::http-request request (header)
 	    (cond
@@ -532,7 +528,7 @@
 ;*    http-response ::http-response-cgi ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-cgi request socket)
-   (with-trace 3 "http-response::http-response-cgi"
+   (with-trace 'hop-response "http-response::http-response-cgi"
       (with-access::http-response-cgi r (start-line header
 					   content-type charset
 					   server cgibin
@@ -549,7 +545,7 @@
 		(http-write-line-string p "Server: " server)
 		(http-write-line p)
 		;; the body
-		(with-trace 4 "http-response-cgi-process"
+		(with-trace 'hop-response "http-response-cgi-process"
 		   (let* ((pi (socket-input socket))
 			  (cl content-length)
 			  (body (read-chars (elong->fixnum cl) pi))
@@ -572,7 +568,7 @@
 ;*    http-response ::http-response-put ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-put request socket)
-   (with-trace 3 "http-response::http-response-put"
+   (with-trace 'hop-response "http-response::http-response-put"
       (with-access::http-response-put r (start-line header
 					   content-type charset
 					   server uri bodyp
@@ -584,7 +580,6 @@
 		  ((=fx i l)
 		   (http-response
 		    (instantiate::http-response-string
-		       #;(request request)
 		       (start-line "HTTP/1.0 400 Bad Request")
 		       (charset (hop-locale))
 		       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request ~a</body></html>" uri))
@@ -603,7 +598,7 @@
 		      (http-write-line-string p "Server: " server)
 		      (http-write-line p)
 		      ;; the body
-		      (with-trace 4 "http-response-put-process"
+		      (with-trace 'hop-response "http-response-put-process"
 			 (let* ((pi (socket-input socket))
 				(env (hop-cgi-env socket r request cmd args 'GET))
 				(proc (apply run-process cmd
@@ -626,14 +621,14 @@
 ;*    http-response ::http-response-abort ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-abort request socket)
-   (with-trace 3 "http-response::http-response-abort"
+   (with-trace 'hop-response "http-response::http-response-abort"
       'abort))
       
 ;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-filter ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-filter request socket)
-   (with-trace 3 "http-response::http-response-filter"
+   (with-trace 'hop-response "http-response::http-response-filter"
       (with-access::http-response-filter r (response)
 	 (http-filter response r request socket))))
 
@@ -641,7 +636,7 @@
 ;*    http-response ::http-response-persistent ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-persistent request socket)
-   (with-trace 3 "http-response::http-response-persistent"
+   (with-trace 'hop-response "http-response::http-response-persistent"
       (with-access::http-response-persistent r (body)
 	 (when (string? body)
 	    (let ((p (socket-output socket)))
@@ -673,7 +668,6 @@
 	 ((string? obj)
 	  (instantiate::http-response-string
 	     (charset (hop-charset))
-	     #;(request req)
 	     (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	     (bodyp (not (eq? method 'HEAD)))
 	     (body obj)))
@@ -698,7 +692,6 @@
 		(backend (hop-xml-backend-secure))
 		(content-type ctype)
 		(charset (hop-charset))
-		#;(request req)
 		(header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 		(bodyp (not (eq? method 'HEAD)))
 		(value obj)))))))
@@ -717,7 +710,6 @@
       (let ((be (hop-xml-backend-secure)))
 	 (with-access::xml-backend be (mime-type)
 	    (instantiate::http-response-xml
-	       #;(request req)
 	       (backend be)
 	       (content-type mime-type)
 	       (charset (hop-charset))
@@ -733,7 +725,6 @@
       (instantiate::http-response-string
 	 (content-type (hop-mime-type))
 	 (charset (hop-charset))
-	 #;(request req)
 	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
 	 (bodyp (not (eq? method 'HEAD)))
 	 (body (xml-tilde->expression obj)))))
@@ -747,7 +738,6 @@
 (define-method (scheme->response obj::xml-http-request req)
    (with-access::xml-http-request obj (status input-port header)
       (instantiate::http-response-procedure
-	 #;(request req)
 	 (start-line (format "HTTP/1.1 ~a" status))
 	 (header header)
 	 (proc (lambda (op) (display (read-string input-port) op))))))
@@ -757,7 +747,6 @@
 ;*---------------------------------------------------------------------*/
 (define (http-response-void req)
    (instantiate::http-response-string
-      #;(request req)
       (charset (hop-locale))
       (start-line "HTTP/1.0 204 No Content")))
 
@@ -765,7 +754,7 @@
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure #!optional body)
-   (with-trace 3 "http-send-request"
+   (with-trace 'hop-response "http-send-request"
       (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout connection)
 	 (let ((ssl (eq? scheme 'https)))
 	    (let loop ((host host)
@@ -773,7 +762,7 @@
 		       (user userinfo)
 		       (path path))
 	       (trace-item "scheme=" scheme " host=" host " port=" port)
-	       (trace-item "method=" method " path=" path)
+	       (trace-item "method=" method " path=" path " user=" user)
 	       (let* ((sock (if (and (not ssl) (hop-use-proxy))
 				(make-proxy-socket
 				   (hop-use-proxy) connection-timeout)

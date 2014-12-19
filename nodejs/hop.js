@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Nov 18 17:27:36 2014 (serrano)                */
+/*    Last change :  Tue Dec 16 18:39:24 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -38,6 +38,7 @@ exports.currentThread = hop.currentThread;
 /*---------------------------------------------------------------------*/
 exports.port = hop.port;
 exports.hostname = hop.hostname;
+exports.version = hop.version;
 
 /*---------------------------------------------------------------------*/
 /*    withHOP                                                          */
@@ -81,6 +82,9 @@ exports.broadcast = hop.broadcast;
 /*---------------------------------------------------------------------*/
 exports.parseWebColor = hop.parseWebColor;
 exports.makeWebColor = hop.makeWebColor;
+exports.encodeURIComponent = hop.encodeURIComponent;
+exports.md5sum = hop.md5sum;
+exports.sha1sum = hop.sha1sum;
 
 /*---------------------------------------------------------------------*/
 /*    Lists                                                            */
@@ -93,6 +97,7 @@ exports.Cons = hop.Cons;
 /*---------------------------------------------------------------------*/
 exports.tree = "tree";
 exports.notepad = "notepad";
+exports.fontifier = "fontifier";
 
 Object.seal( exports );
 Object.freeze( exports );

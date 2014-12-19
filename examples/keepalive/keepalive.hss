@@ -1,3 +1,13 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/3.0.x/examples/keepalive/keepalive.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Dec 17 17:38:47 2014                          */
+/*    Last change :  Wed Dec 17 17:39:00 2014 (serrano)                */
+/*    Copyright   :  2014 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Keepalive HSS stylesheet                                         */
+/*=====================================================================*/
 div {
   border: 5px solid red;
   font-weight: bold;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Nov 21 16:41:24 2014 (serrano)                */
+;*    Last change :  Sun Dec 14 11:06:30 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_websocket
 
+   (include "stringliteral.sch")
+   
    (library web hop js2scheme)
    
    (import __hopscript_types
@@ -24,23 +26,33 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_stringliteral)
    
    (export (class JsWebSocket::JsObject
 	      (ws::websocket read-only))
 	   
 	   (class JsWebSocketClient::JsObject
+	      (wss::JsWebSocketServer read-only)
 	      (socket::socket read-only)
-	      (onmessages::pair-nil (default '())))
+	      (onmessages::pair-nil (default '()))
+	      (oncloses::pair-nil (default '())))
 	   
 	   (class JsWebSocketServer::JsObject
+	      (state::symbol (default 'init))
 	      (worker read-only)
 	      (svc::procedure read-only)
-	      (conns::pair-nil (default '())))
+	      (conns::pair-nil (default '()))
+	      (closes::pair-nil (default '())))
 	   
 	   (class JsWebSocketEvent::websocket-event))
 	   
    (export (js-init-websocket! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral begin                                            */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWebSocket ...                            */
@@ -53,13 +65,16 @@
 		     (target this)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    add-event-listener! ::JsWebSOcketServer ...                      */
+;*    add-event-listener! ::JsWebSocketServer ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! this::JsWebSocketServer name proc . l)
    (cond
       ((string=? name "connection")
        (with-access::JsWebSocketServer this (conns)
-	  (set! conns (cons proc conns))))))
+	  (set! conns (cons proc conns))))
+      ((string=? name "close")
+       (with-access::JsWebSocketServer this (closes)
+	  (set! closes (cons proc closes))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWebSocketClient ...                      */
@@ -68,7 +83,10 @@
    (cond
       ((string=? name "message")
        (with-access::JsWebSocketClient this (onmessages)
-	  (set! onmessages (cons proc onmessages))))))
+	  (set! onmessages (cons proc onmessages))))
+      ((string=? name "close")
+       (with-access::JsWebSocketClient this (oncloses)
+	  (set! oncloses (cons proc oncloses))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-websocket! ...                                           */
@@ -98,11 +116,16 @@
 	       (let* ((protocol (cond
 				   ((string? options)
 				    options)
+				   ((js-string? options)
+				    (js-string->string options))
 				   ((isa? options JsArray)
 				    (let ((join (js-get options 'join %this)))
-				       (js-call1 %this join options ", ")))
+				       (js-string->string 
+					  (js-call1 %this join options
+					     (string->js-string ", ")))))
 				   ((isa? options JsObject)
-				    (js-get options 'protocol %this))))
+				    (js-string->string
+				       (js-get options 'protocol %this)))))
 		      (url (js-tostring url %this))
 		      (ws (instantiate::websocket
 			     (url (pregexp-replace "ws://" url "http://"))
@@ -129,21 +152,37 @@
 			      (js-worker-push-thunk! worker "wss-onconnect"
 				 (lambda ()
 				    (apply-listeners conns evt))))))))))
+
+	 (define (js->hop x)
+	    (if (js-string? x)
+		(js-string->string x)
+		x))
 	 
 	 (define (js-websocket-server-construct this opt)
-	    (letrec* ((path (if (string? opt) opt (js-get opt 'path %this)))
+	    (letrec* ((path (cond
+			       ((string? opt)
+				opt)
+			       ((js-string? opt)
+				(js-string->string opt))
+			       (else
+ 				(js->hop (js-get opt 'path %this)))))
 		      (proto (if (isa? opt JsObject)
 				 (let ((proto (js-get opt 'protocol %this)))
 				    (cond
 				       ((string? proto)
 					(list proto))
+				       ((js-string? proto)
+					(list (js-string->string proto)))
 				       ((isa? proto JsArray)
-					(map car (jsarray->list proto %this)))))))
+					(map (lambda (el)
+						(js-string->string (car el)))
+					   (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
 				    (wss-onconnect wss) proto))))
 		      (wss (instantiate::JsWebSocketServer
+			      (state 'up)
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
 			      (svc svc))))
@@ -207,8 +246,15 @@
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
 		      (with-access::websocket ws (%socket)
-			 (websocket-send %socket value))))
+			 (websocket-send %socket (js-tostring value %this)))))
 		1 'send))
+   ;; close
+   (js-bind! %this obj 'close
+      :value (js-make-function %this
+		(lambda (this)
+		   (with-access::JsWebSocket this (ws)
+		      (websocket-close ws)))
+		0 'close))
    ;; addEventListener
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
@@ -235,7 +281,7 @@
 ;*    bind-listener! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (bind-listener! %this obj action)
-   (js-bind! %this obj (car action)
+   (js-bind! %this obj (car action) 
       :get (js-make-function %this
               (lambda (this) (cdr action))
               0 (car action))
@@ -255,19 +301,31 @@
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (tprint "TODO websocket-server-close"))
+		   (with-access::JsWebSocketServer this (svc state closes worker)
+		      (unless (eq? state 'down)
+			 (set! state 'down)
+			 (unregister-service! (procedure-attr svc))
+			 (when (pair? closes)
+			    ;; invoke the onclose listener
+			    (let ((evt (instantiate::server-event
+					  (name "connection")
+					  (target this)
+					  (value this))))
+			       (js-worker-push-thunk! worker "wss-onclose"
+				  (lambda ()
+				     (apply-listeners closes evt))))))))
 		0 'close))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
 		(lambda (this message proc)
-		   (add-event-listener! this
-			 (js-tostring message %this)
+		   (add-event-listener! this (js-tostring message %this)
 		      (proc->listener %this proc this)))
 		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))
-      (list (cons 'onconnection #f)))
+      (list (cons 'onconnection #f)
+	 (cons 'onclose #f)))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -277,6 +335,7 @@
    (with-access::http-request req (socket)
       (let ((ws (instantiate::JsWebSocketClient
 		   (socket socket)
+		   (wss wss)
 		   (__proto__ proto))))
 	 (thread-start!
 	    (instantiate::hopthread
@@ -288,19 +347,20 @@
 			;; start reading the frames
 			(synchronize mutex
 			   (let loop ((frame (websocket-read socket)))
-			      (when frame
+			      (when (string? frame)
 				 (with-access::JsWebSocketClient ws (onmessages)
 				    (with-access::JsWebSocketServer wss (worker svc)
-				       (let ((evt (instantiate::JsWebSocketEvent
-						     (name "message")
-						     (target ws)
-						     (data frame)
-						     (value frame))))
+				       (let* ((val (string->js-string frame))
+					      (evt (instantiate::JsWebSocketEvent
+						      (name "message")
+						      (target ws)
+						      (data val)
+						      (value val))))
 					  (js-worker-push-thunk! worker
 					     "wesbsocket-client"
 					     (lambda ()
-						(apply-listeners onmessages evt)))))))
-			      (loop (websocket-read socket))))))))
+						(apply-listeners onmessages evt))))))
+				 (loop (websocket-read socket)))))))))
 	 ws)))
 
 ;*---------------------------------------------------------------------*/
@@ -311,9 +371,19 @@
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsWebSocketClient this (socket)
-		      (socket-close socket))
-		   (tprint "TODO websocket-client-close"))
+		   (with-access::JsWebSocketClient this (socket oncloses wss)
+		      (when (socket? socket)
+			 (socket-shutdown socket))
+		      (when (pair? oncloses)
+			 ;; invoke the onclose listener
+			 (let ((evt (instantiate::server-event
+				       (name "connection")
+				       (target this)
+				       (value this))))
+			    (with-access::JsWebSocketServer wss (worker)
+			       (js-worker-push-thunk! worker "ws-onclose"
+				  (lambda ()
+				     (apply-listeners oncloses evt))))))))
 		0 'close))
    ;; client
    (js-bind! %this obj 'socket
@@ -327,7 +397,7 @@
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocketClient this (socket)
-		      (websocket-send socket value :mask #f)))
+		      (websocket-send socket (js-tostring value %this) :mask #f)))
 		1 'send))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
@@ -339,6 +409,11 @@
 		2 'addEventListener))
    ;; listeners
    (for-each (lambda (act) (bind-listener! %this obj act))
-      (list (cons 'onmessage #f)))
+      (list (cons 'onmessage #f)
+	 (cons 'onclose #f)))
    obj)
 
+;*---------------------------------------------------------------------*/
+;*    JsStringLiteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-string-literal-end!)

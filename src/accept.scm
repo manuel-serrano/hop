@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
-;*    Last change :  Wed Nov 19 14:29:37 2014 (serrano)                */
+;*    Last change :  Mon Dec 15 21:37:03 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
@@ -60,7 +60,7 @@
 	 (if (socket-reject sock)
 	     (begin
 		(notify-reject sock)
-		(socket-close sock)
+		(socket-shutdown sock)
 		(loop id))
 	     (begin
 		(hop-verb 2 (hop-color id id " ACCEPT")
@@ -69,7 +69,7 @@
 		;; tune the socket
 		(tune-socket! sock)
 		;; process the request
-		(spawn scd stage-request id sock (hop-read-timeout))
+		(spawn scd stage-request id sock (hop-read-timeout) 'connect)
 		(loop (+fx id 1)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -112,7 +112,8 @@
 		      ;; tune the socket
 		      (tune-socket! sock)
 		      ;; process the request
-		      (spawn scd stage-request nid sock (hop-read-timeout))
+		      (spawn scd stage-request nid sock
+			 (hop-read-timeout) 'connect)
 		      (liip (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -163,7 +164,7 @@
 		     (if (socket-reject sock)
 			 (begin
 			    (notify-reject sock)
-			    (socket-close sock)
+			    (socket-shutdown sock)
 			    (loop))
 			 (let ((id (get-next-id)))
 			    (scheduler-load-add! scd -1)
@@ -181,7 +182,8 @@
 			    (tune-socket! sock)
 			    ;; process the request
 			    (stage scd
-			       thread stage-request id sock (hop-read-timeout))
+			       thread stage-request id sock
+			       (hop-read-timeout) 'connect)
 			    ;; go back to the accept stage
 			    (loop))))))))
       (connect-stage scd thread))
@@ -222,7 +224,7 @@
 	    (input-port-buffer-set! (socket-input sock) inbuf)
 	    (output-port-buffer-set! (socket-output sock) outbuf)))
       ;; process the request
-      (stage scd thread stage-request id sock timeout))
+      (stage scd thread stage-request id sock timeout 'connect))
    
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
@@ -256,14 +258,14 @@
 					     (begin
 						;; notify and close
 						(notify-reject s)
-						(socket-close s)
+						(socket-shutdown s)
 						(loop id))
 					     (begin
 						;; tune the socket
 						(tune-socket! s)
 						;; process the request
 						(spawn scd stage-request id s
-						   (hop-read-timeout))
+						   (hop-read-timeout) 'connect)
 						(loop (+fx id 1))))))))
 			     (loop))))))
       (if w

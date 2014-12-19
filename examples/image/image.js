@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Jul  3 14:59:25 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 11:55:23 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Image manipulation example                                       */
 /*    -------------------------------------------------------------    */
-/*    run: hop -v -g image.js                                          */
+/*    run: hop -v image.js                                             */
 /*    browser: http://localhost:8080/hop/image                         */
 /*=====================================================================*/
 
@@ -74,15 +74,9 @@ service image( { url: img_default } ) {
 	    drawImage( ${imgProxy( url )}, ${colors_default} )
 	 } )
       },
-      <IMG> {
-	 src: url
-      },
-      <CANVAS> {
-	 id: "src", style: "display: none"
-      },
-      <CANVAS> {
-	 id: "dst"
-      }
+      <IMG> { src: url },
+      <CANVAS> { id: "src", style: "display: none" },
+      <CANVAS> { id: "dst" }
    }
 }
    

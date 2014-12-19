@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Nov 19 07:49:10 2014 (serrano)                */
+;*    Last change :  Tue Dec 16 18:11:36 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -417,7 +417,7 @@
 	    (version (get-header header sec-websocket-version: "-1")))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (with-trace (+ 1 (websocket-debug-level)) "ws-register-new-connection"
+	 (with-trace 'event "ws-register-new-connection"
 	    (trace-item "protocol-version=" version)
 	    (let ((resp (websocket-server-response req key)))
 	       ;; register the websocket
@@ -429,6 +429,7 @@
 		  (trace-item "socket=" socket )
 		  (trace-item "connected clients=" *websocket-response-list*))
 	       resp)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -447,7 +448,7 @@
 	       :id server-event
 	       :timeout 0
 	       (#!key key)
-	       (with-trace (websocket-debug-level) "start websocket service"
+	       (with-trace 'event "start websocket service"
 		  (trace-item "key=" key)
 		  (let ((req (current-request)))
 		     (with-access::http-request req (header)
@@ -624,7 +625,7 @@
 (define (server-event-register event key mode padding req)
    
    (define (ajax-register-event! req key name padding)
-      (with-trace 3 "ajax-register-event!"
+      (with-trace 'event "ajax-register-event!"
 	 (let ((conn (ajax-find-connection-by-key key)))
 	    (when debug-ajax
 	       (tprint " ajax-register-connection name=" name " conn=" conn))
@@ -660,7 +661,7 @@
 		      (request req)))))))
    
    (define (flash-register-event! req key name)
-      (with-trace 3 "flash-register-event!"
+      (with-trace 'event "flash-register-event!"
 	 (let ((req (cadr (assq key *flash-request-list*))))
 	    (hashtable-update! *flash-socket-table*
 			       name
@@ -670,7 +671,7 @@
 	       #;(request req)))))
 
    (define (multipart-register-event! req key name)
-      (with-trace 3 "multipart-register-event!"
+      (with-trace 'event "multipart-register-event!"
 	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
 				hop-multipart-key name hop-multipart-key))
 	       (c (assq key *multipart-request-list*)))
@@ -715,7 +716,7 @@
 				    content))))))))
    
    (define (websocket-register-event! req key name)
-      (with-trace 3 "ws-register-event!"
+      (with-trace 'event "ws-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
 	    (trace-item "key=" key)
 	    (trace-item "name=" name)
@@ -723,22 +724,18 @@
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
-				      name
-				      (lambda (l) (cons resp l))
-				      (list resp))
-		   (instantiate::http-response-string)
-		   #;(with-access::http-response-websocket resp (request)
-		      (instantiate::http-response-string
-			 (request request))))
+		      name
+		      (lambda (l) (cons resp l))
+		      (list resp))
+		   (instantiate::http-response-string))
 		(error "server-event-register" "Illegal websocket entry" key)))))
 
-   (with-trace 2 "ws-register-event!"
+   (with-trace 'event "ws-register-event!"
       (synchronize *event-mutex*
-	 (when (or debug-ajax (websocket-debug) debug-multipart debug-flash)
-	    (trace-item "event=" event)
-	    (trace-item "key=" key)
-	    (trace-item "mode=" mode)
-	    (trace-item "padding=" padding))
+	 (trace-item "event=" event)
+	 (trace-item "key=" key)
+	 (trace-item "mode=" mode)
+	 (trace-item "padding=" padding)
 	 (if (<fx *clients-number* (hop-event-max-clients))
 	     (let ((key (string->symbol key)))
 		;; set an output timeout on the socket
@@ -826,7 +823,7 @@
 (define (flash-close-request! req)
    ;; close the socket
    (with-access::http-request req (socket)
-      (socket-close socket))
+      (socket-shutdown socket))
    (set! *clients-number* (-fx *clients-number* 1))
    ;; remove the request from the *flash-request-list*
    (set! *flash-request-list*
@@ -848,7 +845,7 @@
 (define (multipart-close-request! req)
    ;; close the socket
    (with-access::http-request req (socket)
-      (socket-close socket))
+      (socket-shutdown socket))
    (set! *clients-number* (-fx *clients-number* 1))
    ;; remove the request from the *multipart-request-list*
    (set! *multipart-request-list*
@@ -872,8 +869,8 @@
    (with-access::http-response-websocket resp ((req request))
       ;; close the socket
       (with-access::http-request req (socket)
-	 (socket-close socket)
-	 (with-trace (websocket-debug-level) "ws-close-request!"
+	 (socket-shutdown socket)
+	 (with-trace 'event "ws-close-request!"
 	    (trace-item "socket=" socket)))
       ;; decrement the current number of connected clients
       (set! *clients-number* (-fx *clients-number* 1))
@@ -978,7 +975,7 @@
 	    (unless (isa? e &io-error) (raise e))
 	    #f)
 	 (http-response resp request socket)
-	 (socket-close socket)
+	 (socket-shutdown socket)
 	 #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -1067,7 +1064,7 @@
       (with-access::http-request req (socket)
 	 (with-handler
 	    (lambda (e)
-	       (with-trace (websocket-debug-level) "ws-signal-error"
+	       (with-trace 'event "ws-signal-error"
 		  (trace-item "err=" e)
 		  (trace-item "socket=" socket)
 		  (trace-item "thread=" (current-thread))
@@ -1075,12 +1072,12 @@
 		  (trace-item "vlen=" (string-length vstr))
 		  (if (isa? e &io-error)
 		      (begin
-			 (with-trace (websocket-debug-level) "ws-error-close"
+			 (with-trace 'event "ws-error-close"
 			    (websocket-close-request! resp))
 			 #f)
 		      (raise e))))
 	    (with-access::http-response-websocket resp (accept)
-	       (with-trace (websocket-debug-level) "ws-signal"
+	       (with-trace 'event "ws-signal"
 		  (trace-item "resp=" resp)
 		  (if accept
 		      (hybi-signal-value vstr socket)
@@ -1281,7 +1278,7 @@
 		     l))))))
 
    (define (websocket-event-broadcast! name value)
-      (with-trace (websocket-debug-level) "ws-event-broadcast!"
+      (with-trace 'event "ws-event-broadcast!"
 	 (trace-item "name=" name)
 	 (trace-item "value="
 	    (if (or (string? value) (symbol? value) (number? value))
@@ -1292,7 +1289,7 @@
 	       *websocket-socket-table*
 	       name
 	       (lambda (l)
-		  (with-trace (websocket-debug-level) "ws-event-broadcast"
+		  (with-trace 'event "ws-event-broadcast"
 		     (trace-item "name=" name)
 		     (trace-item "# clients=" (length l))
 		     (trace-item "cients="
@@ -1448,6 +1445,7 @@
 		   (values name (string->real real)))))
 	 ((pregexp-match "<j name='([^']*)'><![[]CDATA[[]" buf)
 	  => (lambda (m)
+		(tprint "javascript->obj TO BE FIXED FOR JS")
 		(let* ((name (cadr m))
 		       (js (substring buf
 			      (+fx (string-length name) 20)
@@ -1542,7 +1540,7 @@
 					   (not (eq? (car l) obj)))
 				  listeners))
 	       (when (null? listeners)
-		  (socket-close socket)
+		  (socket-shutdown socket)
 		  (synchronize *listener-mutex*
 		     (hashtable-remove! *server-listeners* event))))))))
 

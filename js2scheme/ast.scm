@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Nov  7 19:39:42 2014 (serrano)                */
+;*    Last change :  Tue Dec 16 17:07:27 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -19,7 +19,7 @@
    (include "walk.sch")
 
    (export (abstract-class J2SNode
-	      (loc::pair read-only))
+	      (loc::pair read-only (info '("notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)
 	   
@@ -27,7 +27,7 @@
 	      nodes::pair-nil)
 	   
 	   (class J2SBlock::J2SSeq
-	      (endloc::pair read-only))
+	      (endloc::pair read-only (info '("notraverse"))))
 	   
 	   (class J2SProgram::J2SBlock
 	      (version::int read-only (default 1))
@@ -188,7 +188,7 @@
 	   (class J2SDeclFun::J2SDeclInit)
 	   
 	   (class J2SDeclCnstFun::J2SDecl
-	      (fun::J2SFun read-only))
+	      (fun::J2SFun read-only (info '("notraverse"))))
 	   
 	   (class J2SDeclSvc::J2SDeclFun)
 	   
@@ -529,8 +529,9 @@
 		    (let ((fields (class-all-fields (object-class n))))
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (when (>=fx i 0)
-			     (let ((f (vector-ref fields i)))
-				(unless (eq? (class-field-name f) 'loc)
+			     (let* ((f (vector-ref fields i))
+				    (fi (class-field-info f)))
+				(unless (and (pair? fi) (member "notraverse" fi))
 				   (let ((v ((class-field-accessor f) n)))
 				      (loop v)))
 				(for (-fx i 1)))))))
@@ -552,8 +553,9 @@
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (if (=fx i -1)
 			      '()
-			      (let ((f (vector-ref fields i)))
-				 (if (eq? (class-field-name f) 'loc)
+			      (let* ((f (vector-ref fields i))
+				     (fi (class-field-info f)))
+				 (if (and (pair? fi) (member "notraverse" fi))
 				     (for (-fx i 1))
 				     (let ((v ((class-field-accessor f) n)))
 					(append (loop v) (for (-fx i 1))))))))))
@@ -577,8 +579,9 @@
 		    (let ((fields (class-all-fields (object-class n))))
 		       (let for ((i (-fx (vector-length fields) 1)))
 			  (if (>=fx i 0)
-			      (let ((f (vector-ref fields i)))
-				 (unless (eq? (class-field-name f) 'loc)
+			      (let* ((f (vector-ref fields i))
+				     (fi (class-field-info f)))
+				 (unless (and (pair? fi) (member "notraverse" fi))
 				    (let ((v ((class-field-accessor f) n)))
 				       ((class-field-mutator f) n (loop v))))
 				 (for (-fx i 1)))

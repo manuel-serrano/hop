@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Nov 18 09:08:46 2014 (serrano)                */
+;*    Last change :  Sat Dec  6 05:44:50 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -44,10 +44,6 @@
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))
-;* 	      (user::user read-only)                                   */
-;* 	      (localclientp::bool (default #f))                        */
-;* 	      (lanclientp::bool (default #f))                          */
-;* 	      (hook::procedure (default (lambda (rep) rep)))           */
 	      (transfer-encoding (default #f))
 	      (http::symbol (default 'HTTP/1.1))
 	      (host::bstring (default "localhost"))
@@ -77,7 +73,6 @@
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::obj read-only (default #f))
-	      #;(request::http-request (default (class-nil http-request)))
 	      (bodyp::bool read-only (default #t)))
 	   
 	   (class http-response-abort::%http-response)
@@ -158,7 +153,6 @@
 	      (body (default #f)))
 	   
 	   (class http-response-async::%http-response
-	      #;(request::http-request read-only)
 	      (async::procedure read-only))
 	   
 	   (class http-response-chunked::%http-response

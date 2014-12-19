@@ -3,16 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun 20 18:38:17 2014                          */
-/*    Last change :  Fri Nov 14 08:43:06 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 16:43:50 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    ArrayBuffer example                                              */
-/*    See                                                              */
-/*      http://www.html5rocks.com/en/tutorials/webgl/typed_arrays/     */
+/*    see http://www.html5rocks.com/en/tutorials/webgl/typed_arrays/   */
 /*    -------------------------------------------------------------    */
 /*    run: hopc -v -g arraybuffer.js && ./a.out                        */
 /*=====================================================================*/
-
 var b = new ArrayBuffer( 16 );
 var b32 = new Int32Array( b, 0, 2 );
 b32[ 0 ] = 0x777777;
@@ -50,7 +48,7 @@ console.log( b16 );
 
 console.log( "7 ===================================" );
 var f32 = new Float32Array( 2 );
-  
+
 f32[ 1 ] = 3.14;
 console.log( f32 );
 
@@ -167,3 +165,11 @@ console.log( "1h=%s", dv.getFloat64( 1, false ) );
 dv.setFloat64( 1, -0x1234, false );
 console.log( "1i=%s", dv.getFloat64( 1, true ) );
 console.log( "1j=%s", dv.getFloat64( 1, false ) );
+
+service arraybuffer() {
+   return <HTML> {
+      <BODY> {
+	 "Console only example"
+      }
+   }
+}

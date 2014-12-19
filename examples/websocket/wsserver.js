@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Thu Nov  6 13:56:55 2014 (serrano)                */
+/*    Last change :  Tue Dec  9 07:43:45 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
@@ -19,7 +19,22 @@ wss.onconnection = function( event ) {
    console.log( "connection established:", ws.socket );
 
    ws.onmessage = function( event ) {
-      console.log('received [%s]', event.data);
+      console.log( "server received [%s]", event.data );
+      if( event.data == "close" ) {
+	 setTimeout( function() { wss.close(); }, 500 );
+      }
    };
-   ws.send('something');
+
+   ws.onclose = function( event ) {
+      console.log( "client socket closed." );
+   }
+   
+   ws.send( "something" );
+   ws.send( "close" );
+   setTimeout( function() { ws.close(); }, 200 );
 };
+
+
+wss.onclose = function() {
+   console.log( "server websocket closed." );
+}

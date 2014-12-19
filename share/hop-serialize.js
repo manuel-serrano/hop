@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Apr 19 12:04:19 2014 (serrano)                */
+/*    Last change :  Mon Dec  8 11:41:08 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1128,5 +1128,56 @@ function hop_js_to_object( cname, hash, o ) {
 
 	 return o;
       }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_hextobuf ...                                                 */
+/*---------------------------------------------------------------------*/
+function hop_hextobuf( str ) {
+   var buf = new Uint8Array( str.length / 2 );
+   for( var i = 0; i < str.length; i += 2 ) {
+      buf[ i / 2 ] = parseInt( str.substr( i, 2 ), 16 );
+   }
+   return buf;
+}
+/*---------------------------------------------------------------------*/
+/*    hop_buffer ...                                                   */
+/*---------------------------------------------------------------------*/
+function hop_buffer( name, _ ) {
+   switch( name ) {
+   case "JsSlowBuffer":
+      return hop_hextobuf( arguments[ 1 ] );
+      
+   case "JsFastBuffer":
+      return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      
+   case "JsInt8Array":
+      return new Int8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+   case "JsUint8Array":
+      return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+   case "JsUint8ClampedArray":
+      return new Uint8ClampedArray( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      
+   case "JsInt16Array":
+      return new Int16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+   case "JsUint16Array":
+      return new Uint16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      
+   case "JsInt32Array":
+      return new Int32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+   case "JsUint32Array":
+      return new Uint32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      
+   case "JsFloat32Array":
+      return new Float32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+   case "JsFloat64Array":
+      return new Float64Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      
+   case "JsDataView":
+      return new DataView( arguments[ 3 ], arguments[ 2 ], arguments[ 3 ].length );
+
+   case "JsArrayBuffer":
+      return hop_hextobuf( arguments[ 2 ] ).buffer;
    }
 }

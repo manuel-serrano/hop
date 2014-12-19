@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Nov 25 13:43:52 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 16:25:36 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -46,7 +46,7 @@
 
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 
-	   (js-get-notfound ::obj ::bool ::JsGlobalObject)
+	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
@@ -653,7 +653,10 @@
 ;* 		 (exception-notify o))                                 */
 	      (js-raise-type-error %this
 		 (format "no such field \"~a\" ~~a" name) o)))
-	  ((class-field-accessor field) o))))
+	  (let ((v ((class-field-accessor field) o)))
+	     (if (string? v)
+		 (string->js-string v)
+		 v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
@@ -1211,7 +1214,6 @@
 			       (configurable configurable))))
 		(js-define-own-property o name newdesc #f %this)
 		value))))
-
 
    (with-access::JsObject o (cmap)
       (if cmap

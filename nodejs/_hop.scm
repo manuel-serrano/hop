@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Nov 25 12:38:30 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 17:21:32 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -16,7 +16,8 @@
 
    (library hopscript hop)
 
-   (import  __nodejs_uv)
+   (import  __nodejs_uv
+	    __nodejs__buffer)
 
    (export (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
 
@@ -62,6 +63,7 @@
 	    ;; info
 	    `(port . ,(hop-port))
 	    `(hostname . ,(string->js-string (hostname)))
+	    `(version . ,(hop-version))
 	       
 	    ;; requests
 	    (define-js withURL 3
@@ -71,7 +73,7 @@
 	    ;; charset
 	    (define-js charsetConvert 3
 	       (lambda (this text from to)
-		  (string->js-string 
+		  (string->js-string
 		     (hopjs-charset-convert this (js-string->string text)
 			from to %this))))
 	    
@@ -128,7 +130,22 @@
 	    
 	    (define-js makeWebColor 3 
 	       (lambda (this r g b)
-		  (make-hex-color r g b)))
+		  (string->js-string (make-hex-color r g b))))
+
+	    (define-js encodeURIComponent 1
+	       (lambda (this path)
+		  (string->js-string
+		     (url-path-encode (js-tostring path %this)))))
+
+	    (define-js md5sum 1
+	       (lambda (this path)
+		  (string->js-string
+		     (md5sum-string (js-tostring path %this)))))
+
+	    (define-js sha1sum 1
+	       (lambda (this path)
+		  (string->js-string
+		     (sha1sum-string (js-tostring path %this)))))
 
 	    ;; Lists
 	    (define-js List -1
@@ -172,50 +189,6 @@
 	 :fail fail 
 	 :timeout timeout
 	 :method (string->symbol method))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-with-hop ...                                               */
-;*---------------------------------------------------------------------*/
-(define (hopjs-with-hop svc success opt %this)
-   (let ((host "localhost")
-	 (port 8080)
-	 (user #f)
-	 (password #f)
-	 (authorization #f)
-	 (fail #f))
-      (unless (eq? opt (js-undefined))
-	 (let ((s (js-totest (js-get opt 'async %this)))
-	       (h (js-get opt 'host %this))
-	       (p (js-get opt 'port %this))
-	       (u (js-get opt 'user %this))
-	       (w (js-get opt 'password %this))
-	       (a (js-get opt 'authorization %this))
-	       (f (js-get opt 'fail %this)))
-	    (unless (eq? h (js-undefined))
-	       (set! host (js-tostring h %this)))
-	    (unless (eq? p (js-undefined))
-	       (set! port (js-tointeger p %this)))
-	    (unless (eq? u (js-undefined))
-	       (set! user u))
-	    (unless (eq? w (js-undefined))
-	       (set! password (js-tostring w %this)))
-	    (unless (eq? a (js-undefined))
-	       (set! authorization (js-tostring a %this)))
-	    (when (isa? f JsFunction)
-	       (set! fail (lambda (x) (js-call1 %this f %this x))))))
-      (with-hop-remote svc
-	 (if (isa? success JsFunction)
-	     (lambda (x) (js-call1 %this success %this x))
-	     (lambda (x) x))
-	 fail
-	 :parse-json (lambda (obj)
-			(javascript->obj obj
-			   :vector->jsarray
-			   (lambda (l) (js-alist->jsobject l %this))
-			   :plist->jsobject
-			   (lambda (v) (js-vector->jsarray v %this))))
-	 :host host :port port 
-	 :user user :password password :authorization authorization)))
 
 ;*---------------------------------------------------------------------*/
 ;*    get/default ...                                                  */
@@ -291,7 +264,8 @@
 ;*    hopjs-response-authentication ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-authentication this msg req %this)
-   (access-denied req (js-tostring msg %this)))
+   (let ((req (if (isa? req http-request) req (instantiate::http-request))))
+      (access-denied req (js-tostring msg %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-proxy ...                                         */
@@ -344,7 +318,7 @@
 (define (hopjs-parse-web-color color %this)
    (with-access::JsGlobalObject %this (js-object)
       (multiple-value-bind (r g b)
-	 (parse-web-color (js-tostring color %this))
+	 (parse-web-color color)
 	 (let ((obj (js-new %this js-object)))
 	    (js-put! obj 'red r #f %this)
 	    (js-put! obj 'green g #f %this)
@@ -358,6 +332,6 @@
    (let ((from (js-tostring from %this))
          (to (js-tostring to %this)))
       (charset-convert text
-         (if (string? from) (string->symbol from) (hop-locale))
-         (if (string? to) (string->symbol to) (hop-charset)))))
+	 (if (string? from) (string->symbol from) (hop-locale))
+	 (if (string? to) (string->symbol to) (hop-charset)))))
    

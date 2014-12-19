@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Sep  2 13:28:42 2014 (serrano)                */
+;*    Last change :  Tue Dec  9 07:53:48 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -822,8 +822,8 @@
 
 (define (hop-enable-proxing-set! v)
    (fprint (current-error-port) "\"hop-enable-proxing-set!\" is deprecated\n"
-      "It has been replaced with \"hop-enable-proxying-set!\"."
-      (format "Edit the file\"~a/wizard.hop\" and fix it."
+      "It has been replaced with \"hop-enable-proxying-set!\". "
+      (format "Edit the file \"~a/wizard.hop\" or \"~a/hoprc.hop\" and fix it."
 	 (hop-rc-directory)))
    (hop-enable-proxying-set! v))
 

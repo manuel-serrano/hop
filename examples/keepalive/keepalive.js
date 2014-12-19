@@ -3,16 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Nov 18 16:13:13 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 17:37:35 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
-/*    Simple example showing how to implement keep-alive HTTP          */
-/*    will using asynchronous computations.                            */
+/*    This shows how to combine keep-alive HTTP and async responses    */
 /*    -------------------------------------------------------------    */
 /*    run: hop -v -g keepalive.js                                      */
 /*    browser: http://localhost:8080/hop/keepalive                     */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 
 service keepalive() {
@@ -21,17 +19,15 @@ service keepalive() {
 	 setTimeout(
 	    function() {
 	       reply( <HTML> {
-		     <HEAD> {
-			css: keepalive.resource( "keepalive.hss" )
-		     },
-		     <DIV> {
-			"I'm still alive"
-		     }
+		  <HEAD> {
+		     css: keepalive.resource( "keepalive.hss" )
+		  },
+		  <DIV> { "I'm still alive" }
 	       } );
 	    },
-	    3000 );
+	    4000 );
       },
    this );
 }
 
-console.log( "Go to \"http://%s:%d/hop/keepalive\" (and wait 3 sec).", hop.hostname, hop.port );
+console.log( "Go to \"http://%s:%d/hop/keepalive\" (and wait 4 sec).", hop.hostname, hop.port );

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.6.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/3.0.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Sep 23 15:12:48 2013 (serrano)                */
-#*    Copyright   :  2004-13 Manuel Serrano                            */
+#*    Last change :  Fri Dec  5 10:07:46 2014 (serrano)                */
+#*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -61,7 +61,8 @@ EXTRA		= hop.hss \
                   hop-gauge.scm hop-gauge.hss \
                   hop-font.scm \
                   hop-password.scm \
-                  hop-foot.hss
+                  hop-foot.hss \
+                  hop-nodejs.js
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
@@ -240,7 +241,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(RTSCONFIG)
+hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js hop-nodejs.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -253,7 +254,7 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(R
                | $(BGLCPP) \
                >> $@
 
-hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js $(RTSCONFIG)
+hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js hop-nodejs.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -355,6 +356,6 @@ clean:
 	$(RM) hop-runtime.sch 
 
 devclean:
-	$(RM) hop-exception.js hop-debug.js 
+	$(RM) hop-exception.js hop-debug.js
 
 distclean: clean

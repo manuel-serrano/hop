@@ -3,15 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Jul  3 14:28:29 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 11:13:07 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
-/*    basic example that shows to the ship a file to the client        */
+/*    basic example that shows how to ship files                       */
 /*    -------------------------------------------------------------    */
 /*    run: hop -v -g file.js                                           */
 /*    browser: http://localhost:8080/hop/file                          */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 
 service file() {
@@ -51,7 +50,9 @@ service file() {
 }
 
 service fileGet( path ) {
-   return hop.HTTPResponseFile( path );
+   return hop.HTTPResponseFile( path,
+				{ contentType: "tex/plain",
+				  charset: hop.locale } );
 }
 					  
 console.log( "Go to \"http://%s:%d/hop/file\"", hop.hostname, hop.port );

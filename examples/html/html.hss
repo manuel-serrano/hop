@@ -3,12 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun  4 09:26:38 2014                          */
-/*    Last change :  Wed Jun  4 11:35:47 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 15:14:36 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the HTML example                                         */
 /*=====================================================================*/
-
 $(define-hss-type box "[data-hss-tag=box]")
 
 box {

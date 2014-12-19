@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Nov 24 15:14:41 2014 (serrano)                */
+;*    Last change :  Fri Dec 12 18:48:45 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -77,9 +77,17 @@
 	 (lambda (op)
 	    (obj->javascript-expr o op))))
    (lambda (s)
-      (call-with-input-string s
-	 javascript->jsobj)))
+      s))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsObject ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsObject %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this ((%prototype __proto__))      */
+;*       (with-access::JsObject obj (__proto__)                        */
+;* 	 (set! __proto__ %prototype)                                   */
+;* 	 obj)))                                                        */
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
 ;*    -------------------------------------------------------------    */
@@ -117,7 +125,8 @@
 	       (display "\"" op)
 	       (display p op)
 	       (display "\":" op)
-	       (hop->javascript (js-get o (string->symbol p) %this)
+	       (hop->javascript
+		  (js-get o (string->symbol (js-string->string p)) %this)
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))
@@ -892,7 +901,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
-   (when (>fx (bigloo-debug) 1)
+   (when (>=fx (bigloo-debug) 3)
       (tprint "TODO, why js-seal need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
@@ -913,7 +922,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
-   (when (>fx (bigloo-debug) 1)
+   (when (>=fx (bigloo-debug) 3)
       (tprint "TODO, why js-freeze need unmap?"))
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
@@ -930,7 +939,7 @@
 (define (js-get-global-object-name o::JsObject name throw %this)
    (let ((pval (js-get-property-value o o name %this)))
       (if (eq? pval (js-absent))
-	  (js-get-notfound name #t %this)
+	  (js-get-notfound name throw %this)
 	  pval)))
 
 ;*---------------------------------------------------------------------*/

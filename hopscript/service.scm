@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Nov 25 12:38:18 2014 (serrano)                */
+;*    Last change :  Fri Dec 12 20:11:52 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -27,7 +27,9 @@
 	   __hopscript_property
 	   __hopscript_function
 	   __hopscript_worker
-	   __hopscript_json)
+	   __hopscript_json
+	   __hopscript_lib
+	   __hopscript_array)
 
    (static (class JsHopFrame::JsObject
 	      (url read-only)))
@@ -35,8 +37,9 @@
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject url)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)
-	   (inline js-service-unserialize ::pair-nil ::JsGlobalObject)
-	   (inline js-service-unjson ::input-port ::JsGlobalObject)))
+	   (js-register-service-buffer-finalizer! ::procedure)
+	   (js-service-unserialize ::obj ::JsGlobalObject)
+	   (js-service-unjson ::input-port ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -155,6 +158,18 @@
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-string->buffer ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-string->buffer str %this)
+   str)
+
+;*---------------------------------------------------------------------*/
+;*    js-register-service-buffer-finalizer! ...                        */
+;*---------------------------------------------------------------------*/
+(define (js-register-service-buffer-finalizer! proc)
+   (set! js-string->buffer proc))
+
+;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post svc::bstring success opt %this)
@@ -182,7 +197,7 @@
 	     (unless (eq? p (js-undefined))
 		(set! port (js-tointeger p %this)))
 	     (unless (eq? u (js-undefined))
-		(set! user u))
+		(set! user (js-tostring u %this)))
 	     (unless (eq? w (js-undefined))
 		(set! password (js-tostring w %this)))
 	     (unless (eq? a (js-undefined))
@@ -191,33 +206,50 @@
 		(when (js-in? %this 'asynchronous opt)
 		   (set! asynchronous #f)))
 	     (when (isa? f JsFunction)
-		(set! fail (lambda (x) (js-call1 %this f %this x)))))))
-      
-      (define (do-with-hop callback)
-	 (with-hop-remote svc
-	    callback
-	    fail
-	    :host host :port port 
-	    :user user :password password :authorization authorization))
+		(set! fail
+		   (lambda (xhr)
+		      (js-call1 %this f %this
+			 (with-access::xml-http-request xhr (header)
+			       (js-alist->jsobject header %this)))))))))
 
+      (define (js-string->obj obj)
+	 (string->obj obj
+	    (lambda (o)
+	       (if (string? o) (js-javascript->obj o) o))))
+
+      (define (js-javascript->obj obj)
+	 (javascript->obj obj %this))
+
+      (define (with-hop callback)
+	 (with-hop-remote svc callback fail
+	    :host host :port port 
+	    :user user :password password :authorization authorization
+	    :string->obj js-string->obj
+	    :javascript->obj js-javascript->obj))
+
+      (define (scheme->js val)
+	 (if (string? val)
+	     (js-string->buffer val %this)
+	     val))
+      
       (if asynchronous
 	  (begin
 	     (thread-start!
 		(instantiate::hopthread
 		   (body (lambda ()
-			    (do-with-hop
+			    (with-hop
 			       (if (isa? success JsFunction)
 				   (lambda (x)
 				      (js-worker-exec (js-current-worker) svc
 					 (lambda ()
-					    (js-call1 %this success %this x))))
-				   (lambda (x) x)))))))
+					    (js-call1 %this success %this
+					       (scheme->js x)))))
+				   scheme->js))))))
 	     (js-undefined))
-	  (do-with-hop
+	  (with-hop
 	     (if (isa? success JsFunction)
-		 (lambda (x)
-		    (js-call1 %this success %this x))
-		 (lambda (x) x))))))
+		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
+		 scheme->js)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
@@ -249,7 +281,7 @@
 				   (lambda (o)
 				      (with-access::JsService o (svc)
 					 (with-access::hop-service svc (path)
-					    path)))
+					    (string->js-string path))))
 				   1 'path))
 			   (set (js-make-function %this
 				   (lambda (o v)
@@ -297,18 +329,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-service-unserialize ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-service-unserialize alist %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (for-each (lambda (e)
-		      (js-put! obj (keyword->symbol (car e)) (cadr e) #f %this))
-	    alist)
-	 obj)))
+(define (js-service-unserialize obj %this::JsGlobalObject)
+   (let loop ((obj obj))
+      (cond
+	 ((string? obj)
+	  (string->js-string obj))
+	 ((pair? obj)
+	  (with-access::JsGlobalObject %this (js-object)
+	     (let ((res (js-new %this js-object)))
+		(for-each (lambda (e)
+			     (js-put! res (keyword->symbol (car e))
+				(loop (cadr e))
+				#f %this))
+		   obj)
+		res)))
+	 ((vector? obj)
+	  (js-vector->jsarray (vector-map! loop obj) %this))
+	 (else
+	  obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-service-unjson ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-service-unjson ip %this::JsGlobalObject)
+(define (js-service-unjson ip %this::JsGlobalObject)
    (js-json-parser ip (js-undefined) #t #t %this))
 
 ;*---------------------------------------------------------------------*/

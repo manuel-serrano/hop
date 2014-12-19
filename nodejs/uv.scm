@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Nov 25 15:45:24 2014 (serrano)                */
+;*    Last change :  Sun Dec 14 07:42:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -195,11 +195,12 @@
 	    (with-access::WorkerHopThread th (%loop)
 	       (set! %loop loop))
 	    [assert (th) (eq? th (current-thread))]
-	    (with-access::WorkerHopThread th (%this)
-	       (signal sigsegv
-		  (lambda (x)
-		     (js-raise-range-error %this
-			"Maximum call stack size exceeded" #f))))
+	    (unless (>=fx (bigloo-debug) 2)
+	       (with-access::WorkerHopThread th (%this)
+		  (signal sigsegv
+		     (lambda (x)
+			(js-raise-range-error %this
+			   "Maximum call stack size exceeded" #f)))))
 	    (when (pair? tqueue) (uv-async-send async)))
 	 (unwind-protect
 	    (with-access::WorkerHopThread th (onexit %process)

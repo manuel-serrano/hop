@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Nov 25 15:32:22 2014 (serrano)                */
+;*    Last change :  Sat Dec 13 08:56:13 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -159,7 +159,8 @@
 			       (uint32->fixnum byteoffset)
 			       (uint32->fixnum length))
 		      port))
-		(display o port)))
+		(display o port))
+	    (flush-output-port port))
 
 	 (js-put! proc 'stdout
 	    (js-alist->jsobject

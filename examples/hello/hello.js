@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Nov 21 13:42:49 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 10:40:51 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    basic example that shows client/server interaction               */
@@ -32,12 +32,8 @@ service hello() {
 	 "Click me to update dates..."
       } </BUTTON>,
       <TABLE> {
-	 <TR> {
-	    <TH> { "server date:" }, sdate
-	 },
-	 <TR> {
-	    <TH> { "client date:" }, cdate 
-	 }
+	 <TR> { <TH> { "server date:" }, sdate },
+	 <TR> { <TH> { "client date:" }, cdate }
       } </TABLE>
    }
 }

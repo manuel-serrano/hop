@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Nov 19 07:10:42 2014 (serrano)                */
+;*    Last change :  Fri Dec 12 16:05:13 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -392,34 +392,39 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 ((:css :jscript :require :include :hz :library)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
-		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path base inl packed 
-			    (cons (favicon (absolute-path (cadr a) dir) inl)
-				  els))
-		      (error "<HEAD>" "Illegal :favicon" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? v)
+			 (loop (cddr a) #f rts dir path base inl packed 
+			    (cons (favicon (absolute-path v dir) inl)
+			       els))
+			 (error "<HEAD>" "Illegal :favicon" (cadr a)))))
 		 ((:rts)
 		  (if (boolean? (cadr a))
 		      (loop (cddr a) #f (cadr a) dir path base inl packed els)
 		      (error "<HEAD>" "Illegal :rts" (cadr a))))
 		 ((:title)
-		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path base inl packed 
-			    (cons (<TITLE> (cadr a)) els))
-		      (error "<HEAD>" "Illegal :title" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? v)
+			 (loop (cddr a) #f rts dir path base inl packed 
+			    (cons (<TITLE> v) els))
+			 (error "<HEAD>" "Illegal :title" (cadr a)))))
 		 ((:base)
-		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir path (cadr a) inl packed
-			    (cons (<BASE> :href (cadr a)) els))
-		      (error "<HEAD>" "Illegal :base" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? (cadr a))
+			 (loop (cddr a) #f rts dir path v inl packed
+			    (cons (<BASE> :href v) els))
+			 (error "<HEAD>" "Illegal :base" (cadr a)))))
 		 ((:dir)
-		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts (cadr a) path base inl packed els)
-		      (error "<HEAD>" "Illegal :dir" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? v)
+			 (loop (cddr a) #f rts v path base inl packed els)
+			 (error "<HEAD>" "Illegal :dir" v))))
 		 ((:path)
-		  (if (string? (cadr a))
-		      (loop (cddr a) #f rts dir (append! path (list (cadr a)))
-			 base inl packed els)
-		      (error "<HEAD>" "Illegal :path" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? v)
+			 (loop (cddr a) #f rts dir (append! path (list v))
+			    base inl packed els)
+			 (error "<HEAD>" "Illegal :path" v))))
 		 ((:context)
 		  (set! context (cadr a))
 		  (loop (cddr a) #f rts dir path base inl packed els))
@@ -432,18 +437,20 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		      (loop (cddr a) #f rts dir path base inl (cadr a) els)
 		      (error "<HEAD>" "Illegal :inline" (cadr a))))
 		 ((:with-base)
-		  (if (and (string? (cadr a)) (pair? (cddr a)))
-		      (let ((wbels (loop (caddr a) #f #f (cadr a) (list (cadr a))
-				      (cadr a) inl packed '())))
-			 (loop (cdddr a) #f rts dir path base inl (cadr a) 
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (and (string? v) (pair? (cddr a)))
+			 (let ((wbels (loop (caddr a) #f #f v (list v)
+					 v inl packed '())))
+			    (loop (cdddr a) #f rts dir path base inl v 
 			       (append (reverse! wbels) els)))
-		      (error "<HEAD>" "Illegal :with-base argument" (cadr a))))
+			 (error "<HEAD>" "Illegal :with-base argument" (cadr a)))))
 		 ((:idiom)
-		  (if (string? (cadr a))
-		      (begin
-			 (set! idiom (cadr a))
-			 (loop (cddr a) #f rts dir path base inl packed els))
-		      (error "<HEAD>" "Illegal :idiom argument" (cadr a))))
+		  (let ((v (xml-primitive-value (cadr a))))
+		     (if (string? v)
+			 (begin
+			    (set! idiom v)
+			    (loop (cddr a) #f rts dir path base inl packed els))
+			 (error "<HEAD>" "Illegal :idiom argument" (cadr a)))))
 		 (else
 		  (error "<HEAD>"
 		     (format "Unknown ~a argument" (car a))
@@ -459,11 +466,12 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:require)
-	      (let ((file (clientc-resolve-filename (car a) (or context path))))
+	      (let* ((v (xml-primitive-value (car a)))
+		     (file (clientc-resolve-filename v (or context path))))
 		 (if (not file)
 		     (error "<HEAD>" "Cannot find required file" file)
 		     (loop (cdr a) mode rts dir path base inl packed 
-			(cons (require file (car a) inl) els)))))
+			(cons (require file v inl) els)))))
 	     ((:library)
 	      (let ((file (find-file/path (car a) (library-path))))
 		 (if (not (string? file))
@@ -499,10 +507,11 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	 ((isa? (car a) xml-tilde)
 	  (loop (cdr a) :jscript rts dir path base inl packed
 		(cons (car a) els)))
-	 ((not (car a))
-	  (loop (cdr a) #f rts dir path base inl packed els))
 	 (else
-	  (loop (cdr a) #f rts dir path base inl packed (cons (car a) els))))))
+	  (let ((v (xml-primitive-value (car a))))
+	     (if (eq? v (car a))
+		 (loop (cdr a) #f rts dir path base inl packed (cons (car a) els))
+		 (loop (cons v (cdr a)) mode rts dir path base inl packed els)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HEAD> ...                                                       */
@@ -537,15 +546,15 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 ;*    LINK ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define-tag <LINK> ((id #unspecified string)
+(define-tag <LINK> ((id #unspecified)
 		    (inline #f boolean)
-		    (href #f string)
+		    (href #f)
 		    (attributes)
 		    body)
    
    (define (default href)
       (when (and (string? href) inline)
-	 (warning '<LINK> "Cannot inline file -- " href))
+	 (warning "<LINK>" "Cannot inline file -- " href))
       (instantiate::xml-element
 	 (tag 'link)
 	 (id (xml-make-id id 'link))
@@ -568,28 +577,33 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(else
 		 (default href))))))
    
-   (if (string-suffix? ".hss" href)
-       ;; this is a file that needs compilation
-       (if (and inline (null? body) (file-exists? href))
-	   (let ((body (hss->css href)))
-	      (if body
-		  (inl body)
-		  (default (hss->css-url href))))
-	   (default (hss->css-url href)))
-       ;; this is a plain css file
-       (if (and inline (null? body) (file-exists? href))
-	   (let ((body (with-input-from-file href read-string)))
-	      (if body
-		  (inl body)
-		  (default href)))
-	   (default href))))
+   (let ((href (xml-primitive-value href)))
+      (cond
+	 ((not (string? href))
+	  (bigloo-type-error "<LINK>" "string" href))
+	 ((string-suffix? ".hss" href)
+	  ;; this is a file that needs compilation
+	  (if (and inline (null? body) (file-exists? href))
+	      (let ((body (hss->css href)))
+		 (if body
+		     (inl body)
+		     (default (hss->css-url href))))
+	      (default (hss->css-url href))))
+	 (else
+	  ;; this is a plain css file
+	  (if (and inline (null? body) (file-exists? href))
+	      (let ((body (with-input-from-file href read-string)))
+		 (if body
+		     (inl body)
+		     (default href)))
+	      (default href))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    SCRIPT ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <SCRIPT> ((inline #f boolean)
-		      (src #unspecified string)
-		      (type (hop-mime-type) string)
+		      (src #unspecified)
+		      (type (hop-mime-type))
 		      (attributes)
 		      body)
    
@@ -629,13 +643,15 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-
-   (purify
-      (if (and inline (string? src))
-	  (if (file-exists? src)
-	      (inl src)
-	      (default src))
-	  (default src))))
+   
+   (let ((src (xml-primitive-value src))
+	 (type (xml-primitive-value type)))
+      (purify
+	 (if (and inline (string? src))
+	     (if (file-exists? src)
+		 (inl src)
+		 (default src))
+	     (default src)))))
  
 ;*---------------------------------------------------------------------*/
 ;*    REQUIRE ...                                                      */
@@ -673,7 +689,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
-
+   
    (if (and inline (string? src))
        (if (file-exists? src)
 	   (inl src)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Nov 18 16:11:07 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 12:00:02 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing asynchronous response                     */
@@ -11,17 +11,16 @@
 /*    run: hop -v -g async.js                                          */
 /*    browser: http://localhost:8080/hop/async                         */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 var fs = require( "fs" );
 
 service async() {
    return hop.HTTPResponseAsync(
       function( reply ) {
-	 fs.readFile( async.resource( "async.js" ), "ascii",
-		      function( err, data ) {
-			 reply( <HTML> { <PRE> { data } } )
-		      } );
+         fs.readFile( async.resource( "async.js" ), "ascii",
+                      function( err, data ) {
+                         reply( <HTML> { <PRE> { data } } )
+                      } );
       },
    this );
 }

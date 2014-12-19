@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Nov 24 15:20:11 2014 (serrano)                */
+;*    Last change :  Fri Dec  5 05:51:51 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -417,18 +417,6 @@
 			(abspath abspath)
 			(method 'GET))))
 	     (autoload-filter req)))))
-;* 	  (let (#;(creq (current-request))                             */
-;* 		(th (current-thread)))                                 */
-;* 	     (unwind-protect                                           */
-;* 		(let ((req (instantiate::http-server-request           */
-;* {* 			      (user (anonymous-user))                  *} */
-;* {* 			      (localclientp #t)                        *} */
-;* {* 			      (lanclientp #t)                          *} */
-;* 			      (abspath abspath)                        */
-;* 			      (method 'GET))))                         */
-;* 		   (current-request-set! th req)                       */
-;* 		   (autoload-filter req))                              */
-;* 		(current-request-set! th creq))))))                   */
    
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */

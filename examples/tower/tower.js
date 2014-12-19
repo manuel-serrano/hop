@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun  3 16:32:25 2014                          */
-/*    Last change :  Thu Jul  3 15:07:01 2014 (serrano)                */
+/*    Last change :  Sat Dec 13 09:22:04 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Recursive client-side tower                                      */
 /*    -------------------------------------------------------------    */
-/*    run: hop -v -g tower.js                                          */
+/*    run: hop -v tower.js                                             */
 /*    browser: http://localhost:8080/hop/tower                         */
 /*=====================================================================*/
 

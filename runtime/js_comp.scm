@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Nov  3 15:32:03 2014 (serrano)                */
+;*    Last change :  Sat Dec  6 19:06:49 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -31,17 +31,6 @@
 	    (generic hop-register-value ::obj ::procedure)
 	    (generic hop->javascript ::obj ::output-port ::procedure ::bool)
 	    (hop->js-callback ::obj)))
-
-;*---------------------------------------------------------------------*/
-;*    object-serializer ::xml-markup ...                               */
-;*---------------------------------------------------------------------*/
-(register-class-serialization! xml-markup
-   (lambda (o)
-      (let ((p (open-output-string)))
-	 (obj->javascript-expr o p)
-	 (close-output-port p)))
-   (lambda (o)
-      #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    for ...                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Nov 21 14:30:57 2014 (serrano)                */
+;*    Last change :  Sat Dec  6 19:06:42 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -57,11 +57,11 @@
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
-	    (generic xml-write-id ::obj ::output-port)
-	    (generic xml-id?::bool ::obj)
 	    (generic xml-write-expression ::obj ::output-port)
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 	    (generic xml-attribute-encode ::obj)
+
+	    (generic xml-primitive-value ::obj)
 
 	    (xml->string ::obj ::xml-backend)
 
@@ -80,6 +80,17 @@
 	    (<TILDE> ::obj #!key src loc env menv)
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::xml-markup ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! xml-markup
+   (lambda (o)
+      (let ((p (open-output-string)))
+	 (obj->javascript-expr o p)
+	 (close-output-port p)))
+   (lambda (o)
+      #unspecified))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */
@@ -250,9 +261,10 @@
 	     ((not (pair? (cdr a)))
 	      (error (el->string el) "Illegal attribute" (car a)))
 	     ((eq? (car a) :id)
-	      (if (or (or (string? (cadr a)) (xml-id? (cadr a))) (not (cadr a)))
-		  (loop (cddr a) attr body (cadr a))
-		  (bigloo-type-error el "string" (cadr a))))
+	      (let ((v (xml-primitive-value (cadr a))))
+		 (if (or (string? v) (not v))
+		     (loop (cddr a) attr body v)
+		     (bigloo-type-error el "string" (cadr a)))))
 	     (else
 	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
 	 ((null? (car a))
@@ -527,7 +539,7 @@
 	     (display "<" p)
 	     (display tag p)
 	     (display " id='" p)
-	     (xml-write-id id p)
+	     (display id p)
 	     (display "'" p)
 	     (if abbrev-emptyp
 		 (display "/>" p)
@@ -752,9 +764,6 @@
 		(if (=fx i ol)
 		    j
 		    (let ((c (string-ref str i)))
-		       ;; MS 23 jul 2013, I don't understand anymore why
-		       ;; attribute values should escape &#...
-;* 		       (if (or (char=? c #\') (char=? c #\&))          */
 		       (if (char=? c #\')
 			   (loop (+fx i 1) (+fx j 5))
 			   (loop (+fx i 1) (+fx j 1)))))))
@@ -775,17 +784,16 @@
 				  (string-set! nstr (+fx j 3) #\9)
 				  (string-set! nstr (+fx j 4) #\;)
 				  (loop (+fx i 1) (+fx j 5)))
-;* 				 ((#\&)                                */
-;* 				  (string-set! nstr j #\&)             */
-;* 				  (string-set! nstr (+fx j 1) #\#)     */
-;* 				  (string-set! nstr (+fx j 2) #\3)     */
-;* 				  (string-set! nstr (+fx j 3) #\8)     */
-;* 				  (string-set! nstr (+fx j 4) #\;)     */
-;* 				  (loop (+fx i 1) (+fx j 5)))          */
 				 (else
 				  (string-set! nstr j c)
 				  (loop (+fx i 1) (+fx j 1))))))))))
 	  (encode obj ol (count obj ol)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::obj ...                                    */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-primitive-value x::obj)
+   x)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */

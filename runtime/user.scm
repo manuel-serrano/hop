@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Nov 18 10:25:22 2014 (serrano)                */
+;*    Last change :  Wed Dec  3 19:09:22 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -614,7 +614,6 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      #;(request req)
       (body (cond
 	       (message
 		(with-output-to-string
@@ -634,7 +633,6 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      #;(request req)
       (body (format "User \"~a\" is not allowed to execute service \"~a\"."
 	       (with-access::user user (name) name) svc))))
 

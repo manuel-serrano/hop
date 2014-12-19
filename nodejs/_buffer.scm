@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Nov 25 18:18:25 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 10:19:42 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -16,7 +16,7 @@
 
    (include "nodejs_debug.sch")
    
-   (library hopscript)
+   (library hopscript hop)
 
    (import  __nodejs_process
 	    __nodejs_require)
@@ -29,16 +29,97 @@
 	       (slowbuffer (default #f))
 	       (offset::long (default 0))
 	       (lastoffset::long (default 0))
-	       (slice (default #f)))
-
-	    (class JsSlowBuffer::JsArrayBuffer))
+	       (slice (default #f))))
    
-   (export  (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
+   (export  (class JsSlowBuffer::JsArrayBuffer)
+
+	    (class JsFastBuffer::JsTypedArray)
+
+	    (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
 	    (make-slowbuffer ::JsGlobalObject)
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)
 	    (slab-allocate ::object ::obj ::long)
 	    (slab-shrink! ::obj ::obj ::long ::long)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArrayBuffer ...                            */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsSlowBuffer #f (lambda (s) s))
+(register-class-serialization! JsFastBuffer #f (lambda (s) s))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsSlowBuffer ...                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsSlowBuffer %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-slowbuffer-proto js-arraybuffer) */
+;*       (with-access::JsFunction js-arraybuffer (construct)           */
+;* 	 (with-access::JsSlowBuffer obj (__proto__)                    */
+;* 	    (set! __proto__ js-slowbuffer-proto))))                    */
+;*    obj)                                                             */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsFastBuffer ...                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsFastBuffer %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-buffer-proto js-arraybuffer) */
+;*       (with-access::JsFunction js-arraybuffer (construct)           */
+;* 	 (with-access::JsFastBuffer obj (__proto__)                    */
+;* 	    (set! __proto__ js-buffer-proto))))                        */
+;*    obj)                                                             */
+   
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-ref ::JsFastBuffer ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-typedarray-ref o::JsFastBuffer)
+   (lambda (buf i)
+      (char->integer (string-ref buf i))))
+
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-set! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-typedarray-set! o::JsFastBuffer)
+   (lambda (buf i v %this)
+      (let ((w (bit-andu32 #u32:255 (js-touint32 v %this))))
+	 (string-set! buf i (integer->char (uint32->fixnum w))) v)))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsTypeArray ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsSlowBuffer op compile isexpr)
+   (with-access::JsArrayBuffer o (data)
+      (display "hop_buffer( \"JsSlowBuffer\", \"" op)
+      (display (string-hex-extern data) op)
+      (display "\")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-buffer->slowbuffer ...                                */
+;*---------------------------------------------------------------------*/
+(define (javascript-buffer->slowbuffer name args %this)
+   (with-access::JsGlobalObject %this (js-slowbuffer-proto)
+      (instantiate::JsSlowBuffer
+	 (__proto__ js-slowbuffer-proto)
+	 (data (string-hex-intern (car args))))))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-buffer->fastbuffer ...                                */
+;*    -------------------------------------------------------------    */
+;*    See __hop_arraybufferview                                        */
+;*---------------------------------------------------------------------*/
+(define (javascript-buffer->fastbuffer name args %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto)
+      (let ((slowbuffer (car (cddddr args))))
+	 (with-access::JsSlowBuffer slowbuffer (data)
+	    (let ((buf (instantiate::JsFastBuffer
+			  (__proto__ js-buffer-proto)
+			  (%data data)
+			  (frozen (car args))
+			  (buffer slowbuffer)
+			  (byteoffset (fixnum->uint32 (cadr args)))
+			  (length (fixnum->uint32 (caddr args)))
+			  (bpe (fixnum->uint32 (cadddr args))))))
+	       (js-put! buf 'length (caddr args) #f %this)
+	       buf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsSlowBuffer ...                         */
@@ -76,25 +157,53 @@
    (let* ((exp (js-get %module 'exports %this))
 	  (buf (js-get exp 'Buffer %this))
 	  (proto (js-get buf 'prototype %this)))
+
+      (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
+	 (set! js-buffer-proto proto))
+
+      ;; service post buffer finalization (see __hopscript_service)
+      (js-register-service-buffer-finalizer!
+	 js-string->jsbuffer)
+      ;; javascript intern (see __hopscript_arraybuffer)
+      (register-javascript-buffer-intern! "JsFastBuffer"
+	 javascript-buffer->fastbuffer)
+      (register-javascript-buffer-intern! "JsSlowBuffer"
+	 javascript-buffer->slowbuffer)
+      
       (with-access::JsFunction buf (alloc)
 	 (set! alloc
 	    (lambda (ctor)
 	       ;; see makeFastBuffer below for the complete JavaScript
 	       ;; land JsTypedArray initialization
-	       (instantiate::JsTypedArray
-		  (cmap #f)
-		  (bpe #u32:1)
-		  (vref (lambda (buf o)
-			   (char->integer (string-ref-ur buf o))))
-		  (vset (lambda (buf o v)
-			   (let ((w (bit-andu32 #u32:255
-				       (js-touint32 v %this))))
-			      (string-set! buf o
-				 (integer->char (uint32->fixnum w)))
-			      v)))
-		  (__proto__ proto)))))
+	       (js-buffer-constr proto %this))))
+
       %module))
 
+;*---------------------------------------------------------------------*/
+;*    js-buffer-constr ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-buffer-constr proto %this)
+   (instantiate::JsFastBuffer
+      (cmap #f)
+      (bpe #u32:1)
+      (__proto__ proto)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string->jsbuffer ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Converts a string into a buffer. This function is called         */
+;*    by service post method (see __hopscript_service) and also        */
+;*    during javascript->obj unmarshalling.                            */
+;*---------------------------------------------------------------------*/
+(define (js-string->jsbuffer str %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-buffer-proto)
+      (let ((buf (js-buffer-constr js-buffer-proto %this)))
+	 (with-access::JsTypedArray buf (%data length)
+	    (set! %data str)
+	    (set! length (fixnum->uint32 (string-length str))))
+	 (js-put! buf 'length (string-length str) #f %this)
+	 buf)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    utf8-substring-length ...                                        */
 ;*    -------------------------------------------------------------    */
@@ -301,8 +410,10 @@
 	 0 name))
    
    (define slowbuffer-proto
-      (with-access::JsGlobalObject %this (js-object)
-	 (js-new %this js-object)))
+      (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
+	 (unless js-slowbuffer-proto
+	    (set! js-slowbuffer-proto (js-new %this js-object)))
+	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)
       (let loop ((a0 a0))
@@ -560,7 +671,6 @@
 			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
-		  (tprint "binWrite")
 		  (if (>fx n 0)
 		      (let ((l (blit-string-binary-decode!
 				  (js-string->string string) 0 data offset n)))
@@ -579,10 +689,10 @@
 			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
-		  (tprint "utf8Write")
 		  (if (>fx n 0)
 		      (multiple-value-bind (m c)
-			 (blit-string-utf8! (js-string->string string) 0 data offset n)
+			 (blit-string-utf8!
+			    (js-string->string string) 0 data offset n)
 			 (js-put! js-slowbuffer '_charsWritten c #t %this)
 			 m)
 		      (begin
@@ -599,7 +709,6 @@
 			   (minfx (js-string-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
-		  (tprint "aciiWrite")
 		  (if (>fx n 0)
 		      (let ((l (blit-string-ascii-decode!
 				  (js-string->string string) 0 data offset n)))
@@ -858,7 +967,7 @@
 		  (set! buffer sbuf))))
 	 4 "makeFastBuffer")
       #t %this)
-   
+
    js-slowbuffer)
    
 ;*---------------------------------------------------------------------*/

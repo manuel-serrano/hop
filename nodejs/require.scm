@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Nov 25 14:16:15 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 10:57:11 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -360,6 +360,11 @@
 		(eval-module-set! evmod))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-load-cache ...                                               */
+;*---------------------------------------------------------------------*/
+(define hop-load-cache (make-hashtable))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread)
@@ -380,11 +385,18 @@
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
+
+   (define (hop-load/cache filename)
+      (let ((old (hashtable-get hop-load-cache filename)))
+	 (unless old
+	    (set! old (hop-load filename :mode 'module))
+	    (hashtable-put! hop-load-cache filename old))
+	 old))
    
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((evmod (hop-load filename :mode 'module))
+	    (let ((evmod (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-module (basename filename) filename %this)))

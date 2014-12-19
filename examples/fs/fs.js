@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Jul  3 14:39:27 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 16:54:07 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    basic example FS examples                                        */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g file.js                                           */
 /*    browser: http://localhost:8080/hop/fs                            */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 var sys = require( "fs" );
 

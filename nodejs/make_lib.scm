@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Thu Oct 23 09:39:56 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 10:21:57 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
@@ -20,8 +20,11 @@
 	   __nodejs_require
 	   __nodejs_process
 	   __nodejs_repl
-	   __nodejs_uv)
-;* 	   (nodejs-event-loop __nodejs_uv)                             */
-;* 	   (nodejs-event-loop-alive? __nodejs_uv))                     */
+	   __nodejs_uv
+	   (JsSlowBuffer __nodejs__buffer)
+	   (JsFastBuffer __nodejs__buffer))
    
-   (eval   (export-all)))
+   (eval  (class JsSlowBuffer)
+          (class JsFastBuffer)
+      
+          (export-all)))

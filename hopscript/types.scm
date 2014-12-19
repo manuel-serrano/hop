@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Nov 24 18:19:58 2014 (serrano)                */
+;*    Last change :  Mon Dec  8 11:34:17 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -60,9 +60,6 @@
 	   (final-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
 	      val::obj
-	      ;; state=0, normalize string
-	      ;; state=1, tree based string
-	      ;; state=2, list based string
 	      state::uint8)
 	   
 	   (class JsObject
@@ -76,6 +73,17 @@
 	      (js-object::JsFunction (default (class-nil JsFunction)))
 	      (js-array::JsFunction (default (class-nil JsFunction)))
 	      (js-array-prototype::JsArray (default (class-nil JsArray)))
+	      (js-arraybuffer::JsFunction (default (class-nil JsFunction)))
+	      (js-int8array::JsFunction (default (class-nil JsFunction)))
+	      (js-uint8array::JsFunction (default (class-nil JsFunction)))
+	      (js-uint8clampedarray::JsFunction (default (class-nil JsFunction)))
+	      (js-int16array::JsFunction (default (class-nil JsFunction)))
+	      (js-uint16array::JsFunction (default (class-nil JsFunction)))
+	      (js-int32array::JsFunction (default (class-nil JsFunction)))
+	      (js-uint32array::JsFunction (default (class-nil JsFunction)))
+	      (js-float32array::JsFunction (default (class-nil JsFunction)))
+	      (js-float64array::JsFunction (default (class-nil JsFunction)))
+	      (js-dataview::JsFunction (default (class-nil JsFunction)))
 	      (js-boolean::JsFunction (default (class-nil JsFunction)))
 	      (js-string::JsFunction (default (class-nil JsFunction)))
 	      (js-number::JsFunction (default (class-nil JsFunction)))
@@ -97,7 +105,8 @@
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
-	      (js-others::pair-nil (default '())))
+	      (js-buffer-proto (default #f))
+	      (js-slowbuffer-proto (default #f)))
 	   
 	   (class JsArray::JsObject
 	      (inline::bool (default #t))
@@ -106,22 +115,30 @@
 	      (vec::vector (default '#())))
 
 	   (class JsArrayBuffer::JsObject
-	      (sealed::bool (default #f))
+;* 	      (sealed::bool (default #f))                              */
 	      (frozen::bool (default #f))
 	      (data (default '#u8())))
 	   
 	   (abstract-class JsArrayBufferView::JsObject
-	      (sealed::bool (default #f))
+;* 	      (sealed::bool (default #f))                              */
 	      (frozen::bool (default #f))
 	      (buffer::JsArrayBuffer (default (class-nil JsArrayBuffer)))
 	      (%data (default '#u8()))
 	      (byteoffset::uint32 (default #u32:0)))
 
-	   (class JsTypedArray::JsArrayBufferView
+	   (abstract-class JsTypedArray::JsArrayBufferView
 	      (length::uint32 (default #u32:0))
-	      (bpe::uint32 read-only)
-	      (vref::procedure read-only)
-	      (vset::procedure read-only))
+	      (bpe::uint32 read-only))
+
+	   (class JsInt8Array::JsTypedArray)
+	   (class JsUint8Array::JsTypedArray)
+	   (class JsUint8ClampedArray::JsTypedArray)
+	   (class JsInt16Array::JsTypedArray)
+	   (class JsUint16Array::JsTypedArray)
+	   (class JsInt32Array::JsTypedArray)
+	   (class JsUint32Array::JsTypedArray)
+	   (class JsFloat32Array::JsTypedArray)
+	   (class JsFloat64Array::JsTypedArray)
 	   
 	   (class JsDataView::JsArrayBufferView)
 	   
@@ -182,7 +199,12 @@
 
 	   (generic js-arraybuffer-length ::JsArrayBuffer)
 	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)
-	   (generic js-arraybuffer-set! ::JsArrayBuffer ::int ::obj)))
+	   (generic js-arraybuffer-set! ::JsArrayBuffer ::int ::obj)
+
+	   (generic js-buffer->jsbuffer ::JsObject ::pair-nil ::JsGlobalObject)
+
+	   (generic js-typedarray-ref::procedure ::JsTypedArray)
+	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ...                                                 */
@@ -366,5 +388,18 @@
    (with-access::JsArrayBuffer o (data)
       (u8vector-set! data index (fixnum->uint8 val))))
 
+;*---------------------------------------------------------------------*/
+;*    js-buffer->jsbuffer ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-buffer->jsbuffer buf::JsObject args %this))
 
-   
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-ref ...                                            */
+;*---------------------------------------------------------------------*/
+(define-generic (js-typedarray-ref::procedure a::JsTypedArray))
+
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-set! ::JsTypedArray ...                            */
+;*---------------------------------------------------------------------*/
+(define-generic (js-typedarray-set!::procedure a::JsTypedArray))
+

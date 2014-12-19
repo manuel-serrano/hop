@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Tue Jul 15 19:39:16 2014 (serrano)                */
+/*    Last change :  Sat Dec  6 06:07:11 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Illustrates multitier error reporting                            */
@@ -92,7 +92,7 @@ if( hop.debug < 1 ) {
    console.log( "Re-run hop with \"-g\" option." );
    process.exit( 1 );
 } else {
-   console.log( "Go to \"http://%s:%d/%s\"",
+   console.log( "Go to \"http:/%s:%d/%s\"",
 		hop.hostname, hop.port, debug().toString() );
 }
 

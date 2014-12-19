@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopsh/main.scm                    */
+;*    serrano/prgm/project/hop/3.0.x/hopsh/main.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jul 19 16:12:11 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Nov 28 11:27:42 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -58,9 +58,10 @@
    (hop-clientc-clear-cache-set! #f)
    (init-hopscheme! :reader (lambda (p v) (hop-read p))
       :verbose (hop-verbose)
-      :eval (lambda (e) (let ((op (open-output-string)))
-			   (obj->javascript-expr (eval e) op)
-			   (close-output-port op)))
+      :eval (lambda (e)
+	       (let ((op (open-output-string)))
+		  (obj->javascript-expr (eval e) op)
+		  (close-output-port op)))
       :hop-compile (lambda (obj op compile)
 		      (hop->javascript obj op compile #f))
       :hop-register hop-register-value

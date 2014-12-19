@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Nov 26 10:46:34 2014 (serrano)                */
+;*    Last change :  Fri Dec 12 20:08:34 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -196,14 +196,16 @@
 	 
 	 ;; then, create a HopScript object
 	 (set! js-error
-	    (js-make-function %this (%js-error %this) 1 'Error
+	    (js-make-function %this (%js-error %this) 1
+	       'Error
 	       :__proto__ js-function-prototype
 	       :prototype js-error-prototype
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
 	 (init-builtin-error-prototype! %this js-error js-error-prototype)
 	 (set! js-syntax-error
-	    (js-make-function %this (%js-syntax-error %this) 1 'SyntaxError
+	    (js-make-function %this (%js-syntax-error %this) 1
+	       'SyntaxError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -212,7 +214,8 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
 	 (set! js-type-error
-	    (js-make-function %this (%js-type-error %this) 1 'TypeError
+	    (js-make-function %this (%js-type-error %this) 1
+	       'TypeError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -221,7 +224,8 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
 	 (set! js-uri-error
-	    (js-make-function %this (%js-uri-error %this) 1 'URIError
+	    (js-make-function %this (%js-uri-error %this) 1
+	       'URIError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -230,7 +234,8 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
 	 (set! js-eval-error
-	    (js-make-function %this (%js-eval-error %this) 1 'EvalError
+	    (js-make-function %this (%js-eval-error %this) 1
+	       'EvalError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -239,7 +244,8 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
 	 (set! js-range-error
-	    (js-make-function %this (%js-range-error %this) 1 'RangeError
+	    (js-make-function %this (%js-range-error %this) 1
+	       'RangeError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -248,7 +254,8 @@
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
 	 (set! js-reference-error
-	    (js-make-function %this (%js-reference-error %this) 1 'ReferenceError
+	    (js-make-function %this (%js-reference-error %this) 1
+	       'ReferenceError
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
@@ -333,6 +340,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-reference-error %this)
    (lambda (this message fname loc)
+      (tprint "%js-reference-error fname=" fname " loc=" loc)
       (with-access::JsGlobalObject %this (js-reference-error)
 	 (js-new %this js-reference-error message fname loc))))
 

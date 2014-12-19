@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Sat May 24 08:15:28 2014 (serrano)                */
+/*    Last change :  Wed Dec  3 19:10:15 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    show how to ask user authentication                              */
@@ -19,10 +19,10 @@ var count = 2;
 service authenticationAccept() {
    switch( count-- ) {
       case 2:
-        return hop.HTTPResponseAuthentication( "I don't know you" );
+      return hop.HTTPResponseAuthentication( "I don't know you", this );
 
       case 1:
-        return hop.HTTPResponseAuthentication( "Do you really insist?" );
+      return hop.HTTPResponseAuthentication( "Do you really insist?", this );
       
       case 0:
         count = 2;
@@ -44,3 +44,5 @@ service authentication() {
       console
    }
 }
+
+console.log( "Go to \"http://%s:%d/hop/authentication\"", hop.hostname, hop.port );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Nov 19 14:31:32 2014 (serrano)                */
+;*    Last change :  Mon Dec 15 21:36:31 2014 (serrano)                */
 ;*    Copyright   :  2008-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -25,7 +25,7 @@
 	   hop_param
 	   hop_accept)
 
-   (export (stage-request ::scheduler ::thread ::int ::socket ::obj)))
+   (export (stage-request ::scheduler ::thread ::int ::socket ::obj ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *socket-mutex* ...                                               */
@@ -80,7 +80,7 @@
 ;*    This stage is in charge of parsing the request. It produces a    */
 ;*    http-request.                                                    */
 ;*---------------------------------------------------------------------*/
-(define (stage-request scd thread id sock timeout)
+(define (stage-request scd thread id sock timeout mode)
 
    ;; verbose function (only for log and debug)
    (define (http-connect-verb scd id sock req mode num)
@@ -113,7 +113,7 @@
 	    (hop-verb 4 (hop-color id id " CONNECT.header") ": "
 		      (with-output-to-string (lambda () (write header))) "\n"))))
 
-   (let loop ((mode 'connect)
+   (let loop ((mode mode)
 	      (timeout timeout)
 	      (num 1))
       (with-stage-handler stage-request-error-handler (id sock mode)
@@ -189,7 +189,6 @@
 		;; we will try to answer the error to the client
 		(unless (isa? e &io-sigpipe-error)
 		   (let* ((req (instantiate::http-request
-				 #;(user (class-nil user))
 				  (socket sock)))
 			  (resp ((or (hop-http-request-error) http-error)
 				 e req)))
@@ -198,7 +197,7 @@
    ;; decrement the keep-alive number
    (when (eq? mode 'keep-alive) (keep-alive--))
    ;; abort this request
-   (socket-close sock)
+   (socket-shutdown sock)
    ;; ignore the error
    #unspecified)
 
@@ -248,7 +247,7 @@
       (lambda (e)
 	 (exception-notify e)
 	 ;; there is nothing we can do but aborting the request
-	 (socket-close (with-access::http-request req (socket) socket))
+	 (socket-shutdown (with-access::http-request req (socket) socket))
 	 #unspecified)
       ;; try to send the error message
       (if (isa? e %http-response)
@@ -277,7 +276,7 @@
 		(with-access::http-request req (socket)
 		   (http-response resp req socket)
 		   ;; abort this request
-		   (socket-close socket)
+		   (socket-shutdown socket)
 		   'close))))))
 
 ;*---------------------------------------------------------------------*/
@@ -296,18 +295,21 @@
 ;*    stage-async-answer ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (stage-async-answer scd thread id req resp)
-   ;;(current-request-set! thread req)
    (with-stage-handler exec-error-handler (scd req)
-      (with-access::http-request req (socket method scheme port host path)
+      (with-access::http-request req (socket method scheme port host path connection)
+	 (socket-timeout-set! socket 0 0)
 	 (with-access::http-response-async resp (async)
 	    (async
 	       (lambda (resp)
-		  (with-handler
-		     (lambda (e)
-			(exec-error-handler e scd req))
-		     (let ((tmt (stage-exec scd thread id req resp)))
-			(when (integer? tmt)
-			   (spawn scd stage-request id socket tmt)))))))
+		  (socket-timeout-set! socket
+		     (hop-keep-alive-timeout) (hop-keep-alive-timeout))
+		  (let ((tmt (with-handler
+				(lambda (e)
+				   (exec-error-handler e scd req))
+				(stage-exec scd thread id req resp))))
+		     (if (integer? tmt)
+			 (spawn scd stage-request id socket tmt 'keep-alive)
+			 (socket-shutdown socket))))))
 	 #f)))
 	   
 ;*---------------------------------------------------------------------*/
@@ -331,7 +333,6 @@
 ;*    stage-exec ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (stage-exec scd thread id req resp)
-   ;; (current-request-set! thread req)
    ;; log
    (if (isa? resp http-response-abort)
        (hop-verb 1 (hop-color req req " ABORT")
@@ -360,7 +361,7 @@
 		       (when (>=fx (hop-verbose) 3)
 			  (stage-exec-verb scd thread req resp conn
 			     " END"))
-		       (socket-close socket)
+		       (socket-shutdown socket)
 		       #f)
 		      ((>=fx load 80)
 		       (when (>=fx (hop-verbose) 3)
@@ -382,7 +383,7 @@
 	       (else
 		(when (>=fx (hop-verbose) 3)
 		   (stage-exec-verb scd thread req resp conn " END"))
-		(socket-close socket)
+		(socket-shutdown socket)
 		#f))))))
 
 ;*---------------------------------------------------------------------*/
@@ -391,7 +392,10 @@
 (define (exec-error-handler e scd req)
    (with-access::http-request req (socket)
       ;; first, close the socket, anycase
-      (socket-close socket)
+      (with-handler
+	 (lambda (e)
+	    (socket-close socket))
+	 (socket-shutdown socket))
       (unless (isa? e &io-sigpipe-error)
 	 ;; signal the error, when this is an error
 	 (hop-verb 2 (hop-color req req " INTERRUPTED"))

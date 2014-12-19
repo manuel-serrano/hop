@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Wed Nov 26 11:15:09 2014 (serrano)                */
+;*    Last change :  Mon Dec  8 11:06:06 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -26,35 +26,30 @@
    
    (export  (generic obj->json ::obj ::output-port)
             (byte-array->json ::bstring ::output-port)
-	    (init-javascript->jsobj! #!key plist->jsobject vector->jsarray)
-	    (javascript->jsobj ::obj)
-	    (javascript->obj ::obj
-	       #!key
-	       (vector->jsarray (lambda (x) x))
-	       (plist->jsobject (lambda (x) x)))
+	    (javascript->obj ::obj #!optional driver)
+	    (generic javascript-vector->obj ::obj ::vector)
+	    (generic javascript-plist->obj ::obj ::pair-nil)
+	    (generic javascript-buffer->obj ::obj ::obj)
 	    (generic javascript-class-all-fields ::object)))
 
 ;*---------------------------------------------------------------------*/
-;*    init-javascript->jsobj! ...                                      */
+;*    javascript-vector>vector ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (init-javascript->jsobj! #!key plist->jsobject vector->jsarray)
-   (set! %vector->jsarray vector->jsarray)
-   (set! %plist->jsobject plist->jsobject))
+(define-generic (javascript-vector->obj driver v::vector)
+   v)
 
 ;*---------------------------------------------------------------------*/
-;*    js_array ...                                                     */
+;*    javascript-plist->obj ...                                        */
 ;*---------------------------------------------------------------------*/
-(define %vector->jsarray (lambda (v) v))
-(define %plist->jsobject (lambda (l) l))
+(define-generic (javascript-plist->obj driver l::pair-nil)
+   l)
 
 ;*---------------------------------------------------------------------*/
-;*    javascript->jsobj ...                                            */
+;*    javascript-buffer->obj ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (javascript->jsobj o)
-   (javascript->obj o
-      vector->jsarray: %vector->jsarray
-      plist->jsobject: %plist->jsobject))
-
+(define-generic (javascript-buffer->obj driver b::obj)
+   b)
+   
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -145,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-parser ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (javascript-parser ip vector->jsarray plist->jsobject)
+(define (javascript-parser ip driver)
    (with-handler
       (lambda (e)
 	 (if (not (isa? e &io-parse-error))
@@ -159,22 +154,20 @@
 			      (location pos))))
 		   (else
 		    (raise e))))))
-      (let ((lalr (javascript-lalr-parser vector->jsarray plist->jsobject)))
+      (let ((lalr (javascript-lalr-parser driver)))
 	 (read/lalrp lalr *javascript-lexer* ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript->obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript->obj o
-	   #!key
-	   (vector->jsarray (lambda (x) x))
-	   (plist->jsobject (lambda (x) x)))
+(define (javascript->obj o #!optional driver)
    (cond
       ((input-port? o)
-       (javascript-parser o vector->jsarray plist->jsobject))
+       (javascript-parser o driver))
       ((string? o)
        (call-with-input-string o
-	  (lambda (ip) (javascript-parser ip vector->jsarray plist->jsobject))))
+	  (lambda (ip)
+	     (javascript-parser ip driver))))
       (else
        (error "javascript->obj" "Illegal argument" o))))
 
@@ -284,7 +277,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-lalr-parser ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (javascript-lalr-parser vector->jsarray plist->jsobject)
+(define (javascript-lalr-parser driver)
    
    (lalr-grammar
       
@@ -319,7 +312,8 @@
 	   ((sc_circle) (javascript-circle->obj expressions*))
 	   ((sc_circle_ref) `(sc_circle_ref ,@expressions*))
 	   ((sc_circle_def) `(sc_circle_def ,@expressions*))
-	   ((sc_vector2array) (vector->jsarray (car expressions*)))
+	   ((sc_vector2array) (javascript-vector->obj driver (car expressions*)))
+	   ((hop_buffer) (javascript-buffer->obj driver expressions*))
 	   (else (error "javascript->obj" "Unknown function" (car IDENTIFIER)))))
        ((ANGLE-OPEN ANGLE-CLO)
 	'#())
@@ -333,7 +327,7 @@
 		 (eq? (car (car hash-elements)) __uuid:)
 		 (equal? (cadr (car hash-elements)) "pair"))
 	    (cons (cadr (cadr hash-elements)) (cadr (caddr hash-elements)))
-	    (plist->jsobject hash-elements)))
+	    (javascript-plist->obj driver hash-elements)))
        ((get-element-by-id)
 	get-element-by-id)
        ((service)

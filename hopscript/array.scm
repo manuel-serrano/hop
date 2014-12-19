@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Nov 25 10:56:22 2014 (serrano)                */
+;*    Last change :  Fri Dec 12 18:14:20 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -42,16 +42,34 @@
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsArray ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsArray %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-array)                    */
+;*       (with-access::JsFunction js-array (construct)                 */
+;* 	 (with-access::JsArray obj (__proto__)                         */
+;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
+;*    obj)                                                             */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsArray ...                                  */
+;*    javascript-vector->obj ::JsGlobalObject ...                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_json                                                   */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArray
-   (lambda (o)
-      (call-with-output-string
-	 (lambda (op)
-	    (obj->javascript-expr o op))))
-   (lambda (s)
-      (call-with-input-string s javascript->jsobj)))
+(define-method (javascript-vector->obj %this::JsGlobalObject v)
+   (js-vector->jsarray v %this))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-serializer ::JsArray ...                                  *} */
+;* {*---------------------------------------------------------------------*} */
+;* (register-class-serialization! JsArray                              */
+;*    (lambda (o)                                                      */
+;*       (call-with-output-string                                      */
+;* 	 (lambda (op)                                                  */
+;* 	    (obj->javascript-expr o op))))                             */
+;*    (lambda (s)                                                      */
+;*       (call-with-input-string s javascript->jsobj)))                */
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */
@@ -98,6 +116,22 @@
 			  (hop->javascript (js-get o i %this)
 			     op compile isexpr))
 		       (loop (+u32 i (fixnum->uint32 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::JsArray ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute o::JsArray id op backend)
+   (let ((v (xml-unpack o)))
+      (when (pair? v)
+	 (display (keyword->string! id) op)
+	 (display "='" op)
+	 (display (xml-attribute-encode (car v)) op)
+	 (let loop ((v (cdr v)))
+	    (when (pair? v)
+	       (display " " op)
+	       (display (xml-attribute-encode (car v)) op)
+	       (loop (cdr v))))
+	 (display "'" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsarray->list ...                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Wed Nov 19 07:11:16 2014 (serrano)                */
+;*    Last change :  Sat Dec 13 09:37:31 2014 (serrano)                */
 ;*    Copyright   :  2007-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -164,26 +164,27 @@
 	     (body '()))
 	  (plain-img src cssrc)))
 
-   (cond
-      ((isa? src xml-tilde)
-       ;; see xml-write-initializations
-       (instantiate::xml-empty-element
-	  (tag 'img)
-	  (id id)
-	  (attributes `(:src ,src :alt ,alt ,@attributes))
-	  (body '())))
-      ((string? src)
-       (if (string-prefix? "data:" src)
-	   (inline-img src src src)
-	   (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
-	      (cond
-		 ((and (pair? body) (string? (car body)) (null? (cdr body)))
-		  (inline-img src cssrc (inline-base64 src (car body))))
-		 (inline
-		  (inline-img src cssrc (inline-image src)))
-		 (else
-		  (plain-img src cssrc))))))
-      ((eq? src #unspecified)
-       (empty-img))
-      (else
-       (error "<IMG>" "Illegal image src" src))))
+   (let ((src (xml-primitive-value src)))
+      (cond
+	 ((isa? src xml-tilde)
+	  ;; see xml-write-initializations
+	  (instantiate::xml-empty-element
+	     (tag 'img)
+	     (id id)
+	     (attributes `(:src ,src :alt ,alt ,@attributes))
+	     (body '())))
+	 ((string? src)
+	  (if (string-prefix? "data:" src)
+	      (inline-img src src src)
+	      (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
+		 (cond
+		    ((and (pair? body) (string? (car body)) (null? (cdr body)))
+		     (inline-img src cssrc (inline-base64 src (car body))))
+		    (inline
+		     (inline-img src cssrc (inline-image src)))
+		    (else
+		     (plain-img src cssrc))))))
+	 ((eq? src #unspecified)
+	  (empty-img))
+	 (else
+	  (error "<IMG>" "Illegal image src" src)))))

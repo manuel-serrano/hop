@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Nov 19 07:55:17 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 17:31:56 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -223,7 +223,7 @@
    (instantiate::xml-meta
       (tag 'meta)
       (attributes attrs)
-      (content content)
+      (content (xml-primitive-value content))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
@@ -267,12 +267,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-tag <INPUT> ((id #unspecified string)
+(define-tag <INPUT> ((id #unspecified)
 		     (type 'text)
 		     (onkeydown #f)
 		     (attributes))
    (if (or (eq? type 'url) (equal? type "url"))
-       (let* ((id (xml-make-id id 'input))
+       (let* ((id (xml-make-id (xml-primitive-value id) 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
@@ -289,8 +289,10 @@
 	     (body '())))
        (instantiate::xml-empty-element
 	  (tag 'input)
-	  (id (xml-make-id id 'input))
+	  (id (xml-make-id (xml-primitive-value id) 'input))
 	  (attributes `(type: ,type
-			  ,@(if onkeydown `(onkeydown: ,(secure-javascript-attr onkeydown)) '())
+			  ,@(if onkeydown
+				`(onkeydown: ,(secure-javascript-attr onkeydown))
+				'())
 			  ,@attributes))
 	  (body '()))))

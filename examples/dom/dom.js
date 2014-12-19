@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Mon Jul 14 09:34:33 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 12:03:31 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Multitier dom manipulations                                      */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g dom.js                                            */
 /*    browser: http://localhost:8080/hop/dom                           */
 /*=====================================================================*/
-
 var hop = require( 'hop' );
 
 service dom() {
@@ -22,7 +21,6 @@ service dom() {
    };
    
    return <HTML> {
-      <HEAD> {},
       <DIV> {
 	 el,
 	 <BUTTON> {
@@ -40,4 +38,3 @@ service dom() {
 }
 
 console.log( "Go to \"http://%s:%d/hop/dom\"", hop.hostname, hop.port );
-

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Nov 22 10:00:53 2014 (serrano)                */
+;*    Last change :  Mon Dec  8 07:53:24 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -34,17 +34,27 @@
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
-;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsArguments ...                              */
-;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArguments
-   (lambda (o)
-      (call-with-output-string
-	 (lambda (op)
-	    (obj->javascript-expr o op))))
-   (lambda (s)
-      (call-with-input-string s
-	 javascript->jsobj)))
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsArguments ...                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsArguments %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-array)                    */
+;*       (with-access::JsFunction js-array (construct)                 */
+;* 	 (with-access::JsArguments obj (__proto__)                     */
+;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
+;*    obj)                                                             */
+   
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-serializer ::JsArguments ...                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (register-class-serialization! JsArguments                          */
+;*    (lambda (o)                                                      */
+;*       (call-with-output-string                                      */
+;* 	 (lambda (op)                                                  */
+;* 	    (obj->javascript-expr o op))))                             */
+;*    (lambda (s)                                                      */
+;*       (call-with-input-string s                                     */
+;* 	 javascript->jsobj)))                                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */

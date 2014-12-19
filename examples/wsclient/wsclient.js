@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Fri Oct  3 16:18:09 2014 (serrano)                */
+/*    Last change :  Wed Dec  3 18:54:25 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
@@ -40,12 +40,12 @@ wss.onconnection = function( event ) {
    console.log( "server: connection established:", ws.socket );
 
    ws.onmessage = function( event ) {
-      console.log('server received [%s]', event.value);
+      console.log( "server received [%s]", event.value );
    };
 
-   console.log ("server sends something");
-   ws.send('something');
-   ws.send('2something2');
+   console.log( "server sends something" );
+   ws.send( "something" );
+   ws.send( "2something2" );
 };
 
 console.log( "Go to \"http://%s:%d/hop/wsclient\"", hop.hostname, hop.port );

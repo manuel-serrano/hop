@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Nov 26 10:44:05 2014 (serrano)                */
+;*    Last change :  Mon Dec  8 07:47:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -36,21 +36,31 @@
    (export (js-init-string! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsString ...                                 */
-;*---------------------------------------------------------------------*/
-(register-class-serialization! JsString
-   (lambda (o)
-      (call-with-output-string
-	 (lambda (op)
-	    (obj->javascript-expr o op))))
-   (lambda (s)
-      (call-with-input-string s
-	 javascript->jsobj)))
-
-;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsString ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsString %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-string)                   */
+;*       (with-access::JsFunction js-string (construct)                */
+;* 	 (with-access::JsString obj (__proto__)                        */
+;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
+;*    obj)                                                             */
+   
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-serializer ::JsString ...                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (register-class-serialization! JsString                             */
+;*    (lambda (o)                                                      */
+;*       (call-with-output-string                                      */
+;* 	 (lambda (op)                                                  */
+;* 	    (obj->javascript-expr o op))))                             */
+;*    (lambda (s)                                                      */
+;*       (call-with-input-string s                                     */
+;* 	 javascript->jsobj)))                                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */

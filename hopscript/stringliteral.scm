@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Nov 26 10:46:48 2014 (serrano)                */
+;*    Last change :  Sat Dec 13 08:02:36 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -36,6 +36,57 @@
 	   
 	   (js-string-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)))
 
+;*---------------------------------------------------------------------*/
+;*    object-print ::JsStringLiteral ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsStringLiteral op proc)
+   (display-js-string obj op))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsStringLiteral ...                            */
+;*    -------------------------------------------------------------    */
+;*    See runtime/js_comp.scm in the Hop library for the definition    */
+;*    of the generic.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsStringLiteral op compile isexpr)
+   (hop->javascript (js-string->string o) op compile isexpr))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    object-serializer ::JsStringLiteral ...                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (register-class-serialization! JsStringLiteral                      */
+;*    js-string->string                                                */
+;*    string->js-string)                                               */
+;*                                                                     */
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsStringLiteral ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value o::JsStringLiteral)
+   (js-string->string o))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsStringLiteral ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::JsStringLiteral op backend)
+   (display-js-string obj op))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::JsStringLiteral ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect s::JsStringLiteral cnt)
+   (js-string->string s))
+
+;*---------------------------------------------------------------------*/
+;*    xml-attribute-encode ::JsStringLiteral ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (xml-attribute-encode obj::JsStringLiteral)
+   (xml-attribute-encode (js-string->string obj)))
+
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsStringLiteral ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsStringLiteral req)
+   (scheme->response (js-string->string obj) req))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-normalize! ...                                         */
@@ -69,7 +120,6 @@
 ;*---------------------------------------------------------------------*/
 (define (display-js-string jstr::JsStringLiteral op)
    (with-access::JsStringLiteral jstr (state val)
-;*       (tprint "display-js-string state=" state " val=" (format "~s" val)) */
       (case (uint8->fixnum state)
 	 ((0)
 	  (display-string val op))
@@ -110,52 +160,6 @@
       (if (=u8 state #u8:0)
 	  val
 	  (js-string-normalize! js))))
-
-;*---------------------------------------------------------------------*/
-;*    hop->javascript ::JsStringLiteral ...                            */
-;*    -------------------------------------------------------------    */
-;*    See runtime/js_comp.scm in the Hop library for the definition    */
-;*    of the generic.                                                  */
-;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsStringLiteral op compile isexpr)
-   (hop->javascript (js-string->string o) op compile isexpr))
-
-;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsStringLiteral ...                          */
-;*---------------------------------------------------------------------*/
-(register-class-serialization! JsStringLiteral
-   js-string->string
-   string->js-string)
-
-;*---------------------------------------------------------------------*/
-;*    xml-id? ::JsStringLiteral ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (xml-id? o::JsStringLiteral)
-   #t)
-
-;*---------------------------------------------------------------------*/
-;*    xml-write-id ::JsStringLiteral ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write-id obj::JsStringLiteral op)
-   (display-js-string obj op))
-
-;*---------------------------------------------------------------------*/
-;*    xml-write ::JsStringLiteral ...                                  */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::JsStringLiteral op backend)
-   (display-js-string obj op))
-
-;*---------------------------------------------------------------------*/
-;*    object-print ::JsStringLiteral ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (object-print obj::JsStringLiteral op proc)
-   (display-js-string obj op))
-
-;*---------------------------------------------------------------------*/
-;*    js-inspect ::JsStringLiteral ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (js-inspect s::JsStringLiteral cnt)
-   (js-string->string s))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string? ...                                                   */

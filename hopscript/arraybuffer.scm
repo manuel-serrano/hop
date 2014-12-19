@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sat Nov 22 07:55:17 2014 (serrano)                */
+;*    Last change :  Mon Dec  8 11:05:59 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -28,19 +28,55 @@
 	   __hopscript_number
 	   __hopscript_worker)
 
-   (export (js-init-arraybuffer! ::JsGlobalObject)))
+   (export (js-init-arraybuffer! ::JsGlobalObject)
+	   (register-javascript-buffer-intern! ::bstring ::procedure)))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-intern-finalizer ::JsArrayBuffer ...                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-intern-finalizer obj::JsArrayBuffer %this::JsGlobalObject) */
+;*    (with-access::JsGlobalObject %this (js-arraybuffer)              */
+;*       (with-access::JsFunction js-arraybuffer (construct)           */
+;* 	 (with-access::JsObject obj (__proto__)                        */
+;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
+;*    obj)                                                             */
 
 ;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsArray ...                                  */
+;*    buffer-interns ...                                               */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArrayBuffer
-   (lambda (o)
-      (call-with-output-string
-	 (lambda (op)
-	    (obj->javascript-expr o op))))
-   (lambda (s)
-      (call-with-input-string s
-	 javascript->jsobj)))
+(define buffer-interns '())
+
+;*---------------------------------------------------------------------*/
+;*    register-javascript-buffer-intern! ...                           */
+;*---------------------------------------------------------------------*/
+(define (register-javascript-buffer-intern! key proc)
+   (set! buffer-interns (cons (cons key proc) buffer-interns)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-buffer->obj ::JsGlobalObject ...                      */
+;*    -------------------------------------------------------------    */
+;*    See __hop_json                                                   */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-buffer->obj %this::JsGlobalObject b)
+   (let ((cell (assoc (car b) buffer-interns)))
+      (if cell
+	  ((cdr cell) (car b) (cdr b) %this)
+	  (error "javascript-buffer->obj" "Wrong buffer format" (car b)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArrayBuffer ...                            */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsArrayBuffer #f (lambda (s) s))
+(register-javascript-buffer-intern! "JsArrayBuffer"
+   javascript-buffer->arraybuffer)
+   
+;*    (lambda (o)                                                      */
+;*       (call-with-output-string                                      */
+;* 	 (lambda (op)                                                  */
+;* 	    (obj->javascript-expr o op))))                             */
+;*    (lambda (s)                                                      */
+;*       (call-with-input-string s                                     */
+;* 	 javascript->jsobj)))                                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
@@ -49,13 +85,80 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsArrayBuffer op compile isexpr)
-   (tprint "TODO"))
+   
+   (define chars
+      '#(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f))
+   
+   (with-access::JsArrayBuffer o (data frozen)
+      (display "hop_buffer( \"JsArrayBuffer\", " op)
+      (display (if frozen "true" "false") op)
+      (display ", \"" op)
+      (let loop ((i 0))
+	 (when (<fx i (u8vector-length data))
+	    (let ((v (uint8->fixnum (u8vector-ref data i))))
+	       (write-char (vector-ref-ur chars (bit-rsh v 8)) op)
+	       (write-char (vector-ref-ur chars (bit-and v #xf)) op))
+	    (loop (+fx i 1))))
+      (display "\")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-buffer->arraybuffer ...                               */
+;*---------------------------------------------------------------------*/
+(define (javascript-buffer->arraybuffer name args %this)
+   (with-access::JsGlobalObject %this (js-arraybuffer)
+      (let* ((u8v (hexstring->u8vector (cadr args)))
+	     (buf (instantiate::JsArrayBuffer
+		     (__proto__ (js-get js-arraybuffer 'prototype %this))
+		     (frozen (car args))
+		     (data u8v))))
+	 (js-put! buf 'byteLength (u8vector-length u8v) #f %this)
+	 buf)))
+      
+;*---------------------------------------------------------------------*/
+;*    hexstring->u8vector ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hexstring->u8vector str::bstring)
+   
+   (define (err c)
+      (error "hexstring->arraybuffer" "Illegal character" c))
+   
+   (define (char-alpha c)
+      (cond
+         ((char>=? c #\a)
+          (if (char<=? c #\f)
+	      (+fx 10 (-fx (char->integer c) (char->integer #\a)))
+	      (err c)))
+         ((char>=? c #\A)
+          (if (char<=? c #\F)
+	      (+fx 10 (-fx  (char->integer c) (char->integer #\A)))
+	      (err c)))
+         ((char>=? c #\0)
+          (if (char<=? c #\9)
+	      (-fx (char->integer c) (char->integer #\0))
+	      (err c)))
+         (else
+	  (err c))))
+   
+   (define (hex2 str j)
+      (let ((n1 (char-alpha (string-ref-ur str j)))
+	    (n2 (char-alpha (string-ref-ur str (+fx j 1)))))
+	 (+fx (*fx n1 16) n2)))
+   
+   (let* ((len (string-length str))
+	  (u8vec (make-u8vector (/fx len 2))))
+      (let loop ((i 0))
+	 (if (<fx i len)
+	     (begin
+		(u8vector-set! u8vec (/fx i 2) (hex2 str i))
+		(loop (+fx i 2)))
+	     u8vec))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-arraybuffer! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybuffer! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-function js-object)
+   (with-access::JsGlobalObject %this (__proto__ js-function js-object
+					 js-arraybuffer)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin ArrayBuffer prototype
@@ -68,7 +171,7 @@
 	       (js-arraybuffer-alloc js-arraybuffer %this)
 	       items))
 
-	 (define js-arraybuffer
+	 (set! js-arraybuffer
 	    (js-make-function %this %js-arraybuffer 1 'ArrayBuffer
 	       :__proto__ js-function-prototype
 	       :prototype js-arraybuffer-prototype

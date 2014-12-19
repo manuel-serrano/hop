@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Nov 25 16:23:15 2014 (serrano)                */
+;*    Last change :  Wed Dec 17 17:21:15 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -526,10 +526,11 @@
 			 (when (pair? l)
 			    (set! acc
 			       (append (reverse! l)
-				  (cons (string->keyword k) acc))))))
+				  (cons (string->keyword (js-string->string k))
+				     acc))))))
 		   (set! acc
 		      (cons* val
-			 (string->keyword k)
+			 (string->keyword (js-string->string k))
 			 acc)))))
 	 %this)
       (reverse! acc)))
@@ -1098,7 +1099,10 @@
 (define (%js-eval-hss ip::input-port %this %worker scope)
    (js-worker-exec %worker "eval-hss"
       (lambda ()
-	 (%js-eval ip 'repl %this (js-get scope 'this %this) scope))))
+	 (let ((v (%js-eval ip 'repl %this (js-get scope 'this %this) scope)))
+	    (if (isa? v JsStringLiteral)
+		(js-string->string v)
+		v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    lib-hopscript-path ...                                           */

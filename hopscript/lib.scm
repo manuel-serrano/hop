@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Nov 24 17:24:32 2014 (serrano)                */
+;*    Last change :  Sat Dec 13 07:10:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -22,10 +22,19 @@
 	   __hopscript_function
 	   __hopscript_public
 	   __hopscript_worker
-	   __hopscript_stringliteral)
+	   __hopscript_stringliteral
+	   __hopscript_array)
 
    (export (js-alist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-plist->obj ::JsGlobalObject ...                       */
+;*    -------------------------------------------------------------    */
+;*    See __hop_json                                                   */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-plist->obj %this::JsGlobalObject l)
+   (js-alist->jsobject l %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
@@ -34,25 +43,7 @@
    (with-access::JsGlobalObject %this (js-object)
       (let ((obj (js-new %this js-object)))
 	 (for-each (lambda (e)
-		      (js-put! obj (car e)
-			 (cond
-			    ((string? (cdr e))
-			     (string->js-string (cdr e)))
-			    ((keyword? (cdr e))
-			     (string->js-string
-				(keyword->string (cdr e))))
-			    ((symbol? (cdr e))
-			     (string->js-string
-				(symbol->string (cdr e))))
-			    ((pair? (cdr e))
-			     (js-alist->jsobject (cdr e) %this))
-			    ((int64? (cdr e))
-			     (int64->flonum (cdr e)))
-			    ((elong? (cdr e))
-			     (elong->flonum (cdr e)))
-			    (else
-			     (cdr e)))
-			 #f %this))
+		      (js-put! obj (car e) (scm->js (cdr e) %this) #f %this))
 	    alist)
 	 obj)))
 
@@ -73,9 +64,20 @@
 		   (if (keyword? (car plist))
 		       (keyword->symbol (car plist))
 		       (car plist))
-		   (if (string? (cadr plist))
-		       (string->js-string (cadr plist))
-		       (cadr plist))
+		   (scm->js (cadr plist) %this)
 		   #f %this)
 		(loop (cddr plist))))))))
 
+;*---------------------------------------------------------------------*/
+;*    scm->js ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (scm->js scm %this)
+   (cond
+      ((string? scm) (string->js-string scm))
+      ((keyword? scm) (string->js-string (keyword->string scm)))
+      ((symbol? scm) (string->js-string (symbol->string scm)))
+      ((pair? scm) (js-alist->jsobject scm %this))
+      ((int64? scm) (int64->flonum scm))
+      ((elong? scm) (elong->flonum scm))
+      ((vector? scm) (js-vector->jsarray (vector-map! scm->js scm) %this))
+      (else scm)))

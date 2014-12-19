@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Apr 19 07:09:44 2014                          */
-/*    Last change :  Mon Nov  3 13:44:06 2014 (serrano)                */
+/*    Last change :  Wed Dec 17 16:53:55 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example of server events.                                     */
@@ -11,10 +11,13 @@
 /*    run: hop -v -g event.js                                          */
 /*    browser: http://localhost:8080/hop/event                         */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 
-var canvas = <CANVAS> { width: 550, height: 200, style: "border: 1px solid black" };
+var canvas = <CANVAS> {
+   width: 550,
+   height: 200,
+   style: "border: 1px solid black"
+};
 
 service event() {
    return <HTML> {
@@ -70,6 +73,7 @@ service eventSlave( {red: 200, green: 0, blue: 0} ) {
 	    server.addEventListener(
 	       "draw",
 	       function( evt ) {
+		  console.log( "draw...",  evt );
 		  ctx.lineTo( evt.value.pageX, evt.value.pageY );
 		  ctx.stroke();
 	       } );

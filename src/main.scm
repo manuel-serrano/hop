@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Nov 24 15:07:52 2014 (serrano)                */
+;*    Last change :  Sun Dec  7 19:28:46 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -82,10 +82,6 @@
       (hop-loader-add! "js"
 	 (lambda (path . test)
 	    (nodejs-load path %worker)))
-      ;; init javascript marshalling
-      (init-javascript->jsobj!
-	 :plist->jsobject (lambda (l) (js-alist->jsobject l %global))
-	 :vector->jsarray (lambda (v) (js-vector->jsarray v %global)))
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
