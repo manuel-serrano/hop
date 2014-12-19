@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Oct  6 11:36:24 2014 (serrano)                */
+#*    Last change :  Fri Dec 19 15:04:44 2014 (serrano)                */
 #*    Copyright   :  2006-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -22,6 +22,7 @@ POPULATION = Makefile \
   nodejs/BLACKLIST \
   nodejs/README \
   nodejs/TEST.in \
+  nodejs/HOP.exe.in \
   nodejs/log \
   test262/BLACKLIST \
   test262/README \
