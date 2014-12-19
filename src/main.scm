@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Dec  7 19:28:46 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 14:31:24 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -153,9 +153,7 @@
 	    (when (pair? files)
 	       (let ((req (instantiate::http-server-request
 			     (host "localhost")
-			     (port (hop-port))
-			     #;(user (anonymous-user))
-			     )))
+			     (port (hop-port)))))
 		  ;; set a dummy request
 		  (thread-request-set! #unspecified req)
 		  ;; preload the user files
@@ -178,10 +176,8 @@
 				     (exception-notify err)
 				     (fprintf (current-error-port)
 					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-				  #;(current-request-set! #f req)
 				  (service-filter req))))
 		  (hop-preload-services))
-	       #;(current-request-set! #f #f)
 	       ;; start the main loop
 	       (scheduler-accept-loop (hop-scheduler) serv #t))
 	    (if (thread-join! %worker) 0 1)))))
@@ -305,9 +301,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-hopscript-worker scd %global %worker)
    (if (>fx (hop-max-threads) 2)
-       (begin
-;* 	  (thread-start! (instantiate::hopthread (body nodejs-event-loop))) */
-	  (thread-start-joinable! %worker))
+       (thread-start-joinable! %worker)
        (error "hop-repl"
 	  "not enough threads to start the main worker (see --threads-max option)"
 	  (hop-max-threads))))

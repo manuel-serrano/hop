@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Nov 19 07:57:58 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 14:33:04 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -33,7 +33,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-server-socket!)
    (when (socket-server? (hop-server-socket))
-      (socket-shutdown (hop-server-socket)))
+      (socket-close (hop-server-socket)))
    (with-handler
       (lambda (e)
 	 (exception-notify e)
