@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Dec 14 07:42:45 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 18:12:05 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -68,6 +68,7 @@
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
 	   (nodejs-getcpus::vector)
+	   (nodejs-exepath::bstring)
 	   (nodejs-getuptime::double)
 	   (nodejs-kill ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 
@@ -508,6 +509,12 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-getcpus)
    (uv-cpus))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-exepath ...                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-exepath)
+   (uv-exepath))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getuptime ...                                             */

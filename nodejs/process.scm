@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat Dec 13 08:56:13 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 18:12:10 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -89,21 +89,6 @@
 			((and (string=? sig "exit") (not exitarmed))
 			 (with-access::WorkerHopThread %worker (onexit)
 			    (set! onexit proc)))
-;* 			;; MS 25 Nov 2014: commented out below...      */
-;* 			 (set! exitarmed #t)                           */
-;* 			       (js-make-function %this                 */
-;* 				  (lambda (this retval)                */
-;* 				     (js-call1                         */
-;* 			 (register-exit-function!                      */
-;* 			    (lambda (status)                           */
-;* 			       (with-access::JsProcess %process (exiting) */
-;* 				  (unless exiting                      */
-;* 				     (set! exiting #t)                 */
-;* 				     (let ((emit (js-get %process 'emit %this))) */
-;* 					(js-call2 %this emit %process  */
-;* 					   (string->js-string "exit")  */
-;* 					   status))))                  */
-;* 			       status)))                               */
 			(else
 			 (js-call2 %this add this signal proc)))))
 	       
@@ -206,7 +191,7 @@
 		      %this)))
 	    #f %this)
 	 (js-put! proc 'execPath
-	    (string->js-string (car (command-line))) #f %this)
+	    (string->js-string (nodejs-exepath)) #f %this)
 	 (js-put! proc 'execArgv
 	    (js-vector->jsarray
 	       (list->vector (map string->js-string (cdr (command-line))))

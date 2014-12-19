@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Oct 23 15:27:17 2014 (serrano)                */
+;*    Last change :  Fri Dec 19 15:30:25 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -472,7 +472,7 @@
 				  ret))
 
       ;; check if a new server socket must be opened
-      (unless (=fx (socket-port-number (hop-server-socket)) (hop-port))
+      (when (and (integer? p) (not (=fx p (hop-port))))
 	 (init-server-socket!))
       (reverse files)))
 
