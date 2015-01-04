@@ -1,0 +1,9 @@
+{
+   "files": [ "widget.js",
+	      "node_modules/flipcounter/package.json", 
+	      "node_modules/flipcounter/lib/flipcounter.js" ], 
+   "tags": ["html", "foreign"],
+   "description": "An example of foreign client-side JavaScript use",
+   "doc": "This example shows out to extend HTML with a new custom widget based on a foreign JQuery plugin",
+   "level": 2
+}

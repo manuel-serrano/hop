@@ -1,0 +1,4 @@
+The HOPJS test suite. The tests can be executed with the TEST driver.
+Usage obtained with:
+
+  ./TEST --help

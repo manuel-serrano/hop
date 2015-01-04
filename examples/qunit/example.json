@@ -1,0 +1,6 @@
+{
+   "tags": [ "foreign", "jquery" ],
+   "description": "QUnit binding",
+   "doc": "This JQuery qunit example",
+   "level": 0.1
+}

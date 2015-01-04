@@ -1,0 +1,6 @@
+{
+   "tags": [ "html", "multitier", "bootstrap", "jsquery" ],
+   "description": "Examples driver",
+   "files": [ "examples.js", "src.js", "doc.js", "passwd.hop", "examples.hss" ],
+   "level": 3.4
+}

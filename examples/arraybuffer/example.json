@@ -1,0 +1,8 @@
+{
+   "source": "file.js",
+   "tags": ["javascript"],
+   "description": "Array buffer examples",
+   "doc": "This example shows how to use ArrayBuffer in hop.js",
+   "level": 1,
+   "service": false
+}

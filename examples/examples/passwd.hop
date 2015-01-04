@@ -1,0 +1,1 @@
+(add-user! "anonymous" :services '* :directories '*)

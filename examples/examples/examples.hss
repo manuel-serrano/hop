@@ -1,0 +1,80 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/3.0.x/examples/examples/examples.hss        */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Dec 14 06:33:26 2014                          */
+/*    Last change :  Sun Dec 21 13:17:33 2014 (serrano)                */
+/*    Copyright   :  2014 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Stylesheet for Hop examples                                      */
+/*=====================================================================*/
+body {
+  padding-top: 10px;
+}
+
+a {
+  color: black;
+}
+
+a:hover {
+  cursor: default;
+}
+
+pre {
+  font-size: 80%;
+}
+
+.glyphicon {
+  margin-right: 8px;
+}
+
+.no-display {
+  display: none;
+}
+
+.tags {
+  font-size: 90%;
+  color: #555;
+}
+
+.consoles pre {
+  font-size: 90%;
+}
+
+.stdout {
+}
+
+.stderr {
+  color: #e33;
+}
+
+.list-group {
+  font-size: 90%;
+}
+
+.description {
+  margin-left: 0.5em;
+}
+
+ul.list-group {
+  counter-reset: item;
+}
+  
+a.list-group-item span.title:before {
+  content: counters( item, "." ) ". ";
+  counter-increment: item;
+}
+  
+.console {
+  background: #333;
+  color: white;
+}
+
+pre.console {
+  border: 0;
+  height: 30ex;
+}
+
+a.panel-heading-url {
+  color: white;
+}

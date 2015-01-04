@@ -1,0 +1,7 @@
+{
+   "tags": [ "sqlite", "foreign" ],
+   "description": "Sqlite binding",
+   "doc": "This example shows how use the low-level Hop Sqlite binding",
+   "level": 3,
+   "files": [ "sqlite.js", "sqlite_core.js" ]
+}

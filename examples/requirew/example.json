@@ -1,0 +1,7 @@
+{
+   "tags": [ "module" ],
+   "description": "Multitier, multiworker require forms",
+   "doc": "Shows how to use nodejs compatible require function and module objects.",
+   "files": [ "requirew.js", "provider.js", "foo.js" ],
+   "level": 3
+}

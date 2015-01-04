@@ -1,0 +1,6 @@
+{
+   "tags": [ "websocket" ],
+   "description": "Hop.js websocket native support",
+   "doc": "Example showing how to use websocket clients",
+   "level": 3
+}

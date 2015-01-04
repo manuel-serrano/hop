@@ -1,0 +1,7 @@
+{
+   "tags": [ "packaging" ],
+   "description": "hophz example",
+   "doc": "This example shows how to use HZ services programmatically.",
+   "files": [ "hzdemo.js", "foo/package.json", "foo/foo.js", "foo/foo.hss" ],
+   "level": 3,
+}
