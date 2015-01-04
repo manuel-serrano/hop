@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec 24 07:40:02 2014 (serrano)                */
+;*    Last change :  Wed Dec 31 09:03:16 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -91,6 +91,8 @@
 	     (hop-upload-directory-set! (make-file-name dir "upload")))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
 	     (hop-cache-directory-set! dir))
+	    (("--no-cache" (help "Disable server caching"))
+	     (hop-cache-enable-set! #f))
 	    (("--clear-cache" (help "Clear all caches"))
 	     (set! clear-cache #t))
 	    (("--no-clear-cache" (help "Don't clear any cache"))

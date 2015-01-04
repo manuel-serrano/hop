@@ -519,7 +519,6 @@ function setupChannel(target, channel) {
 function nop() { }
 
 exports.fork = function(modulePath /*, args, options*/) {
-
   // Get options and args arguments.
   var options, args, execArgv;
   if (Array.isArray(arguments[1])) {
@@ -530,7 +529,7 @@ exports.fork = function(modulePath /*, args, options*/) {
     options = util._extend({}, arguments[1]);
   }
 
-  // Prepare arguments for fork:
+   // Prepare arguments for fork:
   execArgv = options.execArgv || process.execArgv;
   args = execArgv.concat([modulePath], args);
 
@@ -683,7 +682,7 @@ exports.execFile = function(file /* args, options, callback */) {
   child.stdout.setEncoding(options.encoding);
   child.stderr.setEncoding(options.encoding);
 
-   child.stdout.addListener('data', function(chunk) {
+  child.stdout.addListener('data', function(chunk) {
     stdout += chunk;
     if (stdout.length > options.maxBuffer) {
       err = new Error('stdout maxBuffer exceeded.');

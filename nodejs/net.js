@@ -32,9 +32,7 @@ function noop() {}
 // constructor for lazy loading
 function createPipe() {
   var Pipe = process.binding('pipe_wrap').Pipe;
-  var p = new Pipe();
-   return p;
-   
+  return new Pipe();
 }
 
 // constructor for lazy loading
@@ -92,7 +90,7 @@ exports.createServer = function() {
 //
 exports.connect = exports.createConnection = function() {
   var args = normalizeConnectArgs(arguments);
-  var s = new Socket(args[0]);
+   var s = new Socket(args[0]);
   return Socket.prototype.connect.apply(s, args);
 };
 
@@ -277,8 +275,7 @@ function writeAfterFIN(chunk, encoding, cb) {
   var er = new Error('This socket has been ended by the other party');
   er.code = 'EPIPE';
   var self = this;
-   // TODO: defer error events consistently everywhere, not just the cb
-#:tprint( "emit error er=", er );
+  // TODO: defer error events consistently everywhere, not just the cb
   self.emit('error', er);
   if (typeof cb === 'function') {
     process.nextTick(function() {
@@ -439,9 +436,8 @@ Socket.prototype._destroy = function(exception, cb) {
   function fireErrorCallbacks() {
     if (cb) cb(exception);
     if (exception && !self._writableState.errorEmitted) {
-       process.nextTick(function() {
-#:tprint( "emit error ", exception );
-         self.emit('error', exception);
+      process.nextTick(function() {
+        self.emit('error', exception);
       });
       self._writableState.errorEmitted = true;
     }
@@ -833,8 +829,7 @@ Socket.prototype.connect = function(options, cb) {
         // immediately calls net.Socket.connect() on it (that's us).
         // There are no event listeners registered yet so defer the
         // error event to the next tick.
-         process.nextTick(function() {
-#:tprint( "emit error", err );
+        process.nextTick(function() {
           self.emit('error', err);
           self._destroy();
         });
@@ -973,7 +968,7 @@ var createServerHandle = exports._createServerHandle =
     try {
       handle = createHandle(fd);
     }
-     catch (e) {
+    catch (e) {
       // Not a fd we can listen on.  This will trigger an error.
       debug('listen invalid fd=' + fd + ': ' + e.message);
       process._errno = 'EINVAL'; // hack, callers expect that errno is set
@@ -1026,8 +1021,7 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
     self._handle = createServerHandle(address, port, addressType, fd);
     if (!self._handle) {
       var error = errnoException(process._errno, 'listen');
-       process.nextTick(function() {
-#:tprint( "emit error", error );	  
+      process.nextTick(function() {
         self.emit('error', error);
       });
       return;
@@ -1049,7 +1043,6 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
     self._handle.close();
     self._handle = null;
     process.nextTick(function() {
-#:tprint( "emit error", error );	  
       self.emit('error', ex);
     });
     return;
@@ -1076,7 +1069,6 @@ function listen(self, address, port, addressType, backlog, fd) {
                                                                     err) {
         // EACCESS and friends
         if (err) {
-#:tprint( "emit error", err );	  
           self.emit('error', errnoException(err, 'bind'));
           return;
         }
@@ -1089,7 +1081,6 @@ function listen(self, address, port, addressType, backlog, fd) {
         // The exception is when port == 0 because that means "any random
         // port".
         if (port && handle.getsockname && port != handle.getsockname().port) {
-#:tprint( "emit error" );	  
           self.emit('error', errnoException('EADDRINUSE', 'bind'));
           return;
         }
@@ -1150,7 +1141,6 @@ Server.prototype.listen = function() {
     // The first argument is the port, the second an IP.
     require('dns').lookup(arguments[1], function(err, ip, addressType) {
       if (err) {
-#:tprint( "emit error", err );	  
         self.emit('error', err);
       } else {
         listen(self, ip || '0.0.0.0', port, ip ? addressType : 4, backlog);
@@ -1177,7 +1167,6 @@ function onconnection(clientHandle) {
   debug('onconnection');
 
   if (!clientHandle) {
-#:tprint( "emit error", process._errno );	  
     self.emit('error', errnoException(process._errno, 'accept'));
     return;
   }

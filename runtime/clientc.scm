@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Nov 19 07:11:45 2014 (serrano)                */
+;*    Last change :  Wed Dec 31 09:06:20 2014 (serrano)                */
 ;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -49,17 +49,17 @@
 	       (filename-resolver::procedure read-only (default find-file/path)))
 
 	    (init-clientc-compiler! #!key
-				    filec expressionc valuec
-				    modulec macroe
-				    sexp->precompiled
-				    precompiled->JS-expression
-				    precompiled->JS-statement
-				    precompiled->JS-return
-				    precompiled->sexp
-				    precompiled-declared-variables
-				    precompiled-free-variables
-				    filename-resolver
-				    jsc)
+	       filec expressionc valuec
+	       modulec macroe
+	       sexp->precompiled
+	       precompiled->JS-expression
+	       precompiled->JS-statement
+	       precompiled->JS-return
+	       precompiled->sexp
+	       precompiled-declared-variables
+	       precompiled-free-variables
+	       filename-resolver
+	       jsc)
 
 	    (current-module-clientc-import)
 	    
@@ -97,10 +97,13 @@
    
    ;; prepare the client-code compiler cache
    (set! clientc-cache
-      (instantiate::cache-disk
-	 (clear (hop-clientc-clear-cache))
-	 (path (make-cache-name "clientc"))
-	 (out (lambda (o p) (with-output-to-port p (lambda () (print o)))))))
+      (if (hop-cache-enable)
+	  (instantiate::cache-disk
+	     (clear (hop-clientc-clear-cache))
+	     (path (make-cache-name "clientc"))
+	     (out (lambda (o p) (with-output-to-port p (lambda () (print o))))))
+	  (instantiate::cache-memory
+	     (max-file-size #e1024))))
    
    ;; hook the client-code compiler
    (hop-clientc-set!
@@ -171,7 +174,6 @@
 				(compile-client path name value '())
 				;; sent the file response
 				(instantiate::http-response-file
-				   #;(request req)
 				   (charset (hop-locale))
 				   (content-type mime)
 				   (bodyp (eq? method 'GET))
@@ -180,7 +182,6 @@
 				   (file value)))
 			     ;; no cache, use a string
 			     (instantiate::http-response-string
-				#;(request req)
 				(charset (hop-locale))
 				(content-type mime)
 				(bodyp (eq? method 'GET))

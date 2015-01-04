@@ -18,7 +18,7 @@ while : ; do
      break;;
 
   -h|--help)
-    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [--check] [--error] [subdir0 [subdir1 ...]]";
+    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [--check] [--error] [--fullname] [subdir0 [subdir1 ...]]";
     echo "example: $0 simple";
     exit 0;;
 

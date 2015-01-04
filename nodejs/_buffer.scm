@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Dec 23 17:16:08 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sun Jan  4 09:43:47 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -622,7 +622,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (let* ((len (-fx end start))
+	       (let* ((len (-fx (->fixnum end) (->fixnum start)))
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string-ascii-clamp! data start string 0 len))
@@ -1028,13 +1028,15 @@
 ;*    See src/slab_allocator.cc in nodejs                              */
 ;*---------------------------------------------------------------------*/
 (define (slab-allocate slab obj size)
-   (with-trace 'nodejs-buffer "slab-allocate"
+   (with-trace 'nodejs-slab "slab-allocate"
       (trace-item "obj=" (typeof obj) " size=" size)
       (with-access::Slab slab (%this js-slowbuffer slowbuffer slice
 				 offset lastoffset)
 	 (if (not slowbuffer)
 	     (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
 		    (buf (js-new1 %this js-slowbuffer rsize)))
+;* 		(print (format "(~a) slab-allocate NOT SLOW BUFFER size=~a" */
+;* 			 (getpid) size))                               */
 		(set! slowbuffer buf)
 		(set! slice (js-get buf 'slice %this))
 		(set! offset size)
@@ -1045,6 +1047,9 @@
 	     (with-access::JsSlowBuffer slowbuffer (data)
 		;; slowbuffer data are implemented as strings
 		(let* ((sz (string-length data)))
+;* 		   (print                                              */
+;* 		      (format "(~a) slab-allocate offset=~a size=~a sz=~a" */
+;* 			 (getpid) offset size sz))                     */
 		   (if (>fx (+ offset size) sz)
 		       ;; not enough space, new buffer required
 		       (let* ((rsize (roundup (max size sz) 16))
@@ -1067,7 +1072,7 @@
 ;*    slab-shrink! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (slab-shrink! slab buf off size)
-   (with-trace 'nodejs-buffer "slab-shrink!"
+   (with-trace 'nodejs-slab "slab-shrink!"
       (with-access::Slab slab (lastoffset js-slowbuffer slowbuffer %this offset)
 	 (trace-item "off=" off " size=" size
 	    " old-offset=" offset " last-offset=" lastoffset)

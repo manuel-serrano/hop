@@ -1,9 +1,9 @@
 #!/bin/bash
 case $# in
   1)
-     exec -a /home/serrano/prgm/project/hop/3.0.x/test/nodejs/HOP.exe @BINDIR@/hop -g --no-zeroconf --no-server --exepath "*" -- $1;;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1";;
   2)
-     exec -a /home/serrano/prgm/project/hop/3.0.x/test/nodejs/HOP.exe @BINDIR@/hop -g --no-zeroconf --no-server --exepath "*" -- $1 $2;;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1" "$2";;
   3)
-     exec -a /home/serrano/prgm/project/hop/3.0.x/test/nodejs/HOP.exe @BINDIR@/hop -g --no-zeroconf --no-server --exepath "*" -- $1 $2 $3;;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1" "$2" "$3";;
 esac

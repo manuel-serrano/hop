@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Dec 16 18:11:36 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 06:49:34 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -869,7 +869,7 @@
    (with-access::http-response-websocket resp ((req request))
       ;; close the socket
       (with-access::http-request req (socket)
-	 (socket-shutdown socket)
+	 (socket-close socket)
 	 (with-trace 'event "ws-close-request!"
 	    (trace-item "socket=" socket)))
       ;; decrement the current number of connected clients

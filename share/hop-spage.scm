@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/3.0.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Aug 22 07:05:47 2013 (serrano)                */
-;*    Copyright   :  2010-13 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 08:01:15 2015 (serrano)                */
+;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
 ;*=====================================================================*/
@@ -349,7 +349,7 @@
       (node-style-set! spviewport
 	 :width (format "~apx" spage.spscrollwidth)))
 
-   (define (invoke-listeners spage tbody)
+   (define (invoke-pop-listeners spage tbody)
       (spage-invoke-onchange-listener! spage tbody "pop")
       (when (and tbody.tab (not (eq? tbody.tab #unspecified)))
 	 (sptab-invoke-onselect-listener! tbody.tab tbody "pop")))
@@ -439,7 +439,7 @@
 	    (set! spage.spoffset (-fx spage.spoffset spage.spwidth))
 	    ;; invoke the listener before removing any node
 	    (when (pair? spage.tabs)
-	       (invoke-listeners spage (car spage.tabs)))
+	       (invoke-pop-listeners spage (car spage.tabs)))
 	    ;; pop the element from the gui
 	    (case (spage-transition-style spage)
 	       ((move)

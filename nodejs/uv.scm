@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Dec 24 07:38:35 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sun Jan  4 09:34:10 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -53,6 +53,7 @@
 	   (nodejs-timer-close ::WorkerHopThread ::obj)
 	   (nodejs-timer-stop ::WorkerHopThread ::obj)
 	   (nodejs-timer-unref ::WorkerHopThread ::obj)
+	   (nodejs-hrtime::uint64)
 
 	   (nodejs-make-fs-event ::WorkerHopThread)
 	   (nodejs-fs-event-start ::obj ::procedure ::bstring)
@@ -118,10 +119,28 @@
 	   (nodejs-tcp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
 	   (nodejs-tcp-open ::WorkerHopThread ::JsGlobalObject ::obj ::int)
-	   (nodejs-tcp-bind ::JsGlobalObject ::obj ::JsStringLiteral ::int ::int)
+	   (nodejs-tcp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int)
 	   (nodejs-tcp-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int ::procedure)
 
+
+	   (nodejs-tty-handle ::WorkerHopThread ::int ::bool)
+	   (nodejs-tty-set-raw-mode ::obj)
+	   (nodejs-tty-get-window-size ::WorkerHopThread ::JsGlobalObject ::obj)
+	   
+	   (nodejs-udp-handle ::WorkerHopThread)
+	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int)
+	   (nodejs-udp-send ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::bstring ::int ::procedure)
+	   (nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
+	   (nodejs-udp-recv-stop ::obj)
+	   (nodejs-udp-getsockname ::JsGlobalObject ::obj)
+	   (nodejs-udp-set-ttl ::obj ::int)
+	   (nodejs-udp-set-multicast-ttl ::obj ::int)
+	   (nodejs-udp-set-multicast-loop ::obj ::obj)
+	   (nodejs-udp-set-broadcast ::obj ::obj)
+	   (nodejs-udp-set-membership ::obj ::bstring ::obj ::symbol)
+	   
 	   (nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
+	   (nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
 	   (nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
 	   (nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
@@ -130,8 +149,10 @@
 	   (nodejs-process-spawn ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-process-kill ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject ::int)
 	   (nodejs-new-pipe ::WorkerHopThread ::bool)
+	   (nodejs-pipe-ipc?::bool ::obj)
+	   (nodejs-pipe-accept::obj ::WorkerHopThread ::JsGlobalObject ::obj ::obj)
 	   (nodejs-pipe-open ::WorkerHopThread ::JsGlobalObject ::obj ::int)
-	   (nodejs-pipe-bind ::JsGlobalObject ::obj ::JsStringLiteral)
+	   (nodejs-pipe-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral)
 	   (nodejs-pipe-connect ::WorkerHopThread ::JsGlobalObject ::obj ::JsStringLiteral ::procedure)
 	   (nodejs-pipe-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 	   ))
@@ -220,7 +241,7 @@
 	       ;; unregister all the worker services
 	       (for-each unregister-service! services)
 	       ;; tell the subworkers that they will never receive
-	       ;; any message from their parent
+	       ;; any new message from their parent
 	       (for-each (lambda (w)
 			    (with-access::WorkerHopThread w (mutex keep-alive)
 			       (synchronize mutex
@@ -337,7 +358,9 @@
 	       " repeat=" repeat)
 	    (let ((proc (js-get obj 'ontimeout %this)))
 	       (when (isa? proc JsFunction)
-		  (js-call1 %this proc obj status))))))
+		  (js-worker-push-thunk! %worker "tick-spinner"
+		     (lambda ()
+			(js-call1 %this proc obj status))))))))
        
    (letrec ((obj (instantiate::UvTimer
 		    (loop (worker-loop %worker))
@@ -390,6 +413,12 @@
       (trace-item "timer-" (integer->string (uv-id timer) 16)
 	 " " (typeof timer))
       (uv-unref timer)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-hrtime ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-hrtime)
+   (uv-hrtime))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-fs-event ...                                         */
@@ -505,36 +534,37 @@
 	 (let ((tick-from-spinner (js-get process '_tickFromSpinner %this)))
 	    (js-call0 %this tick-from-spinner (js-undefined))))))
 
-;*---------------------------------------------------------------------*/
-;*    tick-spinner ...                                                 */
-;*---------------------------------------------------------------------*/
-(define tick-spinner #f)
-(define need-tick-cb #f)
-(define tick-from-spinner #f)
-
-;*---------------------------------------------------------------------*/
-;*    get-tick-spinner ...                                             */
-;*---------------------------------------------------------------------*/
-(define (get-tick-spinner %worker %this process)
-   (unless tick-spinner
-      (letrec* ((spin (lambda (status)
-			 (when need-tick-cb
-			    (set! need-tick-cb #f)
-			    (uv-idle-stop spinner)
-			    
-			    (unless tick-from-spinner
-			       (set! tick-from-spinner
-				  (js-get process '_tickFromSpinner %this)))
-			    
-			    (js-worker-push-thunk! %worker "tick-spinner"
-			       (lambda ()
-				  (js-call0 %this tick-from-spinner
-				     (js-undefined)))))))
-		(spinner (instantiate::UvIdle
-			    (cb spin)
-			    (loop (worker-loop %worker)))))
-	 (set! tick-spinner spinner))))
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    tick-spinner ...                                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define tick-spinner #f)                                            */
+;* (define need-tick-cb #f)                                            */
+;* (define tick-from-spinner #f)                                       */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    get-tick-spinner ...                                             *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (get-tick-spinner %worker %this process)                    */
+;*    (unless tick-spinner                                             */
+;*       (letrec* ((spin (lambda (status)                              */
+;* 			 (tprint "!!!!!!!!!!!!!!!  spin status=" status) */
+;* 			 (when need-tick-cb                            */
+;* 			    (set! need-tick-cb #f)                     */
+;* 			    (uv-idle-stop spinner)                     */
+;* 			                                               */
+;* 			    (unless tick-from-spinner                  */
+;* 			       (set! tick-from-spinner                 */
+;* 				  (js-get process '_tickFromSpinner %this))) */
+;* 			                                               */
+;* 			    (js-worker-push-thunk! %worker "tick-spinner" */
+;* 			       (lambda ()                              */
+;* 				  (js-call0 %this tick-from-spinner    */
+;* 				     (js-undefined)))))))              */
+;* 		(spinner (instantiate::UvIdle                          */
+;* 			    (cb spin)                                  */
+;* 			    (loop (worker-loop %worker)))))            */
+;* 	 (set! tick-spinner spinner))))                                */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    not-implemented-exn ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -1272,7 +1302,7 @@
 (define (nodejs-istty %worker %this fd)
    (let ((file (int->uvfile %worker %this fd)))
       (when file
-	 (eq? (uv-guess-handle file) 'TTY))))
+	 (eq? (uv-guess-handle fd) 'TTY))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-guess-handle-type ...                                     */
@@ -1280,7 +1310,7 @@
 (define (nodejs-guess-handle-type %worker %this fd)
    (let ((file (int->uvfile %worker %this fd)))
       (when file
-	 (string->js-string (symbol->string (uv-guess-handle file))))))
+	 (string->js-string (symbol->string (uv-guess-handle fd))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-handle ...                                            */
@@ -1355,8 +1385,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-bind ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-tcp-bind %this handle addr port family)
-   (uv-tcp-bind handle (js-string->string addr) port :family family))
+(define (nodejs-tcp-bind %this process handle addr port family)
+   (let ((r (uv-tcp-bind handle (js-string->string addr) port :family family)))
+      (if (=fx r 0)
+	  r
+	  (begin
+	     (process-fail %this process r)
+	     r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-listen ...                                            */
@@ -1382,6 +1417,110 @@
 	  r)))
    
 ;*---------------------------------------------------------------------*/
+;*    nodejs-tty-handle ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tty-handle %worker fd readable)
+   (instantiate::UvTty
+      (loop (worker-loop %worker))
+      (fd fd)
+      (readable readable)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tty-set-raw-mode ...                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tty-set-raw-mode handle)
+   (uv-tty-mode-set! handle 'raw))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-tty-get-window-size ...                                   */
+;*---------------------------------------------------------------------*/
+(define (nodejs-tty-get-window-size %worker %this handle)
+   (js-vector->jsarray (uv-tty-get-window-size handle) %this))
+	   
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-handle ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-handle %worker)
+   (instantiate::UvUdp
+      (loop (worker-loop %worker))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-bind ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-bind %this process handle addr port family)
+   (let ((r (uv-udp-bind handle (js-string->string addr) port :family family)))
+      (if (=fx r 0)
+	  r
+	  (begin
+	     (process-fail %this process r)
+	     r))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-send ...                                              */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-send %worker %this handle buffer offset length port address family callback)
+   [assert (%worker) (eq? %worker (current-thread))]
+   (uv-udp-send handle buffer offset length port address
+      :family family
+      :loop (worker-loop %worker)
+      :callback callback))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-recv-start ...                                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-recv-start %worker %this handle onalloc callback)
+   [assert (%worker) (eq? %worker (current-thread))]
+   (uv-udp-recv-start handle
+      :onalloc onalloc
+      :loop (worker-loop %worker)
+      :callback callback))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-recv-stop ...                                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-recv-stop handle)
+   (uv-udp-recv-stop handle))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-getsockname ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-getsockname %this handle)
+   (let ((res (uv-udp-getsockname handle)))
+      (if (integer? res)
+	  res
+	  (js-alist->jsobject res %this))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-set-ttl ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-set-ttl handle ttl)
+   (uv-udp-set-ttl handle ttl))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-set-multicast-ttl ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-set-multicast-ttl handle ttl)
+   (uv-udp-set-multicast-ttl handle ttl))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-set-multicast-loop ...                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-set-multicast-loop handle on)
+   (uv-udp-set-multicast-loop handle on))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-set-broadcast ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-set-broadcast handle on)
+   (uv-udp-set-broadcast handle on))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-udp-set-membership ...                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-udp-set-membership handle addr iface action)
+   (uv-udp-set-membership handle addr iface action))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-write %worker %this handle buffer offset length callback)
@@ -1391,10 +1530,19 @@
       :callback callback))
    
 ;*---------------------------------------------------------------------*/
+;*    nodejs-stream-write2 ...                                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
+;*    [assert (%worker) (eq? %worker (current-thread))]                */
+   (uv-stream-write2 handle buffer offset length sendhandle
+      :loop (worker-loop %worker)
+      :callback callback))
+   
+;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-read-start %worker %this handle onalloc callback)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert (%worker) (or (not (current-thread)) (eq? %worker (current-thread)))]
    (uv-stream-read-start handle
       :onalloc onalloc
       :loop (worker-loop %worker)
@@ -1404,7 +1552,7 @@
 ;*    nodejs-stream-read-stop ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-read-stop %worker %this handle)
-   [assert (%worker) (eq? %worker (current-thread))]
+;*    [assert (%worker) (eq? %worker (current-thread))]                */
    (uv-stream-read-stop handle))
 
 ;*---------------------------------------------------------------------*/
@@ -1451,7 +1599,7 @@
 		    file))
 		(else
 		 (js-raise-type-error %this
-		    "Illegal file descriptor ~a" fd))))))))
+		    (format "Illegal file descriptor (~a) ~~a" fd) fd))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    close-uvfile ...                                                 */
@@ -1473,6 +1621,7 @@
    
    (define (signal->string::JsStringLiteral sig)
       (cond
+	 ((=fx sig sighup) (string->js-string "SIGHUP"))
 	 ((=fx sig sigfpe) (string->js-string "SIGFPE"))
 	 ((=fx sig sigill) (string->js-string "SIGILL"))
 	 ((=fx sig sigbus) (string->js-string "SIGBUS"))
@@ -1481,6 +1630,10 @@
 	 ((=fx sig sigterm) (string->js-string "SIGTERM"))
 	 ((=fx sig sigint) (string->js-string "SIGINT"))
 	 ((=fx sig sigkill) (string->js-string "SIGKILL"))
+	 ((=fx sig sigabrt) (string->js-string "SIGABRT"))
+	 ((=fx sig sigalrm) (string->js-string "SIGALRM"))
+	 ((=fx sig sigusr1) (string->js-string "SIGUSR1"))
+	 ((=fx sig sigusr2) (string->js-string "SIGUSR2"))
 	 (else (string->js-string "SIG???"))))
    
    (define (process-options-stdio-set! opts::UvProcessOptions i stdio)
@@ -1514,7 +1667,8 @@
    (define (onexit this status term)
       (let ((onexit (js-get process 'onexit %this))
 	    (status (flonum->fixnum (int64->flonum status))))
-	 (with-trace 'nodejs-async "process-onexit"
+	 (with-trace 'nodejs-spawn "process-onexit"
+	    (trace-item "status=" status)
 	    (when (isa? onexit JsFunction)
 	       (when (<fx status 0)
 		  (process-fail %this %process status)
@@ -1534,84 +1688,93 @@
 					   (ocwd cwd)
 					   (oenv env))
 
-	 ;; options.uid
-	 (let ((uid (js-get options 'uid %this)))
-	    (when (integer? uid)
-	       (let ((uid (js-toint32 uid %this)))
-		  (set! oflags (bit-or oflags (UV-PROCESS-SETUID)))
-		  (set! ouid uid))))
-	 
-	 ;; options.gid
-	 (let ((gid (js-get options 'gid %this)))
-	    (when (integer? gid)
-	       (let ((gid (js-toint32 gid %this)))
-		  (set! oflags (bit-or oflags (UV-PROCESS-SETGID)))
-		  (set! ogid gid))))
-
-	 ;; options.file
-	 (let ((file (js-get options 'file %this)))
-	    (unless (js-string? file)
-	       (js-raise-type-error %this "Bad argument ~a" file))
-	    (set! ofile (js-string->string file)))
-	 
-	 ;; options.args
-	 (let ((args (js-get options 'args %this)))
-	    (when (isa? args JsArray)
-	       (set! oargs
-		  (vector-map! (lambda (o) (js-tostring o %this))
-		     (jsarray->vector args %this)))))
-
-	 ;; options.cwd
-	 (let ((cwd (js-get options 'cwd %this)))
-	    (when (and (js-string? cwd) (>fx (js-string-length cwd) 0))
-	       (set! ocwd (js-string->string cwd))))
-
-	 ;; options.env
-	 (let ((env (js-get options 'envPairs %this)))
-	    (when (isa? env JsArray)
-	       (set! oenv
-		  (vector-map! (lambda (o) (js-tostring o %this))
-		     (jsarray->vector env %this)))))
-	 
-	 ;; options.stdio
-	 (let ((stdios (js-get options 'stdio %this)))
-	    (when (isa? stdios JsArray)
-	       (let ((len (js-get stdios 'length %this)))
-		  (uv-process-options-stdio-container-set! opts len)
-		  (let loop ((i 0))
-		     (when (<fx i len)
-			(process-options-stdio-set! opts i
-			   (js-get stdios i %this))
-			(loop (+fx i 1)))))))
-	 
-	 ;; options.windows_verbatim_arguments
-	 (when (js-totest (js-get options 'windowsVerbatimArguments %this))
-	    (set! oflags
-	       (bit-or oflags (UV-PROCESS-WINDOWS-VERBATIM-ARGUMENTS))))
-	 
-	 ;; options.detached
-	 (when (js-totest (js-get options 'detached %this))
-	    (set! oflags (bit-or oflags (UV-PROCESS-DETACHED)))
+	 (with-trace 'nodejs-spawn "spawn"
+	    ;; options.uid
+	    (let ((uid (js-get options 'uid %this)))
+	       (when (integer? uid)
+		  (trace-item "uid=" uid)
+		  (let ((uid (js-toint32 uid %this)))
+		     (set! oflags (bit-or oflags (UV-PROCESS-SETUID)))
+		     (set! ouid uid))))
+	    
+	    ;; options.gid
+	    (let ((gid (js-get options 'gid %this)))
+	       (when (integer? gid)
+		  (trace-item "gid=" gid)
+		  (let ((gid (js-toint32 gid %this)))
+		     (set! oflags (bit-or oflags (UV-PROCESS-SETGID)))
+		     (set! ogid gid))))
+	    
+	    ;; options.file
+	    (let ((file (js-get options 'file %this)))
+	       (trace-item "file=" file)
+	       (unless (js-string? file)
+		  (js-raise-type-error %this "Bad argument ~a" file))
+	       (set! ofile (js-string->string file)))
+	    
+	    ;; options.args
+	    (let ((args (js-get options 'args %this)))
+	       (when (isa? args JsArray)
+		  (trace-item "args=" args)
+		  (set! oargs
+		     (vector-map! (lambda (o) (js-tostring o %this))
+			(jsarray->vector args %this)))))
+	    
+	    ;; options.cwd
+	    (let ((cwd (js-get options 'cwd %this)))
+	       (when (and (js-string? cwd) (>fx (js-string-length cwd) 0))
+		  (trace-item "cwd=" cwd)
+		  (set! ocwd (js-string->string cwd))))
+	    
+	    ;; options.env
+	    (let ((env (js-get options 'envPairs %this)))
+	       (when (isa? env JsArray)
+		  (trace-item "env=" env)
+		  (set! oenv
+		     (vector-map! (lambda (o) (js-tostring o %this))
+			(jsarray->vector env %this)))))
+	    
+	    ;; options.stdio
+	    (let ((stdios (js-get options 'stdio %this)))
+	       (when (isa? stdios JsArray)
+		  (trace-item "stdios=" stdios)
+		  (let ((len (js-get stdios 'length %this)))
+		     (uv-process-options-stdio-container-set! opts len)
+		     (let loop ((i 0))
+			(when (<fx i len)
+			   (process-options-stdio-set! opts i
+			      (js-get stdios i %this))
+			   (loop (+fx i 1)))))))
+	    
+	    ;; options.windows_verbatim_arguments
+	    (when (js-totest (js-get options 'windowsVerbatimArguments %this))
+	       (set! oflags
+		  (bit-or oflags (UV-PROCESS-WINDOWS-VERBATIM-ARGUMENTS))))
+	    
+	    ;; options.detached
+	    (when (js-totest (js-get options 'detached %this))
+	       (set! oflags (bit-or oflags (UV-PROCESS-DETACHED)))
+	       (with-access::JsHandle process (handle)
+		  (with-access::JsChild handle (detached)
+		     (set! detached #t))))
+	    
+	    ;; start the process
 	    (with-access::JsHandle process (handle)
-	       (with-access::JsChild handle (detached)
-		  (set! detached #t))))
-
-	 ;; start the process
-	 (with-access::JsHandle process (handle)
-	    (let ((r (uv-process-spawn handle opts
-			:callback onexit
-			:loop (worker-loop %worker))))
-	       (case r
-		  ((0)
-		   (with-access::JsChild handle (pid)
-		      (js-put! process 'pid pid #f %this)
-		      0))
-		  (else
-		   (process-fail %this %process r)
-		   (js-worker-push-thunk! %worker "spawn-failure"
-		      (lambda ()
-			 (onexit process (fixnum->int64 r) 0)))
-		   0)))))))
+	       (let ((r (uv-process-spawn handle opts
+			   :callback onexit
+			   :loop (worker-loop %worker))))
+		  (trace-item "r=" r)
+		  (case r
+		     ((0)
+		      (with-access::JsChild handle (pid)
+			 (js-put! process 'pid pid #f %this)
+			 0))
+		     (else
+		      (process-fail %this %process r)
+		      (js-worker-push-thunk! %worker "spawn-failure"
+			 (lambda ()
+			    (onexit process (fixnum->int64 r) 0)))
+		      0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process-kill ...                                          */
@@ -1619,8 +1782,7 @@
 (define (nodejs-process-kill %worker %this %process this sig)
    (with-access::JsHandle this (handle)
       (let ((r (uv-process-kill handle sig)))
-	 (unless (=fx r 0)
-	    (process-fail %this %process r)))))
+	 (if (=fx r 0) r (process-fail %this %process r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-pipe ...                                              */
@@ -1632,16 +1794,66 @@
       (ipc (eq? ipc #t))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-pipe-ipc? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-pipe-ipc? pipe)
+   (when (isa? pipe UvPipe)
+      (and (uv-guess-handle (uv-stream-fd pipe))
+	   (uv-pipe-ipc? pipe))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-pipe-accept ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-pipe-accept %worker %this this pending-type)
+   (case pending-type
+      ((UDP)
+       (with-access::WorkerHopThread %worker (%process)
+	  (with-access::JsGlobalObject %this (js-object)
+	     (with-access::JsProcess %process (js-udp)
+		(let* ((udp (js-new %this js-udp)))
+		   (with-access::JsHandle this ((pipe handle))
+		      (with-access::JsHandle udp ((client handle))
+			 (uv-accept pipe client)))
+		   udp)))))
+      ((TCP)
+       (with-access::WorkerHopThread %worker (%process)
+	  (with-access::JsGlobalObject %this (js-object)
+	     (with-access::JsProcess %process (js-tcp)
+	     (let* ((tcp (js-new %this js-tcp)))
+		(with-access::JsHandle this ((pipe handle))
+		   (with-access::JsHandle tcp ((client handle))
+		      (uv-accept pipe client)))
+		tcp)))))
+      ((PIPE)
+       (with-access::WorkerHopThread %worker (%process)
+	  (with-access::JsGlobalObject %this (js-object)
+	     (with-access::JsProcess %process (js-pipe)
+		(let* ((pipe (js-new %this js-pipe)))
+		   (with-access::JsHandle this ((pipe handle))
+		      (with-access::JsHandle pipe ((client handle))
+			 (uv-accept pipe client)))
+		   pipe)))))
+      ((UNKNOWN)
+       (js-undefined))
+      (else
+       (error "nodejs-pipe-accept" "Illegal stream type" pending-type))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-open ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-open %worker %this handle fd)
-   (uv-pipe-open handle (int->uvfile %worker %this fd)))
+   (uv-pipe-open handle fd))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-bind ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-pipe-bind %this handle name)
-   (uv-pipe-bind handle (js-string->string name)))
+(define (nodejs-pipe-bind %this process handle name)
+   (let ((r (uv-pipe-bind handle (js-string->string name))))
+      (if (=fx r 0)
+	  r
+	  (begin
+	     (process-fail %this process r)
+	     r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-connect ...                                          */

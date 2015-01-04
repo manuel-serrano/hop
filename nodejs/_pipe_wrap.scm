@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Nov 25 10:50:54 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Thu Jan  1 09:53:13 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -99,33 +99,33 @@
    ;; writeAsciiString
    (js-put! pipe-prototype 'writeAsciiString
       (js-make-function %this 
-	 (lambda (this string)
+	 (lambda (this string handle)
 	    (stream-write-string %worker %this this
 	       (js-string->string string) 0 (js-string-length string)
-	       "ascii" #f))
-	 0 'writeAsciiString)
+	       "ascii" #f handle))
+	 2 'writeAsciiString)
       #f %this)
    
    ;; writeUtf8String
    (js-put! pipe-prototype 'writeUtf8String
       (js-make-function %this
-	 (lambda (this string)
+	 (lambda (this string handle)
 	    (stream-write-string %worker %this this
 	       (js-string->string string) 0 (js-string-length string)
-	       "utf8" #f))
-	 1 "writeUtf8String")
+	       "utf8" #f handle))
+	 2 "writeUtf8String")
       #f %this)
    
    ;; writeUcs2String
    (js-put! pipe-prototype 'writeUcs2String
       (js-make-function %this
-	 (lambda (this string)
+	 (lambda (this string handle)
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
 		   (buffer (ucs2-string->buffer ucs2string)))
 	       (stream-write-string %worker %this this
 		  (js-string->string string) 0 (js-string-length string)
-		  "ascii" #f)))
-	 1 "writeUcs2String")
+		  "ascii" #f handle)))
+	 2 "writeUcs2String")
       #f %this)
    
    ;; bind
@@ -133,7 +133,7 @@
       (js-make-function %this 
 	 (lambda (this name)
 	    (with-access::JsHandle this (handle)
-	       (nodejs-pipe-bind %this handle name)))
+	       (nodejs-pipe-bind %this process handle name)))
 	 0 'bind)
       #f %this)
    
@@ -165,7 +165,7 @@
 				 this req #t #t)
 			      (js-undefined))))
 		     req))))
-	 0 'connect)
+	 2 'connect)
       #f %this)
    
    ;; open
@@ -174,7 +174,7 @@
 	 (lambda (this fd)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-open %worker %this handle fd)))
-	 0 'open)
+	 1 'open)
       #f %this)
 
    ;; pipe
@@ -198,10 +198,13 @@
 	    obj)))
    
    (with-access::JsGlobalObject %this (js-object)
-      (js-alist->jsobject
-	 `((Pipe . ,(js-make-function %this
-		       (lambda (this . args) #unspecified)
-		       1 'Pipe
-		       :construct pipe
-		       :alloc (lambda (o) #unspecified))))
-	 %this)))
+      (with-access::JsProcess process (js-pipe)
+	 (let ((obj (js-new %this js-object)))
+	    (set! js-pipe
+	       (js-make-function %this
+		  (lambda (this . args) #unspecified) 1 'Pipe
+		  :construct pipe
+		  :prototype pipe-prototype
+		  :alloc (lambda (o) #unspecified)))
+	    (js-put! obj 'Pipe js-pipe #t %this)
+	    obj))))

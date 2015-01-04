@@ -166,7 +166,6 @@ Writable.prototype.write = function(chunk, encoding, cb) {
     cb = encoding;
     encoding = null;
   }
-
   if (Buffer.isBuffer(chunk))
     encoding = 'buffer';
   else if (!encoding)

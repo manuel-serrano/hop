@@ -83,15 +83,15 @@ function eachWorker(cb) {
 
 // Extremely simple progress tracker
 function ProgressTracker(missing, callback) {
-  this.missing = missing;
-  this.callback = callback;
+   this.missing = missing;
+   this.callback = callback;
 }
 ProgressTracker.prototype.done = function() {
-  this.missing -= 1;
-  this.check();
+   this.missing -= 1;
+   this.check();
 };
 ProgressTracker.prototype.check = function() {
-  if (this.missing === 0) this.callback();
+   if (this.missing === 0) this.callback();
 };
 
 cluster.setupMaster = function(options) {
@@ -289,10 +289,10 @@ function toDecInt(value) {
 }
 
 // Create a worker object, that works both for master and worker
-function Worker(customEnv) {
-  if (!(this instanceof Worker)) return new Worker();
+function ClusterWorker(customEnv) {
+  if (!(this instanceof ClusterWorker)) return new ClusterWorker();
   EventEmitter.call(this);
-
+   
   var self = this;
   var env = process.env;
 
@@ -317,7 +317,7 @@ function Worker(customEnv) {
       envCopy = util._extend(envCopy, customEnv);
     }
 
-    // fork worker
+     // fork worker
     this.process = fork(settings.exec, settings.args, {
       'env': envCopy,
       'silent': settings.silent,
@@ -356,8 +356,8 @@ function Worker(customEnv) {
   this.process.on('error', this.emit.bind(this, 'error'));
 
 }
-util.inherits(Worker, EventEmitter);
-cluster.Worker = Worker;
+util.inherits(ClusterWorker, EventEmitter);
+cluster.Worker = ClusterWorker;
 
 function prepareExit(worker, state) {
 
@@ -395,19 +395,18 @@ function sendInternalMessage(worker, message/*, handler, callback*/) {
     queryCallbacks[message._requestEcho] = callback;
   }
 
-
   worker.send(message, handler);
 }
 
 // Send message to worker or master
-Worker.prototype.send = function() {
+ClusterWorker.prototype.send = function() {
 
   // You could also just use process.send in a worker
   this.process.send.apply(this.process, arguments);
 };
 
 // Kill the worker without restarting
-Worker.prototype.kill = Worker.prototype.destroy = function(signal) {
+ClusterWorker.prototype.kill = ClusterWorker.prototype.destroy = function(signal) {
   if (!signal)
     signal = 'SIGTERM';
 
@@ -450,7 +449,7 @@ Worker.prototype.kill = Worker.prototype.destroy = function(signal) {
 // and then disconnect the IPC channel.
 if (cluster.isMaster) {
   // Used in master
-  Worker.prototype.disconnect = function() {
+  ClusterWorker.prototype.disconnect = function() {
     this.suicide = true;
 
     sendInternalMessage(this, {cmd: 'disconnect'});
@@ -458,7 +457,7 @@ if (cluster.isMaster) {
 
 } else {
   // Used in workers
-  Worker.prototype.disconnect = function() {
+  ClusterWorker.prototype.disconnect = function() {
     var self = this;
 
     this.suicide = true;
@@ -504,10 +503,9 @@ cluster.fork = function(env) {
   // This can only be called from the master.
   assert(cluster.isMaster);
 
-  // Make sure that the master has been initialized
-  cluster.setupMaster();
-
-  return (new cluster.Worker(env));
+   // Make sure that the master has been initialized
+   cluster.setupMaster();
+   return (new cluster.Worker(env));
 };
 
 // execute .disconnect on all workers and close handlers when done
@@ -541,7 +539,7 @@ cluster.disconnect = function(callback) {
 cluster._setupWorker = function() {
 
   // Get worker class
-  var worker = cluster.worker = new Worker();
+   var worker = cluster.worker = new ClusterWorker();
 
   // we will terminate the worker
   // when the worker is disconnected from the parent accidentally

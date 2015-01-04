@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Nov 25 10:50:59 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan  3 07:40:08 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	   (stream-write-buffer ::WorkerHopThread ::JsGlobalObject
 	      ::JsObject ::obj)
 	   (stream-write-string ::WorkerHopThread ::JsGlobalObject
-	      ::JsHandle ::bstring ::long ::long ::obj ::obj)
+	      ::JsHandle ::bstring ::long ::long ::obj ::obj ::obj)
 	   (stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsProcess
 	      ::obj ::JsHandle)
 	   (stream-read-stop ::WorkerHopThread ::JsGlobalObject
@@ -37,15 +37,17 @@
 ;*---------------------------------------------------------------------*/
 (define (stream-shutdown %worker %this process this::JsHandle)
    (with-access::JsGlobalObject %this (js-object)
-      (with-access::JsHandle this (handle)
+      (with-access::JsHandle this (handle reqs)
 	 (let* ((req (js-new %this js-object))
 		(res (nodejs-stream-shutdown %worker %this handle
 			(lambda (status handle)
 			   (when (<fx status 0)
 			      (js-put! process '_errno
 				 (nodejs-err-name status) #f %this))
+			   (set! reqs (remq req reqs))
 			   (let ((oncomp (js-get req 'oncomplete %this)))
 			      (js-call3 %this oncomp req status this req))))))
+	    (set! reqs (cons req reqs))
 	    (when (=fx res 0)
 	       req)))))
 
@@ -58,32 +60,41 @@
 	 %data
 	 (uint32->fixnum byteoffset)
 	 (uint32->fixnum length)
-	 "ascii" #f)))
+	 "ascii" #f #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-write-string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (stream-write-string %worker %this this::JsHandle
 	   string::bstring offset::long len::long
-	   encoding callback)
+	   encoding callback sendhandle)
    (with-access::JsGlobalObject %this (js-object)
-      (let ((ipc #f))
-	 (if ipc
-	     (error "stream-write-string" "IPC Not implemented yet" this)
-	     (let ((req (js-new %this js-object)))
-		(js-put! req 'bytes len #f %this)
-		(with-access::JsHandle this (handle)
-		   (js-put! this 'writeQueueSize
-		      (nodejs-stream-write-queue-size handle) #f %this)
-		   (nodejs-stream-write %worker %this handle
-		      string offset len
-		      (lambda (status)
-			 (let ((oncomp (js-get req 'oncomplete %this)))
-			    (js-call3 %this oncomp req status this req)
-			    (js-put! this 'writeQueueSize
-			       (nodejs-stream-write-queue-size handle) #f %this)
-			    (js-undefined)))))
-		req)))))
+      (with-access::JsHandle this (handle reqs)
+	 (let ((req (js-new %this js-object)))
+	    (set! reqs (cons req reqs))
+	    (js-put! req 'bytes len #f %this)
+	    (with-access::JsHandle this (handle)
+	       (js-put! this 'writeQueueSize
+		  (nodejs-stream-write-queue-size handle) #f %this)
+	       (set! reqs (remq req reqs))
+	       (let ((cb (lambda (status)
+			    (let ((oncomp (js-get req 'oncomplete %this)))
+			       (js-call3 %this oncomp req status this req)
+			       (js-put! this 'writeQueueSize
+				  (nodejs-stream-write-queue-size handle) #f %this)
+			       (js-undefined)))))
+		  (if (nodejs-pipe-ipc? handle)
+		      (if (isa? sendhandle JsHandle)
+			  (with-access::JsHandle sendhandle ((shdl handle))
+			     (begin
+				(js-put! req 'handle sendhandle #f %this)
+				(nodejs-stream-write2 %worker %this handle
+				   string offset len shdl cb)))
+			  (nodejs-stream-write2 %worker %this handle
+			     string offset len #f cb))
+		      (nodejs-stream-write %worker %this handle
+			 string offset len cb))))
+	    req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ucs2-string->buffer ...                                          */
@@ -108,7 +119,7 @@
    (with-access::JsHandle this (handle)
       (nodejs-stream-read-start %worker %this handle
 	 (lambda (obj size) (slab-allocate slab obj size))
-	 (lambda (status buf offset len)
+	 (lambda (status buf offset len pending-type)
 	    (with-trace 'nodejs-buffer "read-start-cb"
 	       (trace-item "status=" status " buf=" (typeof buf)
 		  " offset=" offset " len=" len)
@@ -131,8 +142,20 @@
 		  (else
 		   ;; characters read
 		   (let ((b (slab-shrink! slab buf offset len)))
+		      #;(print
+			 (format "(~a) nodejs-read-cb offset=~a len=~a [~s] penting-type=~a ipc=~a" 
+			    (getpid)
+			    offset len
+			    (with-access::JsSlowBuffer b (data)
+			       (substring data offset (+fx offset len)))
+			    pending-type
+			    (nodejs-pipe-ipc? handle)))
 		      (let ((onread (js-get this 'onread %this)))
-			 (js-call3 %this onread this b offset len)
+			 (if (and (nodejs-pipe-ipc? handle) pending-type)
+			     (js-call4 %this onread this b offset len
+				(nodejs-pipe-accept %worker %this this
+				   pending-type))
+			     (js-call3 %this onread this b offset len))
 			 (js-undefined))))))))))
 
 ;*---------------------------------------------------------------------*/

@@ -25,7 +25,7 @@
 // bootstrapping the node.js core. Special caution is given to the performance
 // of the startup process, so many dependencies are invoked lazily.
 
-// This is an excerpt an node.js that initialize process and exit
+// This is an excerpt an node.js that initializes process and exit
 var startup = {};
 
 startup._lazyConstants = null;
@@ -75,7 +75,7 @@ var initProcessChannel = function() {
   // start parsing data from that stream.
   if (process.env.NODE_CHANNEL_FD) {
     var fd = parseInt(process.env.NODE_CHANNEL_FD, 10);
-    assert(fd >= 0);
+/*     assert(fd >= 0);                                                */
 
     // Make sure it's not accidentally inherited by child processes.
     delete process.env.NODE_CHANNEL_FD;
@@ -86,9 +86,8 @@ var initProcessChannel = function() {
     // a message.
     // FIXME is this really necessary?
     process.binding('tcp_wrap');
-
     cp._forkChild(fd);
-    assert(process.send);
+     /*     assert(process.send);                                           */
   }
 }
 

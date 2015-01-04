@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Nov 24 20:23:53 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan  3 19:33:16 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
 ;*=====================================================================*/
@@ -35,11 +35,16 @@
 	 ((flonum? n) (flonum->fixnum n))
 	 (else 0)))
    
+   (define tcp-servers '())
+   (define reqs '())
+   
    (define (connect family)
       (with-access::JsGlobalObject %this (js-object)
 	 (lambda (this host port callback)
+;* 	    (set! tcp-servers (cons this tcp-servers))                 */
 	    (with-access::JsHandle this (handle)
 	       (let ((req (js-new %this js-object)))
+		  (set! reqs (cons req reqs))
 		  (nodejs-tcp-connect %worker %this handle host
 		     (->fixnum (js-tointeger port %this)) family
 		     (lambda (status handle)
@@ -49,6 +54,7 @@
 			(let ((oncomp (js-get req 'oncomplete %this)))
 			   (js-call5 %this oncomp req status
 			      this req #t #t)
+			   (set! reqs (remq req reqs))
 			   (js-undefined))))
 		  req)))))
 
@@ -59,6 +65,7 @@
 	    (js-put! obj 'close
 	       (js-make-function %this
 		  (lambda (this cb)
+;* 		     (set! tcp-servers (remq this tcp-servers))        */
 		     (nodejs-close %worker %this this cb))
 		  1 "close")
 	       #f %this)
@@ -100,31 +107,31 @@
 	    
 	    (js-put! obj 'writeAsciiString
 	       (js-make-function %this
-		  (lambda (this string)
+		  (lambda (this string handle)
 		     (stream-write-string %worker %this this
 			(js-string->string string) 0 (js-string-length string)
-			"ascii" #f))
-		  1 "writeAsciiString")
+			"ascii" #f handle))
+		  2 "writeAsciiString")
 	       #f %this)
 	    
 	    (js-put! obj 'writeUtf8String
 	       (js-make-function %this
-		  (lambda (this string)
+		  (lambda (this string handle)
 		     (stream-write-string %worker %this this
 			(js-string->string string) 0 (js-string-length string)
-			"utf8" #f))
-		  1 "writeUtf8String")
+			"utf8" #f handle))
+		  2 "writeUtf8String")
 	       #f %this)
 	    
 	    (js-put! obj 'writeUcs2String
 	       (js-make-function %this
-		  (lambda (this string)
+		  (lambda (this string handle)
 		     (let* ((ucs2string (utf8-string->ucs2-string string))
 			    (buffer (ucs2-string->buffer ucs2string)))
 			(stream-write-string %worker %this this
 			   (js-string->string string) 0 (js-string-length string)
-			   "ascii" #f)))
-		  1 "writeUcs2String")
+			   "ascii" #f handle)))
+		  2 "writeUcs2String")
 	       #f %this)
 	    
 	    (js-put! obj 'readStart
@@ -193,7 +200,6 @@
 	    (js-put! obj 'open
 	       (js-make-function %this
 		  (lambda (this handle fd)
-		     (tprint "UNTESTED, example needed")
 		     (with-access::JsHandle this (handle)
 			(nodejs-tcp-open %worker %this handle fd)))
 		  2 "open")
@@ -202,27 +208,26 @@
 	    (js-put! obj 'bind
 	       (js-make-function %this
 		  (lambda (this addr port)
-		     (tprint "UNTESTED, example needed")
+;* 		     (set! tcp-servers (cons this tcp-servers))        */
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
-			   (nodejs-tcp-bind %this handle addr p 4))))
+			   (nodejs-tcp-bind %this process handle addr p 4))))
 		  2 "bind")
 	       #f %this)
 	    
 	    (js-put! obj 'bind6
 	       (js-make-function %this
 		  (lambda (this addr port)
-		     (tprint "UNTESTED, example needed")
+;* 		     (set! tcp-servers (cons this tcp-servers))        */
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
-			   (nodejs-tcp-bind %this handle addr p 6))))
+			   (nodejs-tcp-bind %this process handle addr p 6))))
 		  2 "bind6")
 	       #f %this)
 	    
 	    (js-put! obj 'listen
 	       (js-make-function %this
 		  (lambda (this backlog)
-		     (tprint "UNTESTED, example needed")
 		     (with-access::JsHandle this (handle)
 			(nodejs-tcp-listen %worker %this process this handle
 			   (->fixnum (js-tointeger backlog %this))
@@ -257,10 +262,12 @@
       (tcp-wrap (nodejs-tcp-handle %worker)))
    
    (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (js-put! obj 'TCP
-	    (js-make-function %this TCP 0 "TCP"
-	       :alloc (lambda (o) #unspecified)
-	       :construct TCP)
-	    #f %this)
-	 obj)))
+      (with-access::JsProcess process (js-tcp)
+	 (let ((obj (js-new %this js-object)))
+	    (set! js-tcp
+	       (js-make-function %this TCP 0 "TCP"
+		  :alloc (lambda (o) #unspecified)
+		  :prototype (get-tcp-proto)
+		  :construct TCP))
+	    (js-put! obj 'TCP js-tcp #f %this)
+	    obj))))

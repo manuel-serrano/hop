@@ -30,7 +30,7 @@ var StringDecoder;
 util.inherits(Readable, Stream);
 
 function console_error() {
-   //console.error.apply( this, arguments );
+/*    console.error.apply( this, arguments );                          */
 }
 
 function ReadableState(options, stream) {
@@ -118,7 +118,6 @@ function Readable(options) {
 // similar to how Writable.write() returns true if you should
 // write() some more.
 Readable.prototype.push = function(chunk, encoding) {
-   console_error( "Readble.prototype.push...encoding=", encoding );
   var state = this._readableState;
 
   if (typeof chunk === 'string' && !state.objectMode) {
@@ -135,7 +134,7 @@ Readable.prototype.push = function(chunk, encoding) {
 // Unshift should *always* be something directly out of read()
 Readable.prototype.unshift = function(chunk) {
   var state = this._readableState;
-   console_error( "readableAddChunk.2");
+
   return readableAddChunk(this, state, chunk, '', true);
 };
 
@@ -413,7 +412,6 @@ function onEofChunk(stream, state) {
   if (state.decoder && !state.ended) {
     var chunk = state.decoder.end();
     if (chunk && chunk.length) {
-	 console_error( "push.2" );
       state.buffer.push(chunk);
       state.length += state.objectMode ? 1 : chunk.length;
     }
@@ -423,7 +421,6 @@ function onEofChunk(stream, state) {
   // if we've ended and we have some data left, then emit
   // 'readable' now to make sure it gets picked up.
   if (state.length > 0) {
-	 console_error( "emitReadable.3" );
     emitReadable(stream);
   }
   else
@@ -434,19 +431,22 @@ function onEofChunk(stream, state) {
 // another read() call => stack overflow.  This way, it might trigger
 // a nextTick recursion warning, but that's not so bad.
 function emitReadable(stream) {
-   console_error( "emitReable..." );
   var state = stream._readableState;
+
   state.needReadable = false;
   if (state.emittedReadable)
     return;
 
   state.emittedReadable = true;
-  if (state.sync)
-    process.nextTick(function() {
+   if (state.sync) {
+      console_error( "_stream_readable.js, process.nextTick" );
+      process.nextTick(function() {
+	 console_error( "in next tick, emitReadable_" );
       emitReadable_(stream);
     });
-  else
-    emitReadable_(stream);
+   } else {
+      emitReadable_(stream);
+   }
 }
 
 function emitReadable_(stream) {
@@ -461,20 +461,21 @@ function emitReadable_(stream) {
 // However, if we're not ended, or reading, and the length < hwm,
 // then go ahead and try to read some more preemptively.
 function maybeReadMore(stream, state) {
+   console_error( "maybeReadMore state.readingMore=", state.readingMore );
   if (!state.readingMore) {
     state.readingMore = true;
     process.nextTick(function() {
+       console_error( "maybeReadMore nextTick... ");
       maybeReadMore_(stream, state);
     });
   }
 }
 
 function maybeReadMore_(stream, state) {
-   console_error( "maybeReadMode_ state.readingMore state=", state.buffer.length );
+   console_error( "maybeReadMore_ state.readingMore state=", state.buffer.length );
   var len = state.length;
   while (!state.reading && !state.flowing && !state.ended &&
          state.length < state.highWaterMark) {
-     console_error( "_stream_readable read(0).1 state.length=", state.length, " len=", len );
     stream.read(0);
     if (len === state.length)
       // didn't get any data, stop spinning.
@@ -496,7 +497,7 @@ Readable.prototype._read = function(n) {
 Readable.prototype.pipe = function(dest, pipeOpts) {
   var src = this;
   var state = this._readableState;
-   console_error( "_stream_readable _stream_readable prototype.pipe ..." );
+
   switch (state.pipesCount) {
     case 0:
       state.pipes = dest;
@@ -505,7 +506,6 @@ Readable.prototype.pipe = function(dest, pipeOpts) {
       state.pipes = [state.pipes, dest];
       break;
     default:
-	 console_error( "push.3" );
       state.pipes.push(dest);
       break;
   }
@@ -754,7 +754,6 @@ Readable.prototype.on = function(ev, fn) {
       state.emittedReadable = false;
       state.needReadable = true;
       if (!state.reading) {
-	 console_error( "_stream_readable read(0).2");
         this.read(0);
       } else if (state.length) {
 	 console_error( "emitReadable.4" );
@@ -772,7 +771,6 @@ Readable.prototype.addListener = Readable.prototype.on;
 Readable.prototype.resume = function() {
    console_error( "Readable.prototype.on, resume" );
   emitDataEvents(this);
-   console_error( "_stream_readable read(0).3");
   this.read(0);
   this.emit('resume');
 };
@@ -826,7 +824,6 @@ console_error( "~~~~~~~~~~~~~ emitDataEvents startPaused=", startPaused );
         stream.emit('readable');
       });
     else {
-   console_error( "_stream_readable read(0).4");
       this.read(0);
     }
     this.emit('resume');

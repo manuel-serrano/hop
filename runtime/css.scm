@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Tue Nov 18 09:53:16 2014 (serrano)                */
+;*    Last change :  Wed Dec 31 09:07:04 2014 (serrano)                */
 ;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -356,9 +356,12 @@
 ;*---------------------------------------------------------------------*/
 (define (init-hss-compiler! port)
    (set! hss-cache
-	 (instantiate::cache-disk
-	    (path (make-cache-name "hss"))
-	    (out (lambda (o p) (css-write o p))))))
+      (if (hop-cache-enable)
+	  (instantiate::cache-disk
+	     (path (make-cache-name "hss"))
+	     (out (lambda (o p) (css-write o p))))
+	  (instantiate::cache-memory
+	     (max-file-size #e1024)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-response ...                                                 */

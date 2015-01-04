@@ -94,7 +94,7 @@ exports._createSocketHandle = function(address, port, addressType, fd) {
 
   var handle = newHandle(addressType);
 
-  if (port || address) {
+   if (port || address) {
     var r = handle.bind(address, port || 0, 0);
     if (r == -1) {
       handle.close();
@@ -156,7 +156,6 @@ function replaceHandle(self, newHandle) {
 
 Socket.prototype.bind = function(/*port, address, callback*/) {
   var self = this;
-
   self._healthCheck();
 
   if (this._bindState != BIND_STATE_UNBOUND)
@@ -271,8 +270,9 @@ Socket.prototype.send = function(buffer,
 
   self._healthCheck();
 
-  if (self._bindState == BIND_STATE_UNBOUND)
-    self.bind(0, null);
+   if (self._bindState == BIND_STATE_UNBOUND) {
+      self.bind(0, null);
+   }
 
   // If the socket hasn't been bound yet, push the outbound packet onto the
   // send queue and send after binding is complete.

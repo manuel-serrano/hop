@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Dec 23 21:54:55 2014 (serrano)                */
+;*    Last change :  Fri Dec 26 19:31:32 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1073,7 +1073,7 @@
 (define (js-put/debug! _o prop v::obj throw::bool %this::JsGlobalObject loc)
    (cond
       ((pair? _o)
-       (js-put-pair! _o prop v throw %this))
+       (js-put-pair! _o (js-toname prop %this) v throw %this))
       (else
        (let ((o (js-toobject/debug %this loc _o)))
 	  (js-put! _o prop v throw %this)))))

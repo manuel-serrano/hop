@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Oct 24 07:32:52 2014                          */
-#*    Last change :  Fri Oct 24 11:38:16 2014 (serrano)                */
-#*    Copyright   :  2014 Manuel Serrano                               */
+#*    Last change :  Sun Jan  4 09:45:16 2015 (serrano)                */
+#*    Copyright   :  2014-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    nodejs blacklisted tests                                         */
 #*=====================================================================*/
@@ -18,77 +18,102 @@
 #* # server not implemented yet                                        */
 #* simple/net-socket-readystate.js                                     */
 #*                                                                     */
-#* simple/test-domain-multi.js                                         */
-#* simple/test-domain-http-server.js                                   */
-#* simple/test-domain-timers.js                                        */
-#*                                                                     */
-#* simple/test-http-set-timeout-server.js                              */
-#* simple/test-http-set-timeout.js                                     */
-#* simple/test-http-exceptions.js                                      */
-#* simple/test-http-bind-twice.js                                      */
-#* simple/test-http-abort-before-end.js                                */
-#* simple/test-http-full-response.js                                   */
-#* simple/test-http-server-stale-close.js                              */
-#* simple/test-http-304.js                                             */
-#* simple/test-http-1.0-keep-alive.js                                  */
-#* simple/test-http-chunked-304.js                                     */
-#* simple/test-http-client-timeout-agent.js                            */
-#* simple/test-http-incoming-pipelined-socket-destroy.js               */
-#* simple/test-http-malformed-request.js                               */
-#* simple/test-http-many-ended-pipelines.js                            */
-#* simple/test-http-server.js                                          */
-#*                                                                     */
-#* simple/test-net-eaddrinuse.js                                       */
-#* simple/test-net-server-bind.js                                      */
-#* simple/test-net-server-listen-remove-callback.js                    */
-#* simple/test-net-server-max-connections.js                           */
-#* simple/test-net-server-try-ports.js                                 */
-#* simple/test-net-server-unref.js                                     */
-#* simple/test-net-server-adress.js                                    */
-#* simple/test-net-can-reset-timeout.js                                */
-#* simple/test-net-create-connection.js                                */
-#* simple/test-net-bind-twice.js                                       */
-#* simple/test-net-pingpong.js                                         */
-#* simple/test-net-pause-resume-connecting.js                          */
-#*                                                                     */
-#* simple/test-net-server-address.js                                   */
-#* simple/test-http-exit-delay.js                                      */
-#* simple/test-http-upgrade-server.js                                  */
-#* simple/test-https-connecting-to-http.js                             */
-#*                                                                     */
-#* simple/test-pipe.js                                                 */
-#* simple/test-tls-server-large-request.js                             */
-#*                                                                     */
-#* simple/test-cluster-eaddrinuse.js                                   */
-#* simple/test-cluster-master-error.js                                 */
-#* simple/test-cluster-master-kill.js                                  */
-#*                                                                     */
-#* simple/test-socket-write-after-fin.js                               */
-#*                                                                     */
-#* simple/test-regress-GH-4948.js                                      */
-#* simple/test-regress-GH-4015.js                                      */
+simple/test-domain-multi.js
+simple/test-domain-http-server.js
+simple/test-domain-timers.js
+
+simple/test-http-set-timeout-server.js
+simple/test-http-set-timeout.js
+simple/test-http-exceptions.js
+simple/test-http-bind-twice.js
+simple/test-http-abort-before-end.js
+simple/test-http-full-response.js
+simple/test-http-server-stale-close.js
+simple/test-http-304.js
+simple/test-http-1.0-keep-alive.js
+simple/test-http-chunked-304.js
+simple/test-http-client-timeout-agent.js
+simple/test-http-incoming-pipelined-socket-destroy.js
+simple/test-http-malformed-request.js
+simple/test-http-many-ended-pipelines.js
+simple/test-http-server.js
+
+simple/test-net-eaddrinuse.js
+simple/test-net-server-max-connections.js
+simple/test-net-server-adress.js
+simple/test-net-bind-twice.js
+simple/test-net-pingpong.js
+
+simple/test-net-server-address.js
+simple/test-http-exit-delay.js
+simple/test-http-upgrade-server.js
+simple/test-https-connecting-to-http.js
+
+simple/test-pipe.js
+simple/test-tls-server-large-request.js
+
+simple/test-cluster-eaddrinuse.js
+simple/test-cluster-master-error.js
+simple/test-cluster-master-kill.js
+
+simple/test-regress-GH-4948.js
+simple/test-regress-GH-4015.js
+
+# http server not implemented
+simple/test-cluster-basic.js
+simple/test-cluster-bind-twice-v1.js
+simple/test-cluster-http-pipe.js
+
+# crypto
+simple/test-crypto-dh-odd-key.js
+simple/test-crypto-ecb.js
+simple/test-crypto-hash-stream-pipe.js
+simple/test-crypto-padding-aes256.js
+simple/test-crypto-padding.js
+simple/test-crypto-random.js
+simple/test-crypto-stream.js
+simple/test-crypto-verify-failure.js
+simple/test-crypto.js
+
+# zlib
+simple/test-zlib-close-after-write.js
+simple/test-zlib-dictionary-fail.js
+simple/test-zlib-dictionary.js
+simple/test-zlib-from-gzip.js
+simple/test-zlib-from-string.js
+simple/test-zlib-invalid-input.js
+simple/test-zlib-random-byte-pipes.js
+simple/test-zlib-write-after-close.js
+simple/test-zlib-write-after-flush.js
+simple/test-zlib-zero-byte.js
+simple/test-zlib.js
 
 #*---------------------------------------------------------------------*/
-#*    bad javascript tests                                             */
+#*    bad (javascript or nodejs) tests                                 */
 #*---------------------------------------------------------------------*/
 simple/test-fs-readfile-error.js
 simple/test-stream-pipe-multi.js
 simple/test-executable-path.js
 simple/test-regress-GH-1697.js
+simple/test-next-tick-starvation.js
 
 # illegal returns
-#* simple/test-child-process-stdio-big-write-end.js                    */
-#* simple/test-cluster-http-pipe.js                                    */
-#* simple/test-fs-readfile-pipe.js                                     */
-#* simple/test-domain-nested-throw.js                                  */
+simple/test-child-process-stdio-big-write-end.js
+simple/test-cluster-bind-twice-v2.js
+simple/test-domain-nested-throw.js
+simple/test-fs-readfile-pipe.js
+
+# nodejs failing tests
+simple/test-cluster-disconnect-with-no-workers.js
+simple/test-domain-implicit-fs.js
 
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
 #*---------------------------------------------------------------------*/
 # incompatible tests
 simple/test-child-process-silent.js
-simple/test-child-process-fork-close.js
 simple/test-child-process-fork-exec-argv.js
+simple/test-child-process-fork-net2.js # insufficient speed (set count=5)
 simple/test-init.js
 
 # imccompatible command line options
@@ -114,6 +139,9 @@ simple/test-debugger-repl-break-in-module.js
 simple/test-debugger-repl-restart.js
 simple/test-debugger-repl-utf8.js
 simple/test-debugger-repl.js
+
+# signals
+simple/test-signal-handler.js # Boehm's GC uses SIGUSR1 and SIGUSR2
 
 # repl
 simple/test-repl-.save.load.js

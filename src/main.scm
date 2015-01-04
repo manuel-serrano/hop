@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Dec 19 14:31:24 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Thu Jan  1 20:05:37 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -43,11 +43,15 @@
    (cond-expand
       (enable-threads #unspecified)
       (else (signal sigpipe (lambda (n) #unspecified))))
-   (signal sigsegv
+   (signal sigterm
       (lambda (n)
-	 (fprint (current-error-port) "Segmentation violation")
-	 (display-trace-stack (get-trace-stack) (current-error-port))
-	 (exit 2))))
+	 (exit (+fx 128 n))))
+   (when (<fx (bigloo-debug) 3)
+      (signal sigsegv
+	 (lambda (n)
+	    (fprint (current-error-port) "Segmentation violation")
+	    (display-trace-stack (get-trace-stack) (current-error-port))
+	    (exit 2)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

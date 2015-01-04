@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Dec 21 13:09:58 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan  3 06:44:44 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
 	   (nodejs-require ::JsGlobalObject ::JsObject)
+	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
@@ -495,13 +496,12 @@
    (assoc name (core-module-table)))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-require-core ...                                          */
+;*    nodejs-core-module ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    Require a nodejs module, load it if necessary or simply          */
-;*    reuse the previously loaded module structure.                    */
+;*    Get a core module object. This function is used during bootstrap */
+;*    by NODEJS-PROCESS to get the console core module.                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-core name::bstring worker %this)
-
+(define (nodejs-core-module name::bstring worker %this)
    (define (nodejs-init-core name worker %this)
       (with-trace 'require "nodejs-init-core"
 	 (trace-item "name=" name)
@@ -515,13 +515,24 @@
 	       ;; return the module
 	       (trace-item "mod=" (typeof mod))
 	       mod))))
+   
+   (with-trace 'require "nodejs-core-module"
+      (trace-item "name=" name)
+      (trace-item "worker=" (typeof worker))
+      (or (nodejs-cache-module name worker)
+	  (nodejs-init-core name worker %this))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-require-core ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Require a nodejs module, load it if necessary or simply          */
+;*    reuse the previously loaded module structure.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-require-core name::bstring worker %this)
    (with-trace 'require "nodejs-require-core"
       (trace-item "name=" name)
       (trace-item "worker=" (typeof worker))
-      (let ((mod (or (nodejs-cache-module name worker)
-		     (nodejs-init-core name worker %this))))
-	 (js-get mod 'exports %this))))
+      (js-get (nodejs-core-module name worker %this) 'exports %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -797,7 +808,11 @@
 (define (nodejs-worker %this::JsGlobalObject scope::JsObject %module::JsObject)
 
    (define (loader filename worker this)
-      (nodejs-require-module filename worker this %module))
+      (if (string? filename)
+	  (nodejs-require-module filename worker this %module)
+	  (js-raise-error %this
+	     (format "Cannot load worker module ~a" filename)
+	     filename)))
 
    (define (%js-worker %this)
       (with-access::JsGlobalObject %this (js-worker)

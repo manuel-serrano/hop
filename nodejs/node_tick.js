@@ -26,7 +26,7 @@
 // of the startup process, so many dependencies are invoked lazily.
 
 // This is an excerpt an node.js that initialize tick counters.
-function initNodeTick( process ) {
+function initNodeTick() {
   var processNextTick = function() {
     var _needTickCallback = process._needTickCallback;
     var nextTickQueue = [];
@@ -70,7 +70,7 @@ function initNodeTick( process ) {
           infoBox[length] = 0;
         } else {
           nextTickQueue.splice(0, infoBox[index]);
-          infoBox[length] = nextTickQueue.length;
+           infoBox[length] = nextTickQueue.length;
           if (needSpinner) {
             _needTickCallback();
             needSpinner = false;

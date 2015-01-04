@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Dec 23 20:23:08 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan  3 19:20:30 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -208,7 +208,7 @@
 ;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref str i)
+(define (utf8-codeunit-ref str i::int)
    (let ((sentinel (string-ascii-sentinel str)))
       (if (<fx i sentinel)
 	  (char->integer (string-ref str i))
@@ -323,7 +323,7 @@
 	     (pos (js-tointeger index %this)))
 	 (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
 	     +nan.0
-	     (utf8-codeunit-ref val pos))))
+	     (utf8-codeunit-ref val (->fixnum pos)))))
    
    (js-bind! %this obj 'charCodeAt
       :value (js-make-function %this charcodeat 1 'charCodeAt)
