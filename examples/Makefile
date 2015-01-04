@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Nov 24 17:55:20 2014 (serrano)                */
-#*    Copyright   :  2006-14 Manuel Serrano                            */
+#*    Last change :  Sun Jan  4 10:05:19 2015 (serrano)                */
+#*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -19,40 +19,42 @@
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
-  async/async.js \
-  arraybuffer/arraybuffer.js \
+  README.md \
+  async/async.js async/examples.json\
+  arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
-  require/mod1.js \
-  requirec/requirec.js requirec/mod2.js requirec/mod1.js \
+  require/mod1.js require/example.json \
+  requirec/requirec.js requirec/mod2.js requirec/mod1.js requirec/example.json \
   requirew/requirew.js requirew/provider.js requirew/foo.js \
+  requirew/example.json \
   js2http/js2http.js js2http/fact.js \
   arraybuffer/arraybuffer.js \
-  qunit/qunit.js \
-  event/event.js \
-  fs/fs.js \
-  url/url.js \
-  file/file.js \
-  websocket/wsserver.js websocket/wsclient.js \
-  wsclient/wsclient.js \
-  svc/svc.js \
-  svc2/svc2.js svc2/extern.js \
-  svc3/svc3.js \
-  svc4/svc4.js \
+  qunit/qunit.js qunit/example.json \
+  event/event.js event/example.json \
+  fs/fs.js fs/example.json \
+  url/url.js url/example.json \
+  file/file.js file/example.json \
+  websocket/wsserver.js websocket/wsclient.js websocket/example.json \
+  wsclient/wsclient.js wsclient/example.json \
+  svc/svc.js svc/example.json \
+  svc2/svc2.js svc2/extern.js svc2/example.json \
+  svc3/svc3.js svc3/example.json \
+  svc4/svc4.js svc4/example.json \
   html/html.js html/html.hss \
-  hss/hss.hss hss/hss.js \
-  tree/tree.js \
-  tower/tower.js \
-  dom/dom.js \
-  jquery/jquery.js \
-  hello/hello.js \
-  debug/debug.js debug/bugs.js \
-  proxy/proxy.js \
-  worker/slave.js worker/worker.js worker/bar.js \
-  worker2/slave.js worker2/worker2.js \
-  worker3/slave.js worker3/worker3.js worker3/bar.js \
-  worker4/slave.js worker4/worker4.js \
-  sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js \
-  widget/node_modules \
+  hss/hss.hss hss/hss.js hss/example.json \
+  tree/tree.js tree/example.json \
+  tower/tower.js tower/example.json \
+  dom/dom.js dom/example.json \
+  jquery/jquery.js jquery/example.json \
+  hello/hello.js hello/example.json \
+  debug/debug.js debug/bugs.js debug/example.js \
+  proxy/proxy.js proxy/example.json \
+  worker/slave.js worker/worker.js worker/bar.js worker/example.son \
+  worker2/slave.js worker2/worker2.js worker2/example.son \
+  worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.son \
+  worker4/slave.js worker4/worker4.js worker4/example.son \
+  sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
+  widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \
   widget/node_modules/flipcounter/lib \
   widget/node_modules/flipcounter/lib/flipcounter.js \
@@ -67,11 +69,13 @@ POPULATION = Makefile \
   widget/node_modules/flipcounter/etc/img/digits.png \
   widget/node_modules/flipcounter-1.0.0.tgz \
   widget/widget.js \
-  keepalive/keepalive.js keepalive/keepalive.hss \
-  authentication/authentication.js \
-  image/image.js \
-  pair/pair.js \
-  hzdemo/hzdemo.js \
+  keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
+  authentication/authentication.js authentication/example.json \
+  authentication2/authentication2.js authentication2/example.json \
+  authentication2/passwd.hop authentication2/remove.js \
+  image/image.js image/example.json \
+  pair/pair.js pair/example.json \
+  hzdemo/hzdemo.js hzdemo/example.json \
   hzdemo/README \
   hzdemo/foo/package.json \
   hzdemo/foo/foo.js \
@@ -81,7 +85,24 @@ POPULATION = Makefile \
   hzdemo/foo/etc/logo.png \
   hzdemo/foo-1.0.0.hz \
   scheme/scheme.js \
-  scheme/scheme.hop
+  scheme/scheme.hop \
+  examples/doc.js examples/doc.wiki examples/example.json examples/examples.hss \
+  examples/examples.js examples/libs/bootstrap/css/bootstrap-theme.css \
+  examples/libs/bootstrap/css/bootstrap-theme.css.map \
+  examples/libs/bootstrap/css/bootstrap-theme.min.css \
+  examples/libs/bootstrap/css/bootstrap.css \
+  examples/libs/bootstrap/css/bootstrap.css.map \
+  examples/libs/bootstrap/css/bootstrap.min.css \
+  examples/libs/bootstrap/fonts/glyphicons-halflings-regular.eot \
+  examples/libs/bootstrap/fonts/glyphicons-halflings-regular.svg \
+  examples/libs/bootstrap/fonts/glyphicons-halflings-regular.ttf \
+  examples/libs/bootstrap/fonts/glyphicons-halflings-regular.woff \
+  examples/libs/bootstrap/js/bootstrap.js \
+  examples/libs/bootstrap/js/bootstrap.min.js \
+  examples/libs/bootstrap/js/npm.js \
+  examples/libs/jquery/js/jquery.min.js \
+  examples/passwd.hop \
+  examples/src.js
 
 
 #*---------------------------------------------------------------------*/
