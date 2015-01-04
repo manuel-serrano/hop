@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Dec 17 16:25:36 2014 (serrano)                */
+;*    Last change :  Tue Dec 23 21:54:55 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -607,7 +607,7 @@
       ((pair? o)
        (js-get-pair o prop %this))
       ((null? o)
-       (js-get-null o prop %this))
+       (js-get-null o (js-toname prop %this) %this))
       (else
        (let ((obj (js-toobject %this o)))
 	  (if obj
@@ -684,7 +684,7 @@
       ((pair? _o)
        (js-get-pair _o prop %this))
       ((null? _o)
-       (js-get-null _o prop %this))
+       (js-get-null _o (js-toname prop %this) %this))
       (else
        (let ((o (js-toobject/debug %this loc _o)))
 	  (js-get _o prop %this)))))

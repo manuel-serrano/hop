@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Dec  9 07:53:48 2014 (serrano)                */
+;*    Last change :  Wed Dec 24 07:39:00 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -322,6 +322,9 @@
 	    (hop-runtime-extra::pair-nil)
 	    (hop-runtime-extra-set! ::pair-nil)
 	    (hop-runtime-extra-add! ::bstring)
+
+	    (hop-exepath)
+	    (hop-exepath-set! ::obj)
 
 	    (hop-rc-loaded?)
 	    (hop-rc-loaded!)))
@@ -1385,4 +1388,10 @@
 		(format "hop@~a:~a" (hop-server-hostname) v))
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-exepath ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-exepath
+   #f)
 

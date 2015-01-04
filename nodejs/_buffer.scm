@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Wed Dec 17 10:19:42 2014 (serrano)                */
+;*    Last change :  Tue Dec 23 17:16:08 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -67,7 +67,7 @@
 ;* 	 (with-access::JsFastBuffer obj (__proto__)                    */
 ;* 	    (set! __proto__ js-buffer-proto))))                        */
 ;*    obj)                                                             */
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsFastBuffer ...                             */
 ;*---------------------------------------------------------------------*/
@@ -929,9 +929,9 @@
 		    (string=? (js-string->string encoding) "ucs-2")
 		    (string=? (js-string->string encoding) "utf16le")
 		    (string=? (js-string->string encoding) "utf-16le"))
-		(*fx (utf8-codepoint-length (js-string->string string)) 2))
+		(*fx (utf8-codeunit-length (js-string->string string)) 2))
 	       ((string=? (js-string->string encoding) "hex")
-		(/fx (utf8-codepoint-length (js-string->string string)) 2))
+		(/fx (utf8-codeunit-length (js-string->string string)) 2))
 	       ((string=? (js-string->string encoding) "base64")
 		(string-length (base64-decode (js-string->string string) #t)))
 	       ((or (string=? (js-string->string encoding) "ascii")

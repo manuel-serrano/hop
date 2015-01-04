@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Dec 17 17:21:15 2014 (serrano)                */
+;*    Last change :  Tue Dec 23 21:15:26 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -920,7 +920,7 @@
       ((object? obj)
        (js-object-tostring obj %this))
       ((string? obj)
-       (error "js-tostring" "internal error" obj))
+       (bigloo-type-error "js-tostring" "JsStringLiteral" obj))
       (else
        (typeof obj))))
 
@@ -1123,7 +1123,7 @@
 	      (evals (if strict (string-append "'use strict';\n" s) s)))
 	  (call-with-input-string evals
 	     (lambda (ip)
-		(%js-eval ip 'eval %this ;; (used to be scope)
+		(%js-eval ip 'eval %this
 		   (if strict (js-undefined) this)
 		   scope))))))
 
@@ -1169,7 +1169,6 @@
 	    (with-trace 'hopscript-eval "%js-eval-inner"
 	       (trace-item "e=" e)
 	       (trace-item "scope=" (typeof scope))
-	       (trace-item "module=" (typeof (js-get scope 'module %this)))
 	       (let ((r (eval! `(,e ,%this
 				   ,this
 				   ,scope

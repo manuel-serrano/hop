@@ -3,17 +3,18 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Tue Dec  9 07:29:36 2014 (serrano)                */
+/*    Last change :  Sun Dec 21 07:40:12 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
 /*    -------------------------------------------------------------    */
-/*    run: hop -v -g wsclient.js                                       */
-/*    (this assumes an echo WebSocket server at localhost:9999)        */
+/*    run: hop -v -- wsclient.js 9999                                  */
 /*=====================================================================*/
 
-var ws = new WebSocket( "ws://localhost:9999/hop/wss", [ "bar", "foo" ] );
+var port = parseInt( process.execArgv[ process.execArgv.length - 1 ] );
+var ws = new WebSocket( "ws://localhost:" + port + "/hop/wss", [ "bar", "foo" ] );
 
+console.error( "ws=", "ws://localhost:" + port + "/hop/wss" );
 ws.onopen = function( event ) {
    this.send( "toto n'est pas content" );
    this.send( "tutu non plus" );
@@ -27,7 +28,6 @@ ws.onmessage = function( event ) {
    }
 };
 
-
 ws.onclose = function( event ) {
-   console.log( "client websocket closed." );
+   console.error( "client websocket closed." );
 }

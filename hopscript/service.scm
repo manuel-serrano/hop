@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Dec 12 20:11:52 2014 (serrano)                */
+;*    Last change :  Sat Dec 20 07:40:31 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -208,9 +208,9 @@
 	     (when (isa? f JsFunction)
 		(set! fail
 		   (lambda (xhr)
-		      (js-call1 %this f %this
-			 (with-access::xml-http-request xhr (header)
-			       (js-alist->jsobject header %this)))))))))
+		      (with-access::xml-http-request xhr (header)
+			 (js-call1 %this f %this
+			    (js-alist->jsobject header %this)))))))))
 
       (define (js-string->obj obj)
 	 (string->obj obj
@@ -225,7 +225,8 @@
 	    :host host :port port 
 	    :user user :password password :authorization authorization
 	    :string->obj js-string->obj
-	    :javascript->obj js-javascript->obj))
+	    :javascript->obj js-javascript->obj
+	    :string->string string->js-string))
 
       (define (scheme->js val)
 	 (if (string? val)

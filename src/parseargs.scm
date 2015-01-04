@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Dec 19 15:30:25 2014 (serrano)                */
+;*    Last change :  Wed Dec 24 07:40:02 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -260,6 +260,10 @@
 	    (("--no-server" (help "Exit after loading command line files"))
 	     (hop-run-server-set! #f)
 	     (unless p (set! p 0)))
+	    (("--exepath" ?name (help "Set JavaScript executable path"))
+	     (if (string=? name "*")
+		 (hop-exepath-set! (executable-name))
+		 (hop-exepath-set! name)))
 	    
 	    ;; PATHS
 	    (section "Paths")

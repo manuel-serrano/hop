@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Oct 13 15:28:52 2014 (serrano)                */
+;*    Last change :  Tue Dec 23 07:11:40 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -501,7 +501,7 @@
 				       (char=? (string-ref str (+fx j 7)) #\u))
 				  (let ((n2 (hex4 str (+fx j 8))))
 				     (if (=fx (bit-and n2 #xdc00) #xdc00)
-					 ;; utf6-be character
+					 ;; utf16-be character
 					 ;; http://en.wikipedia.org/wiki/UTF-16
 					 ;; http://fr.wikipedia.org/wiki/UTF-16
 					 (let* ((s (integer2->utf8 n n2))

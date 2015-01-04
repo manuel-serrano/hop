@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Fri Jul 25 16:29:06 2014 (serrano)                */
+/*    Last change :  Sat Dec 20 08:02:38 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Programmable hophz interactions                                  */
@@ -40,10 +40,7 @@ service hzdemo() {
       },
       <DIV> {
 	 "search: ",
-	 <INPUT> {
-	    type: "text",
-	    id: "search"
-	 },
+	 <INPUT> { type: "text", id: "search" },
 	 <BUTTON> {
 	    onclick: ~{
 	       var el = document.getElementById( "search" );
@@ -72,10 +69,7 @@ service hzdemo() {
       },  
       <DIV> {
 	 "find: ",
-	 <INPUT> {
-	    type: "text",
-	    id: "find"
-	 },
+	 <INPUT> { type: "text", id: "find" },
 	 <BUTTON> {
 	    onclick: ~{
 	       var el = document.getElementById( "find" );
@@ -85,16 +79,8 @@ service hzdemo() {
 		     el.innerHTML = "";
 
 		     if( e ) {
-			el.appendChild( <DIV> {
-			   e.name,
-			   " ",
-			   e.version,
-			   " ",
-			   e.author
-			} )
-			el.appendChild( <DIV> {
-			   e.comment
-			} );
+			el.appendChild( <DIV> { e.name, " ", e.version, " ", e.author } )
+			el.appendChild( <DIV> { e.comment } );
 		     } else {
 			el.appendChild( <DIV> { "weblet not found" } ) 
 		     }
@@ -108,10 +94,7 @@ service hzdemo() {
       <UL> {
 	 HOPHZ.listCategories( "localhost" ).map( function( e ) {
 	    return <LI> {
-	       <A> {
-		  href: hophzCategory( e ).toString(),
-		  e
-	       }
+	       <A> { href: hophzCategory( e ).toString(), e }
 	    }
 	 } )
       }
@@ -127,9 +110,7 @@ service hophzCategory( c ) {
 	       <A> {
 		  e.name, " ",
 		  <BUTTON> {
-		     onclick: ~{
-			install( e.url );
-		     },
+		     onclick: ~{ install( e.url ); },
 		     "install"
 		  }
 	       }

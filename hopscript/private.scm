@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Nov 22 10:37:54 2014 (serrano)                */
+;*    Last change :  Sat Dec 20 09:26:05 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -61,6 +61,9 @@
 	   (js-number->string obj)
 	   (js-parseint ::bstring ::obj ::bool ::JsGlobalObject)
 	   (js-parsefloat ::bstring ::bool ::JsGlobalObject)
+
+	   (js-serializer ::JsObject)
+	   (js-unserializer ::obj)
 	   
 	   ))
 
@@ -732,3 +735,14 @@
    (fixnum->uint32 (vector-length v)))
 
 
+;*---------------------------------------------------------------------*/
+;*    js-serializer ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-serializer o::JsObject)
+   (call-with-output-string (lambda (op) (obj->javascript-expr o op))))
+
+;*---------------------------------------------------------------------*/
+;*    js-unserializer ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-unserializer s)
+   s)

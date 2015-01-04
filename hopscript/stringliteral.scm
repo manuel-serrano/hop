@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Dec 13 08:02:36 2014 (serrano)                */
+;*    Last change :  Mon Dec 22 06:32:29 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -51,6 +51,12 @@
 (define-method (hop->javascript o::JsStringLiteral op compile isexpr)
    (hop->javascript (js-string->string o) op compile isexpr))
 
+;*---------------------------------------------------------------------*/
+;*    javascript-string->obj ::JsGlobalObject ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-string->obj %this::JsGlobalObject v)
+   (string->js-string v))
+
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    object-serializer ::JsStringLiteral ...                          *} */
 ;* {*---------------------------------------------------------------------*} */
@@ -94,8 +100,6 @@
 ;*    0: S     ;; "foo" = "foo"                                        */
 ;*    1: L     ;; "foobar" = ("foo" "bar")                             */
 ;*    2: R     ;; "foobar" = ("bar" "foo")                             */
-;*    3: S*    ;; utf8-left-replacement                                */
-;*    4: S*    ;; utf8-right-replacement                               */
 ;*---------------------------------------------------------------------*/
 (define (js-string-normalize!::bstring js::JsStringLiteral)
    (with-access::JsStringLiteral js (state val)

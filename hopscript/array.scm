@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 12 18:14:20 2014 (serrano)                */
+;*    Last change :  Sat Dec 20 08:23:46 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -60,16 +60,10 @@
 (define-method (javascript-vector->obj %this::JsGlobalObject v)
    (js-vector->jsarray v %this))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsArray ...                                  *} */
-;* {*---------------------------------------------------------------------*} */
-;* (register-class-serialization! JsArray                              */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s javascript->jsobj)))                */
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArray ...                                  */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsArray js-serializer js-unserializer)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */

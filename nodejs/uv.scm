@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Dec 19 18:12:05 2014 (serrano)                */
+;*    Last change :  Wed Dec 24 07:38:35 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -336,8 +336,6 @@
 	       (integer->string (uv-id timer) 16)
 	       " repeat=" repeat)
 	    (let ((proc (js-get obj 'ontimeout %this)))
-;* 	       (when (=u64 repeat #u64:0)                              */
-;* 		  (nodejs-timer-unmark! %worker timer))                */
 	       (when (isa? proc JsFunction)
 		  (js-call1 %this proc obj status))))))
        
@@ -346,16 +344,6 @@
 		    (cb (lambda (timer status)
 			   (timer-body timer status))))))
       obj))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-timer-unmark! ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-timer-unmark! %worker timer)                        */
-;*    (with-access::AsTimer timer (asyncmark)                          */
-;*       (trace-item "mark=" asyncmark)                                */
-;*       (when asyncmark                                               */
-;* 	 (set! asyncmark #f)                                           */
-;* 	 (uv-async-- %worker (format "timer-~x" (uv-id timer))))))     */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-start ...                                           */
@@ -374,17 +362,8 @@
    (define (start-action)
       (uv-timer-start timer (to-uint64 start) (to-uint64 rep)))
    
-;*    (with-access::UvTimer timer (asyncmark ref)                      */
-      (with-trace 'nodejs-async "nodejs-timer-start (pre)"
-;* 	 (trace-item "timer-" (integer->string (uv-id timer) 16)       */
-;* 	    " start=" start " rep=" rep " asyncmark=" asyncmark " ref=" ref) */
-	 (start-action)))
-;* 	 (if (or asyncmark (not ref))                                  */
-;* 	     (nodejs-async "timer-start" start-action)                 */
-;* 	     (begin                                                    */
-;* 		(set! asyncmark #t)                                    */
-;* 		(nodejs-async (format "timer-~x" (uv-id timer))        */
-;* 		   start-action))))))                                  */
+   (with-trace 'nodejs-async "nodejs-timer-start (pre)"
+      (start-action)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-close ...                                           */
@@ -394,16 +373,6 @@
    (with-trace 'nodejs-async "nodejs-timer-close (pre)"
       (trace-item "timer-" (integer->string (uv-id timer) 16))
       (uv-close timer)))
-;*       (nodejs-timer-unmark! %worker timer)                          */
-;*       (nodejs-async-push "timer-close"                              */
-;* 	 (lambda ()                                                    */
-;* 	    (uv-close timer)                                           */
-;* 	    (js-worker-push-thunk! %worker "nodejs-timer-close"        */
-;* 	       (lambda ()                                              */
-;* 		  ;; one for the close                                 */
-;* 		  (with-trace 'nodejs-async "nodejs-timer-close"       */
-;* 		     (trace-item "timer-" (integer->string (uv-id timer) 16)) */
-;* 		     (uv-async-- %worker "timer-close"))))))))         */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-stop ...                                            */
@@ -412,14 +381,6 @@
    (with-trace 'nodejs-async "nodejs-timer-stop (pre)"
       (trace-item "timer-" (integer->string (uv-id timer) 16))
       (uv-timer-stop timer)))
-;*       (nodejs-async-push "timer-stop"                               */
-;* 	 (lambda ()                                                    */
-;* 	    (uv-timer-stop timer)                                      */
-;* 	    (js-worker-push-thunk! %worker "nodejs-timer-stop"         */
-;* 	       (lambda ()                                              */
-;* 		  (with-trace 'nodejs-async "nodejs-timer-stop"        */
-;* 		     (trace-item "timer-" (integer->string (uv-id timer) 16)) */
-;* 		     (uv-async-- %worker "timer-stop"))))))))          */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-unref ...                                           */
@@ -514,7 +475,7 @@
 ;*    nodejs-exepath ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-exepath)
-   (uv-exepath))
+   (or (hop-exepath) (uv-exepath)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getuptime ...                                             */
@@ -1597,8 +1558,7 @@
 	 (let ((args (js-get options 'args %this)))
 	    (when (isa? args JsArray)
 	       (set! oargs
-		  (vector-map! (lambda (o)
-				  (js-tostring o %this))
+		  (vector-map! (lambda (o) (js-tostring o %this))
 		     (jsarray->vector args %this)))))
 
 	 ;; options.cwd
@@ -1610,8 +1570,7 @@
 	 (let ((env (js-get options 'envPairs %this)))
 	    (when (isa? env JsArray)
 	       (set! oenv
-		  (vector-map! (lambda (o)
-				  (js-tostring o %this))
+		  (vector-map! (lambda (o) (js-tostring o %this))
 		     (jsarray->vector env %this)))))
 	 
 	 ;; options.stdio

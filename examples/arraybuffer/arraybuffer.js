@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun 20 18:38:17 2014                          */
-/*    Last change :  Wed Dec 17 16:43:50 2014 (serrano)                */
+/*    Last change :  Sun Dec 21 11:08:44 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    ArrayBuffer example                                              */
@@ -165,11 +165,3 @@ console.log( "1h=%s", dv.getFloat64( 1, false ) );
 dv.setFloat64( 1, -0x1234, false );
 console.log( "1i=%s", dv.getFloat64( 1, true ) );
 console.log( "1j=%s", dv.getFloat64( 1, false ) );
-
-service arraybuffer() {
-   return <HTML> {
-      <BODY> {
-	 "Console only example"
-      }
-   }
-}

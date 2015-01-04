@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Tue Nov 25 11:25:21 2014 (serrano)                */
+;*    Last change :  Tue Dec 23 21:46:45 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -152,37 +152,7 @@
 ;*    js-get-null ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-get-null o::nil prop %this)
-   (case prop
-      ((length)
-       (js-make-function %this (lambda (this proc) 0)
-	  0 'length))
-      ((map)
-       (js-make-function %this (lambda (this proc) '())
-	  1 'map)) 
-      ((forEach)
-       (js-make-function %this (lambda (this proc) (js-undefined))
-	  1 'forEach))
-      ((assoc)
-       (js-make-function %this (lambda (this key) #f)
-	  1 'assoc))
-      ((reverse)
-       (js-make-function %this (lambda (this) '())
-	  0 'reverse))
-      ((concat)
-       (js-make-function %this
-	  (lambda (this . l) (apply append l))
-	  -1 'concat))
-      ((keys)
-       (js-make-function %this
-	  (lambda (this . l)
-	     (js-vector->jsarray '#() %this))
-	  0 'keys))
-      ((inspect)
-       (js-undefined))
-      (else
-       (tprint "js-get-null raise prop=" prop " " (typeof prop))
-       (js-raise-type-error %this
-	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))
+   (js-raise-type-error %this (format "no such field \"~a\" ~~a" prop) o))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put-pair! ...                                                 */

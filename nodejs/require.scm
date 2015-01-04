@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Dec 19 10:57:11 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 13:09:58 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -453,11 +453,20 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-module name::bstring worker::WorkerHopThread %this %module)
-
+   
    (define (load-json filename)
       (call-with-input-file filename
 	 (lambda (ip)
 	    (js-json-parser ip #f #f #f %this))))
+
+;*    (define (load-wiki filename)                                     */
+;*       (with-access::JsGlobalObject %this (js-object)                */
+;* 	 (let ((scope (js-new0 %this js-object)))                      */
+;* 	    (js-put! scope 'module %module #f %this)                   */
+;* 	    (wiki-file->hop filename                                   */
+;* 	       :syntax (instantiate::wiki-syntax                       */
+;* 			  (extension (lambda (in syntax charset)       */
+;* 					(%js-eval in 'eval %this %this scope)))))))) */
    
    (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
@@ -465,15 +474,19 @@
 	  (nodejs-require-core name worker %this)
 	  (let ((abspath (nodejs-resolve name %this %module)))
 	     (trace-item "abspath=" abspath)
-	     (if (string-suffix? ".json" abspath)
-		 (load-json abspath)
+	     (cond
+		((string-suffix? ".json" abspath)
+		 (load-json abspath))
+;* 		((string-suffix? ".wiki" abspath)                      */
+;* 		 (load-wiki abspath))                                  */
+		(else
 		 (let* ((mod (nodejs-load abspath worker))
 			(children (js-get %module 'children %this))
 			(push (js-get children 'push %this)))
 		    (js-call1 %this push children mod)
 		    (when (eq? (js-get mod 'parent %this) (js-undefined))
 		       (js-put! mod 'parent %module #f %this))
-		    (js-get mod 'exports %this)))))))
+		    (js-get mod 'exports %this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */

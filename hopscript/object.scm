@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Dec 12 18:48:45 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 07:21:28 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -71,13 +71,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsObject
-   (lambda (o)
-      (call-with-output-string
-	 (lambda (op)
-	    (obj->javascript-expr o op))))
-   (lambda (s)
-      s))
+(register-class-serialization! JsObject js-serializer js-unserializer)
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-intern-finalizer ::JsObject ...                               *} */
@@ -336,7 +330,7 @@
 	    ;; unescape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (unescape this string)
-	       (url-decode! (js-tostring string %this)))
+	       (string->js-string (url-decode! (js-tostring string %this))))
 
 	    (js-bind! %this %this 'unescape
 	       :value (js-make-function %this unescape 1 'unescape

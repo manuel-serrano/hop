@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Dec 13 07:10:58 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 07:16:38 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -72,12 +72,13 @@
 ;*    scm->js ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (scm->js scm %this)
-   (cond
-      ((string? scm) (string->js-string scm))
-      ((keyword? scm) (string->js-string (keyword->string scm)))
-      ((symbol? scm) (string->js-string (symbol->string scm)))
-      ((pair? scm) (js-alist->jsobject scm %this))
-      ((int64? scm) (int64->flonum scm))
-      ((elong? scm) (elong->flonum scm))
-      ((vector? scm) (js-vector->jsarray (vector-map! scm->js scm) %this))
-      (else scm)))
+   (let loop ((scm scm))
+      (cond
+	 ((string? scm) (string->js-string scm))
+	 ((keyword? scm) (string->js-string (keyword->string scm)))
+	 ((symbol? scm) (string->js-string (symbol->string scm)))
+	 ((pair? scm) (js-alist->jsobject scm %this))
+	 ((int64? scm) (int64->flonum scm))
+	 ((elong? scm) (elong->flonum scm))
+	 ((vector? scm) (js-vector->jsarray (vector-map! loop scm) %this))
+	 (else scm))))

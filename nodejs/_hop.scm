@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Dec 17 17:21:32 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 07:22:52 2014 (serrano)                */
 ;*    Copyright   :  2014 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -74,8 +74,7 @@
 	    (define-js charsetConvert 3
 	       (lambda (this text from to)
 		  (string->js-string
-		     (hopjs-charset-convert this (js-string->string text)
-			from to %this))))
+		     (hopjs-charset-convert this text from to %this))))
 	    
 	    (define-js charset 0
 	       (lambda (this)
@@ -155,7 +154,6 @@
 	    (define-js Cons 2
 	       (lambda (this car cdr)
 		  (cons car cdr)))
-	    
 	    )
 	 %this)))
 
@@ -164,9 +162,14 @@
 ;*---------------------------------------------------------------------*/
 (define (hopjs-with-url url success opt %this)
    
-   (define (unjson in)
-      (js-json-parser in (js-undefined) #f #t %this))
+   (define (js-string->obj obj)
+      (string->obj obj
+	 (lambda (o)
+	    (if (string? o) (js-javascript->obj o) o))))
    
+   (define (js-javascript->obj obj)
+      (javascript->obj obj %this))
+
    (let ((url (js-tostring url %this))
 	 (fail #f)
 	 (timeout 0)
@@ -185,7 +188,9 @@
 	 (if (isa? success JsFunction)
 	     (lambda (x) (js-call1 %this success %this x))
 	     (lambda (x) x))
-	 :parse-json unjson
+	 :string->obj js-string->obj
+	 :javascript->obj js-javascript->obj
+	 :string->string string->js-string
 	 :fail fail 
 	 :timeout timeout
 	 :method (string->symbol method))))
@@ -331,7 +336,7 @@
 (define (hopjs-charset-convert this text from to %this)
    (let ((from (js-tostring from %this))
          (to (js-tostring to %this)))
-      (charset-convert text
+      (charset-convert (js-tostring text %this)
 	 (if (string? from) (string->symbol from) (hop-locale))
 	 (if (string? to) (string->symbol to) (hop-charset)))))
    

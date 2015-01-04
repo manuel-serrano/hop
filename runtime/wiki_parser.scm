@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Wed May 21 16:43:55 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 12:00:27 2014 (serrano)                */
 ;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
@@ -270,6 +270,15 @@
          (if (pair? env)
 	     (eval `(let (,env) ,exp))
 	     (eval exp)))
+
+      ;; extension-wiki
+      (define (extension-wiki port)
+       (with-access::wiki-syntax syn (extension)
+	  (with-handler
+	     (lambda (e)
+		(exception-notify e)
+		"")
+	     (extension port syn charset))))
       
       ;; misc
       (define (the-html-string)
@@ -479,34 +488,41 @@
 		   (ignore)))))
       
       (define include-grammar
-         (regular-grammar (end name proc)
-	    ((: "</" (+ (out #\>)) ">")
-	     (if (eq? (the-symbol) end)
-		 (let* ((name (apply string-append (reverse! name)))
-			(path (if (substring-at? name ",(" 0)
-				  (let ((e (substring name 1 (string-length name))))
-				     (with-input-from-string e
-					(lambda ()
-					   (eval-wiki (read)))))
-				  (let ((dir (dirname (input-port-name (the-port)))))
-				     (find-file/path name (list "." dir))))))
-		    (cond
-		       ((and (string? path) (file-exists? path))
-			(proc path))
-		       ((string? path)
-			(warning "wiki-parser" "Can't find file: " path)
-			(add-expr! ((wiki-syntax-pre syn)
-				    "File not found -- " path)))
-		       (else
-			(warning "wiki-parser" "Can't find file: " name)
-			(add-expr! ((wiki-syntax-pre syn)
-				    "Cannot find file in path -- " name)))))))
-	    ((+ (or (out #\<) (: "<" (out "/"))))
-	     (set! name (cons (the-string) name))
-	     (ignore))
-	    ((+ #\<)
-	     (set! name (cons (the-string) name))
-	     (ignore))))
+       (regular-grammar (end name proc)
+	  ((: "</" (+ (out #\>)) ">")
+	   (if (eq? (the-symbol) end)
+	       (let* ((name (apply string-append (reverse! name)))
+		      (path (cond
+			       ((substring-at? name ",(" 0)
+				(let ((e (substring name 1 (string-length name))))
+				   (with-input-from-string e
+				      (lambda ()
+					 (eval-wiki (read))))))
+			       ((substring-at? name ",{" 0)
+				(let ((e (substring name 1 (string-length name))))
+				   (with-input-from-string e
+				      (lambda ()
+					 (extension-wiki (current-input-port))))))
+			       (else
+				(let ((dir (dirname (input-port-name (the-port)))))
+				   (find-file/path name (list "." dir)))))))
+		  (cond
+		     ((and (string? path) (file-exists? path))
+		      (proc path))
+		     ((string? path)
+		      (warning "wiki-parser" "Can't find file: " path)
+		      (add-expr! ((wiki-syntax-pre syn)
+				  "File not found -- " path)))
+		     (else
+		      (warning "wiki-parser" "Can't find file: " name)
+		      (add-expr! ((wiki-syntax-pre syn)
+				  "Cannot find file in path -- " name)))))))
+	  ((+ (or (out #\<) (: "<" (out "/"))))
+	   (set! name (cons (the-string) name))
+	   (ignore))
+	  ((+ #\<)
+	   (set! name (cons (the-string) name))
+	   (ignore))))
       
       (define skip-space-grammar
          (regular-grammar ()
@@ -523,6 +539,10 @@
 			 (exception-notify e)
 			 "")
 		      (eval-wiki (hop-read (current-input-port)))))))
+	    ((and (>fx (string-length s) 3) (substring-at? s ",{" 0))
+	     (with-input-from-string (substring s 1 (string-length s))
+		(lambda ()
+		   (extension-wiki (current-input-port)))))
 	    ((and (string? s)
 		  (>fx (string-length s) 0)
 		  (not (char=? (string-ref s 0) #\/))
@@ -1114,6 +1134,10 @@
 			     "")
 			  (let ((e (eval-wiki (hop-read (current-input-port)))))
 			     (values e e))))))
+		((and (>fx (string-length s) 3) (substring-at? s ",{" 0))
+		 (with-input-from-string (substring s 1 (string-length s))
+		    (lambda ()
+		       (extension-wiki (current-input-port)))))
 		((or (=fx (string-length s) 0)
 		     (and (not (char=? (string-ref s 0) #\/))
 			  (not (string-index s #\:))))
@@ -1178,22 +1202,33 @@
       
       ;; embedded hop
       (",("
-       (rgc-buffer-unget-char (the-port) (char->integer #\())
-       (with-handler
-	  (lambda (e)
-	     (exception-notify e)
-	     (add-expr! (<SPAN> :hssclass "hop-parse-error"
-			   (string (the-failure)))))
-	  (let ((expr (hop-read (the-port))))
-	     (with-handler
-		(lambda (e)
-		   (exception-notify e)
-		   (add-expr! (<SPAN> :hssclass "hop-eval-error"
-				 (with-output-to-string
-				    (lambda ()
-				       (write expr))))))
-		(add-expr! (eval-wiki expr)))))
-       (ignore))
+	 (rgc-buffer-unget-char (the-port) (char->integer #\())
+	 (with-handler
+	    (lambda (e)
+	       (exception-notify e)
+	       (add-expr! (<SPAN> :hssclass "hop-parse-error"
+			     (string (the-failure)))))
+	    (let ((expr (hop-read (the-port))))
+	       (with-handler
+		  (lambda (e)
+		     (exception-notify e)
+		     (add-expr! (<SPAN> :hssclass "hop-eval-error"
+				   (with-output-to-string
+				      (lambda ()
+					 (write expr))))))
+		  (add-expr! (eval-wiki expr)))))
+	 (ignore))
+      
+       ;; embedded hop
+       (",{"
+	(rgc-buffer-unget-char (the-port) (char->integer #\())
+	(with-handler
+	   (lambda (e)
+	      (exception-notify e)
+	      (add-expr! (<SPAN> :hssclass "hop-parse-error"
+			    (string (the-failure)))))
+	   (add-expr! (extension-wiki (the-port))))
+	(ignore))
       
       ;; single escape characters
       ((or punct blank #\\)

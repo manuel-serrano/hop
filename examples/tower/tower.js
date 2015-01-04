@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun  3 16:32:25 2014                          */
-/*    Last change :  Sat Dec 13 09:22:04 2014 (serrano)                */
+/*    Last change :  Sun Dec 21 08:40:21 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Recursive client-side tower                                      */
@@ -19,9 +19,7 @@ service tower() {
       ~{
          function clicked (msg) {
             var but = <BUTTON> {
-               onclick: ~{
-                  clicked( ${msg + "+"} );
-               },
+               onclick: ~{ clicked( ${msg + "+"} ) },
                msg
             };
             

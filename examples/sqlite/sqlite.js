@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 25 09:33:54 2014                          */
-/*    Last change :  Sun Jul  6 20:00:39 2014 (serrano)                */
+/*    Last change :  Sat Dec 20 10:03:45 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    This shows how to import Bigloo code from JS using modules       */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g sqlite.js                                         */
 /*    browser: http://localhost:8080/hop/sqlite                        */
 /*=====================================================================*/
-
 var Sqlite = require( './sqlite_core.js' ).Sqlite;
 var Path = require( 'path' );
 var Hop = require( 'hop' );

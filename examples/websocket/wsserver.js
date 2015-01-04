@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Tue Dec  9 07:43:45 2014 (serrano)                */
+/*    Last change :  Sun Dec 21 11:11:22 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
@@ -16,7 +16,7 @@ var wss = new WebSocketServer( { path: "wss", protocol: "foo" } );
 wss.onconnection = function( event ) {
    var ws = event.value;
 
-   console.log( "connection established:", ws.socket );
+   console.error( "connection established:", ws.socket );
 
    ws.onmessage = function( event ) {
       console.log( "server received [%s]", event.data );
@@ -34,7 +34,6 @@ wss.onconnection = function( event ) {
    setTimeout( function() { ws.close(); }, 200 );
 };
 
-
 wss.onclose = function() {
-   console.log( "server websocket closed." );
+   console.error( "server websocket closed." );
 }

@@ -8,6 +8,8 @@ basedir=/usr/local/src/node-v0.10.31/test
 hop=/usr/local/bin/hop
 hopargs="-g --no-zeroconf --no-server"
 hopexec=$PWD/HOP.exe
+errorstop=
+fullname=
 
 while : ; do
 
@@ -16,7 +18,7 @@ while : ; do
      break;;
 
   -h|--help)
-    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [--check] [subdir0 [subdir1 ...]]";
+    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop] [--check] [--error] [subdir0 [subdir1 ...]]";
     echo "example: $0 simple";
     exit 0;;
 
@@ -25,9 +27,6 @@ while : ; do
 
   -s)
     verb="";;
-
-  -*)
-    rest=$1;;
 
   --basedir)
     shift;
@@ -40,6 +39,15 @@ while : ; do
   --check)
     shift
     check=yes;;
+
+  --error)
+    errorstop=true;;
+  
+  --fullname)
+    fullname=true;;  
+
+  -*)
+    rest=$1;;
 
   *)
     chapters="$chapters $1";;
@@ -83,11 +91,19 @@ for chapter in $chapters; do
 
   for path in $basedir/$chapter/*.js; do
     i=`expr $i + 1`
+    fname=`basename $path`
+
+    if [ "$fullname " = "true " ]; then
+      fname=$path
+    fi
+    
     grep "^$chapter/`basename $path`" BLACKLIST 2> /dev/null > /dev/null
 
-        if [ $? != 0  ]; then
-      echo -n "$i. $chapter/`basename $path` ... "
-      echo -n "$i. $chapter/`basename $path` ... " >> /tmp/TEST-NODEJS.out
+    if [ $? != 0  ]; then
+	
+      echo -n "$i. $fname ... "
+      echo -n "$i. $fname ... " >> /tmp/TEST-NODEJS.out
+      
       rm -rf $basedir/tmp/a
       (cd $basedir; $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
   
@@ -106,6 +122,10 @@ for chapter in $chapters; do
           cat /tmp/TEST-NODEJS.out.tmp
         fi
         cat /tmp/TEST-NODEJS.out.tmp >> /tmp/TEST-NODEJS.out
+
+	if [ "$errorstop " = "true " ]; then
+	  exit 1
+	fi
       fi
       rm -f /tmp/TEST-NODEJS.out.tmp
 
@@ -114,7 +134,7 @@ for chapter in $chapters; do
         lsof | grep hop | wc -l >> /tmp/TEST-NODEJS.out
       fi
     else
-      echo "$i. $chapter/`basename $path` ### BLACKLISTED"
+      echo "$i. $fname ### BLACKLISTED"
       blacklist=`expr $blacklist + 1`
     fi
   done

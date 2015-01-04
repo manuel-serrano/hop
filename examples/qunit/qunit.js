@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 23 07:42:15 2014                          */
-/*    Last change :  Fri Jul  4 17:19:35 2014 (serrano)                */
+/*    Last change :  Sat Dec 20 09:29:46 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example of QUnit + Hop combination                            */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g qunit.js                                          */
 /*    browser: http://localhost:8080/hop/qunit                         */
 /*=====================================================================*/
-
 var hop = require( "hop" );
 
 service qunit( { noglobals: false, notrycatch: false }) {
@@ -21,12 +20,8 @@ service qunit( { noglobals: false, notrycatch: false }) {
 	 jscript: "http://code.jquery.com/qunit/qunit-1.14.0.js"
       },
       <BODY> {
-	 <DIV> {
-	    id: "qunit"
-	 },
-	 <DIV> {
-	    id: "qunit-fixture"
-	 },
+	 <DIV> { id: "qunit" },
+	 <DIV> { id: "qunit-fixture" },
 	 ~{
 	    QUnit.test( "hello test", function( assert ) {
 	       assert.ok( 1 == "1", "Passed!" );
@@ -40,5 +35,3 @@ service qunit( { noglobals: false, notrycatch: false }) {
 }
 	 
 console.log( "Go to \"http://%s:%d/hop/qunit\"", hop.hostname, hop.port );
-	 
-	    

@@ -3,17 +3,17 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Tue Nov 18 16:11:59 2014 (serrano)                */
+/*    Last change :  Sat Dec 20 09:27:32 2014 (serrano)                */
 /*    Copyright   :  2014 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Proxied server-to-server requests                                */
-/*    -------------------------------------------------------------    */
-/*    run: hop -v -g proxy.js -p 8888                                  */
-/*         hop -v -g proxy.js -p 8080                                  */
+/*    run: hop -v -g -p 8080 -- proxy.js 8888                          */
+/*         hop -v -g proxy.js -p 8888                                  */
 /*    browser: http://localhost:8080/hop/proxy                         */
 /*=====================================================================*/
-
 var hop = require( "hop" );
+
+var port = parseInt( process.execArgv[ process.execArgv.length - 1 ] );
 
 service proxy() {
    return <HTML> {
@@ -21,12 +21,11 @@ service proxy() {
 	 el.forEach( function( e ) {
 	    document.body.appendChild( <DIV> { e } )
 	 } ) } },
-      
       <BUTTON> {
+	 style: "margin-right: 20px",
 	 onclick: ~{ ${svc}( "Foo", "" ).post( cb ) },
 	 "direct call"
       },
-
       <BUTTON> {
 	 onclick: ~{ ${proxysvc}( "Foo", "" ).post( cb ) },
 	 "svc call"
@@ -44,8 +43,9 @@ service proxysvc( name, path ) {
       function( reply ) {
 	 svc( name, path + " via " + hostId( req ) )
 	    .post( function( el ) {
+	       console.log( "el=", el );
 	       reply( el.map( function( e ) { return <DIV> { e } } ) );
-	    }, { host: req.host, port: 8888 } );
+	    }, { host: req.host, port: port } );
       }, this );
 }
 

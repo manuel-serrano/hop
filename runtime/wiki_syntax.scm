@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/wiki_syntax.scm           */
+;*    serrano/prgm/project/hop/3.0.x/runtime/wiki_syntax.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Thu Dec 22 08:24:04 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Sun Dec 21 11:52:52 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -78,4 +78,5 @@
 	       (plugins::procedure (default (lambda (id) #f)))
 	       (verbatims::procedure (default (lambda (id) #f)))
 	       (prehook::procedure (default (lambda () #f)))
-	       (posthook::procedure (default (lambda (l) l))))))
+	       (posthook::procedure (default (lambda (l) l)))
+	       (extension::procedure (default (lambda (ip syntax charset) ""))))))

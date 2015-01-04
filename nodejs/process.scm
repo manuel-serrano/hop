@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Dec 19 18:12:10 2014 (serrano)                */
+;*    Last change :  Wed Dec 24 07:05:23 2014 (serrano)                */
 ;*    Copyright   :  2013-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -587,21 +587,24 @@
       (query this domain 6 callback))
    
    (define (gethostbyaddr this addr callback)
-      (let ((res (hostname addr)))
-	 (if (string=? res addr)
+      (let* ((str (js-tostring addr %this))
+	     (res (hostname str)))
+	 (if (string=? res str)
 	     (begin
 		(js-call2 %this callback (js-undefined) -1 #f)
 		(js-put! process '_errno -1 #f %this)
 		#f)
 	     (begin
-		(js-call2 %this callback (js-undefined) #f res)
+		(js-call2 %this callback (js-undefined) #f
+		   (js-vector->jsarray (vector (string->js-string res)) %this))
 		#t))))
    
    (define (gethostbyname this name callback)
-      (let ((res (hostname name)))
+      (let ((res (hostinfo (js-tostring name %this))))
 	 (if (pair? res)
 	     (let ((addr (assq 'addresses res)))
-		(js-call2 %this callback (js-undefined) #f (car (cdr addr)))
+		(js-call2 %this callback (js-undefined) #f
+		   (string->js-string (car (cdr addr))))
 		#t)
 	     (begin
 		(js-call2 %this callback (js-undefined) -1 #f)

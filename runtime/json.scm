@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Mon Dec  8 11:06:06 2014 (serrano)                */
+;*    Last change :  Sun Dec 21 07:13:27 2014 (serrano)                */
 ;*    Copyright   :  2010-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -27,10 +27,17 @@
    (export  (generic obj->json ::obj ::output-port)
             (byte-array->json ::bstring ::output-port)
 	    (javascript->obj ::obj #!optional driver)
+	    (generic javascript-string->obj ::obj ::bstring)
 	    (generic javascript-vector->obj ::obj ::vector)
 	    (generic javascript-plist->obj ::obj ::pair-nil)
 	    (generic javascript-buffer->obj ::obj ::obj)
 	    (generic javascript-class-all-fields ::object)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-string->obj ::obj ...                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-string->obj driver::obj v)
+   v)
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-vector>vector ...                                     */
@@ -283,172 +290,174 @@
       
       ;; tokens
       (CONSTANT PAR-OPEN PAR-CLO BRA-OPEN BRA-CLO ANGLE-OPEN ANGLE-CLO
-       COMMA SEMI-COMMA COLON DOT =
-       IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN VAR)
+	 COMMA SEMI-COMMA COLON DOT =
+	 IDENTIFIER ERROR NEW CONS DATE FUNCTION RETURN VAR)
       
       ;; initial rule
       (start
-       (() '())
-       ((expression) expression))
+	 (() '())
+	 ((expression) expression))
       
       ;; expression
       (expression
-       ((CONSTANT)
-	(car CONSTANT))
-       ((IDENTIFIER)
-	(car IDENTIFIER))
-       ((new)
-	new)
-       ((RETURN expression)
-	expression)
-       ((IDENTIFIER PAR-OPEN expressions* PAR-CLO)
-	(case (car IDENTIFIER)
-	   ((sc_consStart) (apply cons* expressions*))
-	   ((sc_Pair) (cons (car expressions*) (cadr expressions*)))
-	   ((sc_list) expressions*)
-	   ((sc_jsstring2symbol) (string->symbol (car expressions*)))
-	   ((sc_jsstring2keyword) (string->keyword (car expressions*)))
-	   ((hop_js_to_object) (javascript->object expressions*))
-	   ((sc_circle) (javascript-circle->obj expressions*))
-	   ((sc_circle_ref) `(sc_circle_ref ,@expressions*))
-	   ((sc_circle_def) `(sc_circle_def ,@expressions*))
-	   ((sc_vector2array) (javascript-vector->obj driver (car expressions*)))
-	   ((hop_buffer) (javascript-buffer->obj driver expressions*))
-	   (else (error "javascript->obj" "Unknown function" (car IDENTIFIER)))))
-       ((ANGLE-OPEN ANGLE-CLO)
-	'#())
-       ((ANGLE-OPEN array-elements ANGLE-CLO)
-	(list->vector array-elements))
-       ((BRA-OPEN BRA-CLO)
-	'())
-       ((BRA-OPEN hash-elements BRA-CLO)
-	;; see json compilation
-	(if (and (=fx (length hash-elements) 3)
-		 (eq? (car (car hash-elements)) __uuid:)
-		 (equal? (cadr (car hash-elements)) "pair"))
-	    (cons (cadr (cadr hash-elements)) (cadr (caddr hash-elements)))
-	    (javascript-plist->obj driver hash-elements)))
-       ((get-element-by-id)
-	get-element-by-id)
-       ((service)
-	service)
-       ((PAR-OPEN FUNCTION PAR-OPEN PAR-CLO BRA-OPEN
-		  VAR set SEMI-COMMA
-		  set+
-		  RETURN new SEMI-COMMA
-		  BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
-	new)
-       ((PAR-OPEN expressions* PAR-CLO)
-	(if (null? (cdr expressions*))
-	    (car expressions*)
-	    expressions*))
-       ((constructor)
-	constructor))
-
+	 ((CONSTANT)
+	  (if (string? (car CONSTANT))
+	      (javascript-string->obj driver (car CONSTANT))
+	      (car CONSTANT)))
+	 ((IDENTIFIER)
+	  (car IDENTIFIER))
+	 ((new)
+	  new)
+	 ((RETURN expression)
+	  expression)
+	 ((IDENTIFIER PAR-OPEN expressions* PAR-CLO)
+	  (case (car IDENTIFIER)
+	     ((sc_consStart) (apply cons* expressions*))
+	     ((sc_Pair) (cons (car expressions*) (cadr expressions*)))
+	     ((sc_list) expressions*)
+	     ((sc_jsstring2symbol) (string->symbol (car expressions*)))
+	     ((sc_jsstring2keyword) (string->keyword (car expressions*)))
+	     ((hop_js_to_object) (javascript->object expressions*))
+	     ((sc_circle) (javascript-circle->obj expressions*))
+	     ((sc_circle_ref) `(sc_circle_ref ,@expressions*))
+	     ((sc_circle_def) `(sc_circle_def ,@expressions*))
+	     ((sc_vector2array) (javascript-vector->obj driver (car expressions*)))
+	     ((hop_buffer) (javascript-buffer->obj driver expressions*))
+	     (else (error "javascript->obj" "Unknown function" (car IDENTIFIER)))))
+	 ((ANGLE-OPEN ANGLE-CLO)
+	  '#())
+	 ((ANGLE-OPEN array-elements ANGLE-CLO)
+	  (list->vector array-elements))
+	 ((BRA-OPEN BRA-CLO)
+	  '())
+	 ((BRA-OPEN hash-elements BRA-CLO)
+	  ;; see json compilation
+	  (if (and (=fx (length hash-elements) 3)
+		   (eq? (car (car hash-elements)) __uuid:)
+		   (equal? (cadr (car hash-elements)) "pair"))
+	      (cons (cadr (cadr hash-elements)) (cadr (caddr hash-elements)))
+	      (javascript-plist->obj driver hash-elements)))
+	 ((get-element-by-id)
+	  get-element-by-id)
+	 ((service)
+	  service)
+	 ((PAR-OPEN FUNCTION PAR-OPEN PAR-CLO BRA-OPEN
+	     VAR set SEMI-COMMA
+	     set+
+	     RETURN new SEMI-COMMA
+	     BRA-CLO PAR-CLO PAR-OPEN PAR-CLO)
+	  new)
+	 ((PAR-OPEN expressions* PAR-CLO)
+	  (if (null? (cdr expressions*))
+	      (car expressions*)
+	      expressions*))
+	 ((constructor)
+	  constructor))
+      
       (expressions*
-       (()
-	'())
-       ((expression)
-	(list expression))
-       ((expression COMMA expressions*)
-	(cons expression expressions*))
-       ((expression SEMI-COMMA expressions*)
-	(cons expression expressions*)))
-
+	 (()
+	  '())
+	 ((expression)
+	  (list expression))
+	 ((expression COMMA expressions*)
+	  (cons expression expressions*))
+	 ((expression SEMI-COMMA expressions*)
+	  (cons expression expressions*)))
+      
       ;; new
       (new
-       ((NEW IDENTIFIER PAR-OPEN expressions* PAR-CLO)
-	(case (car IDENTIFIER)
-	   ((sc_Pair)
-	    (match-case expressions*
-	       ((?a ?d)
-		(cons a d))
-	       (else
-		(error "javascript->obj" "Illegal `cons' construction" expressions*))))
-	   ((Date)
-	    (match-case expressions*
-	       ((and ?sec (? integer?))
-		(seconds->date (/fx sec 1000)))
-	       (else
-		(error "javascript->obj" "Illegal `date' construction" expressions*))))
-	   (else
-	    (error "javascript->obj" "Illegal `new' form" expressions*)))))
+	    ((NEW IDENTIFIER PAR-OPEN expressions* PAR-CLO)
+	     (case (car IDENTIFIER)
+		((sc_Pair)
+		 (match-case expressions*
+		    ((?a ?d)
+		     (cons a d))
+		    (else
+		     (error "javascript->obj" "Illegal `cons' construction" expressions*))))
+		((Date)
+		 (match-case expressions*
+		    ((and ?sec (? integer?))
+		     (seconds->date (/fx sec 1000)))
+		    (else
+		     (error "javascript->obj" "Illegal `date' construction" expressions*))))
+		(else
+		 (error "javascript->obj" "Illegal `new' form" expressions*)))))
       
       ;; array
       (array-elements
-       ((expression)
-	(list expression))
-       ((expression COMMA array-elements)
-	(cons expression array-elements)))
-
+	 ((expression)
+	  (list expression))
+	 ((expression COMMA array-elements)
+	  (cons expression array-elements)))
+      
       ;; hash
       (hash-elements
-       ((hash-element)
-	(list hash-element))
-       ((hash-element COMMA hash-elements)
-	(cons hash-element hash-elements)))
-
+	 ((hash-element)
+	  (list hash-element))
+	 ((hash-element COMMA hash-elements)
+	  (cons hash-element hash-elements)))
+      
       (hash-element
-       ((IDENTIFIER COLON expression)
-	(cons (car IDENTIFIER) expression))
-       ((CONSTANT COLON expression)
-	(let ((v (car CONSTANT)))
-	   (if (string? v)
-	       (cons (string->symbol v) expression)
-	       (cons v expression)))))
-
+	 ((IDENTIFIER COLON expression)
+	  (cons (car IDENTIFIER) expression))
+	 ((CONSTANT COLON expression)
+	  (let ((v (car CONSTANT)))
+	     (if (string? v)
+		 (cons (string->symbol v) expression)
+		 (cons v expression)))))
+      
       (argument*
-       (()
-	'())
-       ((IDENTIFIER)
-	(list (car IDENTIFIER)))
-       ((IDENTIFIER COMMA argument*)
-	(cons (car IDENTIFIER) argument*)))
-
+	 (()
+	  '())
+	 ((IDENTIFIER)
+	  (list (car IDENTIFIER)))
+	 ((IDENTIFIER COMMA argument*)
+	  (cons (car IDENTIFIER) argument*)))
+      
       (argument+
-       ((IDENTIFIER)
-	(list (car IDENTIFIER)))
-       ((IDENTIFIER COMMA argument+)
-	(cons (car IDENTIFIER) argument+)))
-
+	 ((IDENTIFIER)
+	  (list (car IDENTIFIER)))
+	 ((IDENTIFIER COMMA argument+)
+	  (cons (car IDENTIFIER) argument+)))
+      
       (set+
-       ((set SEMI-COMMA set*)
-	(cons set set*)))
-
+	 ((set SEMI-COMMA set*)
+	  (cons set set*)))
+      
       (set*
-       (() '())
-       ((set SEMI-COMMA set*)
-	(cons set set*)))
-
+	 (() '())
+	 ((set SEMI-COMMA set*)
+	  (cons set set*)))
+      
       (set
-       ((IDENTIFIER = expression)
-	'_)
-       ((IDENTIFIER DOT IDENTIFIER = expression)
-	'_)
-       ((IDENTIFIER DOT IDENTIFIER DOT IDENTIFIER = expression)
-	'_))
-
+	 ((IDENTIFIER = expression)
+	  '_)
+	 ((IDENTIFIER DOT IDENTIFIER = expression)
+	  '_)
+	 ((IDENTIFIER DOT IDENTIFIER DOT IDENTIFIER = expression)
+	  '_))
+      
       (proto
-       ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
-	(list c p f fun)))
-
+	 ((IDENTIFIER@c DOT IDENTIFIER@p DOT IDENTIFIER@f = IDENTIFIER@fun)
+	  (list c p f fun)))
+      
       ;; get-element-by-id
       (get-element-by-id
-       ((IDENTIFIER@obj DOT IDENTIFIER@field PAR-OPEN CONSTANT PAR-CLO)
-	;; we don't have a document at hand, so this is getElementById
-	;; is meaningless
-	#f))
-
+	 ((IDENTIFIER@obj DOT IDENTIFIER@field PAR-OPEN CONSTANT PAR-CLO)
+	  ;; we don't have a document at hand, so this is getElementById
+	  ;; is meaningless
+	  #f))
+      
       ;; service
       (service
-       ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
-		  PAR-OPEN argument* PAR-CLO BRA-CLO)
-	(error "javascript->obj" "Service cannot be transmitted" IDENTIFIER)))
-
+	    ((FUNCTION PAR-OPEN PAR-CLO BRA-OPEN RETURN IDENTIFIER
+		PAR-OPEN argument* PAR-CLO BRA-CLO)
+	     (error "javascript->obj" "Service cannot be transmitted" IDENTIFIER)))
+      
       ;; function definition
       (constructor
-       ((FUNCTION PAR-OPEN argument+ PAR-CLO BRA-OPEN expressions* BRA-CLO)
-	`(lambda ,argument+ ,@expressions*)))))
+	 ((FUNCTION PAR-OPEN argument+ PAR-CLO BRA-OPEN expressions* BRA-CLO)
+	  `(lambda ,argument+ ,@expressions*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript->object ...                                           */
