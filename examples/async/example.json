@@ -1,0 +1,6 @@
+{
+   "tags": ["service", "asynchrony" ],
+   "description": "Asynchronous service response",
+   "doc": "This example shows how to implement Hop.js services that respond asynchronously to clients.",
+   "level": 2
+}

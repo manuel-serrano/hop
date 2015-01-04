@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Jan  4 10:05:19 2015 (serrano)                */
+#*    Last change :  Sun Jan  4 10:15:12 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -20,7 +20,7 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   README.md \
-  async/async.js async/examples.json\
+  async/async.js async/example.json \
   arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \
@@ -40,19 +40,19 @@ POPULATION = Makefile \
   svc2/svc2.js svc2/extern.js svc2/example.json \
   svc3/svc3.js svc3/example.json \
   svc4/svc4.js svc4/example.json \
-  html/html.js html/html.hss \
+  html/html.js html/html.hss html/example.json \
   hss/hss.hss hss/hss.js hss/example.json \
   tree/tree.js tree/example.json \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json \
   jquery/jquery.js jquery/example.json \
   hello/hello.js hello/example.json \
-  debug/debug.js debug/bugs.js debug/example.js \
+  debug/debug.js debug/bugs.js debug/example.json \
   proxy/proxy.js proxy/example.json \
-  worker/slave.js worker/worker.js worker/bar.js worker/example.son \
-  worker2/slave.js worker2/worker2.js worker2/example.son \
-  worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.son \
-  worker4/slave.js worker4/worker4.js worker4/example.son \
+  worker/slave.js worker/worker.js worker/bar.js worker/example.json \
+  worker2/slave.js worker2/worker2.js worker2/example.json \
+  worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
+  worker4/slave.js worker4/worker4.js worker4/example.json \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
   widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \
@@ -72,7 +72,7 @@ POPULATION = Makefile \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
   authentication/authentication.js authentication/example.json \
   authentication2/authentication2.js authentication2/example.json \
-  authentication2/passwd.hop authentication2/remove.js \
+  authentication2/passwd.hop authentication2/remote.js \
   image/image.js image/example.json \
   pair/pair.js pair/example.json \
   hzdemo/hzdemo.js hzdemo/example.json \

@@ -1,0 +1,7 @@
+{
+   "tags": ["html"],
+   "files": [ "html.js", "html.hss" ],
+   "description": "Custom server-side HTML tag",
+   "doc": "This example shows how to extend HTML with a custom tag.",
+   "level": 1
+}

@@ -1,0 +1,7 @@
+{
+   "tags": [ "worker" ],
+   "description": "Hop.js worker native support",
+   "doc": "Example spawing workers",
+   "files": [ "worker4.js", "slave.js" ],
+   "level": 3
+}
