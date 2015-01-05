@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jan  1 20:05:37 2015 (serrano)                */
+;*    Last change :  Mon Jan  5 11:51:33 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -79,7 +79,7 @@
    (let* ((files (parse-args args))
 	  ;; init javascript global object
 	  (%global (nodejs-new-global-object))
-	  (%worker (js-init-main-worker! %global (hop-run-server))))
+	  (%worker (js-init-main-worker! %global (hop-run-server) nodejs-new-global-object)))
       ;; extent the require search path to the Hop autoload directories
       (nodejs-resolve-extend-path! (hop-autoload-directories))
       ;; js loader

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Nov 25 09:44:30 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Mon Jan  5 11:55:28 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -60,7 +60,7 @@
 	   (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
-	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool)
+	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool ::procedure)
 	   (js-current-worker::WorkerHopThread)
 
 	   (js-worker-load::procedure)
@@ -197,7 +197,7 @@
 
    (lambda (_ src)
       (letrec* ((parent (js-current-worker))
-		(this (js-new-global-object))
+		(this (%global-constructor))
 		(source (js-tostring src %this))
 		(thunk (lambda ()
 			  (js-put! this 'module
@@ -385,6 +385,7 @@
 ;*    %worker ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define %worker #f)
+(define %global-constructor js-new-global-object)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-current-worker ...                                            */
@@ -400,8 +401,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-init-main-worker! %this::JsGlobalObject keep-alive)
+(define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
    (unless %worker
+      (set! %global-constructor ctor)
       (set! %worker
 	 (instantiate::WorkerHopThread
 	    (name "%worker")

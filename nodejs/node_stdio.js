@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  9 18:26:51 2014                          */
-/*    Last change :  Fri Jan  2 17:37:10 2015 (serrano)                */
+/*    Last change :  Mon Jan  5 09:42:38 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Stdio initialization                                             */
@@ -76,7 +76,6 @@ function createWritableStdioStream(fd) {
 
 startup.processStdio = function( process ) {
    var stdin, stdout, stderr;
-
    process.__defineGetter__('stdout', function() {
       if (stdout) return stdout;
       stdout = createWritableStdioStream(1);
