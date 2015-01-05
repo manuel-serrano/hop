@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Mon Jan  5 12:01:36 2015 (serrano)                */
+/*    Last change :  Mon Jan  5 12:55:26 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -20,8 +20,8 @@ var wiki = require( hop.wiki );
 /*    examplesDoc ...                                                  */
 /*---------------------------------------------------------------------*/
 service examplesDoc( o ) {
-   if( "description" in o ) {
-      return <DIV> { o.description };
+   if( "doc" in o ) {
+      return <DIV> { o.doc };
    } else {
       var p = path.join( o.dir, "doc.wiki" );
       if( fs.existsSync( p ) ) {

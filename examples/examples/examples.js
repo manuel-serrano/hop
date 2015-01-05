@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Jan  5 11:58:46 2015 (serrano)                */
+/*    Last change :  Mon Jan  5 12:55:55 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -124,6 +124,7 @@ service examples() {
 				 ${url}.href = ${o.url};
 				 ${description}.innerHTML = ${o.description};
 				 ${tags}.innerHTML = ${o.tags.join( ", " )};
+				 ${doc}.innerHTML = "";
 
 				 // get the documentation
 				 ${examplesDoc}( ${o} )
