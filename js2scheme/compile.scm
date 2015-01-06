@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Jan  6 13:40:46 2015 (serrano)                */
+;*    Last change :  Tue Jan  6 13:46:22 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -198,9 +198,12 @@
    (unless (and (list? driver) (every (lambda (s) (isa? s J2SStage))))
       (bigloo-type-error "j2s-compile" "driver list" driver))
    (let ((tmp (or tmp
-		  (make-file-path (os-tmp) "J2S"
+		  (make-file-path (os-tmp) 
 		     (or (getenv "USER") "anonymous")
-		     (basename (input-port-name in))))))
+		     "J2S"
+		     (if (string=? (input-port-name in) "[string]")
+			 "stdin"
+			 (input-port-name in))))))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (let ((ast (j2s-parser in args)))
 	 (if (eof-object? ast)
