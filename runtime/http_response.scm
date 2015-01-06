@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Dec 15 21:31:05 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 09:09:42 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -39,7 +39,7 @@
    (export  (generic http-response::symbol ::%http-response ::obj ::socket)
 	    (generic scheme->response ::obj ::http-request)
 	    (http-response-void ::http-request)
-	    (http-send-request ::http-request ::procedure #!optional body)
+	    (http-send-request ::http-request ::procedure #!key body args)
 	    (chunked-flush-hook port size)))
 
 ;*---------------------------------------------------------------------*/
@@ -753,7 +753,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (http-send-request req::http-request proc::procedure #!optional body)
+(define (http-send-request req::http-request proc::procedure #!key args body)
    (with-trace 'hop-response "http-send-request"
       (with-access::http-request req (scheme method path (httpv http) host port header socket userinfo timeout connection-timeout connection)
 	 (let ((ssl (eq? scheme 'https)))
@@ -799,9 +799,11 @@
 			(http :in in :out out
 			   :protocol scheme :method method :http-version httpv
 			   :host host :port port :path path :header header
+			   :content-type (when args 'multipart/form-data)
 			   :authorization auth
 			   :timeout timeout
 			   :login user
+			   :args args
 			   :body body
 			   :proxy (hop-use-proxy))
 			(when (eq? connection 'close)

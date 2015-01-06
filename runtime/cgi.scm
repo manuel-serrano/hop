@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Fri Dec 12 19:59:23 2014 (serrano)                */
-;*    Copyright   :  2003-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 09:30:24 2015 (serrano)                */
+;*    Copyright   :  2003-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
 ;*=====================================================================*/
@@ -28,7 +28,7 @@
 ;*    http-request-cgi-args ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (http-request-cgi-args req::http-request unjson::procedure)
-
+ 
    (define (normalize l)
       (let loop ((l l)
 		 (res '()))
@@ -61,22 +61,25 @@
 				       (string-length
 					  "multipart/form-data; boundary=")
 				       (string-length ctype))))
-		       (cons path
+		       (values path
 			  (with-handler
 			     (lambda (e)
 				(if (isa? e &io-parse-error)
 				    '()
 				    (raise e)))
-			     (cgi-multipart->list (hop-upload-directory)
-				pi
-				content-length
-				boundary))))
-		    (cons path
+			     (map! (lambda (v)
+				      (set-cdr! v (cadr (memq :data v)))
+				      v)
+				(cgi-multipart->list (hop-upload-directory)
+				   pi
+				   content-length
+				   boundary)))))
+		    (values path
 		       (list (cons "hop-encoding" "json")
 			  (cons "json" (list (unjson pi))))))))
 	    ((GET PUT)
 	     (if (string? query)
-		 (values  abspath (normalize (cgi-args->list query)))
+		 (values abspath (normalize (cgi-args->list query)))
 		 (values abspath '())))
 	    (else
 	     (error "http-request-cgi-args" "Illegal HTTP method" method)))))

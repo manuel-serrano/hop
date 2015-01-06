@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Mon Jan  5 12:55:26 2015 (serrano)                */
+/*    Last change :  Mon Jan  5 17:35:50 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -26,9 +26,9 @@ service examplesDoc( o ) {
       var p = path.join( o.dir, "doc.wiki" );
       if( fs.existsSync( p ) ) {
 	 return hop.HTTPResponseAsync(
-	    function( reply ) {
+	    function( sendResponse ) {
 	       fs.readFile( p, function( err, buf ) {
-		  reply( <DIV> { wiki.parse( buf ) } );
+		  sendResponse( <DIV> { wiki.parse( buf ) } );
 	       } );
 	    }, this );
       } else {

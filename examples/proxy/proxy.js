@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Sat Dec 20 09:27:32 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:24 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Proxied server-to-server requests                                */
 /*    run: hop -v -g -p 8080 -- proxy.js 8888                          */
@@ -13,7 +13,7 @@
 /*=====================================================================*/
 var hop = require( "hop" );
 
-var port = parseInt( process.execArgv[ process.execArgv.length - 1 ] );
+var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
 service proxy() {
    return <HTML> {
@@ -40,11 +40,11 @@ function hostId( req ) {
 service proxysvc( name, path ) {
    var req = this;
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 svc( name, path + " via " + hostId( req ) )
 	    .post( function( el ) {
 	       console.log( "el=", el );
-	       reply( el.map( function( e ) { return <DIV> { e } } ) );
+	       sendResponse( el.map( function( e ) { return <DIV> { e } } ) );
 	    }, { host: req.host, port: port } );
       }, this );
 }

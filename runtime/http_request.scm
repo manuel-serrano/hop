@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 22 14:43:59 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Mon Jan  5 18:37:38 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -56,19 +56,8 @@
 	 (out (socket-output sock)))
       (socket-timeout-set! sock timeout timeout)
       (let ((req (read/rp request-line-grammar port id out)))
-;* 	     (localaddr (socket-local-address sock))                   */
-;* 	     (hostaddr (socket-host-address sock))                     */
-;* 	     (localc (or (socket-local? sock)                          */
-;* 			 (find (lambda (addr)                          */
-;* 				  (socket-host-address=? sock addr))   */
-;* 			    (hop-server-addresses))))                  */
-;* 	     (lanc (or localc                                          */
-;* 		       (let ((i (string-index-right localaddr #\.)))   */
-;* 			  (substring=? localaddr hostaddr i)))))       */
-	 (with-access::http-request req (socket) ;;localclientp #;lanclientp
+	 (with-access::http-request req (socket)
 	    (set! socket sock)
-	    #;(set! localclientp localc)
-	    #;(set! lanclientp lanc)
 	    req))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Sep  2 13:22:21 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Mon Jan  5 17:42:55 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -74,7 +74,6 @@
 				       el.value))
 				 '("mip1" "mip2" "mip3" "mip4")))
 		    (localp (dom-get-element-by-id document "localp"))
-		    (lanp (dom-get-element-by-id document "lanp"))
 		    (webdav (dom-get-element-by-id document "webdav")))
 		(cond
 		   ((string=? apasswd.value "")
@@ -88,7 +87,7 @@
 					    gname.value cguest
 					    proxy.value proxyu.value
 					    proxya.value proxyr.value proxym
-					    localp.checked lanp.checked
+					    localp.checked 
 					    webdav.checked)
 		       (lambda (h)
 			  (case (car h)
@@ -103,7 +102,7 @@
 							     proxy.value
 							     proxyu.value proxya.value
 							     proxyr.value proxym
-							     localp.checked lanp.checked
+							     localp.checked 
 							     webdav.checked)
 					(lambda (h)
 					   (innerHTML-set! status (cadr h))
@@ -287,9 +286,6 @@ can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
 		     (<TR> (<TD>
 			      (<TD> :class "comment"
 				 "Lets Hop accepts all anonymous requests (services and resources) coming from local host")))
-		     (<TR> (<TD> 
-			      (<INPUT> :type 'checkbox :id "lanp" :checked #f))
-			   (<TD> (<SPAN> "Allow anonymous requests from LAN")))
 		     (<TR> (<TD>
 			      (<TD> :class "comment"
 				 "Lets Hop accepts all anonymous requests coming from computers on the same domain (same local area network)"))))))))
@@ -391,7 +387,7 @@ setting can be overriden when starting Hop.]))))))
 			     proxy
 			     user-proxy anonymous-proxy
 			     remote-proxy proxy-mask
-			     localp lanp
+			     localp 
 			     webdav)
    (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
@@ -399,7 +395,7 @@ setting can be overriden when starting Hop.]))))))
 	 (force
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
-		localp lanp webdav))
+		localp webdav))
 	 ((file-exists? rc)
 	  (list 'query (format "File exists ~a" rc)))
 	 ((file-exists? wd)
@@ -407,7 +403,7 @@ setting can be overriden when starting Hop.]))))))
 	 (else
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
-		localp lanp webdav)))))
+		localp anp webdav)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    save ...                                                         */
@@ -415,7 +411,7 @@ setting can be overriden when starting Hop.]))))))
 (define (save rcdir rcfile passwdfile
 	      apasswd uname upasswd udir gname gpasswd
 	      proxy uproxy anonymous-proxy remote-proxy proxy-mask
-	      localp lanp webdav)
+	      localp webdav)
    (unless (and (file-exists? rcdir) (directory? rcdir))
       (make-directories rcdir))
    (with-output-to-file rcfile
@@ -463,28 +459,14 @@ setting can be overriden when starting Hop.]))))))
 	 (write `(hop-enable-webdav-set! ,webdav))
 	 (newline)
 	 (newline)
-	 (cond
-	    (lanp
-	       (print ";; anonymous lan requests")
-	       (print '(hop-service-access-control-set!
-			(lambda (req svc)
-			   (with-access::http-request req (lanclientp)
-			      lanclientp))))
-	       (print '(hop-path-access-control-set!
-			(lambda (req path)
-			   (with-access::http-request req (lanclientp)
-			      lanclientp)))))
-	    (localp
-	       (print ";; anonymous local requests")
-	       (print '(hop-service-access-control-set!
-			(lambda (req svc)
-			   (with-access::http-request req (localclientp)
-			      localclientp))))
-	       (print '(hop-path-access-control-set!
-			(lambda (req path)
-			   (with-access::http-request req (localclientp)
-			      localclientp))))
-	       (newline)))))
+	 (when localp
+	    (print ";; anonymous local requests")
+	    (print '(hop-service-access-control-set!
+		     (lambda (req svc)
+			(http-request-local? req))))
+	    (print '(hop-path-access-control-set!
+		     (http-request-local? req)))
+	    (newline))))
    (let ((accounts "admin"))
       (with-output-to-file passwdfile
 	 (lambda ()

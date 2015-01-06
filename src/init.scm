@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Dec 19 15:29:20 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Mon Jan  5 17:39:49 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -558,9 +558,7 @@
 		      ((and (not localclientp)
 			    (or (not (hop-proxy-allow-remote-client))
 				(not (hop-proxy-ip-allowed? req))))
-		       (instantiate::http-response-abort
-			  #;(request req)
-			  ))
+		       (instantiate::http-response-abort))
 		      ((and localclientp (not (hop-proxy-authentication)))
 		       resp)
 		      ((and (not localclientp)

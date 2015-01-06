@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Sun Dec 21 11:09:07 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:34:33 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to authenticate server-to-server requests               */
 /*    -------------------------------------------------------------    */
@@ -16,7 +16,7 @@ var hop = require( "hop" );
 import service public(type);
 import service private(type);
 
-var port = parseInt( process.execArgv[ process.execArgv.length - 1 ] );
+var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
 function connect() {
    /* accepted connection */

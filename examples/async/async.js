@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 17 12:00:02 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:35:37 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing asynchronous response                     */
 /*    -------------------------------------------------------------    */
@@ -16,10 +16,10 @@ var fs = require( "fs" );
 
 service async() {
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
          fs.readFile( async.resource( "async.js" ), "ascii",
                       function( err, data ) {
-                         reply( <HTML> { <PRE> { data } } )
+                         sendResponse( <HTML> { <PRE> { data } } )
                       } );
       },
    this );

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Dec 21 12:06:02 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 09:02:24 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -61,7 +61,8 @@
 			     (anim #f)
 			     (string->obj string->obj)
 			     (javascript->obj javascript->obj)
-			     string->string)
+			     string->string
+			     args)
 	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
 
@@ -178,7 +179,6 @@
 		((eq? n m)
 		 (loop m (cdr filters)))
 		((isa? n http-request)
-		 ;;(current-request-set! thread n)
 		 (loop n (cdr filters)))
 		((eq? n 'hop-resume)
 		 (loop m (hop-filters)))
@@ -354,7 +354,7 @@
 			(hdl (make-http-callback 'with-url r suc fail
 				string->obj javascript->obj string->string)))
 		    (trace-item "remote path=" path)
-		    (http-send-request r hdl body)))))))))
+		    (http-send-request r hdl :body body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-remote ...                                              */
@@ -370,10 +370,15 @@
 	   (anim #f)
 	   (string->obj string->obj)
 	   (javascript->obj javascript->obj)
-	   string->string)
+	   string->string
+	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
-      " http://" host ":" port path "\n")
+      " http://" host ":" port
+      (if (and (=fx (hop-verbose) 1) (>fx (string-length path) 80))
+	  (string-append (substring path 0 80) "...")
+	  path)
+      "\n")
    (with-trace 'with-hop "with-hop-remote"
       (trace-item "host=" host " port=" port " path=" path " abspath=" abspath)
       (trace-item "authorization=" authorization)
@@ -391,13 +396,14 @@
 			 (port port)
 			 (connection 'close)
 			 (header '((hop-serialize: . "arraybuffer")))
+			 (method (if args 'post 'put))
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
 		 (hdl (make-http-callback 'with-hop req suc fail
 			 string->obj javascript->obj string->string)))
 	     (trace-item "remote path=" path)
-	     (http-send-request req hdl))))))
+	     (http-send-request req hdl :args args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */
@@ -562,11 +568,6 @@
 (define (hop-get-file path thread)
    (let* ((reqi (current-request))
 	  (req (instantiate::http-server-request
-;* 		  (localclientp #t)                                    */
-;* 		  (lanclientp #t)                                      */
-;* 		  (user (if (isa? reqi http-request)                   */
-;* 			    (with-access::http-request reqi (user) user) */
-;* 			    (anonymous-user)))                         */
 		  (path path)))
 	  (rep (request->response req thread)))
       (cond

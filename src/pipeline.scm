@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Mon Dec 15 21:36:31 2014 (serrano)                */
-;*    Copyright   :  2008-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 05:14:30 2015 (serrano)                */
+;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -104,7 +104,12 @@
 			     (string-append name "@"))
 			  "")
 		      host ":"
-		      port (string-for-read path)
+		      port " "
+		      (let ((s (string-for-read path)))
+			 (if (and (=fx (hop-verbose) 1)
+				  (>fx (string-length s) 80))
+			     (string-append (substring s 0 80) "...")
+			     s))
 		      " "
 		      (if (>=fx (hop-verbose) 2)
 			  (with-access::http-request req (http) http)

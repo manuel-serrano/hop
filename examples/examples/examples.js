@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Jan  5 12:55:55 2015 (serrano)                */
+/*    Last change :  Mon Jan  5 17:46:13 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -317,7 +317,7 @@ service examplesRun( o ) {
    PORT += PORTINC;
    
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 function run( command, file, port, rep ) {
 	    var cmd = command.replace( /[$][(]([A-Z]+)[)]/g,
 				       function( patch, p ) {
@@ -335,15 +335,13 @@ service examplesRun( o ) {
 
 	    var proc = spawn( SHELL, [ "-c", cmd ], { env: env, cwd: o.dir } );
 
-	    console.log( "cmd=", cmd );
-
 	    proc.stdout.on( "data", function( data ) {
 	       hop.broadcast( file, <SPAN> { class: "stdout", data.toString() } );
 	       if( rep ) {
 		  if( o.service ) {
-		     reply( util.format( "http://localhost:%d/hop/%s", port, o.service ) );
+		     sendResponse( util.format( "http://localhost:%d/hop/%s", port, o.service ) );
 		  } else {
-		     reply( false );
+		     sendResponse( false );
 		  }
 	       }
 	    } );

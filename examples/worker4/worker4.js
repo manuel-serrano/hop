@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Sun Dec 21 11:31:05 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:53 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Services in workers example                                      */
 /*    -------------------------------------------------------------    */
@@ -31,8 +31,8 @@ service worker4() {
 
 service counter() {
    return hop.HTTPResponseAsync(
-      function( reply )  {
-	 w.postMessage( reply );
+      function( sendResponse )  {
+	 w.postMessage( sendResponse );
       }, this );
 }
 

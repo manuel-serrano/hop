@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Sat Dec 20 10:14:57 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:44 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
 /*    -------------------------------------------------------------    */
@@ -18,9 +18,9 @@ service svc4( { name: "foo" } ) {
    svc.path = "/hop/" + name;
 
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 svc.apply( undefined, [ "foo", "bar" ] ).post( function( e ) {
-	    reply( e );
+	    sendResponse( e );
 	 } );
       }, this );
 }

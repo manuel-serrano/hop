@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Dec 20 07:40:31 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 09:33:31 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -32,10 +32,11 @@
 	   __hopscript_array)
 
    (static (class JsHopFrame::JsObject
+	      (args read-only (default #f))
 	      (url read-only)))
 
    (export (js-init-service! ::JsGlobalObject)
-	   (js-make-hopframe ::JsGlobalObject url)
+	   (js-make-hopframe ::JsGlobalObject ::obj ::obj)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)
 	   (js-register-service-buffer-finalizer! ::procedure)
 	   (js-service-unserialize ::obj ::JsGlobalObject)
@@ -122,8 +123,8 @@
 	 (js-bind! %this js-hopframe-prototype 'post
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame success opt)
-			 (with-access::JsHopFrame this (url)
-			    (post url success opt %this)))
+			 (with-access::JsHopFrame this (url args)
+			    (post url args success opt %this)))
 		      2 'post))
 	 
 	 (js-bind! %this js-hopframe-prototype 'toString
@@ -135,13 +136,13 @@
 	 
 	 ;; HopFrame constructor 
 	 (letrec ((js-hopframe (js-make-function %this
-				  (lambda (this url)
-				     (js-new %this js-hopframe url))
+				  (lambda (this url args)
+				     (js-new %this js-hopframe url args))
 				  1 'JsHopFrame
 				  :__proto__ js-function-prototype
 				  :prototype js-hopframe-prototype
-				  :construct (lambda (this url)
-						(js-make-hopframe %this url)))))
+				  :construct (lambda (this url args)
+						(js-make-hopframe %this url args)))))
 	    (js-bind! %this %this 'HopFrame
 	       :configurable #f :enumerable #f :value js-hopframe))
 	 
@@ -150,12 +151,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-hopframe ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-make-hopframe %this::JsGlobalObject url)
+(define (js-make-hopframe %this::JsGlobalObject url args)
    (with-access::JsGlobalObject %this (js-hopframe-prototype)
-      (let ((obj (instantiate::JsHopFrame
-		    (url url)
-		    (__proto__ js-hopframe-prototype))))
-	 obj)))
+      (if #f
+	  ;; not correctly implemented yet. the parsing of post multipart
+	  ;; is incorrect and inefficient (see api/web/src/Llib/cgi)
+	  (instantiate::JsHopFrame
+	     (args (unless (eq? args (js-undefined))
+		      `(("hop-encoding" "hop")
+			("vals" ,(obj->string
+				    (if (vector? args) (vector->list args) args))))))
+	     (url url)
+	     (__proto__ js-hopframe-prototype))
+	  (instantiate::JsHopFrame
+	     (url (hop-apply-url url args))
+	     (__proto__ js-hopframe-prototype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->buffer ...                                            */
@@ -172,7 +182,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc::bstring success opt %this)
+(define (post svc::bstring args success opt %this)
 
    (let ((host "localhost")
 	 (port (hop-port))
@@ -226,7 +236,8 @@
 	    :user user :password password :authorization authorization
 	    :string->obj js-string->obj
 	    :javascript->obj js-javascript->obj
-	    :string->string string->js-string))
+	    :string->string string->js-string
+	    :args args))
 
       (define (scheme->js val)
 	 (if (string? val)
@@ -327,6 +338,7 @@
    (with-access::JsService obj (svc)
       (with-access::hop-service svc (proc)
 	 proc)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-service-unserialize ...                                       */
 ;*---------------------------------------------------------------------*/

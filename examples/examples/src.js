@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Sat Dec 20 10:19:29 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:08 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
 /*    -------------------------------------------------------------    */
@@ -20,7 +20,7 @@ var fontifier = require( hop.fontifier );
 /*---------------------------------------------------------------------*/
 service examplesSrc( path ) {
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 var fontify = fontifier.hopscriptFontifier;
 	 var lbegin = 14;
 	 
@@ -35,7 +35,7 @@ service examplesSrc( path ) {
 	 }
 	 
 	 fs.readFile( path, function( err, buf ) {
-	    reply( <PRE> {
+	    sendResponse( <PRE> {
 	       class: "fontifier-prog",
 	       fontifier.lineNumber( fontify( buf, lbegin ) )
 	    } );

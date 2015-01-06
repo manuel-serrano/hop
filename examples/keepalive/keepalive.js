@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 17 17:37:35 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:16 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    This shows how to combine keep-alive HTTP and async responses    */
 /*    -------------------------------------------------------------    */
@@ -15,10 +15,10 @@ var hop = require( "hop" );
 
 service keepalive() {
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 setTimeout(
 	    function() {
-	       reply( <HTML> {
+	       sendResponse( <HTML> {
 		  <HEAD> {
 		     css: keepalive.resource( "keepalive.hss" )
 		  },

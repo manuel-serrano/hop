@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 23 07:42:15 2014                          */
-/*    Last change :  Sat Dec 20 09:29:46 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 18:03:02 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    An example of QUnit + Hop combination                            */
 /*    -------------------------------------------------------------    */
@@ -13,7 +13,7 @@
 /*=====================================================================*/
 var hop = require( "hop" );
 
-service qunit( { noglobals: false, notrycatch: false }) {
+service qunit( { noglobals: false, notrycatch: false, testNumber: 0 }) {
    return <HTML> {
       <HEAD> {
 	 css: "http://code.jquery.com/qunit/qunit-1.14.0.css",

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/weblets/doc/wiki.hop              */
+;*    serrano/prgm/project/hop/3.0.x/weblets/doc/wiki.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Thu Nov  8 14:51:02 2012 (serrano)                */
-;*    Copyright   :  2006-12 Manuel Serrano                            */
+;*    Last change :  Mon Jan  5 17:40:50 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -97,8 +97,8 @@
 			 (lambda (port t expr)
 			    (let ((title (if mktitle (mktitle t) t)))
 			       (if (authorized-service? req 'admin)
-				   (with-access::http-request req (localclientp)
-				      (if localclientp
+				   (begin
+				      (if (http-request-local? req)
 					  (<DOC/emacs> port title expr)
 					  (<DOC/edit> port title expr))
 				      (<WIKI-DOC> port title expr))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Dec  5 05:51:51 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 09:20:21 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -189,7 +189,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-nice-url ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    This is used for fix arity function in order to build nice URLS. */
+;*    This is used for fix arity functions in order to build nice URLS.*/
 ;*    When at least one argument is not a string, it falls back to     */
 ;*    hop-apply-url.                                                   */
 ;*---------------------------------------------------------------------*/
@@ -236,16 +236,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-service-url ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (hop-apply-service-url svc url)
+(define (hop-apply-service-url svc vals)
    (with-access::hop-service svc (path)
-      (hop-apply-url path url)))
+      (hop-apply-url path vals)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-funcall-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (service-funcall-url svc . vals)
    (if (not (isa? svc hop-service))
-       (bigloo-type-error 'service-funcall-url 'service svc)
+       (bigloo-type-error "service-funcall-url" 'service svc)
        (with-access::hop-service svc (path)
 	  (hop-apply-url path vals))))
 

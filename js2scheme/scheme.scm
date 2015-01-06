@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 23 20:17:59 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Tue Jan  6 08:38:09 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -947,8 +947,8 @@
 	       (tmps (gensym 'services)))
 	    `(letrec* ((,tmpp (lambda (this ,@params #!rest rest)
 				 (with-access::JsService ,tmps (svc)
-				    (js-make-hopframe %this
-				       (hop-apply-service-url svc 
+				    (with-access::hop-service svc (path)
+				       (js-make-hopframe %this path
 					  (if (and (pair? rest)
 						   (isa? (car rest) JsObject))
 					      (js-object->keyword-arguments

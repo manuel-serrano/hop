@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Sat Dec 20 10:14:15 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:36:38 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
 /*    -------------------------------------------------------------    */
@@ -30,9 +30,9 @@ service svc3() {
 service foo( x ) {
    console.log( "in foo x=", x );
    return hop.HTTPResponseAsync(
-      function( reply ) {
+      function( sendResponse ) {
 	 bar( x + 1 ).post( function( e ) {
-	    reply( e );
+	    sendResponse( e );
 	 } )
       }, this );
 }

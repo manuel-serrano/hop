@@ -3,15 +3,15 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Sun Dec 21 07:40:12 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Jan  5 17:34:48 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
 /*    -------------------------------------------------------------    */
 /*    run: hop -v -- wsclient.js 9999                                  */
 /*=====================================================================*/
 
-var port = parseInt( process.execArgv[ process.execArgv.length - 1 ] );
+var port = parseInt( process.argv[ process.argv.length - 1 ] );
 var ws = new WebSocket( "ws://localhost:" + port + "/hop/wss", [ "bar", "foo" ] );
 
 console.error( "ws=", "ws://localhost:" + port + "/hop/wss" );
