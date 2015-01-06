@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon Jan  5 17:42:55 2015 (serrano)                */
+;*    Last change :  Tue Jan  6 16:12:42 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -403,7 +403,7 @@ setting can be overriden when starting Hop.]))))))
 	 (else
 	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
-		localp anp webdav)))))
+		localp webdav)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    save ...                                                         */
@@ -465,7 +465,8 @@ setting can be overriden when starting Hop.]))))))
 		     (lambda (req svc)
 			(http-request-local? req))))
 	    (print '(hop-path-access-control-set!
-		     (http-request-local? req)))
+		     (lambda (req svc)
+			(http-request-local? req))))
 	    (newline))))
    (let ((accounts "admin"))
       (with-output-to-file passwdfile

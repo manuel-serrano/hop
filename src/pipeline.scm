@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Jan  6 05:14:30 2015 (serrano)                */
+;*    Last change :  Tue Jan  6 16:16:19 2015 (serrano)                */
 ;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -202,7 +202,9 @@
    ;; decrement the keep-alive number
    (when (eq? mode 'keep-alive) (keep-alive--))
    ;; abort this request
-   (socket-shutdown sock)
+   (if (isa? e &io-connection-error)
+       (socket-close sock)
+       (socket-shutdown sock))
    ;; ignore the error
    #unspecified)
 

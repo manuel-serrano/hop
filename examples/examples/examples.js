@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Jan  5 17:46:13 2015 (serrano)                */
+/*    Last change :  Tue Jan  6 16:13:38 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -21,8 +21,8 @@ var fontifier = require( hop.fontifier );
 var PORT = hop.port + 1;
 var PROCESSES = [];
 var SHELL = "/bin/sh";
-var CMD = "hop -g --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE)"
-var PASSWD = path.normalize( path.join( path.relative( process.cwd(), __dirname ), "/passwd.hop" ) );
+var CMD = "hop -g --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE)";
+var PASSWD = path.join( __dirname, "passwd.hop" );
 
 var CLASSLEVELS = [ "success", "info", "warning", "danger" ];
 
@@ -329,7 +329,7 @@ service examplesRun( o ) {
 					  if( p == "DIR" ) return o.dir;
 				       } );
 	    var execpath = path.dirname( process.execPath );
-	    var env = { PATH: execpath + ":" + process.env.path };
+	    var env = { PATH: execpath + ":" + process.env.PATH };
 	    
 	    env.__proto__ = process.env;
 
