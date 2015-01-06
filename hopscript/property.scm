@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jan  5 17:47:35 2015 (serrano)                */
+;*    Last change :  Tue Jan  6 11:11:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -605,7 +605,7 @@
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
       ((pair? o)
-       (js-get-pair o prop %this))
+       (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
        (js-get-null o (js-toname prop %this) %this))
       (else
