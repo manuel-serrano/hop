@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Nov 24 09:09:57 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 19:57:40 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -54,6 +54,18 @@
 (%js-string-literal-begin!)
 
 ;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsNumber ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsNumber js-serializer
+   (lambda (s) (make-struct 'javascript 1 s)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-number->obj ::JsGlobalObject ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-number->obj %this::JsGlobalObject v)
+   (js-tonumber v %this))
+
+;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
@@ -61,7 +73,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsNumber op compile isexpr)
    (with-access::JsNumber o (val)
-      (display "new NUmber(" op)
+      (display "new Number(" op)
       (display val op)
       (display ")" op)))
 

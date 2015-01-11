@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Jan  4 10:07:54 2015 (serrano)                */
+#*    Last change :  Sun Jan 11 18:14:02 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -37,4 +37,5 @@ POPULATION = Makefile \
   hopjs/bufferrw.js \
   hopjs/json.js \
   hopjs/property.js \
-  hopjs/string.js 
+  hopjs/string.js \
+  hopjs/serialization.js 

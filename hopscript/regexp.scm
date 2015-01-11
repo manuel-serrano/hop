@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec  8 07:52:20 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 07:48:16 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -36,27 +36,10 @@
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsRegExp ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsRegExp %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-regexp)                   */
-;*       (with-access::JsFunction js-regexp (construct)                */
-;* 	 (with-access::JsRegExp obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsRegExp ...                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (register-class-serialization! JsRegExp                             */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsRegExp ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsRegExp js-serializer js-unserializer)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */

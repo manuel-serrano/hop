@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/cssmatch.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/cssmatch.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Sun Nov 18 15:40:54 2012 (serrano)                */
-;*    Copyright   :  2010-12 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 20:40:59 2015 (serrano)                */
+;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
 ;*=====================================================================*/
@@ -23,7 +23,6 @@
 
    (use	    __hop_user
 	    __hop_hop
-	    __hop_cgi
 	    __hop_misc
 	    __hop_service
 	    __hop_mime

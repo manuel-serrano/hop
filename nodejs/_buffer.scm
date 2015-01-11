@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sun Jan  4 09:43:47 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 09:40:52 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -45,28 +45,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsSlowBuffer #f (lambda (s) s))
-(register-class-serialization! JsFastBuffer #f (lambda (s) s))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsSlowBuffer ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsSlowBuffer %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-slowbuffer-proto js-arraybuffer) */
-;*       (with-access::JsFunction js-arraybuffer (construct)           */
-;* 	 (with-access::JsSlowBuffer obj (__proto__)                    */
-;* 	    (set! __proto__ js-slowbuffer-proto))))                    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsFastBuffer ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsFastBuffer %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-buffer-proto js-arraybuffer) */
-;*       (with-access::JsFunction js-arraybuffer (construct)           */
-;* 	 (with-access::JsFastBuffer obj (__proto__)                    */
-;* 	    (set! __proto__ js-buffer-proto))))                        */
-;*    obj)                                                             */
+(register-class-serialization! JsSlowBuffer #f
+   (lambda (s) (make-struct 'javascript 1 s)))
+(register-class-serialization! JsFastBuffer #f
+   (lambda (s) (make-struct 'javascript 1 s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsFastBuffer ...                             */
@@ -99,7 +81,7 @@
    (with-access::JsGlobalObject %this (js-slowbuffer-proto)
       (instantiate::JsSlowBuffer
 	 (__proto__ js-slowbuffer-proto)
-	 (data (string-hex-intern (car args))))))
+	 (data (string-hex-intern (js-string-normalize! (car args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-buffer->fastbuffer ...                                */

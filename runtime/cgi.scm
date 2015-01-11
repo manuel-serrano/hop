@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Feb 16 11:17:40 2003                          */
-;*    Last change :  Tue Jan  6 09:30:24 2015 (serrano)                */
+;*    Last change :  Sat Jan 10 19:18:40 2015 (serrano)                */
 ;*    Copyright   :  2003-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    CGI scripts handling                                             */
@@ -20,14 +20,14 @@
 	    __hop_types
 	    __hop_http-lib)
    
-   (export  (http-request-cgi-args ::http-request ::procedure)
+   (export  (http-request-cgi-args ::http-request ::procedure ::procedure ::obj)
 	    (cgi-arg::obj ::bstring ::pair-nil)
 	    (serialized-cgi-arg ::bstring ::pair-nil ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-cgi-args ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (http-request-cgi-args req::http-request unjson::procedure)
+(define (http-request-cgi-args req::http-request unjson::procedure stringify::procedure extension)
  
    (define (normalize l)
       (let loop ((l l)
@@ -44,6 +44,20 @@
 		       (loop (cdr l) res))
 		    ;; Not yet added.
 		    (loop (cdr l) (cons (car l) res)))))))
+
+   (define (cgi-arg-multipart-value! v)
+      (let ((header (memq :header v))
+	    (val (cadr (memq :data v))))
+	 (set-cdr! v
+	    (if (not header)
+		val
+		(let ((enc (cadr (memq :hop-encoding (cadr header)))))
+		   (cond
+		      ((string=? enc "string") (stringify val))
+		      ((string=? enc "integer") (string->integer val))
+		      ((string=? enc "keyword") (string->keyword val))
+		      (else (string->obj val extension))))))
+	 v))
    
    (define (cgi-args req)
       (with-access::http-request req (socket method path abspath query
@@ -62,14 +76,8 @@
 					  "multipart/form-data; boundary=")
 				       (string-length ctype))))
 		       (values path
-			  (with-handler
-			     (lambda (e)
-				(if (isa? e &io-parse-error)
-				    '()
-				    (raise e)))
-			     (map! (lambda (v)
-				      (set-cdr! v (cadr (memq :data v)))
-				      v)
+			  (cons '("hop-encoding" . "hop-multipart")
+			     (map! cgi-arg-multipart-value!
 				(cgi-multipart->list (hop-upload-directory)
 				   pi
 				   content-length

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan  6 08:38:09 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 07:49:37 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -208,7 +208,7 @@
 		
 		,(j2s-scheme-unserialize)
 		,(j2s-scheme-unjson)
-		
+
 		(define %worker (js-current-worker))
 		
 		,@body))))
@@ -929,7 +929,9 @@
 		   (resource %resource)
 		   (source %source)
 		   (decoder %unserialize)
-		   (unjson %unjson))))))
+		   (unjson %unjson)
+		   (stringify string->js-string)
+		   )))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)

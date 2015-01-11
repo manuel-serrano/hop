@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Jan  3 19:20:30 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 20:10:22 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -44,7 +44,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsString js-serializer js-unserializer)
+(register-class-serialization! JsString js-serializer
+   (lambda (s) (make-struct 'javascript 1 s)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-string->obj ::JsGlobalObject ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-string->obj %this::JsGlobalObject v)
+   (with-access::JsGlobalObject %this (js-string)
+      (js-new %this js-string v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */
@@ -54,9 +62,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsString op compile isexpr)
    (with-access::JsString o (val)
-      (display "new String( \"" op)
+      (display "new String(\"" op)
       (display (string-for-read (js-string->string val)) op)
-      (display "\"" op)))
+      (display "\")" op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-string! ...                                              */

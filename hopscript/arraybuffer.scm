@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Mon Dec  8 11:05:59 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sun Jan 11 09:37:51 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -31,16 +31,6 @@
    (export (js-init-arraybuffer! ::JsGlobalObject)
 	   (register-javascript-buffer-intern! ::bstring ::procedure)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsArrayBuffer ...                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsArrayBuffer %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-arraybuffer)              */
-;*       (with-access::JsFunction js-arraybuffer (construct)           */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-
 ;*---------------------------------------------------------------------*/
 ;*    buffer-interns ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -58,7 +48,7 @@
 ;*    See __hop_json                                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (javascript-buffer->obj %this::JsGlobalObject b)
-   (let ((cell (assoc (car b) buffer-interns)))
+   (let ((cell (assoc (js-string-normalize! (car b)) buffer-interns)))
       (if cell
 	  ((cdr cell) (car b) (cdr b) %this)
 	  (error "javascript-buffer->obj" "Wrong buffer format" (car b)))))
@@ -70,14 +60,6 @@
 (register-javascript-buffer-intern! "JsArrayBuffer"
    javascript-buffer->arraybuffer)
    
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
-
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */

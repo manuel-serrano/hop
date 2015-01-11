@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  8 07:53:49 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 19:59:13 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
 ;*    -------------------------------------------------------------    */
@@ -37,27 +37,17 @@
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsDate ...                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsDate %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-date)                     */
-;*       (with-access::JsFunction js-date (construct)                  */
-;* 	 (with-access::JsDate obj (__proto__)                          */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsDate ...                                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (register-class-serialization! JsDate                               */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsDate ...                                   */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsDate js-serializer
+   (lambda (s) (make-struct 'javascript 1 s)))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-date->obj ::JsGlobalObject ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-date->obj %this::JsGlobalObject v)
+   (js-date->jsdate v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDate ...                                     */
@@ -66,9 +56,9 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsDate op compile isexpr)
-   (display "new Date(\"" op)
-   (display (js-tostring o (js-initial-global-object)) op)
-   (display "\")" op))
+   (display "new Date(" op)
+   (with-access::JsDate o (val) (display (date->nanoseconds val) op))
+   (display ")" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

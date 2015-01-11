@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Sun Dec 21 07:13:27 2014 (serrano)                */
-;*    Copyright   :  2010-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 20:39:08 2015 (serrano)                */
+;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
 ;*=====================================================================*/
@@ -27,7 +27,11 @@
    (export  (generic obj->json ::obj ::output-port)
             (byte-array->json ::bstring ::output-port)
 	    (javascript->obj ::obj #!optional driver)
-	    (generic javascript-string->obj ::obj ::bstring)
+	    (generic javascript-stringliteral->obj ::obj ::bstring)
+	    (generic javascript-string->obj ::obj ::obj)
+	    (generic javascript-date->obj ::obj ::date)
+	    (generic javascript-number->obj ::obj ::obj)
+	    (generic javascript-boolean->obj ::obj ::bool)
 	    (generic javascript-vector->obj ::obj ::vector)
 	    (generic javascript-plist->obj ::obj ::pair-nil)
 	    (generic javascript-buffer->obj ::obj ::obj)
@@ -37,6 +41,30 @@
 ;*    javascript-string->obj ::obj ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-generic (javascript-string->obj driver::obj v)
+   v)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-stringliteral->obj ::obj ...                          */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-stringliteral->obj driver::obj v)
+   v)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-date->obj ::obj ...                                   */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-date->obj driver::obj v)
+   v)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-number->obj ::obj ...                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-number->obj driver::obj v)
+   v)
+
+;*---------------------------------------------------------------------*/
+;*    javascript-boolean->obj ::obj ...                                */
+;*---------------------------------------------------------------------*/
+(define-generic (javascript-boolean->obj driver::obj v)
    v)
 
 ;*---------------------------------------------------------------------*/
@@ -302,7 +330,7 @@
       (expression
 	 ((CONSTANT)
 	  (if (string? (car CONSTANT))
-	      (javascript-string->obj driver (car CONSTANT))
+	      (javascript-stringliteral->obj driver (car CONSTANT))
 	      (car CONSTANT)))
 	 ((IDENTIFIER)
 	  (car IDENTIFIER))
@@ -366,22 +394,47 @@
       
       ;; new
       (new
-	    ((NEW IDENTIFIER PAR-OPEN expressions* PAR-CLO)
-	     (case (car IDENTIFIER)
-		((sc_Pair)
-		 (match-case expressions*
-		    ((?a ?d)
-		     (cons a d))
-		    (else
-		     (error "javascript->obj" "Illegal `cons' construction" expressions*))))
-		((Date)
-		 (match-case expressions*
-		    ((and ?sec (? integer?))
-		     (seconds->date (/fx sec 1000)))
-		    (else
-		     (error "javascript->obj" "Illegal `date' construction" expressions*))))
-		(else
-		 (error "javascript->obj" "Illegal `new' form" expressions*)))))
+       ;;; new expr	    
+       ((NEW IDENTIFIER PAR-OPEN expressions* PAR-CLO)
+	(case (car IDENTIFIER)
+	   ((sc_Pair)
+	    (match-case expressions*
+	       ((?a ?d)
+		(cons a d))
+	       (else
+		(error "javascript->obj" "Illegal `cons' construction" expressions*))))
+	   ((Date)
+	    (match-case expressions*
+	       (((and ?nsec (? llong?)))
+		(javascript-date->obj driver (nanoseconds->date nsec)))
+	       (((and ?sec (? integer?)))
+		(javascript-date->obj driver (seconds->date (/fx sec 1000))))
+	       (else
+		(error "javascript->obj" "Illegal `date' construction"
+		   expressions*))))
+	   ((Number)
+	    (match-case expressions*
+	       (((and ?val (? number?)))
+		(javascript-number->obj driver val))
+	       (else
+		(error "javascript->obj" "Illegal `number' construction"
+		   expressions*))))
+	   ((Boolean)
+	    (match-case expressions*
+	       (((and ?val (? boolean?)))
+		(javascript-boolean->obj driver val))
+	       (else
+		(error "javascript->obj" "Illegal `boolean' construction"
+		   expressions*))))
+	   ((String)
+	    (match-case expressions*
+	       ((?val)
+		(javascript-string->obj driver val))
+	       (else
+		(error "javascript->obj" "Illegal `string' construction"
+		   expressions*))))
+	   (else
+	    (error "javascript->obj" "Illegal `new' form" expressions*)))))
       
       ;; array
       (array-elements

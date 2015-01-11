@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Jan  1 06:49:34 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 20:41:03 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -36,7 +36,6 @@
 	    __hop_http-response
 	    __hop_json
 	    __hop_js-comp
-	    __hop_cgi
 	    __hop_read
 	    __hop_service
 	    __hop_http-response

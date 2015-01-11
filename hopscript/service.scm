@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan  6 09:33:31 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 20:57:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -130,8 +130,10 @@
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
-			 (with-access::JsHopFrame this (url)
-			    (string->js-string url)))
+			 (with-access::JsHopFrame this (url args)
+			    (if (pair? args)
+				(hopframe-multipart->js-string this)
+				(string->js-string url))))
 		      0 'toString))
 	 
 	 ;; HopFrame constructor 
@@ -152,20 +154,56 @@
 ;*    js-make-hopframe ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-hopframe %this::JsGlobalObject url args)
-   (with-access::JsGlobalObject %this (js-hopframe-prototype)
-      (if #f
-	  ;; not correctly implemented yet. the parsing of post multipart
-	  ;; is incorrect and inefficient (see api/web/src/Llib/cgi)
-	  (instantiate::JsHopFrame
-	     (args (unless (eq? args (js-undefined))
-		      `(("hop-encoding" "hop")
-			("vals" ,(obj->string
-				    (if (vector? args) (vector->list args) args))))))
-	     (url url)
-	     (__proto__ js-hopframe-prototype))
-	  (instantiate::JsHopFrame
-	     (url (hop-apply-url url args))
-	     (__proto__ js-hopframe-prototype)))))
+   
+   (define (url-frame)
+      (with-access::JsGlobalObject %this (js-hopframe-prototype)
+	 (instantiate::JsHopFrame
+	    (url (hop-apply-url url args))
+	    (__proto__ js-hopframe-prototype))))
+   
+   (define (multipart-frame)
+      (with-access::JsGlobalObject %this (js-hopframe-prototype)
+	 (instantiate::JsHopFrame
+	    (args (unless (eq? args (js-undefined))
+		     (map (lambda (val)
+			     (cond
+				((string? val)
+				 `("string" ,val "hop-encoding: string"))
+				((integer? val)
+				 `("integer" ,val "hop-encoding: integer"))
+				((keyword? val)
+				 `("keyword" ,val "hop-encoding: keyword"))
+				(else
+				 `("hop" ,(obj->string val) "hop-encoding: hop"))))
+			args)))
+	    (url url)
+	    (__proto__ js-hopframe-prototype))))
+   
+   (cond
+      ((null? args)
+       (url-frame))
+      ((and (null? (cdr args))
+	    (string? (car args))
+	    (<fx (string-length (car args)) 80))
+       (url-frame))
+      ((every integer? args)
+       (url-frame))
+      (else
+       (multipart-frame))))
+
+;*---------------------------------------------------------------------*/
+;*    hopframe-multipart->js-string ...                                */
+;*---------------------------------------------------------------------*/
+(define (hopframe-multipart->js-string frame)
+   
+   (define (hopframe-multipart-arg->arg arg)
+      (if (string=? (car arg) "hop")
+	  (string->obj (cadr arg))
+	  (cadr arg)))
+   
+   (with-access::JsHopFrame frame (url args)
+      (string->js-string
+	 (hop-apply-url url (map hopframe-multipart-arg->arg args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string->buffer ...                                            */
@@ -225,7 +263,7 @@
       (define (js-string->obj obj)
 	 (string->obj obj
 	    (lambda (o)
-	       (if (string? o) (js-javascript->obj o) o))))
+	       (js-service-unserialize o %this))))
 
       (define (js-javascript->obj obj)
 	 (javascript->obj obj %this))
@@ -243,20 +281,20 @@
 	 (if (string? val)
 	     (js-string->buffer val %this)
 	     val))
-      
+
       (if asynchronous
 	  (begin
 	     (thread-start!
 		(instantiate::hopthread
 		   (body (lambda ()
 			    (with-hop
-			       (if (isa? success JsFunction)
-				   (lambda (x)
-				      (js-worker-exec (js-current-worker) svc
-					 (lambda ()
-					    (js-call1 %this success %this
-					       (scheme->js x)))))
-				   scheme->js))))))
+				  (if (isa? success JsFunction)
+				      (lambda (x)
+					 (js-worker-exec (js-current-worker) svc
+					    (lambda ()
+					       (js-call1 %this success %this
+						  (scheme->js x)))))
+				      scheme->js))))))
 	     (js-undefined))
 	  (with-hop
 	     (if (isa? success JsFunction)
@@ -358,6 +396,12 @@
 		res)))
 	 ((vector? obj)
 	  (js-vector->jsarray (vector-map! loop obj) %this))
+	 ((struct? obj)
+	  (case (struct-key obj)
+	     ((javascript)
+	      (javascript->obj (struct-ref obj 0) %this))
+	     (else
+	      obj)))
 	 (else
 	  obj))))
 

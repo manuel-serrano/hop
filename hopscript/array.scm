@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Dec 20 08:23:46 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 09:26:29 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -42,16 +42,6 @@
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsArray ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsArray %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-array)                    */
-;*       (with-access::JsFunction js-array (construct)                 */
-;* 	 (with-access::JsArray obj (__proto__)                         */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    javascript-vector->obj ::JsGlobalObject ...                      */
 ;*    -------------------------------------------------------------    */
@@ -63,7 +53,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArray js-serializer js-unserializer)
+(register-class-serialization! JsArray
+   (lambda (o)
+      (jsarray->vector o (js-initial-global-object)))
+   js-unserializer)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */

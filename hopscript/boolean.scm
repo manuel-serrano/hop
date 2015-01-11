@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  8 07:52:08 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 19:57:29 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -36,27 +36,17 @@
 ;*---------------------------------------------------------------------*/
 (%js-string-literal-begin!)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsBoolean ...                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsBoolean %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-boolean)                  */
-;*       (with-access::JsFunction js-boolean (construct)               */
-;* 	 (with-access::JsBoolean obj (__proto__)                       */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsBoolean ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (register-class-serialization! JsBoolean                            */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
+;*---------------------------------------------------------------------*/
+;*    javascript-boolean->obj ::JsGlobalObject ...                     */
+;*---------------------------------------------------------------------*/
+(define-method (javascript-boolean->obj %this::JsGlobalObject v)
+   (js-toboolean v))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsBoolean ...                                */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsBoolean js-serializer
+   (lambda (s) (make-struct 'javascript 1 s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Jan  6 09:20:21 2015 (serrano)                */
+;*    Last change :  Sun Jan 11 20:41:17 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -26,7 +26,6 @@
 	    __hop_read
 	    __hop_http-error
 	    __hop_http-response
-	    __hop_cgi
 	    __hop_xml-types
 	    __hop_xml
 	    __hop_html-base
@@ -36,7 +35,8 @@
 	    __hop_js-comp
 	    __hop_user
 	    __hop_weblets
-	    __hop_hop)
+	    __hop_hop
+	    __hop_http-lib)
    
    (export  (init-hop-services!)
 	    (generic service?::bool ::obj)
@@ -250,23 +250,141 @@
 	  (hop-apply-url path vals))))
 
 ;*---------------------------------------------------------------------*/
+;*    service-parse-request-get ...                                    */
+;*---------------------------------------------------------------------*/
+(define (service-parse-request-get svc::hop-service req::http-request)
+   
+   (define (normalize l)
+      ;; pack values of arguments occurring more than once
+      ;; (normalize '((a 1) (a 2) (b 3)) => ((b 3) (a (1 2))))
+      (let loop ((l l)
+		 (res '()))
+	 (if (null? l)
+	     res
+	     (let ((a (assq (caar l) res)))
+		(if (pair? a)
+		    (begin
+		       (if (pair? (cadr a))
+			   (append! (cadr a) (list (cadar l)))
+			   (set-car! (cdr a) (list (cadr a) (cadar l))))
+		       (loop (cdr l) res))
+		    (loop (cdr l) (cons (car l) res)))))))
+
+   (with-access::http-request req (query)
+      (if (string? query)
+	  (let ((args (cgi-args->list query)))
+	     ;; replace the arguments name with keyword and replace
+	     ;; cons cells with lists
+	     (for-each (lambda (a)
+			  (set-car! a (string->keyword (car a)))
+			  (set-cdr! a (cons (cdr a) '())))
+		args)
+	     ;; pack the multipe arguments occurrences
+	     (normalize args)
+	     ;; build the arguyment list
+	     (apply append args))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    service-parse-request-put ...                                    */
+;*---------------------------------------------------------------------*/
+(define (service-parse-request-put svc::hop-service req::http-request)
+   (with-access::http-request req (query abspath)
+      (if (string? query)
+	  (with-access::hop-service svc (id decoder)
+	     (let ((args (cgi-args->list query)))
+		(match-case args
+		   ((("hop-encoding" . "hop") ("vals" . ?vals))
+		    (string->obj vals decoder))
+		   (else
+		    (error id "Illegal service call" abspath)))))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    service-parse-request-post ...                                   */
+;*---------------------------------------------------------------------*/
+(define (service-parse-request-post svc::hop-service req::http-request)
+   
+   (define (multipart-boundary ctype)
+      (when (and (string? ctype)
+		 (substring-ci-at? ctype "multipart/form-data; boundary=" 0))
+	 (substring ctype (string-length "multipart/form-data; boundary=")
+	    (string-length ctype))))
+
+   (define (multipart-value! v)
+      (with-access::hop-service svc (decoder stringify)
+	 (let ((header (memq :header v))
+	       (val (cadr (memq :data v))))
+	    (if (not header)
+		val
+		(let ((enc (cadr (memq :hop-encoding (cadr header)))))
+		   (cond
+		      ((string=? enc "string") (stringify val))
+		      ((string=? enc "integer") (string->integer val))
+		      ((string=? enc "keyword") (string->keyword val))
+		      (else (string->obj val decoder))))))))
+   
+   (with-access::http-request req (content-length header socket)
+      (let* ((pi (socket-input socket))
+	     (ctype (http-header-field header content-type:)))
+	 (cond
+	    ((multipart-boundary ctype)
+	     =>
+	     (lambda (boundary)
+		(let ((args (cgi-multipart->list (hop-upload-directory)
+			       pi content-length boundary)))
+		   (map! multipart-value! args))))
+	    (else
+	     (with-access::hop-service svc (unjson)
+		(list (unjson pi))))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-parse-request ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Hop uses various service call protocols. They mainly depends     */
+;*    on the HTTP verb (PUT, POST, GET) and additionally, for some     */
+;*    of these verbs, different encoding can be used by the caller.    */
+;*---------------------------------------------------------------------*/
+(define (service-parse-request svc::hop-service req::http-request)
+   (with-trace 2 'service-parse-request
+      (with-access::http-request req (method)
+	 (trace-item "path=" path)
+	 (trace-item "abspath=" (string-for-read abspath))
+	 (trace-item "method=" method)
+	 (trace-item "query=" (when (string? query) (string-for-read query)))
+	 (with-access::http-request req (method)
+	    (case method
+	       ((GET PUT)
+		(service-parse-request-put svc req))
+	       ((GET)
+		(service-parse-request-get svc req))
+	       ((POST)
+		(service-parse-request-post svc req))
+	       (else
+		(with-access::hop-service svc (id)
+		   (error "service-parse-request"
+		      (format "Illegal HTTP method (~a)" id)
+		      method))))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
    
-   (define (invoke proc req vals)
-      (with-access::hop-service svc (id)
-	 (hop-verb 2 (hop-color req req " INVOKE.svc")
-	    " "
-	    (with-output-to-string
-	       (lambda ()
-		  (write-circle (cons id vals))))
-	    "\n")
+   (define (invoke-trace req id vals)
+      (hop-verb 2 (hop-color req req " INVOKE.svc")
+	 " "
+	 (with-output-to-string
+	    (lambda ()
+	       (write-circle (cons id vals))))
+	 "\n"))
+   
+   (define (invoke vals)
+      (with-access::hop-service svc (id proc)
+	 (invoke-trace req id vals)
 	 (cond
 	    ((not vals)
-	     (error id
-		"Illegal service arguments encoding"
-		`(,id ,vals)))
+	     (error id "Illegal service arguments encoding" `(,id ,vals)))
 	    ((correct-arity? proc (+fx 1 (length vals)))
 	     (let ((env (current-dynamic-env))
 		   (name id))
@@ -279,34 +397,41 @@
 		(format "Wrong number of arguments (~a/~a)" (length vals)
 		   (-fx (procedure-arity proc) 1))
 		`(,id ,@vals))))))
+   
+   (invoke (service-parse-request svc req)))
 
-   (with-access::hop-service svc (proc id decoder unjson)
-      (multiple-value-bind (path args)
-	 (http-request-cgi-args req unjson)
-	 (cond
-	    ((null? args)
-	     (let ((env (current-dynamic-env))
-		   (name id))
-		($env-push-trace env name #f)
-		(let ((aux (invoke proc req '())))
-		   ($env-pop-trace env)
-		   aux)))
-	    ((equal? (cgi-arg "hop-encoding" args) "hop")
-	     (with-access::http-request req (charset)
-		(set! charset 'UTF-8))
-	     (let ((vals (serialized-cgi-arg "vals" args decoder)))
-		(if (or (null? vals) (pair? vals))
-		    (invoke proc req vals)
-		    (error id "Illegal arguments" vals))))
-	    ((equal? (cgi-arg "hop-encoding" args) "json")
-	     (with-access::http-request req (charset)
-		(set! charset 'UTF-8))
-	     (invoke proc req (cgi-arg "json" args)))
-	    (else
-	     (invoke proc req
-		(append-map (lambda (p)
-			       (list (string->keyword (car p)) (cdr p)))
-		   args)))))))
+;*       (multiple-value-bind (encoding args)                          */
+;* 	 (                                                             */
+;* 	 (cond                                                         */
+;* 	    ((null? args)                                              */
+;* 	     ;; no argument passing                                    */
+;* 	     (if (string=? encoding "null")                            */
+;* 		 (invoke '())                                          */
+;* 		 (error id "Illegal service call, arguments missing" encoding))) */
+;* 	    ((string=? encoding "hop-encoding")                        */
+;* 	     ;; packed string serialized arguments                     */
+;* 	     (with-access::http-request req (charset)                  */
+;* 		(set! charset 'UTF-8))                                 */
+;* 	     (if (or (null? actuals) (pair? (cdr actuals))             */
+;* 		     (not (string=? (caar actuals "vals"))))           */
+;* 		 (error id "Illegal service call" encoding)            */
+;* 		 (with-access::hop-service svc (decoder)               */
+;* 		    (invoke (string->obj (cdar actuals) decoder)))))   */
+;* 	    ((string=? encoding "json")                                */
+;* 	     ;; json encoded argument                                  */
+;* 	     (with-access::http-request req (charset)                  */
+;* 		(set! charset 'UTF-8))                                 */
+;* 	     (invoke args))                                            */
+;* 	    ((string=? encoding "multipart")                           */
+;* 	                                                               */
+;* 	     ...)                                                      */
+;* 	    ((string=? encoding "url")                                 */
+;* 	     (invoke                                                   */
+;* 		(append-map (lambda (p)                                */
+;* 			       (list (string->keyword (car p)) (cdr p))) */
+;* 		   actuals)))                                          */
+;* 	    (else                                                      */
+;* 	     (error id "Illegal service call, bad encoding" encoding)))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Dec 22 06:32:29 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sun Jan 11 20:02:53 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -52,18 +52,11 @@
    (hop->javascript (js-string->string o) op compile isexpr))
 
 ;*---------------------------------------------------------------------*/
-;*    javascript-string->obj ::JsGlobalObject ...                      */
+;*    javascript-stringliteral->obj ::JsGlobalObject ...               */
 ;*---------------------------------------------------------------------*/
-(define-method (javascript-string->obj %this::JsGlobalObject v)
+(define-method (javascript-stringliteral->obj %this::JsGlobalObject v)
    (string->js-string v))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsStringLiteral ...                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (register-class-serialization! JsStringLiteral                      */
-;*    js-string->string                                                */
-;*    string->js-string)                                               */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsStringLiteral ...                        */
 ;*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/hop_video.scm             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/hop_video.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Thu Jan 12 09:30:58 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 20:41:07 2015 (serrano)                */
+;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
 ;*=====================================================================*/
@@ -29,7 +29,6 @@
 	    __hop_service
 	    __hop_hop-slider
 	    __hop_hop-extra
-	    __hop_cgi
 	    __hop_read
 	    __hop_event
 	    __hop_http-error

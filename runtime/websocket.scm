@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Dec 16 18:11:05 2014 (serrano)                */
-;*    Copyright   :  2012-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 11 20:41:23 2015 (serrano)                */
+;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -34,7 +34,6 @@
 	    __hop_http-lib
 	    __hop_http-response
 	    __hop_json
-	    __hop_cgi
 	    __hop_read
 	    __hop_service
 	    __hop_http-response
