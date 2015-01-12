@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Jan 12 17:55:54 2015 (serrano)                */
+/*    Last change :  Mon Jan 12 18:22:27 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -89,6 +89,9 @@ service examples() {
 	    name: "viewport",
 	    content: "width=device-width, initial-scale=1"
 	 },
+	 ~{
+	    var listeners = [];
+	 }
       },
       
       <BODY> {
@@ -167,6 +170,11 @@ service examples() {
 				 // add the consoles
 				 ${consoles}.innerHTML = "";
 
+				 listeners.forEach( function( ltn ) {
+				    server.removeEventListener( ltn.name, ltn.proc );
+				 } );
+				 listeners = [];
+						    
 				 for( var i = 0; i < commands.length; i++ ) {
 				    (function() {
 				       var cmd = commands[ i ];
@@ -181,18 +189,16 @@ service examples() {
 					  pre
 				       };
 
-				       // remove the previously installed listener for that event
-				       if( server.prevListenerProc ) {
-					  server.removeEventListener( server.prevListenerName, server.prevListenerProc );
-				       }
-
 				       // add the new listener
-				       server.prevListenerName = files[ i ];
-				       server.prevListenerProc = function( e ) {
-					  pre.appendChild( e.value );
-				       }
+				       var ltn = {
+					  name: files[ i ],
+					  proc: function( e ) {
+					     pre.appendChild( e.value );
+					  }
+				       };
 
-				       server.addEventListener( server.prevListenerName, server.prevListenerProc );
+				       server.addEventListener( ltn.name, ltn.proc );
+				       listeners.push( ltn );
 
 				       ${consoles}.appendChild( con );
 				    })();
@@ -347,6 +353,7 @@ service examplesRun( o ) {
 	    proc.stdout.on( "data", function( data ) {
 	       hop.broadcast( file, <SPAN> { class: "stdout", data.toString() } );
 	       if( rep ) {
+		  rep = false;
 		  if( o.service ) {
 		     sendResponse( util.format( "http://localhost:%d/hop/%s", port, o.service ) );
 		  } else {
