@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Nov  3 13:43:08 2014 (serrano)                */
-/*    Copyright   :  2007-14 Manuel Serrano                            */
+/*    Last change :  Mon Jan 12 17:51:49 2015 (serrano)                */
+/*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan 11 20:41:17 2015 (serrano)                */
+;*    Last change :  Mon Jan 12 17:46:14 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -250,9 +250,9 @@
 	  (hop-apply-url path vals))))
 
 ;*---------------------------------------------------------------------*/
-;*    service-parse-request-get ...                                    */
+;*    service-parse-request-get-args ...                               */
 ;*---------------------------------------------------------------------*/
-(define (service-parse-request-get svc::hop-service req::http-request)
+(define (service-parse-request-get-args args)
    
    (define (normalize l)
       ;; pack values of arguments occurring more than once
@@ -269,20 +269,25 @@
 			   (set-car! (cdr a) (list (cadr a) (cadar l))))
 		       (loop (cdr l) res))
 		    (loop (cdr l) (cons (car l) res)))))))
-
+   
+   ;; replace the arguments name with keyword and replace
+   ;; cons cells with lists
+   (for-each (lambda (a)
+		(set-car! a (string->keyword (car a)))
+		(set-cdr! a (cons (cdr a) '())))
+      args)
+   ;; pack the multipe arguments occurrences
+   (normalize args)
+   ;; build the arguyment list
+   (apply append args))
+   
+;*---------------------------------------------------------------------*/
+;*    service-parse-request-get ...                                    */
+;*---------------------------------------------------------------------*/
+(define (service-parse-request-get svc::hop-service req::http-request)
    (with-access::http-request req (query)
       (if (string? query)
-	  (let ((args (cgi-args->list query)))
-	     ;; replace the arguments name with keyword and replace
-	     ;; cons cells with lists
-	     (for-each (lambda (a)
-			  (set-car! a (string->keyword (car a)))
-			  (set-cdr! a (cons (cdr a) '())))
-		args)
-	     ;; pack the multipe arguments occurrences
-	     (normalize args)
-	     ;; build the arguyment list
-	     (apply append args))
+	  (service-parse-request-get-args (cgi-args->list query))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -297,7 +302,7 @@
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals decoder))
 		   (else
-		    (error id "Illegal service call" abspath)))))
+		    (service-parse-request-get-args args)))))
 	  '())))
 
 ;*---------------------------------------------------------------------*/

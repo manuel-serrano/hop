@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Tue Jan  6 16:13:38 2015 (serrano)                */
+/*    Last change :  Mon Jan 12 17:55:54 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -181,9 +181,18 @@ service examples() {
 					  pre
 				       };
 
-				       server.addEventListener( files[ i ], function( e ) {
+				       // remove the previously installed listener for that event
+				       if( server.prevListenerProc ) {
+					  server.removeEventListener( server.prevListenerName, server.prevListenerProc );
+				       }
+
+				       // add the new listener
+				       server.prevListenerName = files[ i ];
+				       server.prevListenerProc = function( e ) {
 					  pre.appendChild( e.value );
-				       } );
+				       }
+
+				       server.addEventListener( server.prevListenerName, server.prevListenerProc );
 
 				       ${consoles}.appendChild( con );
 				    })();
