@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Sun Dec 21 11:07:08 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Jan 13 16:40:19 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Server side worker thread example                                */
 /*    -------------------------------------------------------------    */
@@ -18,7 +18,6 @@ var w = new Worker( "./slave.js" );
 
 w.onmessage = function( e ) {
    console.log( "received from the slave: ", e.data );
-   w.terminate();
    console.log( "onmsg master bar=", bar.count( 1 ), " (expect 16)" );
 }
 

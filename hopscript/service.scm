@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan 13 10:37:07 2015 (serrano)                */
+;*    Last change :  Tue Jan 13 16:30:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -168,7 +168,7 @@
 				((integer? val)
 				 `("integer" ,val "hop-encoding: integer"))
 				((keyword? val)
-				 `("keyword" ,val "hop-encoding: keyword"))
+				 `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
 				(else
 				 `("hop" ,(obj->string val) "hop-encoding: hop"))))
 			args)))
