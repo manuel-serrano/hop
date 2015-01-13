@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Sat Oct 25 19:21:31 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Jan 13 10:33:27 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services API.                     */
 /*    -------------------------------------------------------------    */
@@ -71,3 +71,5 @@ service svc2( a, b, c ) {
 }
 
 console.log( "Go to \"http://%s:%d/hop/svc\"", hop.hostname, hop.port );
+console.log( svc1( {c: 6, b: 5, a: 4} ).toString() );
+

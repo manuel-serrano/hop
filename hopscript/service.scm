@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Jan 11 20:57:20 2015 (serrano)                */
+;*    Last change :  Tue Jan 13 10:37:07 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -68,10 +68,9 @@
 ;*    hop->javascript ::JsHopFrame ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsHopFrame op compile isexpr)
-   (with-access::JsHopFrame o (url)
-      (display "new HopFrame(\"" op)
-      (display url op)
-      (display "\")" op)))
+   (display "new HopFrame(\"" op)
+   (display (hopframe->string o) op)
+   (display "\")" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::object ...                                  */
@@ -130,10 +129,7 @@
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
-			 (with-access::JsHopFrame this (url args)
-			    (if (pair? args)
-				(hopframe-multipart->js-string this)
-				(string->js-string url))))
+			 (string->js-string (hopframe->string this)))
 		      0 'toString))
 	 
 	 ;; HopFrame constructor 
@@ -192,9 +188,9 @@
        (multipart-frame))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopframe-multipart->js-string ...                                */
+;*    hopframe->string ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopframe-multipart->js-string frame)
+(define (hopframe->string::bstring frame::JsHopFrame)
    
    (define (hopframe-multipart-arg->arg arg)
       (if (string=? (car arg) "hop")
@@ -202,9 +198,10 @@
 	  (cadr arg)))
    
    (with-access::JsHopFrame frame (url args)
-      (string->js-string
-	 (hop-apply-url url (map hopframe-multipart-arg->arg args)))))
-
+      (if (pair? args)
+	  (hop-apply-url url (map hopframe-multipart-arg->arg args))
+	  url)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-string->buffer ...                                            */
 ;*---------------------------------------------------------------------*/
