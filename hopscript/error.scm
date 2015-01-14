@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Dec 12 20:08:34 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 10:42:20 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -68,8 +68,8 @@
 		    (list `(,name (at ,fname ,location)))
 		    port)))
 	     (fprint port name ": " msg "\n")
-	     (if (string? stk)
-		 (display stk port)
+	     (if (isa? stk JsStringLiteral)
+		 (display (js-string->string stk) port)
 		 (let ((stack (cond
 				 ((string=? name "ReferenceError")
 				  stack)
@@ -152,10 +152,10 @@
 
 	 (define (js-error-construct/stack this::JsError . args)
 	    (let ((err (apply js-error-construct this args)))
-	       (capture-stack-trace #f err %this)
+	       (capture-stack-trace #f err %this args)
 	       err))
 
-	 (define (capture-stack-trace head this %this)
+	 (define (capture-stack-trace head this %this args)
 	    (let ((stk (call-with-output-string
 			  (lambda (op)
 			     (when (string? head)
@@ -163,8 +163,17 @@
 				(when (isa? this JsObject)
 				   (display (js-get this 'message %this) op)
 				   (newline op)))
-			     (display-trace-stack (get-trace-stack 10)
-				op 1)))))
+			     (let* ((off (match-case args
+					    ((?- (and ?off (? integer?)) ??-)
+					     off)
+					    (else
+					     0)))
+				    (stk (if (>fx off 0)
+					     (get-trace-stack (+fx off 10))
+					     (get-trace-stack 10))))
+				(display-trace-stack
+				   (list-tail stk (minfx off (length stk)))
+				   op 1))))))
 	       (js-put! this 'stack (string->js-string stk) #f %this)))
 	 
 	 ;; bind the properties of the prototype
@@ -282,7 +291,7 @@
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (capture-stack-trace "Trace: " this %this))
+			 (capture-stack-trace "Trace: " this %this '()))
 		      2 'captureStackTrace)
 	    :enumerable #f)
 	 js-error)))

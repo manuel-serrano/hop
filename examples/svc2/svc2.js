@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Sat Dec 20 10:12:28 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Wed Jan 14 17:31:53 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
 /*    -------------------------------------------------------------    */
@@ -33,6 +33,6 @@ service svc2() {
    }
 }
 
-import service dummy( { a: 10, b: 11 } );
+import service dummy( { a: undefined, b: undefined } );
 
 console.log( "Go to \"http://%s:%d/hop/svc2\"", hop.hostname, hop.port );

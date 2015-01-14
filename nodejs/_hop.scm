@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Dec 21 07:22:52 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Wed Jan 14 09:36:08 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -121,6 +121,24 @@
 	    (define-js broadcast 2
 	       (lambda (this name v)
 		  (hop-event-broadcast! (js-tostring name %this) v)))
+
+	    ;; xml
+	    (define-js xmlCompile 3
+	       (lambda (this xml ofile backend)
+		  (let ((be (hop-get-xml-backend
+			       (if (eq? backend (js-undefined))
+				   'html5
+				   (string->symbol
+				      (js-tostring backend %this))))))
+		     (if (eq? ofile (js-undefined))
+			 (string->js-string
+			    (call-with-output-string
+			       (lambda (op)
+				  (xml-write xml op be))))
+			 (call-with-output-file (js-tostring ofile %this)
+			    (lambda (op)
+			       (xml-write xml op be)
+			       (js-undefined)))))))
 	    
 	    ;; lib
 	    (define-js parseWebColor 1

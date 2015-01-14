@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec 31 09:03:16 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 09:22:39 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -309,7 +309,7 @@
 	     ;; Macosx sends process serial numbers this way.
 	     ;; just ignore it.
 	     'do-nothing)
-	    (("--" ?file (help "Ignore rest arguments"))
+	    (("--" ?file (help "Ignore next arguments"))
 	     (set! files (cons file files))
 	     (stop #t))
 	    (("-?dummy")

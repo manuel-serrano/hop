@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jan  6 09:09:42 2015 (serrano)                */
+;*    Last change :  Wed Jan 14 09:17:41 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -208,8 +208,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-xml request socket)
    (with-trace 'hop-response "http-response-xml"
-      (with-access::http-response-xml r (#;request
-					 start-line header
+      (with-access::http-response-xml r (start-line header
 					 content-type charset server
 					 xml bodyp timeout
 					 backend)
@@ -263,7 +262,6 @@
       (with-access::http-response-procedure r (start-line header content-type
 						 charset server content-length
 						 proc bodyp
-						 #;request
 						 timeout)
 	 (let ((p (socket-output socket))
 	       (connection (if (>elong content-length #e0)
@@ -293,7 +291,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-raw request socket)
    (with-trace 'hop-response "http-response::http-response-raw"
-      (with-access::http-response-raw r (bodyp proc timeout #;request connection)
+      (with-access::http-response-raw r (bodyp proc timeout connection)
 	 (let ((p (socket-output socket)))
 	    (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	    (when bodyp
@@ -321,7 +319,6 @@
    (define (response-header conn beg end size p r file)
       (with-access::http-response-file r (start-line header
 					    content-type charset
-					    #;request
 					    server)
 	 (with-access::http-request request (http)
 	    ;; partial content header
@@ -351,7 +348,7 @@
 	    ;; close the header
 	    (http-write-line p))))
    
-   (with-access::http-response-file r (start-line file bodyp #;request timeout)
+   (with-access::http-response-file r (start-line file bodyp timeout)
       (let ((size (file-size file)))
 	 (if (>=elong size #e0)
 	     (with-handler
@@ -398,7 +395,6 @@
    (with-access::http-response-file r (start-line header
 					 content-type charset
 					 server file bodyp
-					 #;request
 					 timeout)
       (let ((size (file-size file)))
 	 (if (>=elong size #e0)
@@ -426,7 +422,7 @@
 ;*    directory->response ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (directory->response rep dir)
-   (with-access::%http-response rep (#;request bodyp)
+   (with-access::%http-response rep (bodyp)
       (instantiate::http-response-xml
 	 (backend (hop-xml-backend))
 	 (content-type (with-access::xml-backend (hop-xml-backend) (mime-type) mime-type))
@@ -463,7 +459,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-file request socket)
    (with-trace 'hop-response "http-response::http-response-file"
-      (with-access::http-response-file r (start-line header #;request file)
+      (with-access::http-response-file r (start-line header file)
 	 (with-access::http-request request (header)
 	    (cond
 	       ((directory? file)
@@ -479,7 +475,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-cgi-env socket r::%http-response request::http-request
 	      path::bstring  qstr method)
-   (with-access::%http-response r (#;request header content-type)
+   (with-access::%http-response r (header content-type)
       (let* ((auth (http-header-field header authorization:))
 	     (auth-type (if (and (string? auth) (substring=? auth "Basic" 5))
 			    "Basic"
@@ -533,7 +529,6 @@
 					   content-type charset
 					   server cgibin
 					   bodyp
-					   #;request
 					   timeout content-length)
 	 (if (authorized-path? request cgibin)
 	     (let ((p (socket-output socket)))
@@ -572,7 +567,6 @@
       (with-access::http-response-put r (start-line header
 					   content-type charset
 					   server uri bodyp
-					   #;request
 					   timeout)
 	 (let ((l (string-length uri)))
 	    (let loop ((i 0))

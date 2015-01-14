@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Jan 13 16:30:38 2015 (serrano)                */
+;*    Last change :  Wed Jan 14 17:21:08 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -404,39 +404,6 @@
 		`(,id ,@vals))))))
    
    (invoke (service-parse-request svc req)))
-
-;*       (multiple-value-bind (encoding args)                          */
-;* 	 (                                                             */
-;* 	 (cond                                                         */
-;* 	    ((null? args)                                              */
-;* 	     ;; no argument passing                                    */
-;* 	     (if (string=? encoding "null")                            */
-;* 		 (invoke '())                                          */
-;* 		 (error id "Illegal service call, arguments missing" encoding))) */
-;* 	    ((string=? encoding "hop-encoding")                        */
-;* 	     ;; packed string serialized arguments                     */
-;* 	     (with-access::http-request req (charset)                  */
-;* 		(set! charset 'UTF-8))                                 */
-;* 	     (if (or (null? actuals) (pair? (cdr actuals))             */
-;* 		     (not (string=? (caar actuals "vals"))))           */
-;* 		 (error id "Illegal service call" encoding)            */
-;* 		 (with-access::hop-service svc (decoder)               */
-;* 		    (invoke (string->obj (cdar actuals) decoder)))))   */
-;* 	    ((string=? encoding "json")                                */
-;* 	     ;; json encoded argument                                  */
-;* 	     (with-access::http-request req (charset)                  */
-;* 		(set! charset 'UTF-8))                                 */
-;* 	     (invoke args))                                            */
-;* 	    ((string=? encoding "multipart")                           */
-;* 	                                                               */
-;* 	     ...)                                                      */
-;* 	    ((string=? encoding "url")                                 */
-;* 	     (invoke                                                   */
-;* 		(append-map (lambda (p)                                */
-;* 			       (list (string->keyword (car p)) (cdr p))) */
-;* 		   actuals)))                                          */
-;* 	    (else                                                      */
-;* 	     (error id "Illegal service call, bad encoding" encoding)))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

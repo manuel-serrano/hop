@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jan 11 07:49:37 2015 (serrano)                */
+;*    Last change :  Wed Jan 14 17:59:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -447,9 +447,6 @@
           (j2s-scheme-decl this (j2s-scheme val mode return conf) writable mode return))
 	 (else
 	  (j2s-scheme val mode return conf)))))
-;* 	 (else                                                         */
-;*           (epairify loc                                             */
-;*              `(define ,(j2s-name name id) ,(j2s-scheme val mode return conf))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */
@@ -942,41 +939,51 @@
       (with-access::J2SDataPropertyInit init (name val)
 	 (with-access::J2SString name ((name val))
 	    (list (string->keyword name) (string->symbol name)))))
-   
-   (define (svc-proc-entry this params actuals arity)
-      (with-access::J2SSvc this (loc)
-	 (let ((tmpp (gensym 'servicep))
+
+   (define (svc-fix-proc-entry this)
+      (with-access::J2SSvc this (params loc)
+	 (let ((params (j2s-scheme params mode return conf))
+	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))
-	    `(letrec* ((,tmpp (lambda (this ,@params #!rest rest)
+	    `(letrec* ((,tmpp (lambda (this ,@params)
 				 (with-access::JsService ,tmps (svc)
 				    (with-access::hop-service svc (path)
 				       (js-make-hopframe %this path
-					  (if (and (pair? rest)
-						   (isa? (car rest) JsObject))
-					      (js-object->keyword-arguments
-						 (car rest) %this)
-					      (list ,@actuals)))))))
+					  (list ,@params))))))
 		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
 				  (epairify loc
 				     `(make-hop-url-name
 					 ,(if (symbol? id)
 					      (symbol->string id)
 					      '(gen-service-url :public #t))))
-				  params arity
+				  params (length params)
 				  mode return)))
 		,tmps))))
    
-   (define (svc-fix-proc-entry this)
-      (with-access::J2SSvc this (params)
-	 (let ((params (j2s-scheme params mode return conf)))
-	    (svc-proc-entry this params params (length params)))))
-   
    (define (svc-dsssl-proc-entry this)
-      (with-access::J2SSvc this (init)
+      (with-access::J2SSvc this (init loc)
 	 (with-access::J2SObjInit init (inits)
 	    (let ((params (cons '#!key (map init->formal inits)))
-		  (actuals (append-map init->actual inits)))
-	       (svc-proc-entry this params actuals -1)))))
+		  (actuals (append-map init->actual inits))
+		  (tmpp (gensym 'servicep))
+		  (tmps (gensym 'services)))
+	       `(letrec* ((,tmpp (lambda (this #!optional rest)
+				    (with-access::JsService ,tmps (svc)
+				       (with-access::hop-service svc (path)
+					  (js-make-hopframe %this path
+					     (if (isa? rest JsObject)
+						 (js-object->keyword-arguments
+						    rest %this)
+						 '()))))))
+			  (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
+				     (epairify loc
+					`(make-hop-url-name
+					    ,(if (symbol? id)
+						 (symbol->string id)
+						 '(gen-service-url :public #t))))
+				     params -1
+				     mode return)))
+		   ,tmps)))))
    
    (with-access::J2SSvc this (loc init)
       (epairify-deep loc

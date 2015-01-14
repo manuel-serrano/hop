@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan 13 18:35:57 2015 (serrano)                */
+;*    Last change :  Wed Jan 14 17:59:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -174,7 +174,7 @@
 			args)))
 	    (url url)
 	    (__proto__ js-hopframe-prototype))))
-   
+
    (cond
       ((null? args)
        (url-frame))
@@ -193,9 +193,13 @@
 (define (hopframe->string::bstring frame::JsHopFrame)
    
    (define (hopframe-multipart-arg->arg arg)
-      (if (string=? (car arg) "hop")
-	  (string->obj (cadr arg))
-	  (cadr arg)))
+      (cond
+	 ((string=? (car arg) "hop")
+	  (string->obj (cadr arg)))
+	 ((string=? (car arg) "keyword")
+	  (string->keyword (cadr arg)))
+	 (else
+	  (cadr arg))))
    
    (with-access::JsHopFrame frame (url args)
       (if (pair? args)

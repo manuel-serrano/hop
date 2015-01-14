@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 16 16:14:07 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Wed Jan 14 17:09:01 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -779,6 +779,15 @@
 	     (init (if (isa? inits J2SObjInit)
 		       inits
 		       (instantiate::J2SNop (loc loc)))))
+	 (when (isa? inits J2SObjInit)
+	    (with-access::J2SObjInit inits ((is inits))
+	       (unless (every (lambda (init)
+				 (when (isa? init J2SPropertyInit)
+				    (with-access::J2SDataPropertyInit init (val)
+				       (isa? val J2SUndefined))))
+			  is)
+		  (parse-node-error "Imported service parameters must default to \"undefined\""
+		     inits))))
 	 (instantiate::J2SDeclSvc
 	    (loc loc)
 	    (id (cdr id))

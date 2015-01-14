@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jan  5 11:51:04 2015 (serrano)                */
+;*    Last change :  Wed Jan 14 10:35:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -597,7 +597,7 @@
       (with-access::JsGlobalObject %this (js-uri-error)
 	 (js-raise
 	    (js-new %this js-uri-error
-	       (format "Cannot find module ~s" name)))))
+	       (format "Cannot find module ~s" name) 7))))
    
    (define (resolve-modules mod x start)
       (any (lambda (dir)
