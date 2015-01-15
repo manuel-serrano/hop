@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jan 11 06:23:52 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 10:21:12 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -175,7 +175,7 @@
 	      ;; the JS code calling that service
 	      (javascript::bstring read-only)
 	      ;; a time stamp
-	      (creation::elong read-only (default (date->seconds (current-date))))
+	      (creation::elong read-only (default (current-seconds)))
 	      ;; a timeout in second
 	      (timeout::long read-only (default -1))
 	      ;; the number of times the service might be called

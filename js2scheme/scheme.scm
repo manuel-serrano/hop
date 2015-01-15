@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan 14 17:59:06 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 11:52:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -393,7 +393,7 @@
 	       (if global 
 		   `(begin
 		       (define ,fastid
-			  ,(jsfun->scheme val mode return conf))
+			  ,(jsfun->lambda val mode return conf))
 		       (define ,scmid
 			  (js-bind! %this ,global ',id
 			     :configurable #f
@@ -407,7 +407,7 @@
 				       :construct ,fastid))))
 		   `(begin
 		       (define ,fastid
-			  ,(jsfun->scheme val mode return conf))
+			  ,(jsfun->lambda val mode return conf))
 		       (define ,scmid
 			  (js-make-function %this
 			     ,fastid ,(length params) ',id
@@ -713,9 +713,9 @@
        ,body))
 
 ;*---------------------------------------------------------------------*/
-;*    jsfun->scheme ...                                                */
+;*    jsfun->lambda ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (jsfun->scheme this::J2SFun mode return conf)
+(define (jsfun->lambda this::J2SFun mode return conf)
 
    (define (lambda-or-labels id args body)
       (if id
@@ -844,14 +844,14 @@
 	 (epairify-deep loc fun))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SFun ...                                          */
+;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SFun mode return conf)
+(define (j2sfun->scheme this::J2SFun mode return conf)
    (with-access::J2SFun this (loc name params mode vararg)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym))
 	     (arity (if vararg -1 (+fx 1 (length params))))
-	     (fundef `(let ((,tmp ,(jsfun->scheme this mode return conf)))
+	     (fundef `(let ((,tmp ,(jsfun->lambda this mode return conf)))
 			 (js-make-function %this
 			    ,tmp ,(length params) ',(j2s-name name id)
 			    :src ,(j2s-function-src loc this conf)
@@ -867,6 +867,12 @@
 		fundef)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SFun mode return conf)
+   (j2sfun->scheme this mode return conf))
+
+;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (jssvc->scheme this::J2SSvc id mode return conf)
@@ -876,14 +882,28 @@
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
 	 (if (isa? init J2SObjInit)
-	     "(sc_lambda = function ( argument ) { return new HopFrame( hop_apply_url( ~s, hop_object_to_dsssl_args( argument ) ) ); },
+	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
               sc_lambda)"
-	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
+	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ), 'hop' ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
               sc_lambda)"))
       
-      (define (service-proc->scheme this)
+      (define (service-fix-proc->scheme this)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return)
+	    (let ((fun `(lambda (this . args)
+			   (let ((fun ,(j2sfun->scheme this mode return conf)))
+			      (map! (lambda (a)
+				       (if (string? a)
+					   (string->js-string a)
+					   a))
+				 args)
+			      (js-worker-exec @worker ,(symbol->string id)
+				 (lambda ()
+				    (js-apply %this fun this args)))))))
+	       (epairify-deep loc fun))))
+
+      (define (service-dsssl-proc->scheme this)
 	 (with-access::J2SSvc this (loc body need-bind-exit-return)
 	    (let* ((body (if need-bind-exit-return
 			     (with-access::J2SNode body (loc)
@@ -891,7 +911,7 @@
 				   (return-body
 				      (j2s-scheme body mode return conf))))
 			     (j2s-scheme body mode return conf)))
-		   (fun `(lambda ,(cons 'this args)
+		   (imp `(lambda ,(cons 'this args)
 			    ,@(filter-map
 				 (lambda (a)
 				    (cond
@@ -907,28 +927,45 @@
 				 args)
 			    (js-worker-exec @worker ,(symbol->string id)
 			       (lambda ()
-				  ,(flatten-stmt body))))))
+				  ,(flatten-stmt body)))))
+		   (fun `(lambda (this . args)
+			    (let ((fun ,imp))
+			       (cond
+				  ((symbol? (car args))
+				   (apply fun this args))
+				  ((isa? (car args) JsObject)
+				   (apply fun this
+				      (js-jsobject->plist (car args) %this)))
+				  (else
+				   `(with-access::JsGlobalObject %this (js-type-error)
+				       (js-new %this js-type-error
+					  (string->js-string
+					     "wrong service arguments")
+					  ,fname ,loc))))))))
 	       (epairify-deep loc fun))))
       
       (with-access::J2SSvc this (init register)
-	 `(let ((@worker (js-current-worker)))
-	     (js-make-service %this ,tmp ',id
-		,register
-		,arity
-		@worker
-		(instantiate::hop-service
-		   (proc ,(service-proc->scheme this))
-		   (javascript ,(jscript-funcall init))
-		   (path ,path)
-		   (id ',id)
-		   (wid ',id)
-		   (args ',args)
-		   (resource %resource)
-		   (source %source)
-		   (decoder %unserialize)
-		   (unjson %unjson)
-		   (stringify string->js-string)
-		   )))))
+	 (let ((proc (if (isa? init J2SObjInit)
+			 (service-dsssl-proc->scheme this)
+			 (service-fix-proc->scheme this))))
+	    `(let ((@worker (js-current-worker)))
+		(js-make-service %this ,tmp ',id
+		   ,register
+		   ,arity
+		   @worker
+		   (instantiate::hop-service
+		      (proc ,proc)
+		      (javascript ,(jscript-funcall init))
+		      (path ,path)
+		      (id ',id)
+		      (wid ',id)
+		      (args ',args)
+		      (resource %resource)
+		      (source %source)
+		      (decoder %unserialize)
+		      (unjson %unjson)
+		      (stringify string->js-string)
+		      ))))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)
@@ -1891,7 +1928,7 @@
 	    ((isa? fun J2SHopRef)
 	     (call-hop-function fun args))
 	    ((isa? fun J2SFun)
-	     (call-fun-function fun (jsfun->scheme fun mode return conf) args))
+	     (call-fun-function fun (jsfun->lambda fun mode return conf) args))
 	    ((isa? fun J2SUnresolvedRef)
 	     (if (is-eval? fun)
 		 (call-eval-function fun args)

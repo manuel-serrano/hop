@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 11 19:59:13 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 10:01:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -57,7 +57,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsDate op compile isexpr)
    (display "new Date(" op)
-   (with-access::JsDate o (val) (display (date->nanoseconds val) op))
+   (with-access::JsDate o (val)
+      (display (llong->flonum (/llong (date->nanoseconds val) #l1000000)) op))
    (display ")" op))
 
 ;*---------------------------------------------------------------------*/

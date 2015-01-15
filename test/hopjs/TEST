@@ -42,11 +42,15 @@ success=0
 failure=0
 i=0
 
-for path in *.js; do
+run() {
   i=`expr $i + 1`
 
   echo -n "$i. $path ... "
-  $hop -g --no-zeroconf --no-server $path > /tmp/TEST-HOPJS.out 2>&1
+  if [ "$verb " != " " ]; then
+    echo ""
+    echo -n "$hop -g --no-zeroconf $* ..."
+  fi
+  $hop -g --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
 
   if [ $? = 0 ]; then
     echo "ok.";
@@ -59,6 +63,14 @@ for path in *.js; do
     failure=`expr $failure + 1`
   fi
   /bin/rm -f /tmp/TEST-HOPJS.out
+}
+
+for path in noserv/*.js; do
+    run $path --no-server
+done
+
+for path in serv/*.js; do
+    run $path -p 0 --rc-file passwd.hop
 done
 
 echo "`expr $success + $failure` executed"

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Dec 21 07:16:38 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Thu Jan 15 11:45:46 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -26,7 +26,8 @@
 	   __hopscript_array)
 
    (export (js-alist->jsobject ::pair-nil ::JsGlobalObject)
-	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)))
+	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)
+	   (js-jsobject->plist ::JsObject ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-plist->obj ::JsGlobalObject ...                       */
@@ -67,6 +68,19 @@
 		   (scm->js (cadr plist) %this)
 		   #f %this)
 		(loop (cddr plist))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->plist ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject->plist obj %this)
+   (let ((args '()))
+      (js-for-in obj
+	 (lambda (p)
+	    (let ((p (string->symbol (js-string->string p))))
+	       (set! args (cons (js-get obj p %this) args))
+	       (set! args (cons (symbol->keyword p) args))))
+	 %this)
+      args))
 
 ;*---------------------------------------------------------------------*/
 ;*    scm->js ...                                                      */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Jan 11 18:14:02 2015 (serrano)                */
+#*    Last change :  Thu Jan 15 08:06:11 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -29,13 +29,16 @@ POPULATION = Makefile \
   test262/TEST \
   hopjs/README \
   hopjs/TEST \
-  hopjs/array.js \
-  hopjs/ecma51.js \
-  hopjs/number.js \
-  hopjs/regexp.js \
-  hopjs/unicode.js \
-  hopjs/bufferrw.js \
-  hopjs/json.js \
-  hopjs/property.js \
-  hopjs/string.js \
-  hopjs/serialization.js 
+  hopjs/noserv/array.js \
+  hopjs/noserv/ecma51.js \
+  hopjs/noserv/number.js \
+  hopjs/noserv/regexp.js \
+  hopjs/noserv/unicode.js \
+  hopjs/noserv/bufferrw.js \
+  hopjs/noserv/json.js \
+  hopjs/noserv/property.js \
+  hopjs/noserv/string.js \
+  hopjs/serv/serialization.js \
+  hopjs/serv/service.js 
+  hopjs/serv/service2.js 
+

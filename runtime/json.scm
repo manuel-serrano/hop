@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Sun Jan 11 20:39:08 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 10:04:50 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -407,8 +407,11 @@
 	    (match-case expressions*
 	       (((and ?nsec (? llong?)))
 		(javascript-date->obj driver (nanoseconds->date nsec)))
+	       (((and ?sec (? flonum?)))
+		(javascript-date->obj driver
+		   (nanoseconds->date (*llong #l1000000 (flonum->llong sec)))))
 	       (((and ?sec (? integer?)))
-		(javascript-date->obj driver (seconds->date (/fx sec 1000))))
+		(javascript-date->obj driver (seconds->date sec)))
 	       (else
 		(error "javascript->obj" "Illegal `date' construction"
 		   expressions*))))

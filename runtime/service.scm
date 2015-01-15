@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jan 14 17:21:08 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 11:49:19 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -278,7 +278,7 @@
       args)
    ;; pack the multipe arguments occurrences
    (normalize args)
-   ;; build the arguyment list
+   ;; build the arguments list
    (apply append args))
    
 ;*---------------------------------------------------------------------*/
@@ -385,11 +385,11 @@
 	 "\n"))
    
    (define (invoke vals)
-      (with-access::hop-service svc (id proc)
+      (with-access::hop-service svc (id proc args)
 	 (invoke-trace req id vals)
 	 (cond
 	    ((not vals)
-	     (error id "Illegal service arguments encoding" `(,id ,vals)))
+	     (error id "Illegal service arguments encoding" `(,id ,@vals)))
 	    ((correct-arity? proc (+fx 1 (length vals)))
 	     (let ((env (current-dynamic-env))
 		   (name id))
