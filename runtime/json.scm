@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Thu Jan 15 10:04:50 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 22:06:50 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -357,7 +357,7 @@
 	 ((ANGLE-OPEN array-elements ANGLE-CLO)
 	  (list->vector array-elements))
 	 ((BRA-OPEN BRA-CLO)
-	  '())
+	  (javascript-plist->obj driver '()))
 	 ((BRA-OPEN hash-elements BRA-CLO)
 	  ;; see json compilation
 	  (if (and (=fx (length hash-elements) 3)

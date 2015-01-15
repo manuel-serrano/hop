@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Jan 15 11:26:27 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 22:05:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -71,17 +71,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsObject js-serializer js-unserializer)
+(register-class-serialization! JsObject js-serializer
+   (lambda (s) (make-struct 'javascript 1 s)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsObject ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsObject %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this ((%prototype __proto__))      */
-;*       (with-access::JsObject obj (__proto__)                        */
-;* 	 (set! __proto__ %prototype)                                   */
-;* 	 obj)))                                                        */
-   
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
 ;*    -------------------------------------------------------------    */

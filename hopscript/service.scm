@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jan 15 11:45:34 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 21:52:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -315,7 +315,7 @@
       (instantiate::JsService
 	 (procedure proc)
 	 (len arity)
-	 (arity (+fx 1 arity))
+	 (arity arity)
 	 (worker worker)
 	 (__proto__ js-service-prototype)
 	 (name (if (symbol? name) (symbol->string! name) ""))

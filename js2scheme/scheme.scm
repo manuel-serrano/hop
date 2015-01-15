@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jan 15 11:52:31 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 22:06:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -881,68 +881,82 @@
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
-	 (if (isa? init J2SObjInit)
-	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
+	 "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
-              sc_lambda)"
-	     "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ), 'hop' ); },
-              sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
-              sc_lambda)"))
+              sc_lambda)")
       
       (define (service-fix-proc->scheme this)
-	 (with-access::J2SSvc this (loc body need-bind-exit-return)
-	    (let ((fun `(lambda (this . args)
-			   (let ((fun ,(j2sfun->scheme this mode return conf)))
-			      (map! (lambda (a)
-				       (if (string? a)
-					   (string->js-string a)
-					   a))
-				 args)
-			      (js-worker-exec @worker ,(symbol->string id)
-				 (lambda ()
-				    (js-apply %this fun this args)))))))
-	       (epairify-deep loc fun))))
-
-      (define (service-dsssl-proc->scheme this)
-	 (with-access::J2SSvc this (loc body need-bind-exit-return)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name)
 	    (let* ((body (if need-bind-exit-return
 			     (with-access::J2SNode body (loc)
 				(epairify loc
 				   (return-body
 				      (j2s-scheme body mode return conf))))
 			     (j2s-scheme body mode return conf)))
-		   (imp `(lambda ,(cons 'this args)
-			    ,@(filter-map
-				 (lambda (a)
-				    (cond
-				       ((symbol? a)
-					`(when (string? ,a)
-					    (set! ,a
-					       (string->js-string ,a))))
-				       ((pair? a)
-					`(when (string? ,(car a))
-					    (set! ,(car a)
-					       (string->js-string
-						  ,(car a)))))))
-				 args)
-			    (js-worker-exec @worker ,(symbol->string id)
-			       (lambda ()
-				  ,(flatten-stmt body)))))
 		   (fun `(lambda (this . args)
-			    (let ((fun ,imp))
-			       (cond
-				  ((symbol? (car args))
-				   (apply fun this args))
-				  ((isa? (car args) JsObject)
-				   (apply fun this
-				      (js-jsobject->plist (car args) %this)))
-				  (else
-				   `(with-access::JsGlobalObject %this (js-type-error)
-				       (js-new %this js-type-error
-					  (string->js-string
-					     "wrong service arguments")
-					  ,fname ,loc))))))))
+			    (let ((fun (lambda ,(cons 'this args)
+					  (js-worker-exec @worker ,(symbol->string id)
+					     (lambda ()
+						,(flatten-stmt body))))))
+			       (map! (lambda (a)
+					(if (string? a)
+					    (string->js-string a)
+					    a))
+				  args)
+			       (js-apply% fun ,(+fx 1 (length args)) this args)))))
 	       (epairify-deep loc fun))))
+
+      (define (service-dsssl-proc->scheme this)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name init)
+	    (with-access::J2SObjInit init (inits)
+	       (let* ((body (if need-bind-exit-return
+				(with-access::J2SNode body (loc)
+				   (epairify loc
+				      (return-body
+					 (j2s-scheme body mode return conf))))
+				(j2s-scheme body mode return conf)))
+		      (imp `(lambda (this #!key ,@(map init->formal inits))
+			       ,@(filter-map
+				    (lambda (a)
+				       (cond
+					  ((symbol? a)
+					   `(when (string? ,a)
+					       (set! ,a
+						  (string->js-string ,a))))
+					  ((pair? a)
+					   `(when (string? ,(car a))
+					       (set! ,(car a)
+						  (string->js-string
+						     ,(car a)))))))
+				    args)
+			       (js-worker-exec @worker ,(symbol->string id)
+				  (lambda ()
+				     ,(flatten-stmt body)))))
+		      (fun `(lambda (this . args)
+			       (let ((fun ,imp))
+				  (cond
+				     ((null? args)
+				      (fun this))
+				     ((keyword? (car args))
+				      (apply fun this args))
+				     ((isa? (car args) JsObject)
+				      (apply fun this
+					 (js-jsobject->plist (car args) %this)))
+				     (else
+				      (tprint "args=" args)
+				      (js-raise
+					 (with-access::JsGlobalObject %this (js-type-error)
+					     ,(match-case loc
+						 ((at ?fname ?loc)
+						  `(js-new %this js-type-error
+						      (string->js-string
+							 "wrong service call")
+						      ,fname ,loc))
+						 (else
+						  '(js-new %this js-type-error
+						    (string->js-string
+						       "wrong service call"))))))))))))
+		  (epairify-deep loc fun)))))
       
       (with-access::J2SSvc this (init register)
 	 (let ((proc (if (isa? init J2SObjInit)
@@ -972,61 +986,83 @@
 	 (with-access::J2SString name ((name val))
 	    (list (string->symbol name) (j2s-scheme val mode return conf)))))
    
-   (define (init->actual init::J2SDataPropertyInit)
-      (with-access::J2SDataPropertyInit init (name val)
-	 (with-access::J2SString name ((name val))
-	    (list (string->keyword name) (string->symbol name)))))
-
-   (define (svc-fix-proc-entry this)
-      (with-access::J2SSvc this (params loc)
+;*    (define (init->actual init::J2SDataPropertyInit)                 */
+;*       (with-access::J2SDataPropertyInit init (name val)             */
+;* 	 (with-access::J2SString name ((name val))                     */
+;* 	    (list (string->keyword name) (string->symbol name)))))     */
+;*                                                                     */
+   (define (svc-proc-entry this)
+      (with-access::J2SSvc this (name params loc)
 	 (let ((params (j2s-scheme params mode return conf))
 	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))
-	    `(letrec* ((,tmpp (lambda (this ,@params)
+	    `(letrec* ((,tmpp (lambda (this . args)
 				 (with-access::JsService ,tmps (svc)
 				    (with-access::hop-service svc (path)
-				       (js-make-hopframe %this path
-					  (list ,@params))))))
+				       (js-make-hopframe %this path args)))))
 		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
 				  (epairify loc
 				     `(make-hop-url-name
 					 ,(if (symbol? id)
 					      (symbol->string id)
 					      '(gen-service-url :public #t))))
-				  params (length params)
+				  params -1
 				  mode return)))
 		,tmps))))
+
+;*    (define (svc-fix-proc-entry this)                                */
+;*       (with-access::J2SSvc this (params loc)                        */
+;* 	 (let ((params (j2s-scheme params mode return conf))           */
+;* 	       (tmpp (gensym 'servicep))                               */
+;* 	       (tmps (gensym 'services)))                              */
+;* 	    `(letrec* ((,tmpp (lambda (this ,@params)                  */
+;* 				 (with-access::JsService ,tmps (svc)   */
+;* 				    (with-access::hop-service svc (path) */
+;* 				       (js-make-hopframe %this path    */
+;* 					  (list ,@params))))))         */
+;* 		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp) */
+;* 				  (epairify loc                        */
+;* 				     `(make-hop-url-name               */
+;* 					 ,(if (symbol? id)             */
+;* 					      (symbol->string id)      */
+;* 					      '(gen-service-url :public #t)))) */
+;* 				  params (length params)               */
+;* 				  mode return)))                       */
+;* 		,tmps))))                                              */
+;*                                                                     */
+;*    (define (svc-dsssl-proc-entry this)                              */
+;*       (with-access::J2SSvc this (init loc)                          */
+;* 	 (with-access::J2SObjInit init (inits)                         */
+;* 	    (let ((params (cons '#!key (map init->formal inits)))      */
+;* 		  (actuals (append-map init->actual inits))            */
+;* 		  (tmpp (gensym 'servicep))                            */
+;* 		  (tmps (gensym 'services)))                           */
+;* 	       `(letrec* ((,tmpp (lambda (this #!optional rest)        */
+;* 				    (with-access::JsService ,tmps (svc) */
+;* 				       (with-access::hop-service svc (path) */
+;* 					  (js-make-hopframe %this path */
+;* 					     (if (isa? rest JsObject)  */
+;* 						 (js-jsobject->plist rest %this) */
+;* 						 '()))))))             */
+;* 			  (,tmps ,(j2sscheme-service this tmpp (or id tmpp) */
+;* 				     (epairify loc                     */
+;* 					`(make-hop-url-name            */
+;* 					    ,(if (symbol? id)          */
+;* 						 (symbol->string id)   */
+;* 						 '(gen-service-url :public #t)))) */
+;* 				     params -1                         */
+;* 				     mode return)))                    */
+;* 		   ,tmps)))))                                          */
    
-   (define (svc-dsssl-proc-entry this)
-      (with-access::J2SSvc this (init loc)
-	 (with-access::J2SObjInit init (inits)
-	    (let ((params (cons '#!key (map init->formal inits)))
-		  (actuals (append-map init->actual inits))
-		  (tmpp (gensym 'servicep))
-		  (tmps (gensym 'services)))
-	       `(letrec* ((,tmpp (lambda (this #!optional rest)
-				    (with-access::JsService ,tmps (svc)
-				       (with-access::hop-service svc (path)
-					  (js-make-hopframe %this path
-					     (if (isa? rest JsObject)
-						 (js-object->keyword-arguments
-						    rest %this)
-						 '()))))))
-			  (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
-				     (epairify loc
-					`(make-hop-url-name
-					    ,(if (symbol? id)
-						 (symbol->string id)
-						 '(gen-service-url :public #t))))
-				     params -1
-				     mode return)))
-		   ,tmps)))))
-   
-   (with-access::J2SSvc this (loc init)
-      (epairify-deep loc
-	 (if (isa? init J2SObjInit)
-	     (svc-dsssl-proc-entry this)
-	     (svc-fix-proc-entry this)))))
+;*    (with-access::J2SSvc this (loc init)                             */
+;*       (epairify-deep loc                                            */
+;* 	 (if (isa? init J2SObjInit)                                    */
+;* 	     (svc-proc-entry this)                                     */
+;* 	     (svc-proc-entry this))))                                  */
+
+   (with-access::J2SSvc this (loc)
+      (epairify-deep loc (svc-proc-entry this)))
+   )
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSvc ...                                          */

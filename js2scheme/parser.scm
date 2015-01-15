@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jan 14 17:09:01 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 21:59:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -732,6 +732,7 @@
 			(params params)
 			(name (cdr id))
 			(init init)
+			(mode (or (javascript-mode body) 'normal))
 			(body body)
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
@@ -748,6 +749,7 @@
 				      (params params)
 				      (name (cdr id))
 				      (init init)
+				      (mode (or (javascript-mode body) 'normal))
 				      (body body)))
 			      (decl (instantiate::J2SDeclCnstFun
 				       (loc (token-loc id))
@@ -765,29 +767,17 @@
 		(params params)
 		(name (gensym))
 		(init init)
+		(mode (or (javascript-mode body) 'normal))
 		(body body))))))
 
    (define (service-import)
       (let* ((token (consume-token! 'service))
 	     (loc (token-loc token))
 	     (id (consume-token! 'ID))
-	     (inits (service-params))
-	     (params (if (isa? inits J2SObjInit)
-			 (with-access::J2SObjInit inits (inits)
-			    (map init->params inits))
-			 inits))
-	     (init (if (isa? inits J2SObjInit)
-		       inits
-		       (instantiate::J2SNop (loc loc)))))
-	 (when (isa? inits J2SObjInit)
-	    (with-access::J2SObjInit inits ((is inits))
-	       (unless (every (lambda (init)
-				 (when (isa? init J2SPropertyInit)
-				    (with-access::J2SDataPropertyInit init (val)
-				       (isa? val J2SUndefined))))
-			  is)
-		  (parse-node-error "Imported service parameters must default to \"undefined\""
-		     inits))))
+	     (inits (service-params)))
+	 (unless (null? inits)
+	    (parse-node-error "Imported service must not declare parameters"
+	       inits))
 	 (instantiate::J2SDeclSvc
 	    (loc loc)
 	    (id (cdr id))
@@ -796,10 +786,12 @@
 			     (loc loc)
 			     (id (cdr id))))
 		    (loc loc)
-		    (params params)
+		    (params inits)
 		    (name (cdr id))
-		    (init init)
+		    (init (instantiate::J2SNop
+			     (loc (token-loc token))))
 		    (register #f)
+		    (mode 'strict)
 		    (body (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc loc)

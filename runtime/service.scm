@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jan 15 11:49:19 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 21:46:35 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -352,7 +352,7 @@
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request svc::hop-service req::http-request)
    (with-trace 2 'service-parse-request
-      (with-access::http-request req (method)
+      (with-access::http-request req (method path abspath query)
 	 (trace-item "path=" path)
 	 (trace-item "abspath=" (string-for-read abspath))
 	 (trace-item "method=" method)

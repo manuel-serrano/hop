@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 13 20:04:23 2015 (serrano)                */
+;*    Last change :  Thu Jan 15 21:53:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -39,6 +39,7 @@
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
+	   (js-apply% ::procedure ::int ::obj ::pair-nil)
 	   
 	   (js-call0 ::JsGlobalObject fun::obj this)
 	   (js-call1 ::JsGlobalObject fun::obj this a0)

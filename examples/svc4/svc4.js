@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Mon Jan  5 17:36:44 2015 (serrano)                */
+/*    Last change :  Thu Jan 15 21:54:14 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
@@ -14,14 +14,12 @@
 var hop = require( 'hop' );
 
 service svc4( { name: "foo" } ) {
-   import service svc( a, b );
+   import service svc();
    svc.path = "/hop/" + name;
 
    return hop.HTTPResponseAsync(
       function( sendResponse ) {
-	 svc.apply( undefined, [ "foo", "bar" ] ).post( function( e ) {
-	    sendResponse( e );
-	 } );
+	 svc.apply( undefined, [ "foo", "bar" ] ).post( sendResponse );
       }, this );
 }
 	    
