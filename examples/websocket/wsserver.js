@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Sun Dec 21 11:11:22 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Fri Jan 16 14:32:59 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
 /*    -------------------------------------------------------------    */
@@ -20,9 +20,6 @@ wss.onconnection = function( event ) {
 
    ws.onmessage = function( event ) {
       console.log( "server received [%s]", event.data );
-      if( event.data == "close" ) {
-	 setTimeout( function() { wss.close(); }, 500 );
-      }
    };
 
    ws.onclose = function( event ) {
@@ -30,10 +27,4 @@ wss.onconnection = function( event ) {
    }
    
    ws.send( "something" );
-   ws.send( "close" );
-   setTimeout( function() { ws.close(); }, 200 );
 };
-
-wss.onclose = function() {
-   console.error( "server websocket closed." );
-}
