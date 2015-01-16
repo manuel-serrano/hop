@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:52:24 2006                          */
-;*    Last change :  Wed Nov 19 17:59:14 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 07:51:11 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP doc services                                                 */
 ;*=====================================================================*/
@@ -55,7 +55,6 @@
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-xml
 	     (backend (hop-xml-backend))
-	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-string expr
@@ -80,7 +79,6 @@
 	     (http-internal-error e "Error in source code"))
 	  (instantiate::http-response-xml
 	     (backend (hop-xml-backend))
-	     (request (current-request))
 	     (content-type "text/html")
 	     (bodyp #t)
 	     (xml (with-input-from-file (make-file-path (doc-dir) "examples" file)

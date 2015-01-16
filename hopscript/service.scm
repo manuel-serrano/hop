@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jan 16 05:53:57 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 06:04:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -176,8 +176,6 @@
 	    (__proto__ js-hopframe-prototype))))
 
    (cond
-;*       (#t                                                           */
-;*        (url-frame))                                                 */
       ((null? args)
        (url-frame))
       ((and (null? (cdr args))
