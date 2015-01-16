@@ -1,6 +1,6 @@
 (add-user! "foo"
    password: "+45fae6f23632b1d2ffe7e7aeab32c333"
-   services: '(private public))
+   services: '(s_private s_public))
 
 (add-user! "anonymous"
-   :services '(public))
+   :services '(s_public))

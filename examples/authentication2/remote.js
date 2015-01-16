@@ -13,11 +13,11 @@
 /*=====================================================================*/
 var hop = require( "hop" );
 
-service private(type) {
+service s_private(type) {
    return '"private" authorized with ' + type;
 }
 
-service public(type) {
+service s_public(type) {
    return '"public" authorized with ' + type;
 }
 

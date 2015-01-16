@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Thu Jan 15 22:07:25 2015 (serrano)                */
+/*    Last change :  Fri Jan 16 09:32:47 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server services                                */
@@ -27,8 +27,15 @@ service serv1( { n: 10, m: 20 } ) {
    return n + m;
 }
 
-import service serv2();
-import service serv3();
+service serv2( val ) {
+   assert.ok( val === arguments[ 0 ] );
+   return arguments.length;
+}
+
+
+import service iserv0();
+import service iserv1();
+import service iserv2();
 
 function test() {
    serv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
@@ -38,19 +45,26 @@ function test() {
    serv1( {n: 15} ).post( function( v ) { assert.ok( v == 35 ); res++; } );
    serv1( {m: 15} ).post( function( v ) { assert.ok( v == 25 ); res++; } );
    serv1( {n: 15, m: 25} ).post( function( v ) { assert.ok( v == 40 ); res++; } );
+   serv2().post( function( v ) { assert.ok( v === 0 ); } );
+   serv2( 1 ).post( function( v ) { assert.ok( v === 1 ); res++ } );
+   serv2( 1, 2 ).post( function( v ) { assert.ok( v === 2 ); res++ } );
 
-   serv2( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
+   iserv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
 
-   serv3().post( function( v ) { assert.ok( v == 30 ); res++; } );
-   serv3( {} ).post( function( v ) { assert.ok( v == 30 ); res++; } );
-   serv3( {n: 15} ).post( function( v ) { assert.ok( v == 35 ); res++; } );
-   serv3( {m: 15} ).post( function( v ) { assert.ok( v == 25 ); res++; } );
-   serv3( {n: 15, m: 25} ).post( function( v ) { assert.ok( v == 40 ); res++; } );
+   iserv1().post( function( v ) { assert.ok( v == 30 ); res++; } );
+   iserv1( {} ).post( function( v ) { assert.ok( v == 30 ); res++; } );
+   iserv1( {n: 15} ).post( function( v ) { assert.ok( v == 35 ); res++; } );
+   iserv1( {m: 15} ).post( function( v ) { assert.ok( v == 25 ); res++; } );
+   iserv1( {n: 15, m: 25} ).post( function( v ) { assert.ok( v == 40 ); res++; } );
+   iserv2( 1 ).post( function( v ) { assert.ok( v === 1 ); res++ } );
+   iserv2( 1, 2 ).post( function( v ) { assert.ok( v === 2 ); res++ } );
+   
+   iserv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
 }
 
 setTimeout( function() {
-   assert.ok( res === 18 );
-   process.exit( res === 18 ? 0 : 1 );
+   assert.ok( res === 22 );
+   process.exit( res === 22 ? 0 : 1 );
 }, 200 );
 
 test();

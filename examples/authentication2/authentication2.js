@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Mon Jan  5 17:34:33 2015 (serrano)                */
+/*    Last change :  Fri Jan 16 10:04:20 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to authenticate server-to-server requests               */
@@ -13,14 +13,14 @@
 /*=====================================================================*/
 var hop = require( "hop" );
 
-import service public(type);
-import service private(type);
+import service s_public();
+import service s_private();
 
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
 function connect() {
    /* accepted connection */
-   public( "no password" ).post( console.log, {
+   s_public( "no password" ).post( console.log, {
       asynchronous: false,
       host: "localhost",
       port: port,
@@ -28,7 +28,7 @@ function connect() {
 	 console.log( "public, no password, connection refused: ", err )
       } } );
 
-   public( "password" ).post( console.log, {
+   s_public( "password" ).post( console.log, {
       asynchronous: false,
       host: "localhost",
       user: "foo",
@@ -39,7 +39,7 @@ function connect() {
       } } );
 
    /* accepted connection */
-   private( "password" ).post( console.log, {
+   s_private( "password" ).post( console.log, {
       asynchronous: false,
       host: "localhost",
       port: port,
@@ -50,7 +50,7 @@ function connect() {
       } } );
 
    /* refused connection */
-   private( "no password" ).post( console.log, {
+   s_private( "no password" ).post( console.log, {
       asynchronous: false,
       host: "localhost",
       port: port,

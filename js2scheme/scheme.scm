@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 16 09:14:18 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 09:54:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -791,8 +791,6 @@
 ;*    jsfun-strict-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (jsfun-strict-vararg-body this::J2SFun body id rest)
-   
-   
    (with-access::J2SFun this (params)
       `(let ((arguments (js-strict-arguments %this ,rest)))
 	  ,@(if (pair? params)
@@ -907,33 +905,30 @@
 
       (define (service-fix-proc->scheme this)
 	 (with-access::J2SSvc this (loc body need-bind-exit-return name vararg)
-	    (let* ((body (if need-bind-exit-return
-			     (with-access::J2SNode body (loc)
-				(epairify loc
-				   (return-body
-				      (j2s-scheme body mode return conf))))
-			     (flatten-stmt (j2s-scheme body mode return conf))))
+	    (let* ((ibody (if need-bind-exit-return
+			      (with-access::J2SNode body (loc)
+				 (epairify loc
+				    (return-body
+				       (j2s-scheme body mode return conf))))
+			      (flatten-stmt
+				 (j2s-scheme body mode return conf))))
 		   (imp `(lambda ,(cons 'this args)
 			    (js-worker-exec @worker ,(symbol->string id)
 			       (lambda ()
-				  ,(cond
-				      ((not vararg)
-				       body)
-				      ((eq? mode 'normal)
-				       (let ((id (or id (gensym 'svc))))
-					  (jsfun-normal-vararg-body
-					     this body id 'args)))
-				      (else
-				       (jsfun-strict-vararg-body
-					  this body (js2fun-id this) 'args)))))))
+				  ,ibody))))
+		   (app `(let ((fun ,imp))
+			    (js-apply% fun
+			       ,(+fx 1 (length args)) this args)))
 		   (fun `(lambda (this . args)
-			    (let ((fun ,imp))
-			       (map! (lambda (a)
-					(if (string? a)
-					    (string->js-string a)
-					    a))
-				  args)
-			       (js-apply% fun ,(+fx 1 (length args)) this args)))))
+			    (map! (lambda (a)
+				     (if (string? a)
+					 (string->js-string a)
+					 a))
+			       args)
+			    ,(if (not vararg)
+				 app
+				 `(let ((arguments (js-strict-arguments %this args)))
+				     ,app)))))
 	       (epairify-deep loc fun))))
 
       (define (service-dsssl-proc->scheme this)
@@ -944,7 +939,8 @@
 				   (epairify loc
 				      (return-body
 					 (j2s-scheme body mode return conf))))
-				(flatten-stmt (j2s-scheme body mode return conf))))
+				(flatten-stmt
+				   (j2s-scheme body mode return conf))))
 		      (imp `(lambda (this #!key ,@(map init->formal inits))
 			       ,@(filter-map
 				    (lambda (a)

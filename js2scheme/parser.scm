@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jan 16 09:21:14 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 09:41:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -732,7 +732,7 @@
 			(params params)
 			(name (cdr id))
 			(init init)
-			(mode (or (javascript-mode body) 'normal))
+			(mode 'strict)
 			(body body)
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
@@ -749,7 +749,7 @@
 				      (params params)
 				      (name (cdr id))
 				      (init init)
-				      (mode (or (javascript-mode body) 'normal))
+				      (mode 'strict)
 				      (body body)))
 			      (decl (instantiate::J2SDeclCnstFun
 				       (loc (token-loc id))
@@ -767,7 +767,7 @@
 		(params params)
 		(name (gensym))
 		(init init)
-		(mode (or (javascript-mode body) 'normal))
+		(mode 'strict)
 		(body body))))))
 
    (define (service-import)
@@ -791,7 +791,7 @@
 		    (init (instantiate::J2SNop
 			     (loc (token-loc token))))
 		    (register #f)
-		    (mode 'normal)
+		    (mode 'strict)
 		    (body (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc loc)
