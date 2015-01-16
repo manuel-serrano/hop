@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 16 05:48:47 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 09:14:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -709,31 +709,31 @@
 ;*    return-body ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (return-body body)
-   `(bind-exit (%return)
-       ,body))
+   `(bind-exit (%return) ,(flatten-stmt body)))
 
 ;*---------------------------------------------------------------------*/
-;*    jsfun->lambda ...                                                */
+;*    jsfun-param-scheme-id ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (jsfun->lambda this::J2SFun mode return conf)
+(define (jsfun-param-scheme-id param)
+   (with-access::J2SDecl param (id name)
+      (j2s-name name id)))
 
-   (define (lambda-or-labels id args body)
-      (if id
-	  (let ((%id (symbol-append '@ id)))
-	     `(labels ((,%id ,(cons 'this args) ,body)) ,%id))
-	  `(lambda ,(cons 'this args)
-	      ,body)))
-   
-   (define (param-scheme-id param)
-      (with-access::J2SDecl param (id name)
-	 (j2s-name name id)))
-   
-   (define (fixarg-lambda id params body)
-      (let ((args (j2s-scheme params mode return conf)))
-	 (lambda-or-labels id args body)))
-   
+;*---------------------------------------------------------------------*/
+;*    jsfun-normal-vararg-body ...                                     */
+;*---------------------------------------------------------------------*/
+(define (jsfun-normal-vararg-body this::J2SFun body id rest)
+
+   (define (init-argument val indx)
+      `(js-arguments-define-own-property arguments ,indx
+	  (instantiate::JsValueDescriptor
+	     (name (string->symbol (integer->string ,indx)))
+	     (value ,val)
+	     (writable #t)
+	     (configurable #t)
+	     (enumerable #t))))
+
    (define (init-alias-argument argument rest indx)
-      (let ((id (param-scheme-id argument)))
+      (let ((id (jsfun-param-scheme-id argument)))
 	 `(begin
 	     (set! ,id (car ,rest))
 	     (js-arguments-define-own-property arguments ,indx
@@ -746,101 +746,121 @@
 		   (configurable #t)
 		   (enumerable #t))))))
    
-   (define (init-argument val indx)
-      `(js-arguments-define-own-property arguments ,indx
-	  (instantiate::JsValueDescriptor
-	     (name (string->symbol (integer->string ,indx)))
-	     (value ,val)
-	     (writable #t)
-	     (configurable #t)
-	     (enumerable #t))))
+   (with-access::J2SFun this (params)
+      `(let ((arguments
+		(js-arguments %this
+		   (make-vector (length ,rest) (js-absent)))))
+	  ,@(if (pair? params)
+		(map (lambda (param)
+			(with-access::J2SDecl param (id name loc)
+			   (epairify loc
+			      `(define ,(j2s-name name id)
+				  (js-undefined)))))
+		   params)
+		'())
+	  ,(when (pair? params)
+	      `(when (pair? ,rest)
+		  ,(init-alias-argument (car params) rest 0)
+		  (set! ,rest (cdr ,rest))
+		  ,(let loop ((params (cdr params))
+			      (i 1))
+		      (if (null? params)
+			  #unspecified
+			  `(when (pair? ,rest)
+			      ,(init-alias-argument (car params) rest i)
+			      (set! ,rest (cdr ,rest))
+			      ,(loop (cdr params) (+fx i 1)))))))
+	  (let loop ((,rest ,rest)
+		     (i ,(length params)))
+	     (when (pair? ,rest)
+		,(init-argument `(car ,rest) 'i)
+		(loop (cdr ,rest) (+fx i 1))))
+	  (js-define-own-property arguments 'callee
+	     (instantiate::JsValueDescriptor
+		(name 'callee)
+		(value (js-make-function %this
+			  ,(symbol-append '@ id) 0 ',id))
+		(writable #t)
+		(configurable #t)
+		(enumerable #f))
+	     #f
+	     %this)
+	  ,body)))
+
+;*---------------------------------------------------------------------*/
+;*    jsfun-strict-vararg-body ...                                     */
+;*---------------------------------------------------------------------*/
+(define (jsfun-strict-vararg-body this::J2SFun body id rest)
    
-   (define (normal-vararg-lambda id params::pair-nil body)
+   
+   (with-access::J2SFun this (params)
+      `(let ((arguments (js-strict-arguments %this ,rest)))
+	  ,@(if (pair? params)
+		(map (lambda (param)
+			(with-access::J2SDecl param (id name loc)
+			   (epairify loc
+			      `(define ,(j2s-name name id)
+				  (js-undefined)))))
+		   params)
+		'())
+	  ,(when (pair? params)
+	      `(when (pair? ,rest)
+		  (set! ,(jsfun-param-scheme-id (car params)) (car ,rest))
+		  ,(let loop ((params (cdr params)))
+		      (if (null? params)
+			  #unspecified
+			  `(when (pair? (cdr ,rest))
+			      (set! ,rest (cdr ,rest))
+			      (set! ,(jsfun-param-scheme-id (car params))
+				 (car ,rest))
+			      ,(loop (cdr params)))))))
+	  ,body)))
+   
+;*---------------------------------------------------------------------*/
+;*    jsfun->lambda ...                                                */
+;*---------------------------------------------------------------------*/
+(define (jsfun->lambda this::J2SFun mode return conf)
+
+   (define (lambda-or-labels id args body)
+      (if id
+	  (let ((%id (symbol-append '@ id)))
+	     `(labels ((,%id ,(cons 'this args) ,body)) ,%id))
+	  `(lambda ,(cons 'this args)
+	      ,body)))
+   
+   (define (fixarg-lambda this id body)
+      (with-access::J2SFun this (params)
+	 (let ((args (j2s-scheme params mode return conf)))
+	    (lambda-or-labels id args body))))
+   
+   (define (normal-vararg-lambda this id body)
       ;; normal mode: arguments is an alias
-      (let ((rest (gensym 'rest))
-	    (id (or id (gensym 'fun))))
+      (let ((id (or id (gensym 'fun)))
+	    (rest (gensym 'rest)))
 	 (lambda-or-labels id rest
-	    `(let ((arguments
-		      (js-arguments %this
-			 (make-vector (length ,rest) (js-absent)))))
-		,@(if (pair? params)
-		      (map (lambda (param)
-			      (with-access::J2SDecl param (id name loc)
-				 (epairify loc
-				    `(define ,(j2s-name name id)
-					(js-undefined)))))
-			 params)
-		      '())
-		,(when (pair? params)
-		    `(when (pair? ,rest)
-			,(init-alias-argument (car params) rest 0)
-			(set! ,rest (cdr ,rest))
-			,(let loop ((params (cdr params))
-				    (i 1))
-			    (if (null? params)
-				#unspecified
-				`(when (pair? ,rest)
-				    ,(init-alias-argument (car params) rest i)
-				    (set! ,rest (cdr ,rest))
-				    ,(loop (cdr params) (+fx i 1)))))))
-		(let loop ((,rest ,rest)
-			   (i ,(length params)))
-		   (when (pair? ,rest)
-		      ,(init-argument `(car ,rest) 'i)
-		      (loop (cdr ,rest) (+fx i 1))))
-		(js-define-own-property arguments 'callee
-		   (instantiate::JsValueDescriptor
-		      (name 'callee)
-		      (value (js-make-function %this
-				,(symbol-append '@ id) 0 ',id))
-		      (writable #t)
-		      (configurable #t)
-		      (enumerable #f))
-		   #f
-		   %this)
-		,body))))
+	    (jsfun-normal-vararg-body this body id rest))))
    
-   (define (strict-vararg-lambda id params::pair-nil body)
+   (define (strict-vararg-lambda this id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'rest)))
 	 (lambda-or-labels id rest
-	    `(let ((arguments (js-strict-arguments %this ,rest)))
-		,@(if (pair? params)
-		      (map (lambda (param)
-			      (with-access::J2SDecl param (id name loc)
-				 (epairify loc
-				    `(define ,(j2s-name name id)
-					(js-undefined)))))
-			 params)
-		      '())
-		,(when (pair? params)
-		    `(when (pair? ,rest)
-			(set! ,(param-scheme-id (car params)) (car ,rest))
-			,(let loop ((params (cdr params)))
-			    (if (null? params)
-				#unspecified
-				`(when (pair? (cdr ,rest))
-				    (set! ,rest (cdr ,rest))
-				    (set! ,(param-scheme-id (car params))
-				       (car ,rest))
-				    ,(loop (cdr params)))))))
-		,body))))
+	    (jsfun-strict-vararg-body this body id rest))))
 
-   (with-access::J2SFun this (loc params body need-bind-exit-return vararg mode)
+   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode)
       (let* ((id (j2sfun-id this))
 	     (body (if need-bind-exit-return
 		       (with-access::J2SNode body (loc)
 			  (epairify loc
 			     (return-body
-				(flatten-stmt (j2s-scheme body mode return conf)))))
+				(j2s-scheme body mode return conf))))
 		       (flatten-stmt (j2s-scheme body mode return conf))))
 	     (fun (cond
 		     ((not vararg)
-		      (fixarg-lambda id params body))
+		      (fixarg-lambda this id body))
 		     ((eq? mode 'normal)
-		      (normal-vararg-lambda id params body))
+		      (normal-vararg-lambda this id body))
 		     (else
-		      (strict-vararg-lambda id params body)))))
+		      (strict-vararg-lambda this id body)))))
 	 (epairify-deep loc fun))))
 
 ;*---------------------------------------------------------------------*/
@@ -884,20 +904,30 @@
 	 "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
               sc_lambda)")
-      
+
       (define (service-fix-proc->scheme this)
-	 (with-access::J2SSvc this (loc body need-bind-exit-return name)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name vararg)
 	    (let* ((body (if need-bind-exit-return
 			     (with-access::J2SNode body (loc)
 				(epairify loc
 				   (return-body
 				      (j2s-scheme body mode return conf))))
-			     (j2s-scheme body mode return conf)))
+			     (flatten-stmt (j2s-scheme body mode return conf))))
+		   (imp `(lambda ,(cons 'this args)
+			    (js-worker-exec @worker ,(symbol->string id)
+			       (lambda ()
+				  ,(cond
+				      ((not vararg)
+				       body)
+				      ((eq? mode 'normal)
+				       (let ((id (or id (gensym 'svc))))
+					  (jsfun-normal-vararg-body
+					     this body id 'args)))
+				      (else
+				       (jsfun-strict-vararg-body
+					  this body (js2fun-id this) 'args)))))))
 		   (fun `(lambda (this . args)
-			    (let ((fun (lambda ,(cons 'this args)
-					  (js-worker-exec @worker ,(symbol->string id)
-					     (lambda ()
-						,(flatten-stmt body))))))
+			    (let ((fun ,imp))
 			       (map! (lambda (a)
 					(if (string? a)
 					    (string->js-string a)
@@ -914,7 +944,7 @@
 				   (epairify loc
 				      (return-body
 					 (j2s-scheme body mode return conf))))
-				(j2s-scheme body mode return conf)))
+				(flatten-stmt (j2s-scheme body mode return conf))))
 		      (imp `(lambda (this #!key ,@(map init->formal inits))
 			       ,@(filter-map
 				    (lambda (a)
@@ -931,7 +961,7 @@
 				    args)
 			       (js-worker-exec @worker ,(symbol->string id)
 				  (lambda ()
-				     ,(flatten-stmt body)))))
+				     ,body))))
 		      (fun `(lambda (this . args)
 			       (let ((fun ,imp))
 				  (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jan 16 05:32:26 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 09:21:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -791,7 +791,7 @@
 		    (init (instantiate::J2SNop
 			     (loc (token-loc token))))
 		    (register #f)
-		    (mode 'strict)
+		    (mode 'normal)
 		    (body (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc loc)
