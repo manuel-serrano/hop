@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jan 15 21:59:20 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 05:32:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -777,7 +777,7 @@
 	     (inits (service-params)))
 	 (unless (null? inits)
 	    (parse-node-error "Imported service must not declare parameters"
-	       inits))
+	       (car inits)))
 	 (instantiate::J2SDeclSvc
 	    (loc loc)
 	    (id (cdr id))

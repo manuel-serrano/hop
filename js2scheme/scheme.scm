@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jan 15 22:06:16 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 05:48:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -943,7 +943,6 @@
 				      (apply fun this
 					 (js-jsobject->plist (car args) %this)))
 				     (else
-				      (tprint "args=" args)
 				      (js-raise
 					 (with-access::JsGlobalObject %this (js-type-error)
 					     ,(match-case loc

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jan 15 21:52:49 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 05:53:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -69,7 +69,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsHopFrame op compile isexpr)
    (display "new HopFrame(\"" op)
-   (display (hopframe->string o) op)
+   (display (hopframe->string o (js-initial-global-object)) op)
    (display "\")" op))
 
 ;*---------------------------------------------------------------------*/
@@ -129,7 +129,7 @@
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
-			 (string->js-string (hopframe->string this)))
+			 (string->js-string (hopframe->string this %this)))
 		      0 'toString))
 	 
 	 ;; HopFrame constructor 
@@ -176,8 +176,8 @@
 	    (__proto__ js-hopframe-prototype))))
 
    (cond
-      (#t
-       (url-frame))
+;*       (#t                                                           */
+;*        (url-frame))                                                 */
       ((null? args)
        (url-frame))
       ((and (null? (cdr args))
@@ -192,12 +192,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopframe->string ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopframe->string::bstring frame::JsHopFrame)
+(define (hopframe->string::bstring frame::JsHopFrame %this)
    
    (define (hopframe-multipart-arg->arg arg)
       (cond
 	 ((string=? (car arg) "hop")
-	  (string->obj (cadr arg)))
+	  (string->obj (cadr arg)
+	     (lambda (alist) (js-service-unserialize alist %this))))
 	 ((string=? (car arg) "keyword")
 	  (string->keyword (cadr arg)))
 	 (else

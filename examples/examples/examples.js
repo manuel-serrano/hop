@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Thu Jan 15 21:46:57 2015 (serrano)                */
+/*    Last change :  Fri Jan 16 05:32:53 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -26,8 +26,8 @@ var PASSWD = path.join( __dirname, "passwd.hop" );
 
 var CLASSLEVELS = [ "success", "info", "warning", "danger" ];
 
-import service examplesSrc( path );
-import service examplesDoc( o );
+import service examplesSrc();
+import service examplesDoc();
 
 /*---------------------------------------------------------------------*/
 /*    src.js and doc.js                                                */
