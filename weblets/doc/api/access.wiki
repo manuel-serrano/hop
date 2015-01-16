@@ -61,13 +61,13 @@ declarations.
 == Server Definitions ==
 <server>
 
-=== ++hop-enable-proxing++ ===
+=== ++hop-enable-proxying++ ===
 <parameter> hop-enable-proxying
 <parameter> hop-enable-proxying-set!
 
 <arguments>
 ^  access  ^   type    ^  current value                    ^  short description            ^
-|   r/w    |  bool     |  ++,(hop-enable-proxing)++  | Enables/disables proxy requests. |
+|   r/w    |  bool     |  ++,(hop-enable-proxying)++  | Enables/disables proxy requests. |
 </arguments>
 
 This parameter controls whether HOP can be used as a Web proxy. When this
@@ -142,7 +142,7 @@ HOP as proxy.
 
 This parameter restricts the set of clients that are allowed to use
 HOP as proxy to the set of clients whose IP address matches
-++hop-proxy-ip-mask++ (see ++hop-enable-proxing++).
+++hop-proxy-ip-mask++ (see ++hop-enable-proxying++).
 </parameter> 
 </parameter>
 

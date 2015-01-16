@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Mon Jan  5 17:40:50 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 13:25:33 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
@@ -21,9 +21,9 @@
    
    (export (<WIKIREF> lbl)
 	   (doc-wiki-syntax)
-	   (make-wiki-request-syntax initial-syntax #!optional mktitle)
+	   (make-wiki-request-syntax initial-syntax req #!optional mktitle)
 	   (wiki-tt-parser proc)
-	   (doc-page page syntax)
+	   (doc-page page syntax req)
 	   (doc-page->name path)
 	   (meta-wiki-example name)))
 
@@ -88,24 +88,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-wiki-request-syntax ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (make-wiki-request-syntax initial-syntax #!optional mktitle)
-   (let ((req (current-request)))
-      (duplicate::wiki-syntax initial-syntax
-	 (plugins (lambda (id)
-		     (case id
-			((<doc>)
-			 (lambda (port t expr)
-			    (let ((title (if mktitle (mktitle t) t)))
-			       (if (authorized-service? req 'admin)
-				   (begin
-				      (if (http-request-local? req)
-					  (<DOC/emacs> port title expr)
-					  (<DOC/edit> port title expr))
-				      (<WIKI-DOC> port title expr))
-				   (<WIKI-DOC> port title expr)))))
-			(else
-			 (with-access::wiki-syntax initial-syntax (plugins)
-			    (plugins id)))))))))
+(define (make-wiki-request-syntax initial-syntax req #!optional mktitle)
+   (duplicate::wiki-syntax initial-syntax
+      (plugins (lambda (id)
+		  (case id
+		     ((<doc>)
+		      (lambda (port t expr)
+			 (let ((title (if mktitle (mktitle t) t)))
+			    (if (authorized-service? req 'admin)
+				(begin
+				   (if (http-request-local? req)
+				       (<DOC/emacs> port title expr)
+				       (<DOC/edit> port title expr))
+				   (<WIKI-DOC> port title expr))
+				(<WIKI-DOC> port title expr)))))
+		     (else
+		      (with-access::wiki-syntax initial-syntax (plugins)
+			 (plugins id))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-DOC> ...                                                   */
@@ -299,12 +298,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    doc-page ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (doc-page page syntax)
+(define (doc-page page syntax req)
    (define (err src)
       (<SPAN> :class "parse-error" (html-string-encode src)))
    (cond
       ((not page)
-       (http-service-error (current-request) 'doc "Service not found"))
+       (http-service-error req 'doc "Service not found"))
       ((not (file-exists? page))
        (http-file-not-found page))
       (else

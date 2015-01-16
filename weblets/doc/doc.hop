@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.1.x/weblets/doc/doc.hop               */
+;*    serrano/prgm/project/hop/3.0.x/weblets/doc/doc.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  9 14:42:21 2006                          */
-;*    Last change :  Fri Mar  5 18:56:07 2010 (serrano)                */
-;*    Copyright   :  2006-10 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 13:29:28 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP meta-documentation.                                          */
 ;*=====================================================================*/
@@ -28,7 +28,7 @@
 ;*    doc ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-service (doc)
-   (doc-main #f))
+   (doc-main #f (current-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/documentation ...                                            */
@@ -45,25 +45,28 @@
 ;*---------------------------------------------------------------------*/
 (define-service (doc/weblet #!key weblet)
    (setup-api-tables!)
-   (doc-main (<SCRIPT> :type "text/javascript"
-		(select-weblet-pad-on-load weblet))))
+   (doc-main
+      (<SCRIPT> :type "text/javascript"
+	 (select-weblet-pad-on-load weblet))
+      (current-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/feature ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/feature #!key feature)
    (setup-api-tables!)
-   (doc-main (<SCRIPT> :type "text/javascript"
-		(select-api-pad-on-load
-		 (service-resource doc/documentation
-				   (make-file-name "api" feature))))))
+   (doc-main
+      (<SCRIPT> :type "text/javascript"
+	 (select-api-pad-on-load
+	    (service-resource doc/documentation
+	       (make-file-name "api" feature))))
+      (current-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc-main ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (doc-main script)
-   (let* ((req (current-request))
-	  (prefs (make-file-name (doc-rc-directory) "doc.prefs")))
+(define (doc-main script req)
+   (let ((prefs (make-file-name (doc-rc-directory) "doc.prefs")))
       (thread-start! (make-thread (lambda () (setup-api-tables!))))
       (when (file-exists? prefs) (doc-preferences-load prefs))
       (<DOC> :script script
@@ -79,14 +82,16 @@
 	       (<DIV> :class "core doc-tab"
 		  (doc-page
 		   (make-file-name (doc-core-dir) "core.wiki")
-		   (make-wiki-request-syntax (doc-api-syntax)))))
+		   (make-wiki-request-syntax (doc-api-syntax) req)
+		   req)))
 
 	    (<NPTAB> :id "doc-js"
 	       (<NPTABHEAD> "JavaScript")
 	       (<DIV> :class "js doc-tab"
 		  (doc-page
 		   (make-file-name (doc-js-dir) "js-interface.wiki")
-		   (make-wiki-request-syntax (doc-api-syntax)))))
+		   (make-wiki-request-syntax (doc-api-syntax) req)
+		   req)))
 	    
 	    (<NPTAB> :id "doc-libraries"
 	       (<NPTABHEAD> "Libraries")
@@ -98,7 +103,8 @@
 	       (<DIV> :class "wiki doc-tab"
 		  (doc-page
 		   (make-file-name (doc-wiki-dir) "syntax.wiki")
-		   (make-wiki-request-syntax (doc-wiki-syntax)))))
+		   (make-wiki-request-syntax (doc-wiki-syntax) req)
+		   req)))
 	    
 	    (<NPTAB> :id "doc-weblets"
 	       (<NPTABHEAD> "Weblets")

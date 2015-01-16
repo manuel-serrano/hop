@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/weblets/doc/tutorials.hop         */
+;*    serrano/prgm/project/hop/3.0.x/weblets/doc/tutorials.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Wed Nov 16 16:20:09 2011 (serrano)                */
-;*    Copyright   :  2006-11 Manuel Serrano                            */
+;*    Last change :  Fri Jan 16 13:26:57 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
 ;*=====================================================================*/
@@ -30,7 +30,7 @@
 ;*    <TUTORIALS> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<TUTORIALS> req)
-   (initialize-tutorials!)
+   (initialize-tutorials! req)
    (<DIV> :class "tutorials"
       (<TUTORIALS-MAIN> "pad-tutorials")
       (<DIV> :class "pagearea" :id "pad-tutorials"
@@ -46,7 +46,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    initialize-tutorials! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (initialize-tutorials!)
+(define (initialize-tutorials! req)
    (when (eq? *tutorial-table* #unspecified)
       (let* ((table '())
 	     (files (filter-map (lambda (x)
@@ -101,23 +101,24 @@
 			  (let ((s (html-string-decode (car x))))
 			     (or (class-parser s)
 				 (<SPAN> :class "doc-type" x)))
-			  (<SPAN> :class "doc-type" x))))))))
+			  (<SPAN> :class "doc-type" x)))))
+	  req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    doc/tutorial ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-service (doc/tutorial file-or-key)
-   (initialize-tutorials!)
+   (initialize-tutorials! (current-request))
    (cond
       ((or (eq? file-or-key #unspecified) (=fx (string-length file-or-key) 0))
        "Please, select a tutorial.")
       ((file-exists? file-or-key)
-       (doc-page file-or-key *tutorial-syntax*))
+       (doc-page file-or-key *tutorial-syntax* (current-request)))
       (else
        (let ((cell (assoc file-or-key *tutorial-table*)))
 	  (if cell
 	      (let ((path (make-file-name (doc-tutorials-dir) (cdr cell))))
-		 (doc-page path *tutorial-syntax*))
+		 (doc-page path *tutorial-syntax* (current-request)))
 	      "")))))
    
 ;*---------------------------------------------------------------------*/

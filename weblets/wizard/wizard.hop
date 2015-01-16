@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Tue Jan  6 16:12:42 2015 (serrano)                */
+;*    Last change :  Fri Jan 16 13:20:41 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -277,18 +277,15 @@ can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
 (define (<ANONYMOUS-USER>)
    (<TABLE> :class "wizard-user wizard-anonymous"
       (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "anonymous.png")))
-	    (<TD> (<TABLE>
-		     (<COLGROUP> (<COL> :width "0*"))
-		     (<TR> (<TH> :colspan 2 "Anonymous"))
-		     (<TR> (<TD> 
-			      (<INPUT> :type 'checkbox :id "localp" :checked #t))
-			   (<TD> (<SPAN> "Allow anonymous requests from the local host")))
-		     (<TR> (<TD>
-			      (<TD> :class "comment"
-				 "Lets Hop accepts all anonymous requests (services and resources) coming from local host")))
-		     (<TR> (<TD>
-			      (<TD> :class "comment"
-				 "Lets Hop accepts all anonymous requests coming from computers on the same domain (same local area network)"))))))))
+	 (<TD> (<TABLE>
+		  (<COLGROUP> (<COL> :width "0*"))
+		  (<TR> (<TH> :colspan 2 "Anonymous"))
+		  (<TR> (<TD> 
+			   (<INPUT> :type 'checkbox :id "localp" :checked #t))
+		     (<TD> (<SPAN> "Allow anonymous requests from the local host")))
+		  (<TR> (<TD>
+			   (<TD> :class "comment"
+			      "Lets Hop accepts all anonymous requests (services and resources) coming from local host"))))))))
 		     
 
 ;*---------------------------------------------------------------------*/
