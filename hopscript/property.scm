@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan  6 11:11:38 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:34:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -288,8 +288,8 @@
       (cond
 	 ((string? p)
 	  (string->symbol p))
-	 ((js-string? p)
-	  (string->symbol (js-string->string p)))
+	 ((js-jsstring? p)
+	  (string->symbol (js-jsstring->string p)))
 	 ((symbol? p)
 	  p)
 	 ((fixnum? p)
@@ -471,7 +471,7 @@
 			   ;; see cmap case in js-delete!
 			   (with-access::JsPropertyDescriptor p (name enumerable)
 			      (when (or (not enump) enumerable)
-				 (string->js-string
+				 (js-string->jsstring
 				    (symbol->string! name))))))
 	    (if cmap
 		(with-access::JsConstructMap cmap (descriptors)
@@ -655,7 +655,7 @@
 		 (format "no such field \"~a\" ~~a" name) o)))
 	  (let ((v ((class-field-accessor field) o)))
 	     (if (string? v)
-		 (string->js-string v)
+		 (js-string->jsstring v)
 		 v)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1676,7 +1676,7 @@
 	    (unless (memq name env)
 	       (when (eq? enumerable #t)
 		  (set! env (cons name env))
-		  (proc (string->js-string (symbol->string! name))))))))
+		  (proc (js-string->jsstring (symbol->string! name))))))))
    
    (let loop ((o obj))
       (with-access::JsObject o (cmap properties __proto__)
@@ -1695,7 +1695,7 @@
       (let loop ((i 0))
 	 (when (<fx i (vector-length fields))
 	    (proc
-	       (string->js-string
+	       (js-string->jsstring
 		  (symbol->string (class-field-name (vector-ref-ur fields i)))))
 	    (loop (+fx i 1))))))
 

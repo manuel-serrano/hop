@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jan 16 05:39:26 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 10:02:42 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -15,7 +15,8 @@
 (module __hop_service
    
    (include "service.sch"
-            "verbose.sch")
+            "verbose.sch"
+	    "param.sch")
    
    (library web)
    
@@ -296,13 +297,12 @@
 (define (service-parse-request-put svc::hop-service req::http-request)
    (with-access::http-request req (query abspath)
       (if (string? query)
-	  (with-access::hop-service svc (id decoder)
-	     (let ((args (cgi-args->list query)))
-		(match-case args
-		   ((("hop-encoding" . "hop") ("vals" . ?vals))
-		    (string->obj vals decoder))
-		   (else
-		    (service-parse-request-get-args args)))))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (string->obj vals))
+		(else
+		 (service-parse-request-get-args args))))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -315,19 +315,31 @@
 		 (substring-ci-at? ctype "multipart/form-data; boundary=" 0))
 	 (substring ctype (string-length "multipart/form-data; boundary=")
 	    (string-length ctype))))
-
+   
    (define (multipart-value! v)
-      (with-access::hop-service svc (decoder stringify)
-	 (let ((header (memq :header v))
-	       (val (cadr (memq :data v))))
-	    (if (not header)
-		val
-		(let ((enc (cadr (memq :hop-encoding (cadr header)))))
-		   (cond
-		      ((string=? enc "string") (stringify val))
-		      ((string=? enc "integer") (string->integer val))
-		      ((string=? enc "keyword") (string->keyword val))
-		      (else (string->obj val decoder))))))))
+      (let ((header (memq :header v))
+	    (val (cadr (memq :data v))))
+	 (if (not header)
+	     val
+	     (let ((enc (cadr (memq :hop-encoding (cadr header)))))
+		(cond
+		   ((string=? enc "string")
+		    val)
+		   ((string=? enc "integer")
+		    (string->integer val))
+		   ((string=? enc "keyword")
+		    (string->keyword val))
+		   (else
+		    (string->obj val)))))))
+   
+   (define (hopjs-encoded-arguments? args)
+      (match-case args
+	 ((("hop" . ?-)) #t)
+	 (else #f)))
+   
+   (define (dsssl-service? svc)
+      (with-access::hop-service svc (args)
+	 (and (pair? args) (eq? (car args) #!key))))
    
    (with-access::http-request req (content-length header socket)
       (let* ((pi (socket-input socket))
@@ -338,10 +350,15 @@
 	     (lambda (boundary)
 		(let ((args (cgi-multipart->list (hop-upload-directory)
 			       pi content-length boundary)))
-		   (map! multipart-value! args))))
+		   (if (and (dsssl-service? svc)
+			    (hopjs-encoded-arguments? args))
+		       (multipart-value! (car args))
+		       (map! multipart-value! args)))))
 	    (else
-	     (with-access::hop-service svc (unjson)
-		(list (unjson pi))))))))
+	     (with-access::hop-service svc (id)
+		(error "service-parse-request"
+		   (format "Illegal HTTP POST request type (~a)" id)
+		   ctype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request ...                                        */

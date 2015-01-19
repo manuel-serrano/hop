@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 11 09:26:29 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:15:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -40,23 +40,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-vector->obj ::JsGlobalObject ...                      */
-;*    -------------------------------------------------------------    */
-;*    See __hop_json                                                   */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-vector->obj %this::JsGlobalObject v)
-   (js-vector->jsarray v %this))
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArray
-   (lambda (o)
-      (jsarray->vector o (js-initial-global-object)))
-   js-unserializer)
+   (lambda (o) (jsarray->vector o (js-initial-global-object)))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */
@@ -264,13 +255,13 @@
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this)))
 	 (if (=u32 lenval #u32:0)
-	     (string->js-string "")
+	     (js-string->jsstring "")
 	     (let* ((sep ",")
 		    (el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
 			   (i 1))
 		   (if (=u32 i lenval)
-		       (string-list->js-string (reverse! r))
+		       (js-stringlist->jsstring (reverse! r))
 		       (loop (cons* (el->string (js-get o (uint32->fixnum i) %this))
 				sep r)
 			  (+u32 i #u32:1))))))))
@@ -356,12 +347,12 @@
 		      ","
 		      (js-tostring separator %this))))
 	 (if (=u32 lenval #u32:0)
-	     (string->js-string "")
+	     (js-string->jsstring "")
 	     (let* ((el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
 			   (i #u32:1))
 		   (if (=u32 i lenval)
-		       (string-list->js-string (reverse! r))
+		       (js-stringlist->jsstring (reverse! r))
 		       (loop (cons* (el->string (js-get o i %this)) sep r)
 			  (+u32 i #u32:1))))))))
    
@@ -1412,7 +1403,7 @@
 		(let ((v (vector-ref vec i)))
 		   (if (eq? v (js-absent))
 		       (loop (-fx i 1) acc)
-		       (loop (-fx i 1) (cons (integer->js-string i) acc)))))))))
+		       (loop (-fx i 1) (cons (js-integer->jsstring i) acc)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-vector-properties ...                                   */
@@ -1925,7 +1916,7 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (integer->js-string i))
+		       (proc (js-integer->jsstring i))
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))
@@ -1953,4 +1944,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

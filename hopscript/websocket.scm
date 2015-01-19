@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Jan 16 12:03:37 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 09:06:44 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -52,7 +52,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsWebSocket ...                              */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsWebSocket
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsWebSocketClient ...                        */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsWebSocketClient
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsWebSocketServer ...                        */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsWebSocketServer
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWebSocket ...                            */
@@ -116,15 +143,15 @@
 	       (let* ((protocol (cond
 				   ((string? options)
 				    options)
-				   ((js-string? options)
-				    (js-string->string options))
+				   ((js-jsstring? options)
+				    (js-jsstring->string options))
 				   ((isa? options JsArray)
 				    (let ((join (js-get options 'join %this)))
-				       (js-string->string 
+				       (js-jsstring->string 
 					  (js-call1 %this join options
-					     (string->js-string ", ")))))
+					     (js-string->jsstring ", ")))))
 				   ((isa? options JsObject)
-				    (js-string->string
+				    (js-jsstring->string
 				       (js-get options 'protocol %this)))))
 		      (url (js-tostring url %this))
 		      (ws (instantiate::websocket
@@ -154,16 +181,16 @@
 				    (apply-listeners conns evt))))))))))
 
 	 (define (js->hop x)
-	    (if (js-string? x)
-		(js-string->string x)
+	    (if (js-jsstring? x)
+		(js-jsstring->string x)
 		x))
 	 
 	 (define (js-websocket-server-construct this opt)
 	    (letrec* ((path (cond
 			       ((string? opt)
 				opt)
-			       ((js-string? opt)
-				(js-string->string opt))
+			       ((js-jsstring? opt)
+				(js-jsstring->string opt))
 			       (else
  				(js->hop (js-get opt 'path %this)))))
 		      (proto (if (isa? opt JsObject)
@@ -171,11 +198,11 @@
 				    (cond
 				       ((string? proto)
 					(list proto))
-				       ((js-string? proto)
-					(list (js-string->string proto)))
+				       ((js-jsstring? proto)
+					(list (js-jsstring->string proto)))
 				       ((isa? proto JsArray)
 					(map (lambda (el)
-						(js-string->string (car el)))
+						(js-jsstring->string (car el)))
 					   (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
@@ -350,7 +377,7 @@
 			      (when (string? frame)
 				 (with-access::JsWebSocketClient ws (onmessages)
 				    (with-access::JsWebSocketServer wss (worker svc)
-				       (let* ((val (string->js-string frame))
+				       (let* ((val (js-string->jsstring frame))
 					      (evt (instantiate::JsWebSocketEvent
 						      (name "message")
 						      (target ws)
@@ -418,4 +445,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

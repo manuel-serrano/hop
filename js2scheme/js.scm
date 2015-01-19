@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Jan 11 06:25:08 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:06:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -39,8 +39,6 @@
 		     (eval! `(define %worker ,(config-get conf :worker)))
 		     (eval! `(define %scope %this))
 		     (eval! `(define this %this))
-		     (eval! (j2s-scheme-unserialize))
-		     (eval! (j2s-scheme-unjson))
 		     (j2s-js ast #f
 			(lambda (this::J2SDollar tildec dollarc mode evalp conf)
 			   (with-access::J2SDollar this (node)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jan 14 10:35:16 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:46:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -106,10 +106,10 @@
 		     (acc '()))
 	     (if (string=? dir "/")
 		 (list->vector
-		    (reverse! (cons (string->js-string "/node_modules") acc)))
+		    (reverse! (cons (js-string->jsstring "/node_modules") acc)))
 		 (loop (dirname dir)
 		    (cons
-		       (string->js-string (make-file-name dir "node_modules"))
+		       (js-string->jsstring (make-file-name dir "node_modules"))
 		       acc))))
 	  '#()))
    
@@ -119,7 +119,7 @@
       ;; exports
       (js-put! m 'exports exports #f %this)
       ;; filename
-      (js-put! m 'filename (string->js-string filename) #f %this)
+      (js-put! m 'filename (js-string->jsstring filename) #f %this)
       ;; loaded
       (js-put! m 'loaded #t #f %this)
       ;; parent
@@ -164,8 +164,8 @@
 	 (lambda (_ name)
 	    (let ((name (js-tostring name this)))
 	       (if (core-module? name)
-		   (string->js-string name)
-		   (string->js-string
+		   (js-string->jsstring name)
+		   (js-string->jsstring
 		      (nodejs-resolve name this %module)))))
 	 1 "resolve")
       #f this)
@@ -189,7 +189,7 @@
 	    :value (js-make-function %this
 		      (lambda (this name fun)
 			 (js-bind! %this this
-			    (string->symbol (js-string->string name)) :get fun))
+			    (string->symbol (js-jsstring->string name)) :get fun))
 		      2 "__defineGetter__")
 	    :enumerable #f
 	    :writable #t
@@ -608,17 +608,17 @@
       (let ((paths (js-get mod 'paths %this)))
 	 (cond
 	    ((pair? paths)
-	     (append (map js-string->string paths) nodejs-env-path))
+	     (append (map js-jsstring->string paths) nodejs-env-path))
 	    ((isa? paths JsArray)
 	     (with-access::JsArray paths (vec)
-		(append (map! js-string->string (vector->list vec))
+		(append (map! js-jsstring->string (vector->list vec))
 		   nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
 
    (with-trace 'require "nodejs-resolve"
       (let* ((mod %module)
-	     (filename (js-string->string (js-get mod 'filename %this)))
+	     (filename (js-jsstring->string (js-get mod 'filename %this)))
 	     (dir (dirname filename)))
 	 (trace-item "name=" name " dir=" dir)
 	 (cond
@@ -750,9 +750,9 @@
 (define (nodejs-eval %this scope)
    
    (define (js-eval this str)
-      (if (not (js-string? str))
+      (if (not (js-jsstring? str))
 	  str
-	  (call-with-input-string (js-string->string str)
+	  (call-with-input-string (js-jsstring->string str)
 	     (lambda (ip)
 		(%js-eval ip 'eval %this %this scope)))))
 

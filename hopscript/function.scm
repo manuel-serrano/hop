@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov 26 09:49:33 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 18 07:08:01 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -42,7 +42,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsFunction ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsFunction
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
@@ -166,7 +175,7 @@
    (define (get-source this::JsFunction)
       (with-access::JsFunction this (src)
 	 (when (pair? src)
-	    (string->js-string
+	    (js-string->jsstring
 	       (format "~a:~a" (cadr (car src)) (caddr (car src)))))))
 
    (with-access::JsGlobalObject %this (js-function js-object)
@@ -216,7 +225,7 @@
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f))
 	    (js-bind! %this fun 'name
-	       :value (string->js-string fname)
+	       :value (js-string->jsstring fname)
 	       :writable #f
 	       :enumerable #f :configurable #f)
 	    ;; source is an hop extension
@@ -251,14 +260,14 @@
 	     (cond
 		((pair? src)
 		 (if (string? (cdr src))
-		     (string-list->js-string (list "function " (cdr src)))
-		     (string->js-string
+		     (js-stringlist->jsstring (list "function " (cdr src)))
+		     (js-string->jsstring
 			(format "[Function ~a~a]"
 			   (cadr (car src)) (caddr (car src))))))
 		((>fx (string-length name) 0)
-		 (string->js-string (format "[Function ~a]" name)))
+		 (js-string->jsstring (format "[Function ~a]" name)))
 		(else
-		 (string->js-string "[Function]")))))
+		 (js-string->jsstring "[Function]")))))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
@@ -360,4 +369,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

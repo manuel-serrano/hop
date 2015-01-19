@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Jul 11 08:15:20 2014 (serrano)                */
-;*    Copyright   :  2010-14 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Fri Jan 16 18:56:35 2015 (serrano)                */
+;*    Copyright   :  2010-15 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
 ;*=====================================================================*/
@@ -146,11 +146,13 @@
 (define (hopscheme->JS-expression hs)
    (let* ((jstr (hopscheme-jstr hs))
 	  (assig-var (hopscheme-var hs))
-	  (assig-var-str (symbol->string assig-var)))
+	  (assig-var-str (if (symbol? assig-var)
+			     (symbol->string assig-var)
+			     "")))
       (string-append
-       "(function() { " jstr "\n"
-       "return " assig-var-str "; })"
-       ".call(this)")))
+	 "(function() { " jstr "\n"
+	 "return " assig-var-str "; })"
+	 ".call(this)")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme->JS-statement ...                                      */

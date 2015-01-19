@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Sun Dec 21 12:06:14 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jan 18 08:50:08 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -79,8 +79,7 @@
 	       (lambda (op)
 		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
-	       (lambda (obj) obj)
-	       :javascript->obj json->ast
+	       json->ast
 	       :method 'POST
 	       :header '((content-type: . "application/json"))
 	       :connection 'close

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Jan 14 09:36:08 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 11:44:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -51,18 +51,18 @@
 	    ;; misc
 	    (define-js srcDir 0
 	       (lambda (this)
-		  (string->js-string (the-loading-dir))))
+		  (js-string->jsstring (the-loading-dir))))
 	    
 	    (define-js srcFile 0
 	       (lambda (this code)
-		  (string->js-string (the-loading-file))))
+		  (js-string->jsstring (the-loading-file))))
 
 	    (define-js currentThread 0
 	       (lambda (this) (current-thread)))
 	    
 	    ;; info
 	    `(port . ,(hop-port))
-	    `(hostname . ,(string->js-string (hostname)))
+	    `(hostname . ,(js-string->jsstring (hostname)))
 	    `(version . ,(hop-version))
 	       
 	    ;; requests
@@ -73,12 +73,12 @@
 	    ;; charset
 	    (define-js charsetConvert 3
 	       (lambda (this text from to)
-		  (string->js-string
+		  (js-string->jsstring
 		     (hopjs-charset-convert this text from to %this))))
 	    
 	    (define-js charset 0
 	       (lambda (this)
-		  (string->js-string (symbol->string! (hop-charset)))))
+		  (js-string->jsstring (symbol->string! (hop-charset)))))
 	    
 	    (define-js charsetSet 1
 	       (lambda (this cs)
@@ -131,7 +131,7 @@
 				   (string->symbol
 				      (js-tostring backend %this))))))
 		     (if (eq? ofile (js-undefined))
-			 (string->js-string
+			 (js-string->jsstring
 			    (call-with-output-string
 			       (lambda (op)
 				  (xml-write xml op be))))
@@ -147,21 +147,21 @@
 	    
 	    (define-js makeWebColor 3 
 	       (lambda (this r g b)
-		  (string->js-string (make-hex-color r g b))))
+		  (js-string->jsstring (make-hex-color r g b))))
 
 	    (define-js encodeURIComponent 1
 	       (lambda (this path)
-		  (string->js-string
+		  (js-string->jsstring
 		     (url-path-encode (js-tostring path %this)))))
 
 	    (define-js md5sum 1
 	       (lambda (this path)
-		  (string->js-string
+		  (js-string->jsstring
 		     (md5sum-string (js-tostring path %this)))))
 
 	    (define-js sha1sum 1
 	       (lambda (this path)
-		  (string->js-string
+		  (js-string->jsstring
 		     (sha1sum-string (js-tostring path %this)))))
 
 	    ;; Lists
@@ -180,14 +180,9 @@
 ;*---------------------------------------------------------------------*/
 (define (hopjs-with-url url success opt %this)
    
-   (define (js-string->obj obj)
-      (string->obj obj
-	 (lambda (o)
-	    (if (string? o) (js-javascript->obj o) o))))
-   
    (define (js-javascript->obj obj)
-      (javascript->obj obj %this))
-
+      (js-obj->jsobject obj %this))
+   
    (let ((url (js-tostring url %this))
 	 (fail #f)
 	 (timeout 0)
@@ -204,11 +199,8 @@
 	       (set! method (js-tostring m %this)))))
       (with-url url
 	 (if (isa? success JsFunction)
-	     (lambda (x) (js-call1 %this success %this x))
+	     (lambda (x) (js-call1 %this success %this (js-javascript->obj x)))
 	     (lambda (x) x))
-	 :string->obj js-string->obj
-	 :javascript->obj js-javascript->obj
-	 :string->string string->js-string
 	 :fail fail 
 	 :timeout timeout
 	 :method (string->symbol method))))
@@ -220,7 +212,7 @@
    (let ((v (js-get obj key this)))
       (cond
 	 ((eq? v (js-undefined)) def)
-	 ((js-string? v) (js-string->string v))
+	 ((js-jsstring? v) (js-jsstring->string v))
 	 (else v))))
 
 ;*---------------------------------------------------------------------*/

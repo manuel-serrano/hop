@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sun Jan 11 09:40:52 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 08:40:31 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -35,6 +35,9 @@
 
 	    (class JsFastBuffer::JsTypedArray)
 
+	    (js-string->jsslowbuffer::JsSlowBuffer ::bstring ::JsGlobalObject)
+	    (js-string->jsfastbuffer::JsFastBuffer ::bstring ::JsGlobalObject)
+	    
 	    (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
 	    (make-slowbuffer ::JsGlobalObject)
@@ -45,10 +48,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsSlowBuffer #f
-   (lambda (s) (make-struct 'javascript 1 s)))
-(register-class-serialization! JsFastBuffer #f
-   (lambda (s) (make-struct 'javascript 1 s)))
+(register-class-serialization! JsSlowBuffer
+   (lambda (o)
+      (with-access::JsArrayBuffer o (data) data))
+   (lambda (o)
+      (let ((stu (make-struct '__JsCustom__ 2 o)))
+	 (struct-set! stu 1 js-string->jsslowbuffer)
+	 stu)))
+
+(register-class-serialization! JsFastBuffer
+   (lambda (o)
+      (with-access::JsFastBuffer o (%data length byteoffset)
+	 (make-serialization-substring %data
+	    (uint32->fixnum byteoffset) (uint32->fixnum length))))
+   (lambda (o)
+      (let ((stu (make-struct '__JsCustom__ 2 o)))
+	 (struct-set! stu 1 js-string->jsfastbuffer)
+	 stu)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsFastBuffer ...                             */
@@ -75,13 +91,35 @@
       (display "\")" op)))
 
 ;*---------------------------------------------------------------------*/
-;*    javascript-buffer->slowbuffer ...                                */
+;*    js-string->jsslowbuffer ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (javascript-buffer->slowbuffer name args %this)
+(define (js-string->jsslowbuffer str %this)
    (with-access::JsGlobalObject %this (js-slowbuffer-proto)
-      (instantiate::JsSlowBuffer
-	 (__proto__ js-slowbuffer-proto)
-	 (data (string-hex-intern (js-string-normalize! (car args)))))))
+      (let ((buf (instantiate::JsSlowBuffer
+		    (__proto__ js-slowbuffer-proto)
+		    (data str))))
+	 (js-put! buf 'length (string-length str) #f %this)
+	 buf)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string->jsfastbuffer ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-string->jsfastbuffer str %this)
+   (with-access::JsGlobalObject %this (js-buffer-proto)
+      (let ((slowbuffer (js-string->jsslowbuffer str %this)))
+	 (with-access::JsSlowBuffer slowbuffer (data)
+	    (let ((buf (instantiate::JsFastBuffer
+			  (__proto__ js-buffer-proto)
+			  (%data data)
+			  (frozen #f)
+			  (buffer slowbuffer)
+			  (byteoffset (fixnum->uint32 0))
+			  (length (fixnum->uint32 (string-length str)))
+			  (bpe 1))))
+	       (js-put! buf 'length (string-length str) #f %this)
+	       (js-put! buf 'offset 0 #f %this)
+	       (js-put! buf 'parent slowbuffer #f %this)
+	       buf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-buffer->fastbuffer ...                                */
@@ -143,15 +181,6 @@
       (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
 	 (set! js-buffer-proto proto))
 
-      ;; service post buffer finalization (see __hopscript_service)
-      (js-register-service-buffer-finalizer!
-	 js-string->jsbuffer)
-      ;; javascript intern (see __hopscript_arraybuffer)
-      (register-javascript-buffer-intern! "JsFastBuffer"
-	 javascript-buffer->fastbuffer)
-      (register-javascript-buffer-intern! "JsSlowBuffer"
-	 javascript-buffer->slowbuffer)
-      
       (with-access::JsFunction buf (alloc)
 	 (set! alloc
 	    (lambda (ctor)
@@ -178,6 +207,7 @@
 ;*    during javascript->obj unmarshalling.                            */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsbuffer str %this::JsGlobalObject)
+   (tprint "js-string->jsbuffer str=[" str "]")
    (with-access::JsGlobalObject %this (js-buffer-proto)
       (let ((buf (js-buffer-constr js-buffer-proto %this)))
 	 (with-access::JsTypedArray buf (%data length)
@@ -432,9 +462,9 @@
 		      :writable #f
 		      :enumerable #t)
 		   this)))
-	    ((js-string? a0)
+	    ((js-jsstring? a0)
 	     (with-access::JsGlobalObject %this (js-object)
-		(let* ((data (js-string->string a0))
+		(let* ((data (js-jsstring->string a0))
 		       (this (instantiate::JsSlowBuffer
 				(__proto__ slowbuffer-proto)
 				(data data))))
@@ -466,11 +496,11 @@
 	  (js-raise-type-error %this "offset is not uint" offset))
 	 ((and (flonum? offset) (>fl offset (exptfl 2. 31.)))
 	  (js-raise-type-error %this "Trying to ~a beyond buffer length"
-	     (string->js-string action)))
+	     (js-string->jsstring action)))
 	 ((>fx (->fixnum offset) (-fx (string-length data) sizeof))
 	  (js-raise-range-error %this
 	     "Trying to ~s beyond buffer length"
-	     (string->js-string action)))))
+	     (js-string->jsstring action)))))
 
    (define (byte-ref str i)
       (fixnum->uint8 (char->integer (string-ref-ur str i))))
@@ -586,7 +616,7 @@
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string! data start string 0 len))
-		  (string->js-string string))))
+		  (js-string->jsstring string))))
 	 2 "binarySlice")
       #f %this)
    
@@ -595,7 +625,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (string->js-string (string-encode-utf8 data start end))))
+	       (js-string->jsstring (string-encode-utf8 data start end))))
 	 2 "utf8Slice")
       #f %this)
    
@@ -608,7 +638,7 @@
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string-ascii-clamp! data start string 0 len))
-		  (string->js-string string))))
+		  (js-string->jsstring string))))
 	 2 "asciiSlice")
       #f %this)
 
@@ -620,7 +650,7 @@
 	       (let ((ip (open-input-string! data start end))
 		     (op (open-output-string)))
 		  (base64-encode-port ip op 0)
-		  (string->js-string (close-output-port op)))))
+		  (js-string->jsstring (close-output-port op)))))
 	 2 "utf8Slice")
       #f %this)
    
@@ -629,7 +659,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (string->js-string
+	       (js-string->jsstring
 		  (ucs2-string->utf8-string (string->ucs2-string data start end)))))
 	 2 "ucs2Slice")
       #f %this)
@@ -639,7 +669,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (string->js-string (string-hex-extern data start end))))
+	       (js-string->jsstring (string-hex-extern data start end))))
 	 2 "hexSlice")
       #f %this)
 
@@ -650,12 +680,12 @@
 	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (js-string-length string)
+			   (minfx (js-jsstring-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (let ((l (blit-string-binary-decode!
-				  (js-string->string string) 0 data offset n)))
+				  (js-jsstring->string string) 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
 			 l)
 		      n))))
@@ -668,13 +698,13 @@
 	    
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (js-string-length string)
+			   (minfx (js-jsstring-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (multiple-value-bind (m c)
 			 (blit-string-utf8!
-			    (js-string->string string) 0 data offset n)
+			    (js-jsstring->string string) 0 data offset n)
 			 (js-put! js-slowbuffer '_charsWritten c #t %this)
 			 m)
 		      (begin
@@ -688,12 +718,12 @@
 	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
 	       (let ((n (maxfx 0
-			   (minfx (js-string-length string)
+			   (minfx (js-jsstring-length string)
 			      (minfx length
 				 (-fx (string-length data) offset))))))
 		  (if (>fx n 0)
 		      (let ((l (blit-string-ascii-decode!
-				  (js-string->string string) 0 data offset n)))
+				  (js-jsstring->string string) 0 data offset n)))
 			 (js-put! js-slowbuffer '_charsWritten l #t %this)
 			 l)
 		      n))))
@@ -704,7 +734,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let ((ip (open-input-string! (js-string->string string)))
+	       (let ((ip (open-input-string! (js-jsstring->string string)))
 		     (op (open-output-string)))
 		  (base64-decode-port ip op #t)
 		  (close-input-port ip)
@@ -724,7 +754,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (utf8-string->ucs2-string (js-string->string string)))
+	       (let* ((s (utf8-string->ucs2-string (js-jsstring->string string)))
 		      (n (maxfx 0
 			    (minfx (*fx 2 (ucs2-string-length s))
 			       (minfx length
@@ -742,7 +772,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
 	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (string-hex-intern (js-string->string string)))
+	       (let* ((s (string-hex-intern (js-jsstring->string string)))
 		      (n (maxfx 0
 			    (minfx (*fx 2 (string-length s))
 			       (minfx length
@@ -904,22 +934,22 @@
 	 (lambda (this string encoding)
 	    (cond
 	       ((or (eq? encoding (js-undefined))
-		    (string=? (js-string->string encoding) "utf8")
-		    (string=? (js-string->string encoding) "utf-8"))
-		(js-string-length string))
-	       ((or (string=? (js-string->string encoding) "ucs2")
-		    (string=? (js-string->string encoding) "ucs-2")
-		    (string=? (js-string->string encoding) "utf16le")
-		    (string=? (js-string->string encoding) "utf-16le"))
-		(*fx (utf8-codeunit-length (js-string->string string)) 2))
-	       ((string=? (js-string->string encoding) "hex")
-		(/fx (utf8-codeunit-length (js-string->string string)) 2))
-	       ((string=? (js-string->string encoding) "base64")
-		(string-length (base64-decode (js-string->string string) #t)))
-	       ((or (string=? (js-string->string encoding) "ascii")
-		    (string=? (js-string->string encoding) "binary")
-		    (string=? (js-string->string encoding) "buffer"))
-		(utf8-string-length (js-string->string string)))
+		    (string=? (js-jsstring->string encoding) "utf8")
+		    (string=? (js-jsstring->string encoding) "utf-8"))
+		(js-jsstring-length string))
+	       ((or (string=? (js-jsstring->string encoding) "ucs2")
+		    (string=? (js-jsstring->string encoding) "ucs-2")
+		    (string=? (js-jsstring->string encoding) "utf16le")
+		    (string=? (js-jsstring->string encoding) "utf-16le"))
+		(*fx (utf8-codeunit-length (js-jsstring->string string)) 2))
+	       ((string=? (js-jsstring->string encoding) "hex")
+		(/fx (utf8-codeunit-length (js-jsstring->string string)) 2))
+	       ((string=? (js-jsstring->string encoding) "base64")
+		(string-length (base64-decode (js-jsstring->string string) #t)))
+	       ((or (string=? (js-jsstring->string encoding) "ascii")
+		    (string=? (js-jsstring->string encoding) "binary")
+		    (string=? (js-jsstring->string encoding) "buffer"))
+		(utf8-string-length (js-jsstring->string string)))
 	       (else
 		(error "buffer" "byteLength encoding not implemented"
 		   encoding))))

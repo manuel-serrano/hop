@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 11 19:57:29 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:15:24 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -29,24 +29,20 @@
 	   __hopscript_regexp
 	   __hopscript_error)
 
-   (export (js-init-boolean! ::JsGlobalObject)))
+   (export (js-init-boolean! ::JsGlobalObject)
+	   (js-bool->jsboolean::JsBoolean ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-boolean->obj ::JsGlobalObject ...                     */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-boolean->obj %this::JsGlobalObject v)
-   (js-toboolean v))
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsBoolean ...                                */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsBoolean js-serializer
-   (lambda (s) (make-struct 'javascript 1 s)))
+(register-class-serialization! JsBoolean
+   (lambda (o) (with-access::JsBoolean o (val) val))
+   (lambda (o) (make-struct '__JsBoolean__ 1 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */
@@ -132,8 +128,8 @@
 		   (if (isa? this JsBoolean)
 		       (with-access::JsBoolean this (val)
 			  (if val
-			      (string->js-string "true")
-			      (string->js-string "false")))
+			      (js-string->jsstring "true")
+			      (js-string->jsstring "false")))
 		       (js-raise-type-error %this "not a boolean"
 			  (typeof this))))
 		0
@@ -151,7 +147,14 @@
       :enumerable #f))
       
 ;*---------------------------------------------------------------------*/
+;*    js-bool->jsboolean ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-bool->jsboolean val::bool %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-boolean)
+      (js-new1 %this js-boolean val)))
+
+;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)
 

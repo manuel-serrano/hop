@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 11 19:57:40 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:08:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -28,6 +28,7 @@
 	   __hopscript_public)
    
    (export (js-init-number! ::JsGlobalObject)
+	   (js-number->jsnumber ::obj ::JsGlobalObject)
 	   
 	   (js+ left right ::JsGlobalObject)
 	   (js-slow+ left right ::JsGlobalObject)
@@ -51,19 +52,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsNumber js-serializer
-   (lambda (s) (make-struct 'javascript 1 s)))
-
-;*---------------------------------------------------------------------*/
-;*    javascript-number->obj ::JsGlobalObject ...                      */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-number->obj %this::JsGlobalObject v)
-   (js-tonumber v %this))
+(register-class-serialization! JsNumber
+   (lambda (o) (with-access::JsNumber o (val) val))
+   (lambda (o) (make-struct '__JsNumber__ 1 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */
@@ -205,15 +201,15 @@
 		   ((or (< r 2) (> r 36))
 		    (js-raise-range-error %this "Radix out of range: ~a" r))
 		   ((and (flonum? val) (nanfl? val))
-		    (string->js-string "NaN"))
+		    (js-string->jsstring "NaN"))
 		   ((= val +inf.0)
-		    (string->js-string "Infinity"))
+		    (js-string->jsstring "Infinity"))
 		   ((= val -inf.0)
-		    (string->js-string "-Infinity"))
+		    (js-string->jsstring "-Infinity"))
 		   ((or (= r 10) (= r 0))
 		    (js-tojsstring val %this))
 		   (else
-		    (string->js-string (number->string val r))))))))
+		    (js-string->jsstring (number->string val r))))))))
 
    (js-bind! %this obj 'toString
       :value (js-make-function %this js-number-to-string 2 'toString)
@@ -253,8 +249,8 @@
       
       (define (signed val s)
 	 (if (>= val 0)
-	     (string->js-string s)
-	     (string->js-string (string-append "-" s))))
+	     (js-string->jsstring s)
+	     (js-string->jsstring (string-append "-" s))))
       
       (if (not (isa? this JsNumber))
 	  (js-raise-type-error %this
@@ -267,7 +263,7 @@
 		    "Fraction digits out of range: ~a" f)
 		 (with-access::JsNumber this (val)
 		    (if (and (flonum? val) (nanfl? val))
-			(string->js-string "NaN")
+			(js-string->jsstring "NaN")
 			(let ((x (abs val))
 			      (f (->fixnum f)))
 			   (if (>= x (exptfl 10. 21.))
@@ -317,6 +313,13 @@
       :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
+;*    js-number->jsnumber ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-number->jsnumber val %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-number)
+      (js-new1 %this js-number val)))
+
+;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
@@ -340,10 +343,10 @@
    (let ((left (js-toprimitive left 'any %this))
 	 (right (js-toprimitive right 'any %this)))
       (cond
-	 ((js-string? left)
-	  (js-string-append left (js-tojsstring right %this)))
-	 ((js-string? right)
-	  (js-string-append (js-tojsstring left %this) right))
+	 ((js-jsstring? left)
+	  (js-jsstring-append left (js-tojsstring right %this)))
+	 ((js-jsstring? right)
+	  (js-jsstring-append (js-tojsstring left %this) right))
 	 (else
 	  (let* ((left (js-tonumber left %this))
 		 (right (js-tonumber right %this)))
@@ -517,8 +520,8 @@
        (< left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-string? px) (js-string? py))
-	      (js-string<? px py)
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring<? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (< nx ny))))))
@@ -533,8 +536,8 @@
        (> left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-string? px) (js-string? py))
-	      (js-string>? px py)
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring>? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (> nx ny))))))
@@ -549,8 +552,8 @@
        (<= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-string? px) (js-string? py))
-	      (js-string<=? px py)
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring<=? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (<= nx ny))))))
@@ -565,8 +568,8 @@
        (>= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-string? px) (js-string? py))
-	      (js-string>=? px py)
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring>=? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
@@ -613,4 +616,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

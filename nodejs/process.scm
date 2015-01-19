@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Jan  4 09:22:57 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:46:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -248,15 +248,15 @@
 	 (js-put! proc 'argv
 	    (let ((jsargs (member "--" (command-line))))
 	       (if jsargs
-		   (let ((cmdline (cons (string->js-string (car (command-line)))
-				     (map string->js-string (cdr jsargs)))))
+		   (let ((cmdline (cons (js-string->jsstring (car (command-line)))
+				     (map js-string->jsstring (cdr jsargs)))))
 		      (js-vector->jsarray (list->vector cmdline) %this))
 		   (js-vector->jsarray
-		      (list->vector (map string->js-string (command-line)))
+		      (list->vector (map js-string->jsstring (command-line)))
 		      %this)))
 	    #f %this)
 	 (js-put! proc 'execPath
-	    (string->js-string (nodejs-exepath)) #f %this)
+	    (js-string->jsstring (nodejs-exepath)) #f %this)
 	 (js-put! proc 'execArgv
 	    (js-vector->jsarray '#() %this)
 	    #f %this)
@@ -267,8 +267,8 @@
 	       0 "abort")
 	    #f %this)
 	 
-	 (js-put! proc 'title (string->js-string (hop-name)) #f %this)
-	 (js-put! proc 'version (string->js-string (hop-version)) #f %this)
+	 (js-put! proc 'title (js-string->jsstring (hop-name)) #f %this)
+	 (js-put! proc 'version (js-string->jsstring (hop-version)) #f %this)
 	 
 	 (js-put! proc 'exit
 	    (js-make-function %this
@@ -290,12 +290,12 @@
 		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)
-	 (js-put! proc 'arch (string->js-string (os-arch)) #f %this)
-	 (js-put! proc 'platform (string->js-string (os-name)) #f %this)
+	 (js-put! proc 'arch (js-string->jsstring (os-arch)) #f %this)
+	 (js-put! proc 'platform (js-string->jsstring (os-name)) #f %this)
 	 (js-put! proc 'binding
 	    (js-make-function %this
 	       (lambda (this module)
-		  (let ((mod (js-string->string module)))
+		  (let ((mod (js-jsstring->string module)))
 		     (cond
 			((string=? mod "constants")
 			 (process-constants %this))
@@ -382,13 +382,13 @@
 	 (js-put! proc 'cwd
 	    (js-make-function %this
 	       (lambda (this)
-		  (string->js-string (pwd)))
+		  (js-string->jsstring (pwd)))
 	       0 "cwd")
 	    #f %this)
 	 (js-put! proc 'chdir
 	    (js-make-function %this
 	       (lambda (this path)
-		  (chdir (js-string->string path)))
+		  (chdir (js-jsstring->string path)))
 	       1 "chdir")
 	    #f %this)
 	 (js-put! proc 'getuid
@@ -417,8 +417,8 @@
 		  (cond
 		     ((eq? val (js-undefined))
 		      (umask))
-		     ((js-string? val)
-		      (umask (string->integer (js-string->string val) 8)))
+		     ((js-jsstring? val)
+		      (umask (string->integer (js-jsstring->string val) 8)))
 		     (else
 		      (umask (js-tointeger val %this)))))
 	       1 "umask")
@@ -560,18 +560,18 @@
 				    ((=fx (uv-fs-event-change)
 					(bit-and events (uv-fs-event-change)))
 				     (set! eventstr
-					(string->js-string "change")))
+					(js-string->jsstring "change")))
 				    ((=fx (uv-fs-event-rename)
 					(bit-and events (uv-fs-event-rename)))
 				     (set! eventstr
-					(string->js-string "rename")))
+					(js-string->jsstring "rename")))
 				    (else
 				     (error "process-fs-event-wrap"
 					"bad event" eventstr)))
 				 (js-call3 %this onchange this
 				    status eventstr
-				    (string->js-string path))))
-			   (js-string->string path)))
+				    (js-string->jsstring path))))
+			   (js-jsstring->string path)))
 		     (unless (js-totest options)
 			(with-access::JsHandle this (handle)
 			   (nodejs-unref handle %worker))))
@@ -642,7 +642,7 @@
 		#f)
 	     (begin
 		(js-call2 %this callback (js-undefined) #f
-		   (js-vector->jsarray (vector (string->js-string res)) %this))
+		   (js-vector->jsarray (vector (js-string->jsstring res)) %this))
 		#t))))
    
    (define (gethostbyname this name callback)
@@ -650,7 +650,7 @@
 	 (if (pair? res)
 	     (let ((addr (assq 'addresses res)))
 		(js-call2 %this callback (js-undefined) #f
-		   (string->js-string (car (cdr addr))))
+		   (js-string->jsstring (car (cdr addr))))
 		#t)
 	     (begin
 		(js-call2 %this callback (js-undefined) -1 #f)
@@ -714,20 +714,20 @@
       `((getEndianness . ,(js-make-function %this
 			     (lambda (this)
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
-				    (string->js-string "LE")
-				    (string->js-string "BE")))
+				    (js-string->jsstring "LE")
+				    (js-string->jsstring "BE")))
 			     0 "endianess"))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)
-			      (string->js-string (hostname)))
+			      (js-string->jsstring (hostname)))
 			   0 "getHostname"))
 	(getOSType . ,(js-make-function %this
 			 (lambda (this)
-			    (string->js-string (os-name)))
+			    (js-string->jsstring (os-name)))
 			 0 "getOSType"))
 	(getOSRelease . ,(js-make-function %this
 			    (lambda (this)
-			       (string->js-string (os-version)))
+			       (js-string->jsstring (os-version)))
 			    0 "getOSRelease"))
 	(getInterfaceAddresses . ,(js-make-function %this
 				     (lambda (this)

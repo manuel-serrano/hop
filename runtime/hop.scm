@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Jan 11 20:50:29 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 08:47:16 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -46,10 +46,7 @@
 		      (connection 'keep-alive)
 		      (timeout 0)
 		      (method 'GET)
-		      body
-		      (string->obj string->obj)
-		      (javascript->obj javascript->obj)
-		      string->string)
+		      body)
 	    (with-hop-remote path success failure
 			     #!key
 			     (host "localhost")
@@ -59,9 +56,6 @@
 			     (password #f)
 			     (authorization #f)
 			     (anim #f)
-			     (string->obj string->obj)
-			     (javascript->obj javascript->obj)
-			     string->string
 			     args)
 	    (generic with-hop-local obj success fail authorization)
 	    (hop-get-file::obj ::bstring ::obj)))
@@ -222,8 +216,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback proc::symbol req success fail
-	   string->obj javascript->obj string->string)
+(define (make-http-callback proc::symbol req success fail)
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "make-http-callback"
 	 (trace-item "status=" status " content-length=" clength)
@@ -249,10 +242,7 @@
 			   ((text/html application/xhtml+xml)
 			    (car (last-pair (parse-html p (elong->fixnum clength)))))
 			   (else
-			    (let ((str (read-string p)))
-			       (if string->string
-				   (string->string str)
-				   str))))))
+			    (read-string p)))))
 		(success obj)))
 	    ((201 204 304)
 	     ;; no message body
@@ -295,12 +285,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (with-url url success #!key fail (header '()) (timeout 0) (method 'GET)
+(define (with-url url success
+		  #!key fail (header '()) (timeout 0) (method 'GET)
 		  (connection 'keep-alive)
-		  body
-		  (string->obj string->obj)
-		  (javascript->obj javascript->obj)
-		  string->string)
+		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
 	     ": " url "\n")
@@ -351,8 +339,7 @@
 			      (method method)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback 'with-url r suc fail
-				string->obj javascript->obj string->string)))
+			(hdl (make-http-callback 'with-url r suc fail)))
 		    (trace-item "remote path=" path)
 		    (http-send-request r hdl :body body)))))))))
 
@@ -368,9 +355,6 @@
 	   (password #f)
 	   (authorization #f)
 	   (anim #f)
-	   (string->obj string->obj)
-	   (javascript->obj javascript->obj)
-	   string->string
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
@@ -400,8 +384,7 @@
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
-		 (hdl (make-http-callback 'with-hop req suc fail
-			 string->obj javascript->obj string->string)))
+		 (hdl (make-http-callback 'with-hop req suc fail)))
 	     (trace-item "remote path=" path)
 	     (http-send-request req hdl :args args))))))
 

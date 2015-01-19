@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Jan  4 09:34:10 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:47:43 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -170,7 +170,7 @@
 ;*    nodejs-err-name ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-err-name errno)
-   (string->js-string (uv-err-name errno)))
+   (js-string->jsstring (uv-err-name errno)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
@@ -571,14 +571,14 @@
 (define (not-implemented-exn fun %this)
    (with-access::JsGlobalObject %this (js-error)
       (js-new %this js-error
-	 (string->js-string (format "~a not implemented" fun)))))
+	 (js-string->jsstring (format "~a not implemented" fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-exn ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (fs-exn fmt obj %this)
    (with-access::JsGlobalObject %this (js-error)
-      (js-new %this js-error (string->js-string (format fmt obj)))))
+      (js-new %this js-error (js-string->jsstring (format fmt obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-errno-exn ...                                                 */
@@ -589,10 +589,10 @@
 	     (msg (format fmt (uv-strerror errno)))
 	     (obj (js-new %this js-error
 		     (if (string? ename)
-			 (string-list->js-string (list ename ", " msg))
-			 (string->js-string msg)))))
+			 (js-stringlist->jsstring (list ename ", " msg))
+			 (js-string->jsstring msg)))))
 	 (js-put! obj 'errno errno #f %this)
-	 (js-put! obj 'code (string->js-string ename) #f %this)
+	 (js-put! obj 'code (js-string->jsstring ename) #f %this)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -600,7 +600,7 @@
 ;*---------------------------------------------------------------------*/
 (define (fs-errno-path-exn fmt::bstring errno %this path)
    (let ((exn (fs-errno-exn fmt errno %this)))
-      (when (js-string? path)
+      (when (js-jsstring? path)
 	 (js-put! exn 'path path #t %this))
       exn))
 
@@ -623,9 +623,9 @@
 (define (fs-callback-error %worker %this name callback . args)
    (with-access::JsGlobalObject %this (js-error)
       (let ((err (js-new %this js-error
-		    (string->js-string (format "EBADF, ~a" name)))))
+		    (js-string->jsstring (format "EBADF, ~a" name)))))
 	   (js-put! err 'errno EBADF #f %this)
-	   (js-put! err 'code  (string->js-string "EBADF") #f %this)
+	   (js-put! err 'code  (js-string->jsstring "EBADF") #f %this)
 	   (if (isa? callback JsFunction)
 	       (js-worker-push-thunk! %worker "fs-callback-error"
 		  (lambda ()
@@ -640,19 +640,19 @@
    (define (rename-callback res)
       (fs-callback %worker %this callback "rename-file"
 	 (format "rename: cannot rename file ~s into ~s -- ~~s"
-	    (js-string->string oldp) (js-string->string newp))
+	    (js-jsstring->string oldp) (js-jsstring->string newp))
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-rename (js-string->string oldp) (js-string->string newp)
+       (uv-fs-rename (js-jsstring->string oldp) (js-jsstring->string newp)
 	  :callback rename-callback
 	  :loop (worker-loop %worker))
-       (let ((r (uv-fs-rename (js-string->string oldp) (js-string->string newp))))
+       (let ((r (uv-fs-rename (js-jsstring->string oldp) (js-jsstring->string newp))))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
 		    (format "rename: cannot rename file ~a into ~a"
-		       (js-string->string oldp) (js-string->string newp))
+		       (js-jsstring->string oldp) (js-jsstring->string newp))
 		    r %this))
 	      r))))
 
@@ -682,14 +682,14 @@
 
    (define (truncate-callback res)
       (fs-callback %worker %this callback "truncate"
-	 (format "truncate: cannot truncate ~a to ~a -- ~~s" (js-string->string path) offset)
+	 (format "truncate: cannot truncate ~a to ~a -- ~~s" (js-jsstring->string path) offset)
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-truncate (js-string->string path) offset
+       (uv-fs-truncate (js-jsstring->string path) offset
 	  :callback truncate-callback
 	  :loop (worker-loop %worker))
-       (uv-fs-truncate (js-string->string path) offset)))
+       (uv-fs-truncate (js-jsstring->string path) offset)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fchown ...                                                */
@@ -717,14 +717,14 @@
 
    (define (fchown-callback res)
       (fs-callback %worker %this callback "chown"
-	 (format "chown: cannot chown ~a, ~a, ~a -- ~~s" (js-string->string path) uid guid)
+	 (format "chown: cannot chown ~a, ~a, ~a -- ~~s" (js-jsstring->string path) uid guid)
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-chown (js-string->string path) uid guid
+       (uv-fs-chown (js-jsstring->string path) uid guid
 	  :callback fchown-callback
 	  :loop (worker-loop %worker))
-       (uv-fs-chown (js-string->string path) uid guid)))
+       (uv-fs-chown (js-jsstring->string path) uid guid)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lchown ...                                                */
@@ -733,14 +733,14 @@
    
    (define (lchown-callback res)
       (fs-callback %worker %this callback "lchown"
-	 (format "lchown: cannot chown ~a, ~a, ~a -- ~~s" (js-string->string path) uid guid)
+	 (format "lchown: cannot chown ~a, ~a, ~a -- ~~s" (js-jsstring->string path) uid guid)
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-lchown (js-string->string path) uid guid
+       (uv-fs-lchown (js-jsstring->string path) uid guid
 	  :callback lchown-callback
 	  :loop (worker-loop %worker))
-       (uv-fs-lchown (js-string->string path) uid guid)))
+       (uv-fs-lchown (js-jsstring->string path) uid guid)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fchmod ...                                                */
@@ -774,18 +774,18 @@
 
    (define (chmod-callback res)
       (fs-callback %worker %this callback "chmod"
-	 (format "chmod: cannot chmod ~a, ~a -- ~~s" (js-string->string path) mod)
+	 (format "chmod: cannot chmod ~a, ~a -- ~~s" (js-jsstring->string path) mod)
 	 res))
 
    (if (isa? callback JsFunction)
-       (uv-fs-chmod (js-string->string path) mod
+       (uv-fs-chmod (js-jsstring->string path) mod
 	  :callback chmod-callback
 	  :loop (worker-loop %worker))
-       (let ((r (uv-fs-chmod (js-string->string path) mod)))
+       (let ((r (uv-fs-chmod (js-jsstring->string path) mod)))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
-		    (format "chmod: cannot chmod ~a ~a" (js-string->string path) mod)
+		    (format "chmod: cannot chmod ~a ~a" (js-jsstring->string path) mod)
 		    r %this))
 	      r))))
 
@@ -796,7 +796,7 @@
    
    (define (lchmod-callback res)
       (fs-callback %worker %this callback "lchmod"
-	 (format "lchmod: cannot chmod ~a, ~a -- ~~s" (js-string->string fd) mod)
+	 (format "lchmod: cannot chmod ~a, ~a -- ~~s" (js-jsstring->string fd) mod)
 	 res))
    
    (lchmod-callback (not-implemented-exn "lchmod" %this)))
@@ -812,20 +812,20 @@
 	     (uvfile->int %worker res))
 	  (let ((exn (fs-errno-exn
 			(format "open: cannot open file ~a, ~a, ~a -- ~~s"
-			   (js-string->string path) flags mode)
+			   (js-jsstring->string path) flags mode)
 			res %this)))
 	     (js-call2 %this callback (js-undefined) exn #f))))
    
    (if (isa? callback JsFunction)
-       (uv-fs-open (js-string->string path) flags :mode mode
+       (uv-fs-open (js-jsstring->string path) flags :mode mode
 	  :loop (worker-loop %worker)
 	  :callback open-callback)
-       (let ((res (uv-fs-open (js-string->string path) flags :mode mode)))
+       (let ((res (uv-fs-open (js-jsstring->string path) flags :mode mode)))
 	  (if (isa? res UvFile)
 	      (uvfile->int %worker res)
 	      (let ((exn (fs-errno-exn
 			    (format "open: cannot open file ~a, ~a, ~a -- ~~s"
-			       (js-string->string path) flags mode)
+			       (js-jsstring->string path) flags mode)
 			    res %this)))
 		 (js-raise exn))))))
 
@@ -907,17 +907,17 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stat %worker %this path callback proto)
    (if (isa? callback JsFunction)
-       (let ((lbl (string-append "stat:" (js-string->string path))))
-	  (uv-fs-stat (js-string->string path)
+       (let ((lbl (string-append "stat:" (js-jsstring->string path))))
+	  (uv-fs-stat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
 	     :callback (stat-cb %worker %this callback "stat"
-			  (js-string->string path) proto lbl path)))
-       (let ((res (uv-fs-stat (js-string->string path))))
+			  (js-jsstring->string path) proto lbl path)))
+       (let ((res (uv-fs-stat (js-jsstring->string path))))
 	  (if (integer? res)
 	      (js-raise
 		 (fs-errno-path-exn
 		    (format "stat: cannot stat ~a -- ~~s"
-		       (js-string->string path))
+		       (js-jsstring->string path))
 		    res %this path))
 	      (stat->jsobj %this proto res)))))
 
@@ -926,16 +926,16 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-lstat %worker %this path callback proto)
    (if (isa? callback JsFunction)
-       (let ((lbl (string-append "lstat:" (js-string->string path))))
-	  (uv-fs-lstat (js-string->string path)
+       (let ((lbl (string-append "lstat:" (js-jsstring->string path))))
+	  (uv-fs-lstat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
 	     :callback (stat-cb %worker %this callback "lstat"
 			  path proto lbl path)))
-       (let ((res (uv-fs-lstat (js-string->string path))))
+       (let ((res (uv-fs-lstat (js-jsstring->string path))))
 	  (if (integer? res)
 	      (js-raise
 		 (fs-errno-exn (format "lstat: cannot stat ~a -- ~~s"
-				  (js-string->string path))
+				  (js-jsstring->string path))
 		    res %this))
 	      (stat->jsobj %this proto res)))))
 
@@ -947,19 +947,19 @@
    (define (link-callback res)
       (fs-callback %worker %this callback "link"
 	 (format "link: cannot link ~a, ~a -- ~~s"
-	    (js-string->string src) (js-string->string dst))
+	    (js-jsstring->string src) (js-jsstring->string dst))
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-link (js-string->string src) (js-string->string dst)
+       (uv-fs-link (js-jsstring->string src) (js-jsstring->string dst)
 	  :loop (worker-loop %worker)
 	  :callback link-callback)
-       (let ((r (uv-fs-link (js-string->string src) (js-string->string dst))))
+       (let ((r (uv-fs-link (js-jsstring->string src) (js-jsstring->string dst))))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
 		    (format "link: cannot lin ~a ~a"
-		       (js-string->string src) (js-string->string dst))
+		       (js-jsstring->string src) (js-jsstring->string dst))
 		    r %this))
 	      r))))
 
@@ -971,14 +971,14 @@
    (define (symlink-callback res)
       (fs-callback %worker %this callback "symlink"
 	 (format "symlink: cannot link ~a, ~a -- ~~s"
-	    (js-string->string src) (js-string->string dst))
+	    (js-jsstring->string src) (js-jsstring->string dst))
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-symlink (js-string->string src) (js-string->string dst)
+       (uv-fs-symlink (js-jsstring->string src) (js-jsstring->string dst)
 	  :loop (worker-loop %worker)
 	  :callback symlink-callback)
-       (uv-fs-symlink (js-string->string src) (js-string->string dst))))
+       (uv-fs-symlink (js-jsstring->string src) (js-jsstring->string dst))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-readlink ...                                              */
@@ -989,26 +989,26 @@
       (if (integer? res)
 	  (js-call2 %this callback (js-undefined)
 	     (fs-errno-exn (format "readlink: ~~a ~s"
-			      (js-string->string src))
+			      (js-jsstring->string src))
 		res %this)
 	     (js-undefined))
 	  (js-call2 %this callback (js-undefined) '()
-	     (string->js-string res))))
+	     (js-string->jsstring res))))
    
    (if (isa? callback JsFunction)
-       (uv-fs-readlink (js-string->string src)
+       (uv-fs-readlink (js-jsstring->string src)
 	  :loop (worker-loop %worker)
 	  :callback readlink-callback)
-       (let ((r (uv-fs-readlink (js-string->string src))))
+       (let ((r (uv-fs-readlink (js-jsstring->string src))))
 	  (if (and (integer? r) (<fx r 0))
 	      (with-access::JsGlobalObject %this (js-error)
 		 (let ((exn (js-new %this js-error
-			       (string->js-string
+			       (js-string->jsstring
 				  (format "readlink: cannot read link ~a"
-				     (js-string->string src))))))
+				     (js-jsstring->string src))))))
 		    (js-put! exn 'errno r #f %this)
 		    (js-raise exn)))
-	      (string->js-string r)))))
+	      (js-string->jsstring r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-unlink ...                                                */
@@ -1021,14 +1021,14 @@
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-unlink (js-string->string src)
+       (uv-fs-unlink (js-jsstring->string src)
 	  :loop (worker-loop %worker)
 	  :callback unlink-callback)
-       (let ((r (uv-fs-unlink (js-string->string src))))
+       (let ((r (uv-fs-unlink (js-jsstring->string src))))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
-		    (format "unlink: cannot unlink ~a" (js-string->string src))
+		    (format "unlink: cannot unlink ~a" (js-jsstring->string src))
 		    r %this))
 	      r)
 	  r)))
@@ -1040,18 +1040,18 @@
    
    (define (rmdir-callback res)
       (fs-callback %worker %this callback "rmdir"
-	 (format "rmdir: cannot rmdir ~a -- ~~s" (js-string->string src))
+	 (format "rmdir: cannot rmdir ~a -- ~~s" (js-jsstring->string src))
 	 res))
    
    (if (isa? callback JsFunction)
-       (uv-fs-rmdir (js-string->string src)
+       (uv-fs-rmdir (js-jsstring->string src)
 	  :loop (worker-loop %worker)
 	  :callback rmdir-callback)
-       (let ((r (uv-fs-rmdir (js-string->string src))))
+       (let ((r (uv-fs-rmdir (js-jsstring->string src))))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
-		    (format "rmdir: cannot rmdir ~a" (js-string->string src))
+		    (format "rmdir: cannot rmdir ~a" (js-jsstring->string src))
 		    r %this))
 	      r))))
 
@@ -1094,19 +1094,19 @@
 	 (else
 	  (let ((exn (fs-errno-path-exn
 			(format "mkdir: cannot mkdir ~a -- ~~s"
-			   (js-string->string path))
+			   (js-jsstring->string path))
 			res %this path)))
 	     (js-call1 %this callback (js-undefined) exn)))))
    
    (if (isa? callback JsFunction)
-       (uv-fs-mkdir (js-string->string path) mode
+       (uv-fs-mkdir (js-jsstring->string path) mode
 	  :loop (worker-loop %worker)
 	  :callback mkdir-callback)
-       (let ((r (uv-fs-mkdir (js-string->string path) mode)))
+       (let ((r (uv-fs-mkdir (js-jsstring->string path) mode)))
 	  (if (and (integer? r) (<fx r 0))
 	      (js-raise
 		 (fs-errno-exn
-		    (format "mkdir: cannot mkdir ~a" (js-string->string path))
+		    (format "mkdir: cannot mkdir ~a" (js-jsstring->string path))
 		    r %this))
 	      r))))
 
@@ -1176,15 +1176,15 @@
    
    (define (utimes-callback res)
       (fs-callback %worker %this callback "utimes"
-	 (format "utimes: cannot utimes ~a -- ~~s" (js-string->string path))
+	 (format "utimes: cannot utimes ~a -- ~~s" (js-jsstring->string path))
 	 res (js-undefined)))
    
    (if (isa? callback JsFunction)
-       (uv-fs-utime (js-string->string path) (js-todouble atime %this)
+       (uv-fs-utime (js-jsstring->string path) (js-todouble atime %this)
 	  (js-todouble mtime %this)
 	  :loop (worker-loop %worker)
 	  :callback utimes-callback)
-       (let ((res (uv-fs-utime (js-string->string path)
+       (let ((res (uv-fs-utime (js-jsstring->string path)
 		     (js-todouble atime %this)
 		     (js-todouble mtime %this))))
 	  (if (=fx res 0)
@@ -1241,7 +1241,7 @@
    [assert (%worker) (eq? (current-thread) %worker)]
    (with-access::JsGlobalObject %this (js-object)
       (let ((wrap (js-new %this js-object)))
-	 (uv-getaddrinfo (js-string->string node) #f
+	 (uv-getaddrinfo (js-jsstring->string node) #f
 	    :family family
 	    :loop (worker-loop %worker)
 	    :callback
@@ -1251,7 +1251,7 @@
 		      (if (pair? res)
 			  (js-call1 %this oncomplete (js-undefined)
 			     (js-vector->jsarray
-				(list->vector (map! string->js-string res))
+				(list->vector (map! js-string->jsstring res))
 				%this))
 			  (begin
 			     (process-fail %this process res)
@@ -1264,7 +1264,7 @@
 ;*---------------------------------------------------------------------*/
 (define (process-fail %this process errno)
    (js-put! process 'errno errno #f %this)
-   (js-put! process '_errno (string->js-string (uv-err-name errno)) #f %this)
+   (js-put! process '_errno (js-string->jsstring (uv-err-name errno)) #f %this)
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -1280,7 +1280,7 @@
    
    [assert () (isa? (current-thread) WorkerHopThread)]
    (with-access::JsGlobalObject %this (js-object)
-      (let ((res (uv-getaddrinfo (js-string->string node) #f :family family
+      (let ((res (uv-getaddrinfo (js-jsstring->string node) #f :family family
 		    :loop (worker-loop %worker)
 		    :callback query-callback)))
 	 (if (=fx res 0)
@@ -1292,8 +1292,8 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-isip addr)
    (cond
-      ((uv-inet-pton (js-string->string addr) :family 4) 4)
-      ((uv-inet-pton (js-string->string addr) :family 6) 6)
+      ((uv-inet-pton (js-jsstring->string addr) :family 4) 4)
+      ((uv-inet-pton (js-jsstring->string addr) :family 6) 6)
       (else 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -1310,7 +1310,7 @@
 (define (nodejs-guess-handle-type %worker %this fd)
    (let ((file (int->uvfile %worker %this fd)))
       (when file
-	 (string->js-string (symbol->string (uv-guess-handle fd))))))
+	 (js-string->jsstring (symbol->string (uv-guess-handle fd))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-handle ...                                            */
@@ -1336,7 +1336,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-connect %worker %this handle host port family callback)
    [assert (%worker) (eq? (current-thread) %worker)]
-   (uv-tcp-connect handle (js-string->string host) port :family family
+   (uv-tcp-connect handle (js-jsstring->string host) port :family family
       :loop (worker-loop %worker)
       :callback callback))
 
@@ -1386,7 +1386,7 @@
 ;*    nodejs-tcp-bind ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-bind %this process handle addr port family)
-   (let ((r (uv-tcp-bind handle (js-string->string addr) port :family family)))
+   (let ((r (uv-tcp-bind handle (js-jsstring->string addr) port :family family)))
       (if (=fx r 0)
 	  r
 	  (begin
@@ -1448,7 +1448,7 @@
 ;*    nodejs-udp-bind ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-udp-bind %this process handle addr port family)
-   (let ((r (uv-udp-bind handle (js-string->string addr) port :family family)))
+   (let ((r (uv-udp-bind handle (js-jsstring->string addr) port :family family)))
       (if (=fx r 0)
 	  r
 	  (begin
@@ -1621,23 +1621,23 @@
    
    (define (signal->string::JsStringLiteral sig)
       (cond
-	 ((=fx sig sighup) (string->js-string "SIGHUP"))
-	 ((=fx sig sigfpe) (string->js-string "SIGFPE"))
-	 ((=fx sig sigill) (string->js-string "SIGILL"))
-	 ((=fx sig sigbus) (string->js-string "SIGBUS"))
-	 ((=fx sig sigsegv) (string->js-string "SIGSEGV"))
-	 ((=fx sig sigpipe) (string->js-string "SIGPIPE"))
-	 ((=fx sig sigterm) (string->js-string "SIGTERM"))
-	 ((=fx sig sigint) (string->js-string "SIGINT"))
-	 ((=fx sig sigkill) (string->js-string "SIGKILL"))
-	 ((=fx sig sigabrt) (string->js-string "SIGABRT"))
-	 ((=fx sig sigalrm) (string->js-string "SIGALRM"))
-	 ((=fx sig sigusr1) (string->js-string "SIGUSR1"))
-	 ((=fx sig sigusr2) (string->js-string "SIGUSR2"))
-	 (else (string->js-string "SIG???"))))
+	 ((=fx sig sighup) (js-string->jsstring "SIGHUP"))
+	 ((=fx sig sigfpe) (js-string->jsstring "SIGFPE"))
+	 ((=fx sig sigill) (js-string->jsstring "SIGILL"))
+	 ((=fx sig sigbus) (js-string->jsstring "SIGBUS"))
+	 ((=fx sig sigsegv) (js-string->jsstring "SIGSEGV"))
+	 ((=fx sig sigpipe) (js-string->jsstring "SIGPIPE"))
+	 ((=fx sig sigterm) (js-string->jsstring "SIGTERM"))
+	 ((=fx sig sigint) (js-string->jsstring "SIGINT"))
+	 ((=fx sig sigkill) (js-string->jsstring "SIGKILL"))
+	 ((=fx sig sigabrt) (js-string->jsstring "SIGABRT"))
+	 ((=fx sig sigalrm) (js-string->jsstring "SIGALRM"))
+	 ((=fx sig sigusr1) (js-string->jsstring "SIGUSR1"))
+	 ((=fx sig sigusr2) (js-string->jsstring "SIGUSR2"))
+	 (else (js-string->jsstring "SIG???"))))
    
    (define (process-options-stdio-set! opts::UvProcessOptions i stdio)
-      (let ((type (js-string->string (js-get stdio 'type %this))))
+      (let ((type (js-jsstring->string (js-get stdio 'type %this))))
 	 (cond
 	    ((string=? type "ignore")
 	     (uv-process-options-stdio-container-flags-set! opts i
@@ -1708,9 +1708,9 @@
 	    ;; options.file
 	    (let ((file (js-get options 'file %this)))
 	       (trace-item "file=" file)
-	       (unless (js-string? file)
+	       (unless (js-jsstring? file)
 		  (js-raise-type-error %this "Bad argument ~a" file))
-	       (set! ofile (js-string->string file)))
+	       (set! ofile (js-jsstring->string file)))
 	    
 	    ;; options.args
 	    (let ((args (js-get options 'args %this)))
@@ -1722,9 +1722,9 @@
 	    
 	    ;; options.cwd
 	    (let ((cwd (js-get options 'cwd %this)))
-	       (when (and (js-string? cwd) (>fx (js-string-length cwd) 0))
+	       (when (and (js-jsstring? cwd) (>fx (js-jsstring-length cwd) 0))
 		  (trace-item "cwd=" cwd)
-		  (set! ocwd (js-string->string cwd))))
+		  (set! ocwd (js-jsstring->string cwd))))
 	    
 	    ;; options.env
 	    (let ((env (js-get options 'envPairs %this)))
@@ -1848,7 +1848,7 @@
 ;*    nodejs-pipe-bind ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-bind %this process handle name)
-   (let ((r (uv-pipe-bind handle (js-string->string name))))
+   (let ((r (uv-pipe-bind handle (js-jsstring->string name))))
       (if (=fx r 0)
 	  r
 	  (begin
@@ -1860,7 +1860,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-connect %worker %this handle name callback)
    [assert (%worker) (eq? (current-thread) %worker)]
-   (uv-pipe-connect handle (js-string->string name)
+   (uv-pipe-connect handle (js-jsstring->string name)
       :loop (worker-loop %worker)
       :callback callback))
 

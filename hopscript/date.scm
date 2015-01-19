@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jan 15 10:01:34 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:15:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -35,19 +35,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsDate ...                                   */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsDate js-serializer
-   (lambda (s) (make-struct 'javascript 1 s)))
-
-;*---------------------------------------------------------------------*/
-;*    javascript-date->obj ::JsGlobalObject ...                        */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-date->obj %this::JsGlobalObject v)
-   (js-date->jsdate v %this))
+(register-class-serialization! JsDate
+   (lambda (o) (with-access::JsDate o (val) val))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDate ...                                     */
@@ -186,9 +181,9 @@
 		   ((?value)
 		    (let ((v (js-toprimitive value 'any %this)))
 		       (cond
-			  ((js-string? v)
+			  ((js-jsstring? v)
 			   (js-date->jsdate
-			      (parse-date (js-string->string v))))
+			      (parse-date (js-jsstring->string v))))
 			  ((number? v)
 			   (if (flonum? v)
 			       (js-date->jsdate 
@@ -407,9 +402,9 @@
    (define (date-prototype-tostring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (string->js-string
+	     (js-string->jsstring
 		(date->rfc2822-date (seconds->date (date->seconds val))))
-	     (string->js-string "Invalid date"))))
+	     (js-string->jsstring "Invalid date"))))
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this date-prototype-tostring 0 'toString)
@@ -422,13 +417,13 @@
    (define (date-prototype-todatestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (string->js-string
+	     (js-string->jsstring
 		(format "~a ~a ~2,0d ~d"
 		   (day-aname (date-wday val))
 		   (month-aname (date-month val))
 		   (date-day val)
 		   (date-year val)))
-	     (string->js-string "Invalid date"))))
+	     (js-string->jsstring "Invalid date"))))
 
    (js-bind! %this obj 'toDateString
       :value (js-make-function %this date-prototype-todatestring
@@ -442,13 +437,13 @@
    (define (date-prototype-totimestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (string->js-string
+	     (js-string->jsstring
 		(format "~2,0d:~2,0d:~2,0d ~a"
 		   (date-hour val)
 		   (date-minute val)
 		   (date-second val)
 		   (date-timezone val)))
-	     (string->js-string "Invalid date"))))
+	     (js-string->jsstring "Invalid date"))))
 
    (js-bind! %this obj 'toTimeString
       :value (js-make-function %this date-prototype-totimestring
@@ -498,7 +493,7 @@
    (define (date-prototype-toutcstring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (string->js-string (date->utc-string val))
+	     (js-string->jsstring (date->utc-string val))
 	     "Invalid date")))
 
    (js-bind! %this obj 'toUTCString
@@ -517,7 +512,7 @@
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
-			(string->js-string
+			(js-string->jsstring
 			   (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
 			      (date-year val)
 			      (date-month val)
@@ -1132,14 +1127,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-date->jsdate ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-date->jsdate date::date %this::JsGlobalObject)
+(define (js-date->jsdate val::date %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-date)
       (let ((dt (js-new0 %this js-date)))
-	 (with-access::JsDate dt (val)
-	    (set! val date)
+	 (with-access::JsDate dt ((dval val))
+	    (set! dval val)
 	    dt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

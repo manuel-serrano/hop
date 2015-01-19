@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jan 11 20:02:53 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:18:47 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -19,22 +19,29 @@
    (import __hopscript_types
 	   __hopscript_public)
    
-   (export (inline string->js-string::JsStringLiteral ::bstring)
-	   (inline string-list->js-string::JsStringLiteral ::pair-nil)
-	   (inline js-string->string::bstring ::JsStringLiteral)
-	   (inline js-string?::bool ::obj)
-	   (inline js-string-length::long ::JsStringLiteral)
-	   (inline js-string-null? ::JsStringLiteral)
-	   (inline js-string=?::bool ::JsStringLiteral ::JsStringLiteral)
-	   (inline js-string<?::bool ::JsStringLiteral ::JsStringLiteral)
-	   (inline js-string<=?::bool ::JsStringLiteral ::JsStringLiteral)
-	   (inline js-string>?::bool ::JsStringLiteral ::JsStringLiteral)
-	   (inline js-string>=?::bool ::JsStringLiteral ::JsStringLiteral)
-	   (integer->js-string::JsStringLiteral ::long)
-	   (js-string->bool::bool ::JsStringLiteral)
-	   (js-string-normalize!::bstring ::JsStringLiteral)
+   (export (inline js-string->jsstring::JsStringLiteral ::bstring)
+	   (inline js-stringlist->jsstring::JsStringLiteral ::pair-nil)
+	   (inline js-jsstring->string::bstring ::JsStringLiteral)
+	   (inline js-jsstring?::bool ::obj)
+	   (inline js-jsstring-length::long ::JsStringLiteral)
+	   (inline js-jsstring-null? ::JsStringLiteral)
+	   (inline js-jsstring=?::bool ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring<?::bool ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring<=?::bool ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring>?::bool ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring>=?::bool ::JsStringLiteral ::JsStringLiteral)
+	   (js-integer->jsstring::JsStringLiteral ::long)
+	   (js-jsstring->bool::bool ::JsStringLiteral)
+	   (js-jsstring-normalize!::bstring ::JsStringLiteral)
 	   
-	   (js-string-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)))
+	   (js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsString ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsStringLiteral
+   js-jsstring->string
+   (lambda (s) s))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsStringLiteral ...                               */
@@ -49,19 +56,13 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsStringLiteral op compile isexpr)
-   (hop->javascript (js-string->string o) op compile isexpr))
-
-;*---------------------------------------------------------------------*/
-;*    javascript-stringliteral->obj ::JsGlobalObject ...               */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-stringliteral->obj %this::JsGlobalObject v)
-   (string->js-string v))
+   (hop->javascript (js-jsstring->string o) op compile isexpr))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsStringLiteral ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsStringLiteral)
-   (js-string->string o))
+   (js-jsstring->string o))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsStringLiteral ...                                  */
@@ -73,28 +74,28 @@
 ;*    js-inspect ::JsStringLiteral ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-inspect s::JsStringLiteral cnt)
-   (js-string->string s))
+   (js-jsstring->string s))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsStringLiteral ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-attribute-encode obj::JsStringLiteral)
-   (xml-attribute-encode (js-string->string obj)))
+   (xml-attribute-encode (js-jsstring->string obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsStringLiteral ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsStringLiteral req)
-   (scheme->response (js-string->string obj) req))
+   (scheme->response (js-jsstring->string obj) req))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-normalize! ...                                         */
+;*    js-jsstring-normalize! ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    0: S     ;; "foo" = "foo"                                        */
 ;*    1: L     ;; "foobar" = ("foo" "bar")                             */
 ;*    2: R     ;; "foobar" = ("bar" "foo")                             */
 ;*---------------------------------------------------------------------*/
-(define (js-string-normalize!::bstring js::JsStringLiteral)
+(define (js-jsstring-normalize!::bstring js::JsStringLiteral)
    (with-access::JsStringLiteral js (state val)
       (case (uint8->fixnum state)
 	 ((0)
@@ -110,7 +111,7 @@
 	     (set! val v)
 	     v))
 	 (else
-	  (error "js-string-normalize!" "internal error" state)))))
+	  (error "js-jsstring-normalize!" "internal error" state)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */
@@ -130,45 +131,45 @@
 		(for-each (lambda (str) (display-string str op)) v)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    string->js-string ...                                            */
+;*    js-string->jsstring ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a Scheme string literal.           */
 ;*---------------------------------------------------------------------*/
-(define-inline (string->js-string::JsStringLiteral val::bstring)
+(define-inline (js-string->jsstring::JsStringLiteral val::bstring)
    (instantiate::JsStringLiteral
       (state #u8:0)
       (val val)))
 
 ;*---------------------------------------------------------------------*/
-;*    string-list->js-string ...                                       */
+;*    js-stringlist->jsstring ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a list of Scheme string literals.  */
 ;*---------------------------------------------------------------------*/
-(define-inline (string-list->js-string::JsStringLiteral val::pair-nil)
+(define-inline (js-stringlist->jsstring::JsStringLiteral val::pair-nil)
    (instantiate::JsStringLiteral
       (state #u8:1)
       (val val)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string->string ...                                            */
+;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string->string::bstring js::JsStringLiteral)
+(define-inline (js-jsstring->string::bstring js::JsStringLiteral)
    (with-access::JsStringLiteral js (state val)
       (if (=u8 state #u8:0)
 	  val
-	  (js-string-normalize! js))))
+	  (js-jsstring-normalize! js))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string? ...                                                   */
+;*    js-jsstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string? obj)
+(define-inline (js-jsstring? obj)
    (isa? obj JsStringLiteral))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-length ...                                             */
+;*    js-jsstring-length ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string-length s::JsStringLiteral)
-   (string-length (js-string->string s)))
+(define-inline (js-jsstring-length s::JsStringLiteral)
+   (string-length (js-jsstring->string s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::JsStringLiteral ...                         */
@@ -177,40 +178,40 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-null? ...                                              */
+;*    js-jsstring-null? ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string-null? js)
-   (string-null? (js-string->string js)))
+(define-inline (js-jsstring-null? js)
+   (string-null? (js-jsstring->string js)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string=? ...                                                  */
+;*    js-jsstring=? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string=?::bool left::JsStringLiteral right::JsStringLiteral)
-   (string=? (js-string->string left) (js-string->string right)))
+(define-inline (js-jsstring=?::bool left::JsStringLiteral right::JsStringLiteral)
+   (string=? (js-jsstring->string left) (js-jsstring->string right)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string>? ...                                                  */
+;*    js-jsstring>? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string>?::bool left::JsStringLiteral right::JsStringLiteral)
-   (string>? (js-string->string left) (js-string->string right)))
+(define-inline (js-jsstring>?::bool left::JsStringLiteral right::JsStringLiteral)
+   (string>? (js-jsstring->string left) (js-jsstring->string right)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string>=? ...                                                 */
+;*    js-jsstring>=? ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string>=?::bool left::JsStringLiteral right::JsStringLiteral)
-   (string>=? (js-string->string left) (js-string->string right)))
+(define-inline (js-jsstring>=?::bool left::JsStringLiteral right::JsStringLiteral)
+   (string>=? (js-jsstring->string left) (js-jsstring->string right)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string<? ...                                                  */
+;*    js-jsstring<? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string<?::bool left::JsStringLiteral right::JsStringLiteral)
-   (string<? (js-string->string left) (js-string->string right)))
+(define-inline (js-jsstring<?::bool left::JsStringLiteral right::JsStringLiteral)
+   (string<? (js-jsstring->string left) (js-jsstring->string right)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string<=? ...                                                 */
+;*    js-jsstring<=? ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-string<=?::bool left::JsStringLiteral right::JsStringLiteral)
-   (string<=? (js-string->string left) (js-string->string right)))
+(define-inline (js-jsstring<=?::bool left::JsStringLiteral right::JsStringLiteral)
+   (string<=? (js-jsstring->string left) (js-jsstring->string right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-integer-table ...                                           */
@@ -229,21 +230,21 @@
 (define integers (make-integer-table 100))
 
 ;*---------------------------------------------------------------------*/
-;*    integer->js-string ...                                           */
+;*    js-integer->jsstring ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (integer->js-string num::long)
+(define (js-integer->jsstring num::long)
    (if (or (<fx num 0) (>fx num (vector-length integers)))
-       (string->js-string (integer->string num))
+       (js-string->jsstring (integer->string num))
        (vector-ref-ur integers num)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string->bool ...                                              */
+;*    js-jsstring->bool ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-string->bool::bool s::JsStringLiteral)
-   (>fx (string-length (js-string->string s)) 0))
+(define (js-jsstring->bool::bool s::JsStringLiteral)
+   (>fx (string-length (js-jsstring->string s)) 0))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-append ...                                             */
+;*    js-jsstring-append ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    This append function optimizes the case where either the         */
 ;*    two strings are normalized or when the left string is            */
@@ -251,7 +252,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Abandon optimization if the consed string is a utf8 replacement. */
 ;*---------------------------------------------------------------------*/
-(define (js-string-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+(define (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (with-access::JsStringLiteral left ((lstate state) (lval val))
       (with-access::JsStringLiteral right ((rstate state) (rval val))
 ;* 	 (tprint "append left " lstate "=" (format "~s" lval)          */

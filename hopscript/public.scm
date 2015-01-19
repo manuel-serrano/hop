@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Jan 15 21:53:08 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:18:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -508,7 +508,7 @@
 	 (lambda (k)
 	    (set! acc
 	       (cons* (js-get obj k %this)
-		  (string->keyword (js-string->string k))
+		  (string->keyword (js-jsstring->string k))
 		  acc)))
 	 %this)
       (reverse! acc)))
@@ -527,11 +527,11 @@
 			 (when (pair? l)
 			    (set! acc
 			       (append (reverse! l)
-				  (cons (string->keyword (js-string->string k))
+				  (cons (string->keyword (js-jsstring->string k))
 				     acc))))))
 		   (set! acc
 		      (cons* val
-			 (string->keyword (js-string->string k))
+			 (string->keyword (js-jsstring->string k))
 			 acc)))))
 	 %this)
       (reverse! acc)))
@@ -609,7 +609,7 @@
       ((eq? obj (js-undefined)) #f)
       ((eq? obj (js-null)) #f)
       ((number? obj) (not (or (= obj 0) (and (flonum? obj) (nanfl? obj)))))
-      ((js-string? obj) (js-string->bool obj))
+      ((js-jsstring? obj) (js-jsstring->bool obj))
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -630,8 +630,8 @@
 	  1)
 	 ((eq? obj #f)
 	  0)
-	 ((js-string? obj)
-	  (let ((str (trim-whitespaces+ (js-string->string obj)
+	 ((js-jsstring? obj)
+	  (let ((str (trim-whitespaces+ (js-jsstring->string obj)
 			:left #t :right #t :plus #t)))
 	     (cond
 		((string=? str "Infinity")
@@ -673,7 +673,7 @@
 	   (*fl -1. (floor (abs obj))))
 	  (else
 	   (floor obj))))
-      ((or (js-string? obj) (symbol? obj))
+      ((or (js-jsstring? obj) (symbol? obj))
        (js-tointeger (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
@@ -878,14 +878,14 @@
 	   false))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
-      ((js-string? p)
-       (string->index (js-string->string p)))
+      ((js-jsstring? p)
+       (string->index (js-jsstring->string p)))
       ((string? p)
        (string->index p))
       ((symbol? p)
        (string->index (symbol->string! p)))
       ((isa? p JsString)
-       (with-access::JsString p (val) (string->index (js-string->string val))))
+       (with-access::JsString p (val) (string->index (js-jsstring->string val))))
       (else
        false)))
 
@@ -904,8 +904,8 @@
    (cond
       ((isa? obj JsObject)
        (js-tostring (js-toprimitive obj 'string %this) %this))
-      ((js-string? obj)
-       (js-string->string obj))
+      ((js-jsstring? obj)
+       (js-jsstring->string obj))
       ((eq? obj (js-undefined))
        "undefined")
       ((eq? obj #t)
@@ -929,9 +929,9 @@
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring obj %this)
-   (if (js-string? obj)
+   (if (js-jsstring? obj)
        obj
-       (string->js-string (js-tostring obj %this))))
+       (js-string->jsstring (js-tostring obj %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-tostring ...                                           */
@@ -943,14 +943,14 @@
 ;*    js-object-tostring::bstring ::JsStringLiteral ...                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-object-tostring::bstring obj::JsStringLiteral %this)
-   (js-string->string obj))
+   (js-jsstring->string obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
-      ((js-string? o)
+      ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
       ((number? o)
@@ -1019,27 +1019,27 @@
 	  (cond
 	     ((number? y)
 	      (= x y))
-	     ((js-string? y)
+	     ((js-jsstring? y)
 	      (if (= x 0)
-		  (or (js-string-null? y) (equality? x (js-tonumber y %this)))
+		  (or (js-jsstring-null? y) (equality? x (js-tonumber y %this)))
 		  (equality? x (js-tonumber y %this))))
 	     ((isa? y JsObject)
 	      (equality? x (js-toprimitive y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
-	 ((js-string? x)
+	 ((js-jsstring? x)
 	  (cond
-	     ((js-string? y)
-	      (js-string=? x y))
+	     ((js-jsstring? y)
+	      (js-jsstring=? x y))
 	     ((number? y)
 	      (if (= y 0)
-		  (or (js-string-null? x) (equality? (js-tonumber x %this) y))
+		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
 	     ((isa? y JsObject)
 	      (equality? x (js-toprimitive y 'any %this)))
 	     ((eq? y #f)
-	      (js-string-null? x))
+	      (js-jsstring-null? x))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
@@ -1053,7 +1053,7 @@
 	  (equality? x (js-tonumber y %this)))
 	 ((isa? x JsObject)
 	  (cond
-	     ((js-string? y) (equality? (js-toprimitive x 'any %this) y))
+	     ((js-jsstring? y) (equality? (js-toprimitive x 'any %this) y))
 	     ((number? y) (equality? (js-toprimitive x 'any %this) y))
 	     (else #f)))
 	 (else
@@ -1073,7 +1073,7 @@
 (define (js-eq? x y)
    (cond
       ((number? x) (and (number? y) (= x y)))
-      ((js-string? x) (and (js-string? y) (js-string=? x y)))
+      ((js-jsstring? x) (and (js-jsstring? y) (js-jsstring=? x y)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -1102,7 +1102,7 @@
       (lambda ()
 	 (let ((v (%js-eval ip 'repl %this (js-get scope 'this %this) scope)))
 	    (if (isa? v JsStringLiteral)
-		(js-string->string v)
+		(js-jsstring->string v)
 		v)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1118,9 +1118,9 @@
 ;*      ch11/11.13/11.13.2/S11.13.2_A1_T1.js                           */
 ;*---------------------------------------------------------------------*/
 (define (%js-direct-eval s strict %this this scope)
-   (if (not (js-string? s))
+   (if (not (js-jsstring? s))
        s
-       (let* ((s (js-string->string s))
+       (let* ((s (js-jsstring->string s))
 	      (evals (if strict (string-append "'use strict';\n" s) s)))
 	  (call-with-input-string evals
 	     (lambda (ip)
@@ -1185,7 +1185,7 @@
 (define (eval-dummy-module %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((obj (js-new %this js-object)))
-	 (js-put! obj 'filename (string->js-string "") #f %this)
+	 (js-put! obj 'filename (js-string->jsstring "") #f %this)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -1217,8 +1217,8 @@
       ((isa? obj JsObject)
        (with-handler
 	  (lambda (e)
-	     (js-string->string (js-typeof obj)))
-	  (js-string->string
+	     (js-jsstring->string (js-typeof obj)))
+	  (js-jsstring->string
 	     (js-call0 %this (js-get obj 'toString %this) obj))))
       ((eq? obj #unspecified)
        "undefined")
@@ -1226,8 +1226,8 @@
        "false")
       ((eq? obj #t)
        "true")
-      ((js-string? obj)
-       (js-string->string obj))
+      ((js-jsstring? obj)
+       (js-jsstring->string obj))
       ((symbol? obj)
        (symbol->string! obj))
       (else
@@ -1240,7 +1240,7 @@
    (with-access::JsGlobalObject %this (js-type-error)
       (js-raise
 	 (js-new %this js-type-error
-	    (string->js-string
+	    (js-string->jsstring
 	       (format fmt (error-obj->string %this obj)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1252,7 +1252,7 @@
        (with-access::JsGlobalObject %this (js-type-error)
 	  (js-raise
 	     (js-new %this js-type-error
-		(string->js-string (format fmt (error-obj->string %this obj)))
+		(js-string->jsstring (format fmt (error-obj->string %this obj)))
 		fname
 		loc))))
       (else
@@ -1265,7 +1265,7 @@
    (with-access::JsGlobalObject %this (js-range-error)
       (js-raise
 	 (js-new %this js-range-error
-	    (string->js-string (format fmt obj))))))
+	    (js-string->jsstring (format fmt obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-uri-error ...                                           */
@@ -1274,7 +1274,7 @@
    (with-access::JsGlobalObject %this (js-uri-error)
       (js-raise
 	 (js-new %this js-uri-error
-	    (string->js-string (format fmt obj))))))
+	    (js-string->jsstring (format fmt obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-syntax-error ...                                        */
@@ -1283,7 +1283,7 @@
    (with-access::JsGlobalObject %this (js-syntax-error)
       (js-raise
 	 (apply js-new %this js-syntax-error
-	    (string->js-string (format fmt obj)) args))))
+	    (js-string->jsstring (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-reference-error ...                                     */
@@ -1292,7 +1292,7 @@
    (with-access::JsGlobalObject %this (js-reference-error)
       (js-raise
 	 (apply js-new %this js-reference-error
-	    (string->js-string (format fmt obj)) args))))
+	    (js-string->jsstring (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-error ...                                               */
@@ -1301,7 +1301,7 @@
    (with-access::JsGlobalObject %this (js-error)
       (js-raise
 	 (apply js-new %this js-error
-	    (string->js-string (format fmt obj)) args))))
+	    (js-string->jsstring (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ...                                                   */

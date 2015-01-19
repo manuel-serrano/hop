@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Jan  1 19:39:17 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:51:17 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -79,7 +79,7 @@
 	       (js-make-function %this
 		  (lambda (this string handle)
 		     (stream-write-string %worker %this this
-			(js-string->string string) 0 (js-string-length string)
+			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"ascii" #f handle))
 		  2 "writeAsciiString")
 	       #f %this)
@@ -88,7 +88,7 @@
 	       (js-make-function %this
 		  (lambda (this string handle)
 		     (stream-write-string %worker %this this
-			(js-string->string string) 0 (js-string-length string)
+			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"utf8" #f handle))
 		  2 "writeUtf8String")
 	       #f %this)
@@ -99,7 +99,7 @@
 		     (let* ((ucs2string (utf8-string->ucs2-string string))
 			    (buffer (ucs2-string->buffer ucs2string)))
 			(stream-write-string %worker %this this
-			   (js-string->string string) 0 (js-string-length string)
+			   (js-jsstring->string string) 0 (js-jsstring-length string)
 			   "ascii" #f handle)))
 		  2 "writeUcs2String")
 	       #f %this)

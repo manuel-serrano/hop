@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Thu Jan 15 22:06:50 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:13:14 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -26,65 +26,9 @@
    
    (export  (generic obj->json ::obj ::output-port)
             (byte-array->json ::bstring ::output-port)
-	    (javascript->obj ::obj #!optional driver)
-	    (generic javascript-stringliteral->obj ::obj ::bstring)
-	    (generic javascript-string->obj ::obj ::obj)
-	    (generic javascript-date->obj ::obj ::date)
-	    (generic javascript-number->obj ::obj ::obj)
-	    (generic javascript-boolean->obj ::obj ::bool)
-	    (generic javascript-vector->obj ::obj ::vector)
-	    (generic javascript-plist->obj ::obj ::pair-nil)
-	    (generic javascript-buffer->obj ::obj ::obj)
+	    (javascript->obj ::obj)
 	    (generic javascript-class-all-fields ::object)))
 
-;*---------------------------------------------------------------------*/
-;*    javascript-string->obj ::obj ...                                 */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-string->obj driver::obj v)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-stringliteral->obj ::obj ...                          */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-stringliteral->obj driver::obj v)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-date->obj ::obj ...                                   */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-date->obj driver::obj v)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-number->obj ::obj ...                                 */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-number->obj driver::obj v)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-boolean->obj ::obj ...                                */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-boolean->obj driver::obj v)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-vector>vector ...                                     */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-vector->obj driver v::vector)
-   v)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-plist->obj ...                                        */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-plist->obj driver l::pair-nil)
-   l)
-
-;*---------------------------------------------------------------------*/
-;*    javascript-buffer->obj ...                                       */
-;*---------------------------------------------------------------------*/
-(define-generic (javascript-buffer->obj driver b::obj)
-   b)
-   
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -171,11 +115,10 @@
 		  ,@Lbody
 		  (,loop (+fx ,i 1)))))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    javascript-parser ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (javascript-parser ip driver)
+(define (javascript-parser ip)
    (with-handler
       (lambda (e)
 	 (if (not (isa? e &io-parse-error))
@@ -189,20 +132,20 @@
 			      (location pos))))
 		   (else
 		    (raise e))))))
-      (let ((lalr (javascript-lalr-parser driver)))
+      (let ((lalr (javascript-lalr-parser)))
 	 (read/lalrp lalr *javascript-lexer* ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript->obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript->obj o #!optional driver)
+(define (javascript->obj o)
    (cond
       ((input-port? o)
-       (javascript-parser o driver))
+       (javascript-parser o))
       ((string? o)
        (call-with-input-string o
 	  (lambda (ip)
-	     (javascript-parser ip driver))))
+	     (javascript-parser ip))))
       (else
        (error "javascript->obj" "Illegal argument" o))))
 
@@ -312,7 +255,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-lalr-parser ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (javascript-lalr-parser driver)
+(define (javascript-lalr-parser)
    
    (lalr-grammar
       
@@ -329,9 +272,7 @@
       ;; expression
       (expression
 	 ((CONSTANT)
-	  (if (string? (car CONSTANT))
-	      (javascript-stringliteral->obj driver (car CONSTANT))
-	      (car CONSTANT)))
+	  (car CONSTANT))
 	 ((IDENTIFIER)
 	  (car IDENTIFIER))
 	 ((new)
@@ -349,22 +290,22 @@
 	     ((sc_circle) (javascript-circle->obj expressions*))
 	     ((sc_circle_ref) `(sc_circle_ref ,@expressions*))
 	     ((sc_circle_def) `(sc_circle_def ,@expressions*))
-	     ((sc_vector2array) (javascript-vector->obj driver (car expressions*)))
-	     ((hop_buffer) (javascript-buffer->obj driver expressions*))
+	     ((sc_vector2array) (car expressions*))
+	     ((hop_buffer) (car expressions*))
 	     (else (error "javascript->obj" "Unknown function" (car IDENTIFIER)))))
 	 ((ANGLE-OPEN ANGLE-CLO)
 	  '#())
 	 ((ANGLE-OPEN array-elements ANGLE-CLO)
 	  (list->vector array-elements))
 	 ((BRA-OPEN BRA-CLO)
-	  (javascript-plist->obj driver '()))
+	  '())
 	 ((BRA-OPEN hash-elements BRA-CLO)
 	  ;; see json compilation
 	  (if (and (=fx (length hash-elements) 3)
 		   (eq? (car (car hash-elements)) __uuid:)
 		   (equal? (cadr (car hash-elements)) "pair"))
 	      (cons (cadr (cadr hash-elements)) (cadr (caddr hash-elements)))
-	      (javascript-plist->obj driver hash-elements)))
+	      hash-elements))
 	 ((get-element-by-id)
 	  get-element-by-id)
 	 ((service)
@@ -402,37 +343,37 @@
 	       ((?a ?d)
 		(cons a d))
 	       (else
-		(error "javascript->obj" "Illegal `cons' construction" expressions*))))
+		(error "javascript->obj" "Illegal `cons' construction"
+		   expressions*))))
 	   ((Date)
 	    (match-case expressions*
 	       (((and ?nsec (? llong?)))
-		(javascript-date->obj driver (nanoseconds->date nsec)))
+		(nanoseconds->date nsec))
 	       (((and ?sec (? flonum?)))
-		(javascript-date->obj driver
-		   (nanoseconds->date (*llong #l1000000 (flonum->llong sec)))))
+		(nanoseconds->date (*llong #l1000000 (flonum->llong sec))))
 	       (((and ?sec (? integer?)))
-		(javascript-date->obj driver (seconds->date sec)))
+		(seconds->date sec))
 	       (else
 		(error "javascript->obj" "Illegal `date' construction"
 		   expressions*))))
 	   ((Number)
 	    (match-case expressions*
 	       (((and ?val (? number?)))
-		(javascript-number->obj driver val))
+		val)
 	       (else
 		(error "javascript->obj" "Illegal `number' construction"
 		   expressions*))))
 	   ((Boolean)
 	    (match-case expressions*
 	       (((and ?val (? boolean?)))
-		(javascript-boolean->obj driver val))
+		val)
 	       (else
 		(error "javascript->obj" "Illegal `boolean' construction"
 		   expressions*))))
 	   ((String)
 	    (match-case expressions*
 	       ((?val)
-		(javascript-string->obj driver val))
+		val)
 	       (else
 		(error "javascript->obj" "Illegal `string' construction"
 		   expressions*))))

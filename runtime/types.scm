@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jan 15 10:21:12 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 06:39:39 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -183,14 +183,7 @@
 	      ;; the resource directory (that contains the source file)
 	      (resource::obj (default #f))
 	      ;; the source file
-	      (source::obj read-only (default #f))
-	      ;; the argument decoder (currently only used for json encoding)
-	      ;; global JS object
-	      (decoder::procedure read-only (default (lambda (enc args) #f)))
-	      ;; jsparser used to extrac JSON value from POST body content
-	      (unjson::procedure read-only (default (lambda (s) s)))
-	      ;; string builder
-	      (stringify::procedure read-only (default (lambda (s) s))))))
+	      (source::obj read-only (default #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Nov 25 12:37:57 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan 17 08:15:39 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -35,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */
@@ -82,7 +82,7 @@
    (json-parse ip
       :expr expr
       :undefined undefined
-      :string-alloc string->js-string
+      :string-alloc js-string->jsstring
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
 			 (js-new %this js-array 10)))
@@ -151,14 +151,14 @@
 	 (let* ((len (string-length str))
 		(count (string-count str)))
 	    (if (=fx len count)
-		(string-list->js-string (list "\"" str "\""))
+		(js-stringlist->jsstring (list "\"" str "\""))
 		(let ((nstr (make-string (+fx count 2))))
 		   (string-set! nstr 0 #\")
 		   (string-set! nstr (+fx count 1) #\")
 		   (let loop ((r 0)
 			      (w 1))
 		      (if (=fx r len)
-			  (string->js-string nstr)
+			  (js-string->jsstring nstr)
 			  (let ((c (string-ref-ur str r)))
 			     (case c
 				((#a008)
@@ -217,8 +217,8 @@
 		   (else
 		    (make-string
 		       (->fixnum (js-tointeger space %this)) #\space))))
-	       ((js-string? space)
-		(let ((space (js-string->string space)))
+	       ((js-jsstring? space)
+		(let ((space (js-jsstring->string space)))
 		   (if (>fx (string-length space) 10)
 		       (substring space 0 10)
 		       space)))
@@ -242,7 +242,7 @@
       (define (lst::JsStringLiteral key::symbol holder value mind
 		 opar::bstring cpar::bstring proc)
 	 (let ((len (js-get value 'length %this)))
-	    (string->js-string 
+	    (js-string->jsstring 
 	       (if (= len 0)
 		   (string-append opar cpar)
 		   (call-with-output-string
@@ -302,16 +302,16 @@
 		(js-raise-type-error %this
 		   "Converting circular structure to JSON ~s"
 		   (js-tostring value %this)))
-	       ((js-string? value)
-		(string-quote (js-string->string value)))
+	       ((js-jsstring? value)
+		(string-quote (js-jsstring->string value)))
 	       ((number? value)
-		(string->js-string (number->string value)))
+		(js-string->jsstring (number->string value)))
 	       ((eq? (js-null) value)
-		(string->js-string "null"))
+		(js-string->jsstring "null"))
 	       ((eq? value #t)
-		(string->js-string "true"))
+		(js-string->jsstring "true"))
 	       ((eq? value #f)
-		(string->js-string "false"))
+		(js-string->jsstring "false"))
 	       ((eq? value (js-undefined))
 		value)
 	       (else
@@ -330,17 +330,17 @@
 		    (let ((res (lst key holder value mind "{" "}"
 				  (lambda (i)
 				     (let ((k (js-get rep i %this)))
-					(when (js-string? k)
+					(when (js-jsstring? k)
 					   (let ((v (str k value stack)))
 					      (when (js-totest v)
-						 (js-string-append
+						 (js-jsstring-append
 						    (string-quote 
-						       (js-string->string k))
-						    (js-string-append
+						       (js-jsstring->string k))
+						    (js-jsstring-append
 						       (if gap
-							   (string->js-string
+							   (js-string->jsstring
 							      ": ")
-							   (string->js-string
+							   (js-string->jsstring
 							      ":"))
 						       v))))))))))
 		       (set! gap mind)
@@ -348,7 +348,7 @@
 		   (else
 		    (let ((i 0)
 			  (nstack (cons value stack)))
-		       (string->js-string
+		       (js-string->jsstring
 			  (call-with-output-string
 			     (lambda (op)
 				(for-in value
@@ -393,4 +393,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

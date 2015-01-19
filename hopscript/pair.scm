@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Tue Dec 23 21:46:45 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan 17 08:36:41 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
 ;*=====================================================================*/
@@ -37,15 +37,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name-pair ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-properties-name-pair::vector o::pair %this)
    (if (epair? o)
-       `#(,(string->js-string "car") ,(string->js-string "cdr") ,(string->js-string "cer"))
-       `#(,(string->js-string "car") ,(string->js-string "car"))))
+       `#(,(js-string->jsstring "car") ,(js-string->jsstring "cdr") ,(js-string->jsstring "cer"))
+       `#(,(js-string->jsstring "car") ,(js-string->jsstring "car"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-pair ...                                     */
@@ -174,4 +174,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

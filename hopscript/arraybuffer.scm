@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sun Jan 11 09:37:51 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:18:31 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -29,36 +29,14 @@
 	   __hopscript_worker)
 
    (export (js-init-arraybuffer! ::JsGlobalObject)
-	   (register-javascript-buffer-intern! ::bstring ::procedure)))
-
-;*---------------------------------------------------------------------*/
-;*    buffer-interns ...                                               */
-;*---------------------------------------------------------------------*/
-(define buffer-interns '())
-
-;*---------------------------------------------------------------------*/
-;*    register-javascript-buffer-intern! ...                           */
-;*---------------------------------------------------------------------*/
-(define (register-javascript-buffer-intern! key proc)
-   (set! buffer-interns (cons (cons key proc) buffer-interns)))
-
-;*---------------------------------------------------------------------*/
-;*    javascript-buffer->obj ::JsGlobalObject ...                      */
-;*    -------------------------------------------------------------    */
-;*    See __hop_json                                                   */
-;*---------------------------------------------------------------------*/
-(define-method (javascript-buffer->obj %this::JsGlobalObject b)
-   (let ((cell (assoc (js-string-normalize! (car b)) buffer-interns)))
-      (if cell
-	  ((cdr cell) (car b) (cdr b) %this)
-	  (error "javascript-buffer->obj" "Wrong buffer format" (car b)))))
+	   (js-u8vector->jsarraybuffer ::u8vector ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArrayBuffer #f (lambda (s) s))
-(register-javascript-buffer-intern! "JsArrayBuffer"
-   javascript-buffer->arraybuffer)
+(register-class-serialization! JsArrayBuffer
+   (lambda (o) (with-access::JsArrayBuffer o (data) data))
+   (lambda (o) o))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
@@ -169,50 +147,57 @@
 	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
 	    (with-access::JsArrayBuffer this (data)
 	       (when (pair? items)
-		  (let ((i (car items)))
-		     (let* ((n (js-touint32 i %this))
-			    (f (uint32->fixnum n)))
-			(set! data (make-u8vector f))
+		  (let ((i (car items))
+			(f 0))
+
+		     ;; data
+		     (if (u8vector? i)
+			 (begin
+			    (set! f (u8vector-length i))
+			    (set! data i))
+			 (let ((n (js-touint32 i %this)))
+			    (set! f (uint32->fixnum n))
+			    (set! data (make-u8vector f))))
 			
-			;; byteLength
-			(js-bind! %this this 'byteLength
-			   :value f
-			   :configurable #f
-			   :writable #f
-			   :enumerable #t)
-			
-			;; slice
-			(define (arraybuffer-slice this::JsArrayBuffer beg end)
-			   (with-access::JsArrayBuffer this (data)
-			      (let* ((l (u8vector-length data))
-				     (b (if (eq? beg (js-undefined))
-					    (js-raise-error %this
-					       "Wrong number of arguments."
-					       #f)
-					    (->fixnum (js-tointeger beg %this))))
-				     (e (if (eq? end (js-undefined))
-					    l
-					    (->fixnum (js-tointeger end %this)))))
-				 (when (< b 0) (set! b (+ l b)))
-				 (when (< e 0) (set! e (+ l e)))
-				 (set! b (min b l))
-				 (set! e (min e l))
-				 (let* ((l (max (min (- e b) l) 0))
-					(new (%js-arraybuffer %this l)))
-				    (with-access::JsArrayBuffer new ((dst data))
-				       (let loop ((i 0))
-					  (when (<fx i l)
-					     (u8vector-set! dst i
-						(u8vector-ref data (+fx i b)))
-					     (loop (+fx i 1))))
-				       new)))))
-			
-			(js-bind! %this this 'slice
-			   :value (js-make-function %this
-				     arraybuffer-slice 2 'slice)
-			   :configurable #f
-			   :writable #t
-			   :enumerable #t))))
+		     ;; byteLength
+		     (js-bind! %this this 'byteLength
+			:value f
+			:configurable #f
+			:writable #f
+			:enumerable #t)
+		     
+		     ;; slice
+		     (define (arraybuffer-slice this::JsArrayBuffer beg end)
+			(with-access::JsArrayBuffer this (data)
+			   (let* ((l (u8vector-length data))
+				  (b (if (eq? beg (js-undefined))
+					 (js-raise-error %this
+					    "Wrong number of arguments."
+					    #f)
+					 (->fixnum (js-tointeger beg %this))))
+				  (e (if (eq? end (js-undefined))
+					 l
+					 (->fixnum (js-tointeger end %this)))))
+			      (when (< b 0) (set! b (+ l b)))
+			      (when (< e 0) (set! e (+ l e)))
+			      (set! b (min b l))
+			      (set! e (min e l))
+			      (let* ((l (max (min (- e b) l) 0))
+				     (new (%js-arraybuffer %this l)))
+				 (with-access::JsArrayBuffer new ((dst data))
+				    (let loop ((i 0))
+				       (when (<fx i l)
+					  (u8vector-set! dst i
+					     (u8vector-ref data (+fx i b)))
+					  (loop (+fx i 1))))
+				    new)))))
+		     
+		     (js-bind! %this this 'slice
+			:value (js-make-function %this
+				  arraybuffer-slice 2 'slice)
+			:configurable #f
+			:writable #t
+			:enumerable #t)))
 	       
 	       this))
 
@@ -227,7 +212,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-name obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (vector-append (apply vector (map integer->js-string (iota len)))
+      (vector-append (apply vector (map js-integer->jsstring (iota len)))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -344,3 +329,8 @@
 	 (else
 	  (call-next-method)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-u8vector->jsarraybuffer ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-u8vector->jsarraybuffer o::u8vector %this)
+   #t)

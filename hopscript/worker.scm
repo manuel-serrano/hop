@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Jan  5 11:55:28 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 08:34:49 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -81,7 +81,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsWorker ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsWorker
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsWorker ...                                        */
@@ -262,7 +271,7 @@
    ;; toString
    (js-bind! %this obj 'toString
       :value (js-make-function %this
-		(lambda (this) (string->js-string "[object Worker]"))
+		(lambda (this) (js-string->jsstring "[object Worker]"))
 		0 'toString)
       :writable #t
       :configurable #t
@@ -540,5 +549,5 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)
 

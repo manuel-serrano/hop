@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue Nov 25 13:19:56 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan 17 08:48:12 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -143,23 +143,23 @@
       (nodejs-lchmod %worker %this path mod cb))
    
    (define (readdir this jspath::JsStringLiteral cb)
-      (let* ((path (js-string->string jspath))
+      (let* ((path (js-jsstring->string jspath))
 	     (l (directory->list path)))
 	 (if (and (null? l) (not (directory? path)))
 	     (let ((exn (with-access::JsGlobalObject %this (js-error)
 			   (let ((obj (js-new %this js-error
-					 (string->js-string
+					 (js-string->jsstring
 					    (format "readdir: cannot read dir ~a"
 					       path)))))
 			      (js-put! obj 'errno 20 #f %this)
-			      (js-put! obj 'code (string->js-string "ENOTDIR") #f %this)
+			      (js-put! obj 'code (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
 		(if (isa? cb JsFunction)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
 			  (js-call2 %this cb this exn (js-undefined))))
 		    (js-raise exn)))
-	     (let ((r (js-vector->jsarray (list->vector (map! string->js-string l))  %this)))
+	     (let ((r (js-vector->jsarray (list->vector (map! js-string->jsstring l))  %this)))
 		(if (isa? cb JsFunction)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()

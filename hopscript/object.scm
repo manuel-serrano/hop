@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Jan 15 22:05:46 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 07:21:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -40,7 +40,8 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_worker
-	   __hopscript_websocket)
+	   __hopscript_websocket
+	   __hopscript_lib)
 
    (export (js-initial-global-object)
 	   (js-new-global-object::JsGlobalObject)
@@ -56,7 +57,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsObject ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsObject
+   (lambda (o) (js-jsobject->plist o (js-initial-global-object)))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -67,12 +75,6 @@
       (if (isa? proc JsFunction)
 	  (js-call1 this proc obj req)
 	  (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsObject ...                                 */
-;*---------------------------------------------------------------------*/
-(register-class-serialization! JsObject js-serializer
-   (lambda (s) (make-struct 'javascript 1 s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsObject ...                                        */
@@ -112,7 +114,7 @@
 	       (display p op)
 	       (display "\":" op)
 	       (hop->javascript
-		  (js-get o (string->symbol (js-string->string p)) %this)
+		  (js-get o (string->symbol (js-jsstring->string p)) %this)
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))
@@ -188,9 +190,9 @@
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1
 	    ;; not used, see nodejs/require.scm
 	    (define (js-eval _ string)
-	       (if (not (js-string? string))
+	       (if (not (js-jsstring? string))
 		   string
-		   (call-with-input-string (js-string->string string)
+		   (call-with-input-string (js-jsstring->string string)
 		      (lambda (ip)
 			 (%js-eval ip 'eval %this %this %this)))))
 	    
@@ -252,7 +254,7 @@
 	    ;; check-utfi-validity
 	    (define (check-utf8-validity str)
 	       (if (utf8-string? str)
-		   (string->js-string str)
+		   (js-string->jsstring str)
 		   (js-raise-uri-error %this "Not a utf8 string ~s" string)))
 	    
 	    ;; decodeURI
@@ -287,7 +289,7 @@
 	    (define (encodeuri this string)
 	       (let ((str (js-tostring string %this)))
 		  (if (utf8-string? str #t)
-		      (string->js-string (uri-encode str))
+		      (js-string->jsstring (uri-encode str))
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this 'encodeURI
@@ -300,7 +302,7 @@
 	    (define (encodeuricomponent this string)
 	       (let ((str (js-tostring string %this)))
 		  (if (utf8-string? str #t)
-		      (string->js-string (uri-encode-component str))
+		      (js-string->jsstring (uri-encode-component str))
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this 'encodeURIComponent
@@ -312,7 +314,7 @@
 	    ;; escape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (escape this string)
-	       (string->js-string (url-path-encode (js-tostring string %this))))
+	       (js-string->jsstring (url-path-encode (js-tostring string %this))))
 	    
 	    (js-bind! %this %this 'escape
 	       :value (js-make-function %this escape 1 'escape
@@ -322,7 +324,7 @@
 	    ;; unescape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (unescape this string)
-	       (string->js-string (url-decode! (js-tostring string %this))))
+	       (js-string->jsstring (url-decode! (js-tostring string %this))))
 
 	    (js-bind! %this %this 'unescape
 	       :value (js-make-function %this unescape 1 'unescape
@@ -626,13 +628,13 @@
       (define (js-object-prototype-tostring this)
 	 (cond
 	    ((eq? this (js-undefined))
-	     (string->js-string "[object Undefined]"))
+	     (js-string->jsstring "[object Undefined]"))
 	    ((eq? this (js-null))
-	     (string->js-string "[object Null]"))
+	     (js-string->jsstring "[object Null]"))
 	    (else
 	     (let* ((obj (js-toobject %this this))
 		    (name (symbol->string! (class-name (object-class obj)))))
-		(string->js-string
+		(js-string->jsstring
 		   (format "[object ~a]"
 		      (cond
 			 ((not (string-prefix? "Js" name))
@@ -781,7 +783,7 @@
 		   ((isa? value JsObject)
 		    ;; 1.a
 		    value)
-		   ((js-string? value)
+		   ((js-jsstring? value)
 		    ;; 1.b
 		    (js-new %this js-string value))
 		   ((boolean? value)
@@ -986,4 +988,4 @@
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Jan  1 09:51:15 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 07:49:52 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -22,6 +22,7 @@
 	__hopscript_string
 	__hopscript_stringliteral
 	__hopscript_number
+	__hopscript_date
 	__hopscript_error
 	__hopscript_boolean
 	__hopscript_private
@@ -115,12 +116,10 @@
 	      (vec::vector (default '#())))
 
 	   (class JsArrayBuffer::JsObject
-;* 	      (sealed::bool (default #f))                              */
 	      (frozen::bool (default #f))
 	      (data (default '#u8())))
 	   
 	   (abstract-class JsArrayBufferView::JsObject
-;* 	      (sealed::bool (default #f))                              */
 	      (frozen::bool (default #f))
 	      (buffer::JsArrayBuffer (default (class-nil JsArrayBuffer)))
 	      (%data (default '#u8()))
@@ -175,7 +174,7 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name::JsStringLiteral (default (string->js-string "Error")))
+	      (name::JsStringLiteral (default (js-string->jsstring "Error")))
 	      msg
 	      (stack (default #f))
 	      (fname (default #f))
@@ -336,12 +335,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    Constant strings ...                                             */
 ;*---------------------------------------------------------------------*/
-(define js-string-undefined (string->js-string "undefined"))
-(define js-string-object (string->js-string "object"))
-(define js-string-number (string->js-string "number"))
-(define js-string-boolean (string->js-string "boolean"))
-(define js-string-string (string->js-string "string"))
-(define js-string-function (string->js-string "function"))
+(define js-string-undefined (js-string->jsstring "undefined"))
+(define js-string-object (js-string->jsstring "object"))
+(define js-string-number (js-string->jsstring "number"))
+(define js-string-boolean (js-string->jsstring "boolean"))
+(define js-string-string (js-string->jsstring "string"))
+(define js-string-function (js-string->jsstring "function"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */
@@ -360,12 +359,12 @@
        js-string-boolean)
       ((eq? obj (js-undefined))
        js-string-undefined)
-      ((or (string? obj) (js-string? obj))
+      ((or (string? obj) (js-jsstring? obj))
        js-string-string)
       ((eq? obj (js-null))
        js-string-object)
       (else
-       (string->js-string (typeof obj)))))
+       (js-string->jsstring (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsArrayBuffer ...                        */

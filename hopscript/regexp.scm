@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 11 07:48:16 2015 (serrano)                */
+;*    Last change :  Sat Jan 17 10:34:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -29,17 +29,21 @@
 	   __hopscript_stringliteral
 	   __hopscript_error)
 
-   (export (js-init-regexp! ::JsGlobalObject)))
+   (export (js-init-regexp! ::JsGlobalObject)
+	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsRegExp js-serializer js-unserializer)
+;* (register-class-serialization! JsRegExp js-serializer js-unserializer) */
+(register-class-serialization! JsRegExp
+   (lambda (o) (with-access::JsRegExp o (rx) rx))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */
@@ -239,7 +243,7 @@
 			 (value (fixnum? m))))
 	       (source (instantiate::JsValueDescriptor
 			  (name 'source)
-			  (value (string->js-string pattern)))))
+			  (value (js-string->jsstring pattern)))))
 	    (with-handler
 	       (lambda (e)
 		  (if (isa? e &io-parse-error)
@@ -271,7 +275,7 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this
 		(lambda (this)
-		   (string->js-string
+		   (js-string->jsstring
 		      (string-append "/"
 			 (js-tostring (js-get this 'source %this) %this) "/"
 			 (if (js-totest (js-get this 'global %this)) "g" "")
@@ -378,7 +382,7 @@
 			     (js-define-own-property a 'input
 				(instantiate::JsValueDescriptor
 				   (name 'input)
-				   (value (string->js-string s))
+				   (value (js-string->jsstring s))
 				   (writable #t)
 				   (enumerable #t)
 				   (configurable #t))
@@ -396,7 +400,7 @@
 			     (js-define-own-property a 0
 				(instantiate::JsValueDescriptor
 				   (name (js-toname 0 %this))
-				   (value (string->js-string
+				   (value (js-string->jsstring
 					     (substring s (caar r) (cdar r))))
 				   (writable #f)
 				   (enumerable #t)
@@ -408,7 +412,7 @@
 				(when (pair? c)
 				   (let* ((r (car c))
 					  (v (if (pair? r)
-						 (string->js-string
+						 (js-string->jsstring
 						    (substring s (car r) (cdr r)))
 						 (js-undefined))))
 				      (js-define-own-property a i
@@ -441,7 +445,13 @@
    (tprint "CANNOT FIND THE SPEC..."))
 
 ;*---------------------------------------------------------------------*/
+;*    js-regexp->jsregexp ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-regexp->jsregexp val::regexp %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp)
+      (js-new1 %this js-regexp (js-string->jsstring (regexp-pattern val)))))
+
+;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
-	 
+(%js-jsstringliteral-end!)

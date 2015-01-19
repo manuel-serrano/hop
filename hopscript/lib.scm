@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Jan 15 11:45:46 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 09:50:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -15,6 +15,8 @@
 (module __hopscript_lib
 
    (library hop)
+
+   (include "arraybufferview.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -23,20 +25,77 @@
 	   __hopscript_public
 	   __hopscript_worker
 	   __hopscript_stringliteral
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_date
+	   __hopscript_boolean
+	   __hopscript_number
+	   __hopscript_regexp
+	   __hopscript_arraybuffer
+	   __hopscript_arraybufferview)
 
-   (export (js-alist->jsobject ::pair-nil ::JsGlobalObject)
+   (export (generic js-obj->jsobject ::obj ::JsGlobalObject)
+	   (js-alist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-jsobject->plist ::JsObject ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    javascript-plist->obj ::JsGlobalObject ...                       */
-;*    -------------------------------------------------------------    */
-;*    See __hop_json                                                   */
+;*    js-obj->jsobject ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-method (javascript-plist->obj %this::JsGlobalObject l)
-   (js-alist->jsobject l %this))
+(define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
+   (cond
+      ((string? obj) (js-string->jsstring obj))
+      ((date? obj) (js-date->jsdate obj %this))
+      ((vector? obj) (js-vector->jsobject obj %this))
+      ((struct? obj) (js-struct->jsobject obj %this))
+      ((int64? obj) (int64->flonum obj))
+      ((elong? obj) (elong->flonum obj))
+      ((regexp? obj) (js-regexp->jsregexp obj %this))
+      ((keyword? obj) (js-string->jsstring (keyword->string obj)))
+      ((symbol? obj) (js-string->jsstring (symbol->string obj)))
+      ((pair? obj) (js-pair->jsobject obj %this))
+      ((u8vector? obj) (js-u8vector->jsarraybuffer obj %this))
+      ((null? obj) (js-undefined))
+      (else obj)))
 
+;*---------------------------------------------------------------------*/
+;*    js-vector->jsobject ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-vector->jsobject vec %this)
+   (vector-map! (lambda (o) (js-obj->jsobject o %this)) vec)
+   (js-vector->jsarray vec %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-struct->jsobject ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-struct->jsobject stu %this)
+   (case (struct-key stu)
+      ((__JsBoolean__) (js-bool->jsboolean (struct-ref stu 0) %this))
+      ((__JsNumber__) (js-number->jsnumber (struct-ref stu 0) %this))
+      ((__JsCustom__) ((struct-ref stu 1) (struct-ref stu 0) %this))
+      (else (js-obj->jsobject (list->vector (struct->list stu)) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-pair->jsobject ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-pair->jsobject l %this)
+   
+   (define (plist? l)
+      (and (or (keyword? (car l)) (symbol? (car l))) (list? l)))
+
+   (define (alist? l)
+      (when (list? l)
+	 (every (lambda (e)
+		   (and (pair? e) (or (keyword? (car e)) (symbol? (car e)))))
+	    l)))
+
+   (cond
+      ((plist? l)
+       (js-plist->jsobject l %this))
+      ((alist? l)
+       (js-alist->jsobject l %this))
+      (else
+       (map! (lambda (o) (js-obj->jsobject o %this)) l))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -44,7 +103,11 @@
    (with-access::JsGlobalObject %this (js-object)
       (let ((obj (js-new %this js-object)))
 	 (for-each (lambda (e)
-		      (js-put! obj (car e) (scm->js (cdr e) %this) #f %this))
+		      (js-put! obj (if (keyword? (car e))
+				       (keyword->symbol (car e))
+				       (car e))
+			 (js-obj->jsobject (cdr e) %this)
+			 #f %this))
 	    alist)
 	 obj)))
 
@@ -65,7 +128,7 @@
 		   (if (keyword? (car plist))
 		       (keyword->symbol (car plist))
 		       (car plist))
-		   (scm->js (cadr plist) %this)
+		   (js-obj->jsobject (cadr plist) %this)
 		   #f %this)
 		(loop (cddr plist))))))))
 
@@ -76,23 +139,8 @@
    (let ((args '()))
       (js-for-in obj
 	 (lambda (p)
-	    (let ((p (string->symbol (js-string->string p))))
+	    (let ((p (string->symbol (js-jsstring->string p))))
 	       (set! args (cons (js-get obj p %this) args))
 	       (set! args (cons (symbol->keyword p) args))))
 	 %this)
       args))
-
-;*---------------------------------------------------------------------*/
-;*    scm->js ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (scm->js scm %this)
-   (let loop ((scm scm))
-      (cond
-	 ((string? scm) (string->js-string scm))
-	 ((keyword? scm) (string->js-string (keyword->string scm)))
-	 ((symbol? scm) (string->js-string (symbol->string scm)))
-	 ((pair? scm) (js-alist->jsobject scm %this))
-	 ((int64? scm) (int64->flonum scm))
-	 ((elong? scm) (elong->flonum scm))
-	 ((vector? scm) (js-vector->jsarray (vector-map! loop scm) %this))
-	 (else scm))))

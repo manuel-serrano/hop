@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sat Nov 22 07:03:33 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan 17 10:34:10 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
 ;*=====================================================================*/
@@ -16,23 +16,25 @@
    (import __hopscript_stringliteral))
 
 ;*---------------------------------------------------------------------*/
-;*    string->js-string                                                */
+;*    js-string->jsstring                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Static allocation of constant strings.                           */
 ;*---------------------------------------------------------------------*/
-(define-expander string->js-string
+(define-expander js-string->jsstring
    (lambda (x e)
       (match-case x
-	 ((string->js-string (and ?val (? string?)))
+	 ((js-string->jsstring (and ?val (? string?)))
 	  (let ((index (eval `(js-string-register! ,val))))
 	     (evepairify `(vector-ref-ur ,js-strings-vector ,index) x)))
-	 ((string->js-string ?val)
-	  `(string->js-string ,(e (evepairify val x) e))))))
+	 ((js-string->jsstring ?val)
+	  `(js-string->jsstring ,(e (evepairify val x) e)))
+	 (else
+	  (error "js-string->jsstring" "wrong syntax" x)))))
 
 ;*---------------------------------------------------------------------*/
-;*    %js-string-literal-begin! ...                                    */
+;*    %js-jsstringliteral-begin! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-expander %js-string-literal-begin!
+(define-expander %js-jsstringliteral-begin!
    (lambda (x e)
       (eval '(define js-strings '()))
       (eval '(define js-length 0))
@@ -48,9 +50,9 @@
       #unspecified))
 
 ;*---------------------------------------------------------------------*/
-;*    %js-string-literal-end! ...                                      */
+;*    %js-jsstringliteral-end! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-expander %js-string-literal-end!
+(define-expander %js-jsstringliteral-end!
    (lambda (x e)
       (when (pair? (eval 'js-strings))
 	 (e `(define ,(eval 'js-strings-vector)

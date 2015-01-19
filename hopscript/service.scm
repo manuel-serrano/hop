@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Jan 16 10:20:16 2015 (serrano)                */
+;*    Last change :  Sun Jan 18 09:11:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -37,15 +37,21 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)
-	   (js-register-service-buffer-finalizer! ::procedure)
-	   (js-service-unserialize ::obj ::JsGlobalObject)
-	   (js-service-unjson ::input-port ::JsGlobalObject)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-begin!)
+(%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsService ...                                */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsService
+   (lambda (o)
+      (js-raise-type-error (js-initial-global-object)
+	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsHopFrame ...                            */
@@ -106,8 +112,8 @@
 	 (js-bind! %this js-function-prototype 'resource
 	    :value (js-make-function %this
 		      (lambda (this file)
-			 (string->js-string
-			    (service-resource this (js-string->string file))))
+			 (js-string->jsstring
+			    (service-resource this (js-jsstring->string file))))
 		      1 'resource)
 	    :writable #t
 	    :configurable #t
@@ -129,7 +135,7 @@
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
-			 (string->js-string (hopframe->string this %this)))
+			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'toString))
 	 
 	 ;; HopFrame constructor 
@@ -163,14 +169,21 @@
 	    (args (unless (eq? args (js-undefined))
 		     (map (lambda (val)
 			     (cond
-				((string? val)
-				 `("string" ,val "hop-encoding: string"))
+				((isa? val JsStringLiteral)
+				 `("string" ,(js-jsstring->string val)
+				     "hop-encoding: string"))
 				((integer? val)
-				 `("integer" ,val "hop-encoding: integer"))
+				 `("integer" ,val
+				     "hop-encoding: integer"))
 				((keyword? val)
-				 `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
+				 `("keyword" ,(keyword->string val)
+				     "hop-encoding: keyword"))
+				((string? val)
+				 (error "js-make-hopframe"
+				    "Illegal string" val))
 				(else
-				 `("hop" ,(obj->string val) "hop-encoding: hop"))))
+				 `("hop" ,(obj->string val)
+				     "hop-encoding: hop"))))
 			args)))
 	    (url url)
 	    (__proto__ js-hopframe-prototype))))
@@ -195,8 +208,7 @@
    (define (hopframe-multipart-arg->arg arg)
       (cond
 	 ((string=? (car arg) "hop")
-	  (string->obj (cadr arg)
-	     (lambda (alist) (js-service-unserialize alist %this))))
+	  (string->obj (cadr arg)))
 	 ((string=? (car arg) "keyword")
 	  (string->keyword (cadr arg)))
 	 (else
@@ -262,27 +274,14 @@
 			 (js-call1 %this f %this
 			    (js-alist->jsobject header %this)))))))))
 
-      (define (js-string->obj obj)
-	 (string->obj obj
-	    (lambda (o)
-	       (js-service-unserialize o %this))))
-
-      (define (js-javascript->obj obj)
-	 (javascript->obj obj %this))
-
       (define (with-hop callback)
 	 (with-hop-remote svc callback fail
 	    :host host :port port 
 	    :user user :password password :authorization authorization
-	    :string->obj js-string->obj
-	    :javascript->obj js-javascript->obj
-	    :string->string string->js-string
 	    :args args))
 
       (define (scheme->js val)
-	 (if (string? val)
-	     (js-string->buffer val %this)
-	     val))
+	 (js-obj->jsobject val %this))
 
       (if asynchronous
 	  (begin
@@ -334,7 +333,7 @@
 				   (lambda (o)
 				      (with-access::JsService o (svc)
 					 (with-access::hop-service svc (path)
-					    (string->js-string path))))
+					    (js-string->jsstring path))))
 				   1 'path))
 			   (set (js-make-function %this
 				   (lambda (o v)
@@ -381,41 +380,7 @@
 	 proc)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-service-unserialize ...                                       */
-;*---------------------------------------------------------------------*/
-(define (js-service-unserialize obj %this::JsGlobalObject)
-   (let loop ((obj obj))
-      (cond
-	 ((string? obj)
-	  (string->js-string obj))
-	 ((pair? obj)
-	  (with-access::JsGlobalObject %this (js-object)
-	     (let ((res (js-new %this js-object)))
-		(for-each (lambda (e)
-			     (js-put! res (keyword->symbol (car e))
-				(loop (cadr e))
-				#f %this))
-		   obj)
-		res)))
-	 ((vector? obj)
-	  (js-vector->jsarray (vector-map! loop obj) %this))
-	 ((struct? obj)
-	  (case (struct-key obj)
-	     ((javascript)
-	      (javascript->obj (struct-ref obj 0) %this))
-	     (else
-	      obj)))
-	 (else
-	  obj))))
-
-;*---------------------------------------------------------------------*/
-;*    js-service-unjson ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-service-unjson ip %this::JsGlobalObject)
-   (js-json-parser ip (js-undefined) #t #t %this))
-
-;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
-(%js-string-literal-end!)
+(%js-jsstringliteral-end!)
 

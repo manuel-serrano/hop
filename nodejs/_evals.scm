@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Tue Nov 25 14:23:05 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan 17 08:51:32 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
 ;*=====================================================================*/
@@ -48,7 +48,7 @@
    (define runInContext
       (js-make-function %this
 	 (lambda (this obj ctx)
-	    (call-with-input-string (js-string->string obj)
+	    (call-with-input-string (js-jsstring->string obj)
 	       (lambda (ip)
 		  (%js-eval ip 'eval %this this
 		     (if (eq? ctx (js-undefined)) %this ctx)))))

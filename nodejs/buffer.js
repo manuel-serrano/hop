@@ -50,7 +50,6 @@ SlowBuffer.prototype.toString = function(encoding, start, end) {
   encoding = String(encoding || 'utf8').toLowerCase();
   start = +start || 0;
   if (typeof end !== 'number') end = this.length;
-
   // Fastpath empty strings
   if (+end == start) {
     return '';

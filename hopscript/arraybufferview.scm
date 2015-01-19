@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Dec 17 16:42:37 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Jan 17 10:46:56 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -32,23 +32,56 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
-(register-class-serialization! JsArrayBufferView #f (lambda (s) s))
-(register-class-serialization! JsInt8Array #f (lambda (s) s))
-(register-class-serialization! JsUint8Array #f (lambda (s) s))
-(register-class-serialization! JsUint8ClampedArray #f (lambda (s) s))
-(register-class-serialization! JsInt16Array #f (lambda (s) s))
-(register-class-serialization! JsUint16Array #f (lambda (s) s))
-(register-class-serialization! JsInt32Array #f (lambda (s) s))
-(register-class-serialization! JsUint32Array #f (lambda (s) s))
-(register-class-serialization! JsFloat32Array #f (lambda (s) s))
-(register-class-serialization! JsFloat64Array #f (lambda (s) s))
+;* (register-class-serialization! JsArrayBufferView #f (lambda (s) s)) */
+;* (register-class-serialization! JsInt8Array #f (lambda (s) s))       */
+;* (register-class-serialization! JsUint8Array #f (lambda (s) s))      */
+;* (register-class-serialization! JsUint8ClampedArray #f (lambda (s) s)) */
+;* (register-class-serialization! JsInt16Array #f (lambda (s) s))      */
+;* (register-class-serialization! JsUint16Array #f (lambda (s) s))     */
+;* (register-class-serialization! JsInt32Array #f (lambda (s) s))      */
+;* (register-class-serialization! JsUint32Array #f (lambda (s) s))     */
+;* (register-class-serialization! JsFloat32Array #f (lambda (s) s))    */
+;* (register-class-serialization! JsFloat64Array #f (lambda (s) s))    */
+;*                                                                     */
+;* (register-javascript-buffer-intern! "JsDataView"                    */
+;*    javascript-buffer->arraybufferview)                              */
+;*                                                                     */
+;* (register-javascript-buffer-intern! "JsTypedArray"                  */
+;*    javascript-buffer->typedarray)                                   */
+(register-class-serialization! JsInt8Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsUint8Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsInt16Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsUint16Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsInt32Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsUint32Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsFloat32Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsFloat64Array
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
+(register-class-serialization! JsDataView
+   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
+   (lambda (o) o))
 
-(register-javascript-buffer-intern! "JsDataView"
-   javascript-buffer->arraybufferview)
-
-(register-javascript-buffer-intern! "JsTypedArray"
-   javascript-buffer->typedarray)
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-obj->jsobject ::JsInt8Array ...                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (js-obj->jsobject obj::JsInt8Array %this)            */
+;*    (with-access::JsGlobalObject %this (js-int8array)                */
+;*                                                                     */
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-intern-finalizer ::JsArrayBufferView ...                      *} */
 ;* {*---------------------------------------------------------------------*} */
@@ -1261,3 +1294,4 @@
 	 
 	 js-dataview)))
 	 
+   

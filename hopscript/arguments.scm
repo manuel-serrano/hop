@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Dec  8 07:53:24 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan 17 08:13:33 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -27,26 +27,17 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_array)
 
    (export (js-arguments-define-own-property ::JsArguments ::int ::JsPropertyDescriptor)
 	   (js-arguments ::JsGlobalObject ::vector)
 	   (js-strict-arguments ::JsGlobalObject ::pair-nil)
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsArguments ...                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsArguments %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-array)                    */
-;*       (with-access::JsFunction js-array (construct)                 */
-;* 	 (with-access::JsArguments obj (__proto__)                     */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    object-serializer ::JsArguments ...                              *} */
-;* {*---------------------------------------------------------------------*} */
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsArray ...                                  */
+;*---------------------------------------------------------------------*/
 ;* (register-class-serialization! JsArguments                          */
 ;*    (lambda (o)                                                      */
 ;*       (call-with-output-string                                      */
@@ -55,6 +46,9 @@
 ;*    (lambda (s)                                                      */
 ;*       (call-with-input-string s                                     */
 ;* 	 javascript->jsobj)))                                          */
+(register-class-serialization! JsArguments
+   (lambda (o) (jsarray->vector o (js-initial-global-object)))
+   (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
@@ -253,7 +247,7 @@
    (with-access::JsArguments obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
 	 (vector-append
-	    (apply vector (map! integer->js-string (iota (uint32->fixnum len))))
+	    (apply vector (map! js-integer->jsstring (iota (uint32->fixnum len))))
 	    (call-next-method))	 )))
 
 ;*---------------------------------------------------------------------*/
@@ -407,7 +401,7 @@
 	     (let loop ((i 0))
 		(if (<fx i len)
 		    (begin
-		       (proc (integer->js-string i))
+		       (proc (js-integer->jsstring i))
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))
