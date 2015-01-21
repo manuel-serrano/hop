@@ -110,6 +110,7 @@ startup.processFatal = function(process) {
       // if we handled an error, then make sure any ticks get processed
       if (caught)
          process._needTickCallback();
+
       return caught;
    };
 };

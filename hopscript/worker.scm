@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Jan 20 10:03:38 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 10:09:48 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -418,13 +418,9 @@
 	 (instantiate::WorkerHopThread
 	    (name "%worker")
 	    (%this %this)
-	    (onexit (js-make-function %this
-		       (lambda (this retval)
-			  (exit retval))
-		       1 'onexit))
+	    (onexit #f)
 	    (keep-alive keep-alive)
-	    (body (lambda ()
-		     (js-worker-loop %worker))))))
+	    (body (lambda () (js-worker-loop %worker))))))
    %worker)
 
 ;*---------------------------------------------------------------------*/
@@ -433,11 +429,15 @@
 (define-generic (js-worker-exception-handler th::object exn errval)
    (with-access::WorkerHopThread th (handlers %this %process)
       (if (pair? handlers)
-	  (begin
-	     (for-each (lambda (h)
-			  (js-call1 %this h %process exn))
-		(reverse handlers))
-	     0)
+	  (let loop ((handlers (reverse handlers)))
+	     (cond
+		((null? handlers)
+		 (exception-notify exn)
+		 errval)
+		((js-totest (js-call1 %this (car handlers) %process exn))
+		 0)
+		(else
+		 (loop (cdr handlers)))))
 	  (begin
 	     (exception-notify exn)
 	     errval))))

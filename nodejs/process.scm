@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Jan 20 19:43:49 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 10:53:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -65,15 +65,14 @@
 	 ;; bind process into %this
 	 (js-put! %this 'process %process #t %this)
 	 ;; bind the process fatal error handler
-;* 	 (js-worker-add-handler! %worker                               */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (exn)                                           */
-;* 		  (let ((fatal (js-get %process '_fatalException %this))) */
-;* 		     (if (isa? fatal JsFunction)                       */
-;* 			 (js-call1 %this fatal %process exn)           */
-;* 			 (raise exn)))                                 */
-;* 		  (exit (js-totest (js-get %process '_exiting %this)) 0 1)) */
-;* 	       1 "fatalException"))                                    */
+	 (js-worker-add-handler! %worker
+	    (js-make-function %this
+	       (lambda (this exn)
+		  (let ((fatal (js-get %process '_fatalException %this)))
+		     (if (isa? fatal JsFunction)
+			 (js-call1 %this fatal %process exn)
+			 (raise exn))))
+	       1 "fatalException"))
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
 		(tick (js-get m 'initNodeTick %this)))
@@ -94,11 +93,12 @@
 	       (define (on this signame proc)
 		  (let ((sig (js-tostring signame %this)))
 		     (cond
-			((string=? sig "uncaughtException")
-			 (js-worker-add-handler! %worker proc))
+;* 			((string=? sig "uncaughtException")            */
+;* 			 (js-worker-add-handler! %worker proc))        */
 			((and (string=? sig "exit") (not exitarmed))
 			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit proc)))
+			    (set! onexit proc))
+			 (js-call2 %this add this signame proc))
 			((assq (string->symbol sig) signals)
 			 =>
 			 (lambda (c)
@@ -114,11 +114,12 @@
 	       (define (remove this signame proc)
 		  (let ((sig (js-tostring signame %this)))
 		     (cond
-			((string=? sig "uncaughtException")
-			 (js-worker-remove-handler! %worker proc))
+;* 			((string=? sig "uncaughtException")            */
+;* 			 (js-worker-remove-handler! %worker proc))     */
 			((string=? sig "exit")
 			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit #f)))
+			  (set! onexit #f))
+			 (js-call2 %this rem this signame proc))
 			((assq (string->symbol sig) signals)
 			 =>
 			 (lambda (c)

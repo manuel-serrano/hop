@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Jan  6 16:16:19 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 08:51:52 2015 (serrano)                */
 ;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -399,10 +399,7 @@
 (define (exec-error-handler e scd req)
    (with-access::http-request req (socket)
       ;; first, close the socket, anycase
-      (with-handler
-	 (lambda (e)
-	    (socket-close socket))
-	 (socket-shutdown socket))
+      (socket-shutdown socket)
       (unless (isa? e &io-sigpipe-error)
 	 ;; signal the error, when this is an error
 	 (hop-verb 2 (hop-color req req " INTERRUPTED"))

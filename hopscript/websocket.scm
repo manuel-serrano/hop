@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun Jan 18 09:06:44 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 08:50:10 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -400,9 +400,7 @@
 		(lambda (this)
 		   (with-access::JsWebSocketClient this (socket oncloses wss)
 		      (when (socket? socket)
-			 (with-handler
-			    (lambda (e) #f)
-			    (socket-shutdown socket)))
+			 (socket-shutdown socket))
 		      (when (pair? oncloses)
 			 ;; invoke the onclose listener
 			 (let ((evt (instantiate::server-event

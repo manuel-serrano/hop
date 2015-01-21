@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jan 20 09:58:03 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 12:46:27 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -22,7 +22,8 @@
 	      (async (default #f))
 	      (async-count::int (default 0))
 	      (async-count-debug::pair-nil (default '()))
-	      (actions::pair-nil (default '())))
+	      (actions::pair-nil (default '()))
+	      (exiting::bool (default #f)))
 
 	   (class JsChild::UvProcess
 	      (ref (default #t))
@@ -193,20 +194,31 @@
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
-				 (with-access::JsLoop loop (actions)
-				    (with-handler
-				       (lambda (e)
-					  (set! retval
-					     (js-worker-exception-handler th e 8)))
-				       (for-each (lambda (action)
-						    (with-trace 'nodejs-async (car action)
-						       [assert (th) (eq? th (current-thread))]
-						       (call (cdr action))))
-					  (with-access::WorkerHopThread th (mutex)
-					     (synchronize mutex
-						(let ((acts actions))
-						   (set! actions '())
-						   acts)))))
+				 (with-access::JsLoop loop (actions exiting)
+				    (let loop ((acts (synchronize mutex
+							(let ((acts actions))
+							   (set! actions '())
+							   (reverse! acts)))))
+				       (with-handler
+					  (lambda (e)
+					     (let ((r (js-worker-exception-handler
+							 th e 8)))
+						(if (=fx r 0)
+						    (begin
+						       (loop acts)
+						       (set! exiting #t))
+						    (begin
+						       (set! retval r)
+						       (set! keep-alive #f)))))
+					  (let loop ()
+					     (when (pair? acts)
+						(let* ((action (car acts))
+						       (actname (car action))
+						       (actproc (cdr action)))
+						   (set! acts (cdr acts))
+						   (with-trace 'nodejs-async actname
+						      (call actproc)))
+						(loop)))))
 				    (when (and (not keep-alive)
 					       (null? services)
 					       (null? actions))
@@ -225,17 +237,24 @@
 			   "Maximum call stack size exceeded" #f)))))
 	    (when (pair? tqueue) (uv-async-send async)))
 	 (unwind-protect
-	    (with-access::WorkerHopThread th (onexit %process)
+	    (with-access::WorkerHopThread th (onexit %process parent)
 	       (with-handler
 		  (lambda (e)
-		     (set! retval (js-worker-exception-handler th e 8)))
+		     (tprint "MS: 21 jan 2015, EXITING FROM THE LOOP WITH AN ERROR !!!")
+		     (tprint "This should never happens, as callback should push async actions")
+		     (exception-notify e))
 		  (uv-run loop))
 	       ;; call the cleanup function
-	       (with-handler
-		  (lambda (e)
-		     (exit (js-worker-exception-handler th e 8)))
-		  (when (isa? onexit JsFunction)
-		     (js-call1 %this onexit %process retval))
+	       (when (=fx retval 0)
+		  (unless (js-totest (js-get %process '_exiting %this))
+		     (with-handler
+			(lambda (e)
+			   (exception-notify e)
+			   (set! retval 8))
+			(when (isa? onexit JsFunction)
+			   (js-call1 %this onexit %process retval)))))
+	       ;; when the parent died, kill the application
+	       (unless parent
 		  (exit retval)))
 	    (with-access::WorkerHopThread th (services subworkers)
 	       ;; unregister all the worker services
@@ -270,13 +289,16 @@
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
 	 (if %loop
-	     (with-access::JsLoop %loop (actions async)
+	     (with-access::JsLoop %loop (actions async exiting)
 		(synchronize mutex
-		   (uv-ref async)
-		   ;; push the action to be executed (with a debug name)
-		   (set! actions (append! actions (list (cons name thunk))))
-		   ;; tells libuv that there is something to be executed
-		   (uv-async-send async)))
+		   (begin ;; unless exiting
+		      ;; do not add any new actions when the loop is exiting
+		      (let ((act (cons name thunk)))
+			 (unless (pair? actions)
+			    (uv-ref async)
+			    (uv-async-send async))
+			 ;; push the action to be executed (with a debug name)
+			 (set! actions (cons act actions))))))
 	     ;; the loop is not started yet (this might happend when
 	     ;; a master send a message (js-worker-post-master-message)
 	     ;; before the slave is fully initialized
@@ -780,9 +802,9 @@
 	  (js-call2 %this callback (js-undefined) #f
 	     (uvfile->int %worker res))
 	  (let ((exn (fs-errno-exn
-			(format "open: cannot open file ~a, ~a, ~a -- ~~s"
-			   (js-jsstring->string path) flags mode)
+			(format "open '~a'" (js-jsstring->string path))
 			res %this)))
+	     (js-put! exn 'path path #f %this)
 	     (js-call2 %this callback (js-undefined) exn #f))))
    
    (if (isa? callback JsFunction)
@@ -793,9 +815,9 @@
 	  (if (isa? res UvFile)
 	      (uvfile->int %worker res)
 	      (let ((exn (fs-errno-exn
-			    (format "open: cannot open file ~a, ~a, ~a -- ~~s"
-			       (js-jsstring->string path) flags mode)
+			    (format "open '~a'" (js-jsstring->string path))
 			    res %this)))
+		 (js-put! exn 'path path #f %this)
 		 (js-raise exn))))))
 
 ;*---------------------------------------------------------------------*/
@@ -842,13 +864,17 @@
 (define (stat-cb %worker %this callback name obj proto lbl path)
    (lambda (res)
       (if (integer? res)
-	  (js-call2 %this callback (js-undefined)
-	     (fs-errno-path-exn
-		(format "~a: cannot stat ~a -- ~~s" name obj)
-		res %this path)
-	     #f)
+	  (js-worker-push-thunk! %worker "stat"
+	     (lambda ()
+		(js-call2 %this callback (js-undefined)
+		   (fs-errno-path-exn
+		      (format "~a: cannot stat ~a -- ~~s" name obj)
+		      res %this path)
+		   #f)))
 	  (let ((jsobj (stat->jsobj %this proto res)))
-	     (js-call2 %this callback (js-undefined) #f jsobj)))))
+	     (js-worker-push-thunk! %worker "stat"
+		(lambda ()
+		   (js-call2 %this callback (js-undefined) #f jsobj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */

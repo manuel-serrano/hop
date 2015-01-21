@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Jan 13 18:13:41 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 08:50:43 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -567,9 +567,7 @@
 		     (apply-listeners oncloses se)))
 	       (set! state 'closed)
 	       (when (socket? %socket)
-		  (with-handler
-		     (lambda (e) #f)
-		     (socket-shutdown %socket))
+		  (socket-shutdown %socket)
 		  (set! %socket #f))))))
    
    (define (abort)
@@ -676,9 +674,7 @@
 (define (websocket-close ws::websocket)
    (with-access::websocket ws (%socket)
       (when %socket
-	 (with-handler
-	    (lambda (e) #f)
-	    (socket-shutdown %socket))
+	 (socket-shutdown %socket)
 	 (set! %socket #f))))
 
 ;*---------------------------------------------------------------------*/
