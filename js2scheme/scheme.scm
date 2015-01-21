@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jan 18 09:31:03 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 07:40:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -923,24 +923,25 @@
 	 (with-access::J2SSvc this (loc init)
 	    (with-access::J2SObjInit init (inits)
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
+			      
 			      (js-worker-exec @worker ,(symbol->string id)
 				 (lambda ()
 				    ,(service-body this))))))
 		  (epairify-deep loc
 		     `(lambda (this . args)
-			 (set! args
-			    (map! (lambda (a) (js-obj->jsobject a %this)) args))
 			 (let ((fun ,imp))
 			    (cond
 			       ((null? args)
 				(fun this))
 			       ((keyword? (car args))
-				(apply fun this args))
-			       ((isa? (car args) JsObject)
 				(apply fun this
-				   (js-jsobject->plist (car args) %this)))
+				   (js-dsssl-args->jsargs args %this)))
+			       ((and (null? (cdr args))
+				     (pair? (car args))
+				     (keyword? (caar args)))
+				(apply fun this
+				   (js-dsssl-args->jsargs (car args) %this)))
 			       (else
-				(tprint args)
 				,(service-call-error this))))))))))
 
       (define (service-proc->scheme this)

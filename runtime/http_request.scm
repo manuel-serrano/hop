@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Mon Jan  5 18:37:38 2015 (serrano)                */
+;*    Last change :  Tue Jan 20 15:26:37 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -238,9 +238,7 @@
 	  (header '())
 	  (port (hop-port))
 	  (host "localhost")
-	  (content-length 10)
-	  #;(user (anonymous-user))
-	  )
+	  (content-length 10))
        (raise (instantiate::&hop-method-error
 		 (proc "request-line-grammar")
 		 (msg "policy file request not understood")

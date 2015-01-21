@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Jan 17 08:47:43 2015 (serrano)                */
+;*    Last change :  Tue Jan 20 09:58:03 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -186,7 +186,7 @@
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex tqueue %this keep-alive services)
+   (with-access::WorkerHopThread th (mutex tqueue %this keep-alive services call)
       (letrec* ((retval 0)
 		(loop (instantiate::JsLoop
 			 (actions tqueue)))
@@ -201,7 +201,7 @@
 				       (for-each (lambda (action)
 						    (with-trace 'nodejs-async (car action)
 						       [assert (th) (eq? th (current-thread))]
-						       ((cdr action))))
+						       (call (cdr action))))
 					  (with-access::WorkerHopThread th (mutex)
 					     (synchronize mutex
 						(let ((acts actions))
@@ -534,37 +534,6 @@
 	 (let ((tick-from-spinner (js-get process '_tickFromSpinner %this)))
 	    (js-call0 %this tick-from-spinner (js-undefined))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    tick-spinner ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define tick-spinner #f)                                            */
-;* (define need-tick-cb #f)                                            */
-;* (define tick-from-spinner #f)                                       */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    get-tick-spinner ...                                             *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (get-tick-spinner %worker %this process)                    */
-;*    (unless tick-spinner                                             */
-;*       (letrec* ((spin (lambda (status)                              */
-;* 			 (tprint "!!!!!!!!!!!!!!!  spin status=" status) */
-;* 			 (when need-tick-cb                            */
-;* 			    (set! need-tick-cb #f)                     */
-;* 			    (uv-idle-stop spinner)                     */
-;* 			                                               */
-;* 			    (unless tick-from-spinner                  */
-;* 			       (set! tick-from-spinner                 */
-;* 				  (js-get process '_tickFromSpinner %this))) */
-;* 			                                               */
-;* 			    (js-worker-push-thunk! %worker "tick-spinner" */
-;* 			       (lambda ()                              */
-;* 				  (js-call0 %this tick-from-spinner    */
-;* 				     (js-undefined)))))))              */
-;* 		(spinner (instantiate::UvIdle                          */
-;* 			    (cb spin)                                  */
-;* 			    (loop (worker-loop %worker)))))            */
-;* 	 (set! tick-spinner spinner))))                                */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    not-implemented-exn ...                                          */
 ;*---------------------------------------------------------------------*/

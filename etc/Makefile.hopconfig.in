@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sat Aug 23 08:10:25 2014 (serrano)                */
-#*    Copyright   :  2004-14 Manuel Serrano                            */
+#*    Last change :  Tue Jan 20 10:53:20 2015 (serrano)                */
+#*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -70,6 +70,7 @@ BIGLOOSSLLIBS	= @BIGLOOSSLLIBS@
 BIGLOOSSLLIBU	= @BIGLOOSSLLIBU@
 
 BSCM2JSFLAGS	= @BSCM2JSFLAGS@
+BHOPCFLAGS	= @BHOPCFLAGS@
 
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */

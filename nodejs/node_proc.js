@@ -27,6 +27,7 @@
 
 // This is an excerpt an node.js that initializes process and exit
 var startup = {};
+var assert;
 
 startup._lazyConstants = null;
 
@@ -37,7 +38,93 @@ startup.lazyConstants = function() {
   return startup._lazyConstants;
 };
 
-function initProcessKillAndExit( process ) {
+var NativeModule = { require: require };
+
+startup.processFatal = function(process) {
+   // call into the active domain, or emit uncaughtException,
+   // and exit if there are no listeners.
+   process._fatalException = function(er) {
+      var caught = false;
+      if (process.domain) {
+         var domain = process.domain;
+         var domainModule = NativeModule.require('domain');
+         var domainStack = domainModule._stack;
+
+         // ignore errors on disposed domains.
+         //
+         // XXX This is a bit stupid.  We should probably get rid of
+         // domain.dispose() altogether.  It's almost always a terrible
+         // idea.  --isaacs
+         if (domain._disposed)
+            return true;
+
+         er.domain = domain;
+         er.domainThrown = true;
+         // wrap this in a try/catch so we don't get infinite throwing
+         try {
+            // One of three things will happen here.
+            //
+            // 1. There is a handler, caught = true
+            // 2. There is no handler, caught = false
+            // 3. It throws, caught = false
+            //
+            // If caught is false after this, then there's no need to exit()
+            // the domain, because we're going to crash the process anyway.
+            caught = domain.emit('error', er);
+
+            // Exit all domains on the stack.  Uncaught exceptions end the
+            // current tick and no domains should be left on the stack
+            // between ticks.
+            var domainModule = NativeModule.require('domain');
+            domainStack.length = 0;
+            domainModule.active = process.domain = null;
+         } catch (er2) {
+            // The domain error handler threw!  oh no!
+            // See if another domain can catch THIS error,
+            // or else crash on the original one.
+            // If the user already exited it, then don't double-exit.
+            if (domain === domainModule.active)
+               domainStack.pop();
+            if (domainStack.length) {
+               var parentDomain = domainStack[domainStack.length - 1];
+               process.domain = domainModule.active = parentDomain;
+               caught = process._fatalException(er2);
+            } else
+               caught = false;
+         }
+      } else {
+         caught = process.emit('uncaughtException', er);
+      }
+      // if someone handled it, then great.  otherwise, die in C++ land
+      // since that means that we'll exit the process, emit the 'exit' event
+      if (!caught) {
+         try {
+            if (!process._exiting) {
+               process._exiting = true;
+               process.emit('exit', 1);
+            }
+         } catch (er) {
+            // nothing to be done about it at this point.
+         }
+      }
+      // if we handled an error, then make sure any ticks get processed
+      if (caught)
+         process._needTickCallback();
+      return caught;
+   };
+};
+
+
+startup.processAssert = function(process) {
+   // Note that calls to assert() are pre-processed out by JS2C for the
+   // normal build of node. They persist only in the node_g build.
+   // Similarly for debug().
+   assert = process.assert = function(x, msg) {
+      if (!x) throw new Error(msg || 'assertion error');
+   };
+};
+
+startup.processKillAndExit = function(process) {
   process.exit = function(code) {
     if (!process._exiting) {
       process._exiting = true;
@@ -70,12 +157,12 @@ function initProcessKillAndExit( process ) {
   };
 }
 
-var initProcessChannel = function() {
+startup.processChannel = function(process) {
   // If we were spawned with env NODE_CHANNEL_FD then load that up and
   // start parsing data from that stream.
   if (process.env.NODE_CHANNEL_FD) {
     var fd = parseInt(process.env.NODE_CHANNEL_FD, 10);
-/*     assert(fd >= 0);                                                */
+    assert(fd >= 0);
 
     // Make sure it's not accidentally inherited by child processes.
     delete process.env.NODE_CHANNEL_FD;
@@ -87,9 +174,11 @@ var initProcessChannel = function() {
     // FIXME is this really necessary?
     process.binding('tcp_wrap');
     cp._forkChild(fd);
-     /*     assert(process.send);                                           */
+    assert(process.send);
   }
 }
 
-exports.initProcessKillAndExit = initProcessKillAndExit;
-exports.initProcessChannel = initProcessChannel;
+exports.initFatal = startup.processFatal;
+exports.initAssert = startup.processAssert;
+exports.initProcessKillAndExit = startup.processKillAndExit;
+exports.initProcessChannel = startup.processChannel;

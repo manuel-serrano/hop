@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Nov 24 17:59:25 2014 (serrano)                */
-#*    Copyright   :  2004-14 Manuel Serrano                            */
+#*    Last change :  Tue Jan 20 10:59:36 2015 (serrano)                */
+#*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -48,6 +48,7 @@ bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 
 bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
+bhopcflags=""
 
 blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
@@ -239,6 +240,7 @@ while : ; do
       debug=yes;
       bcflagsrts=-g;
       bscm2jsflags=-g;
+      bhopcflags=-g;
       bcflags="$bcflags $bcflagsdbg";;
 
     --debug2)
@@ -246,6 +248,7 @@ while : ; do
       debug=yes;
       bcflagsrts=-g;
       bscm2jsflags=-g;
+      bhopcflags=-g;
       bcflags="$bcflags $bcflagsdbg2";;
 
     --pmem)
@@ -830,6 +833,7 @@ cat $mkmf.in \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
+          -e "s|@BHOPCFLAGS@|$bhopcflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
           -e "s|@FFLAGS@|$fflags|" \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \

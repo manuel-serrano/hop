@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat Jan 17 08:46:28 2015 (serrano)                */
+;*    Last change :  Tue Jan 20 19:43:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -64,6 +64,16 @@
 	 (set! %process (new-process-object %worker %this))
 	 ;; bind process into %this
 	 (js-put! %this 'process %process #t %this)
+	 ;; bind the process fatal error handler
+;* 	 (js-worker-add-handler! %worker                               */
+;* 	    (js-make-function %this                                    */
+;* 	       (lambda (exn)                                           */
+;* 		  (let ((fatal (js-get %process '_fatalException %this))) */
+;* 		     (if (isa? fatal JsFunction)                       */
+;* 			 (js-call1 %this fatal %process exn)           */
+;* 			 (raise exn)))                                 */
+;* 		  (exit (js-totest (js-get %process '_exiting %this)) 0 1)) */
+;* 	       1 "fatalException"))                                    */
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
 		(tick (js-get m 'initNodeTick %this)))
@@ -130,7 +140,7 @@
 			    (signal (cdr c) 'default)))
 			(else
 			 (js-call1 %this remall this signame)))))
-		  
+
 	       ;; on
 	       (let ((add (js-make-function %this on 2 "addListener")))
 		  (js-put! %process 'on add #f %this)
@@ -165,8 +175,12 @@
 	    (js-call0 %this timers (js-undefined)))
 	 ;; process and exit
 	 (let* ((m (nodejs-require-core "node_proc" %worker %this))
+		(fatal (js-get m 'initFatal %this))
+		(assert (js-get m 'initAssert %this))
 		(prockillexit (js-get m 'initProcessKillAndExit %this))
 		(procchannel (js-get m 'initProcessChannel %this)))
+	    (js-call1 %this fatal (js-undefined) %process)
+	    (js-call1 %this assert (js-undefined) %process)
 	    (js-call1 %this prockillexit (js-undefined) %process)
 	    (js-call1 %this procchannel (js-undefined) %process))
 	 ;; cluster
@@ -208,6 +222,24 @@
 		      port))
 		(display o port))
 	    (flush-output-port port))
+
+	 (define (domain-call this)
+	    (lambda (callback)
+	       ;; this is a transcription of the C++ nodejs MakeDomainCall
+	       ;; function (see node.cc)
+	       (let ((domainv (js-get this 'domain %this)))
+		  (if (isa? domainv JsObject)
+		      (begin
+			 (unless (js-get domainv '_disposed %this)
+			    (let ((enter (js-get domainv 'enter %this)))
+			       (js-call0 %this enter domainv)))
+			 (let ((ret (callback)))
+			    (let ((exit (js-get domainv 'exit %this)))
+			       (js-call0 %this exit domainv)
+			       ret)))
+		      (callback)))))
+		  
+	 (define using-domains #f)
 
 	 ;; these stdio definitions are used during the bootstrap only
 	 ;; they will be overriden by node_stdio.js
@@ -426,7 +458,24 @@
 	 
 	 (js-put! proc '_usingDomains
 	    (js-make-function %this
-	       (lambda (this) (js-undefined)) 0 "_usingDomains")
+	       (lambda (this)
+		  (unless using-domains
+		     (set! using-domains #t)
+		     (with-access::WorkerHopThread %worker (call)
+			(set! call (domain-call this)))
+		     (let ((tdc (js-get this '_tickDomainCallback %this))
+			   (ndt (js-get this '_nextDomainTick %this)))
+			(unless (isa? tdc JsFunction)
+			   (error "_usingDomains"
+			      "process._tickDomainCallback assigned to non-function"
+			      tdc))
+			(unless (isa? ndt JsFunction)
+			   (error "_usingDomains"
+			      "process._nextDomainTick assigned to non-function"
+			      ndt))
+			(js-put! this '_tickCallback tdc #f %this)
+			(js-put! this '_currentTickHandler ndt #f %this))))
+	       0 "_usingDomains")
 	    #f %this)
 
 	 ;; tick

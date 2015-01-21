@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan 18 10:02:42 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 07:18:23 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -354,6 +354,9 @@
 			    (hopjs-encoded-arguments? args))
 		       (multipart-value! (car args))
 		       (map! multipart-value! args)))))
+	    ((string=? ctype "application/x-www-form-urlencoded")
+	     (let ((body (read-chars (elong->fixnum content-length) pi)))
+		(service-parse-request-get-args (cgi-args->list body))))
 	    (else
 	     (with-access::hop-service svc (id)
 		(error "service-parse-request"

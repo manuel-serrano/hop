@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Sep  2 10:13:17 2014 (serrano)                */
-#*    Copyright   :  2006-14 Manuel Serrano                            */
+#*    Last change :  Tue Jan 20 11:21:12 2015 (serrano)                */
+#*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -43,7 +43,7 @@ o/%.o: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 o/%.o: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm
 	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
@@ -55,13 +55,13 @@ $(CLASS_DIR)/%.class: %.hop
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.hop
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),$(BHOPCFLAGS) -c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),$(BHOPCFLAGS) -c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */

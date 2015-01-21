@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Jan 17 08:34:49 2015 (serrano)                */
+;*    Last change :  Tue Jan 20 10:03:38 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -54,6 +54,7 @@
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
 	      (uvfiles::vector (default (make-vector 32)))
+	      (call::procedure (default (lambda (cb) (cb))))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '())))
 
@@ -450,7 +451,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-loop th::object)
    (with-access::WorkerHopThread th (mutex condv tqueue state subworkers
-				       name alivep %this)
+				       name alivep %this call)
       (tprint "THIS CODE SHOULD NOT BE EXECUTED")
       ;; install the signal handler for that thread
       (signal sigsegv
@@ -480,7 +481,7 @@
 				       (liip)))))))
 		  (when (pair? nthunk)
 		     (with-trace 'hopscript-worker (car nthunk)
-			((cdr nthunk)))
+			(call (cdr nthunk)))
 		     (loop))))
 	    (set! state 'terminated))
 	 #t)))
@@ -489,7 +490,6 @@
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exec th::object name::bstring thunk::procedure)
-   (tprint "THIS CODE SHOULD NOT BE EXECUTED")
    (if (and (eq? (current-thread) th)
 	    (with-access::WorkerHopThread th (tqueue)
 	       (null? tqueue)))

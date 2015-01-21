@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Jan 16 18:56:35 2015 (serrano)                */
+;*    Last change :  Tue Jan 20 08:38:51 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -169,10 +169,12 @@
 (define (hopscheme->JS-return hs)
    (let* ((jstr (hopscheme-jstr hs))
 	  (assig-var (hopscheme-var hs))
-	  (assig-var-str (symbol->string assig-var)))
+	  (assig-var-str (if (symbol? assig-var)
+			     (symbol->string assig-var)
+			     "")))
       (string-append
-       "{ " jstr "\n"
-       "return " assig-var-str "; }")))
+	 "{ " jstr "\n"
+	 "return " assig-var-str "; }")))
 
 ;*---------------------------------------------------------------------*/
 ;*    only-macros? ...                                                 */

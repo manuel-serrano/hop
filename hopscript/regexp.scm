@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 17 10:34:34 2015 (serrano)                */
+;*    Last change :  Wed Jan 21 08:11:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -40,7 +40,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
 ;*---------------------------------------------------------------------*/
-;* (register-class-serialization! JsRegExp js-serializer js-unserializer) */
 (register-class-serialization! JsRegExp
    (lambda (o) (with-access::JsRegExp o (rx) rx))
    (lambda (o) o))
@@ -166,12 +165,21 @@
 		       (if (>=fx j (-fx len 3))
 			   (err "wrong \"\\x\" pattern \"~a\"" str)
 			   (let ((n (hex2 str (+fx j 2))))
-			      (if n
+			      (cond
+				 ((not n)
+				  (err "wrong \"\\x\" pattern \"~a\"" str))
+				 ((=fx n #x5d)
+				  ;; "]" character
+				  ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
+				  (string-set! res w #\\)
+				  (string-set! res (+fx 1 w) #\])
+				  (loop (+fx j 4) (+fx w 2)))
+				 (n
 				  (let* ((s (integer->utf8 n))
 					 (l (string-length s)))
 				     (blit-string! s 0 res w l)
 				     (loop (+fx j 4) (+fx w l)))
-				  (err "wrong \"\\x\" pattern \"~a\"" str)))))
+				  )))))
 		      ((#\u)
 		       (if (>=fx j (-fx len 5))
 			   (err "wrong \"\\u\" pattern \"~a\"" str)
@@ -248,7 +256,8 @@
 	       (lambda (e)
 		  (if (isa? e &io-parse-error)
 		      (with-access::&io-parse-error e (msg)
-			 (js-raise-syntax-error %this msg ""))
+			 (js-raise-syntax-error %this
+			    (format "~a \"~a\"" msg pattern) ""))
 		      (raise e)))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
 		  (instantiate::JsRegExp

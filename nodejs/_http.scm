@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Oct 24 12:31:57 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Wed Jan 21 08:35:40 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -156,7 +156,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-parser-execute ...                                          */
 ;*---------------------------------------------------------------------*/
-(define debug-parser 2)
+(define debug-parser 0)
 
 (define (http-parser-execute %this parser::JsHttpParser buf off len)
 
@@ -363,7 +363,6 @@
 	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) #\:)
 	  (let ((key (the-substring 0 -1))
 		(len (the-length)))
-	     (tprint "key=" key)
 	     (with-access::JsHttpParser parser (headers)
 		(set! headers (cons key headers)))
 	     (http-header-value-state (the-port) %this parser
@@ -385,7 +384,6 @@
 		    (http-header-state (the-port) %this parser
 		       (+fx nread len) (-fx avail len))))))
 	 (crlf
-	  (tprint "crlf...")
 	  (let ((len (the-length)))
 	     (http-on-header-complete %this parser)
 	     (http-body-state (the-port) %this parser
@@ -622,7 +620,9 @@
 
    (define (headers parser)
       (with-access::JsHttpParser parser (headers)
-	 (js-vector->jsarray (list->vector (reverse headers)) %this)))
+	 (js-vector->jsarray
+	    (list->vector (map! js-string->jsstring (reverse! headers)))
+	    %this)))
       
    (let ((cb (js-get parser 'onHeadersComplete %this)))
       (when (isa? cb JsFunction)
@@ -637,8 +637,10 @@
 		  (if (string? method)
 		      ;; request
 		      (begin
-			 (js-put! info 'method method #f %this)
-			 (js-put! info 'url url #t %this))
+			 (js-put! info 'method
+			    (js-string->jsstring method) #f %this)
+			 (js-put! info 'url
+			    (if url (js-string->jsstring url) url) #t %this))
 		      ;; response
 		      (js-put! info 'statusCode status-code #f %this))
 		  ;; http-version
