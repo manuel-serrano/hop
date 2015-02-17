@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Jan 18 07:18:47 2015 (serrano)                */
+;*    Last change :  Sun Feb  1 08:50:35 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -233,7 +233,7 @@
 ;*    js-integer->jsstring ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-integer->jsstring num::long)
-   (if (or (<fx num 0) (>fx num (vector-length integers)))
+   (if (or (<fx num 0) (>=fx num (vector-length integers)))
        (js-string->jsstring (integer->string num))
        (vector-ref-ur integers num)))
 

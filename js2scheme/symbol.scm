@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Oct 27 07:50:19 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan 31 09:40:06 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -174,15 +174,16 @@
 	 ;; propagate the compilation mode to the function
 	 (when (eq? mode 'strict)
 	    (set! fmode mode))
+	 ;; check parameter correctness
 	 (if (eq? fmode 'strict)
 	     (begin
-		;; check parameter correctness
 		(check-strict-mode-params params loc)
 		(when (symbol? id)
 		   (check-strict-mode-eval id "Function name" loc)))
 	     (nonstrict-params! params))
-
-	 (let* ((decls (filter (lambda (d)
+	 ;; walk throught the function body
+	 (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
+		(decls (filter (lambda (d)
 				  ;; see ecma-262-51.html#sec-10.2
 				  (or (isa? d J2SDeclFun)
 				      (isa? d J2SDeclCnstFun)
@@ -192,11 +193,10 @@
 			      (id 'arguments)
 			      (loc loc)))
 		(envl (append decls params))
-		(env0 (append envl env))
+		(env1 (append envl env0))
 		(nenv (if (find-decl 'arguments envl)
-			  env0
-			  (cons arguments env0)))
-		(nenv (if decl (append nenv (list decl)) nenv))
+			  env1
+			  (cons arguments env1)))
 		(nwenv (cons arguments (append decls params wenv))))
 	    (if (pair? decls)
 		(set! body

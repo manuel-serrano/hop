@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sat Jan 17 08:50:23 2015 (serrano)                */
+;*    Last change :  Thu Feb  5 06:00:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -16,6 +16,8 @@
 
    (library hopscript)
 
+   (include "nodejs_async.sch")
+   
    (import  __nodejs_uv
 	    __nodejs_process
 	    __nodejs__buffer
@@ -76,7 +78,7 @@
 	    (js-put! obj 'close
 	       (js-make-function %this
 		  (lambda (this cb)
-		     (nodejs-close %worker %this this cb))
+		     (nodejs-close %worker %this process this cb))
 		  1 "close")
 	       #f %this)
 	    
@@ -282,12 +284,13 @@
 			    (slab-shrink! slab buf offset 0)
 			    (js-put! process '_errno (nodejs-err-name len) #f %this)
 			    (let ((onmsg (js-get this 'onmessage %this)))
-			       (js-call0 %this onmsg this)))
+			       (!js-call0 "recv-start" %this onmsg this)))
 			   (else
 			    ;; characters read
 			    (let ((b (slab-shrink! slab buf offset len)))
 			       (let ((onmsg (js-get this 'onmessage %this)))
-				  (js-call5 %this onmsg this this b offset len
+				  (!js-call5 "recv-start" %this
+				     onmsg this this b offset len
 				     (js-alist->jsobject addr %this))
 				  (js-undefined))))))))))
 	 (if (=fx r 0)

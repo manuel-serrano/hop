@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Nov 25 16:09:58 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Tue Feb  3 17:36:27 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -29,7 +29,17 @@
 
    (import  __nodejs_process)
    
-   (export  (process-crypto ::JsGlobalObject)))
+   (export  (process-crypto ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    debug-crypto ...                                                 */
+;*---------------------------------------------------------------------*/
+(define debug-crypto
+   (let ((env (getenv "NODE_DEBUG")))
+      (cond
+	 ((not (string? env)) 0)
+	 ((string-contains env "_crypto") 2)
+	 (else 0))))
 
 (cond-expand
    (enable-ssl
@@ -37,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    process-crypto ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (process-crypto %this)
+(define (process-crypto %worker %this)
    
    (define (not-implemented name)
       (js-make-function %this
@@ -58,12 +68,57 @@
    
    (define (add-ca-cert this cert)
       (with-access::JsSecureContext this (ctx)
-	 (if (string? cert)
-	     (secure-context-add-ca-cert! ctx cert 0 (string-length cert))
+	 (if (isa? cert JsStringLiteral)
+	     (let ((cert (js-jsstring->string cert)))
+		(secure-context-add-ca-cert! ctx cert 0 (string-length cert)))
 	     (with-access::JsTypedArray cert (%data byteoffset length)
 		(secure-context-add-ca-cert! ctx %data
 		   (uint32->fixnum byteoffset)
 		   (uint32->fixnum length))))))
+
+   (define (set-key this cert passphrase)
+      (with-access::JsSecureContext this (ctx)
+	 (let ((pass (when (string? passphrase) passphrase)))
+	    (if (isa? cert JsStringLiteral)
+		(let ((cert (js-jsstring->string cert)))
+		   (secure-context-set-key! ctx cert 0 (string-length cert) pass))
+		(with-access::JsTypedArray cert (%data byteoffset length)
+		   (secure-context-set-key! ctx %data
+		      (uint32->fixnum byteoffset)
+		      (uint32->fixnum length)
+		      pass))))))
+   
+   (define (set-cert this cert)
+      (with-access::JsSecureContext this (ctx)
+	 (if (isa? cert JsStringLiteral)
+	     (let ((cert (js-jsstring->string cert)))
+		(secure-context-set-cert! ctx cert 0 (string-length cert)))
+	     (with-access::JsTypedArray cert (%data byteoffset length)
+		(secure-context-set-cert! ctx %data
+		   (uint32->fixnum byteoffset)
+		   (uint32->fixnum length))))))
+
+   (define (set-ciphers this ciphers)
+      (with-access::JsSecureContext this (ctx)
+	 (cond
+	    ((isa? ciphers JsStringLiteral)
+	     (secure-context-set-ciphers! ctx (js-jsstring->string ciphers)))
+	    ((isa? ciphers JsTypedArray)
+	     (with-access::JsTypedArray ciphers (%data byteoffset length)
+		(secure-context-set-ciphers! ctx
+		   (substring %data
+		      (uint32->fixnum byteoffset)
+		      (uint32->fixnum length)))))
+	    (else
+	     (js-raise-type-error %this
+		(format "Bad parameter (~a) ~~a" (typeof ciphers))
+		ciphers)))))
+   
+   (define (set-options this options)
+      (with-access::JsSecureContext this (ctx)
+	 (if (integer? options)
+	     (secure-context-set-options! ctx options)
+	     (js-raise-type-error %this "Bad parameter ~a" options))))
    
    (define secure-context-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
@@ -80,11 +135,26 @@
 	    (js-make-function %this add-ca-cert
 	       1 "addCACert")
 	    #f %this)
+	 (js-put! proto 'setKey
+	    (js-make-function %this set-key
+	       2 "setKey")
+	    #f %this)
+	 (js-put! proto 'setCert
+	    (js-make-function %this set-cert
+	       2 "setCert")
+	    #f %this)
+	 (js-put! proto 'setCiphers
+	    (js-make-function %this set-ciphers
+	       2 "setCiphers")
+	    #f %this)
+	 (js-put! proto 'setOptions
+	    (js-make-function %this set-options
+	       2 "setOptions")
+	    #f %this)
 	 
 	 (for-each (lambda (name)
 		      (js-put! proto name (not-implemented name) #f %this))
-	    '(setKey setCert addCRL setCiphers
-	      setOptions setSessionIdContext close loadPKCS12))
+	    '(addCRL setSessionIdContext close loadPKCS12))
 	 proto))
 
    (define c -1)
@@ -98,9 +168,10 @@
 
    (define (connection-encout this buffer offset len)
       (with-access::JsTypedArray buffer (length)
-	 (tprint "EncOut(" (count) ") buffer=" length
-	    " offset=" offset
-	    " len=" len))
+	 (when (>fx debug-crypto 0)
+	    (tprint "EncOut(" (count) ") buffer=" length
+	       " offset=" offset
+	       " len=" len)))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%data byteoffset length)
 	    (ssl-connection-read ssl %data
@@ -108,9 +179,10 @@
    
    (define (connection-encin this buffer offset len)
       (with-access::JsTypedArray buffer (length)
-	 (tprint "EncIn(" (count) ") buffer=" length
-	    " offset=" offset
-	    " len=" len))
+	 (when (>fx debug-crypto 0)
+	    (tprint "EncIn(" (count) ") buffer=" length
+	       " offset=" offset
+	       " len=" len)))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%data byteoffset length)
 	    (ssl-connection-write ssl %data
@@ -118,22 +190,25 @@
    
    (define (connection-clearin this buffer offset len)
       (with-access::JsTypedArray buffer (length byteoffset)
-	 (tprint "ClearIn(" (count) ") buffer=" length
-	    " offset=" offset " byteoffset=" byteoffset
-	    " len=" len))
+	 (when (>fx debug-crypto 0)
+	    (tprint "ClearIn(" (count) ") buffer=" length
+	       " offset=" offset " byteoffset=" byteoffset
+	       " len=" len)))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%data byteoffset length)
-	    (tprint "ssl-connection-clear-in "
-	       (+fx (uint32->fixnum byteoffset) offset)
-	       " len=" len)
+	    (when (>fx debug-crypto 0)
+	       (tprint "ssl-connection-clear-in "
+		  (+fx (uint32->fixnum byteoffset) offset)
+		  " len=" len))
 	    (ssl-connection-clear-in ssl %data
 	       (+fx (uint32->fixnum byteoffset) offset) len))))
    
    (define (connection-clearout this buffer offset len)
       (with-access::JsTypedArray buffer (length)
-	 (tprint "ClearOut(" (count) ") buffer=" length
-	    " offset=" offset
-	    " len=" len))
+	 (when (>fx debug-crypto 0)
+	    (tprint "ClearOut(" (count) ") buffer=" length
+	       " offset=" offset
+	       " len=" len)))
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::JsTypedArray buffer (%data byteoffset length)
 	    (ssl-connection-clear-out ssl %data
@@ -158,7 +233,7 @@
    
    (define (connection-verify-error this)
       (with-access::JsSSLConnection this (ssl)
-	 (ssl-connection-verify-error ssl)))
+	 (js-string->jsstring (ssl-connection-verify-error ssl))))
    
    (define (connection-get-peer-certificate this)
       (with-access::JsSSLConnection this (ssl)
@@ -223,19 +298,38 @@
    (define (secure-context this . args)
       (instantiate::JsSecureContext
 	 (__proto__ secure-context-proto)))
+
+   (define (info-callback this state)
+      (if (=fx state 0)
+	  ;; start
+	  (let ((onhandshakestart (js-get this 'onhandshakestart %this)))
+	     (js-worker-push-thunk! %worker "connection"
+		(lambda ()
+		   (tprint "onhandshakestart ")
+		   (js-call0 %this onhandshakestart this))))
+	  ;; done
+	  (let ((onhandshakedone (js-get this 'onhandshakedone %this)))
+	     (js-worker-push-thunk! %worker "connection"
+		(lambda ()
+		   (tprint "onhandshakedone ")
+		   (js-call0 %this onhandshakedone this))))))
    
    (define (connection this jsctx serverp request-cert-or-server-name reject)
       (with-access::JsSecureContext jsctx (ctx)
-	 (instantiate::JsSSLConnection
-	    (__proto__ connection-proto)
-	    (ssl (instantiate::ssl-connection
-		    (ctx ctx)
-		    (isserver (js-toboolean serverp))
-		    (request-cert (when serverp
-				     request-cert-or-server-name))
-		    (server-name (unless serverp
-				    request-cert-or-server-name))
-		    (reject-unauthorized reject))))))
+	 (letrec ((conn (instantiate::JsSSLConnection
+			   (__proto__ connection-proto)
+			   (ssl (instantiate::ssl-connection
+				   (ctx ctx)
+				   (info-callback (lambda (start-or-done)
+						     (info-callback
+							conn start-or-done)))
+				   (isserver (js-toboolean serverp))
+				   (request-cert (when serverp
+						    request-cert-or-server-name))
+				   (server-name (unless serverp
+						   request-cert-or-server-name))
+				   (reject-unauthorized reject))))))
+	    conn)))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
@@ -252,9 +346,11 @@
 	      (getCiphers . ,(js-new %this js-object))
 	      (getHashes . ,(js-new %this js-object))
 	      (init . ,(not-implemented "init"))
+	      (DiffieHellman . ,(not-implemented "DiffieHellman"))
 	      (SecureContext . ,sc)
 	      (Connection . ,conn))
 	    %this))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    no ssl support                                                   */

@@ -260,22 +260,29 @@ function onwrite(stream, er) {
       clearBuffer(stream, state);
     }
 
-    if (sync) {
-      process.nextTick(function() {
-        afterWrite(stream, state, finished, cb);
+     // MS: CARE 28 Jan 2015, is the sync test is enabled, the nodejs
+     // test test-http-many-ended-pipelines.js hangs when the number of
+     // iterations is in the range [18~30]. I have absolutely no idea
+     // what's going on there.
+     var MS_SYNC_PATCH = false;
+    if (sync && MS_SYNC_PATCH ) {
+       process.nextTick(function() {
+         afterWrite(stream, state, finished, cb, "sync");
       });
     } else {
-      afterWrite(stream, state, finished, cb);
+       afterWrite(stream, state, finished, cb, "async");
     }
   }
 }
 
-function afterWrite(stream, state, finished, cb) {
-  if (!finished)
-    onwriteDrain(stream, state);
+function afterWrite(stream, state, finished, cb, __from) {
+   if (!finished) {
+      onwriteDrain(stream, state);
+   }
   cb();
-  if (finished)
-    finishMaybe(stream, state);
+   if (finished) {
+      finishMaybe(stream, state);
+   }
 }
 
 // Must force callback to be called on nextTick, so that we don't
@@ -354,7 +361,7 @@ function needFinish(stream, state) {
 function finishMaybe(stream, state) {
   var need = needFinish(stream, state);
   if (need) {
-    state.finished = true;
+     state.finished = true;
     stream.emit('finish');
   }
   return need;
@@ -366,8 +373,9 @@ function endWritable(stream, state, cb) {
   if (cb) {
     if (state.finished)
       process.nextTick(cb);
-    else
-      stream.once('finish', cb);
+     else {
+	stream.once('finish', cb);
+     }
   }
   state.ended = true;
 }

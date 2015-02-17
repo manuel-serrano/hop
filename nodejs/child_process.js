@@ -397,7 +397,7 @@ function setupChannel(target, channel) {
     });
   });
 
-  target.send = function(message, handle) {
+   target.send = function(message, handle) {
     if (typeof message === 'undefined') {
       throw new TypeError('message cannot be undefined');
     }

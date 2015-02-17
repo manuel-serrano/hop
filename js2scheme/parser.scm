@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jan 16 09:41:16 2015 (serrano)                */
+;*    Last change :  Wed Jan 28 09:31:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1318,11 +1318,15 @@
 	      (parse-token-error
 		 "Invalid ${ ... } statement"
 		 (consume-any!))))
-	 ((NaN)
-	  (let ((token (consume-token! 'NaN)))
-	     (instantiate::J2SNumber
-		(loc (token-loc token))
-		(val +nan.0))))
+;* 	 ((NaN)                                                        */
+;* 	  (let ((token (consume-token! 'NaN)))                         */
+;* 	     (instantiate::J2SNumber                                   */
+;* 		(loc (token-loc token))                                */
+;* 		(val +nan.0))))                                        */
+;* 	 ((undefined)                                                  */
+;* 	  (let ((token (consume-token! 'undefined)))                   */
+;* 	     (instantiate::J2SUndefined                                */
+;* 		(loc (token-loc token)))))                             */
 	 (else
 	  (parse-token-error "unexpected token" (peek-token)))))
    

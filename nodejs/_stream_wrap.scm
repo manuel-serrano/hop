@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Sat Jan 17 08:49:40 2015 (serrano)                */
+;*    Last change :  Fri Feb  6 09:47:48 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -16,6 +16,8 @@
 
    (library hopscript)
 
+   (include "nodejs_async.sch")
+   
    (import  __nodejs_uv
 	    __nodejs_process
 	    __nodejs__buffer)
@@ -74,14 +76,12 @@
 	    (set! reqs (cons req reqs))
 	    (js-put! req 'bytes len #f %this)
 	    (with-access::JsHandle this (handle)
-	       (js-put! this 'writeQueueSize
-		  (nodejs-stream-write-queue-size handle) #f %this)
 	       (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status)
+			    (js-put! this 'writeQueueSize
+			       (nodejs-stream-write-queue-size handle) #f %this)
 			    (let ((oncomp (js-get req 'oncomplete %this)))
 			       (js-call3 %this oncomp req status this req)
-			       (js-put! this 'writeQueueSize
-				  (nodejs-stream-write-queue-size handle) #f %this)
 			       (js-undefined)))))
 		  (if (nodejs-pipe-ipc? handle)
 		      (if (isa? sendhandle JsHandle)
@@ -93,7 +93,9 @@
 			  (nodejs-stream-write2 %worker %this handle
 			     string offset len #f cb))
 		      (nodejs-stream-write %worker %this handle
-			 string offset len cb))))
+			 string offset len cb)))
+	       (js-put! this 'writeQueueSize
+		  (nodejs-stream-write-queue-size handle) #f %this))
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -116,47 +118,42 @@
 ;*    stream-read-start ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (stream-read-start %worker %this process slab this)
-   (with-access::JsHandle this (handle)
-      (nodejs-stream-read-start %worker %this handle
-	 (lambda (obj size) (slab-allocate slab obj size))
-	 (lambda (status buf offset len pending-type)
-	    (with-trace 'nodejs-buffer "read-start-cb"
-	       (trace-item "status=" status " buf=" (typeof buf)
-		  " offset=" offset " len=" len)
-	       (cond
-		  ((eof-object? status)
-		   ;; eof
-		   (js-put! process '_errno (js-string->jsstring "EOF")
-		      #f %this)
-		   (let ((onread (js-get this 'onread %this)))
-		      (js-call3 %this onread this
-			 (js-undefined) (js-undefined) +nan.0)))
-		  ((not status)
-		   ;; read error
-		   (slab-shrink! slab buf offset 0)
-		   (js-put! process '_errno (nodejs-err-name len) #f %this)
-		   (let ((onread (js-get this 'onread %this)))
-		      (js-call0 %this onread this)))
-		  ((=fx len 0)
-		   ;; nothing read
-		   (slab-shrink! slab buf offset 0))
-		  (else
-		   ;; characters read
-		   (let ((b (slab-shrink! slab buf offset len)))
-		      #;(print
-			 (format "(~a) nodejs-read-cb offset=~a len=~a [~s] penting-type=~a ipc=~a" 
-			    (getpid)
-			    offset len
-			    (with-access::JsSlowBuffer b (data)
-			       (substring data offset (+fx offset len)))
-			    pending-type
-			    (nodejs-pipe-ipc? handle)))
+   (with-trace 'nodejs-buffer "read-start"
+      (with-access::JsHandle this (handle)
+	 (nodejs-stream-read-start %worker %this process handle
+	    (lambda (obj size) (slab-allocate slab obj size))
+	    (lambda (status buf offset len pending-type)
+	       (with-trace 'nodejs-buffer "read-start-cb"
+		  (trace-item "status=" status " buf=" (typeof buf)
+		     " offset=" offset " len=" len)
+		  (cond
+		     ((eof-object? status)
+		      ;; eof
+		      (js-put! process '_errno (js-string->jsstring "EOF")
+			 #f %this)
 		      (let ((onread (js-get this 'onread %this)))
+			 (!js-call3 "read-start" %this onread this
+			    (js-undefined) (js-undefined) (js-undefined))))
+		     ((not status)
+		      ;; read error
+		      (slab-shrink! slab buf offset 0)
+		      (js-put! process '_errno (nodejs-err-name len) #f %this)
+		      (let ((onread (js-get this 'onread %this)))
+			 (!js-call0 "read-start" %this onread this)))
+		     ((=fx len 0)
+		      ;; nothing read
+		      (slab-shrink! slab buf offset 0))
+		     (else
+		      ;; characters read
+		      (let* ((b (slab-shrink! slab buf offset len))
+			     (onread (js-get this 'onread %this)))
 			 (if (and (nodejs-pipe-ipc? handle) pending-type)
-			     (js-call4 %this onread this b offset len
+			     (!js-call4 "read-start" %this
+				onread this b offset len
 				(nodejs-pipe-accept %worker %this this
 				   pending-type))
-			     (js-call3 %this onread this b offset len))
+			     (!js-call3 "read-start" %this
+				onread this b offset len))
 			 (js-undefined))))))))))
 
 ;*---------------------------------------------------------------------*/

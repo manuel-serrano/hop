@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/ecma51.js              */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Nov 26 09:51:05 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sat Jan 31 10:31:08 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -65,11 +65,10 @@ assert.strictEqual( val instanceof Function, true );
 /*---------------------------------------------------------------------*/
 /*    function assignments                                             */
 /*---------------------------------------------------------------------*/
-function Ffoo1() { Ffoo1 = 4; }
+function Ffoo1() { Ffoo1 = 5; }
 
 Ffoo1();
-
-assert.strictEqual( Ffoo1, 4 );
+assert.strictEqual( Ffoo1, 5 );
 
 var Ffoo2 = function Ffoo2() { Ffoo2 = 4; }
 var bck = Ffoo2;
@@ -77,11 +76,38 @@ var bck = Ffoo2;
 Ffoo2();
 assert.strictEqual( Ffoo2, bck );
 
+function Ffoo3() {
+   Ffoo3 = 3;
+   assert.strictEqual( Ffoo3, 3 );
+
+}
+
+Ffoo3();
+assert.strictEqual( Ffoo3, 3 );
+
+var Ffoo4 = function Ffoo4() {
+   Ffoo4 = 3;
+   assert.ok( Ffoo4 instanceof Function );
+}
+
+Ffoo4();
+assert.ok( Ffoo4 instanceof Function );
+
+var Ffoo5_aux = 0;
+var Ffoo5 = function Ffoo5( n ) {
+   if( n == 1 ) {
+      Ffoo5( 0, (Ffoo5_aux = 6) );
+   }
+
+}
+Ffoo5( 1 );
+assert.strictEqual( Ffoo5_aux, 6 );
+
 /*---------------------------------------------------------------------*/
 /*    switches                                                         */
 /*---------------------------------------------------------------------*/
-function swfoo1( x ) {
-   switch( x ) {
+function swfoo1( xxx ) {
+   switch( xxx ) {
       case 1:
       case 2:
       case 3: return 1;
@@ -89,8 +115,8 @@ function swfoo1( x ) {
    }
 }
 
-function swfoo2( x ) {
-   switch( x ) {
+function swfoo2( yyy ) {
+   switch( yyy ) {
       case 1:
       case 2: return 3;
       case 3: return 1;
@@ -108,35 +134,44 @@ assert.strictEqual( swfoo2( false ), 2 );
 /*---------------------------------------------------------------------*/
 /*    variables and parameters                                         */
 /*---------------------------------------------------------------------*/
-function foo1( x ) {
+function foo1( zzz ) {
    "use strict";
-   x = 45;
-   var x = 55;
-   return x;
+   zzz = 45;
+   var zzz = 55;
+   return zzz;
 }
 
-function foo2( x ) {
+function foo2( uuu ) {
    "use strict";
-   x = 45;
-   var x = 55;
+   uuu = 45;
+   var uuu = 55;
    return arguments[ 0 ];
 }
 
-function bar1( x ) {
-   x = 45;
-   var x = 55;
-   return x;
+function bar1( ttt ) {
+   ttt = 45;
+   var ttt = 55;
+   return ttt;
 }
 
-function bar2( x ) {
-   x = 45;
-   var x = 55;
+function bar2( www ) {
+   www = 45;
+   var www = 55;
    return arguments[ 0 ];
 }
-
 
 assert.equal( foo1( 10 ), 55 );
 assert.equal( foo2( 10 ), 10 );
 assert.equal( bar1( 10 ), 55 );
 assert.equal( bar2( 10 ), 55 );
+
+/*---------------------------------------------------------------------*/
+/*    undefined                                                        */
+/*---------------------------------------------------------------------*/
+var undefined = 3;
+
+assert.equal( typeof undefined, "number" );
+assert.equal( typeof this.undefined, "undefined" );
+
+assert.equal( (function() { var undefined = 3; return undefined; })(), 3 );
 

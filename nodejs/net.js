@@ -212,6 +212,7 @@ function onSocketFinish() {
 
   var shutdownReq = this._handle.shutdown();
 
+   debug( "oSF: shutdownReq=" + shutdownReq );
   if (!shutdownReq)
     return this._destroy(errnoException(process._errno, 'shutdown'));
 
@@ -398,10 +399,13 @@ Socket.prototype.end = function(data, encoding) {
   DTRACE_NET_STREAM_END(this);
 
   // just in case we're waiting for an EOF.
-  if (this.readable && !this._readableState.endEmitted)
-    this.read(0);
-  else
-    maybeDestroy(this);
+   if (this.readable && !this._readableState.endEmitted) {
+      //console.log( "Socket.prototype.end read( 0 )" );
+      this.read(0);
+   } else {
+      // console.log( "Socket.prototype.end maybeDestory" );
+      maybeDestroy(this);
+   }
 };
 
 
@@ -412,6 +416,7 @@ function maybeDestroy(socket) {
       !socket.destroyed &&
       !socket._connecting &&
       !socket._writableState.length) {
+     // console.log( "maybeDestroy, destroy" );
     socket.destroy();
   }
 }
@@ -501,7 +506,7 @@ function onread(buffer, offset, length) {
   timers._unrefActive(self);
 
   var end = offset + length;
-  debug('onread', process._errno, offset, length, end);
+   debug('onread', process._errno, offset, length, end);
 
   if (buffer) {
     debug('got data');
@@ -523,9 +528,11 @@ function onread(buffer, offset, length) {
     self.bytesRead += length;
 
     // Optimization: emit the original buffer with end points
-    var ret = true;
+     var ret = true;
     if (self.ondata) self.ondata(buffer, offset, end);
-    else ret = self.push(buffer.slice(offset, end));
+     else {
+	ret = self.push(buffer.slice(offset, end));
+     }
 
     if (handle.reading && !ret) {
       handle.reading = false;
@@ -661,7 +668,7 @@ function createWriteReq(handle, data, encoding) {
       return handle.writeBuffer(data);
 
     case 'utf8':
-    case 'utf-8':
+  case 'utf-8':
       return handle.writeUtf8String(data);
 
     case 'ascii':
@@ -673,7 +680,7 @@ function createWriteReq(handle, data, encoding) {
     case 'utf-16le':
       return handle.writeUcs2String(data);
 
-    default:
+  default:
       return handle.writeBuffer(new Buffer(data, encoding));
   }
 }
@@ -734,7 +741,6 @@ function afterWrite(status, handle, req) {
 function connect(self, address, port, addressType, localAddress) {
   // TODO return promise from Socket.prototype.connect which
   // wraps _connectReq.
-
   assert.ok(self._connecting);
 
   if (localAddress) {
@@ -817,7 +823,7 @@ Socket.prototype.connect = function(options, cb) {
 
   } else {
     var host = options.host;
-    debug('connect: find host ' + host);
+     debug('connect: find host ' + host );
     require('dns').lookup(host, function(err, ip, addressType) {
       // It's possible we were destroyed while looking this up.
       // XXX it would be great if we could cancel the promise returned by

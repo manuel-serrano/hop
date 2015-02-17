@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jan 18 06:44:46 2015 (serrano)                */
+;*    Last change :  Wed Feb  4 18:30:41 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -141,7 +141,8 @@
 		  (hop-hss-foreign-eval-set!
 		     (lambda (ip)
 			(js-put! mod 'filename
-			   (js-string->jsstring (input-port-name ip)) #f %global)
+			   (js-string->jsstring (input-port-name ip)) #f
+			   %global)
 			(%js-eval-hss ip %global %worker scope)))))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
@@ -241,9 +242,11 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (js-worker-push-thunk! %worker "nodejs-load"
-	     (lambda ()
-		(nodejs-load path %worker))))
+	  (with-access::WorkerHopThread %worker (%this)
+	     (with-access::JsGlobalObject %this (js-main)
+		(js-worker-push-thunk! %worker "nodejs-load"
+		   (lambda ()
+		      (nodejs-load path %worker))))))
 	 (else
 	  ;; this is a plain file
 	  (hop-load-weblet path)))))

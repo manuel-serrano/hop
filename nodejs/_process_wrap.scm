@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Wed Dec 31 07:20:00 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Wed Jan 28 07:01:20 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
 ;*=====================================================================*/
@@ -48,7 +48,7 @@
    (js-put! process-prototype 'close
       (js-make-function %this
 	 (lambda (this cb)
-	    (nodejs-close %worker %this this cb))
+	    (nodejs-close %worker %this process this cb))
 	 1 "close")
       #f %this)
    

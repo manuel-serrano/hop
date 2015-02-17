@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 18 07:15:55 2015 (serrano)                */
+;*    Last change :  Thu Jan 22 08:03:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -783,7 +783,7 @@
    (define (date-prototype-getmilliseconds this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (* 1000 (date-nanosecond val))
+	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getMilliseconds

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Jan 21 12:46:27 2015 (serrano)                */
+;*    Last change :  Fri Feb  6 12:18:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -16,7 +16,7 @@
 
    (library hop hopscript libuv)
 
-   (include "nodejs_debug.sch")
+   (include "nodejs_debug.sch" "nodejs_async.sch")
    
    (static (class JsLoop::UvLoop
 	      (async (default #f))
@@ -42,10 +42,14 @@
 	   __nodejs__pipe-wrap
 	   __nodejs__buffer)
    
-   (export (nodejs-err-name::JsStringLiteral ::int)
+   (export (nodejs-uv-version::bstring)
+	   (nodejs-err-name::JsStringLiteral ::int)
+	   (nodejs-process-title-init!)
+	   (nodejs-get-process-title::bstring)
+	   (nodejs-set-process-title! ::bstring)
 	   (nodejs-now ::WorkerHopThread)
 
-	   (nodejs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj)
+	   (nodejs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject ::obj)
 	   (nodejs-ref ::obj ::WorkerHopThread)
 	   (nodejs-unref ::obj ::WorkerHopThread)
 	   
@@ -60,6 +64,10 @@
 	   (nodejs-fs-event-start ::obj ::procedure ::bstring)
 	   (nodejs-fs-event-stop ::obj)
 
+	   (nodejs-make-fs-poll ::WorkerHopThread)
+	   (nodejs-fs-poll-start ::JsGlobalObject ::JsObject ::obj ::bstring ::procedure ::int)
+	   (nodejs-fs-poll-stop ::obj)
+
 	   (nodejs-make-idle ::WorkerHopThread ::JsGlobalObject ::procedure)
 	   (nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
@@ -69,6 +77,7 @@
 	   (nodejs-loadavg ::u8vector)
 	   (nodejs-getfreemem::double)
 	   (nodejs-gettotalmem::double)
+	   (nodejs-getresidentmem::long)
 	   (nodejs-getcpus::vector)
 	   (nodejs-exepath::bstring)
 	   (nodejs-getuptime::double)
@@ -76,32 +85,32 @@
 
 	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   
-	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::int ::int ::obj)
-	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::int ::int ::int ::obj)
-	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::int ::obj)
-	   (nodejs-lchown ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::int ::obj)
-	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::int ::int ::obj)
-	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj ::obj)
-	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::int ::obj ::obj)
-	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj ::obj)
-	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj)
-	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj)
-	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj)
-	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::int ::obj)
-	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::long ::long ::obj)
-	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsStringLiteral ::obj ::obj ::obj)
-	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::int ::obj ::obj ::obj)
-	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::int ::obj)
-	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::int ::obj ::long ::long ::long ::obj)
-	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::int ::obj ::long ::long ::long ::obj)
-	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::int ::obj)
+	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
+	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
+	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
+	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::int ::obj)
+	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::int ::obj)
+	   (nodejs-lchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::int ::obj)
+	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
+	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
+	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
+	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj)
+	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
+	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj)
+	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
+	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
+	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
+	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
+	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
+	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
+	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
+	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::long ::long ::obj)
+	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj ::obj)
+	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj ::obj)
+	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
+	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::long ::obj)
+	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::long ::obj)
+	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 
 	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int)
 	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::JsObject)
@@ -142,7 +151,7 @@
 	   
 	   (nodejs-stream-write ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::procedure)
 	   (nodejs-stream-write2 ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::obj ::procedure)
-	   (nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
+	   (nodejs-stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::procedure ::obj)
 	   (nodejs-stream-read-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (nodejs-stream-shutdown ::WorkerHopThread ::JsGlobalObject ::obj ::procedure)
 
@@ -166,19 +175,51 @@
 
 (define EBADF
    (cond-expand (bigloo-c (pragma::long "EBADF")) (else 9)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-uv-version ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-uv-version)
+   (uv-version))
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-err-name ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-err-name errno)
    (js-string->jsstring (uv-err-name errno)))
-	   
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-process-title-init! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (nodejs-process-title-init!)
+   (uv-process-title-init!))
+   
+;*---------------------------------------------------------------------*/
+;*    nodejs-get-process-title ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-get-process-title)
+   (uv-get-process-title))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-set-process-title! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-set-process-title! str)
+   (uv-set-process-title! str))
+
 ;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (worker-loop::JsLoop th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop)
       %loop))
+
+;*---------------------------------------------------------------------*/
+;*    process-fail ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (process-fail %this process errno)
+   (js-put! process 'errno errno #f %this)
+   (js-put! process '_errno (js-string->jsstring (uv-err-name errno)) #f %this)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
@@ -219,10 +260,8 @@
 						   (with-trace 'nodejs-async actname
 						      (call actproc)))
 						(loop)))))
-				    (when (and (not keep-alive)
-					       (null? services)
-					       (null? actions))
-				       (uv-unref async))))))))
+				    (unless (or keep-alive (pair? services) (pair? actions))
+				       (uv-unref async)))))) ))
 	 (synchronize mutex
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
@@ -240,9 +279,7 @@
 	    (with-access::WorkerHopThread th (onexit %process parent)
 	       (with-handler
 		  (lambda (e)
-		     (tprint "MS: 21 jan 2015, EXITING FROM THE LOOP WITH AN ERROR !!!")
-		     (tprint "This should never happens, as callback should push async actions")
-		     (exception-notify e))
+		     (set! retval (js-worker-exception-handler th e 8)))
 		  (uv-run loop))
 	       ;; call the cleanup function
 	       (when (=fx retval 0)
@@ -252,6 +289,7 @@
 			   (exception-notify e)
 			   (set! retval 8))
 			(when (isa? onexit JsFunction)
+			   (js-put! %process '_exiting #t #f %this)
 			   (js-call1 %this onexit %process retval)))))
 	       ;; when the parent died, kill the application
 	       (unless parent
@@ -340,7 +378,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-close ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-close %worker %this this callback)
+(define (nodejs-close %worker %this process this callback)
    (with-access::JsHandle this (handle)
       (cond
 	 ((or (not (isa? handle JsPipe))
@@ -349,11 +387,13 @@
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
-		   (when (isa? callback JsFunction)
-		      (js-call0 %this callback (js-undefined)))))))
+		   (js-worker-push-thunk! %worker "close"
+		      (lambda ()
+			 (when (isa? callback JsFunction)
+			    (js-call0 %this callback (js-undefined)))))))))
 	 (else
 	  (when (isa? callback JsFunction)
-	     (js-call0 %this callback (js-undefined)))))))
+	     (!js-call0 'close %this callback (js-undefined)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-ref ...                                                   */
@@ -461,6 +501,29 @@
    (uv-fs-event-stop hdl))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-make-fs-poll ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-make-fs-poll %worker)
+   (instantiate::UvFsPoll (loop (worker-loop %worker))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fs-poll-start ...                                         */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fs-poll-start %this proto hdl path proc interval)
+   (uv-fs-poll-start hdl
+      (lambda (this status prev curr)
+	 (proc this status
+	    (stat->jsobj %this proto prev)
+	    (stat->jsobj %this proto curr)))
+      path interval))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fs-poll-stop ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fs-poll-stop hdl)
+   (uv-fs-poll-stop hdl))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-make-idle ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-idle %worker %this callback)
@@ -480,14 +543,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-check ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-make-check %worker %this proc)
+(define (nodejs-make-check %worker %this process)
    [assert (%worker) (eq? %worker (current-thread))]
    (let ((check (instantiate::UvCheck
 		   (loop (worker-loop %worker))
 		   (cb (lambda (_)
-			  (let ((cb (js-get proc '_immediateCallback %this)))
+			  (let ((cb (js-get process '_immediateCallback %this)))
 			     (when (isa? cb JsFunction)
-				(js-call0 %this cb (js-undefined)))))))))
+				(!js-call0 '_immedateCallback
+				   %this cb (js-undefined)))))))))
       (uv-check-start check)
       check))
    
@@ -515,6 +579,12 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-gettotalmem)
    (uv-get-total-memory))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-getresidentmem ...                                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-getresidentmem)
+   (uv-get-resident-memory))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getcpus ...                                               */
@@ -554,7 +624,8 @@
    (js-worker-push-thunk! %worker "tick-spinner"
       (lambda ()
 	 (let ((tick-from-spinner (js-get process '_tickFromSpinner %this)))
-	    (js-call0 %this tick-from-spinner (js-undefined))))))
+	    (when (isa? tick-from-spinner JsFunction)
+	       (js-call0 %this tick-from-spinner (js-undefined)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    not-implemented-exn ...                                          */
@@ -598,15 +669,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    fs-callback ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (fs-callback %worker %this callback name fmt res #!optional (ok '()))
+(define (fs-callback %worker %this process callback name fmt res #!optional (ok '()))
    (cond
       ((not (integer? res))
-       (js-call1 %this callback (js-undefined) res))
+       (!js-call1 (string->symbol name) %this callback (js-undefined) res))
       ((=fx res 0)
-       (js-call1 %this callback (js-undefined) ok))
+       (!js-call1 (string->symbol name) %this callback (js-undefined) ok))
       (else
        (let ((exn (fs-errno-exn fmt res %this)))
-	  (js-call1 %this callback (js-undefined) exn)))))
+	  (!js-call1 (string->symbol name) %this callback (js-undefined) exn)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-callback-error ...                                            */
@@ -626,10 +697,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-rename-file ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-rename-file %worker %this oldp newp callback)
+(define (nodejs-rename-file %worker %this process oldp newp callback)
    
    (define (rename-callback res)
-      (fs-callback %worker %this callback "rename-file"
+      (fs-callback %worker %this process callback "rename-file"
 	 (format "rename: cannot rename file ~s into ~s -- ~~s"
 	    (js-jsstring->string oldp) (js-jsstring->string newp))
 	 res))
@@ -650,10 +721,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-ftruncate ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-ftruncate %worker %this fd offset callback)
+(define (nodejs-ftruncate %worker %this process fd offset callback)
    
    (define (ftruncate-callback res)
-      (fs-callback %worker %this callback "ftruncate"
+      (fs-callback %worker %this process callback "ftruncate"
 	 (format "ftruncate: cannot truncate ~a to ~a -- ~~s" fd offset)
 	 res))
    
@@ -669,10 +740,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-truncate ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-truncate %worker %this path offset callback)
+(define (nodejs-truncate %worker %this process path offset callback)
 
    (define (truncate-callback res)
-      (fs-callback %worker %this callback "truncate"
+      (fs-callback %worker %this process callback "truncate"
 	 (format "truncate: cannot truncate ~a to ~a -- ~~s" (js-jsstring->string path) offset)
 	 res))
    
@@ -685,10 +756,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fchown ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fchown %worker %this fd uid guid callback)
+(define (nodejs-fchown %worker %this process fd uid guid callback)
    
    (define (fchown-callback res)
-      (fs-callback %worker %this callback "fchown"
+      (fs-callback %worker %this process callback "fchown"
 	 (format "fchown: cannot chown ~a, ~a, ~a -- ~~s" fd uid guid)
 	 res))
    
@@ -704,10 +775,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-chown ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-chown %worker %this path uid guid callback)
+(define (nodejs-chown %worker %this process path uid guid callback)
 
    (define (fchown-callback res)
-      (fs-callback %worker %this callback "chown"
+      (fs-callback %worker %this process callback "chown"
 	 (format "chown: cannot chown ~a, ~a, ~a -- ~~s" (js-jsstring->string path) uid guid)
 	 res))
    
@@ -720,10 +791,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lchown ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lchown %worker %this path uid guid callback)
+(define (nodejs-lchown %worker %this process path uid guid callback)
    
    (define (lchown-callback res)
-      (fs-callback %worker %this callback "lchown"
+      (fs-callback %worker %this process callback "lchown"
 	 (format "lchown: cannot chown ~a, ~a, ~a -- ~~s" (js-jsstring->string path) uid guid)
 	 res))
    
@@ -736,10 +807,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fchmod ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fchmod %worker %this fd mod callback)
+(define (nodejs-fchmod %worker %this process fd mod callback)
 
    (define (fchmod-callback res)
-      (fs-callback %worker %this callback "fchmod"
+      (fs-callback %worker %this process callback "fchmod"
 	 (format "fchmod: cannot chmod ~a, ~a -- ~~s" fd mod)
 	 res))
    
@@ -761,10 +832,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-chmod ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-chmod %worker %this path mod callback)
+(define (nodejs-chmod %worker %this process path mod callback)
 
    (define (chmod-callback res)
-      (fs-callback %worker %this callback "chmod"
+      (fs-callback %worker %this process callback "chmod"
 	 (format "chmod: cannot chmod ~a, ~a -- ~~s" (js-jsstring->string path) mod)
 	 res))
 
@@ -783,10 +854,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lchmod ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lchmod %worker %this fd mod callback)
+(define (nodejs-lchmod %worker %this process fd mod callback)
    
    (define (lchmod-callback res)
-      (fs-callback %worker %this callback "lchmod"
+      (fs-callback %worker %this process callback "lchmod"
 	 (format "lchmod: cannot chmod ~a, ~a -- ~~s" (js-jsstring->string fd) mod)
 	 res))
    
@@ -795,18 +866,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-open ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-open %worker %this path flags mode callback)
+(define (nodejs-open %worker %this process path flags mode callback)
    
    (define (open-callback res)
       (if (isa? res UvFile)
-	  (js-call2 %this callback (js-undefined) #f
+	  (!js-call2 'open %this callback (js-undefined) #f
 	     (uvfile->int %worker res))
 	  (let ((exn (fs-errno-exn
 			(format "open '~a'" (js-jsstring->string path))
 			res %this)))
 	     (js-put! exn 'path path #f %this)
-	     (js-call2 %this callback (js-undefined) exn #f))))
-   
+	     (!js-call2 'open %this callback (js-undefined) exn #f))))
+
    (if (isa? callback JsFunction)
        (uv-fs-open (js-jsstring->string path) flags :mode mode
 	  :loop (worker-loop %worker)
@@ -823,7 +894,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fs-close ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fs-close %worker %this fd callback)
+(define (nodejs-fs-close %worker %this process fd callback)
    (let ((file (int->uvfile %worker %this fd)))
       (if file
 	  (begin
@@ -832,7 +903,8 @@
 		 (uv-fs-close file
 		    :loop (worker-loop %worker)
 		    :callback
-		    (lambda (val) (js-call1 %this callback (js-undefined) val)))
+		    (lambda (val)
+		       (!js-call1 'close %this callback (js-undefined) val)))
 		 (uv-fs-close file)))
 	  (fs-callback-error %worker %this callback "close"))))
 
@@ -861,32 +933,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    stat-cb ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (stat-cb %worker %this callback name obj proto lbl path)
+(define (stat-cb %worker %this process callback name obj proto lbl path)
    (lambda (res)
       (if (integer? res)
-	  (js-worker-push-thunk! %worker "stat"
-	     (lambda ()
-		(js-call2 %this callback (js-undefined)
-		   (fs-errno-path-exn
-		      (format "~a: cannot stat ~a -- ~~s" name obj)
-		      res %this path)
-		   #f)))
+	  (!js-call2 'stat %this callback (js-undefined)
+	     (fs-errno-path-exn
+		(format "~a: cannot stat ~a -- ~~s" name obj)
+		res %this path)
+	     #f)
 	  (let ((jsobj (stat->jsobj %this proto res)))
-	     (js-worker-push-thunk! %worker "stat"
-		(lambda ()
-		   (js-call2 %this callback (js-undefined) #f jsobj)))))))
+	     (!js-call2 'stat %this callback (js-undefined) #f jsobj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fstat %worker %this fd callback proto)
+(define (nodejs-fstat %worker %this process fd callback proto)
    (let ((file (int->uvfile %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (let ((lbl (string-append "fstat:" (integer->string fd))))
 		 (uv-fs-fstat file
 		    :loop (worker-loop %worker)
-		    :callback (stat-cb %worker %this callback
+		    :callback (stat-cb %worker %this process callback
 				 "fstat" fd proto lbl #f)))
 	      (let ((res (uv-fs-fstat file)))
 		 (if (integer? res)
@@ -900,12 +968,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stat ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stat %worker %this path callback proto)
+(define (nodejs-stat %worker %this process path callback proto)
    (if (isa? callback JsFunction)
        (let ((lbl (string-append "stat:" (js-jsstring->string path))))
 	  (uv-fs-stat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this callback "stat"
+	     :callback (stat-cb %worker %this process callback "stat"
 			  (js-jsstring->string path) proto lbl path)))
        (let ((res (uv-fs-stat (js-jsstring->string path))))
 	  (if (integer? res)
@@ -919,12 +987,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-lstat ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-lstat %worker %this path callback proto)
+(define (nodejs-lstat %worker %this process path callback proto)
    (if (isa? callback JsFunction)
        (let ((lbl (string-append "lstat:" (js-jsstring->string path))))
 	  (uv-fs-lstat (js-jsstring->string path)
 	     :loop (worker-loop %worker)
-	     :callback (stat-cb %worker %this callback "lstat"
+	     :callback (stat-cb %worker %this process callback "lstat"
 			  path proto lbl path)))
        (let ((res (uv-fs-lstat (js-jsstring->string path))))
 	  (if (integer? res)
@@ -937,10 +1005,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-link ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-link %worker %this src dst callback)
+(define (nodejs-link %worker %this process src dst callback)
    
    (define (link-callback res)
-      (fs-callback %worker %this callback "link"
+      (fs-callback %worker %this process callback "link"
 	 (format "link: cannot link ~a, ~a -- ~~s"
 	    (js-jsstring->string src) (js-jsstring->string dst))
 	 res))
@@ -961,10 +1029,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-symlink ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-symlink %worker %this src dst callback)
+(define (nodejs-symlink %worker %this process src dst callback)
    
    (define (symlink-callback res)
-      (fs-callback %worker %this callback "symlink"
+      (fs-callback %worker %this process callback "symlink"
 	 (format "symlink: cannot link ~a, ~a -- ~~s"
 	    (js-jsstring->string src) (js-jsstring->string dst))
 	 res))
@@ -978,16 +1046,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-readlink ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-readlink %worker %this src callback)
+(define (nodejs-readlink %worker %this process src callback)
    
    (define (readlink-callback res)
       (if (integer? res)
-	  (js-call2 %this callback (js-undefined)
+	  (!js-call2 'readlink %this callback (js-undefined)
 	     (fs-errno-exn (format "readlink: ~~a ~s"
 			      (js-jsstring->string src))
 		res %this)
 	     (js-undefined))
-	  (js-call2 %this callback (js-undefined) '()
+	  (!js-call2 'readlink %this callback (js-undefined) '()
 	     (js-string->jsstring res))))
    
    (if (isa? callback JsFunction)
@@ -1008,10 +1076,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-unlink ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-unlink %worker %this src callback)
+(define (nodejs-unlink %worker %this process src callback)
    
    (define (unlink-callback res)
-      (fs-callback %worker %this callback "unlink"
+      (fs-callback %worker %this process callback "unlink"
 	 (format "unlink: cannot unlink ~a -- ~~s" src)
 	 res))
    
@@ -1031,10 +1099,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-rmdir ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-rmdir %worker %this src callback)
+(define (nodejs-rmdir %worker %this process src callback)
    
    (define (rmdir-callback res)
-      (fs-callback %worker %this callback "rmdir"
+      (fs-callback %worker %this process callback "rmdir"
 	 (format "rmdir: cannot rmdir ~a -- ~~s" (js-jsstring->string src))
 	 res))
    
@@ -1053,10 +1121,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fdatasync ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fdatasync %worker %this fd callback)
+(define (nodejs-fdatasync %worker %this process fd callback)
    
    (define (datasync-callback res)
-      (fs-callback %worker %this callback "datasync"
+      (fs-callback %worker %this process callback "datasync"
 	 (format "datasync: cannot datasync ~a -- ~~s" fd)
 	 res))
    
@@ -1073,25 +1141,25 @@
 			   (format "datasync: cannot datasync ~a" fd)
 			   r %this))
 		     r)))
-	  (fs-callback-error %worker %this callback "fdatasync" #f))))
+	  (fs-callback-error %worker %this "fdatasync" #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-mkdir ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-mkdir %worker %this path mode callback)
+(define (nodejs-mkdir %worker %this process path mode callback)
    
    (define (mkdir-callback res)
       (cond
 	 ((not (integer? res))
-	  (js-call1 %this callback (js-undefined) res))
+	  (!js-call1 'mkdir %this callback (js-undefined) res))
 	 ((=fx res 0)
-	  (js-call1 %this callback (js-undefined) '()))
+	  (!js-call1 'mkdir %this callback (js-undefined) '()))
 	 (else
 	  (let ((exn (fs-errno-path-exn
 			(format "mkdir: cannot mkdir ~a -- ~~s"
 			   (js-jsstring->string path))
 			res %this path)))
-	     (js-call1 %this callback (js-undefined) exn)))))
+	     (!js-call1 'mkdir %this callback (js-undefined) exn)))))
    
    (if (isa? callback JsFunction)
        (uv-fs-mkdir (js-jsstring->string path) mode
@@ -1108,7 +1176,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-write ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-write %worker %this fd buffer offset length position callback)
+(define (nodejs-write %worker %this process fd buffer offset length position callback)
    (let ((file (int->uvfile %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
@@ -1116,9 +1184,11 @@
 		 (uv-fs-write (int->uvfile %worker %this fd) %data length
 		    :callback (lambda (obj)
 				 (if (<fx obj 0)
-				     (js-call3 %this callback (js-undefined)
+				     (!js-call3 'write %this
+					callback (js-undefined)
 					obj #f buffer)
-				     (js-call3 %this callback (js-undefined)
+				     (!js-call3 'write %this
+					callback (js-undefined)
 					#f obj buffer)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position position
@@ -1132,7 +1202,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-read ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-read %worker %this fd buffer offset length position callback)
+(define (nodejs-read %worker %this process fd buffer offset length position callback)
    (let ((file (int->uvfile %worker %this fd)))
       (if file
 	  (with-access::JsArrayBufferView buffer (%data byteoffset)
@@ -1141,8 +1211,8 @@
 		    :callback
 		    (lambda (obj)
 		       (if (<fx obj 0)
-			   (js-call2 %this callback (js-undefined) obj #f)
-			   (js-call2 %this callback (js-undefined) #f obj)))
+			   (!js-call2 'read %this callback (js-undefined) obj #f)
+			   (!js-call2 'read %this callback (js-undefined) #f obj)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position position
 		    :loop (worker-loop %worker))
@@ -1167,10 +1237,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-utimes ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-utimes %worker %this path atime mtime callback)
+(define (nodejs-utimes %worker %this process path atime mtime callback)
    
    (define (utimes-callback res)
-      (fs-callback %worker %this callback "utimes"
+      (fs-callback %worker %this process callback "utimes"
 	 (format "utimes: cannot utimes ~a -- ~~s" (js-jsstring->string path))
 	 res (js-undefined)))
    
@@ -1189,10 +1259,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-futimes ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-futimes %worker %this fd atime mtime callback)
+(define (nodejs-futimes %worker %this process fd atime mtime callback)
    
    (define (utimes-callback res)
-      (fs-callback %worker %this callback "futimes"
+      (fs-callback %worker %this process callback "futimes"
 	 (format "futimes: cannot utimes ~a -- ~~s" fd)
 	 res (js-undefined)))
    
@@ -1213,10 +1283,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fsync ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-fsync %worker %this fd callback)
+(define (nodejs-fsync %worker %this process fd callback)
    
    (define (fsync-callback res)
-      (fs-callback %worker %this callback "fsync"
+      (fs-callback %worker %this process callback "fsync"
 	 (format "fsync: cannot fsync ~a -- ~~s" fd)
 	 res))
    
@@ -1244,23 +1314,15 @@
 	       (let ((oncomplete (js-get wrap 'oncomplete %this)))
 		  (if (isa? oncomplete JsFunction)
 		      (if (pair? res)
-			  (js-call1 %this oncomplete (js-undefined)
+			  (!js-call1 'getaddrinfo %this oncomplete (js-undefined)
 			     (js-vector->jsarray
 				(list->vector (map! js-string->jsstring res))
 				%this))
 			  (begin
-			     (process-fail %this process res)
-			     (js-call1 %this oncomplete (js-undefined)
+			     (process-ares-fail %this process res)
+			     (!js-call1 'getaddrinfo %this oncomplete (js-undefined)
 				(js-undefined))))))))
 	 wrap)))
-
-;*---------------------------------------------------------------------*/
-;*    process-fail ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (process-fail %this process errno)
-   (js-put! process 'errno errno #f %this)
-   (js-put! process '_errno (js-string->jsstring (uv-err-name errno)) #f %this)
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-query ...                                                 */
@@ -1270,8 +1332,8 @@
    (define (query-callback res)
       (if (pair? res)
 	  (let ((v (js-vector->jsarray (list->vector res) %this)))
-	     (js-call2 %this cb (js-undefined) #f v))
-	  (js-call2 %this cb (js-undefined) res '#())))
+	     (!js-call2 'query %this cb (js-undefined) #f v))
+	  (!js-call2 'query %this cb (js-undefined) res '#())))
    
    [assert () (isa? (current-thread) WorkerHopThread)]
    (with-access::JsGlobalObject %this (js-object)
@@ -1280,7 +1342,28 @@
 		    :callback query-callback)))
 	 (if (=fx res 0)
 	     #t
-	     (process-fail %this process res)))))
+	     (process-ares-fail %this process res)))))
+
+;*---------------------------------------------------------------------*/
+;*    process-aeres-fail ...                                           */
+;*---------------------------------------------------------------------*/
+(define (process-ares-fail %this process errno)
+   
+   (define errnames
+      '#("SUCCESS" "ENODATA" "EFORMERR" "ESERVFAIL" "ENOTFOUND" "ENOTIMP"
+	 "EREFUSED" "EBADQUERY" "EBADNAME" "EBADFAMILY" "EBADRESP"
+	 "ECONNREFUSED" "ETIMEOUT" "EOF" "EFILE" "ENOMEM" "EDESTRUCTION"
+	 "EBADSTR" "EBADFLAGS" "ENONAME" "EBADHINTS" "ENOTINITIALIZED"))
+   
+   (define (ares-err-name errno)
+      (let ((n (negfx errno)))
+	 (if (or (<fx n 0) (>=fx n (vector-length errnames)))
+	     "ENOTFOUND"
+	     (vector-ref errnames n))))
+
+   (js-put! process 'errno errno #f %this)
+   (js-put! process '_errno (js-string->jsstring (ares-err-name errno)) #f %this)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-isip ...                                                  */
@@ -1331,9 +1414,14 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-connect %worker %this handle host port family callback)
    [assert (%worker) (eq? (current-thread) %worker)]
+   ;; (tprint "tcp-connect host=" host " port=" port " family=" family)
    (uv-tcp-connect handle (js-jsstring->string host) port :family family
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status handle)
+		   ;; (tprint "tcp-connect, AfterConnect status=" status)
+		   (js-worker-push-thunk! %worker "tcp-connect"
+		      (lambda ()
+			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-nodelay ...                                           */
@@ -1386,17 +1474,19 @@
 	  r
 	  (begin
 	     (process-fail %this process r)
-	     r))))
+	     -1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-listen ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-listen %worker %this process this handle backlog tcp-wrap)
+   ;; (tprint "tcp-listen")
    [assert (%worker) (eq? (current-thread) %worker)]
    (let ((r (uv-listen handle backlog
 	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
+		  ;; (tprint "tcp-listen, OnConnection status=" status)
 		  (if (< status 0)
 		      (process-fail %this process status)
 		      (with-access::UvTcp server (loop)
@@ -1405,7 +1495,7 @@
 			       (if (< r 0)
 				   (process-fail %this process r)
 				   (let ((onconn (js-get this 'onconnection %this)))
-				      (js-call1 %this onconn this
+				      (!js-call1 'listen %this onconn this
 					 (tcp-wrap client))))))))))))
       (if (<fx r 0)
 	  (fs-errno-exn "Listen failed ~s" r %this)
@@ -1458,7 +1548,10 @@
    (uv-udp-send handle buffer offset length port address
       :family family
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status)
+		   (js-worker-push-thunk! %worker "udp-send"
+		      (lambda ()
+			 (callback status))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-start ...                                        */
@@ -1522,7 +1615,11 @@
    [assert (%worker) (eq? %worker (current-thread))]
    (uv-stream-write handle buffer offset length
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status)
+		   ;; (tprint "AfterWrite status=" status)
+		   (js-worker-push-thunk! %worker "stream-write"
+		      (lambda ()
+			 (callback status))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
@@ -1531,12 +1628,15 @@
 ;*    [assert (%worker) (eq? %worker (current-thread))]                */
    (uv-stream-write2 handle buffer offset length sendhandle
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status)
+		   (js-worker-push-thunk! %worker "stream-write"
+		      (lambda ()
+			 (callback status))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-read-start %worker %this handle onalloc callback)
+(define (nodejs-stream-read-start %worker %this process handle onalloc callback)
    [assert (%worker) (or (not (current-thread)) (eq? %worker (current-thread)))]
    (uv-stream-read-start handle
       :onalloc onalloc
@@ -1547,7 +1647,6 @@
 ;*    nodejs-stream-read-stop ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-read-stop %worker %this handle)
-;*    [assert (%worker) (eq? %worker (current-thread))]                */
    (uv-stream-read-stop handle))
 
 ;*---------------------------------------------------------------------*/
@@ -1557,7 +1656,10 @@
    [assert (%worker) (eq? %worker (current-thread))]
    (uv-stream-shutdown handle
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status handle)
+		   (js-worker-push-thunk! %worker "stream-shutdown"
+		      (lambda ()
+			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
@@ -1665,14 +1767,16 @@
 	 (with-trace 'nodejs-spawn "process-onexit"
 	    (trace-item "status=" status)
 	    (when (isa? onexit JsFunction)
-	       (when (<fx status 0)
-		  (process-fail %this %process status)
-		  (set! status -1))
-	       (js-call2 %this onexit process
-		  status
-		  (if (=fx term 0)
-		      (js-undefined)
-		      (signal->string term)))))))
+	       (js-worker-push-thunk! %worker "exit"
+		  (lambda ()
+		     (when (<fx status 0)
+			(process-fail %this %process status)
+			(set! status -1))
+		     (js-call2 %this onexit process
+			status
+			(if (=fx term 0)
+			    (js-undefined)
+			    (signal->string term)))))))))
 
    (let ((opts (instantiate::UvProcessOptions)))
       (with-access::UvProcessOptions opts ((oflags flags)
@@ -1854,24 +1958,31 @@
 ;*    nodejs-pipe-connect ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-connect %worker %this handle name callback)
+   ;; (tprint "tcp-listen, pipe-connect")
    [assert (%worker) (eq? (current-thread) %worker)]
    (uv-pipe-connect handle (js-jsstring->string name)
       :loop (worker-loop %worker)
-      :callback callback))
+      :callback (lambda (status handle)
+		   ;; (tprint "pipe-connect status=" status)
+		   (js-worker-push-thunk! %worker "pipe-connect"
+		      (lambda ()
+			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-listen ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-listen %worker %this process this handle backlog)
+   ;; rint "pipe-listen...")
    [assert (%worker) (eq? (current-thread) %worker)]
    (let ((r (uv-listen handle backlog
 	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
+		  '' (tprint "pipe-listen listen status=" status)
 		  (if (< status 0)
 		      (process-fail %this process status)
 		      (let ((onconn (js-get this 'onconnection %this)))
-			 (js-call0 %this onconn this)))))))
+			 (!js-call0 'listen %this onconn this)))))))
       (if (<fx r 0)
 	  (fs-errno-exn "Listen failed ~s" r %this)
 	  r)))

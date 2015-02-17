@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 16 17:07:27 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Jan 31 09:15:05 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -306,6 +306,8 @@
 	   (macro define-walk-method)
 
 	   (j2sfun-id ::J2SFun)
+	   (j2sfun-expression? ::J2SFun)
+	   
 	   (ast-decl-key::int)
 	   
 	   (ast->json ::obj ::output-port)
@@ -315,13 +317,20 @@
 	      (%id read-only))))
 
 ;*---------------------------------------------------------------------*/
-;*    js2fun-id ...                                                    */
+;*    j2sfun-id ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2sfun-id this::J2SFun)
    (with-access::J2SFun this (decl)
       (when (isa? decl J2SDecl)
 	 (with-access::J2SDecl decl (id)
 	    id))))
+
+;*---------------------------------------------------------------------*/
+;*    j2sfun-expression? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2sfun-expression? this::J2SFun)
+   (with-access::J2SFun this (decl)
+      (isa? decl J2SDeclCnstFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */

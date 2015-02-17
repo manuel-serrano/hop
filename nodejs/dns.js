@@ -126,7 +126,6 @@ exports.lookup = function(domain, family, callback) {
   }
 
   var wrap = cares.getaddrinfo(domain, family);
-
   if (!wrap) {
     throw errnoException(process._errno, 'getaddrinfo');
   }

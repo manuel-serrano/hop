@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sat Jan 17 08:48:12 2015 (serrano)                */
+;*    Last change :  Fri Feb  6 11:35:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -16,7 +16,10 @@
 
    (library hopscript)
 
-   (import  __nodejs_uv)
+   (include "nodejs_async.sch")
+   
+   (import  __nodejs_uv
+	    __nodejs_process)
 
    (export O_RDONLY
 	   O_WRONLY
@@ -39,7 +42,7 @@
 	   S_IFIFO
 	   S_IFSOCK
 	   
-	   (process-fs ::WorkerHopThread ::JsGlobalObject)))
+	   (process-fs ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
@@ -113,34 +116,34 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/fs.html                                    */
 ;*---------------------------------------------------------------------*/
-(define (process-fs %worker %this)
-
+(define (process-fs %worker %this process)
+   
    (define (rename this old new cb)
-      (nodejs-rename-file %worker %this old new cb))
+      (nodejs-rename-file %worker %this process old new cb))
    
    (define (ftruncate this fd offset cb)
-      (nodejs-ftruncate %worker %this fd offset cb))
+      (nodejs-ftruncate %worker %this process fd offset cb))
    
    (define (truncate this path offset cb)
-      (nodejs-truncate %worker %this path offset cb))
+      (nodejs-truncate %worker %this process path offset cb))
    
    (define (fchown this fd uid gid cb)
-      (nodejs-fchown %worker %this fd uid gid cb))
+      (nodejs-fchown %worker %this process fd uid gid cb))
    
    (define (chown this path uid gid cb)
-      (nodejs-chown %worker %this path uid gid cb))
+      (nodejs-chown %worker %this process path uid gid cb))
    
    (define (lchown this path uid gid cb)
-      (nodejs-lchown %worker %this path uid gid cb))
+      (nodejs-lchown %worker %this process path uid gid cb))
    
    (define (fchmod this fd mod cb)
-      (nodejs-fchmod %worker %this fd mod cb))
+      (nodejs-fchmod %worker %this process fd mod cb))
    
    (define (chmod this path mod cb)
-      (nodejs-chmod %worker %this path mod cb))
+      (nodejs-chmod %worker %this process path mod cb))
    
    (define (lchmod this path mod cb)
-      (nodejs-lchmod %worker %this path mod cb))
+      (nodejs-lchmod %worker %this process path mod cb))
    
    (define (readdir this jspath::JsStringLiteral cb)
       (let* ((path (js-jsstring->string jspath))
@@ -165,67 +168,70 @@
 		       (lambda ()
 			  (js-call2 %this cb this #f r)))
 		    r)))))
-
+   
    (define (fstat this fd callback)
-      (nodejs-fstat %worker %this fd callback (get-process-fs-stats %this)))
-
+      (nodejs-fstat %worker %this process
+	 fd callback (get-process-fs-stats %this)))
+   
    (define (stat this path callback)
-      (nodejs-stat %worker %this path callback (get-process-fs-stats %this)))
-
+      (nodejs-stat %worker %this process
+	 path callback (get-process-fs-stats %this)))
+   
    (define (lstat this path callback)
-      (nodejs-lstat %worker %this path callback (get-process-fs-stats %this)))
-
+      (nodejs-lstat %worker %this process
+	 path callback (get-process-fs-stats %this)))
+   
    (define (link this src dst callback)
-      (nodejs-link %worker %this src dst callback))
-
+      (nodejs-link %worker %this process src dst callback))
+   
    (define (symlink this src dst type callback)
       (if (eq? callback (js-undefined))
-	  (nodejs-symlink %worker %this src dst type)
-	  (nodejs-symlink %worker %this src dst callback)))
-
+	  (nodejs-symlink %worker %this process src dst type)
+	  (nodejs-symlink %worker %this process src dst callback)))
+   
    (define (readlink this path callback)
-      (nodejs-readlink %worker %this path callback))
-
+      (nodejs-readlink %worker %this process path callback))
+   
    (define (unlink this path callback)
-      (nodejs-unlink %worker %this path callback))
-
+      (nodejs-unlink %worker %this process path callback))
+   
    (define (rmdir this path callback)
-      (nodejs-rmdir %worker %this path callback))
-
+      (nodejs-rmdir %worker %this process path callback))
+   
    (define (fdatasync this path callback)
-      (nodejs-fdatasync %worker %this path callback))
-
+      (nodejs-fdatasync %worker %this process path callback))
+   
    (define (mkdir this path mode callback)
       (if (eq? callback (js-undefined))
 	  (if (isa? mode JsFunction)
-	      (nodejs-mkdir %worker %this path #o777 mode)
-	      (nodejs-mkdir %worker %this path mode #f))
-	  (nodejs-mkdir %worker %this path mode callback)))
-
+	      (nodejs-mkdir %worker %this process path #o777 mode)
+	      (nodejs-mkdir %worker %this process path mode #f))
+	  (nodejs-mkdir %worker %this process path mode callback)))
+   
    (define (close this fd callback)
-      (nodejs-fs-close %worker %this fd callback))
-
+      (nodejs-fs-close %worker %this process fd callback))
+   
    (define (open this path flags mode callback)
-      (nodejs-open %worker %this path flags mode callback))
-
+      (nodejs-open %worker %this process path flags mode callback))
+   
    (define (utimes this path atime mtime callback)
-      (nodejs-utimes %worker %this path atime mtime callback))
+      (nodejs-utimes %worker %this process path atime mtime callback))
    
    (define (futimes this fd atime mtime callback)
-      (nodejs-futimes %worker %this fd atime mtime callback))
+      (nodejs-futimes %worker %this process fd atime mtime callback))
    
    (define (fsync this fd callback)
-      (nodejs-fsync %worker %this fd callback))
+      (nodejs-fsync %worker %this process fd callback))
    
    (define (write this fd buffer offset length position callback)
-      (nodejs-write %worker %this fd buffer offset length
+      (nodejs-write %worker %this process fd buffer offset length
 	 (if (not (integer? position))
 	     -1
 	     (int32->fixnum (js-toint32 position %this)))
 	 callback))
    
    (define (read this fd buffer offset length position callback)
-      (nodejs-read %worker %this fd buffer
+      (nodejs-read %worker %this process fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))
 	 (if (not (integer? position))
@@ -233,6 +239,56 @@
 	     (int32->fixnum (js-toint32 position %this)))
 	 callback))
 
+   (define (create-fs-watcher-proto)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((obj (js-new %this js-object)))
+	    
+	    (js-put! obj 'start
+	       (js-make-function %this
+		  (lambda (this::JsHandle path options interval)
+		     (with-access::JsHandle this (handle)
+			(nodejs-fs-poll-start %this (get-process-fs-stats %this)
+			   handle
+			   (js-tostring path %this)
+			   (lambda (_ status prev curr)
+			      (let ((onchange (js-get this 'onchange %this)))
+				 (unless (=fx status 0)
+				    (js-put! process '_errno
+				       (nodejs-err-name status)
+				       #f %this))
+				 (!js-call3 'fs-watcher %this onchange this
+				    curr prev status)))
+			   interval))
+		     (unless (js-totest options)
+			(with-access::JsHandle this (handle)
+			   (nodejs-unref handle %worker))))
+		  3 "start")
+	       #f %this)
+	    
+	    (js-put! obj 'stop
+	       (js-make-function %this
+		  (lambda (this)
+		     (let ((onstop (js-get this 'onstop %this)))
+			(when (isa? onstop JsFunction)
+			   (!js-call0 'fs-watcher %this onstop this)))
+		     (with-access::JsHandle this (handle)
+			(nodejs-fs-poll-stop handle)))
+		  1 "stop")
+	       #f %this)
+	    
+	    obj)))
+   
+   (define (get-fs-watcher-proto process)
+      (with-access::JsProcess process (fs-watcher-proto)
+	 (unless fs-watcher-proto
+	    (set! fs-watcher-proto (create-fs-watcher-proto)))
+	 fs-watcher-proto))
+   
+   (define (fs-watcher this)
+      (instantiate::JsHandle
+	 (handle (nodejs-make-fs-poll %worker))
+	 (__proto__ (get-fs-watcher-proto process))))
+   
    (js-alist->jsobject
       `((rename . ,(js-make-function %this rename 2 "rename"))
 	(ftruncate . ,(js-make-function %this ftruncate 2 "ftruncate"))
@@ -262,5 +318,8 @@
 	(write . ,(js-make-function %this write 5 "write"))
 	
 	(open . ,(js-make-function %this open 4 "open"))
-	(read . ,(js-make-function %this read 6 "read")))
+	(read . ,(js-make-function %this read 6 "read"))
+	(StatWatcher . ,(js-make-function %this fs-watcher 0 "StatWatcher"
+			   :alloc (lambda (o) #unspecified)
+			   :construct fs-watcher)))
       %this))

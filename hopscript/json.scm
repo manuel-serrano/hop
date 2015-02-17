@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Jan 17 08:15:39 2015 (serrano)                */
+;*    Last change :  Thu Feb  5 14:51:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -239,7 +239,7 @@
       
       (define gap "")
       
-      (define (lst::JsStringLiteral key::symbol holder value mind
+      (define (lst::JsStringLiteral holder value mind
 		 opar::bstring cpar::bstring proc)
 	 (let ((len (js-get value 'length %this)))
 	    (js-string->jsstring 
@@ -320,14 +320,14 @@
 		   ((isa? value JsFunction)
 		    (js-undefined))
 		   ((isa? value JsArray)
-		    (let ((res (lst key holder value mind "[" "]"
+		    (let ((res (lst holder value mind "[" "]"
 				  (lambda (i)
 				     (str i value stack)))))
 		       (set! gap mind)
 		       res))
 		   ((and (isa? rep JsObject) (not (isa? rep JsFunction)))
 		    ;; rep is an array
-		    (let ((res (lst key holder value mind "{" "}"
+		    (let ((res (lst holder value mind "{" "}"
 				  (lambda (i)
 				     (let ((k (js-get rep i %this)))
 					(when (js-jsstring? k)

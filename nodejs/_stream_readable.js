@@ -30,7 +30,7 @@ var StringDecoder;
 util.inherits(Readable, Stream);
 
 function console_error() {
-/*    console.error.apply( this, arguments );                          */
+//   console.error.apply( this, arguments );
 }
 
 function ReadableState(options, stream) {
@@ -122,12 +122,13 @@ Readable.prototype.push = function(chunk, encoding) {
 
   if (typeof chunk === 'string' && !state.objectMode) {
     encoding = encoding || state.defaultEncoding;
-    if (encoding !== state.encoding) {
+     if (encoding !== state.encoding) {
       chunk = new Buffer(chunk, encoding);
       encoding = '';
     }
   }
 
+   console_error( "---- push chunk state=", state.ended, " chunk=", typeof chunk );
   return readableAddChunk(this, state, chunk, encoding, false);
 };
 
@@ -135,12 +136,14 @@ Readable.prototype.push = function(chunk, encoding) {
 Readable.prototype.unshift = function(chunk) {
   var state = this._readableState;
 
+   console_error( "---- unshift state=", state.ended );
   return readableAddChunk(this, state, chunk, '', true);
 };
 
 var count = 0;
 
 function readableAddChunk(stream, state, chunk, encoding, addToFront) {
+   console_error( "---- readableAddChunk state=", state.ended );
   var er = chunkInvalid(state, chunk);
   if (er) {
     stream.emit('error', er);
@@ -156,19 +159,23 @@ function readableAddChunk(stream, state, chunk, encoding, addToFront) {
       var e = new Error('stream.unshift() after end event');
       stream.emit('error', e);
     } else {
+       console_error( "---- state.decoder=", state.decoder, " enc=", encoding );
       if (state.decoder && !addToFront && !encoding) {
         chunk = state.decoder.write(chunk);
       }
 
+       console_error( "---- addToFront=", addToFront );
       // update the buffer info.
       state.length += state.objectMode ? 1 : chunk.length;
       if (addToFront) {
         state.buffer.unshift(chunk);
       } else {
         state.reading = false;
+       console_error( "---- state.buffer.push=", state.buffer.push );
         state.buffer.push(chunk);
       }
 
+       console_error( "---- state.needReable=", state.needReadble );
       if (state.needReadable) {
         emitReadable(stream);
       }
@@ -769,7 +776,6 @@ Readable.prototype.addListener = Readable.prototype.on;
 // pause() and resume() are remnants of the legacy readable stream API
 // If the user uses them, then switch into old mode.
 Readable.prototype.resume = function() {
-   console_error( "Readable.prototype.on, resume" );
   emitDataEvents(this);
   this.read(0);
   this.emit('resume');
@@ -975,7 +981,6 @@ function fromList(n, state) {
 
 function endReadable(stream) {
   var state = stream._readableState;
-
   // If we get here before consuming all the bytes, then that is a
   // bug in node.  Should never happen.
   if (state.length > 0)
@@ -987,7 +992,7 @@ function endReadable(stream) {
       // Check that we didn't get one last unshift.
       if (!state.endEmitted && state.length === 0) {
         state.endEmitted = true;
-        stream.readable = false;
+         stream.readable = false;
         stream.emit('end');
       }
     });

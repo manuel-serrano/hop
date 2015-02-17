@@ -239,7 +239,6 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
    debug( "SlabBuffer.prototype.use bytes=" + bytes);
    if (bytes > 0) {
     this.offset += bytes;
-#:tprint( "this.offset += -> ", this.offset, " bytes=", bytes );
     this.remaining -= bytes;
   }
 
@@ -842,7 +841,6 @@ function onhandshakestart() {
     // callback to destroy the connection right now, it would crash and burn.
     setImmediate(function() {
       var err = new Error('TLS session renegotiation attack detected.');
-#:tprint( "emit error er=", err );
       if (self.cleartext) self.cleartext.emit('error', err);
     });
   }
@@ -1051,7 +1049,6 @@ SecurePair.prototype.error = function(returnOnly) {
     }
     this.destroy();
      if (!returnOnly) {
-#:tprint( "emit error er=", er );
 	this.emit('error', err);
      }
   } else if (this._isServer &&
@@ -1061,7 +1058,6 @@ SecurePair.prototype.error = function(returnOnly) {
     this.destroy();
   } else {
      if (!returnOnly) {
-#:tprint( "emit error er=", er );
 	this.cleartext.emit('error', err);
      }
   }
@@ -1423,7 +1419,7 @@ exports.connect = function(/* [port, host], options, cb */) {
       }
     }
 
-    if (verifyError) {
+     if (verifyError) {
       cleartext.authorized = false;
       cleartext.authorizationError = verifyError.message;
 

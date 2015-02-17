@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Jan 21 10:53:28 2015 (serrano)                */
+;*    Last change :  Fri Feb  6 12:46:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -19,7 +19,8 @@
    (library hopscript hop)
 
    (include "nodejs.sch"
-	    "nodejs_debug.sch")
+	    "nodejs_debug.sch"
+	    "nodejs_async.sch")
 
    (import __nodejs__hop
 	   __nodejs__fs
@@ -45,7 +46,9 @@
 	      (js-pipe (default #f))
 	      (js-tty (default #f))
 	      (fs-event-proto (default #f))
+	      (fs-watcher-proto (default #f))
 	      (buffer-binding (default #f))
+	      (using-domains::bool (default #f))
 	      (exiting::bool (default #f)))
 
 	   (class JsHandle::JsObject
@@ -93,8 +96,6 @@
 	       (define (on this signame proc)
 		  (let ((sig (js-tostring signame %this)))
 		     (cond
-;* 			((string=? sig "uncaughtException")            */
-;* 			 (js-worker-add-handler! %worker proc))        */
 			((and (string=? sig "exit") (not exitarmed))
 			 (with-access::WorkerHopThread %worker (onexit)
 			    (set! onexit proc))
@@ -114,8 +115,6 @@
 	       (define (remove this signame proc)
 		  (let ((sig (js-tostring signame %this)))
 		     (cond
-;* 			((string=? sig "uncaughtException")            */
-;* 			 (js-worker-remove-handler! %worker proc))     */
 			((string=? sig "exit")
 			 (with-access::WorkerHopThread %worker (onexit)
 			  (set! onexit #f))
@@ -240,8 +239,6 @@
 			       ret)))
 		      (callback)))))
 		  
-	 (define using-domains #f)
-
 	 ;; these stdio definitions are used during the bootstrap only
 	 ;; they will be overriden by node_stdio.js
 	 (js-put! proc 'stdout
@@ -299,9 +296,37 @@
 		  (exit 134))
 	       0 "abort")
 	    #f %this)
+
+	 ;; first process name
+	 (nodejs-process-title-init!)
 	 
-	 (js-put! proc 'title (js-string->jsstring (hop-name)) #f %this)
+	 (js-bind! %this proc 'title
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (js-string->jsstring (nodejs-get-process-title)))
+		    0 'title)
+	    :set (js-make-function %this
+		    (lambda (this str)
+		       (nodejs-set-process-title! (js-tostring str %this)))
+		    1 'title)
+	    :configurable #f)
+	 
 	 (js-put! proc 'version (js-string->jsstring (hop-version)) #f %this)
+	 
+	 (js-put! proc 'versions
+	    (js-alist->jsobject
+	       '((http_parser: . "1.0")
+		 (hop: . ,(hop-version))
+		 (bigloo: . ,(bigloo-version))
+		 (uv: . ,(nodejs-uv-version))
+		 (modules: . "11")
+		 (openssl: . ssl-version)
+		 (v8: . "-")
+		 (node: . "-")
+		 (ares: . "-")
+		 (zlib: . "-"))
+	       %this)
+	    #f %this)
 	 
 	 (js-put! proc 'exit
 	    (js-make-function %this
@@ -309,11 +334,10 @@
 		  (let ((r (if (eq? status (js-undefined))
 			       0
 			       (js-tointeger status %this))))
-		     (with-access::JsProcess proc (exiting)
-			(unless exiting
-			   (set! exiting #t)
-			   (let ((emit (js-get proc 'emit %this)))
-			      (js-call2 %this emit proc "exit" r)))
+		     (unless (js-totest (js-get proc '_exiting %this))
+			(js-put! proc '_exiting #t #f %this)
+			(let ((emit (js-get proc 'emit %this)))
+			   (js-call2 %this emit proc "exit" r))
 			(exit r))))
 	       1 "exit")
 	    #f %this)
@@ -333,7 +357,7 @@
 			((string=? mod "constants")
 			 (process-constants %this))
 			((string=? mod "fs")
-			 (process-fs %worker %this))
+			 (process-fs %worker %this proc))
 			((string=? mod "buffer")
 			 (process-buffer %this slowbuffer))
 			((string=? mod "tcp_wrap")
@@ -351,7 +375,7 @@
 			((string=? mod "process_wrap")
 			 (process-process-wrap %worker %this proc))
 			((string=? mod "crypto")
-			 (process-crypto %this))
+			 (process-crypto %worker %this))
 			((string=? mod "http_parser")
 			 (process-http-parser %this))
 			((string=? mod "zlib")
@@ -460,22 +484,24 @@
 	 (js-put! proc '_usingDomains
 	    (js-make-function %this
 	       (lambda (this)
-		  (unless using-domains
-		     (set! using-domains #t)
-		     (with-access::WorkerHopThread %worker (call)
-			(set! call (domain-call this)))
-		     (let ((tdc (js-get this '_tickDomainCallback %this))
-			   (ndt (js-get this '_nextDomainTick %this)))
-			(unless (isa? tdc JsFunction)
-			   (error "_usingDomains"
-			      "process._tickDomainCallback assigned to non-function"
-			      tdc))
-			(unless (isa? ndt JsFunction)
-			   (error "_usingDomains"
-			      "process._nextDomainTick assigned to non-function"
-			      ndt))
-			(js-put! this '_tickCallback tdc #f %this)
-			(js-put! this '_currentTickHandler ndt #f %this))))
+		  (with-access::JsProcess proc (using-domains)
+		     (unless using-domains
+			(set! using-domains #t)
+			(with-access::WorkerHopThread %worker (call async)
+			   (set! async #t)
+			   (set! call (domain-call this)))
+			(let ((tdc (js-get this '_tickDomainCallback %this))
+			      (ndt (js-get this '_nextDomainTick %this)))
+			   (unless (isa? tdc JsFunction)
+			      (error "_usingDomains"
+				 "process._tickDomainCallback assigned to non-function"
+				 tdc))
+			   (unless (isa? ndt JsFunction)
+			      (error "_usingDomains"
+				 "process._nextDomainTick assigned to non-function"
+				 ndt))
+			   (js-put! this '_tickCallback tdc #f %this)
+			   (js-put! this '_currentTickHandler ndt #f %this)))))
 	       0 "_usingDomains")
 	    #f %this)
 
@@ -517,6 +543,25 @@
 		  (nodejs-kill %worker %this proc pid sig))
 	       2 "_kill")
 	    #t %this)
+
+	 ;; memoryUsage
+	 (js-put! proc 'memoryUsage
+	    (js-make-function %this
+	       (lambda (this)
+		  (js-alist->jsobject
+		     `((rss . ,(nodejs-getresidentmem))
+		       (heapTotal . 0)
+		       (heapUsed . 0))
+		     %this))
+	       0 "memoryUsage")
+	    #t %this)
+
+	 ;; mainModule
+	 (with-access::JsGlobalObject %this (js-main) 
+	    (js-bind! %this proc 'mainModule
+	       :get (js-make-function %this (lambda (this) js-main) 0 'main)
+	       :configurable #f
+	       :writable #f))
 	 
 	 (for-each not-implemented
 	    '(_getActiveRequest
@@ -528,8 +573,7 @@
 	      _debugPause
 	      _debugEnd
 	      dlopen
-	      uptime
-	      memoryUsage))
+	      uptime))
 	 
 	 proc)))
 
@@ -618,7 +662,7 @@
 				    (else
 				     (error "process-fs-event-wrap"
 					"bad event" eventstr)))
-				 (js-call3 %this onchange this
+				 (!js-call3 'fs-event %this onchange this
 				    status eventstr
 				    (js-string->jsstring path))))
 			   (js-jsstring->string path)))
@@ -697,6 +741,7 @@
    
    (define (gethostbyname this name callback)
       (let ((res (hostinfo (js-tostring name %this))))
+	 (tprint "gethostbyname res=" res)
 	 (if (pair? res)
 	     (let ((addr (assq 'addresses res)))
 		(js-call2 %this callback (js-undefined) #f

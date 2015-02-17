@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jan 21 08:23:50 2015 (serrano)                */
+;*    Last change :  Wed Feb  4 19:57:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -104,18 +104,22 @@
       (if (char=? (string-ref file 0) #\/)
 	  (let loop ((dir (dirname file))
 		     (acc '()))
-	     (if (string=? dir "/")
+	     (cond
+		((string=? dir "/")
 		 (list->vector
-		    (reverse! (cons (js-string->jsstring "/node_modules") acc)))
+		    (reverse! (cons (js-string->jsstring "/node_modules") acc))))
+		((string-suffix? "/node_modules" dir)
+		 (loop (dirname dir) acc))
+		(else
 		 (loop (dirname dir)
 		    (cons
 		       (js-string->jsstring (make-file-name dir "node_modules"))
-		       acc))))
+		       acc)))))
 	  '#()))
    
    (define (module-init! m exports)
       ;; id field
-      (js-put! m 'id id #f %this)
+      (js-put! m 'id (js-string->jsstring id) #f %this)
       ;; exports
       (js-put! m 'exports exports #f %this)
       ;; filename
@@ -158,6 +162,13 @@
 	       (js-current-worker) this %module))
 	 1 "require"))
 
+   ;; require.main
+   (with-access::JsGlobalObject this (js-main) 
+      (js-bind! this require 'main
+	 :get (js-make-function this (lambda (this) js-main) 0 'main)
+	 :configurable #f
+	 :writable #f))
+   
    ;; require.resolve
    (js-put! require 'resolve
       (js-make-function this
@@ -169,6 +180,9 @@
 		      (nodejs-resolve name this %module)))))
 	 1 "resolve")
       #f this)
+
+   ;; module .require
+   (js-put! %module 'require require #f this)
 
    require)
 
@@ -200,6 +214,14 @@
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_SERVER_REQUEST")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_RESPONSE
+	    :value (js-make-function %this
+		      (lambda (this req socket)
+			 (js-undefined))
+		      2 "DTRACE_HTTP_SERVER_RESPONSE")
 	    :enumerable #f
 	    :writable #f
 	    :configurable #f)
@@ -256,6 +278,22 @@
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_STREAM_END")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_NET_SOCKET_READ
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "DTRACE_NET_SOCKET_READ")
+	    :enumerable #f
+	    :writable #f
+	    :configurable #f)
+	 (js-bind! %this proto 'DTRACE_NET_SOCKET_WRITE
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (js-undefined))
+		      0 "DTRACE_NET_SOCKET_WRITE")
 	    :enumerable #f
 	    :writable #f
 	    :configurable #f)
@@ -373,14 +411,17 @@
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook)
-	    (with-access::JsGlobalObject %this (js-object)
+	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (nodejs-compile filename))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
-		     (mod (nodejs-module (basename filename) filename %this)))
+		     (mod (nodejs-module (if js-main filename ".")
+			     filename %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
+		  ;; main module
+		  (unless js-main (set! js-main mod))
 		  ;; create the module
 		  (hopscript %this this scope mod)
 		  ;; return the newly created module
@@ -400,7 +441,7 @@
 	    (let ((evmod (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module (basename filename) filename %this)))
+		  (mod (nodejs-module filename filename %this)))
 	       (when (evmodule? evmod)
 		  (call-with-eval-module evmod
 		     (lambda ()
@@ -414,7 +455,7 @@
 	    (let ((init (dynamic-load filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module (basename filename) filename %this)))
+		  (mod (nodejs-module filename filename %this)))
 	       (when (procedure? init)
 		  (init %this this scope mod))
 	       ;; return the newly created module
@@ -432,6 +473,8 @@
 	  (load-module-so))
 	 ((or (string-prefix? "http://" filename)
 	      (string-prefix? "https://" filename))
+	  (load-module-js))
+	 ((not (string-index (basename filename) #\.))
 	  (load-module-js))
 	 (else
 	  (js-raise-error (js-new-global-object)
@@ -481,12 +524,13 @@
 ;* 		((string-suffix? ".wiki" abspath)                      */
 ;* 		 (load-wiki abspath))                                  */
 		(else
-		 (let* ((mod (nodejs-load abspath worker))
-			(children (js-get %module 'children %this))
-			(push (js-get children 'push %this)))
-		    (js-call1 %this push children mod)
-		    (when (eq? (js-get mod 'parent %this) (js-undefined))
-		       (js-put! mod 'parent %module #f %this))
+		 (let ((mod (nodejs-load abspath worker)))
+		    (unless (js-get mod 'parent %this)
+		       ;; parent and children
+		       (let* ((children (js-get %module 'children %this))
+			      (push (js-get children 'push %this)))
+			  (js-call1 %this push children mod)
+			  (js-put! mod 'parent %module #f %this)))
 		    (js-get mod 'exports %this))))))))
 
 ;*---------------------------------------------------------------------*/

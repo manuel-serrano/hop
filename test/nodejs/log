@@ -50,7 +50,7 @@
 49. test-child-process-stdio.js ... ok.
 50. test-child-process-stdout-flush.js ... ok.
 51. test-cli-eval.js ### BLACKLISTED
-52. test-cluster-basic.js ### BLACKLISTED
+52. test-cluster-basic.js ... ok.
 53. test-cluster-bind-twice-v1.js ### BLACKLISTED
 54. test-cluster-bind-twice-v2.js ### BLACKLISTED
 55. test-cluster-dgram-1.js ... ok.
@@ -63,7 +63,7 @@
 62. test-cluster-http-pipe.js ### BLACKLISTED
 63. test-cluster-listening-port.js ... ok.
 64. test-cluster-master-error.js ### BLACKLISTED
-65. test-cluster-master-kill.js ### BLACKLISTED
+65. test-cluster-master-kill.js ... ok.
 66. test-cluster-message.js ... ok.
 67. test-cluster-net-listen.js ... ok.
 68. test-cluster-net-send.js ... ok.
@@ -78,7 +78,7 @@
 77. test-console-instance.js ... ok.
 78. test-console-not-call-toString.js ... ok.
 79. test-console.js ... ok.
-80. test-crypto-binary-default.js ... ok.
+80. test-crypto-binary-default.js ### BLACKLISTED
 81. test-crypto-dh-odd-key.js ### BLACKLISTED
 82. test-crypto-ecb.js ### BLACKLISTED
 83. test-crypto-hash-stream-pipe.js ### BLACKLISTED
@@ -99,7 +99,7 @@
 98. test-dgram-address.js ... ok.
 99. test-dgram-bind-default-address.js ... ok.
 100. test-dgram-bind.js ... ok.
-101. test-dgram-broadcast-multi-process.js ... failure !!!
+101. test-dgram-broadcast-multi-process.js ### BLACKLISTED
 102. test-dgram-close.js ... ok.
 103. test-dgram-implicit-bind.js ... ok.
 104. test-dgram-listen-after-bind.js ... ok.
@@ -111,8 +111,8 @@
 110. test-dgram-send-bad-arguments.js ... ok.
 111. test-dgram-udp4.js ... ok.
 112. test-dgram-unref.js ... ok.
-113. test-dh-padding.js ... failure !!!
-114. test-domain-crypto.js ... failure !!!
+113. test-dh-padding.js ### BLACKLISTED
+114. test-domain-crypto.js ### BLACKLISTED
 115. test-domain-exit-dispose-again.js ... ok.
 116. test-domain-exit-dispose.js ... ok.
 117. test-domain-from-timer.js ... ok.
@@ -124,10 +124,10 @@
 123. test-domain-safe-exit.js ... ok.
 124. test-domain-stack.js ... ok.
 125. test-domain-timers.js ### BLACKLISTED
-126. test-domain.js ... failure !!!
+126. test-domain.js ### BLACKLISTED
 127. test-error-reporting.js ... ok.
-128. test-eval-require.js ... failure !!!
-129. test-eval.js ... failure !!!
+128. test-eval-require.js ### BLACKLISTED
+129. test-eval.js ### BLACKLISTED
 130. test-event-emitter-add-listeners.js ... ok.
 131. test-event-emitter-check-listener-leaks.js ... ok.
 132. test-event-emitter-listeners-side-effects.js ... ok.
@@ -151,7 +151,7 @@
 150. test-file-write-stream.js ... ok.
 151. test-file-write-stream2.js ... ok.
 152. test-file-write-stream3.js ... ok.
-153. test-force-repl.js ... failure !!!
+153. test-force-repl.js ### BLACKLISTED
 154. test-fs-append-file-sync.js ... ok.
 155. test-fs-append-file.js ... ok.
 156. test-fs-chmod.js ... ok.
@@ -200,181 +200,181 @@
 199. test-fs-write-sync.js ... ok.
 200. test-fs-write.js ... ok.
 201. test-global.js ... ok.
-202. test-http-1.0-keep-alive.js ### BLACKLISTED
-203. test-http-1.0.js ... failure !!!
-204. test-http-304.js ### BLACKLISTED
-205. test-http-abort-before-end.js ### BLACKLISTED
-206. test-http-abort-client.js ... failure !!!
-207. test-http-abort-stream-end.js ... failure !!!
-208. test-http-after-connect.js ... failure !!!
-209. test-http-agent-destroyed-socket.js ... failure !!!
-210. test-http-agent-null.js ... failure !!!
-211. test-http-agent.js ... failure !!!
-212. test-http-allow-req-after-204-res.js ... failure !!!
+202. test-http-1.0-keep-alive.js ... ok.
+203. test-http-1.0.js ... ok.
+204. test-http-304.js ... ok.
+205. test-http-abort-before-end.js ... ok.
+206. test-http-abort-client.js ... ok.
+207. test-http-abort-stream-end.js ... ok.
+208. test-http-after-connect.js ... ok.
+209. test-http-agent-destroyed-socket.js ... ok.
+210. test-http-agent-null.js ... ok.
+211. test-http-agent.js ... ok.
+212. test-http-allow-req-after-204-res.js ... ok.
 213. test-http-bind-twice.js ### BLACKLISTED
 214. test-http-blank-header.js ... ok.
-215. test-http-buffer-sanity.js ... failure !!!
-216. test-http-byteswritten.js ... failure !!!
-217. test-http-chunked-304.js ### BLACKLISTED
-218. test-http-chunked.js ... failure !!!
-219. test-http-client-abort.js ... failure !!!
-220. test-http-client-abort2.js ... failure !!!
-221. test-http-client-agent.js ... failure !!!
-222. test-http-client-get-url.js ... failure !!!
-223. test-http-client-parse-error.js ... failure !!!
-224. test-http-client-pipe-end.js ... failure !!!
-225. test-http-client-race-2.js ... failure !!!
-226. test-http-client-race.js ... failure !!!
-227. test-http-client-readable.js ... failure !!!
-228. test-http-client-response-domain.js ... failure !!!
-229. test-http-client-timeout-agent.js ### BLACKLISTED
-230. test-http-client-timeout-event.js ... failure !!!
-231. test-http-client-timeout-with-data.js ... failure !!!
+215. test-http-buffer-sanity.js ... ok.
+216. test-http-byteswritten.js ... ok.
+217. test-http-chunked-304.js ... ok.
+218. test-http-chunked.js ... ok.
+219. test-http-client-abort.js ... ok.
+220. test-http-client-abort2.js ... ok.
+221. test-http-client-agent.js ... ok.
+222. test-http-client-get-url.js ... ok.
+223. test-http-client-parse-error.js ... ok.
+224. test-http-client-pipe-end.js ### BLACKLISTED
+225. test-http-client-race-2.js ... ok.
+226. test-http-client-race.js ... ok.
+227. test-http-client-readable.js ... ok.
+228. test-http-client-response-domain.js ### BLACKLISTED
+229. test-http-client-timeout-agent.js ... ok.
+230. test-http-client-timeout-event.js ... ok.
+231. test-http-client-timeout-with-data.js ... ok.
 232. test-http-client-timeout.js ... ok.
-233. test-http-client-upload-buf.js ... failure !!!
-234. test-http-client-upload.js ... failure !!!
+233. test-http-client-upload-buf.js ... ok.
+234. test-http-client-upload.js ... ok.
 235. test-http-conn-reset.js ... ok.
-236. test-http-connect.js ... failure !!!
-237. test-http-contentLength0.js ... failure !!!
-238. test-http-createConnection.js ... failure !!!
-239. test-http-curl-chunk-problem.js ... failure !!!
-240. test-http-date-header.js ... failure !!!
-241. test-http-default-encoding.js ... failure !!!
-242. test-http-destroyed-socket-write.js ... failure !!!
-243. test-http-dns-error.js ... failure !!!
-244. test-http-end-throw-socket-handling.js ... failure !!!
+236. test-http-connect.js ... ok.
+237. test-http-contentLength0.js ... ok.
+238. test-http-createConnection.js ... ok.
+239. test-http-curl-chunk-problem.js ... ok.
+240. test-http-date-header.js ... ok.
+241. test-http-default-encoding.js ... ok.
+242. test-http-destroyed-socket-write.js ... ok.
+243. test-http-dns-error.js ... ok.
+244. test-http-end-throw-socket-handling.js ... ok.
 245. test-http-eof-on-connect.js ... ok.
-246. test-http-exceptions.js ### BLACKLISTED
-247. test-http-exit-delay.js ### BLACKLISTED
-248. test-http-expect-continue.js ... failure !!!
+246. test-http-exceptions.js ... ok.
+247. test-http-exit-delay.js ... ok.
+248. test-http-expect-continue.js ... ok.
 249. test-http-extra-response.js ... ok.
-250. test-http-full-response.js ### BLACKLISTED
-251. test-http-get-pipeline-problem.js ... failure !!!
-252. test-http-head-request.js ... failure !!!
-253. test-http-head-response-has-no-body-end.js ... failure !!!
-254. test-http-head-response-has-no-body.js ... failure !!!
-255. test-http-header-read.js ... failure !!!
-256. test-http-header-response-splitting.js ... failure !!!
-257. test-http-hex-write.js ... failure !!!
-258. test-http-host-headers.js ... failure !!!
-259. test-http-incoming-pipelined-socket-destroy.js ### BLACKLISTED
-260. test-http-keep-alive-close-on-header.js ... failure !!!
-261. test-http-keep-alive.js ... failure !!!
-262. test-http-legacy.js ... failure !!!
+250. test-http-full-response.js ... ok.
+251. test-http-get-pipeline-problem.js ... ok.
+252. test-http-head-request.js ... ok.
+253. test-http-head-response-has-no-body-end.js ... ok.
+254. test-http-head-response-has-no-body.js ... ok.
+255. test-http-header-read.js ... ok.
+256. test-http-header-response-splitting.js ... ok.
+257. test-http-hex-write.js ... ok.
+258. test-http-host-headers.js ### BLACKLISTED
+259. test-http-incoming-pipelined-socket-destroy.js ... ok.
+260. test-http-keep-alive-close-on-header.js ... ok.
+261. test-http-keep-alive.js ... ok.
+262. test-http-legacy.js ... ok.
 263. test-http-localaddress-bind-error.js ... ok.
-264. test-http-localaddress.js ... failure !!!
-265. test-http-malformed-request.js ### BLACKLISTED
-266. test-http-many-ended-pipelines.js ### BLACKLISTED
-267. test-http-many-keep-alive-connections.js ... failure !!!
-268. test-http-max-headers-count.js ... failure !!!
+264. test-http-localaddress.js ... ok.
+265. test-http-malformed-request.js ... ok.
+266. test-http-many-ended-pipelines.js ... ok.
+267. test-http-many-keep-alive-connections.js ### BLACKLISTED
+268. test-http-max-headers-count.js ... ok.
 269. test-http-multi-line-headers.js ... ok.
-270. test-http-mutable-headers.js ... failure !!!
+270. test-http-mutable-headers.js ... ok.
 271. test-http-no-content-length.js ... ok.
-272. test-http-parser-bad-ref.js ... failure !!!
-273. test-http-parser-free.js ... failure !!!
-274. test-http-parser.js ... failure !!!
-275. test-http-pause-resume-one-end.js ... failure !!!
-276. test-http-pause.js ... failure !!!
-277. test-http-pipe-fs.js ... failure !!!
-278. test-http-pipeline-flood.js ... failure !!!
-279. test-http-proxy.js ... failure !!!
-280. test-http-request-end-twice.js ... failure !!!
-281. test-http-request-end.js ... failure !!!
+272. test-http-parser-bad-ref.js ### BLACKLISTED
+273. test-http-parser-free.js ... ok.
+274. test-http-parser.js ... ok.
+275. test-http-pause-resume-one-end.js ... ok.
+276. test-http-pause.js ... ok.
+277. test-http-pipe-fs.js ... ok.
+278. test-http-pipeline-flood.js ### BLACKLISTED
+279. test-http-proxy.js ... ok.
+280. test-http-request-end-twice.js ... ok.
+281. test-http-request-end.js ... ok.
 282. test-http-request-methods.js ... ok.
-283. test-http-res-write-end-dont-take-array.js ... failure !!!
-284. test-http-response-close.js ... failure !!!
+283. test-http-res-write-end-dont-take-array.js ... ok.
+284. test-http-response-close.js ... ok.
 285. test-http-response-no-headers.js ... ok.
-286. test-http-response-readable.js ... failure !!!
-287. test-http-server-multiheaders.js ... failure !!!
-288. test-http-server-stale-close.js ### BLACKLISTED
-289. test-http-server.js ### BLACKLISTED
-290. test-http-set-cookies.js ... failure !!!
-291. test-http-set-timeout-server.js ### BLACKLISTED
-292. test-http-set-timeout.js ### BLACKLISTED
-293. test-http-set-trailers.js ... failure !!!
-294. test-http-should-keep-alive.js ... failure !!!
-295. test-http-status-code.js ... failure !!!
-296. test-http-timeout-overflow.js ... failure !!!
-297. test-http-timeout.js ... failure !!!
-298. test-http-unix-socket.js ... failure !!!
-299. test-http-upgrade-agent.js ... failure !!!
-300. test-http-upgrade-client.js ... failure !!!
-301. test-http-upgrade-client2.js ... failure !!!
-302. test-http-upgrade-server.js ### BLACKLISTED
+286. test-http-response-readable.js ... ok.
+287. test-http-server-multiheaders.js ... ok.
+288. test-http-server-stale-close.js ... ok.
+289. test-http-server.js ... ok.
+290. test-http-set-cookies.js ... ok.
+291. test-http-set-timeout-server.js ... ok.
+292. test-http-set-timeout.js ... ok.
+293. test-http-set-trailers.js ... ok.
+294. test-http-should-keep-alive.js ... ok.
+295. test-http-status-code.js ... ok.
+296. test-http-timeout-overflow.js ... ok.
+297. test-http-timeout.js ... ok.
+298. test-http-unix-socket.js ### BLACKLISTED
+299. test-http-upgrade-agent.js ... ok.
+300. test-http-upgrade-client.js ... ok.
+301. test-http-upgrade-client2.js ... ok.
+302. test-http-upgrade-server.js ... ok.
 303. test-http-upgrade-server2.js ... ok.
-304. test-http-url.parse-auth-with-header-in-request.js ... failure !!!
-305. test-http-url.parse-auth.js ... failure !!!
-306. test-http-url.parse-basic.js ... failure !!!
-307. test-http-url.parse-https.request.js ... failure !!!
+304. test-http-url.parse-auth-with-header-in-request.js ... ok.
+305. test-http-url.parse-auth.js ... ok.
+306. test-http-url.parse-basic.js ... ok.
+307. test-http-url.parse-https.request.js ### BLACKLISTED
 308. test-http-url.parse-only-support-http-https-protocol.js ... ok.
-309. test-http-url.parse-path.js ... failure !!!
-310. test-http-url.parse-post.js ... failure !!!
-311. test-http-url.parse-search.js ... failure !!!
+309. test-http-url.parse-path.js ... ok.
+310. test-http-url.parse-post.js ... ok.
+311. test-http-url.parse-search.js ... ok.
 312. test-http-wget.js ... ok.
-313. test-http-write-empty-string.js ... failure !!!
-314. test-http-zero-length-write.js ... failure !!!
-315. test-http.js ... failure !!!
-316. test-https-agent.js ... failure !!!
-317. test-https-byteswritten.js ... failure !!!
-318. test-https-client-get-url.js ... failure !!!
-319. test-https-client-reject.js ... failure !!!
-320. test-https-client-resume.js ... failure !!!
+313. test-http-write-empty-string.js ... ok.
+314. test-http-zero-length-write.js ... ok.
+315. test-http.js ... ok.
+316. test-https-agent.js ### BLACKLISTED
+317. test-https-byteswritten.js ### BLACKLISTED
+318. test-https-client-get-url.js ### BLACKLISTED
+319. test-https-client-reject.js ### BLACKLISTED
+320. test-https-client-resume.js ### BLACKLISTED
 321. test-https-connecting-to-http.js ### BLACKLISTED
-322. test-https-drain.js ... failure !!!
-323. test-https-eof-for-eom.js ... failure !!!
-324. test-https-foafssl.js ... ok.
-325. test-https-invalid-key.js ... failure !!!
-326. test-https-localaddress-bind-error.js ... failure !!!
-327. test-https-localaddress.js ... failure !!!
-328. test-https-no-reader.js ... failure !!!
-329. test-https-pfx.js ... failure !!!
-330. test-https-req-split.js ... failure !!!
-331. test-https-simple.js ... failure !!!
-332. test-https-socket-options.js ... failure !!!
-333. test-https-strict.js ... failure !!!
-334. test-https-timeout-server-2.js ... failure !!!
-335. test-https-timeout-server.js ... failure !!!
-336. test-https-timeout.js ... failure !!!
+322. test-https-drain.js ### BLACKLISTED
+323. test-https-eof-for-eom.js ### BLACKLISTED
+324. test-https-foafssl.js ### BLACKLISTED
+325. test-https-invalid-key.js ### BLACKLISTED
+326. test-https-localaddress-bind-error.js ### BLACKLISTED
+327. test-https-localaddress.js ### BLACKLISTED
+328. test-https-no-reader.js ### BLACKLISTED
+329. test-https-pfx.js ### BLACKLISTED
+330. test-https-req-split.js ### BLACKLISTED
+331. test-https-simple.js ### BLACKLISTED
+332. test-https-socket-options.js ### BLACKLISTED
+333. test-https-strict.js ### BLACKLISTED
+334. test-https-timeout-server-2.js ### BLACKLISTED
+335. test-https-timeout-server.js ### BLACKLISTED
+336. test-https-timeout.js ### BLACKLISTED
 337. test-init.js ### BLACKLISTED
-338. test-listen-fd-cluster.js ... failure !!!
-339. test-listen-fd-detached-inherit.js ... failure !!!
-340. test-listen-fd-detached.js ... failure !!!
+338. test-listen-fd-cluster.js ### BLACKLISTED
+339. test-listen-fd-detached-inherit.js ### BLACKLISTED
+340. test-listen-fd-detached.js ### BLACKLISTED
 341. test-listen-fd-ebadf.js ... ok.
-342. test-listen-fd-server.js ... failure !!!
-343. test-memory-usage-emfile.js ... failure !!!
-344. test-memory-usage.js ... failure !!!
+342. test-listen-fd-server.js ### BLACKLISTED
+343. test-memory-usage-emfile.js ... ok.
+344. test-memory-usage.js ... ok.
 345. test-mkdir-rmdir.js ... ok.
 346. test-module-loading-error.js ### BLACKLISTED
 347. test-module-loading.js ... failure !!!
-348. test-net-GH-5504.js ... failure !!!
+348. test-net-GH-5504.js ### BLACKLISTED
 349. test-net-after-close.js ... ok.
-350. test-net-binary.js ... failure !!!
+350. test-net-binary.js ... ok.
 351. test-net-bind-twice.js ### BLACKLISTED
 352. test-net-buffersize.js ... ok.
-353. test-net-bytes-stats.js ... failure !!!
+353. test-net-bytes-stats.js ... ok.
 354. test-net-can-reset-timeout.js ... ok.
 355. test-net-connect-buffer.js ... ok.
 356. test-net-connect-handle-econnrefused.js ... ok.
 357. test-net-connect-immediate-finish.js ... ok.
 358. test-net-connect-options.js ... ok.
 359. test-net-create-connection.js ... ok.
-360. test-net-dns-error.js ... failure !!!
+360. test-net-dns-error.js ... ok.
 361. test-net-during-close.js ... ok.
 362. test-net-eaddrinuse.js ### BLACKLISTED
 363. test-net-end-without-connect.js ... ok.
 364. test-net-error-twice.js ... ok.
 365. test-net-isip.js ... ok.
 366. test-net-keepalive.js ... ok.
-367. test-net-large-string.js ... failure !!!
+367. test-net-large-string.js ... ok.
 368. test-net-listen-error.js ... ok.
 369. test-net-listen-fd0.js ... ok.
 370. test-net-local-address-port.js ... ok.
 371. test-net-pause-resume-connecting.js ... ok.
 372. test-net-pingpong.js ### BLACKLISTED
-373. test-net-pipe-connect-errors.js ... failure !!!
+373. test-net-pipe-connect-errors.js ### BLACKLISTED
 374. test-net-reconnect.js ... ok.
 375. test-net-remote-address-port.js ... ok.
-376. test-net-server-address.js ### BLACKLISTED
+376. test-net-server-address.js ... ok.
 377. test-net-server-bind.js ... ok.
 378. test-net-server-close.js ... ok.
 379. test-net-server-listen-remove-callback.js ... ok.
@@ -401,25 +401,25 @@
 400. test-os.js ... ok.
 401. test-path-makelong.js ... ok.
 402. test-path.js ... ok.
-403. test-pipe-address.js ... failure !!!
-404. test-pipe-file-to-http.js ... failure !!!
+403. test-pipe-address.js ... ok.
+404. test-pipe-file-to-http.js ... ok.
 405. test-pipe-head.js ... ok.
 406. test-pipe-return-val.js ... ok.
-407. test-pipe-stream.js ... failure !!!
-408. test-pipe-unref.js ... failure !!!
+407. test-pipe-stream.js ### BLACKLISTED
+408. test-pipe-unref.js ### BLACKLISTED
 409. test-pipe.js ### BLACKLISTED
-410. test-process-active-wraps.js ... failure !!!
-411. test-process-argv-0.js ... failure !!!
-412. test-process-config.js ... failure !!!
+410. test-process-active-wraps.js ### BLACKLISTED
+411. test-process-argv-0.js ### BLACKLISTED
+412. test-process-config.js ### BLACKLISTED
 413. test-process-env.js ... ok.
-414. test-process-exec-argv.js ... failure !!!
+414. test-process-exec-argv.js ### BLACKLISTED
 415. test-process-exit-recursive.js ... ok.
 416. test-process-exit.js ... ok.
-417. test-process-getgroups.js ... failure !!!
+417. test-process-getgroups.js ### BLACKLISTED
 418. test-process-hrtime.js ... ok.
 419. test-process-kill-null.js ... ok.
 420. test-process-next-tick.js ... ok.
-421. test-process-wrap.js ... failure !!!
+421. test-process-wrap.js ### BLACKLISTED
 422. test-pump-file2tcp-noexist.js ... ok.
 423. test-pump-file2tcp.js ... ok.
 424. test-punycode.js ... ok.
@@ -431,21 +431,21 @@
 430. test-readline-interface.js ### BLACKLISTED
 431. test-readline-set-raw-mode.js ### BLACKLISTED
 432. test-readuint.js ... ok.
-433. test-regress-GH-1531.js ... failure !!!
+433. test-regress-GH-1531.js ### BLACKLISTED
 434. test-regress-GH-1697.js ### BLACKLISTED
-435. test-regress-GH-1726.js ... failure !!!
+435. test-regress-GH-1726.js ### BLACKLISTED
 436. test-regress-GH-1899.js ... ok.
-437. test-regress-GH-3542.js ... failure !!!
+437. test-regress-GH-3542.js ### BLACKLISTED
 438. test-regress-GH-3739.js ... ok.
 439. test-regress-GH-4015.js ### BLACKLISTED
-440. test-regress-GH-4027.js ... failure !!!
+440. test-regress-GH-4027.js ... ok.
 441. test-regress-GH-4256.js ... ok.
 442. test-regress-GH-4948.js ### BLACKLISTED
-443. test-regress-GH-5927.js ... failure !!!
+443. test-regress-GH-5927.js ### BLACKLISTED
 444. test-regress-GH-746.js ... ok.
-445. test-regress-GH-784.js ... failure !!!
+445. test-regress-GH-784.js ... ok.
 446. test-regress-GH-819.js ... ok.
-447. test-regress-GH-877.js ... failure !!!
+447. test-regress-GH-877.js ... ok.
 448. test-regress-GH-897.js ... ok.
 449. test-regression-object-prototype.js ... ok.
 450. test-repl-.save.load.js ### BLACKLISTED
@@ -468,8 +468,8 @@
 467. test-script-static-new.js ... failure !!!
 468. test-script-static-this.js ... failure !!!
 469. test-script-this.js ... failure !!!
-470. test-setproctitle.js ... failure !!!
-471. test-sigint-infinite-loop.js ... ok.
+470. test-setproctitle.js ### BLACKLISTED
+471. test-sigint-infinite-loop.js ### BLACKLISTED
 472. test-signal-handler.js ### BLACKLISTED
 473. test-signal-unregister.js ... ok.
 474. test-socket-write-after-fin-error.js ... ok.
@@ -507,7 +507,7 @@
 506. test-stream2-compatibility.js ... ok.
 507. test-stream2-finish-pipe.js ... ok.
 508. test-stream2-fs.js ... ok.
-509. test-stream2-httpclient-response-end.js ... failure !!!
+509. test-stream2-httpclient-response-end.js ... ok.
 510. test-stream2-large-read-stall.js ... ok.
 511. test-stream2-objects.js ... ok.
 512. test-stream2-pipe-error-handling.js ... ok.
@@ -527,12 +527,12 @@
 526. test-stream2-unpipe-leak.js ... ok.
 527. test-stream2-writable.js ... ok.
 528. test-string-decoder-end.js ... ok.
-529. test-string-decoder.js ... failure !!!
+529. test-string-decoder.js ... ok.
 530. test-sync-fileread.js ... ok.
 531. test-sys.js ... ok.
 532. test-tcp-wrap-connect.js ... ok.
 533. test-tcp-wrap-listen.js ... ok.
-534. test-tcp-wrap.js ... failure !!!
+534. test-tcp-wrap.js ... ok.
 535. test-timers-first-fire.js ... ok.
 536. test-timers-immediate.js ... ok.
 537. test-timers-linked-list.js ... ok.
@@ -543,49 +543,49 @@
 542. test-timers-zero-timeout.js ... ok.
 543. test-timers.js ... ok.
 544. test-tls-check-server-identity.js ... ok.
-545. test-tls-client-abort.js ... failure !!!
-546. test-tls-client-abort2.js ... failure !!!
-547. test-tls-client-abort3.js ... failure !!!
-548. test-tls-client-destroy-soon.js ... failure !!!
-549. test-tls-client-reject.js ... failure !!!
-550. test-tls-client-resume.js ... failure !!!
-551. test-tls-client-verify.js ... failure !!!
-552. test-tls-close-notify.js ... failure !!!
-553. test-tls-connect-given-socket.js ... failure !!!
-554. test-tls-connect-pipe.js ... failure !!!
-555. test-tls-connect-simple.js ... failure !!!
-556. test-tls-connect.js ... failure !!!
-557. test-tls-fast-writing.js ... failure !!!
-558. test-tls-getcipher.js ... failure !!!
+545. test-tls-client-abort.js ### BLACKLISTED
+546. test-tls-client-abort2.js ### BLACKLISTED
+547. test-tls-client-abort3.js ### BLACKLISTED
+548. test-tls-client-destroy-soon.js ### BLACKLISTED
+549. test-tls-client-reject.js ### BLACKLISTED
+550. test-tls-client-resume.js ### BLACKLISTED
+551. test-tls-client-verify.js ### BLACKLISTED
+552. test-tls-close-notify.js ### BLACKLISTED
+553. test-tls-connect-given-socket.js ### BLACKLISTED
+554. test-tls-connect-pipe.js ### BLACKLISTED
+555. test-tls-connect-simple.js ### BLACKLISTED
+556. test-tls-connect.js ### BLACKLISTED
+557. test-tls-fast-writing.js ### BLACKLISTED
+558. test-tls-getcipher.js ### BLACKLISTED
 559. test-tls-handshake-nohang.js ... ok.
-560. test-tls-hello-parser-failure.js ... failure !!!
-561. test-tls-honorcipherorder.js ... failure !!!
-562. test-tls-interleave.js ... failure !!!
-563. test-tls-invalid-key.js ... failure !!!
-564. test-tls-junk-closes-server.js ... failure !!!
+560. test-tls-hello-parser-failure.js ### BLACKLISTED
+561. test-tls-honorcipherorder.js ### BLACKLISTED
+562. test-tls-interleave.js ### BLACKLISTED
+563. test-tls-invalid-key.js ### BLACKLISTED
+564. test-tls-junk-closes-server.js ### BLACKLISTED
 565. test-tls-npn-server-client.js ... ok.
-566. test-tls-ondata.js ... failure !!!
-567. test-tls-over-http-tunnel.js ... failure !!!
-568. test-tls-passphrase.js ... failure !!!
-569. test-tls-pause-close.js ... failure !!!
-570. test-tls-pause.js ... failure !!!
-571. test-tls-peer-certificate-multi-keys.js ... failure !!!
-572. test-tls-peer-certificate.js ... failure !!!
-573. test-tls-remote.js ... failure !!!
-574. test-tls-request-timeout.js ... failure !!!
-575. test-tls-securepair-client.js ... failure !!!
-576. test-tls-securepair-server.js ... failure !!!
+566. test-tls-ondata.js ### BLACKLISTED
+567. test-tls-over-http-tunnel.js ### BLACKLISTED
+568. test-tls-passphrase.js ### BLACKLISTED
+569. test-tls-pause-close.js ### BLACKLISTED
+570. test-tls-pause.js ### BLACKLISTED
+571. test-tls-peer-certificate-multi-keys.js ### BLACKLISTED
+572. test-tls-peer-certificate.js ### BLACKLISTED
+573. test-tls-remote.js ### BLACKLISTED
+574. test-tls-request-timeout.js ### BLACKLISTED
+575. test-tls-securepair-client.js ### BLACKLISTED
+576. test-tls-securepair-server.js ### BLACKLISTED
 577. test-tls-server-large-request.js ### BLACKLISTED
-578. test-tls-server-missing-options.js ... failure !!!
-579. test-tls-server-slab.js ... failure !!!
-580. test-tls-server-verify.js ... ok.
-581. test-tls-session-cache.js ... failure !!!
-582. test-tls-set-ciphers.js ... failure !!!
-583. test-tls-set-encoding.js ... failure !!!
-584. test-tls-sni-server-client.js ... ok.
-585. test-tls-timeout-server-2.js ... failure !!!
-586. test-tls-timeout-server.js ... failure !!!
-587. test-tls-zero-clear-in.js ... failure !!!
+578. test-tls-server-missing-options.js ### BLACKLISTED
+579. test-tls-server-slab.js ### BLACKLISTED
+580. test-tls-server-verify.js ### BLACKLISTED
+581. test-tls-session-cache.js ### BLACKLISTED
+582. test-tls-set-ciphers.js ### BLACKLISTED
+583. test-tls-set-encoding.js ### BLACKLISTED
+584. test-tls-sni-server-client.js ### BLACKLISTED
+585. test-tls-timeout-server-2.js ### BLACKLISTED
+586. test-tls-timeout-server.js ### BLACKLISTED
+587. test-tls-zero-clear-in.js ### BLACKLISTED
 588. test-tty-stdout-end.js ... ok.
 589. test-tty-wrap.js ... ok.
 590. test-typed-arrays.js ... ok.
@@ -595,14 +595,14 @@
 594. test-util-format.js ... ok.
 595. test-util-inspect.js ### BLACKLISTED
 596. test-util.js ### BLACKLISTED
-597. test-vm-create-context-accessors.js ... failure !!!
-598. test-vm-create-context-arg.js ... failure !!!
-599. test-vm-create-context-circular-reference.js ... failure !!!
+597. test-vm-create-context-accessors.js ### BLACKLISTED
+598. test-vm-create-context-arg.js ### BLACKLISTED
+599. test-vm-create-context-circular-reference.js ### BLACKLISTED
 600. test-writedouble.js ... ok.
 601. test-writefloat.js ... ok.
 602. test-writeint.js ... ok.
 603. test-writeuint.js ... ok.
-604. test-zerolengthbufferbug.js ... failure !!!
+604. test-zerolengthbufferbug.js ... ok.
 605. test-zlib-close-after-write.js ### BLACKLISTED
 606. test-zlib-dictionary-fail.js ### BLACKLISTED
 607. test-zlib-dictionary.js ### BLACKLISTED
@@ -614,7 +614,7 @@
 613. test-zlib-write-after-flush.js ### BLACKLISTED
 614. test-zlib-zero-byte.js ### BLACKLISTED
 615. test-zlib.js ### BLACKLISTED
-518 executed
-   323 success
-   195 failure
-   97 blacklist
+438 executed
+   428 success
+   10 failure
+   177 blacklist

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan 21 07:40:40 2015 (serrano)                */
+;*    Last change :  Sat Jan 31 11:05:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -214,14 +214,16 @@
 	       '(define %resource (dirname %source))
 	       
 	       `(define (main args)
-		   (define %worker (js-init-main-worker! %this #f))
+		   (define %worker
+		      (js-init-main-worker! %this #f nodejs-new-global-object))
 		   (define %scope (nodejs-new-scope-object %this))
 		   (define this
 		     (with-access::JsGlobalObject %this (js-object)
 			(js-new0 %this js-object)))
 		   (define %module (nodejs-module ,(basename path) ,path %this))
-		   ,@body
-		   (js-worker-terminate! %worker #f)
+		   (js-worker-push-thunk! %worker "nodejs-toplevel"
+		      (lambda () ,@body))
+		   ;; (js-worker-terminate! %worker #f)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
 
@@ -754,8 +756,7 @@
 	  (js-define-own-property arguments 'callee
 	     (instantiate::JsValueDescriptor
 		(name 'callee)
-		(value (js-make-function %this
-			  ,(symbol-append '@ id) 0 ',id))
+		(value (js-make-function %this ,(j2s-fast-id id) 0 ',id))
 		(writable #t)
 		(configurable #t)
 		(enumerable #f))
@@ -797,7 +798,7 @@
 
    (define (lambda-or-labels id args body)
       (if id
-	  (let ((%id (symbol-append '@ id)))
+	  (let ((%id (j2s-fast-id id)))
 	     `(labels ((,%id ,(cons 'this args) ,body)) ,%id))
 	  `(lambda ,(cons 'this args)
 	      ,body)))
@@ -843,7 +844,7 @@
 (define (j2sfun->scheme this::J2SFun mode return conf)
    (with-access::J2SFun this (loc name params mode vararg)
       (let* ((id (j2sfun-id this))
-	     (tmp (gensym))
+	     (tmp (gensym id))
 	     (arity (if vararg -1 (+fx 1 (length params))))
 	     (fundef `(let ((,tmp ,(jsfun->lambda this mode return conf)))
 			 (js-make-function %this
@@ -1828,8 +1829,16 @@
 		    ;; matching arity
 		    `(,f (js-undefined) ,@(j2s-scheme args mode return conf)))
 		   ((>fx lena lenf)
-		    ;; too many arguments ignore the extra values
-		    `(,f (js-undefined) ,@(j2s-scheme (take args lenf) mode return conf)))
+		    ;; too many arguments ignore the extra values,
+		    ;; but still evaluate extra expressions
+		    (let ((temps (map (lambda (i)
+					 (string->symbol
+					    (string-append "%a"
+					       (integer->string i))))
+				    (iota lena))))
+		       `(let* ,(map (lambda (t a)
+				       `(,t ,(j2s-scheme a mode return conf))) temps args)
+			   (,f (js-undefined) ,@(take temps lenf)))))
 		   (else
 		    ;; argument missing
 		    `(,f

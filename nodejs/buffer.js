@@ -209,7 +209,7 @@ function Buffer(subject, encoding, offset) {
     // optimize by branching logic for new allocations
     if (typeof subject !== 'number') {
       if (type === 'string') {
-        // We are a string
+         // We are a string
         this.length = this.write(subject, 0, encoding);
       // if subject is buffer then use built-in copy method
       } else if (Buffer.isBuffer(subject)) {
@@ -326,7 +326,7 @@ Buffer.prototype.write = function(string, offset, length, encoding) {
 
   offset = +offset || 0;
   var remaining = this.length - offset;
-  if (!length) {
+   if (!length) {
     length = remaining;
   } else {
     length = +length;

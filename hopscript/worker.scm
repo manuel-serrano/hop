@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Jan 21 10:09:48 2015 (serrano)                */
+;*    Last change :  Thu Jan 22 07:54:49 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -48,6 +48,7 @@
 	      (onexit::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)
 	      (%process (default #f))
+	      (async (default #f))
 	      (state::symbol (default 'init))
 	      (module-table::obj (default (make-hashtable)))
 	      (module-mutex::obj (default (make-mutex)))

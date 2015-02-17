@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sat Jan 17 08:50:43 2015 (serrano)                */
+;*    Last change :  Wed Jan 28 07:01:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -42,7 +42,7 @@
    (js-put! pipe-prototype 'close
       (js-make-function %this
 		  (lambda (this cb)
-		     (nodejs-close %worker %this this cb))
+		     (nodejs-close %worker %this process this cb))
 		  1 "close")
       #f %this)
 

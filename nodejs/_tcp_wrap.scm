@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sat Jan 17 08:49:58 2015 (serrano)                */
+;*    Last change :  Fri Feb  6 09:18:35 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -35,13 +35,11 @@
 	 ((flonum? n) (flonum->fixnum n))
 	 (else 0)))
    
-   (define tcp-servers '())
    (define reqs '())
    
    (define (connect family)
       (with-access::JsGlobalObject %this (js-object)
 	 (lambda (this host port callback)
-;* 	    (set! tcp-servers (cons this tcp-servers))                 */
 	    (with-access::JsHandle this (handle)
 	       (let ((req (js-new %this js-object)))
 		  (set! reqs (cons req reqs))
@@ -65,8 +63,7 @@
 	    (js-put! obj 'close
 	       (js-make-function %this
 		  (lambda (this cb)
-;* 		     (set! tcp-servers (remq this tcp-servers))        */
-		     (nodejs-close %worker %this this cb))
+		     (nodejs-close %worker %this process this cb))
 		  1 "close")
 	       #f %this)
 	    
@@ -117,6 +114,7 @@
 	    (js-put! obj 'writeUtf8String
 	       (js-make-function %this
 		  (lambda (this string handle)
+		     (tprint "writeUtf8String string=" string)
 		     (stream-write-string %worker %this this
 			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"utf8" #f handle))
@@ -208,7 +206,6 @@
 	    (js-put! obj 'bind
 	       (js-make-function %this
 		  (lambda (this addr port)
-;* 		     (set! tcp-servers (cons this tcp-servers))        */
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-tcp-bind %this process handle addr p 4))))
@@ -218,7 +215,6 @@
 	    (js-put! obj 'bind6
 	       (js-make-function %this
 		  (lambda (this addr port)
-;* 		     (set! tcp-servers (cons this tcp-servers))        */
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-tcp-bind %this process handle addr p 6))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Jan 14 16:35:11 2015 (serrano)                */
+;*    Last change :  Wed Jan 28 09:23:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -304,8 +304,8 @@
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
-	     ((eq? symbol 'undefined)
-	      (token symbol symbol (the-length)))
+;* 	     ((eq? symbol 'undefined)                                  */
+;* 	      (token symbol symbol (the-length)))                      */
 	     ((getprop symbol 'reserved)
 	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))

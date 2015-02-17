@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jan 19 19:31:33 2015 (serrano)                */
+;*    Last change :  Sat Jan 31 11:53:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -825,6 +825,8 @@
 	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))))
+      ((elong? obj)
+       (error "js-toint32" "unexpected elong" obj))
       (else
        (js-toint32 (js-tonumber obj %this) %this))))
 

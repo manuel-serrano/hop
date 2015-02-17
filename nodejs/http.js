@@ -53,6 +53,7 @@ function readStop(socket) {
 // processed in a single run. This method is also
 // called to process trailing HTTP headers.
 function parserOnHeaders(headers, url) {
+   debug( "parserOnHeaders headers=" + headers + " url=" + url );
   // Once we exceeded headers limit - stop collecting them
   if (this.maxHeaderPairs <= 0 ||
       this._headers.length < this.maxHeaderPairs) {
@@ -117,7 +118,7 @@ function parserOnHeadersComplete(info) {
   if (!info.upgrade) {
     // For upgraded connections and CONNECT method request,
     // we'll emit this after parser.execute
-    // so that we can capture the first part of the new protocol
+     // so that we can capture the first part of the new protocol
     skipBody = parser.onIncoming(parser.incoming, info.shouldKeepAlive);
   }
 
@@ -129,7 +130,6 @@ function parserOnHeadersComplete(info) {
 function parserOnBody(b, start, len) {
   var parser = this;
   var stream = parser.incoming;
-
   // if the stream has already been removed, then drop it.
   if (!stream)
     return;
@@ -137,7 +137,7 @@ function parserOnBody(b, start, len) {
   var socket = stream.socket;
 
   // pretend this was the result of a stream._read call.
-  if (len > 0 && !stream._dumped) {
+   if (len > 0 && !stream._dumped) {
     var slice = b.slice(start, start + len);
      debug( "slice start=" + start + " end=" + (start+len) );
     var ret = stream.push(slice);
@@ -164,9 +164,11 @@ function parserOnMessageComplete() {
     }
 
     if (!stream.upgrade)
-      // For upgraded connections, also emit this after parser.execute
+       // For upgraded connections, also emit this after parser.execute
       stream.push(null);
+  } else {
   }
+     
 
   if (stream && !parser.incoming._pendings.length) {
     // For emit end event
@@ -420,6 +422,7 @@ IncomingMessage.prototype._addHeaderLine = function(field, value) {
 // Call this instead of resume() if we want to just
 // dump all the data to /dev/null
 IncomingMessage.prototype._dump = function() {
+   debug( "######### _dump" );
   if (!this._dumped) {
     this._dumped = true;
     if (this.socket.parser) this.socket.parser.incoming = null;
@@ -491,7 +494,7 @@ OutgoingMessage.prototype._send = function(data, encoding) {
   // This is a shameful hack to get the headers and first body chunk onto
   // the same packet. Future versions of Node are going to take care of
   // this at a lower level and in a more general way.
-   debug( "OutgoingMessage _send [" + data.toString( "ascii" ) + "]" );
+   debug( "OutgoingMessage _send [" + data.toString( "ascii" ).length + "]" );
   if (!this._headerSent) {
     if (typeof data === 'string' &&
         encoding !== 'hex' &&
@@ -509,9 +512,7 @@ OutgoingMessage.prototype._send = function(data, encoding) {
 
 OutgoingMessage.prototype._writeRaw = function(data, encoding) {
    debug( "OutgoingMessage _writeRaw "
-	  + data.toString( "ascii" ).length
-	  + " [" + data.toString( "ascii" )
-	  + "]" );
+	  + data.toString( "ascii" ).length );
   if (data.length === 0) {
     return true;
   }
@@ -546,7 +547,7 @@ OutgoingMessage.prototype._writeRaw = function(data, encoding) {
 
 
 OutgoingMessage.prototype._buffer = function(data, encoding) {
-   debug( "OutgoingMessage _buffer [" + data.toString( "ascii" ) + "]" );
+   debug( "OutgoingMessage _buffer [" + data.toString( "ascii" ).length + "]" );
   this.output.push(data);
   this.outputEncodings.push(encoding);
 
@@ -872,32 +873,26 @@ OutgoingMessage.prototype.write = function(chunk, encoding) {
         encoding !== 'base64') {
       len = Buffer.byteLength(chunk, encoding);
       chunk = len.toString(16) + CRLF + chunk + CRLF;
-   debug( "send.2" );
       ret = this._send(chunk, encoding);
     } else if (Buffer.isBuffer(chunk)) {
       var buf = chunkify(chunk, '', '', false);
-   debug( "send.3" );
       ret = this._send(buf, encoding);
     } else {
       // Non-toString-friendly encoding.
-      if (typeof chunk === 'string')
-        len = Buffer.byteLength(chunk, encoding);
-      else
-        len = chunk.length;
+       if (typeof chunk === 'string') {
+          len = Buffer.byteLength(chunk, encoding);
+       } else {
+          len = chunk.length;
+       }
 
-   debug( "send.4" );
       this._send(len.toString(16) + CRLF, 'ascii');
-   debug( "send.5" );
       this._send(chunk, encoding);
-   debug( "send.6" );
       ret = this._send(CRLF);
     }
   } else {
-   debug( "send.7" );
     ret = this._send(chunk, encoding);
   }
 
-  debug('write ret = ' + ret);
   return ret;
 };
 
@@ -968,7 +963,7 @@ OutgoingMessage.prototype.end = function(data, encoding) {
     // HACKY.
 
     if (typeof data === 'string') {
-      if (this.chunkedEncoding) {
+       if (this.chunkedEncoding) {
         var l = Buffer.byteLength(data, encoding).toString(16);
         ret = this.connection.write(this._header + l + CRLF +
                                     data + '\r\n0\r\n' +
@@ -1031,6 +1026,7 @@ OutgoingMessage.prototype._finish = function() {
     DTRACE_HTTP_CLIENT_REQUEST(this, this.connection);
     COUNTER_HTTP_CLIENT_REQUEST();
   }
+
   this.emit('finish');
 };
 
@@ -1430,7 +1426,7 @@ function ClientRequest(options, cb) {
     }
   } else if (self.agent) {
     // If there is an agent we should default to Connection:keep-alive.
-    self._last = false;
+     self._last = false;
     self.shouldKeepAlive = true;
     self.agent.addRequest(self, host, port, options.localAddress);
   } else {
@@ -1525,7 +1521,8 @@ function socketCloseListener() {
   var parser = socket.parser;
   var req = socket._httpMessage;
   debug('HTTP socket close');
-  req.emit('close');
+   req.emit('close');
+
   if (req.res && req.res.readable) {
     // Socket closed before we emitted 'end' below.
     req.res.emit('aborted');
@@ -1600,7 +1597,7 @@ function socketOnData(d, start, end) {
   var req = this._httpMessage;
   var parser = this.parser;
    
-   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name + " " + #:current-thread() );
+   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name );
   var ret = parser.execute(d, start, end - start);
    debug( "--- socketOnData -> ret=" + ret );
   if (ret instanceof Error) {
@@ -1614,7 +1611,7 @@ function socketOnData(d, start, end) {
     // Upgrade or CONNECT
     var bytesParsed = ret;
     var res = parser.incoming;
-    req.res = res;
+     req.res = res;
 
     socket.ondata = null;
     socket.onend = null;
@@ -1689,7 +1686,8 @@ function parserOnIncomingClient(res, shouldKeepAlive) {
   debug('AGENT isHeadResponse ' + isHeadResponse);
 
   if (res.statusCode == 100) {
-    // restart the parser, as this is a continue message.
+     // restart the parser, as this is a continue message.
+
     delete req.res; // Clear res so that we don't hit double-responses.
     req.emit('continue');
     return true;
@@ -1753,7 +1751,7 @@ function responseOnEnd() {
 ClientRequest.prototype.onSocket = function(socket) {
   var req = this;
 
-  process.nextTick(function() {
+   process.nextTick(function() {
     var parser = parsers.alloc();
     req.socket = socket;
     req.connection = socket;
@@ -1989,7 +1987,9 @@ function connectionListener(socket) {
 
   socket.ondata = function(d, start, end) {
     assert(!socket._paused);
+   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name );
     var ret = parser.execute(d, start, end - start);
+   debug( "--- socketOnData -> ret=" + ret );
     if (ret instanceof Error) {
       debug('parse error');
       socket.destroy(ret);
@@ -2177,7 +2177,6 @@ Client.prototype.request = function(method, path, headers) {
       if (self._decoder) {
         var ret = self._decoder.end();
         if (ret) {
-	   debug( "~~~~~~~~~~~~~~~ EMIT ON DATA " + typeof( ret ) );
           self.emit('data', ret);
 	}
       }

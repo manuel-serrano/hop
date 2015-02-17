@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Jan 17 07:49:52 2015 (serrano)                */
+;*    Last change :  Wed Feb  4 18:17:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -107,7 +107,8 @@
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-buffer-proto (default #f))
-	      (js-slowbuffer-proto (default #f)))
+	      (js-slowbuffer-proto (default #f))
+	      (js-main (default #f)))
 	   
 	   (class JsArray::JsObject
 	      (inline::bool (default #t))
