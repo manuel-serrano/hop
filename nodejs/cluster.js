@@ -401,7 +401,7 @@ function sendInternalMessage(worker, message/*, handler, callback*/) {
 // Send message to worker or master
 ClusterWorker.prototype.send = function() {
 
-  // You could also just use process.send in a worker
+   // You could also just use process.send in a worker
   this.process.send.apply(this.process, arguments);
 };
 
@@ -559,7 +559,6 @@ cluster._setupWorker = function() {
 cluster._getServer = function(tcpSelf, address, port, addressType, fd, cb) {
   // This can only be called from a worker.
   assert(cluster.isWorker);
-
   // Store tcp instance for later use
   var key = [address, port, addressType, fd].join(':');
   serverListeners[key] = tcpSelf;

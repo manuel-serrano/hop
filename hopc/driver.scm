@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Oct 28 08:22:10 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Sat Feb 14 10:35:31 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -154,6 +154,7 @@
 			 (open-mmap fname :read #t :write #f))))
 	    (for-each (lambda (exp) (pp exp out))
 	       (j2s-compile in
+		  :return-as-exit (hopc-js-return-as-exit)
 		  :mmap-src mmap
 		  :driver (js-driver)
 		  :worker (hopc-js-worker)
@@ -232,6 +233,7 @@
 		  ;; compile
 		  (map (lambda (e) (write (obj->string e) out))
 		     (j2s-compile in
+			:return-as-exit (hopc-js-return-as-exit)
 			:mmap-src mmap
 			:driver (js-driver)
 			:worker (hopc-js-worker)

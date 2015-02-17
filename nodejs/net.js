@@ -1016,15 +1016,14 @@ var createServerHandle = exports._createServerHandle =
 
 
 Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
-  debug('listen2', address, port, addressType, backlog);
+   debug('listen2', address, port, addressType, backlog, fd);
   var self = this;
   var r = 0;
-
   // If there is not yet a handle, we need to create one and bind.
   // In the case of a server sent via IPC, we don't need to do this.
   if (!self._handle) {
     debug('_listen2: create a handle');
-    self._handle = createServerHandle(address, port, addressType, fd);
+     self._handle = createServerHandle(address, port, addressType, fd);
     if (!self._handle) {
       var error = errnoException(process._errno, 'listen');
       process.nextTick(function() {
@@ -1041,10 +1040,10 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
 
   // Use a backlog of 512 entries. We pass 511 to the listen() call because
   // the kernel does: backlogsize = roundup_pow_of_two(backlogsize + 1);
-  // which will thus give us a backlog of 512 entries.
-  r = self._handle.listen(backlog || 511);
-
-  if (r) {
+   // which will thus give us a backlog of 512 entries.
+   r = self._handle.listen(backlog || 511);
+   
+   if (r) {
     var ex = errnoException(process._errno, 'listen');
     self._handle.close();
     self._handle = null;
@@ -1114,7 +1113,7 @@ Server.prototype.listen = function() {
   var TCP = process.binding('tcp_wrap').TCP;
 
   if (arguments.length == 0 || typeof arguments[0] == 'function') {
-    // Bind to a random port.
+     // Bind to a random port.
     listen(self, '0.0.0.0', 0, null, backlog);
 
   } else if (arguments[0] && typeof arguments[0] === 'object') {

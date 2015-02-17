@@ -34,14 +34,8 @@ simple/test-regress-GH-4015.js
 
 # http server not implemented
 simple/test-cluster-bind-twice-v1.js
+simple/test-cluster-bind-twice-v2.js
 simple/test-http-many-keep-alive-connections.js
-
-# script context
-test-script-context.js
-test-script-new.js
-test-script-static-new.js
-test-script-static-this.js
-test-script-this.js
 
 # crypto
 simple/test-crypto-dh-odd-key.js
@@ -153,20 +147,20 @@ simple/test-process-argv-0.js
 simple/test-process-config.js
 
 # illegal returns
-simple/test-child-process-stdio-big-write-end.js
-simple/test-cluster-bind-twice-v2.js
-simple/test-domain-nested-throw.js
-simple/test-fs-readfile-pipe.js
-simple/test-cluster-http-pipe.js
+#* simple/test-child-process-stdio-big-write-end.js                    */
+#* simple/test-cluster-bind-twice-v2.js                                */
+#* simple/test-domain-nested-throw.js                                  */
+#* simple/test-fs-readfile-pipe.js                                     */
+#* simple/test-listen-fd-cluster.js                                    */
+#* simple/test-listen-fd-detached-inherit.js                           */
+#* simple/test-listen-fd-detached.js                                   */
+#* simple/test-listen-fd-server.js                                     */
+#* simple/test-net-GH-5504.js                                          */
+#* simple/test-process-getgroups.js                                    */
+#* simple/test-regress-GH-1726.js                                      */
+#* simple/test-regress-GH-3542.js                                      */
+
 simple/test-http-pipeline-flood.js
-simple/test-listen-fd-cluster.js
-simple/test-listen-fd-detached-inherit.js
-simple/test-listen-fd-detached.js
-simple/test-listen-fd-server.js
-simple/test-net-GH-5504.js
-simple/test-process-getgroups.js
-simple/test-regress-GH-1726.js
-simple/test-regress-GH-3542.js
 
 # nodejs failing tests
 simple/test-cluster-disconnect-with-no-workers.js
@@ -178,6 +172,7 @@ simple/test-net-pipe-connect-errors.js
 simple/test-http-client-pipe-end.js
 simple/test-http-client-response-domain.js
 simple/test-http-unix-socket.js
+simple/test-cluster-http-pipe.js
 simple/test-pipe-stream.js
 simple/test-pipe-unref.js
 
@@ -191,6 +186,7 @@ simple/test-child-process-fork-net2.js # insufficient speed (set count=5)
 simple/test-init.js
 simple/test-domain.js # the hop error messages differ from nodejs
 simple/test-setproctitle.js
+simple/test-module-loading.js # uses deprecated require.extensions
 
 # imccompatible command line options
 simple/test-cli-eval.js
@@ -202,6 +198,7 @@ simple/test-eval.js
 simple/test-force-repl.js
 simple/test-process-exec-argv.js
 simple/test-process-wrap.js
+simple/test-stdout-stderr-reading.js
 
 # unsupported features
 simple/test-event-emitter-memory-leak.js

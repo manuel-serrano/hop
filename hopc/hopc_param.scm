@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jul 26 07:32:08 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sat Feb 14 10:35:57 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -90,7 +90,10 @@
 	    (hopc-js-libraries-set! ::pair-nil)
 	    
 	    (hopc-js-driver::obj)
-	    (hopc-js-driver-set! ::obj))
+	    (hopc-js-driver-set! ::obj)
+
+	    (hopc-js-return-as-exit::bool)
+	    (hopc-js-return-as-exit-set! ::bool))
 	    
    (eval    (export-exports)))
 
@@ -258,4 +261,10 @@
 ;*    hopc-js-driver ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-driver
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-return-as-exit ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-return-as-exit
    #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Feb  6 12:18:15 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 14:55:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -121,7 +121,7 @@
 	   
 	   (nodejs-tcp-handle ::WorkerHopThread)
 	   (nodejs-stream-write-queue-size::long ::obj)
-	   (nodejs-stream-fd::long ::obj)
+	   (nodejs-stream-fd::long ::WorkerHopThread ::obj)
 	   (nodejs-tcp-connect ::WorkerHopThread ::JsGlobalObject ::obj ::JsStringLiteral ::int ::int ::procedure)
 	   (nodejs-tcp-nodelay ::obj ::bool)
 	   (nodejs-tcp-keepalive ::obj ::bool ::long)
@@ -728,7 +728,7 @@
 	 (format "ftruncate: cannot truncate ~a to ~a -- ~~s" fd offset)
 	 res))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-ftruncate file offset
@@ -763,7 +763,7 @@
 	 (format "fchown: cannot chown ~a, ~a, ~a -- ~~s" fd uid guid)
 	 res))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-fchown file uid guid
@@ -814,7 +814,7 @@
 	 (format "fchmod: cannot chmod ~a, ~a -- ~~s" fd mod)
 	 res))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-fchmod file mod
@@ -895,7 +895,7 @@
 ;*    nodejs-fs-close ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-fs-close %worker %this process fd callback)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (begin
 	     (close-uvfile %worker fd)
@@ -948,7 +948,7 @@
 ;*    nodejs-fstat ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-fstat %worker %this process fd callback proto)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (let ((lbl (string-append "fstat:" (integer->string fd))))
@@ -1128,7 +1128,7 @@
 	 (format "datasync: cannot datasync ~a -- ~~s" fd)
 	 res))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-fdatasync file
@@ -1177,11 +1177,11 @@
 ;*    nodejs-write ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-write %worker %this process fd buffer offset length position callback)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
-		 (uv-fs-write (int->uvfile %worker %this fd) %data length
+		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
 		    :callback (lambda (obj)
 				 (if (<fx obj 0)
 				     (!js-call3 'write %this
@@ -1194,7 +1194,7 @@
 		    :position position
 		    :loop (worker-loop %worker)))
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
-		 (uv-fs-write (int->uvfile %worker %this fd) %data length
+		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position position :loop (worker-loop %worker))))
 	  (fs-callback-error %worker %this "write" callback #f buffer))))
@@ -1203,7 +1203,7 @@
 ;*    nodejs-read ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-read %worker %this process fd buffer offset length position callback)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (with-access::JsArrayBufferView buffer (%data byteoffset)
 	     (if (isa? callback JsFunction)
@@ -1266,7 +1266,7 @@
 	 (format "futimes: cannot utimes ~a -- ~~s" fd)
 	 res (js-undefined)))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-futime file (js-todouble atime %this)
@@ -1290,7 +1290,7 @@
 	 (format "fsync: cannot fsync ~a -- ~~s" fd)
 	 res))
    
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (if file
 	  (if (isa? callback JsFunction)
 	      (uv-fs-fsync file
@@ -1378,7 +1378,7 @@
 ;*    nodejs-istty ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-istty %worker %this fd)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (when file
 	 (eq? (uv-guess-handle fd) 'TTY))))
 
@@ -1386,7 +1386,7 @@
 ;*    nodejs-guess-handle-type ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-guess-handle-type %worker %this fd)
-   (let ((file (int->uvfile %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd)))
       (when file
 	 (js-string->jsstring (symbol->string (uv-guess-handle fd))))))
 
@@ -1406,8 +1406,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-fd ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-fd hdl)
-   (uv-stream-fd hdl))
+(define (nodejs-stream-fd %worker hdl)
+   (let ((fd (uv-stream-fd hdl)))
+      (when (>=fx fd 0) (store-stream-fd! %worker hdl fd))
+      fd))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-connect ...                                           */
@@ -1463,7 +1465,9 @@
 ;*    nodejs-tcp-open ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-open %worker %this handle fd)
-   (uv-tcp-open handle (int->uvfile %worker %this fd)))
+   (let ((r (uv-tcp-open handle fd)))
+      (store-stream-fd! %worker handle r)
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tcp-bind ...                                              */
@@ -1497,9 +1501,9 @@
 				   (let ((onconn (js-get this 'onconnection %this)))
 				      (!js-call1 'listen %this onconn this
 					 (tcp-wrap client))))))))))))
-      (if (<fx r 0)
-	  (fs-errno-exn "Listen failed ~s" r %this)
-	  r)))
+      (when (<fx r 0)
+	 (process-fail %this process r))
+      r))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-tty-handle ...                                            */
@@ -1662,48 +1666,64 @@
 			 (callback status handle))))))
 
 ;*---------------------------------------------------------------------*/
+;*    store-stream-fd! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (store-stream-fd! %worker hdl fd::int)
+   (with-access::WorkerHopThread %worker (uvhandles)
+      (when (>=fx fd (vector-length uvhandles))
+	 (let ((new (make-vector (*fx 2 fd))))
+	    (vector-copy! new 0 uvhandles)
+	    (set! uvhandles new)))
+      (vector-set! uvhandles fd hdl)))
+   
+;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (uvfile->int %worker file::UvFile)
-   (with-access::WorkerHopThread %worker (uvfiles)
-      (with-access::UvFile file (fd)
-	 (when (>=fx fd (vector-length uvfiles))
-	    (let ((new (make-vector (*fx 2 fd))))
-	       (vector-copy! new 0 uvfiles)
-	       (set! uvfiles new)))
-	 (vector-set! uvfiles fd file)
-	 fd)))
+   (with-access::UvFile file (fd)
+      (store-stream-fd! %worker file fd)
+      fd))
 
 ;*---------------------------------------------------------------------*/
-;*    int->uvfile ...                                                  */
+;*    int->uvhandle ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (int->uvfile %worker %this fd::int)
-   (with-access::WorkerHopThread %worker (uvfiles)
+(define (int->uvhandle %worker %this fd::int)
+   (with-access::WorkerHopThread %worker (uvhandles)
       (cond
 	 ((<fx fd 0) #f)
-	 ((>fx fd (vector-length uvfiles)) #f)
+	 ((>fx fd (vector-length uvhandles)) #f)
 	 (else
-	  (let ((file (vector-ref uvfiles fd)))
+	  (let ((hdl (vector-ref uvhandles fd)))
 	     (cond
-		((isa? file UvFile)
-		 file)
+		((and hdl (not (eq? hdl (js-undefined))))
+		 hdl)
 		((<=fx fd 2)
-		 ;; initialize stdio lazily
+		 ;; initialize lazily stdio
 		 (let ((file (instantiate::UvFile
 				(fd fd)
 				(path ""))))
-		    (vector-set! uvfiles fd file)
+		    (store-stream-fd! %worker file fd)
 		    file))
-		(else
-		 (js-raise-type-error %this
-		    (format "Illegal file descriptor (~a) ~~a" fd) fd))))))))
+		(else 
+		 ;; initialize lazily, other fd as some nodejs examples,
+		 ;; cite FD ex-nihilo
+		 ;; see simple/test-listen-fd-cluster.js
+		 (let ((file (instantiate::UvFile
+				(fd fd)
+				(path ""))))
+		    (store-stream-fd! %worker file fd)
+		    file))))))))
+;* 		(else                                                  */
+;* 		 (tprint "PAS de FD: " fd " pid=" (getpid))            */
+;* 		 (js-raise-type-error %this                            */
+;* 		    (format "Illegal descriptor (~a) ~~a" fd) fd)))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    close-uvfile ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (close-uvfile %worker fd::int)
-   (with-access::WorkerHopThread %worker (uvfiles)
-      (vector-set! uvfiles fd #f)))
+   (with-access::WorkerHopThread %worker (uvhandles)
+      (vector-set! uvhandles fd #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-new-process ...                                           */
@@ -1733,8 +1753,8 @@
 	 ((=fx sig sigusr2) (js-string->jsstring "SIGUSR2"))
 	 (else (js-string->jsstring "SIG???"))))
    
-   (define (process-options-stdio-set! opts::UvProcessOptions i stdio)
-      (let ((type (js-jsstring->string (js-get stdio 'type %this))))
+   (define (process-options-stdio-set! opts::UvProcessOptions i hdl)
+      (let ((type (js-jsstring->string (js-get hdl 'type %this))))
 	 (cond
 	    ((string=? type "ignore")
 	     (uv-process-options-stdio-container-flags-set! opts i
@@ -1746,20 +1766,21 @@
 		   (bit-or
 		      (UV-READABLE-PIPE)
 		      (UV-WRITABLE-PIPE))))
-	     (uv-process-options-stdio-container-stream-set! opts i
-		(with-access::JsHandle (js-get stdio 'handle %this) (handle)
+	     (with-access::JsHandle (js-get hdl 'handle %this) (handle)
+		(uv-process-options-stdio-container-stream-set! opts i
 		   handle)))
 	    ((string=? type "wrap")
 	     (uv-process-options-stdio-container-flags-set! opts i
 		(UV-INHERIT-STREAM))
-	     (uv-process-options-stdio-container-stream-set! opts i
-		(with-access::JsHandle (js-get stdio 'handle %this) (handle)
+	     (with-access::JsHandle (js-get hdl 'handle %this) (handle)
+		(uv-process-options-stdio-container-stream-set! opts i
 		   handle)))
 	    (else
-	     (uv-process-options-stdio-container-flags-set! opts i
-		(UV-INHERIT-FD))
-	     (uv-process-options-stdio-container-fd-set! opts i
-		(int->uvfile %worker %this (js-get stdio 'fd %this)))))))
+	     
+	     (let ((handle (int->uvhandle %worker %this (js-get hdl 'fd %this))))
+		(uv-process-options-stdio-container-flags-set! opts i
+		   (UV-INHERIT-FD))
+		(uv-process-options-stdio-container-fd-set! opts i handle))))))
    
    (define (onexit this status term)
       (let ((onexit (js-get process 'onexit %this))
@@ -1941,7 +1962,9 @@
 ;*    nodejs-pipe-open ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-open %worker %this handle fd)
-   (uv-pipe-open handle fd))
+   (let ((r (uv-pipe-open handle fd)))
+      (store-stream-fd! %worker handle fd)
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-bind ...                                             */
@@ -1978,11 +2001,11 @@
 	       :loop (worker-loop %worker)
 	       :callback
 	       (lambda (server status)
-		  '' (tprint "pipe-listen listen status=" status)
+		  ;; (tprint "pipe-listen listen status=" status)
 		  (if (< status 0)
 		      (process-fail %this process status)
 		      (let ((onconn (js-get this 'onconnection %this)))
 			 (!js-call0 'listen %this onconn this)))))))
-      (if (<fx r 0)
-	  (fs-errno-exn "Listen failed ~s" r %this)
-	  r)))
+      (when (<fx r 0)
+	 (process-fail %this process r))	  
+      r))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jan 17 08:34:32 2015 (serrano)                */
+;*    Last change :  Sat Feb 14 06:57:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -589,12 +589,12 @@
       ((pair? throw)
        (match-case throw
 	  ((at ?fname ?point)
-	   (js-raise-reference-error %this "variable unbound \"~a\"" name
+	   (js-raise-reference-error %this "\"~a\" is not defined" name
 	      fname point))
 	  (else
-	   (js-raise-reference-error %this "variable unbound \"~a\"" name))))
+	   (js-raise-reference-error %this "\"~a\" is not defined" name))))
       (else
-       (js-raise-reference-error %this "variable unbound \"~a\"" name))))
+       (js-raise-reference-error %this "\"~a\" is not defined" name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ...                                                       */

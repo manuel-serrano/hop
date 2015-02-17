@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Jul 22 09:58:22 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sat Feb 14 11:28:35 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -22,7 +22,8 @@
 	   __js2scheme_dump
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_syntax)
+	   __js2scheme_syntax
+	   __js2scheme_utils)
 
    (export j2s-return-stage
 	   (generic j2s-return ::obj ::obj)))
@@ -53,25 +54,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-return this::J2SProgram args)
    (with-access::J2SProgram this (nodes)
-      (for-each (lambda (o) (unreturn! o #f #t)) nodes)
+      (for-each (lambda (o) (unreturn! o #f #t args)) nodes)
       (set! nodes (trim-nop nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SNode target tail?)
-   (default-walk! this target tail?))
+(define-walk-method (unreturn! this::J2SNode target tail? args)
+   (default-walk! this target tail? args))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SSeq target tail?)
+(define-walk-method (unreturn! this::J2SSeq target tail? args)
    (with-access::J2SSeq this (nodes loc)
       (let loop ((n nodes))
 	 (when (pair? n)
 	    (let ((t? (and tail? (null? (cdr n)))))
-	       (set-car! n (walk! (car n) target t?))
+	       (set-car! n (walk! (car n) target t? args))
 	       (loop (cdr n)))))
       ;; remove all useful nop (for readability)
       (set! nodes (trim-nop nodes))
@@ -100,135 +101,141 @@
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SSwitch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (unreturn! this::J2SSwitch target tail?)
+(define-method (unreturn! this::J2SSwitch target tail? args)
    (with-access::J2SSwitch this (key cases)
-      (set! key (unreturn! key target tail?))
+      (set! key (unreturn! key target tail? args))
       (cond
 	 ((not tail?)
 	  (for-each (lambda (kase::J2SCase)
 		       (with-access::J2SCase kase (expr body)
-			  (set! expr (unreturn! expr target #f))
-			  (set! body (unreturn! body target #f))))
+			  (set! expr (unreturn! expr target #f args))
+			  (set! body (unreturn! body target #f args))))
 	     cases))
 	 ((pair? cases)
 	  (let ((sesac (reverse cases)))
 	     (for-each (lambda (kase::J2SCase)
 			  (with-access::J2SCase kase (expr body)
-			     (set! expr (unreturn! expr target #f))
-			     (set! body (unreturn! body target #f))))
+			     (set! expr (unreturn! expr target #f args))
+			     (set! body (unreturn! body target #f args))))
 		(cdr sesac))
 	     (with-access::J2SCase (car sesac) (expr body)
-		(set! expr (unreturn! expr target #f))
-		(set! body (unreturn! body target #f))))))
+		(set! expr (unreturn! expr target #f args))
+		(set! body (unreturn! body target #f args))))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2STry...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2STry target tail?)
+(define-walk-method (unreturn! this::J2STry target tail? args)
    (with-access::J2STry this (body catch finally)
-      (set! body (walk! body target tail?))
-      (set! catch (walk! catch target tail?))
-      (set! finally (walk! finally target #f)))
+      (set! body (walk! body target tail? args))
+      (set! catch (walk! catch target tail? args))
+      (set! finally (walk! finally target #f args)))
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SFun target tail?)
+(define-walk-method (unreturn! this::J2SFun target tail? args)
    (with-access::J2SFun this (body)
-      (set! body (walk! body this #t)))
+      (set! body (walk! body this #t args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SCatch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SCatch target tail?)
+(define-walk-method (unreturn! this::J2SCatch target tail? args)
    (with-access::J2SCatch this (body)
-      (set! body (walk! body target tail?)))
+      (set! body (walk! body target tail? args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SWhile target tail?)
+(define-walk-method (unreturn! this::J2SWhile target tail? args)
    (with-access::J2SWhile this (test body)
-      (set! test (walk! test target #f))
-      (set! body (walk! body target #f)))
+      (set! test (walk! test target #f args))
+      (set! body (walk! body target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SAssig target tail?)
+(define-walk-method (unreturn! this::J2SAssig target tail? args)
    (with-access::J2SAssig this (lhs rhs)
-      (set! lhs (walk! lhs target #f))
-      (set! rhs (walk! rhs target #f)))
+      (set! lhs (walk! lhs target #f args))
+      (set! rhs (walk! rhs target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SReturn target tail?)
-   (with-access::J2SReturn this (tail loc expr)
+(define-walk-method (unreturn! this::J2SReturn target tail? args)
+   (with-access::J2SReturn this (tail loc expr exit)
       (unless target
-	 (syntax-error this "Illegal return statement"))
+	 (if (config-get args :return-as-exit)
+	     (begin
+		(set! exit #t)
+		(set! tail #t)
+		(set! tail? #t)
+		(set! expr (walk! expr target #f args)))
+	     (syntax-error this "Illegal return statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)
 	 ;; mark the function as needing a bind-exit
 	 (with-access::J2SFun target (need-bind-exit-return)
 	    (set! need-bind-exit-return #t)))
-      (set! expr (walk! expr target #f)))
+      (set! expr (walk! expr target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SLabel ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SLabel target tail?)
+(define-walk-method (unreturn! this::J2SLabel target tail? args)
    (with-access::J2SLabel this (body)
-      (set! body (walk! body target tail?)))
+      (set! body (walk! body target tail? args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SIf ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SIf target tail?)
+(define-walk-method (unreturn! this::J2SIf target tail? args)
    (with-access::J2SIf this (test then else)
-      (set! test (walk! test target #f))
-      (set! then (walk! then target tail?))
-      (set! else (walk! else target tail?)))
+      (set! test (walk! test target #f args))
+      (set! then (walk! then target tail? args))
+      (set! else (walk! else target tail? args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SCond ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SCond target tail?)
+(define-walk-method (unreturn! this::J2SCond target tail? args)
    (with-access::J2SCond this (test then else)
-      (set! test (walk! test target #f))
-      (set! then (walk! then target tail?))
-      (set! else (walk! else target tail?)))
+      (set! test (walk! test target #f args))
+      (set! then (walk! then target tail? args))
+      (set! else (walk! else target tail? args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SFor target tail?)
+(define-walk-method (unreturn! this::J2SFor target tail? args)
    (with-access::J2SFor this (init test incr body)
-      (set! init (walk! init target #f))
-      (set! test (walk! test target #f))
-      (set! incr (walk! incr target #f))
-      (set! body (walk! body target #f)))
+      (set! init (walk! init target #f args))
+      (set! test (walk! test target #f args))
+      (set! incr (walk! incr target #f args))
+      (set! body (walk! body target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SForIn target tail?)
+(define-walk-method (unreturn! this::J2SForIn target tail? args)
    (with-access::J2SForIn this (lhs obj body)
-      (set! lhs (walk! lhs target #f))
-      (set! obj (walk! obj target #f))
-      (set! body (walk! body target #f)))
+      (set! lhs (walk! lhs target #f args))
+      (set! obj (walk! obj target #f args))
+      (set! body (walk! body target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/

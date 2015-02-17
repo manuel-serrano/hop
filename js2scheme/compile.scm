@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Jan  6 13:46:22 2015 (serrano)                */
+;*    Last change :  Sat Feb 14 11:21:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -33,7 +33,9 @@
 	   __js2scheme_debug
 	   __js2scheme_stage)
 
-   (export (j2s-compile in::input-port
+   (export (j2s-compile-options::pair-nil)
+	   (j2s-compile-options-set! ::pair-nil)
+	   (j2s-compile in::input-port
 	      #!key
 	      (driver (j2s-optim-driver))
 	      tmp
@@ -187,6 +189,17 @@
       j2s-javascript-stage))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-compile-options ...                                          */
+;*---------------------------------------------------------------------*/
+(define %j2s-compile-options '())
+
+(define (j2s-compile-options)
+   %j2s-compile-options)
+
+(define (j2s-compile-options-set! v)
+   (set! %j2s-compile-options v))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-compile ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-compile in::input-port
@@ -203,9 +216,10 @@
 		     "J2S"
 		     (if (string=? (input-port-name in) "[string]")
 			 "stdin"
-			 (input-port-name in))))))
+			 (input-port-name in)))))
+	 (opts (append args (j2s-compile-options))))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
-      (let ((ast (j2s-parser in args)))
+      (let ((ast (j2s-parser in opts)))
 	 (if (eof-object? ast)
 	     '()
 	     (let loop ((ast ast)
@@ -213,6 +227,7 @@
 			(count 0))
 		(if (null? driver)
 		    ast
-		    (loop (stage-exec (car driver) ast  tmp count args)
+		    (loop (stage-exec (car driver) ast  tmp count opts)
 		       (cdr driver)
 		       (+fx 1 count))))))))
+

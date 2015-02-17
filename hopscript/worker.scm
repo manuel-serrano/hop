@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Jan 22 07:54:49 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 07:25:17 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -50,11 +50,12 @@
 	      (%process (default #f))
 	      (async (default #f))
 	      (state::symbol (default 'init))
-	      (module-table::obj (default (make-hashtable)))
-	      (module-mutex::obj (default (make-mutex)))
+	      (module-cache::obj (default #f))
+;* 	      (module-table::obj (default (make-hashtable)))           */
+;* 	      (module-mutex::obj (default (make-mutex)))               */
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
-	      (uvfiles::vector (default (make-vector 32)))
+	      (uvhandles::vector (default (make-vector 32)))
 	      (call::procedure (default (lambda (cb) (cb))))
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '())))
@@ -139,18 +140,18 @@
 ;*    js-worker-construct ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-worker-construct %this loader)
-
+   
    (define (remove-subworker! parent thread)
       (with-access::WorkerHopThread parent (mutex condv subworkers)
 	 (synchronize mutex
 	    (set! subworkers (delete! thread subworkers))
 	    (condition-variable-signal! condv))))
-
+   
    (define (add-subworker! parent thread)
       (with-access::WorkerHopThread parent (mutex subworkers)
 	 (synchronize mutex
 	    (set! subworkers (cons thread subworkers)))))
-
+   
    (define (bind-worker-methods! %this scope worker)
       ;; postMessage
       (js-bind! %this scope 'postMessage
@@ -205,32 +206,33 @@
 	    :writable #t
 	    :configurable #t
 	    :enumerable #t)))
-
+   
    (lambda (_ src)
-      (letrec* ((parent (js-current-worker))
-		(this (%global-constructor))
-		(source (js-tostring src %this))
-		(thunk (lambda ()
-			  (js-put! this 'module
-			     (js-get %this 'module %this) #f this)
-			  (loader source thread this)))
-		(thread (instantiate::WorkerHopThread
-			   (parent parent)
-			   (tqueue (list (cons "init" thunk)))
-			   (%this this)
-			   (keep-alive #f)
-			   (body (lambda ()
-				    (js-worker-loop thread)))
-			   (cleanup (lambda (thread)
-				       (when (isa? parent WorkerHopThread)
-					  (remove-subworker! parent thread)))))))
-
-	 ;; add the worker to the parent list
-	 (when (isa? parent WorkerHopThread)
-	    (add-subworker! parent thread))
-
-	 ;; create the worker object
-	 (with-access::JsGlobalObject %this (js-worker js-worker-prototype)
+      (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
+	 (letrec* ((parent (js-current-worker))
+		   (this (%global-constructor))
+		   (source (js-tostring src %this))
+		   (thunk (lambda ()
+			     (js-put! this 'module
+				(js-get %this 'module %this) #f this)
+			     (loader source thread this)))
+		   (thread (instantiate::WorkerHopThread
+			      (parent parent)
+			      (tqueue (list (cons "init" thunk)))
+			      (%this this)
+			      (keep-alive #f)
+			      (module-cache (js-new0 %this js-object))
+			      (body (lambda ()
+				       (js-worker-loop thread)))
+			      (cleanup (lambda (thread)
+					  (when (isa? parent WorkerHopThread)
+					     (remove-subworker! parent thread)))))))
+	    
+	    ;; add the worker to the parent list
+	    (when (isa? parent WorkerHopThread)
+	       (add-subworker! parent thread))
+	    
+	    ;; create the worker object
 	    (let ((worker (instantiate::JsWorker
 			     (__proto__ js-worker-prototype)
 			     (extensible #t)
@@ -258,7 +260,7 @@
 	       
 	       ;; start the worker thread
 	       (thread-start! thread)
-
+	       
 	       ;; return the newly created worker
 	       worker)))))
 
@@ -415,13 +417,15 @@
 (define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
    (unless %worker
       (set! %global-constructor ctor)
-      (set! %worker
-	 (instantiate::WorkerHopThread
-	    (name "%worker")
-	    (%this %this)
-	    (onexit #f)
-	    (keep-alive keep-alive)
-	    (body (lambda () (js-worker-loop %worker))))))
+      (with-access::JsGlobalObject %this (js-object)
+	 (set! %worker
+	    (instantiate::WorkerHopThread
+	       (name "%worker")
+	       (%this %this)
+	       (onexit #f)
+	       (keep-alive keep-alive)
+	       (module-cache (js-new0 %this js-object))
+	       (body (lambda () (js-worker-loop %worker)))))))
    %worker)
 
 ;*---------------------------------------------------------------------*/

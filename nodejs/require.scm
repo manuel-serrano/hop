@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb  4 19:57:02 2015 (serrano)                */
+;*    Last change :  Tue Feb 17 16:18:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -19,8 +19,8 @@
    (import __nodejs
 	   __nodejs_process)
 
-   (export (nodejs-module::JsObject ::bstring ::bstring ::JsGlobalObject)
-	   (nodejs-require ::JsGlobalObject ::JsObject)
+   (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread)
@@ -98,7 +98,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-module ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-module::JsObject id filename %this::JsGlobalObject)
+(define (nodejs-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
    
    (define (nodejs-filename->paths::vector file::bstring)
       (if (char=? (string-ref file 0) #\/)
@@ -116,35 +116,36 @@
 		       (js-string->jsstring (make-file-name dir "node_modules"))
 		       acc)))))
 	  '#()))
-   
-   (define (module-init! m exports)
-      ;; id field
-      (js-put! m 'id (js-string->jsstring id) #f %this)
-      ;; exports
-      (js-put! m 'exports exports #f %this)
-      ;; filename
-      (js-put! m 'filename (js-string->jsstring filename) #f %this)
-      ;; loaded
-      (js-put! m 'loaded #t #f %this)
-      ;; parent
-      (js-put! m 'parent #f #f %this)
-      ;; children
-      (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
-      ;; paths
-      (js-put! m 'paths
-	 (js-vector->jsarray (nodejs-filename->paths filename) %this)
-	 #f %this))
+
+   (define (module-init! m)
+      (with-access::JsGlobalObject %this (js-object)
+	 ;; id field
+	 (js-put! m 'id (js-string->jsstring id) #f %this)
+	 ;; exports
+	 (js-put! m 'exports (js-new0 %this js-object) #f %this)
+	 ;; filename
+	 (js-put! m 'filename (js-string->jsstring filename) #f %this)
+	 ;; loaded
+	 (js-put! m 'loaded #t #f %this)
+	 ;; parent
+	 (js-put! m 'parent #f #f %this)
+	 ;; children
+	 (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
+	 ;; paths
+	 (js-put! m 'paths
+	    (js-vector->jsarray (nodejs-filename->paths filename) %this)
+	    #f %this)))
 
    (with-trace 'require "nodejs-module"
       (trace-item "id=" id)
       (trace-item "filename=" filename)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((m (js-new0 %this js-object))
-	       (exports (js-new0 %this js-object)))
+	 (let ((m (js-new0 %this js-object)))
 	    ;; module properties
-	    (module-init! m exports)
-	    ;; reqgister the module in the current worker thread
-	    (nodejs-cache-module-put! filename (js-current-worker) m)
+	    (module-init! m)
+	    ;; register the module in the current worker thread
+	    (with-access::WorkerHopThread worker (module-cache)
+	       (js-put! module-cache filename m #f %this))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
@@ -152,7 +153,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require this::JsGlobalObject %module::JsObject)
+(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject)
 
    ;; require
    (define require
@@ -163,7 +164,7 @@
 	 1 "require"))
 
    ;; require.main
-   (with-access::JsGlobalObject this (js-main) 
+   (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require 'main
 	 :get (js-make-function this (lambda (this) js-main) 0 'main)
 	 :configurable #f
@@ -181,7 +182,11 @@
 	 1 "resolve")
       #f this)
 
-   ;; module .require
+   ;; require.cache
+   (with-access::WorkerHopThread worker (module-cache) 
+      (js-put! require 'cache module-cache #f this))
+	 
+   ;; module.require
    (js-put! %module 'require require #f this)
 
    require)
@@ -416,18 +421,23 @@
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
-			     filename %this)))
+			     filename worker %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
 		  ;; main module
 		  (unless js-main (set! js-main mod))
 		  ;; create the module
-		  (hopscript %this this scope mod)
+		  (with-handler
+		     (lambda (e)
+			(with-access::WorkerHopThread worker (module-cache %this)
+			   (js-delete! module-cache filename #f %this))
+			(raise e))
+		     (hopscript %this this scope mod))
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
-
+   
    (define (hop-load/cache filename)
       (let ((old (hashtable-get hop-load-cache filename)))
 	 (unless old
@@ -441,7 +451,7 @@
 	    (let ((evmod (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename %this)))
+		  (mod (nodejs-module filename filename worker %this)))
 	       (when (evmodule? evmod)
 		  (call-with-eval-module evmod
 		     (lambda ()
@@ -455,11 +465,16 @@
 	    (let ((init (dynamic-load filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename %this)))
+		  (mod (nodejs-module filename filename worker %this)))
 	       (when (procedure? init)
 		  (init %this this scope mod))
 	       ;; return the newly created module
 	       mod))))
+   
+   (define (not-found filename)
+      (js-raise-error (js-new-global-object)
+	 (format "Don't know how to load module ~s" filename)
+	 filename))
    
    (define (load-module)
       (cond
@@ -477,18 +492,11 @@
 	 ((not (string-index (basename filename) #\.))
 	  (load-module-js))
 	 (else
-	  (js-raise-error (js-new-global-object)
-	     (format "Don't know how to load module ~s" filename)
-	     filename))))
+	  (not-found filename))))
    
    (with-trace 'require "nodejs-load"
       (trace-item "filename=" filename)
-      (with-access::WorkerHopThread worker (module-mutex module-table)
-	 (synchronize module-mutex
-	    (or (hashtable-get module-table filename)
-		(let ((mod (with-loading-file filename load-module)))
-		   (hashtable-put! module-table filename mod)
-		   mod))))))
+      (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-module ...                                        */
@@ -498,11 +506,14 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-module name::bstring worker::WorkerHopThread %this %module)
    
-   (define (load-json filename)
-      (call-with-input-file filename
-	 (lambda (ip)
-	    (js-json-parser ip #f #f #f %this))))
-
+   (define (load-json path)
+      (let ((mod (nodejs-module path path worker %this))
+	    (json (call-with-input-file path
+		     (lambda (ip)
+			(js-json-parser ip #f #f #f %this)))))
+	 (js-put! mod 'exports json #f %this)
+	 mod))
+   
 ;*    (define (load-wiki filename)                                     */
 ;*       (with-access::JsGlobalObject %this (js-object)                */
 ;* 	 (let ((scope (js-new0 %this js-object)))                      */
@@ -512,26 +523,33 @@
 ;* 			  (extension (lambda (in syntax charset)       */
 ;* 					(%js-eval in 'eval %this %this scope)))))))) */
    
+   (define (load-module path worker %this %module)
+      (cond
+	 ((core-module? path)
+	  (nodejs-core-module path worker %this))
+	 ((string-suffix? ".json" path)
+	  (load-json path))
+;* 		((string-suffix? ".wiki" path)                      */
+;* 		 (load-wiki path))                                  */
+	 (else
+	  (let ((mod (nodejs-load path worker)))
+	     (unless (js-get mod 'parent %this)
+		;; parent and children
+		(let* ((children (js-get %module 'children %this))
+		       (push (js-get children 'push %this)))
+		   (js-call1 %this push children mod)
+		   (js-put! mod 'parent %module #f %this)))
+	     mod))))
+   
    (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
-      (if (core-module? name)
-	  (nodejs-require-core name worker %this)
-	  (let ((abspath (nodejs-resolve name %this %module)))
-	     (trace-item "abspath=" abspath)
-	     (cond
-		((string-suffix? ".json" abspath)
-		 (load-json abspath))
-;* 		((string-suffix? ".wiki" abspath)                      */
-;* 		 (load-wiki abspath))                                  */
-		(else
-		 (let ((mod (nodejs-load abspath worker)))
-		    (unless (js-get mod 'parent %this)
-		       ;; parent and children
-		       (let* ((children (js-get %module 'children %this))
-			      (push (js-get children 'push %this)))
-			  (js-call1 %this push children mod)
-			  (js-put! mod 'parent %module #f %this)))
-		    (js-get mod 'exports %this))))))))
+      (with-access::WorkerHopThread worker (module-cache)
+	 (let* ((path (nodejs-resolve name %this %module))
+		(mod (js-get-property-value module-cache module-cache path %this)))
+	    (if (eq? mod (js-absent))
+		(let ((mod (load-module path worker %this %module)))
+		   (js-get mod 'exports %this))
+		(js-get mod 'exports %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
@@ -546,6 +564,7 @@
 ;*    by NODEJS-PROCESS to get the console core module.                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-core-module name::bstring worker %this)
+   
    (define (nodejs-init-core name worker %this)
       (with-trace 'require "nodejs-init-core"
 	 (trace-item "name=" name)
@@ -553,7 +572,7 @@
 	    (let ((init (cdr (assoc name (core-module-table))))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module name name %this)))
+		  (mod (nodejs-module name name worker %this)))
 	       ;; initialize the core module
 	       (init %this this scope mod)
 	       ;; return the module
@@ -562,9 +581,11 @@
    
    (with-trace 'require "nodejs-core-module"
       (trace-item "name=" name)
-      (trace-item "worker=" (typeof worker))
-      (or (nodejs-cache-module name worker)
-	  (nodejs-init-core name worker %this))))
+      (with-access::WorkerHopThread worker (module-cache)
+	 (let ((mod (js-get-property-value module-cache module-cache name %this)))
+	    (if (eq? mod (js-absent))
+		(nodejs-init-core name worker %this)
+		mod)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
@@ -575,7 +596,6 @@
 (define (nodejs-require-core name::bstring worker %this)
    (with-trace 'require "nodejs-require-core"
       (trace-item "name=" name)
-      (trace-item "worker=" (typeof worker))
       (js-get (nodejs-core-module name worker %this) 'exports %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -642,9 +662,11 @@
    
    (define (resolve-error x)
       (with-access::JsGlobalObject %this (js-uri-error)
-	 (js-raise
-	    (js-new %this js-uri-error
-	       (format "Cannot find module ~s" name) 7))))
+	 (let ((exn (js-new %this js-uri-error
+		       (format "Cannot find module ~s" name) 7)))
+	    (js-put! exn 'code (js-string->jsstring "MODULE_NOT_FOUND")
+	       #f %this)
+	    (js-raise exn))))
    
    (define (resolve-modules mod x start)
       (any (lambda (dir)
@@ -687,6 +709,8 @@
 	     (or (resolve-file-or-directory name "/")
 		 (resolve-modules mod name "/")
 		 (resolve-error name)))
+	    ((core-module? name)
+	     name)
 	    (else
 	     (or (resolve-modules mod name (dirname dir))
 		 (resolve-error name)))))))
@@ -721,22 +745,22 @@
 (define (nodejs-resolve-extend-path! path)
    (set! nodejs-env-path (append nodejs-env-path path)))
 
-;*---------------------------------------------------------------------*/
-;*    nodejs-cache-module ...                                          */
-;*---------------------------------------------------------------------*/
-(define (nodejs-cache-module name worker)
-   (with-access::WorkerHopThread worker (module-table module-mutex)
-      (synchronize module-mutex
-	 (hashtable-get module-table name))))
-   
-;*---------------------------------------------------------------------*/
-;*    nodejs-cache-module-put! ...                                     */
-;*---------------------------------------------------------------------*/
-(define (nodejs-cache-module-put! name worker module)
-   (with-access::WorkerHopThread worker (module-table module-mutex)
-      (synchronize module-mutex
-	 (hashtable-put! module-table name module)
-	 module)))
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-cache-module ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (nodejs-cache-module name worker)                           */
+;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
+;*       (synchronize module-mutex                                     */
+;* 	 (hashtable-get module-table name))))                          */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-cache-module-put! ...                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (nodejs-cache-module-put! name worker module)               */
+;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
+;*       (synchronize module-mutex                                     */
+;* 	 (hashtable-put! module-table name module)                     */
+;* 	 module)))                                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import! ...                                               */
@@ -884,4 +908,4 @@
 (js-worker-load-set!
    (lambda (filename worker this)
       (nodejs-require-module filename worker this
-	 (nodejs-module (basename filename) filename this))))
+	 (nodejs-module (basename filename) filename worker this))))

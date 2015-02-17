@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 14 09:22:39 2015 (serrano)                */
+;*    Last change :  Sat Feb 14 11:03:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -275,7 +275,13 @@
 	     (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	    ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
 	     (set! libraries (cons library libraries )))
-	    
+
+	    ;; JavaScript
+	    (section "JavaScript")
+	    (("--js-return-as-exit" (help "Consider toplevel returns as exits"))
+	     (nodejs-compiler-options-add! :return-as-exit #t)) 
+	    (("--no-js-return-as-exit" (help "Do not consider toplevel returns as exits"))
+	     (nodejs-compiler-options-add! :return-as-exit #f))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))

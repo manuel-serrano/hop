@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Feb  6 12:46:39 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 18:56:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -16,7 +16,7 @@
    
    (option (set! *warning-overriden-variables* #f))
    
-   (library hopscript hop)
+   (library hopscript hop js2scheme)
 
    (include "nodejs.sch"
 	    "nodejs_debug.sch"
@@ -55,7 +55,14 @@
 	      (handle (default #f))
 	      (reqs::pair-nil (default '()))))
 
-   (export (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
+   (export (nodejs-compiler-options-add! ::keyword ::obj)
+	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compiler-options-add! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compiler-options-add! k v)
+   (j2s-compile-options-set! (cons* k v (j2s-compile-options))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-process ...                                               */
@@ -297,6 +304,18 @@
 	       0 "abort")
 	    #f %this)
 
+	 (js-bind! %this proc 'compilerOptions
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (js-plist->jsobject (j2s-compile-options) %this))
+		    0 'compilerOptions)
+	    :set (js-make-function %this
+		    (lambda (this o)
+		       (j2s-compile-options-set!
+			  (js-jsobject->plist o %this)))
+		    1 'compilerOptions)
+	    :configurable #f)
+	 
 	 ;; first process name
 	 (nodejs-process-title-init!)
 	 
@@ -556,6 +575,14 @@
 	       0 "memoryUsage")
 	    #t %this)
 
+	 ;; getgroups
+	 (js-put! proc 'getgroups
+	    (js-make-function %this
+	       (lambda (this)
+		  (js-vector->jsarray (getgroups) %this))
+	       0 "getgroups")
+	    #t %this)
+
 	 ;; mainModule
 	 (with-access::JsGlobalObject %this (js-main) 
 	    (js-bind! %this proc 'mainModule
@@ -566,7 +593,6 @@
 	 (for-each not-implemented
 	    '(_getActiveRequest
 	      _getActiveHandles
-	      getgroups
 	      setgroups
 	      initgroups
 	      _debugProcess

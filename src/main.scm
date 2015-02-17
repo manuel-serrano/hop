@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Feb  4 18:30:41 2015 (serrano)                */
+;*    Last change :  Thu Feb 12 08:25:19 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -127,9 +127,9 @@
 	    ;; create the repl JS module
 	    (let ((path (file-name-canonicalize!
 			   (make-file-name (pwd) (car args)))))
-	       (nodejs-module "repl" path %global))
+	       (nodejs-module "repl" path %worker %global))
 	    ;; hss extension
-	    (let ((mod (nodejs-module "hss" "hss" %global))
+	    (let ((mod (nodejs-module "hss" "hss" %worker %global))
 		  (scope (nodejs-new-scope-object %global)))
 	       ;; force the module initialization
 	       (let ((exp (call-with-input-string "false"

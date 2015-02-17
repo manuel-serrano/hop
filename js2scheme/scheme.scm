@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jan 31 11:05:03 2015 (serrano)                */
+;*    Last change :  Tue Feb 17 16:17:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -181,6 +181,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return conf)
 
+   (define (exit-body body)
+      (if (config-get conf :return-as-exit)
+	  `((bind-exit (%jsexit) ,@body))
+	  body))
+   
    (define (j2s-module module body)
       (with-access::J2SProgram this (nodes mode pcache-size)
 	 (list
@@ -189,10 +194,8 @@
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
-		
 		(define %worker (js-current-worker))
-		
-		,@body))))
+		,@(exit-body body)))))
 
    (define (j2s-main-module name body)
       (let ((module `(module ,(string->symbol name)
@@ -220,9 +223,9 @@
 		   (define this
 		     (with-access::JsGlobalObject %this (js-object)
 			(js-new0 %this js-object)))
-		   (define %module (nodejs-module ,(basename path) ,path %this))
+		   (define %module (nodejs-module ,(basename path) ,path %worker %this))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
-		      (lambda () ,@body))
+		      (lambda () ,(exit-body body)))
 		   ;; (js-worker-terminate! %worker #f)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
@@ -240,15 +243,14 @@
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
 		 (define %resource (dirname %source))
-
-		 ,@body))
+		 ,@(exit-body body)))
 	    (main
 	     ;; generate a main hopscript module
 	     (j2s-main-module name body))
 	    (else
 	     ;; generate the module clause
 	     (let ((module `(module ,(string->symbol name)
-			       (library hop hopscript js2scheme)
+			       (library hop hopscript js2scheme nodejs)
 			       (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
 		(j2s-module module body)))))))
 
@@ -1012,11 +1014,16 @@
 ;*    j2s-scheme ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SReturn mode return conf)
-   (with-access::J2SReturn this (loc expr tail)
-      (if tail
-	  (j2s-scheme expr mode return conf)
+   (with-access::J2SReturn this (loc expr tail exit)
+      (cond
+	 (exit
 	  (epairify loc
-	     `(%return ,(j2s-scheme expr mode return conf))))))
+	     `(%jsexit ,(j2s-scheme expr mode return conf))))
+	 (tail
+	  (j2s-scheme expr mode return conf))
+	 (else
+	  (epairify loc
+	     `(%return ,(j2s-scheme expr mode return conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SThrow ...                                        */

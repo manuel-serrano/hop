@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Jan 28 07:01:13 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 09:41:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -189,7 +189,7 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsHandle this (handle)
-			     (nodejs-stream-fd handle)))
+			     (nodejs-stream-fd %worker handle)))
 		       0 'getGD)
 	       :writable #f :configurable #f)
 	    ;; writeQueueSize

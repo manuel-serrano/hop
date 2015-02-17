@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Jan 31 11:53:51 2015 (serrano)                */
+;*    Last change :  Sat Feb 14 11:15:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1140,7 +1140,6 @@
       (trace-item "in=" (input-port-name in))
       (with-handler
 	 (lambda (e)
-	    (exception-notify e)
 	    (cond
 	       ((isa? e &io-parse-error)
 		(with-access::&io-parse-error e (proc msg obj fname location)

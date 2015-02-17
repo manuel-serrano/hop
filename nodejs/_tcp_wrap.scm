@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Fri Feb  6 09:18:35 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 10:37:08 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -114,7 +114,6 @@
 	    (js-put! obj 'writeUtf8String
 	       (js-make-function %this
 		  (lambda (this string handle)
-		     (tprint "writeUtf8String string=" string)
 		     (stream-write-string %worker %this this
 			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"utf8" #f handle))
@@ -197,7 +196,7 @@
 	    
 	    (js-put! obj 'open
 	       (js-make-function %this
-		  (lambda (this handle fd)
+		  (lambda (this fd)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tcp-open %worker %this handle fd)))
 		  2 "open")
@@ -247,7 +246,7 @@
 	    (js-bind! %this obj 'fd
 	       :get (js-make-function %this
 		       (lambda (this)
-			  (nodejs-stream-fd hdl))
+			  (nodejs-stream-fd %worker hdl))
 		       0 'getGD)
 	       :writable #f :configurable #f)
 	    (js-put! obj 'writeQueueSize

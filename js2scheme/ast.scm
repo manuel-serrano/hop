@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Jan 31 09:15:05 2015 (serrano)                */
+;*    Last change :  Sat Feb 14 10:15:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -99,6 +99,7 @@
 	   (final-class J2SDefault::J2SCase)
 	   
 	   (final-class J2SReturn::J2SStmt
+	      (exit::bool (default #f))
 	      (tail::bool (default #t))
 	      expr::J2SExpr)
 	   

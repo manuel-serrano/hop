@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Jan 28 07:01:33 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 07:30:17 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -136,7 +136,7 @@
 	    (js-bind! %this obj 'fd
 	       :get (js-make-function %this
 		       (lambda (this)
-			  (nodejs-stream-fd hdl))
+			  (nodejs-stream-fd %worker hdl))
 		       0 'GetFD)
 	       :writable #f :configurable #f)
 	    obj)))

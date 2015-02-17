@@ -1,9 +1,9 @@
 #!/bin/bash
 case $# in
   1)
-     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1";;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --js-return-as-exit --exepath "*" -- "$1";;
   2)
-     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1" "$2";;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --js-return-as-exit --exepath "*" -- "$1" "$2";;
   3)
-     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --exepath "*" -- "$1" "$2" "$3";;
+     exec -a $0 @BINDIR@/hop -g --no-zeroconf --no-server --no-cache --js-return-as-exit --exepath "*" -- "$1" "$2" "$3";;
 esac

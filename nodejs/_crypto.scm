@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Feb  3 17:36:27 2015 (serrano)                */
+;*    Last change :  Sun Feb 15 15:10:08 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -27,7 +27,8 @@
 	    (class JsSSLConnection::JsObject
 	       (ssl (default #unspecified))))
 
-   (import  __nodejs_process)
+   (import  __nodejs_process
+	    __nodejs__buffer)
    
    (export  (process-crypto ::WorkerHopThread ::JsGlobalObject)))
 
@@ -330,6 +331,29 @@
 						   request-cert-or-server-name))
 				   (reject-unauthorized reject))))))
 	    conn)))
+
+   (define (check-entropy)
+      (let loop ()
+	 (unless (ssl-rand-status)
+	    (unless (ssl-rand-poll)))))
+   
+   (define (pseudoRandomBytes this size cb)
+      (check-entropy)
+      (let ((buf (js-string->jsslowbuffer
+		    (ssl-rand-pseudo-bytes (js-tointeger size %this))
+		    %this)))
+	 (if (isa? cb JsFunction)
+	     (js-call2 %this cb this (js-undefined) buf)
+	     buf)))
+   
+   (define (randomBytes this size cb)
+      (check-entropy)
+      (let ((buf (js-string->jsslowbuffer
+		    (ssl-rand-bytes (js-tointeger size %this))
+		    %this)))
+	 (if (isa? cb JsFunction)
+	     (js-call2 %this cb this (js-undefined) buf)
+	     buf)))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
@@ -340,8 +364,10 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    `((PBKDF2 . ,(not-implemented "PBKDF2"))
-	      (randomBytes . ,(js-new %this js-object))
-	      (pseudoRandomBytes . ,(js-new %this js-object))
+	      (randomBytes . ,(js-make-function %this randomBytes
+				 2 "randomBytes"))
+	      (pseudoRandomBytes . ,(js-make-function %this pseudoRandomBytes
+				       2 "pseudoRandomBytes"))
 	      (getSSLCiphers . ,(not-implemented "getSLLCiphers"))
 	      (getCiphers . ,(js-new %this js-object))
 	      (getHashes . ,(js-new %this js-object))

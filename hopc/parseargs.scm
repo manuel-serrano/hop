@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Oct 11 10:43:31 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sat Feb 14 10:43:48 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -139,6 +139,10 @@
 	     (hopc-js-header-set! #f))
 	    (("--js-header" (help "Generate hopscript header"))
 	     (hopc-js-header-set! #t))
+	    (("--js-return-as-exit" (help "Consider top level returns as exit"))
+	     (hopc-js-return-as-exit-set! #t))
+	    (("--no-js-return-as-exit" (help "Consider top level returns as error"))
+	     (hopc-js-return-as-exit-set! #f))
 	    (("--js-driver" ?driver (help "Set j2s compiler driver"))
 	     (hopc-js-driver-set! driver))
 	    (("--js-show-driver" (help "Set j2s compiler driver"))

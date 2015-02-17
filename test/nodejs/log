@@ -45,7 +45,7 @@
 44. test-child-process-silent.js ### BLACKLISTED
 45. test-child-process-spawn-typeerror.js ... ok.
 46. test-child-process-stdin.js ... ok.
-47. test-child-process-stdio-big-write-end.js ### BLACKLISTED
+47. test-child-process-stdio-big-write-end.js ... ok.
 48. test-child-process-stdio-inherit.js ... ok.
 49. test-child-process-stdio.js ... ok.
 50. test-child-process-stdout-flush.js ... ok.
@@ -119,7 +119,7 @@
 118. test-domain-http-server.js ### BLACKLISTED
 119. test-domain-implicit-fs.js ### BLACKLISTED
 120. test-domain-multi.js ### BLACKLISTED
-121. test-domain-nested-throw.js ### BLACKLISTED
+121. test-domain-nested-throw.js ... ok.
 122. test-domain-nested.js ... ok.
 123. test-domain-safe-exit.js ... ok.
 124. test-domain-stack.js ... ok.
@@ -175,7 +175,7 @@
 174. test-fs-read.js ... ok.
 175. test-fs-readfile-empty.js ... ok.
 176. test-fs-readfile-error.js ### BLACKLISTED
-177. test-fs-readfile-pipe.js ### BLACKLISTED
+177. test-fs-readfile-pipe.js ... ok.
 178. test-fs-readfile-unlink.js ... ok.
 179. test-fs-readfile-zero-byte-liar.js ... ok.
 180. test-fs-realpath.js ... ok.
@@ -336,17 +336,17 @@
 335. test-https-timeout-server.js ### BLACKLISTED
 336. test-https-timeout.js ### BLACKLISTED
 337. test-init.js ### BLACKLISTED
-338. test-listen-fd-cluster.js ### BLACKLISTED
-339. test-listen-fd-detached-inherit.js ### BLACKLISTED
-340. test-listen-fd-detached.js ### BLACKLISTED
+338. test-listen-fd-cluster.js ... ok.
+339. test-listen-fd-detached-inherit.js ... ok.
+340. test-listen-fd-detached.js ... ok.
 341. test-listen-fd-ebadf.js ... ok.
-342. test-listen-fd-server.js ### BLACKLISTED
+342. test-listen-fd-server.js ... ok.
 343. test-memory-usage-emfile.js ... ok.
 344. test-memory-usage.js ... ok.
 345. test-mkdir-rmdir.js ... ok.
 346. test-module-loading-error.js ### BLACKLISTED
-347. test-module-loading.js ... failure !!!
-348. test-net-GH-5504.js ### BLACKLISTED
+347. test-module-loading.js ### BLACKLISTED
+348. test-net-GH-5504.js ... ok.
 349. test-net-after-close.js ... ok.
 350. test-net-binary.js ... ok.
 351. test-net-bind-twice.js ### BLACKLISTED
@@ -415,7 +415,7 @@
 414. test-process-exec-argv.js ### BLACKLISTED
 415. test-process-exit-recursive.js ... ok.
 416. test-process-exit.js ... ok.
-417. test-process-getgroups.js ### BLACKLISTED
+417. test-process-getgroups.js ... ok.
 418. test-process-hrtime.js ... ok.
 419. test-process-kill-null.js ... ok.
 420. test-process-next-tick.js ... ok.
@@ -433,9 +433,9 @@
 432. test-readuint.js ... ok.
 433. test-regress-GH-1531.js ### BLACKLISTED
 434. test-regress-GH-1697.js ### BLACKLISTED
-435. test-regress-GH-1726.js ### BLACKLISTED
+435. test-regress-GH-1726.js ... ok.
 436. test-regress-GH-1899.js ... ok.
-437. test-regress-GH-3542.js ### BLACKLISTED
+437. test-regress-GH-3542.js ... ok.
 438. test-regress-GH-3739.js ... ok.
 439. test-regress-GH-4015.js ### BLACKLISTED
 440. test-regress-GH-4027.js ... ok.
@@ -458,16 +458,16 @@
 457. test-repl-tab-complete.js ### BLACKLISTED
 458. test-repl.js ### BLACKLISTED
 459. test-require-cache-without-stat.js ... ok.
-460. test-require-cache.js ... failure !!!
-461. test-require-exceptions.js ... failure !!!
+460. test-require-cache.js ... ok.
+461. test-require-exceptions.js ... ok.
 462. test-require-json.js ... ok.
 463. test-require-resolve.js ... ok.
-464. test-script-context.js ... failure !!!
-465. test-script-new.js ... failure !!!
+464. test-script-context.js ... ok.
+465. test-script-new.js ... ok.
 466. test-script-static-context.js ... ok.
-467. test-script-static-new.js ... failure !!!
-468. test-script-static-this.js ... failure !!!
-469. test-script-this.js ... failure !!!
+467. test-script-static-new.js ... ok.
+468. test-script-static-this.js ... ok.
+469. test-script-this.js ... ok.
 470. test-setproctitle.js ### BLACKLISTED
 471. test-sigint-infinite-loop.js ### BLACKLISTED
 472. test-signal-handler.js ### BLACKLISTED
@@ -485,7 +485,7 @@
 484. test-stdout-cannot-be-closed-child-process-pipe.js ... ok.
 485. test-stdout-close-catch.js ### BLACKLISTED
 486. test-stdout-close-unref.js ... ok.
-487. test-stdout-stderr-reading.js ... failure !!!
+487. test-stdout-stderr-reading.js ### BLACKLISTED
 488. test-stdout-to-file.js ... ok.
 489. test-stream-big-packet.js ... ok.
 490. test-stream-big-push.js ... ok.
@@ -523,7 +523,7 @@
 522. test-stream2-set-encoding.js ... ok.
 523. test-stream2-stderr-sync.js ... ok.
 524. test-stream2-transform.js ... ok.
-525. test-stream2-unpipe-drain.js ... failure !!!
+525. test-stream2-unpipe-drain.js ... ok.
 526. test-stream2-unpipe-leak.js ... ok.
 527. test-stream2-writable.js ... ok.
 528. test-string-decoder-end.js ... ok.
@@ -614,7 +614,7 @@
 613. test-zlib-write-after-flush.js ### BLACKLISTED
 614. test-zlib-zero-byte.js ### BLACKLISTED
 615. test-zlib.js ### BLACKLISTED
-438 executed
-   428 success
-   10 failure
-   177 blacklist
+447 executed
+   447 success
+   0 failure
+   168 blacklist
