@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 14 11:15:50 2015 (serrano)                */
+;*    Last change :  Wed Feb 18 07:41:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1171,12 +1171,12 @@
 	    (with-trace 'hopscript-eval "%js-eval-inner"
 	       (trace-item "e=" e)
 	       (trace-item "scope=" (typeof scope))
-	       (let ((r (eval! `(,e ,%this
-				   ,this
-				   ,scope
-				   ,(if (eq? m (js-undefined))
-					(eval-dummy-module %this)
-					m)))))
+	       (let ((r (eval `(,e ,%this
+				  ,this
+				  ,scope
+				  ,(if (eq? m (js-undefined))
+				       (eval-dummy-module %this)
+				       m)))))
 		  (trace-item "r=" r)
 		  r))))))
 

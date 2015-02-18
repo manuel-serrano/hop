@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Feb 17 15:46:37 2015 (serrano)                */
+;*    Last change :  Wed Feb 18 08:02:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -65,7 +65,7 @@
    (list
       (js-def-extern 'global #t #f '%this)
       (js-def-extern 'GLOBAL #t #f '%this)
-      (js-def-extern 'module #t #f '%module)
+      (js-def-extern 'module #t #t '%module)
       (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
       (js-def-extern 'require #t #f '(nodejs-require %worker %this %module))
       (js-def-extern 'Worker #t #t '(nodejs-worker %this %scope %module))

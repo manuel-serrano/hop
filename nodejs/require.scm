@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Feb 17 16:18:27 2015 (serrano)                */
+;*    Last change :  Wed Feb 18 08:00:37 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -187,7 +187,9 @@
       (js-put! require 'cache module-cache #f this))
 	 
    ;; module.require
-   (js-put! %module 'require require #f this)
+   (js-bind! this %module 'require
+      :value require
+      :enumerable #f)
 
    require)
 
@@ -397,7 +399,7 @@
 		 (evmod (eval-module)))
 	     (unwind-protect
 		(begin
-		   (for-each eval! expr)
+		   (for-each eval expr)
 		   (let ((hopscript (eval! 'hopscript)))
 		      (hashtable-put! compile-table filename hopscript)
 		      hopscript))

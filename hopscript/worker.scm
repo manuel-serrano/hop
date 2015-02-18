@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Feb 15 07:25:17 2015 (serrano)                */
+;*    Last change :  Wed Feb 18 07:41:08 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -371,7 +371,7 @@
 	    (jsmodule #f))
 	 (unwind-protect
 	    ;; eval the compile module in the current environment
-	    (for-each (lambda (e) (set! jsmodule (eval! e))) exprs)
+	    (for-each (lambda (e) (set! jsmodule (eval e))) exprs)
 	    ;; restore the previous module
 	    (eval-module-set! m)))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Tue Feb 17 14:41:19 2015 (serrano)                */
+;*    Last change :  Wed Feb 18 07:41:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -42,7 +42,7 @@
 		       (j2s-compile in :driver (j2s-plain-driver)
 			  :parser 'repl
 			  :filename "repl.js")))))
-	 ((eval! exp) %this %this %this module))
+	 ((eval exp) %this %this %this module))
       ;; enter the read-eval-print loop
       (unwind-protect
 	 (let loop ()
@@ -73,7 +73,7 @@
 					   (lambda ()
 					      (with-handler
 						 repl-error-handler
-						 (let ((v ((eval! exp) %this %this %this module)))
+						 (let ((v ((eval exp) %this %this %this module)))
 						    (jsprint v %this)))))))
 				  (liip))))))))
 	    (loop))
