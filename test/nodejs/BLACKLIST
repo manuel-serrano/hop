@@ -12,28 +12,12 @@
 #*---------------------------------------------------------------------*/
 #*    unimplemented (yet) features                                     */
 #*---------------------------------------------------------------------*/
-simple/test-domain-multi.js
-simple/test-domain-http-server.js
-simple/test-domain-timers.js
-
-simple/test-http-bind-twice.js
-
-simple/test-net-eaddrinuse.js
-simple/test-net-server-max-connections.js
-simple/test-net-bind-twice.js
+# failures that need to be fixed
 simple/test-net-pingpong.js
-
-simple/test-pipe.js
-simple/test-tls-server-large-request.js
-
-simple/test-cluster-eaddrinuse.js
+simple/test-http-pipeline-flood.js
 simple/test-cluster-master-error.js
 
-simple/test-regress-GH-4948.js
-simple/test-regress-GH-4015.js
-
 # http server not implemented
-simple/test-cluster-bind-twice-v1.js
 simple/test-cluster-bind-twice-v2.js
 simple/test-http-many-keep-alive-connections.js
 
@@ -43,7 +27,6 @@ simple/test-crypto-ecb.js
 simple/test-crypto-hash-stream-pipe.js
 simple/test-crypto-padding-aes256.js
 simple/test-crypto-padding.js
-simple/test-crypto-random.js
 simple/test-crypto-stream.js
 simple/test-crypto-verify-failure.js
 simple/test-crypto.js
@@ -78,6 +61,7 @@ simple/test-https-timeout-server.js
 simple/test-https-timeout.js
 
 # tls
+simple/test-tls-server-large-request.js
 simple/test-tls-client-abort.js
 simple/test-tls-client-abort2.js
 simple/test-tls-client-abort3.js
@@ -120,19 +104,6 @@ simple/test-tls-timeout-server-2.js
 simple/test-tls-timeout-server.js
 simple/test-tls-zero-clear-in.js
 
-# zlib
-simple/test-zlib-close-after-write.js
-simple/test-zlib-dictionary-fail.js
-simple/test-zlib-dictionary.js
-simple/test-zlib-from-gzip.js
-simple/test-zlib-from-string.js
-simple/test-zlib-invalid-input.js
-simple/test-zlib-random-byte-pipes.js
-simple/test-zlib-write-after-close.js
-simple/test-zlib-write-after-flush.js
-simple/test-zlib-zero-byte.js
-simple/test-zlib.js
-
 #*---------------------------------------------------------------------*/
 #*    bad (javascript or nodejs) tests                                 */
 #*---------------------------------------------------------------------*/
@@ -146,27 +117,9 @@ simple/test-http-parser-bad-ref.js
 simple/test-process-argv-0.js
 simple/test-process-config.js
 
-# illegal returns
-#* simple/test-child-process-stdio-big-write-end.js                    */
-#* simple/test-cluster-bind-twice-v2.js                                */
-#* simple/test-domain-nested-throw.js                                  */
-#* simple/test-fs-readfile-pipe.js                                     */
-#* simple/test-listen-fd-cluster.js                                    */
-#* simple/test-listen-fd-detached-inherit.js                           */
-#* simple/test-listen-fd-detached.js                                   */
-#* simple/test-listen-fd-server.js                                     */
-#* simple/test-net-GH-5504.js                                          */
-#* simple/test-process-getgroups.js                                    */
-#* simple/test-regress-GH-1726.js                                      */
-#* simple/test-regress-GH-3542.js                                      */
-
-simple/test-http-pipeline-flood.js
-
 # nodejs failing tests
 simple/test-cluster-disconnect-with-no-workers.js
 simple/test-domain-implicit-fs.js
-
-simple/test-net-pipe-connect-errors.js
 
 # EADDRINUSE
 simple/test-http-client-pipe-end.js
@@ -175,6 +128,8 @@ simple/test-http-unix-socket.js
 simple/test-cluster-http-pipe.js
 simple/test-pipe-stream.js
 simple/test-pipe-unref.js
+simple/test-net-pipe-connect-errors.js
+simple/test-cluster-eaddrinuse.js
 
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
@@ -238,8 +193,22 @@ simple/test-repl-require-cache.js
 simple/test-repl-tab-complete.js
 simple/test-repl.js
 
+# zlib
+simple/test-zlib-close-after-write.js
+simple/test-zlib-dictionary-fail.js
+simple/test-zlib-dictionary.js
+simple/test-zlib-from-gzip.js
+simple/test-zlib-from-string.js
+simple/test-zlib-invalid-input.js
+simple/test-zlib-random-byte-pipes.js
+simple/test-zlib-write-after-close.js
+simple/test-zlib-write-after-flush.js
+simple/test-zlib-zero-byte.js
+simple/test-zlib.js
+
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */
 #*---------------------------------------------------------------------*/
+#* simple/test-pipe.js                                                 */
 #* simple/test-child-process-stdout-flush.js                           */
 #* simple/test-stdout-to-file.js                                       */

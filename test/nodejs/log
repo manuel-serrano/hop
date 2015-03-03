@@ -116,14 +116,14 @@
 115. test-domain-exit-dispose-again.js ... ok.
 116. test-domain-exit-dispose.js ... ok.
 117. test-domain-from-timer.js ... ok.
-118. test-domain-http-server.js ### BLACKLISTED
+118. test-domain-http-server.js ... ok.
 119. test-domain-implicit-fs.js ### BLACKLISTED
-120. test-domain-multi.js ### BLACKLISTED
+120. test-domain-multi.js ... ok.
 121. test-domain-nested-throw.js ... ok.
 122. test-domain-nested.js ... ok.
 123. test-domain-safe-exit.js ... ok.
 124. test-domain-stack.js ... ok.
-125. test-domain-timers.js ### BLACKLISTED
+125. test-domain-timers.js ... ok.
 126. test-domain.js ### BLACKLISTED
 127. test-error-reporting.js ... ok.
 128. test-eval-require.js ### BLACKLISTED
@@ -614,7 +614,7 @@
 613. test-zlib-write-after-flush.js ### BLACKLISTED
 614. test-zlib-zero-byte.js ### BLACKLISTED
 615. test-zlib.js ### BLACKLISTED
-447 executed
-   447 success
+450 executed
+   450 success
    0 failure
-   168 blacklist
+   165 blacklist

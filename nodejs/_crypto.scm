@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sun Feb 15 15:10:08 2015 (serrano)                */
+;*    Last change :  Sat Feb 28 18:13:53 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -339,21 +339,33 @@
    
    (define (pseudoRandomBytes this size cb)
       (check-entropy)
-      (let ((buf (js-string->jsslowbuffer
-		    (ssl-rand-pseudo-bytes (js-tointeger size %this))
-		    %this)))
-	 (if (isa? cb JsFunction)
-	     (js-call2 %this cb this (js-undefined) buf)
-	     buf)))
+      (cond
+	 ((not (number? size))
+	  (js-raise-type-error %this "Bad argument" size))
+	 ((or (< size 0) (> size 1073741823.))
+	  (js-raise-type-error %this "Bad size" size))
+	 (else
+	  (let ((buf (js-string->jsslowbuffer
+			(ssl-rand-pseudo-bytes size)
+			%this)))
+	     (if (isa? cb JsFunction)
+		 (js-call2 %this cb this (js-undefined) buf)
+		 buf)))))
    
    (define (randomBytes this size cb)
       (check-entropy)
-      (let ((buf (js-string->jsslowbuffer
-		    (ssl-rand-bytes (js-tointeger size %this))
-		    %this)))
-	 (if (isa? cb JsFunction)
-	     (js-call2 %this cb this (js-undefined) buf)
-	     buf)))
+      (cond
+	 ((not (number? size))
+	  (js-raise-type-error %this "Bad argument" size))
+	 ((or (< size 0) (> size 1073741823.))
+	  (js-raise-type-error %this "Bad size" size))
+	 (else
+	  (let ((buf (js-string->jsslowbuffer
+			(ssl-rand-bytes (js-tointeger size %this))
+			%this)))
+	     (if (isa? cb JsFunction)
+		 (js-call2 %this cb this (js-undefined) buf)
+		 buf)))))
    
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
@@ -383,6 +395,6 @@
 ;*---------------------------------------------------------------------*/
 )
 (else
- (define (process-crypto %this)
+ (define (process-crypto %worker %this)
     #unspecified)))
 

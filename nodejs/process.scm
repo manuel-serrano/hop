@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Feb 15 18:56:50 2015 (serrano)                */
+;*    Last change :  Thu Feb 19 11:30:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -390,7 +390,7 @@
 			((string=? mod "cares_wrap")
 			 (process-cares-wrap %worker %this proc))
 			((string=? mod "timer_wrap")
-			 (hopjs-process-timer %worker %this))
+			 (hopjs-process-timer %worker %this proc))
 			((string=? mod "process_wrap")
 			 (process-process-wrap %worker %this proc))
 			((string=? mod "crypto")

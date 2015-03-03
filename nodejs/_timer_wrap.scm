@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Sun Jan  4 07:36:44 2015 (serrano)                */
+;*    Last change :  Thu Feb 19 11:30:29 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -24,12 +24,12 @@
 	      (proc (default #f))
 	      (marked (default #f))))
 
-   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject)))
+   (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-timer ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hopjs-process-timer %worker %this)
+(define (hopjs-process-timer %worker %this process)
    
    (define js-timer-prototype
       (instantiate::JsObject))
@@ -41,7 +41,7 @@
 	 (lambda (this) this)
 	 0 "Timer"
 	 :prototype js-timer-prototype
-	 :construct (js-timer-construct! %worker %this js-timer-prototype)))
+	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
 
    (js-bind! %this Timer 'now
       :value (js-make-function %this
@@ -58,13 +58,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-timer-construct! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-timer-construct! %worker %this::JsGlobalObject js-timer-prototype)
+(define (js-timer-construct! %worker %this::JsGlobalObject process js-timer-prototype)
    (lambda (_)
       (let ((obj (instantiate::JsTimer
 		    (__proto__ js-timer-prototype)
 		    (worker (js-current-worker)))))
 	 (with-access::JsTimer obj (timer)
-	    (set! timer (nodejs-make-timer %worker %this obj)))
+	    (set! timer (nodejs-make-timer %worker %this process obj)))
 	 obj)))
 
 ;*---------------------------------------------------------------------*/

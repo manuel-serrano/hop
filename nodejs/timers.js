@@ -301,8 +301,27 @@ Timeout.prototype.unref = function() {
     var delay = this._monotonicStartTime + this._idleTimeout - nowMonotonic;
     if (delay < 0) delay = 0;
     exports.unenroll(this);
-    this._handle = new Timer();
-    this._handle.ontimeout = this._onTimeout;
+     this._handle = new Timer();
+     var self = this;
+     this._handle.ontimeout = function() {
+	// MS 19 feb 2015 CARE
+	// I think the geniune nodejs code is wrong. For a reason that I don't
+	// understand, node inverse the execution of the setTimeout and
+	// setImmetediate listener of the test-domain-timers.js tests.
+	// Because of this inversion the setTimeout is executed in a process
+	// environment where domain is set. As Hop does the thing correct,
+	// i.e., setImmediate is executed before, the setTimeout listenere
+	// is not executed protected by a domain. The patch below, fixes
+	// that problem
+	if( self._handle.domain ) {
+	   var odomain = process.domain;
+	   process.domain = self._handle.domain;
+	   self._onTimeout();
+	   process.domain = odomain;
+	} else {
+	   self._onTimeout();
+	}
+     }
     this._handle.start(delay, 0);
     this._handle.domain = this.domain;
     this._handle.unref();

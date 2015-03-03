@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Feb 15 14:55:30 2015 (serrano)                */
+;*    Last change :  Thu Feb 19 14:29:34 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -53,7 +53,7 @@
 	   (nodejs-ref ::obj ::WorkerHopThread)
 	   (nodejs-unref ::obj ::WorkerHopThread)
 	   
-	   (nodejs-make-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)
+	   (nodejs-make-timer ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-timer-start ::WorkerHopThread ::obj ::obj ::obj)
 	   (nodejs-timer-close ::WorkerHopThread ::obj)
 	   (nodejs-timer-stop ::WorkerHopThread ::obj)
@@ -410,7 +410,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-timer ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-make-timer %worker %this obj)
+(define (nodejs-make-timer %worker %this process obj)
    
    (define (timer-body timer status)
       (with-access::UvTimer timer (repeat)
@@ -421,14 +421,13 @@
 	    (let ((proc (js-get obj 'ontimeout %this)))
 	       (when (isa? proc JsFunction)
 		  (js-worker-push-thunk! %worker "tick-spinner"
-		     (lambda ()
-			(js-call1 %this proc obj status))))))))
-       
-   (letrec ((obj (instantiate::UvTimer
-		    (loop (worker-loop %worker))
-		    (cb (lambda (timer status)
-			   (timer-body timer status))))))
-      obj))
+                     (lambda ()
+                        (js-call1 %this proc obj status))))))))
+   
+   (instantiate::UvTimer
+      (loop (worker-loop %worker))
+      (cb (lambda (timer status)
+	     (timer-body timer status)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-start ...                                           */
