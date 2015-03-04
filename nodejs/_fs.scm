@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Fri Feb  6 11:35:24 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 14:51:10 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -48,44 +48,63 @@
 ;*    Constants                                                        */
 ;*---------------------------------------------------------------------*/
 (define O_RDONLY
-   (cond-expand (bigloo-c (pragma::long "O_RDONLY")) (else 0)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_RDONLY")) (else 0)))
 (define O_WRONLY
-   (cond-expand (bigloo-c (pragma::long "O_WRONLY")) (else 1)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_WRONLY")) (else 1)))
 (define O_RDWR
-   (cond-expand (bigloo-c (pragma::long "O_RDWR")) (else 2)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_RDWR")) (else 2)))
 (define O_CREAT
-   (cond-expand (bigloo-c (pragma::long "O_CREAT")) (else #o64)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_CREAT")) (else #o64)))
 (define O_EXCL
-   (cond-expand (bigloo-c (pragma::long "O_EXCL")) (else #o200)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_EXCL")) (else #o200)))
 (define O_NOCTTY
-   (cond-expand (bigloo-c (pragma::long "O_NOCTTY")) (else #o400)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_NOCTTY")) (else #o400)))
 (define O_TRUNC
-   (cond-expand (bigloo-c (pragma::long "O_TRUNC")) (else #o1000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_TRUNC")) (else #o1000)))
 (define O_APPEND
-   (cond-expand (bigloo-c (pragma::long "O_APPEND")) (else #o2000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_APPEND")) (else #o2000)))
 (define O_DIRECTORY
-   (cond-expand (bigloo-c (pragma::long "O_DIRECTORY")) (else #o200000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_DIRECTORY")) (else #o200000)))
 (define O_SYNC
-   (cond-expand (bigloo-c (pragma::long "O_SYNC")) (else #o4010000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_SYNC")) (else #o4010000)))
 (define O_NOFOLLOW
-   (cond-expand (bigloo-c (pragma::long "O_NOFOLLOW")) (else #o400000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "O_NOFOLLOW")) (else #o400000)))
 
 (define S_IFMT
-   (cond-expand (bigloo-c (pragma::long "S_IFMT")) (else #o170000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFMT")) (else #o170000)))
 (define S_IFREG
-   (cond-expand (bigloo-c (pragma::long "S_IFREG")) (else #o100000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFREG")) (else #o100000)))
 (define S_IFDIR
-   (cond-expand (bigloo-c (pragma::long "S_IFDIR")) (else #o40000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFDIR")) (else #o40000)))
 (define S_IFBLK
-   (cond-expand (bigloo-c (pragma::long "S_IFBLK")) (else #o60000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFBLK")) (else #o60000)))
 (define S_IFCHR
-   (cond-expand (bigloo-c (pragma::long "S_IFCHR")) (else #o20000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFCHR")) (else #o20000)))
 (define S_IFLNK
-   (cond-expand (bigloo-c (pragma::long "S_IFLNK")) (else #o120000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFLNK")) (else #o120000)))
 (define S_IFIFO
-   (cond-expand (bigloo-c (pragma::long "S_IFIFO")) (else #o10000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFIFO")) (else #o10000)))
 (define S_IFSOCK
-   (cond-expand (bigloo-c (pragma::long "S_IFSOCK")) (else #o140000)))
+   (cond-expand
+      ((and enable-libuv bigloo-c) (pragma::long "S_IFSOCK")) (else #o140000)))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-fs-stats ...                                             */

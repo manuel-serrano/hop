@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  4 13:52:41 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 14:48:19 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -188,21 +188,23 @@
 ;*    Constants                                                        */
 ;*---------------------------------------------------------------------*/
 (define ENOENT
-   (cond-expand (bigloo-c (pragma::long "ENOENT")) (else 2)))
+   (cond-expand
+      ((and bigloo-c enable-libuv) (pragma::long "ENOENT")) (else 2)))
 
 (define EBADF
-   (cond-expand (bigloo-c (pragma::long "EBADF")) (else 9)))
+   (cond-expand
+      ((and bigloo-c enable-libuv) (pragma::long "EBADF")) (else 9)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-uv-version ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-uv-version)
+(define (nodejs-uv-version::bstring)
    (uv-version))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-err-name ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-err-name errno)
+(define (nodejs-err-name::JsStringLiteral errno)
    (js-string->jsstring (uv-err-name errno)))
 
 ;*---------------------------------------------------------------------*/
@@ -214,7 +216,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-get-process-title ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-get-process-title)
+(define (nodejs-get-process-title::bstring)
    (uv-get-process-title))
 
 ;*---------------------------------------------------------------------*/
@@ -495,7 +497,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-hrtime ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-hrtime)
+(define (nodejs-hrtime::uint64)
    (uv-hrtime))
 
 ;*---------------------------------------------------------------------*/
@@ -571,7 +573,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-check? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-check? obj)
+(define (nodejs-check?::bool obj)
    (isa? obj UvCheck))
 
 ;*---------------------------------------------------------------------*/
@@ -605,37 +607,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getfreemem ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-getfreemem)
+(define (nodejs-getfreemem::double)
    (uv-get-free-memory))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-gettotalmem ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-gettotalmem)
+(define (nodejs-gettotalmem::double)
    (uv-get-total-memory))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getresidentmem ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-getresidentmem)
+(define (nodejs-getresidentmem::long)
    (uv-get-resident-memory))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getcpus ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-getcpus)
+(define (nodejs-getcpus::vector)
    (uv-cpus))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-exepath ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-exepath)
+(define (nodejs-exepath::bstring)
    (or (hop-exepath) (uv-exepath)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-getuptime ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-getuptime)
+(define (nodejs-getuptime::double)
    (uv-uptime))
 
 ;*---------------------------------------------------------------------*/
@@ -1434,13 +1436,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write-queue-size ...                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-write-queue-size hdl)
+(define (nodejs-stream-write-queue-size::long hdl)
    (uv-stream-write-queue-size hdl))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-fd ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-stream-fd %worker hdl)
+(define (nodejs-stream-fd::long %worker hdl)
    (let ((fd (uv-stream-fd hdl)))
       (when (>=fx fd 0) (store-stream-fd! %worker hdl fd))
       fd))
