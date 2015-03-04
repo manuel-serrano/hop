@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  4 13:31:12 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 13:52:41 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1713,7 +1713,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uvfile->int ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (uvfile->int %worker file::UvFile)
+(define (uvfile->int %worker file)
    (with-access::UvFile file (fd)
       (store-stream-fd! %worker file fd)
       fd))
