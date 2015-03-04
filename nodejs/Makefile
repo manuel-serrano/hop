@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Feb  6 10:57:07 2015 (serrano)                */
+#*    Last change :  Tue Mar  3 19:12:47 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = nodejs require process repl _hop uv _uv _fs _http _crypto \
+_OBJECTS = nodejs require process repl _hop uv _fs _http _crypto \
   _buffer _process_wrap _stream_wrap _tcp_wrap _pipe_wrap _udp_wrap \
   _tty_wrap _timer_wrap _evals
 _JS_OBJECTS = console constants util sys path stream events fs \
@@ -57,12 +57,12 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js)
 
-INCLUDES = nodejs_debug.sch nodejs_async.sch
+INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile make_fakeuv.scm
 
 include ../etc/Makefile.library
 
@@ -82,6 +82,12 @@ build:
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+#*---------------------------------------------------------------------*/
+#*    uv.sch ...                                                       */
+#*---------------------------------------------------------------------*/
+uv.sch: uv.scm make_fakeuv.scm
+	cat uv.scm | $(BIGLOO) -i make_fakeuv.scm > uv.sch
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */

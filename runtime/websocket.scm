@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Jan 21 08:50:43 2015 (serrano)                */
+;*    Last change :  Tue Mar  3 17:10:08 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -739,70 +739,11 @@
       (websocket-trigger-event ws "ready" ws)))
 
 ;*---------------------------------------------------------------------*/
-;*    websocket-send-frame ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
-;*    http://www.rfc-base.org/txt/rfc-6455.txt                         */
-;*---------------------------------------------------------------------*/
-(define (websocket-send-frame payload::bstring port::output-port
-	   #!key (opcode 0) (final #t) (mask #t))
-   (with-trace 'websocket "websocket-send-frame"
-      (trace-item "opcode=" opcode " final=" final " mask=" mask)
-      ;; byte 0, FIN + opcode
-      (write-byte (if final (bit-or #x80 opcode) opcode) port)
-      ;; byte 1, Mask + payload len (7)
-      (let ((len (string-length payload)))
-	 ;; the length
-	 (cond
-	    ((<=fx len 125)
-	     ;; 1 byte length
-	     (write-byte (if mask (bit-or #x80 len) len) port))
-	    ((<=fx len 65535)
-	     ;; 2 bytes length
-	     (write-byte (if mask (bit-or #x80 126) 126) port)
-	     (write-byte (quotientfx len 256) port)
-	     (write-byte (remainderfx len 256) port))
-	    (else
-	     ;; 8 bytes length
-	     (write-byte (if mask (bit-or #x80 127) 127) port)
-	     (let loop ((i 0)
-			(len len))
-		(if (=fx i 8)
-		    (write-byte len port)
-		    (begin
-		       (loop (+fx i 1) (quotientfx len 256))
-		       (write-byte (remainderfx len 256) port))))))
-	 (if mask
-	     ;; masked payload data
-	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
-		;; key
-		(write-byte (vector-ref-ur key 0) port)
-		(write-byte (vector-ref-ur key 1) port)
-		(write-byte (vector-ref-ur key 2) port)
-		(write-byte (vector-ref-ur key 3) port)
-		;; payload
-		(let loop ((i 0))
-		   (when (<fx i len)
-		      (let* ((end (-fx len i))
-			     (stop (if (>=fx end 4) 4 end)))
-			 (let liip ((j 0))
-			    (if (<fx j stop)
-				(let ((c (char->integer
-					    (string-ref-ur payload (+fx i j))))
-				      (k (vector-ref-ur key j)))
-				   (write-byte (bit-xor c k) port)
-				   (liip (+fx j 1)))
-				(loop (+fx i 4))))))))
-	     ;; unmasked payload data
-	     (display-string payload port)))
-      (flush-output-port port)))
-
-;*---------------------------------------------------------------------*/
 ;*    write-frame ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
 ;*---------------------------------------------------------------------*/
-(define (write-frame frame::websocket-frame port::output-port)
+(define (write-frame-TOBEREMOVED frame::websocket-frame port::output-port)
    (with-access::websocket-frame frame (kind final? payload)
       (define (string->bytes str)
          (map char->integer (string->list str)))
@@ -868,6 +809,65 @@
       (flush-output-port port)))
 
 ;*---------------------------------------------------------------------*/
+;*    websocket-send-frame ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
+;*    http://www.rfc-base.org/txt/rfc-6455.txt                         */
+;*---------------------------------------------------------------------*/
+(define (websocket-send-frame payload::bstring port::output-port
+	   #!key (opcode 0) (final #t) (mask #t))
+   (with-trace 'websocket "websocket-send-frame"
+      (trace-item "opcode=" opcode " final=" final " mask=" mask)
+      ;; byte 0, FIN + opcode
+      (write-byte (if final (bit-or #x80 opcode) opcode) port)
+      ;; byte 1, Mask + payload len (7)
+      (let ((len (string-length payload)))
+	 ;; the length
+	 (cond
+	    ((<=fx len 125)
+	     ;; 1 byte length
+	     (write-byte (if mask (bit-or #x80 len) len) port))
+	    ((<=fx len 65535)
+	     ;; 2 bytes length
+	     (write-byte (if mask (bit-or #x80 126) 126) port)
+	     (write-byte (quotientfx len 256) port)
+	     (write-byte (remainderfx len 256) port))
+	    (else
+	     ;; 8 bytes length
+	     (write-byte (if mask (bit-or #x80 127) 127) port)
+	     (let loop ((i 0)
+			(len len))
+		(if (=fx i 8)
+		    (write-byte len port)
+		    (begin
+		       (loop (+fx i 1) (quotientfx len 256))
+		       (write-byte (remainderfx len 256) port))))))
+	 (if mask
+	     ;; masked payload data
+	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+		;; key
+		(write-byte (vector-ref-ur key 0) port)
+		(write-byte (vector-ref-ur key 1) port)
+		(write-byte (vector-ref-ur key 2) port)
+		(write-byte (vector-ref-ur key 3) port)
+		;; payload
+		(let loop ((i 0))
+		   (when (<fx i len)
+		      (let* ((end (-fx len i))
+			     (stop (if (>=fx end 4) 4 end)))
+			 (let liip ((j 0))
+			    (if (<fx j stop)
+				(let ((c (char->integer
+					    (string-ref-ur payload (+fx i j))))
+				      (k (vector-ref-ur key j)))
+				   (write-byte (bit-xor c k) port)
+				   (liip (+fx j 1)))
+				(loop (+fx i 4))))))))
+	     ;; unmasked payload data
+	     (display-string payload port)))
+      (flush-output-port port)))
+
+;*---------------------------------------------------------------------*/
 ;*    websocket-send-text ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Send TEXT over WS.                                               */
@@ -892,33 +892,53 @@
 (define (websocket-read sock::socket)
    
    (define (read-int16 in)
-      (let ((bh (read-byte in))
-	    (bl (read-byte in)))
+      (let* ((bh (read-byte in))
+	     (bl (read-byte in)))
 	 (bit-or (bit-lsh bh 8) bl)))
    
    (define (read-int32 in)
-      (let ((wh (read-int16 in))
-	    (wl (read-int16 in)))
+      (let* ((wh (read-int16 in))
+	     (wl (read-int16 in)))
 	 (bit-or (bit-lsh wh 16) wl)))
    
    (define (read-check-byte in val)
       (let ((b (read-byte in)))
 	 (and (integer? b) (=fx b val))))
    
-   (define (read-payload in l)
+   (define (read-playload-len l::int in::input-port)
       (cond
 	 ((<=fx l 125)
-	  (read-chars l in))
+	  l)
 	 ((=fx l 126)
-	  (read-chars (read-int16 in) in))
+	  (read-int16 in))
 	 ((=fx l 127)
 	  (when (and (read-check-byte in 0)
 		     (read-check-byte in 0)
 		     (read-check-byte in 0)
 		     (read-check-byte in 0))
-	     (read-chars (read-int32 in) in)))
+	     (read-int32 in)))
 	 (else
 	  #f)))
+   
+;*    (define (read-payload in l)                                      */
+;*       (cond                                                         */
+;* 	 ((<=fx l 125)                                                 */
+;* 	  (tprint "read-payload.1 l=" l)                               */
+;* 	  (read-chars l in))                                           */
+;* 	 ((=fx l 126)                                                  */
+;* 	  (let ((sz (read-int16 in)))                                  */
+;* 	     (tprint "read-payload.2 l=" l " sz=" sz)                  */
+;* 	     (read-chars sz in)))                                      */
+;* 	 ((=fx l 127)                                                  */
+;* 	  (when (and (read-check-byte in 0)                            */
+;* 		     (read-check-byte in 0)                            */
+;* 		     (read-check-byte in 0)                            */
+;* 		     (read-check-byte in 0))                           */
+;* 	     (let ((sz (read-int32 in)))                               */
+;* 		(tprint "read-payload.3 l=" l " sz=" sz)               */
+;* 		(read-chars sz in))))                                  */
+;* 	 (else                                                         */
+;* 	  #f)))                                                        */
    
    (define (unmask payload key)
       (let ((len (string-length payload)))
@@ -936,21 +956,25 @@
 			    (liip (+fx j 1)))
 			 (loop (+fx i 4))))))))
       payload)
-
+   
    (let ((in (socket-input sock)))
       ;; MS: to be complete, binary, ping, etc. must be supported
       (when (read-check-byte in #x81)
 	 (let* ((s (read-byte in))
 		(l (bit-and s #x7f))
-		(m (bit-and s #x80)))
-	    (if (=fx m 0)
+		(len (read-playload-len l in)))
+	    (cond
+	       ((not len)
+		(error "websocket-read" "badly formed frame" s))
+	       ((=fx (bit-and s #x80) 0)
 		;; unmasked payload
-		(read-payload in l)
+		(read-chars len in))
+	       (else
 		;; masked payload
 		(let* ((key0 (read-byte in))
 		       (key1 (read-byte in))
 		       (key2 (read-byte in))
 		       (key3 (read-byte in))
 		       (key (vector key0 key1 key2 key3))
-		       (payload (read-payload in l)))
-		   (unmask payload key)))))))
+		       (payload (read-chars len in)))
+		   (unmask payload key))))))))

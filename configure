@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Jan 20 10:59:36 2015 (serrano)                */
+#*    Last change :  Tue Mar  3 18:40:15 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -289,6 +289,7 @@ while : ; do
       upnp=no;;
 
     --disable-libuv)
+      uv=no;
       libuv=no;;
 
     --gzip=*)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Thu Feb 19 14:29:34 2015 (serrano)                */
+;*    Last change :  Tue Mar  3 19:21:31 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -14,33 +14,41 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_uv
 
-   (library hop hopscript libuv)
+   (library hop hopscript)
 
-   (include "nodejs_debug.sch" "nodejs_async.sch")
-   
-   (static (class JsLoop::UvLoop
-	      (async (default #f))
-	      (async-count::int (default 0))
-	      (async-count-debug::pair-nil (default '()))
-	      (actions::pair-nil (default '()))
-	      (exiting::bool (default #f)))
+   (cond-expand
+      (enable-libuv
+       (library libuv)))
 
-	   (class JsChild::UvProcess
-	      (ref (default #t))
-	      (detached (default #f)))
-	   
-	   (class JsPipe::UvPipe
-	      ;; count are used to decrement the uv-async globa counter
-	      ;; because when uv-close is invoked with an input pipe
-	      ;; the read-start called is never invoked and then, it
-	      ;; has not chance to decrement the counter for itself.
-	      (count::int (default 0))
-	      (econnreset::bool (default #f))))
+   (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch")
 
-   (import __nodejs_process
-	   __nodejs__process-wrap
-	   __nodejs__pipe-wrap
-	   __nodejs__buffer)
+   (cond-expand
+      (enable-libuv
+       (static (class JsLoop::UvLoop
+		  (async (default #f))
+		  (async-count::int (default 0))
+		  (async-count-debug::pair-nil (default '()))
+		  (actions::pair-nil (default '()))
+		  (exiting::bool (default #f)))
+	  
+	  (class JsChild::UvProcess
+	     (ref (default #t))
+	     (detached (default #f)))
+	  
+	  (class JsPipe::UvPipe
+	     ;; count are used to decrement the uv-async globa counter
+	     ;; because when uv-close is invoked with an input pipe
+	     ;; the read-start called is never invoked and then, it
+	     ;; has not chance to decrement the counter for itself.
+	     (count::int (default 0))
+	     (econnreset::bool (default #f))))))
+
+   (cond-expand
+      (enable-libuv
+       (import __nodejs_process
+	  __nodejs__process-wrap
+	  __nodejs__pipe-wrap
+	  __nodejs__buffer)))
    
    (export (nodejs-uv-version::bstring)
 	   (nodejs-err-name::JsStringLiteral ::int)
@@ -63,6 +71,8 @@
 	   (nodejs-make-fs-event ::WorkerHopThread)
 	   (nodejs-fs-event-start ::obj ::procedure ::bstring)
 	   (nodejs-fs-event-stop ::obj)
+	   (nodejs-fs-event-change)
+	   (nodejs-fs-event-rename)
 
 	   (nodejs-make-fs-poll ::WorkerHopThread)
 	   (nodejs-fs-poll-start ::JsGlobalObject ::JsObject ::obj ::bstring ::procedure ::int)
@@ -71,6 +81,7 @@
 	   (nodejs-make-idle ::WorkerHopThread ::JsGlobalObject ::procedure)
 	   (nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
+	   (nodejs-check?::bool ::obj)
 	   (nodejs-make-check ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   (nodejs-check-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
@@ -166,6 +177,10 @@
 	   (nodejs-pipe-connect ::WorkerHopThread ::JsGlobalObject ::obj ::JsStringLiteral ::procedure)
 	   (nodejs-pipe-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 	   ))
+
+(cond-expand
+   (enable-libuv
+;;;
 
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
@@ -500,6 +515,18 @@
    (uv-fs-event-stop hdl))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-fs-event-change ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fs-event-change)
+   (uv-fs-event-change))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-fs-event-rename ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-fs-event-rename)
+   (uv-fs-event-rename))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-make-fs-poll ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-fs-poll %worker)
@@ -538,6 +565,12 @@
 (define (nodejs-idle-stop %worker %this obj)
    [assert (%worker) (eq? %worker (current-thread))]
    (uv-idle-stop obj))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-check? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-check? obj)
+   (isa? obj UvCheck))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-check ...                                            */
@@ -2008,3 +2041,8 @@
       (when (<fx r 0)
 	 (process-fail %this process r))	  
       r))
+
+;*---------------------------------------------------------------------*/
+;*    cond-expand                                                      */
+;*---------------------------------------------------------------------*/
+))

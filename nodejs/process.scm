@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Feb 19 11:30:38 2015 (serrano)                */
+;*    Last change :  Tue Mar  3 19:18:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -433,13 +433,13 @@
 	    (js-bind! %this proc '_needImmediateCallback
 	       :get (js-make-function %this
 		       (lambda (this)
-			  (isa? check UvCheck))
+			  (nodejs-check? check))
 		       0 '_needImmediateCallback)
 	       :set (js-make-function %this
 		       (lambda (this val)
 			  (let ((v (js-totest val)))
 			     (cond
-				((and v (not (isa? check UvCheck)))
+				((and v (not (nodejs-check? check)))
 				 (set! idle
 				    (nodejs-make-idle
 				       %worker %this
@@ -447,7 +447,7 @@
 				 (set! check
 				    (nodejs-make-check
 				       %worker %this proc)))
-				((and (not v) (isa? check UvCheck))
+				((and (not v) (nodejs-check? check))
 				 (nodejs-idle-stop %worker %this idle)
 				 (set! idle #f)
 				 (nodejs-check-stop %worker %this check)
@@ -677,12 +677,12 @@
 				     (js-put! process '_errno
 					(nodejs-err-name status)
 					#f %this))
-				    ((=fx (uv-fs-event-change)
-					(bit-and events (uv-fs-event-change)))
+				    ((=fx (nodejs-fs-event-change)
+					(bit-and events (nodejs-fs-event-change)))
 				     (set! eventstr
 					(js-string->jsstring "change")))
-				    ((=fx (uv-fs-event-rename)
-					(bit-and events (uv-fs-event-rename)))
+				    ((=fx (nodejs-fs-event-rename)
+					(bit-and events (nodejs-fs-event-rename)))
 				     (set! eventstr
 					(js-string->jsstring "rename")))
 				    (else

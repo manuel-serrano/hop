@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.5.x/share/hop-window.js               */
+/*    serrano/prgm/project/hop/3.0.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Sun Aug 11 15:32:59 2013 (serrano)                */
-/*    Copyright   :  2007-13 Manuel Serrano                            */
+/*    Last change :  Wed Mar  4 07:58:58 2015 (serrano)                */
+/*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
@@ -353,6 +353,8 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var w0 = win.el_win.offsetWidth;
    var h0 = win.el_win.offsetHeight;
    var obg = node_computed_style_get( win.el_win, "background" );
+   if( obg === "" ) obg = node_style_get( win.el_win, "background" );
+   
    var wx0 = hop_element_x( win );
    var wy0 = hop_element_y( win );
    var pow = (win.parentNode == document.body) ? -1 : hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
@@ -360,7 +362,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var mousemove;
 
    node_style_set( win.el_content, "display", "none" );
-   node_style_set( win.el_win, "background", "white" );
+   if( obg === "" ) node_style_set( win.el_win, "background", "white" );
 
    if( widthp && heightp ) {
       mousemove = function( event ) {
@@ -407,7 +409,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    }
 
    var mouseup = function( event ) {
-      node_style_set( win.el_win, "background", obg );
+      if( obg === "" ) node_style_set( win.el_win, "background", "" );
       node_style_set( win.el_content, "display", "block" );
       hop_remove_event_listener( document, "mousemove", mousemove );
       hop_remove_event_listener( document, "mouseup", mouseup );
