@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Mar  3 19:21:31 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 13:31:12 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -41,7 +41,9 @@
 	     ;; the read-start called is never invoked and then, it
 	     ;; has not chance to decrement the counter for itself.
 	     (count::int (default 0))
-	     (econnreset::bool (default #f))))))
+	     (econnreset::bool (default #f)))))
+      (else
+       (static (class JsLoop))))
 
    (cond-expand
       (enable-libuv
