@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Feb  6 07:18:44 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 17:33:17 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -146,14 +146,16 @@
 	    (js-put! proto 'pause
 	       (js-make-function %this
 		  (lambda (this)
-		     (tprint "parser pause not implemented...")
+		     (with-access::JsHttpParser this (errno)
+			(set! errno 1)) 
 		     (js-undefined))
 		  0 'pause)
 	       #f %this)
 	    (js-put! proto 'resume
 	       (js-make-function %this
 		  (lambda (this)
-		     (tprint "parser resume not implemented...")
+		     (with-access::JsHttpParser this (errno)
+			(set! errno 0) )
 		     (js-undefined))
 		  0 'resume)
 	       #f %this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Mar  4 14:48:19 2015 (serrano)                */
+;*    Last change :  Wed Mar  4 19:00:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -247,7 +247,7 @@
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex tqueue %this keep-alive services call)
+   (with-access::WorkerHopThread th (mutex tqueue %process %this keep-alive services call)
       (letrec* ((retval 0)
 		(loop (instantiate::JsLoop
 			 (actions tqueue)))
@@ -280,7 +280,10 @@
 						      (call actproc)))
 						(loop)))))
 				    (unless (or keep-alive (pair? services) (pair? actions))
-				       (uv-unref async)))))) ))
+				       (uv-unref async)
+				       (when (js-totest
+						(js-get %process '_exiting %this))
+					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))

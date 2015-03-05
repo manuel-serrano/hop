@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sat Feb 28 18:13:53 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 10:11:40 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -62,6 +62,10 @@
 			(js-tostring (car args) %this)
 			"SSLv23_method")))
 	    (set! ctx (instantiate::secure-context (method met))))))
+
+   (define (secure-context-close this)
+      (with-access::JsSecureContext this (ctx)
+	 (secure-context-close ctx)))
 
    (define (add-root-certs this)
       (with-access::JsSecureContext this (ctx)
@@ -128,6 +132,10 @@
 	    (js-make-function %this secure-context-init
 	       1 "init")
 	    #f %this)
+	 (js-put! proto 'close
+	    (js-make-function %this secure-context-close
+	       0 "close")
+	    #f %this)
 	 (js-put! proto 'addRootCerts
 	    (js-make-function %this add-root-certs
 	       0 "addRootCerts")
@@ -155,7 +163,7 @@
 	 
 	 (for-each (lambda (name)
 		      (js-put! proto name (not-implemented name) #f %this))
-	    '(addCRL setSessionIdContext close loadPKCS12))
+	    '(addCRL setSessionIdContext loadPKCS12))
 	 proto))
 
    (define c -1)
@@ -166,6 +174,18 @@
    (define (connection-start this)
       (with-access::JsSSLConnection this (ssl)
 	 (ssl-connection-start ssl)))
+
+   (define (connection-close this)
+      (with-access::JsSSLConnection this (ssl)
+	 (ssl-connection-close ssl)))
+
+   (define (connection-shutdown this)
+      (with-access::JsSSLConnection this (ssl)
+	 (let ((flags (ssl-connection-shutdown ssl)))
+	    (when (memq 'sent flags)
+	       (js-put! this 'sentShutdown #t #f %this))
+	    (when (memq 'received flags)
+	       (js-put! this 'receivedShutdown #t #f %this)))))
 
    (define (connection-encout this buffer offset len)
       (with-access::JsTypedArray buffer (length)
@@ -249,6 +269,14 @@
 	    (js-make-function %this connection-start
 	       0 "start")
 	    #f %this)
+	 (js-put! proto 'close
+	    (js-make-function %this connection-close
+	       0 "close")
+	    #f %this)
+	 (js-put! proto 'shutdown
+	    (js-make-function %this connection-shutdown
+	       0 "shutdown")
+	    #f %this)
 	 (js-put! proto 'encOut
 	    (js-make-function %this connection-encout
 	       3 "encOut")
@@ -292,8 +320,7 @@
 	 (for-each (lambda (name)
 		      (js-put! proto name (not-implemented name) #f %this))
 	    '(getSession setSettion loadSession
-	      isSessionReused getCurrentCipher
-	      shutdown close))
+	      isSessionReused getCurrentCipher))
 	 proto))
    
    (define (secure-context this . args)

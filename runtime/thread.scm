@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/thread.scm                */
+;*    serrano/prgm/project/hop/3.0.x/runtime/thread.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 29 10:33:58 2013                          */
-;*    Last change :  Thu Jun 20 17:07:28 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Thu Mar  5 09:08:13 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop thread base class.                                           */
 ;*    -------------------------------------------------------------    */
@@ -22,6 +22,10 @@
    
    (include "thread.sch")
 
+   (export (hop-sigterm-default-handler ::int)
+	   (hop-sigterm-handler)
+	   (hop-sigterm-handler-set! ::procedure))
+   
    (cond-expand
       ((and enable-threads (library pthread))
        (export (class hopthread::pthread
@@ -32,6 +36,29 @@
 		  (%loading-file (default #f))
 		  (%specific::obj read-only (default #f))
 		  (%cleanup::obj read-only (default #f)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sigterm-default-handler ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-sigterm-default-handler n)
+   (exit (+fx 128 n)))
+
+;*---------------------------------------------------------------------*/
+;*    sigterm-handler ...                                              */
+;*---------------------------------------------------------------------*/
+(define sigterm-handler hop-sigterm-default-handler)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sigterm-handler ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hop-sigterm-handler)
+   sigterm-handler)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sigterm-handler-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (hop-sigterm-handler-set! proc)
+   (set! sigterm-handler proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    Basic implementation for nothread configuration                  */

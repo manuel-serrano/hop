@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jan 28 09:31:50 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 10:34:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1360,6 +1360,9 @@
 				  (loc (token-loc token)))
 			    rev-els)
 		      (+fx length 1))))
+	       ((for)
+		;; array comprehension
+		(tprint "PAS GLOP"))
 	       (else
 		(let ((array-el (assig-expr #f)))
 		   (case (peek-token-type)

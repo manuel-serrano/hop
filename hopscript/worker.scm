@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Feb 18 07:41:08 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 08:49:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -51,8 +51,6 @@
 	      (async (default #f))
 	      (state::symbol (default 'init))
 	      (module-cache::obj (default #f))
-;* 	      (module-table::obj (default (make-hashtable)))           */
-;* 	      (module-mutex::obj (default (make-mutex)))               */
 	      (parent::obj (default #f))
 	      (subworkers::pair-nil (default '()))
 	      (uvhandles::vector (default (make-vector 32)))

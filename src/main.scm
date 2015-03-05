@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Feb 12 08:25:19 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 08:53:44 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -45,7 +45,7 @@
       (else (signal sigpipe (lambda (n) #unspecified))))
    (signal sigterm
       (lambda (n)
-	 (exit (+fx 128 n))))
+	 ((hop-sigterm-handler) n)))
    (when (<fx (bigloo-debug) 3)
       (signal sigsegv
 	 (lambda (n)

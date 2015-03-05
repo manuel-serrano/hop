@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Mar  3 19:18:00 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 09:08:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -111,11 +111,15 @@
 			 =>
 			 (lambda (c)
 			    (set! sighdls (cons c sighdls))
-			    (signal (cdr c)
-			       (lambda (s)
-				  (js-worker-push-thunk! %worker sig
-				     (lambda ()
-					(js-call0 %this proc this)))))))
+			    (if (eq? (car c) 'SIGTERM)
+				(hop-sigterm-handler-set!
+				   (lambda (n)
+				      (js-call0 %this proc this)))
+				(signal (cdr c)
+				   (lambda (s)
+				      (js-worker-push-thunk! %worker sig
+					 (lambda ()
+					    (js-call0 %this proc this))))))))
 			(else
 			 (js-call2 %this add this signame proc)))))
 	       
@@ -130,7 +134,10 @@
 			 =>
 			 (lambda (c)
 			    (set! sighdls (remq! c sighdls))
-			    (signal (cdr c) 'default)))
+			    (if (eq? (car c) 'SIGTERM)
+				(hop-sigterm-handler-set!
+				   hop-sigterm-default-handler)
+				(signal (cdr c) 'default))))
 			(else
 			 (js-call2 %this rem this signame proc)))))
 	       
@@ -144,7 +151,10 @@
 			 =>
 			 (lambda (c)
 			    (set! sighdls (remq! c sighdls))
-			    (signal (cdr c) 'default)))
+			    (if (eq? (car c) 'SIGTERM)
+				(hop-sigterm-handler-set!
+				   hop-sigterm-default-handler)
+				(signal (cdr c) 'default))))
 			(else
 			 (js-call1 %this remall this signame)))))
 
