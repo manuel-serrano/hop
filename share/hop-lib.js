@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Wed Oct 29 15:17:16 2014 (serrano)                */
-/*    Copyright   :  2007-14 Manuel Serrano                            */
+/*    Last change :  Fri Mar  6 10:42:44 2015 (serrano)                */
+/*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -952,10 +952,35 @@ function hop_xml_make_id( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_comprehension ...                                            */
 /*---------------------------------------------------------------------*/
-function hop_comprehension( iterable, fun, test, _name, _astp, _aste, _astd ) {
-   if( test === true ) {
-      return iterable.map( fun );
+function hop_comprehension( iterables, fun, test, _names, _astp, _aste, _astd ) {
+   function product( iterables ) {
+      return iterables.reduce( function(a, b) {
+	 var ret = [];
+	 a.forEach( function( a ) {
+	    b.forEach( function( b ) {
+	       ret.push( a.concat( [ b ] ) );
+	    } );
+	 } );
+	 return ret;
+      }, [[]]);
+   };
+
+   if( iterables.length == 1 ) {
+      // fast path
+      if( test === true ) {
+	 return iterables[ 0 ].map( fun );
+      } else {
+	 return iterables[ 0 ].filter( test ).map( fun );
+      }
    } else {
-      return iterable.filter( test ).map( fun );
+      // full path
+      var prods = product( iterables );
+      var self = iterables[ 0 ];
+      if( test === true ) {
+	 return prods.map( function( a ) { return fun.apply( self, a ) } );
+      } else {
+	 return prods.filter( function( a ) { return test.apply( self, a ) } )
+	    .map( function( a ) { return fun.apply( self, a ) } );
+      }
    }
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Jan 31 09:40:06 2015 (serrano)                */
+;*    Last change :  Fri Mar  6 08:06:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -530,9 +530,12 @@
 ;*    resolve! ::J2SComprehension ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (resolve! this::J2SComprehension env mode withs wenvs)
-   (with-access::J2SComprehension this (test expr iterable decl)
-      (set! iterable (resolve! iterable env mode withs wenvs))
-      (let ((nenv (cons decl env)))
+   (with-access::J2SComprehension this (test expr iterables decls)
+      (set! iterables
+	 (map (lambda (iterable)
+		 (resolve! iterable env mode withs wenvs))
+	    iterables))
+      (let ((nenv (append decls env)))
 	 (set! test (resolve! test nenv mode withs wenvs))
 	 (set! expr (resolve! expr nenv mode withs wenvs))
 	 this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 18 07:15:44 2015 (serrano)                */
+;*    Last change :  Fri Mar  6 09:39:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -35,7 +35,7 @@
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
-	      ::obj ::symbol ::bstring ::bstring)))
+	      ::obj ::pair ::bstring ::bstring ::pair)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -1302,22 +1302,71 @@
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions
-   (define (array-prototype-comprehension this::obj fun test _name
+   ;; https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Array_comprehensions
+   (define (array-prototype-comprehension iterables::pair fun test _names
 	      _astp _aste _astd)
-      (if (eq? test #t)
-	  ;; a mere map
-	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     (let ((jsmap (js-get js-array-prototype 'map %this)))
-		(js-call1 %this jsmap this fun)))
-	  ;; a map filter
-	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     (let ((jsmap (js-get js-array-prototype 'map %this))
-		   (jsfilter (js-get js-array-prototype 'filter %this)))
-		(let ((i (js-call1 %this jsfilter this test)))
-		   (js-call1 %this jsmap i fun))))))
+
+      (define (prod2 l1 l2)
+	 (append-map (lambda (a)
+			(map (lambda (b) (list a b)) l2))
+	    l1))
+
+      (define (prod l)
+	 (cond
+	    ((null? l)
+	     '())
+	    ((null? (cdr l))
+	     (car l))
+	    ((null? (cddr l))
+	     (prod2 (car l) (cadr l)))
+	    (else
+	     (let ((r (prod (cdr l))))
+		(append-map (lambda (a) (map (lambda (r) (cons a r)) r))
+		   (car l))))))
+
+      
+      (define (iterables->lists iterables)
+	 
+	 (define jsid (js-make-function %this (lambda (this n) n) 1 "id"))
+	 
+	 (map (lambda (el)
+		 (if (isa? el JsArray)
+		     (vector->list (jsarray->vector el %this))
+		     (let* ((jsmap (js-get el 'map %this))
+			    (arr (js-call1 %this jsmap el jsid)))
+			(vector->list (jsarray->vector el %this)))))
+	    iterables))
+
+      (define (fast-comprehension)
+	 (let ((this (car iterables)))
+	    (if (eq? test #t)
+		(let ((jsmap (js-get this 'map %this)))
+		   (js-call1 %this jsmap this fun))
+		(let* ((jsfilter (js-get this 'filter %this))
+		       (arr (js-call1 %this jsfilter this test))
+		       (jsmap (js-get arr 'map %this)))
+		   (js-call1 %this jsmap arr fun)))))
+
+      (if (null? (cdr iterables))
+	  ;; fast path, only one array
+	  (fast-comprehension)
+	  ;; full path, multiple iterables
+	  (let* ((this (car iterables))
+		 (lsts (prod (iterables->lists iterables)))
+		 (res (if (eq? test #t)
+			  (map (lambda (l)
+				  (js-apply %this fun this l))
+			     lsts)
+			  (filter-map (lambda (l)
+					 (let ((t (js-apply %this test this l)))
+					    (when (js-totest t)
+					       (js-apply %this fun this l))))
+			     lsts))))
+	     (js-vector->jsarray (list->vector res) %this))))
 
    (js-bind! %this js-array-prototype 'comprehension
-      :value (js-make-function %this array-prototype-comprehension 5 'comprehension
+      :value (js-make-function %this array-prototype-comprehension 6
+		'comprehension
 		:prototype (js-undefined))
       :enumerable #f))
 
@@ -1932,14 +1981,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-comprehension ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-array-comprehension %this iterable fun test _name _astp _aste)
-   (let ((jscomp (js-get iterable 'comprehension %this)))
-      (js-call5 %this jscomp iterable
-	 (js-make-function %this fun 1 "comprehension-expr")
+(define (js-array-comprehension %this iterables fun test _names _astp _aste _astd)
+   (let ((jscomp (js-get (car iterables) 'comprehension %this))
+	 (len (length iterables)))
+      (js-call6 %this jscomp iterables
+	 (js-make-function %this fun len "comprehension-expr")
 	 (if (eq? test #t)
 	     #t
-	     (js-make-function %this test 1 "comprehension-test"))
-	 _name _astp _aste)))
+	     (js-make-function %this test len "comprehension-test"))
+	 _names _astp _aste _astd)))
 	
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

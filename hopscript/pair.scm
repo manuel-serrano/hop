@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Sat Jan 17 08:36:41 2015 (serrano)                */
+;*    Last change :  Fri Mar  6 08:35:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -103,7 +103,7 @@
        (if (epair? o)
 	   (cer o)
 	   (js-raise-type-error %this
-	      (format "no such field.3 \"~a\" ~~a" (js-toname prop %this)) o)))
+	      (format "no such field \"~a\" ~~a" (js-toname prop %this)) o)))
       ((length)
        (js-make-function %this length
 	  0 'length))
@@ -146,7 +146,7 @@
        (js-undefined))
       (else
        (js-raise-type-error %this
-	  (format "no such field.1 \"~a\" ~~a" (js-toname prop %this)) o))))
+	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-get-null ...                                                  */

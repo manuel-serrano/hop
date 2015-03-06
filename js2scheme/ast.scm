@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Feb 14 10:15:36 2015 (serrano)                */
+;*    Last change :  Thu Mar  5 13:28:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -163,8 +163,8 @@
 	      else::J2SExpr)
 
 	   (class J2SComprehension::J2SExpr
-	      (decl::J2SLet read-only)
-	      (iterable::J2SExpr read-only)
+	      (decls::pair read-only)
+	      (iterables::pair read-only)
 	      (test::J2SExpr read-only)
 	      (expr::J2SExpr read-only))
 	   
@@ -646,7 +646,7 @@
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
-(gen-walks J2SComprehension iterable test expr)
+(gen-walks J2SComprehension (iterables) test expr)
 
 (gen-traverals J2STilde)
 

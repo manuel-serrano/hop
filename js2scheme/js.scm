@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Jan 18 07:06:18 2015 (serrano)                */
+;*    Last change :  Fri Mar  6 10:37:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -322,39 +322,58 @@
 ;*    j2s-js ::J2SComprehension ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SComprehension tildec dollarc mode evalp conf)
-   (with-access::J2SComprehension this (decl test expr iterable ast)
+   (with-access::J2SComprehension this (decls iterables test expr ast)
       
-      (define (comprehension name fun cond)
-	 (cons* this "hop_comprehension" "("
-	    (append (j2s-js iterable tildec dollarc mode evalp conf)
-	       `(", " ,@fun ", " ,@cond ", " ,(format "~s" name) ", "
-		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json test op))))
-		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json expr op))))
-		   ,(format "~s" (call-with-output-string
-				    (lambda (op) (ast->json decl op)))))
+      (define (comprehension names fun cond)
+	 (cons* this "hop_comprehension" "( ["
+	    (append
+	       (j2s-js (car iterables) tildec dollarc mode evalp conf)
+	       (append-map (lambda (iterable)
+		       (cons ", "
+			  (j2s-js iterable tildec dollarc mode evalp conf)))
+		  (cdr iterables))
+	       `("], " ,@fun ", " ,@cond ", ["
+		   ,(format "~(, )" (map (lambda (n) (format "~s" n)) names))
+		   "], "
+		   ,(format "~s"
+		       (call-with-output-string
+			  (lambda (op) (ast->json test op))))
+		   ", "
+		   ,(format "~s"
+		       (call-with-output-string
+			  (lambda (op) (ast->json expr op))))
+		   ", "
+		   ,(format "~(, )"
+		       (map (lambda (decl)
+			       (call-with-output-string
+				  (lambda (op) (ast->json decl op))))
+			  decls)))
 	       '(")"))))
       
-      (with-access::J2SDecl decl (id)
-	 (let ((name (symbol->string id)))
-	    (if (not (isa? test J2SBool))
-		(comprehension name
-		   (cons* "function" "(" name ")" "{" " return "
-		      (append (j2s-js expr tildec dollarc mode evalp conf)
-			 '("}")))
-		   (cons* "function" "(" name ")" "{" " return "
-		      (append (j2s-js test tildec dollarc mode evalp conf)
-			 '("}"))))
-		(with-access::J2SBool test (val)
-		   (if (eq? val #t)
-		       (comprehension name
-			  (cons* "function" "(" name ")" "{" " return "
-			     (append
-				(j2s-js expr tildec dollarc mode evalp conf)
-				'("}")))
-			  '("true"))
-		       '("[]"))))))))
+      (let ((names (map (lambda (decl)
+			   (with-access::J2SDecl decl (id)
+			      (symbol->string id)))
+		      decls)))
+	 (if (not (isa? test J2SBool))
+	     (comprehension names
+		(cons* "function" "(" (format "~(, )" names) ")"
+		   "{" " return "
+		   (append (j2s-js expr tildec dollarc mode evalp conf)
+		      '("}")))
+		(cons* "function" "(" (format "~(, )" names) ")"
+		   "{" " return "
+		   (append (j2s-js test tildec dollarc mode evalp conf)
+		      '("}"))))
+	     (with-access::J2SBool test (val)
+		(if (eq? val #t)
+		    (comprehension names
+		       (cons* "function" "(" (format "~(, )" names) ")"
+			  "{" " return "
+			  (append
+			     (j2s-js expr tildec dollarc mode evalp conf)
+			     '("}")))
+		       '("true"))
+		    '("[]")))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLiteralValue ...                                     */
