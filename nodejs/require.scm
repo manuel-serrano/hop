@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 18 08:00:37 2015 (serrano)                */
+;*    Last change :  Wed Mar 11 15:55:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -194,9 +194,31 @@
    require)
 
 ;*---------------------------------------------------------------------*/
+;*    *resolve-service* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *resolve-service* #f)
+(define *resolve-this* #f)
+(define *resolve-url-path* "public/require/resolve")
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
+   (unless *resolve-service*
+      (let ((this (js-new-global-object)))
+	 (set! *resolve-this* this)
+	 (set! *resolve-service*
+	    (service :name *resolve-url-path* (name filename path)
+	       (with-access::JsGlobalObject this (js-object)
+		  (let ((m (js-new0 *resolve-this* js-object)))
+		     ;; module properties
+		     (js-put! m 'id (js-string->jsstring filename) #f this)
+		     ;; filename
+		     (js-put! m 'filename (js-string->jsstring filename) #f this)
+		     ;; paths
+		     (js-put! m 'paths (js-vector->jsarray path this) #f this)
+		     ;; the resolution
+		     (nodejs-resolve name this m)))))))
    (nodejs-v8-global-object-init! (js-new-global-object)))
 
 ;*---------------------------------------------------------------------*/
@@ -693,16 +715,28 @@
 	     (dir (dirname filename)))
 	 (trace-item "name=" name " dir=" dir)
 	 (cond
+	    ((core-module? name)
+	     name)
 	    ((or (string-prefix? "http://" name)
 		 (string-prefix? "https://" name))
 	     name)
 	    ((or (string-prefix? "http://" dir)
 		 (string-prefix? "https://" dir))
 	     (multiple-value-bind (scheme uinfo host port path)
-		(url-parse dir)
-		(if uinfo
-		    (format "~a://~a:~a~@a~a~a" host port uinfo (dirname path) name)
-		    (format "~a://~a:~a~a~a" host port (dirname path) name))))
+		(url-parse filename)
+		(let* ((paths (js-get mod 'paths %this))
+		       (abspath (hop-apply-url
+				  (string-append "/hop/" *resolve-url-path*)
+				  (list name
+				     path
+				     (if (and #f (isa? paths JsArray))
+					 (jsarray->vector paths  %this)
+					 '#())))))
+		   (with-hop-remote abspath
+		      (lambda (x) x)
+		      (lambda (x) #f)
+		      :host host
+		      :port port))))
 	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
 	     (or (resolve-file-or-directory name dir)
 		 (resolve-modules mod name (dirname dir))
@@ -711,8 +745,6 @@
 	     (or (resolve-file-or-directory name "/")
 		 (resolve-modules mod name "/")
 		 (resolve-error name)))
-	    ((core-module? name)
-	     name)
 	    (else
 	     (or (resolve-modules mod name (dirname dir))
 		 (resolve-error name)))))))

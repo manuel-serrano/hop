@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Thu Apr 11 08:21:16 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Wed Mar 11 11:38:59 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -200,6 +200,7 @@
    (synchronize *job-mutex*
       (with-access::job j (%thread)
 	 (when (isa? %thread thread)
+	    (tprint "JOB-ABORT...")
 	    (thread-terminate! %thread)
 	    (set! *jobs-run* (remq! j *jobs-run*))))))
 

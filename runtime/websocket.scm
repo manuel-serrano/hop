@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Mar  3 17:10:08 2015 (serrano)                */
+;*    Last change :  Wed Mar 11 11:18:10 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -401,6 +401,7 @@
 						(socket-close rsocket)
 						(set! websocket-proxy-tunnel-count
 						   (-fx websocket-proxy-tunnel-count 1))
+						(tprint "WEBSOCKET-CONNECT-TUNNEL ABORT.1..")
 						(thread-terminate! th2))
 					     (begin
 						(display c rop)
@@ -416,6 +417,7 @@
 					     (begin
 						(socket-close rsocket)
 						(socket-shutdown socket)
+						(tprint "WEBSOCKET-CONNECT-TUNNEL ABORT.2..")
 						(thread-terminate! th1))
 					     (begin
 						(display c rop)
