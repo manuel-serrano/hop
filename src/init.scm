@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Jan  5 17:39:49 2015 (serrano)                */
+;*    Last change :  Wed Mar 11 15:58:49 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -154,12 +154,12 @@
 ;*---------------------------------------------------------------------*/
 (define (http-connect req)
    (with-access::http-request req (host port)
-      (if (isa? req http-proxy-request)
+      (if (and (isa? req http-proxy-request)
+	       (hop-proxy-ip-allowed? req))
 	  ;; okay for proxying connect response (probably used for websocket)
 	  (websocket-proxy-connect! host port req)
 	  ;; refused
-	  (instantiate::http-response-abort
-	     #;(request req)))))
+	  (instantiate::http-response-abort))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-get-file-not-found ...                                      */
@@ -177,7 +177,6 @@
  <allow-access-from domain=\"*\" />
 </cross-domain-policy>" (hop-port))))
 	     (instantiate::http-response-string
-		#;(request req)
 		(timeout timeout)
 		(content-type "application/xml")
 		(body s))))
@@ -198,7 +197,6 @@
 	  (hss-response req abspath))
 	 (else
 	  (instantiate::http-response-file
-	     #;(request req)
 	     (timeout timeout)
 	     (charset (hop-locale))
 	     (content-type (mime-type abspath "text/plain"))
@@ -218,7 +216,6 @@
 	    ((isa? rep xml)
 	     (instantiate::http-response-xml
 		(backend (hop-xml-backend))
-		#;(request req)
 		(timeout timeout)
 		(content-type (mime-type abspath "text/plain"))
 		(charset (hop-charset))
@@ -265,7 +262,6 @@
 		   ((and im (string<=? lm im))
 		    ;; not modified
 		    (instantiate::http-response-string
-		       #;(request req)
 		       (start-line "HTTP/1.1 304 Not Modified")
 		       (content-type (mime-type (prefix abspath) "text/plain"))
 		       (header `((Last-Modified: . ,lm)))
@@ -291,7 +287,6 @@
 	  ;; send a gzipped file with a mime type corresponding
 	  ;; to the ungzipped file
 	  (instantiate::http-response-file
-	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -305,7 +300,6 @@
 	       (accept-gzip? header))
 	  ;; send a gzipped version of the file
 	  (instantiate::http-response-file
-	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Content-Encoding: . "gzip")
@@ -318,7 +312,6 @@
 	  =>
 	  (lambda (icy)
 	     (instantiate::http-response-shoutcast
-		#;(request req)
 		(timeout -1)
 		(start-line "ICY 200 OK")
 		(header `((Last-Modified: . ,last-modified)
@@ -328,7 +321,6 @@
 	 (else
 	  ;; send a regular file
 	  (instantiate::http-response-file
-	     #;(request req)
 	     (timeout timeout)
 	     (header `((Last-Modified: . ,last-modified)
 		       (Accept-Ranges: . "bytes")))
@@ -365,7 +357,6 @@
       (when (hop-enable-webdav)
 	 (set! options (add-options! options (webdav-options))))
       (instantiate::http-response-string
-	 #;(request req)
 	 (charset (hop-locale))
 	 (header options)
 	 (bodyp #f))))
