@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Mar 11 15:55:57 2015 (serrano)                */
+;*    Last change :  Wed Mar 11 17:38:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -96,26 +96,29 @@
    (if (> (bigloo-debug) 0) (j2s-debug-driver) (j2s-optim-driver)))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-file->paths ...                                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-filename->paths::vector file::bstring)
+   (if (char=? (string-ref file 0) #\/)
+       (let loop ((dir (dirname file))
+		  (acc '()))
+	  (cond
+	     ((string=? dir "/")
+	      (list->vector
+		 (reverse! (cons (js-string->jsstring "/node_modules") acc))))
+	     ((string-suffix? "/node_modules" dir)
+	      (loop (dirname dir) acc))
+	     (else
+	      (loop (dirname dir)
+		 (cons
+		    (js-string->jsstring (make-file-name dir "node_modules"))
+		    acc)))))
+       '#()))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-module ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-module::JsObject id filename worker::WorkerHopThread %this::JsGlobalObject)
-   
-   (define (nodejs-filename->paths::vector file::bstring)
-      (if (char=? (string-ref file 0) #\/)
-	  (let loop ((dir (dirname file))
-		     (acc '()))
-	     (cond
-		((string=? dir "/")
-		 (list->vector
-		    (reverse! (cons (js-string->jsstring "/node_modules") acc))))
-		((string-suffix? "/node_modules" dir)
-		 (loop (dirname dir) acc))
-		(else
-		 (loop (dirname dir)
-		    (cons
-		       (js-string->jsstring (make-file-name dir "node_modules"))
-		       acc)))))
-	  '#()))
 
    (define (module-init! m)
       (with-access::JsGlobalObject %this (js-object)
@@ -208,7 +211,7 @@
       (let ((this (js-new-global-object)))
 	 (set! *resolve-this* this)
 	 (set! *resolve-service*
-	    (service :name *resolve-url-path* (name filename path)
+	    (service :name *resolve-url-path* (name filename)
 	       (with-access::JsGlobalObject this (js-object)
 		  (let ((m (js-new0 *resolve-this* js-object)))
 		     ;; module properties
@@ -216,7 +219,9 @@
 		     ;; filename
 		     (js-put! m 'filename (js-string->jsstring filename) #f this)
 		     ;; paths
-		     (js-put! m 'paths (js-vector->jsarray path this) #f this)
+		     (js-put! m 'paths
+			(js-vector->jsarray (nodejs-filename->paths filename) this)
+			#f this)
 		     ;; the resolution
 		     (nodejs-resolve name this m)))))))
    (nodejs-v8-global-object-init! (js-new-global-object)))
@@ -713,7 +718,9 @@
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod 'filename %this)))
 	     (dir (dirname filename)))
-	 (trace-item "name=" name " dir=" dir)
+	 (trace-item "name=" name
+	    " dir=" dir
+	    " path=" (jsarray->vector(js-get mod 'paths %this) %this))
 	 (cond
 	    ((core-module? name)
 	     name)
@@ -726,14 +733,13 @@
 		(url-parse filename)
 		(let* ((paths (js-get mod 'paths %this))
 		       (abspath (hop-apply-url
-				  (string-append "/hop/" *resolve-url-path*)
-				  (list name
-				     path
-				     (if (and #f (isa? paths JsArray))
-					 (jsarray->vector paths  %this)
-					 '#())))))
+				   (string-append "/hop/" *resolve-url-path*)
+				   (list name path))))
 		   (with-hop-remote abspath
-		      (lambda (x) x)
+		      (lambda (x)
+			 (if uinfo
+			     (format "~a://~a:~a~@a~a" scheme host port uinfo x)
+			     (format "~a://~a:~a~a" scheme host port x)))
 		      (lambda (x) #f)
 		      :host host
 		      :port port))))
