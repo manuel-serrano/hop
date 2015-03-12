@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 12 10:06:35 2015 (serrano)                */
+;*    Last change :  Thu Mar 12 10:11:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -55,15 +55,18 @@
 (define-method (xml-unpack obj::JsArray)
    (with-access::JsArray obj (vec)
       (if (>fx (vector-length vec) 0)
-	  (filter (lambda (x) (not (eq? x (js-absent)))) (vector->list vec))
+	  (filter! (lambda (x) (not (eq? x (js-absent)))) (vector->list vec))
 	  (let* ((%this (js-initial-global-object))
 		 (len (uint32->fixnum
 			 (js-touint32 (js-get obj 'length %this) %this))))
 	     (let loop ((i 0))
-		(if (<fx i len)
-		    (cons (js-get obj (integer->string i) %this)
-		       (loop (+fx i 1)))
-		    '()))))))
+		(cond
+		   ((=u32 i len)
+		    '())
+		   ((js-has-property obj (js-toname i %this) %this)
+		    (cons (js-get obj i %this) (loop (+fx i 1))))
+		   (else
+		    (loop (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-body-element ::JsArray ...                                   */
