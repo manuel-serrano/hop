@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Feb  1 08:50:35 2015 (serrano)                */
+;*    Last change :  Fri Mar 13 16:24:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -74,7 +74,7 @@
 ;*    js-inspect ::JsStringLiteral ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-inspect s::JsStringLiteral cnt)
-   (js-jsstring->string s))
+   s)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsStringLiteral ...                       */

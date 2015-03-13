@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Mar 11 15:58:49 2015 (serrano)                */
+;*    Last change :  Fri Mar 13 12:01:56 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -155,7 +155,10 @@
 (define (http-connect req)
    (with-access::http-request req (host port)
       (if (and (isa? req http-proxy-request)
-	       (hop-proxy-ip-allowed? req))
+	       (hop-enable-proxying)
+	       (hop-enable-websocket-proxying)
+	       (hop-proxy-ip-allowed? req)
+	       (or (http-request-local? req) (hop-proxy-allow-remote-client)))
 	  ;; okay for proxying connect response (probably used for websocket)
 	  (websocket-proxy-connect! host port req)
 	  ;; refused

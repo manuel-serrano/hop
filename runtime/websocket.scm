@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Mar 11 15:57:55 2015 (serrano)                */
+;*    Last change :  Fri Mar 13 11:35:20 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -120,10 +120,14 @@
 ;*    websocket-proxy-connect! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (websocket-proxy-connect! host port req)
-   (if (and (hop-enable-proxying)
-	    (hop-enable-websocket-proxying)
-	    (<fx websocket-proxy-tunnel-count (hop-max-websocket-proxy-tunnel)))
+   (if (<fx websocket-proxy-tunnel-count (hop-max-websocket-proxy-tunnel))
        (begin
+	  (with-access::http-request req ((req-host host) (req-port port) socket)
+	     (tprint "*** WEBSOCKET-PROX-CONNECT req=" req
+		" req-host=" req-host " req-port=" req-port
+		" req-ip=" (socket-host-address socket) " "
+		(ipv4->elong (socket-host-address socket)))
+	     (tprint "*** dest-host=" host " dest-port=" port))
 	  (synchronize connect-mutex
 	     (hashtable-put! *connect-host-table*
 		(format "~a:~a" host port) #t))

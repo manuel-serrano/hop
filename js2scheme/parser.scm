@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Mar  6 09:51:30 2015 (serrano)                */
+;*    Last change :  Fri Mar 13 16:00:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -28,14 +28,19 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-parser input-port conf::pair-nil)
 
-   (define dollarp #f)
+   (define tilde-level 0)
 
-   (define (with-dollar val proc)
-      (let ((old dollarp))
-	 (set! dollarp val)
-	 (let ((res (proc)))
-	    (set! dollarp old)
-	    res)))
+   (define (with-tilde proc)
+      (set! tilde-level (+fx tilde-level 1))
+      (let ((res (proc)))
+	 (set! tilde-level (-fx tilde-level 1))
+	 res))
+	    
+   (define (with-dollar proc)
+      (set! tilde-level (-fx tilde-level 1))
+      (let ((res (proc)))
+	 (set! tilde-level (+fx tilde-level 1))
+	 res))
 	    
    (define (current-loc)
       `(at ,(input-port-name input-port) ,(input-port-position input-port)))
@@ -1191,7 +1196,7 @@
 		       (peek-token))))))))
 
    (define (tilde token)
-      (with-dollar #t
+      (with-tilde
 	 (lambda ()
 	    (let loop ((rev-stats '()))
 	       (case (peek-token-type)
@@ -1306,8 +1311,8 @@
 		(loc (token-loc token))
 		(stmt (tilde token)))))
 	 ((DOLLAR)
-	  (if dollarp
-	      (with-dollar #f
+	  (if (>fx tilde-level 0)
+	      (with-dollar
 		 (lambda ()
 		    (let ((ignore (consume-any!))
 			  (expr (expression #f))
@@ -1652,7 +1657,7 @@
 	 (if (symbol? mode) mode 'normal)))
    
    (define (program dp)
-      (set! dollarp dp)
+      (set! tilde-level (if dp 1 0))
       (with-access::J2SBlock (source-elements) (loc endloc nodes name)
 	 (let ((module (javascript-module-nodes nodes)))
 	    (instantiate::J2SProgram
@@ -1667,7 +1672,7 @@
 	       (nodes nodes)))))
    
    (define (eval)
-      (set! dollarp #f)
+      (set! tilde-level 0)
       (with-access::J2SBlock (source-elements) (loc endloc nodes)
 	 (instantiate::J2SProgram
 	    (loc loc)
