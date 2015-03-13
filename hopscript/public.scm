@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 13 16:28:45 2015 (serrano)                */
+;*    Last change :  Fri Mar 13 16:32:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1311,8 +1311,6 @@
    (cond
       ((string? o)
        o)
-      ((isa? o JsStringLiteral)
-       (js-jsstring->string o))
       ((< cnt 0)
        (js-string->jsstring "..."))
       (else
