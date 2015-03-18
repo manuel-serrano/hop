@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Mar 11 17:38:21 2015 (serrano)                */
+;*    Last change :  Wed Mar 18 12:38:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -677,9 +677,7 @@
 	 (or (and (file-exists? json)
 		  (let* ((m (resolve-package json))
 			 (p (make-file-name x m)))
-		     (if (directory? p)
-			 (resolve-file (make-file-name p "index.js"))
-			 (resolve-file p))))
+		     (resolve-file-or-directory m x)))
 	     (let ((p (make-file-name x "index.js")))
 		(when (file-exists? p)
 		   (file-name-canonicalize p))))))
