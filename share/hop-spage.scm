@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Thu Jan  1 08:01:15 2015 (serrano)                */
+;*    Last change :  Fri Mar 20 09:23:07 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -571,7 +571,7 @@
 ;*    spage-push-node ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-node tab node)
-   ;; save the static-body that will be restore when poped
+   ;; save the static-body that will be restore when popped
    (let ((p (dom-parent-node node)))
       (set! tab.pushed #t)
       (set! tab.static-node node)

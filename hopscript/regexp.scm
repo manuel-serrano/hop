@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 21 08:11:58 2015 (serrano)                */
+;*    Last change :  Thu Mar 19 08:35:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -142,7 +142,7 @@
    (define (integer->utf8 n)
       (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	 (ucs2-string->utf8-string u)))
-   
+
    (let* ((len (string-length str))
 	  (res (make-string len)))
       (let loop ((i 0)
@@ -168,6 +168,9 @@
 			      (cond
 				 ((not n)
 				  (err "wrong \"\\x\" pattern \"~a\"" str))
+				 ((=fx n 0)
+				  (blit-string! "\\000" 0 res w 4)
+				  (loop (+fx j 4) (+fx w 4)))
 				 ((=fx n #x5d)
 				  ;; "]" character
 				  ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
@@ -184,12 +187,23 @@
 		       (if (>=fx j (-fx len 5))
 			   (err "wrong \"\\u\" pattern \"~a\"" str)
 			   (let ((n (hex4 str (+fx j 2))))
-			      (if n
+			      (cond
+				 ((not n)
+				  (err "wrong \"\\u\" pattern \"~a\"" str))
+				 ((=fx n 0)
+				  (blit-string! "\\000" 0 res w 4)
+				  (loop (+fx j 6) (+fx w 4)))
+				 ((=fx n #x5d)
+				  ;; "]" character
+				  ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
+				  (string-set! res w #\\)
+				  (string-set! res (+fx 1 w) #\])
+				  (loop (+fx j 6) (+fx w 2)))
+				 (else
 				  (let* ((s (integer->utf8 n))
 					 (l (string-length s)))
 				     (blit-string! s 0 res w l)
-				     (loop (+fx j 6) (+fx w l)))
-				  (err "wrong \"\\u\" pattern \"~a\"" str)))))
+				     (loop (+fx j 6) (+fx w l))))))))
 		      ((#\\)
 		       (string-set! res w #\\)
 		       (string-set! res (+fx w 1) #\\)
@@ -264,10 +278,10 @@
 		     (extensible #t)
 		     (__proto__ js-regexp-prototype)
 		     (rx (pregexp (make-js-regexp-pattern %this pattern)
-			    (when (fixnum? i) 'CASELESS)
-			    'JAVASCRIPT_COMPAT
-			    'UTF8
-			    (when (fixnum? m) 'MULTILINE)))
+				     (when (fixnum? i) 'CASELESS)
+				     'JAVASCRIPT_COMPAT
+				     'UTF8
+				     (when (fixnum? m) 'MULTILINE)))
 		     (properties (list lastindex global icase mline source)))))))))
        
 ;*---------------------------------------------------------------------*/
