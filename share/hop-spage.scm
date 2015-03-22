@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Sat Mar 21 07:13:16 2015 (serrano)                */
+;*    Last change :  Sun Mar 22 07:35:17 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -439,7 +439,7 @@
 	    (set! spage.spoffset (-fx spage.spoffset spage.spwidth))
 	    ;; invoke the listener before removing any node
 	    (when (pair? spage.tabs)
-	       (invoke-pop-listeners spage tbody))
+	       (invoke-pop-listeners spage (car spage.tabs)))
 	    ;; pop the element from the gui
 	    (case (spage-transition-style spage)
 	       ((move)
