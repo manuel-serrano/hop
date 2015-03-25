@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Jan 15 11:40:35 2015 (serrano)                */
+/*    Last change :  Wed Mar 25 07:48:23 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -406,14 +406,18 @@ HopFrame.prototype.toString = function() {
 }
 
 HopFrame.prototype.post = function post( success, opt ) {
-   return withHOP( this.url, success, opt );
+   return withHOP( this.url, success, opt, false );
+}
+
+HopFrame.prototype.postSync = function call( opt ) {
+   return withHOP( this.url, function( v ) { return v }, opt, true );
 }
    
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/
-function withHOP( svc, success, opt ) {
-   var sync = false;
+function withHOP( svc, success, opt, force_sync ) {
+   var sync = force_sync;
    var fail = false;
    var anim = true;
 

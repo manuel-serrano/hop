@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 10 18:24:14 2015 (serrano)                */
+#*    Last change :  Tue Mar 24 19:58:17 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -425,7 +425,8 @@ if [ ! -f $bigloo ]; then
    which $bigloo > /dev/null 2> /dev/null
    if [ "$?" != "0" ]; then
       echo "*** ERROR:configure:bigloo. Aborting"
-      echo "Can't find bigloo."
+      echo "Can't find bigloo. It may be downloaded at:"
+      echo "   $bigloourl"
       exit 1;
    fi
 fi

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Jan 18 09:11:30 2015 (serrano)                */
+;*    Last change :  Wed Mar 25 07:52:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -129,8 +129,14 @@
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame success opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args success opt %this)))
+			    (post url args success opt %this #f)))
 		      2 'post))
+	 (js-bind! %this js-hopframe-prototype 'postSync
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame opt)
+			 (with-access::JsHopFrame this (url args)
+			    (post url args #f opt %this #t)))
+		      1 'postSync))
 	 
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
@@ -234,7 +240,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc::bstring args success opt %this)
+(define (post svc::bstring args success opt %this force-sync)
 
    (let ((host "localhost")
 	 (port (hop-port))
@@ -242,7 +248,7 @@
 	 (password #f)
 	 (authorization #f)
 	 (fail #f)
-	 (asynchronous #t))
+	 (asynchronous (not force-sync)))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail opt))

@@ -29,6 +29,7 @@ instance 8800, and then browsing the URL:
 
   http://localhost:8800
 
-with any modern Web browser. We recommend Firefox 2.0 and higher but
-Konqueror, Opera 9, Safari, and Internet Explorer 7 can also be used.
+with any modern Web browser. We recommend Firefox 30.0 and higher but
+Chrome, Konqueror, Opera 9, Safari, and Internet Explorer 7 can also
+be used.
 
