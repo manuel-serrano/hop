@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Dec 24 07:39:00 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sat Mar 28 18:00:07 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -325,6 +325,9 @@
 
 	    (hop-exepath)
 	    (hop-exepath-set! ::obj)
+
+	    (hop-user-agent::bstring)
+	    (hop-user-agent-set! ::bstring)
 
 	    (hop-rc-loaded?)
 	    (hop-rc-loaded!)))
@@ -1394,4 +1397,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-exepath
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-user-agent ...                                               */
+;*    -------------------------------------------------------------    */
+;*    User-Agent string when emitting https requests                   */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user-agent
+   "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
 

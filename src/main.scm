@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar 16 07:54:24 2015 (serrano)                */
+;*    Last change :  Sat Mar 28 17:01:12 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -97,6 +97,11 @@
       (init-http!)
       (when (hop-enable-webdav) (init-webdav!))
       (when (hop-enable-fast-server-event) (init-flash!))
+      ;; https file handling
+      (cond-expand
+	 (enable-ssl
+	  (input-port-protocol-set! "https://"
+	     open-input-https-socket)))
       ;; start zeroconf
       (when (hop-enable-zeroconf) (init-zeroconf!))
       ;; close filters and users registration before starting

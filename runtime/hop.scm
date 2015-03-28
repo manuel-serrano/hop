@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sun Mar  8 08:24:03 2015 (serrano)                */
+;*    Last change :  Sat Mar 28 18:00:09 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -16,6 +16,9 @@
 
    (library web)
 
+   (cond-expand
+      (enable-ssl (library ssl)))
+   
    (include "verbose.sch")
    
    (import  __hop_param
@@ -58,7 +61,8 @@
 			     (anim #f)
 			     args)
 	    (generic with-hop-local obj success fail authorization)
-	    (hop-get-file::obj ::bstring ::obj)))
+	    (hop-get-file::obj ::bstring ::obj)
+	    (open-input-https-socket ::bstring bufinfo timeout)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *anonymous-request* ...                                          */
@@ -574,3 +578,62 @@
 	 (else
 	  #f))))
    
+;*---------------------------------------------------------------------*/
+;*    open-input-https-socket ...                                      */
+;*---------------------------------------------------------------------*/
+(define (open-input-https-socket string bufinfo timeout)
+   
+   (define (parser ip status-code header clen tenc)
+      (when (and (>=fx status-code 200) (<=fx status-code 299))
+	 (cond
+	    ((not (input-port? ip))
+	     (open-input-string ""))
+	    ((and (elong? clen) (>elong clen 0))
+	     (input-port-fill-barrier-set! ip (elong->fixnum clen))
+	     ($input-port-length-set! ip clen)
+	     ip)
+	    (else
+	     ip))))
+   
+   (cond-expand
+      (enable-ssl
+       (multiple-value-bind (protocol login host port abspath)
+	  (url-sans-protocol-parse string "https")
+	  (let loop ((ip #f)
+		     (header `((user-agent: ,(hop-user-agent))
+			       (Connection: keep-alive))))
+	     (let* ((sock (http :socket
+			     (make-ssl-client-socket host port
+				:timeout timeout)
+			     :protocol 'https
+			     :host host
+			     :port port
+			     :login login
+			     :path abspath
+			     :timeout timeout
+			     :header header))
+		    (op (socket-output sock)))
+		(if (input-port? ip)
+		    ;; the socket has been re-opened for seek, reuse
+		    ;; the user input-port
+		    (input-port-clone! ip (socket-input sock))
+		    (set! ip (socket-input sock)))
+		(input-port-close-hook-set! ip
+		   (lambda (ip)
+		      (close-output-port op)
+		      (socket-close sock)))
+		(input-port-seek-set! ip
+		   (lambda (ip offset)
+		      (socket-close sock)
+		      (let ((r (string-append "bytes=" (integer->string offset) "-")))
+			 (loop ip `((range: ,r)
+				    (user-agent: "Mozilla/5.0"))))))
+		(with-handler
+		   (lambda (e)
+		      (socket-close sock)
+		      (when (isa? e &http-redirection)
+			 (with-access::&http-redirection e (url)
+			    (open-input-file url bufinfo))))
+		   (http-parse-response ip op parser))))))
+      (else
+       (error "open-input-https-socket" "ssl disable" string))))
