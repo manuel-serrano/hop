@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 13 16:24:00 2015 (serrano)                */
+;*    Last change :  Wed Apr  1 18:08:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1082,9 +1082,9 @@
 ;*    js-bind! ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    This is a simplified version of DefineOwnProperty used to build  */
-;*    the library objects. This function always bind the value in the  */
+;*    the library objects. This function always binds the value in the */
 ;*    mentionned object. It does not follow the prototype chain. It    */
-;*    does not check the extensible flags.                             */
+;*    does not check the extensibility flags.                          */
 ;*    -------------------------------------------------------------    */
 ;*    [[Put]]                                                          */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4    */

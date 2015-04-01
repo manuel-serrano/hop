@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed Mar  4 17:33:17 2015 (serrano)                */
+;*    Last change :  Wed Apr  1 17:29:53 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -955,13 +955,6 @@
 	       " off=" off " (" (+fx offset (-fx off shift))
 	       ") length=" length " shift=" shift))
 	 (when (isa? cb JsFunction)
-;* 	    (if (<fx off shift)                                        */
-;* 		(begin                                                 */
-;* 		   (js-call3 %this cb parser prebuffer                 */
-;* 		      (+fx preoffset off) (minfx length (-fx shift off))) */
-;* 		   (when (>fx (+fx off length) shift)                  */
-;* 		      (js-call3 %this cb parser buffer                 */
-;* 			 0 (-fx length (-fx shift off)))))             */
 	    (js-call3 %this cb parser buffer (+fx offset (-fx off shift))
 	       length)))))
 

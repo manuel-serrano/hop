@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Mar  6 08:27:34 2015 (serrano)                */
+;*    Last change :  Wed Apr  1 18:23:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2108,6 +2108,11 @@
 	 (else
 	  (with-access::J2SLiteralValue name (val)
 	     `(js-toname ,(j2s-scheme val mode return conf) %this)))))
+
+   (define (is-proto? name)
+      (when (isa? name J2SString)
+	 (with-access::J2SString name (val)
+	    (string=? val "__proto__"))))
    
    (with-access::J2SObjInit this (loc inits)
       (let ((tmp (gensym)))
@@ -2115,15 +2120,24 @@
 	    `(with-access::JsGlobalObject %this (js-object)
 		(let ((,tmp ,(j2s-new loc 'js-object '())))
 		   ,@(map (lambda (i)
-			     (if (isa? i J2SDataPropertyInit)
+			     (cond
+				((isa? i J2SDataPropertyInit)
 				 (with-access::J2SDataPropertyInit i (loc name val)
-				    (epairify loc
-				       `(js-bind! %this ,tmp
-					   ,(j2s-propname name)
-					   :value ,(j2s-scheme val mode return conf)
-					   :writable #t
-					   :enumerable #t
-					   :configurable #t)))
+				    (if (is-proto? name)
+					;; __proto__ field is special during
+					;; initialization, it must be assigned
+					;; using the generic js-put! function
+					(j2s-put! loc tmp "__proto__"
+					   (j2s-scheme val mode return conf)
+					   (eq? mode 'strict) #f)
+					(epairify loc
+					   `(js-bind! %this ,tmp
+					       ,(j2s-propname name)
+					       :value ,(j2s-scheme val mode return conf)
+					       :writable #t
+					       :enumerable #t
+					       :configurable #t)))))
+				(else
 				 (with-access::J2SAccessorPropertyInit i (loc name get set)
 				    (epairify loc
 				       `(js-bind! %this ,tmp
@@ -2132,7 +2146,7 @@
 					   :set ,(j2s-scheme set mode return conf)
 					   :writable #t
 					   :enumerable #t
-					   :configurable #t)))))
+					   :configurable #t))))))
 			inits)
 		   ,tmp))))))
 

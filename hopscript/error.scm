@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Mar 19 08:32:36 2015 (serrano)                */
+;*    Last change :  Wed Apr  1 17:27:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -23,10 +23,18 @@
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_property
+	   __hopscript_array
 	   __hopscript_function
 	   __hopscript_private
 	   __hopscript_public)
 
+   (static (class JsFrame::JsObject
+	      (file::bstring read-only)
+	      (line::int read-only)
+	      (column::int read-only)
+	      (iseval::bool read-only (default #f))
+	      (fun::bstring read-only)))
+   
    (export (js-init-error! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -152,10 +160,10 @@
 
 	 (define (js-error-construct/stack this::JsError . args)
 	    (let ((err (apply js-error-construct this args)))
-	       (capture-stack-trace #f err %this args)
+	       (capture-stack-trace-old #f err %this args)
 	       err))
 
-	 (define (capture-stack-trace head this %this args)
+	 (define (capture-stack-trace-old head this %this args)
 	    (let ((stk (call-with-output-string
 			  (lambda (op)
 			     (when (string? head)
@@ -175,6 +183,92 @@
 				   (list-tail stk (minfx off (length stk)))
 				   op 1))))))
 	       (js-put! this 'stack (js-string->jsstring stk) #f %this)))
+
+	 (define (capture-stack-trace this %this args)
+
+	    (define frame-proto
+	       (with-access::JsGlobalObject %this (js-object)
+		  (js-new0 %this js-object)))
+	       
+	    (define (make-frame fun loc file line column)
+	       (with-access::JsGlobalObject %this (js-object)
+		  (let ((obj (instantiate::JsFrame
+				(__proto__ frame-proto)
+				(file file)
+				(line line)
+				(column column)
+				(fun fun))))
+		     (js-put! obj 'receiver (js-undefined) #f %this)
+		     (js-put! obj 'fun (js-string->jsstring fun) #f %this)
+		     (js-put! obj 'pos (js-string->jsstring loc) #f %this)
+		     obj)))
+	    
+	    (define (hop-frame->js-frame frame)
+	       (let ((name (pregexp-match "\\@@([^ ]*) hopscript"
+			      (symbol->string! (car frame)))))
+		  (cond
+		     ((pair? name)
+		      (let ((fun (cadr name))
+			    (loc (cadr frame)))
+			 (make-frame fun (apply format "~a:~a" (cdr loc))
+			    (cadr loc) (caddr loc) 0)))
+		     ((eq? (car frame) 'hopscript)
+		      (make-frame "hopscript" "" "" 0 0))
+		     (else
+		      (js-undefined)))))
+
+	    ;; initialize the frame proto object
+	    (js-bind! %this frame-proto 'getFileName
+	       :value (js-make-function %this
+			 (lambda (o)
+			    (with-access::JsFrame o (file)
+			       (js-string->jsstring file)))
+			 0 'getFileName)
+	       :enumerable #t)
+	    (js-bind! %this frame-proto 'getLineNumber
+	       :value (js-make-function %this
+			 (lambda (o)
+			    (with-access::JsFrame o (line)
+			       line))
+			 0 'getLineNumber)
+	       :enumerable #t)
+	    (js-bind! %this frame-proto 'getColumnNumber
+	       :value (js-make-function %this
+			 (lambda (o)
+			    (with-access::JsFrame o (column)
+			       column))
+			 0 'getColumnNumber)
+	       :enumerable #t)
+	    (js-bind! %this frame-proto 'getFunctionName
+	       :value (js-make-function %this
+			 (lambda (o)
+			    (with-access::JsFrame o (fun)
+			       (js-string->jsstring fun)))
+			 0 'getFunctionName)
+	       :enumerable #t)
+	    (js-bind! %this frame-proto 'isEval
+	       :value (js-make-function %this
+			 (lambda (o)
+			    (with-access::JsFrame o (iseval)
+			       iseval))
+			 0 'isEval)
+	       :enumerable #t)
+	    
+	       
+	    (let ((limit (js-get js-error 'stackTraceLimit %this)))
+	       (cond
+		  ((eq? limit (js-undefined))
+		   (set! limit 10))
+		  ((not (integer? limit))
+		   (set! limit 10))
+		  ((or (< limit 0) (> limit 10000))
+		   (set! limit 10)))
+	       (let ((stack (get-trace-stack limit)))
+		  (js-put! this 'stack
+		     (js-vector->jsarray
+			(list->vector (filter-map hop-frame->js-frame stack))
+			%this)
+		     #f %this))))
 	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
@@ -288,10 +382,13 @@
 	 (js-bind! %this %this 'ReferenceError :configurable #f :enumerable #f
 	    :value js-reference-error)
 	 ;; nodejs addon
+	 (js-bind! %this js-error 'stackTraceLimit
+	    :value 10
+	    :enumerable #f)
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (capture-stack-trace "Trace: " this %this '()))
+			 (capture-stack-trace this %this '()))
 		      2 'captureStackTrace)
 	    :enumerable #f)
 	 js-error)))

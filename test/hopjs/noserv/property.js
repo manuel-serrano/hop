@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/property.js            */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/property.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Oct  1 11:56:41 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Wed Apr  1 18:28:53 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -158,3 +158,17 @@ assert.strictEqual( "2" in o, false );
 var o = { get readwrite() { return 24; },set readwrite( val ) {} };
 
 assert.strictEqual( o.readwrite, 24 );
+
+/*---------------------------------------------------------------------*/
+/*    Prototypes                                                       */
+/*---------------------------------------------------------------------*/
+var o1 = {};
+o1.__proto__ = { a: 456 };
+
+var o2 = { __proto__: o1.__proto__ };
+
+assert.strictEqual( o1.a, 456 );
+assert.strictEqual( o2.a, 456 );
+
+var o3 = {get __proto__() { return { a: 1 } } };
+assert.strictEqual( o3.a, undefined );

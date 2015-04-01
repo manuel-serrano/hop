@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Mar  4 14:51:10 2015 (serrano)                */
+;*    Last change :  Wed Apr  1 18:46:47 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -329,7 +329,9 @@
 	(fdatasync . ,(js-make-function %this fdatasync 2 "fdatasync"))
 	(mkdir . ,(js-make-function %this mkdir 3 "mkdir"))
 	(readdir . ,(js-make-function %this readdir 1 "readdir"))
-	(Stats . ,(js-alist->jsobject `((prototype . ,(get-process-fs-stats %this))) %this))
+	(Stats . ,(js-make-function %this (lambda (this) this) 0 "Stats"
+		     :alloc (lambda (o) #unspecified)
+		     :prototype (get-process-fs-stats %this)))
 	(close . ,(js-make-function %this close 2 "close"))
 	(utimes . ,(js-make-function %this utimes 4 "utimes"))
 	(futimes . ,(js-make-function %this futimes 4 "futimes"))

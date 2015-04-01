@@ -88,6 +88,8 @@ function parserOnHeadersComplete(info) {
   parser.incoming.httpVersion = info.versionMajor + '.' + info.versionMinor;
   parser.incoming.url = url;
 
+  parser.incoming.pasglop = parser.incoming._addHeaderLine;
+   
   var n = headers.length;
 
   // If parser.maxHeaderPairs <= 0 - assume that there're no limit
