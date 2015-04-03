@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr  3 08:11:50 2015 (serrano)                */
+;*    Last change :  Fri Apr  3 10:34:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -84,6 +84,7 @@
 				  stack)
 				 (else
 				  stack))))
+		    (fprint port name ": " msg "\n")
 		    (display-trace-stack stack port)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -151,9 +152,6 @@
 
 	       (js-bind! %this this 'name
 		  :value name
-		  :enumerable #f)
-	       (js-bind! %this this 'stack
-		  :value (js-string->jsstring "")
 		  :enumerable #f))
 	    this)
 
