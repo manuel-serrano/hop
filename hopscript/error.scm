@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr  1 17:27:01 2015 (serrano)                */
+;*    Last change :  Fri Apr  3 08:11:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -75,7 +75,6 @@
 		 (display-trace-stack-source
 		    (list `(,name (at ,fname ,location)))
 		    port)))
-	     (fprint port name ": " msg "\n")
 	     (if (isa? stk JsStringLiteral)
 		 (display (js-jsstring->string stk) port)
 		 (let ((stack (cond
@@ -160,7 +159,8 @@
 
 	 (define (js-error-construct/stack this::JsError . args)
 	    (let ((err (apply js-error-construct this args)))
-	       (capture-stack-trace-old #f err %this args)
+	       (capture-stack-trace err (js-undefined))
+	       ;;(capture-stack-trace-old #f err %this args)
 	       err))
 
 	 (define (capture-stack-trace-old head this %this args)
@@ -184,12 +184,12 @@
 				   op 1))))))
 	       (js-put! this 'stack (js-string->jsstring stk) #f %this)))
 
-	 (define (capture-stack-trace this %this args)
-
+	 (define (capture-stack-trace err start-fun)
+	    
 	    (define frame-proto
 	       (with-access::JsGlobalObject %this (js-object)
 		  (js-new0 %this js-object)))
-	       
+	    
 	    (define (make-frame fun loc file line column)
 	       (with-access::JsGlobalObject %this (js-object)
 		  (let ((obj (instantiate::JsFrame
@@ -216,7 +216,20 @@
 		      (make-frame "hopscript" "" "" 0 0))
 		     (else
 		      (js-undefined)))))
-
+	    
+	    (define (hop-stack->jsstring err stack)
+	       (js-string->jsstring
+		  (call-with-output-string
+		     (lambda (op)
+			(when (isa? err JsObject)
+			   (let ((head (js-get err 'name %this)))
+			      (unless (eq? head (js-undefined))
+				 (display (js-tostring head %this) op)
+				 (display ": " op)))
+			   (display (js-get err 'message %this) op)
+			   (newline op))
+			(display-trace-stack stack op 1)))))
+	    
 	    ;; initialize the frame proto object
 	    (js-bind! %this frame-proto 'getFileName
 	       :value (js-make-function %this
@@ -254,7 +267,7 @@
 			 0 'isEval)
 	       :enumerable #t)
 	    
-	       
+	    
 	    (let ((limit (js-get js-error 'stackTraceLimit %this)))
 	       (cond
 		  ((eq? limit (js-undefined))
@@ -264,37 +277,49 @@
 		  ((or (< limit 0) (> limit 10000))
 		   (set! limit 10)))
 	       (let ((stack (get-trace-stack limit)))
-		  (js-put! this 'stack
-		     (js-vector->jsarray
-			(list->vector (filter-map hop-frame->js-frame stack))
-			%this)
-		     #f %this))))
+		  (js-bind! %this err 'stack
+		     :get (js-make-function %this
+			     (lambda (o)
+				(let ((prepare (js-get js-error
+						  'prepareStackTrace %this)))
+				   (if (isa? prepare JsFunction)
+				       (let ((frames (js-vector->jsarray
+							(list->vector
+							   (filter-map hop-frame->js-frame
+							      stack))
+							%this)))
+					  (js-call2 %this prepare js-error
+					     err frames))
+				       (hop-stack->jsstring err stack))))
+			     0 'get)
+		     :enumerable #f
+		     :configurable #f))))
 	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'message :value v :enumerable #f))
-		    2 'message)
+		    1 'message)
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (msg) msg)
 			   (js-undefined)))
-		    1 'message)
+		    0 'message)
 	    :enumerable #f
 	    :configurable #t)
 	 (js-bind! %this js-error-prototype 'name
 	    :set (js-make-function %this
 		    (lambda (o v)
 		       (js-bind! %this o 'name :value v))
-		    2 'name)
+		    1 'name)
 	    :get (js-make-function %this
 		    (lambda (o)
 		       (if (isa? o JsError)
 			   (with-access::JsError o (name) name)
 			   (js-undefined)))
-		    1 'name)
+		    0 'name)
 	    :enumerable #f)
 	 
 	 ;; then, create a HopScript object
@@ -388,7 +413,7 @@
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
-			 (capture-stack-trace this %this '()))
+			 (capture-stack-trace this start-func))
 		      2 'captureStackTrace)
 	    :enumerable #f)
 	 js-error)))
