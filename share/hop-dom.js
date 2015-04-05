@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Oct 30 14:18:54 2014 (serrano)                */
-/*    Copyright   :  2006-14 Manuel Serrano                            */
+/*    Last change :  Sun Apr  5 09:28:21 2015 (serrano)                */
+/*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1615,12 +1615,13 @@ function hop_create_element( html ) {
       // As of Feb 2010, webkit based browsers (Feb 2010) requires a deep
       // clone to accept evaluating embedded scripts when the resulting
       // node is inserted in the DOM!
-      if( html.search( /<script[ >]/i ) >= 0 )
+      if( html.search( /<script[ >]/i ) >= 0 ) {
 	 return cloneScriptNode( el.childNodes[ 0 ] );
-      else
+      } else {
 	 // Remove the node otherwise it has a parentNode set to non-null
 	 // which confused functions such as dom_add_child
 	 return el.removeChild( el.childNodes[ 0 ] );
+      }
    } else {
       // See the remark above for removeChild
       return el.removeChild( el.childNodes[ 0 ] );

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sat Apr 19 08:15:07 2014 (serrano)                */
-/*    Copyright   :  2006-14 Manuel Serrano                            */
+/*    Last change :  Sun Apr  5 09:38:25 2015 (serrano)                */
+/*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -391,10 +391,14 @@ function cloneScriptNode( node ) {
 
       s.id = node.id;
 
-      if( "text" in s ) 
+      if( "src" in node && node.src != "" ) {
+	 s.src = node.src;
+      }
+      if( "text" in s ) {
 	 s.text = node.innerHTML;
-      else
+      } else {
 	 s.appendChild( t );
+      }
 
       return s;
    }
