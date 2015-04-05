@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Sun Apr  5 09:38:25 2015 (serrano)                */
+/*    Last change :  Sun Apr  5 10:04:59 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -393,6 +393,12 @@ function cloneScriptNode( node ) {
 
       if( "src" in node && node.src != "" ) {
 	 s.src = node.src;
+      }
+      if( "onload" in node && node.onload != "" ) {
+	 s.onload = node.onload;
+      }
+      if( "onerror" in node && node.onerror != "" ) {
+	 s.onerror = node.onerror;
       }
       if( "text" in s ) {
 	 s.text = node.innerHTML;
