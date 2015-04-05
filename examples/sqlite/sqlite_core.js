@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 25 09:49:22 2014                          */
-/*    Last change :  Sun Jan 18 11:37:11 2015 (serrano)                */
+/*    Last change :  Sat Apr  4 07:19:54 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    An example of Bigloo/JS connection                               */
@@ -26,12 +26,12 @@ Sqlite.prototype.tables = function() {
 }
 
 Sqlite.prototype.columns = function( table ) {
-   var columns = #:sqlite-table-name-of-columns( this.builtin, #:js-jsstring->string( table ) );
+   var columns = #:sqlite-table-name-of-columns( this.builtin, #:js-jsstring->jsstring( table ) );
    return list2Array( columns );
 }
 
 Sqlite.prototype.map = function( f, query ) {
-   var l = #:sqlite-map( this.builtin, #:pragma( "(lambda l (js-vector->jsarray (list->vector l) %this))"), #:js-jsstring->string( query ) );
+   var l = #:sqlite-map( this.builtin, #:pragma( "(lambda l (js-vector->jsarray (list->vector l) %this))"), #:js-jsstring->jsstring( query ) );
    return list2Array( l ).map( f );
 }
    

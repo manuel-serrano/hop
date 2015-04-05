@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Mar  5 10:11:40 2015 (serrano)                */
+;*    Last change :  Sat Apr  4 08:11:22 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -25,7 +25,11 @@
 	       (ctx (default #unspecified)))
 
 	    (class JsSSLConnection::JsObject
-	       (ssl (default #unspecified))))
+	       (ssl (default #unspecified)))
+
+	    (class JsDH::JsObject
+	       (dh (default #unspecified))
+	       (initp::bool (default #f))))
 
    (import  __nodejs_process
 	    __nodejs__buffer)
@@ -393,13 +397,114 @@
 	     (if (isa? cb JsFunction)
 		 (js-call2 %this cb this (js-undefined) buf)
 		 buf)))))
-   
+
+   (define (buffer->string buf)
+      (with-access::JsFastBuffer buf (%data byteoffset length)
+	 (let ((start (uint32->fixnum byteoffset))
+	       (len (uint32->fixnum length)))
+	    (substring %data start (+fx start len)))))
+
+   (define (dh-set-private-key this buffer)
+      (with-access::JsDH this (initp dh)
+	 (unless initp
+	    (js-raise-error %this "Not initialize" this))
+	 (unless (isa? buffer JsFastBuffer)
+	    (js-raise-type-error %this "Argument not a buffer" buffer))
+	 (with-access::dh dh (private-key)
+	    (set! private-key (bn-bin2bn (buffer->string buffer))))))
+
+   (define (dh-set-public-key this buffer)
+      (with-access::JsDH this (initp dh)
+	 (unless initp
+	    (js-raise-error %this "Not initialize" this))
+	 (unless (isa? buffer JsFastBuffer)
+	    (js-raise-type-error %this "Argument not a buffer" buffer))
+	 (with-access::dh dh (public-key)
+	    (set! public-key (bn-bin2bn (buffer->string buffer))))))
+
+   (define (dh-generate-keys this)
+      (with-access::JsDH this (initp dh)
+	 (unless initp
+	    (js-raise-error %this "Not initialize" this))
+	 (unless (dh-generate-key dh)
+	    (js-raise-error %this "Key generation failed" this))
+	 (with-access::dh dh (public-key)
+	    (js-string->jsslowbuffer (bn-bn2bin public-key) %this))))
+
+   (define (dh-compute-secret this buffer)
+      (with-access::JsDH this (initp dh)
+	 (unless initp
+	    (js-raise-error %this "Not initialize" this))
+	 (unless (isa? buffer JsFastBuffer)
+	    (js-raise-type-error %this "Argument not a buffer" buffer))
+	 (let* ((str (buffer->string buffer))
+		(key (bn-bin2bn str))
+		(data (dh-compute-key dh key)))
+	    (unwind-protect
+	       (if (string? data)
+		   (js-string->jsslowbuffer data %this)
+		   (case (dh-check-pub-key dh key)
+		      ((DH-CHECK-PUBKEY-TOO-SMALL)
+		       (js-raise-error %this "Supplied key is too small" key))
+		      ((DH-CHECK-PUBKEY-TOO-LARGE)
+		       (js-raise-error %this "Supplied key is too large" key))
+		      (else
+		       (js-raise-error %this "Invalid key" this))))
+	       (bn-free key)))))
+
+   (define diffie-hellman-proto
+      (let ((proto (with-access::JsGlobalObject %this (js-object)
+		      (js-new %this js-object))))
+	 (js-put! proto 'setPrivateKey
+	    (js-make-function %this dh-set-private-key
+	       1 "setPrivateKey")
+	    #f %this)
+	 (js-put! proto 'setPublicKey
+	    (js-make-function %this dh-set-public-key
+	       1 "setPublicKey")
+	    #f %this)
+	 (js-put! proto 'generateKeys
+	    (js-make-function %this dh-generate-keys
+	       0 "generateKeys")
+	    #f %this)
+	 (js-put! proto 'computeSecret
+	    (js-make-function %this dh-compute-secret
+	       1 "computeSecret")
+	    #f %this)
+	 proto))
+
+   (define (diffie-hellman this . args)
+      (let* ((dh (instantiate::dh))
+	     (obj (instantiate::JsDH
+		     (__proto__ diffie-hellman-proto)
+		     (dh dh))))
+	 (cond
+	    ((integer? (car args))
+	     (dh-generate-parameters-ex dh (car args) 'DH-GENERATOR-2)
+	     (unless (dh-check dh)
+		(with-access::JsDH obj (initp) (set! initp #t))))
+	    ((isa? (car args) JsFastBuffer)
+	     (with-access::dh dh (p g)
+		(set! p (bn-bin2bn (buffer->string (car args))))
+		(set! g (bn-new))
+		(when (bn-set-word g 2)
+		   (unless (dh-check dh)
+		      (with-access::JsDH obj (initp)
+			 (set! initp #t))))))
+	    (else
+	     (tprint "diffie-hellman unknown init arg: " (typeof (car args))
+		" " args)))
+	 obj))
+
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
 		:prototype secure-context-proto))
 	 (conn (js-make-function %this connection 4 "Connection"
 		  :construct connection
-		  :prototype connection-proto)))
+		  :prototype connection-proto))
+	 (dh (js-make-function %this diffie-hellman 4 "diffieHellman"
+		  :construct diffie-hellman
+		  :prototype diffie-hellman-proto)))
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    `((PBKDF2 . ,(not-implemented "PBKDF2"))
@@ -411,11 +516,10 @@
 	      (getCiphers . ,(js-new %this js-object))
 	      (getHashes . ,(js-new %this js-object))
 	      (init . ,(not-implemented "init"))
-	      (DiffieHellman . ,(not-implemented "DiffieHellman"))
+	      (DiffieHellman . ,dh)
 	      (SecureContext . ,sc)
 	      (Connection . ,conn))
 	    %this))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    no ssl support                                                   */

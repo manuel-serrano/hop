@@ -174,7 +174,7 @@ function Buffer(subject, encoding, offset) {
         break;
 
       case 'string':
-        this.length = Buffer.byteLength(subject, encoding);
+       this.length = Buffer.byteLength(subject, encoding);
         break;
 
       case 'object': // Assume object is array-ish

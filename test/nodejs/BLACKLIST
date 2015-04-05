@@ -17,7 +17,6 @@ simple/test-net-pingpong.js
 simple/test-http-pipeline-flood.js # Hop too slow start (need 500 setTimeout)
 
 # crypto
-simple/test-crypto-dh-odd-key.js
 simple/test-crypto-ecb.js
 simple/test-crypto-hash-stream-pipe.js
 simple/test-crypto-padding-aes256.js
@@ -28,7 +27,6 @@ simple/test-crypto.js
 simple/test-http-host-headers.js
 simple/test-http-url.parse-https.request.js
 simple/test-crypto-binary-default.js
-simple/test-dh-padding.js
 simple/test-domain-crypto.js
 simple/test-regress-GH-1531.js
 
