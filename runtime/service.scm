@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Mar 21 07:22:19 2015 (serrano)                */
+;*    Last change :  Tue Apr  7 16:54:00 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -317,20 +317,54 @@
 	    (string-length ctype))))
    
    (define (multipart-value! v)
-      (let ((header (memq :header v))
-	    (val (cadr (memq :data v))))
-	 (if (not header)
-	     val
-	     (let ((enc (cadr (memq :hop-encoding (cadr header)))))
-		(cond
-		   ((string=? enc "string")
-		    val)
-		   ((string=? enc "integer")
-		    (string->integer val))
-		   ((string=? enc "keyword")
-		    (string->keyword val))
-		   (else
-		    (string->obj val)))))))
+      (let ((header (memq :header v)))
+	 (cond
+	    ((memq :data v)
+	     =>
+	     (lambda (data)
+		(let ((val (cadr data)))
+		   (if (not header)
+		       val
+		       (cond
+			  ((memq :hop-encoding (cadr header))
+			   =>
+			   (lambda (hop-enc)
+			      (let ((enc (cadr hop-enc)))
+				 (cond
+				    ((string=? enc "string")
+				     val)
+				    ((string=? enc "integer")
+				     (string->integer val))
+				    ((string=? enc "keyword")
+				     (string->keyword val))
+				    (else
+				     (string->obj val))))))
+			  (else
+			   val))))))
+	    ((memq :file v)
+	     =>
+	     (lambda (file)
+		(let ((val (cadr file)))
+		   val)))
+	    (else
+	     (error "service-parse-request-post"
+		"unknown error" v)))))
+   
+   (define (multipart-arg-value v)
+      (let ((header (memq :header v)))
+	 (cond
+	    ((memq :data v)
+	     =>
+	     (lambda (data)
+		(list (string->keyword (car v)) (cadr data))))
+	    ((memq :file v)
+	     =>
+	     (lambda (file)
+		(let ((val (cadr file)))
+		   (list (string->keyword (car v)) val))))
+	    (else
+	     (error "service-parse-request-post"
+		"unknown error" v)))))
    
    (define (hopjs-encoded-arguments? args)
       (match-case args
@@ -348,12 +382,17 @@
 	    ((multipart-boundary ctype)
 	     =>
 	     (lambda (boundary)
-		(let ((args (cgi-multipart->list (hop-upload-directory)
-			       pi content-length boundary)))
-		   (if (and (dsssl-service? svc)
-			    (hopjs-encoded-arguments? args))
-		       (multipart-value! (car args))
-		       (map! multipart-value! args)))))
+		(let ((dir (make-file-path (hop-cache-directory)
+			      (integer->string (hop-port))
+			      (hop-upload-directory))))
+		   (unless (directory? dir)
+		      (make-directories dir))
+		   (let ((args (cgi-multipart->list dir
+				  pi content-length boundary)))
+		      (if (and (dsssl-service? svc)
+			       (hopjs-encoded-arguments? args))
+			  (multipart-value! (car args))
+			  (append-map multipart-arg-value args))))))
 	    ((string=? ctype "application/x-www-form-urlencoded")
 	     (let ((body (read-chars (elong->fixnum content-length) pi)))
 		(service-parse-request-get-args (cgi-args->list body))))

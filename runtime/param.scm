@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Mar 28 18:00:07 2015 (serrano)                */
+;*    Last change :  Tue Apr  7 16:48:39 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -1009,7 +1009,7 @@
 ;*    hop-upload-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-upload-directory
-   (make-file-name (hop-rc-directory) "upload"))
+   "upload")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-job-file ...                                                 */
