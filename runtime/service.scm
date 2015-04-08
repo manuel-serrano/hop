@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Apr  7 16:54:00 2015 (serrano)                */
+;*    Last change :  Wed Apr  8 10:53:29 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -374,8 +374,16 @@
    (define (dsssl-service? svc)
       (with-access::hop-service svc (args)
 	 (and (pair? args) (eq? (car args) #!key))))
+
+   (define (multipart->list dir pi content-length boundary transfer-encoding)
+      (if (eq? transfer-encoding 'chunked)
+	  (let ((pic (http-chunks->port pi)))
+	     (unwind-protect
+		(cgi-multipart->list dir pic content-length boundary)
+		(close-input-port pic)))
+	  (cgi-multipart->list dir pi content-length boundary)))
    
-   (with-access::http-request req (content-length header socket)
+   (with-access::http-request req (content-length header socket transfer-encoding)
       (let* ((pi (socket-input socket))
 	     (ctype (http-header-field header content-type:)))
 	 (cond
@@ -387,8 +395,9 @@
 			      (hop-upload-directory))))
 		   (unless (directory? dir)
 		      (make-directories dir))
-		   (let ((args (cgi-multipart->list dir
-				  pi content-length boundary)))
+		   (let ((args (multipart->list dir
+				  pi content-length boundary
+				  transfer-encoding)))
 		      (if (and (dsssl-service? svc)
 			       (hopjs-encoded-arguments? args))
 			  (multipart-value! (car args))

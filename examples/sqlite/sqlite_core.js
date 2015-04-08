@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 25 09:49:22 2014                          */
-/*    Last change :  Sat Apr  4 07:19:54 2015 (serrano)                */
+/*    Last change :  Wed Apr  8 10:58:53 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    An example of Bigloo/JS connection                               */
@@ -13,7 +13,7 @@
 
 function Sqlite( path ) {
    this.path = path;
-   this.builtin = #:pragma( "(lambda (%this path) (instantiate::sqlite (path (js-string->string path))))" )( path );
+   this.builtin = #:pragma( "(lambda (%this path) (instantiate::sqlite (path (js-jsstring->string path))))" )( path );
 }
 
 function list2Array( l ) {
