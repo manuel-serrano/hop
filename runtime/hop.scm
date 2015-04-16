@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Mar 28 18:00:09 2015 (serrano)                */
+;*    Last change :  Thu Apr 16 07:19:29 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -229,6 +229,7 @@
 	 (case status
 	    ((200)
 	     (trace-item "ctype=" (header-content-type header))
+	     (trace-item "header=" header)
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
 	     (let ((obj (case (header-content-type header)
 			   ((application/x-hop)
@@ -594,7 +595,7 @@
 	     ip)
 	    (else
 	     ip))))
-   
+
    (cond-expand
       (enable-ssl
        (multiple-value-bind (protocol login host port abspath)

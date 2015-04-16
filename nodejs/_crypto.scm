@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sat Apr  4 08:11:22 2015 (serrano)                */
+;*    Last change :  Mon Apr 13 20:17:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -335,15 +335,15 @@
       (if (=fx state 0)
 	  ;; start
 	  (let ((onhandshakestart (js-get this 'onhandshakestart %this)))
+	     (tprint "onhandshakestart")
 	     (js-worker-push-thunk! %worker "connection"
 		(lambda ()
-		   (tprint "onhandshakestart ")
 		   (js-call0 %this onhandshakestart this))))
 	  ;; done
 	  (let ((onhandshakedone (js-get this 'onhandshakedone %this)))
+	     (tprint "onhandshakedone")
 	     (js-worker-push-thunk! %worker "connection"
 		(lambda ()
-		   (tprint "onhandshakedone ")
 		   (js-call0 %this onhandshakedone this))))))
    
    (define (connection this jsctx serverp request-cert-or-server-name reject)

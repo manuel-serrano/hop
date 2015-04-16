@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Jan 20 15:26:37 2015 (serrano)                */
+;*    Last change :  Sun Apr 12 06:32:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
@@ -195,9 +195,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization pauth)
-			 (connection connection)
-;* 			 (user user)                                   */
-			 ))
+			 (connection connection)))
 		     (else
 		      (instantiate::http-server-request
 			 (id id)
@@ -215,9 +213,7 @@
 			 (content-length cl)
 			 (transfer-encoding te)
 			 (authorization auth)
-			 (connection connection)
-;* 			 (user user)                                   */
-			 )))))))))
+			 (connection connection))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-policy-file-request ...                               */

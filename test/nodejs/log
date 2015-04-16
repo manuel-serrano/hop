@@ -79,7 +79,7 @@
 78. test-console-not-call-toString.js ... ok.
 79. test-console.js ... ok.
 80. test-crypto-binary-default.js ### BLACKLISTED
-81. test-crypto-dh-odd-key.js ### BLACKLISTED
+81. test-crypto-dh-odd-key.js ... ok.
 82. test-crypto-ecb.js ### BLACKLISTED
 83. test-crypto-hash-stream-pipe.js ### BLACKLISTED
 84. test-crypto-padding-aes256.js ### BLACKLISTED
@@ -111,7 +111,7 @@
 110. test-dgram-send-bad-arguments.js ... ok.
 111. test-dgram-udp4.js ... ok.
 112. test-dgram-unref.js ... ok.
-113. test-dh-padding.js ### BLACKLISTED
+113. test-dh-padding.js ... ok.
 114. test-domain-crypto.js ### BLACKLISTED
 115. test-domain-exit-dispose-again.js ... ok.
 116. test-domain-exit-dispose.js ... ok.
@@ -614,7 +614,7 @@
 613. test-zlib-write-after-flush.js ### BLACKLISTED
 614. test-zlib-zero-byte.js ### BLACKLISTED
 615. test-zlib.js ### BLACKLISTED
-474 executed
-   474 success
+476 executed
+   476 success
    0 failure
-   141 blacklist
+   139 blacklist

@@ -26,13 +26,14 @@ Sqlite.prototype.tables = function() {
 }
 
 Sqlite.prototype.columns = function( table ) {
-   var columns = #:sqlite-table-name-of-columns( this.builtin, #:js-jsstring->jsstring( table ) );
+   var columns = #:sqlite-table-name-of-columns( this.builtin, #:js-jsstring->string( table ) );
    return list2Array( columns );
 }
 
 Sqlite.prototype.map = function( f, query ) {
-   var l = #:sqlite-map( this.builtin, #:pragma( "(lambda l (js-vector->jsarray (list->vector l) %this))"), #:js-jsstring->jsstring( query ) );
+   var l = #:sqlite-map( this.builtin, #:pragma( "(lambda l (js-vector->jsarray (list->vector l) %this))"), #:js-jsstring->string( query ) );
    return list2Array( l ).map( f );
 }
    
 exports.Sqlite = Sqlite;
+

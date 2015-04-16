@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed Apr  1 17:29:53 2015 (serrano)                */
+;*    Last change :  Mon Apr 13 19:56:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -342,7 +342,7 @@
 ;*    http-parse-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error parser::JsHttpParser err::long msg::bstring nread)
-   (when (or #t (>fx debug-parser 0))
+   (when (>fx debug-parser 0)
       (tprint "!!! HTTP-PARSE-ERROR nread=" nread " msg=" msg " err=" err))
    (with-access::JsHttpParser parser (errno errname)
       (set! errno err)
@@ -440,7 +440,7 @@
 	 ((or (: (+ (out SP CR LF)) SP)
 	      (: "HTTP" (out #\/ #\S))
 	      (: "HTTPS" (out #\/)))
-	  (tprint "PAS GLOP [" (the-string) "]")
+	  (tprint "M4=[" (string-for-read (the-string)) "]")
 	  (http-parse-error parser 13
 	     "HPE_INVALID_CONSTANT" nread))
 	 ((: (+ (in ("AZ"))))

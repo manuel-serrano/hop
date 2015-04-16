@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Mar  5 09:08:10 2015 (serrano)                */
+;*    Last change :  Wed Apr  8 16:42:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -57,6 +57,11 @@
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-version ...                                               */
+;*---------------------------------------------------------------------*/
+(define (nodejs-version) "0.10.32")
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compiler-options-add! ...                                 */
@@ -344,14 +349,14 @@
 	 
 	 (js-put! proc 'versions
 	    (js-alist->jsobject
-	       '((http_parser: . "1.0")
+	       `((http_parser: . "1.0")
 		 (hop: . ,(hop-version))
-		 (bigloo: . ,(bigloo-version))
+		 (bigloo: . ,(bigloo-config 'release-number))
 		 (uv: . ,(nodejs-uv-version))
 		 (modules: . "11")
-		 (openssl: . ssl-version)
+		 (openssl: . ,(ssl-version))
 		 (v8: . "-")
-		 (node: . "-")
+		 (node: . ,(nodejs-version))
 		 (ares: . "-")
 		 (zlib: . "-"))
 	       %this)

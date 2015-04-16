@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Sun Jan 18 07:13:14 2015 (serrano)                */
+;*    Last change :  Thu Apr 16 07:32:01 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -125,10 +125,15 @@
 	     (raise e)
 	     (with-access::&io-parse-error e (obj)
 		(match-case obj
-		   ((?token ?val ?file ?pos)
+		   ((?token ?val (and (? string?) ?file) ?pos)
 		    (raise (duplicate::&io-parse-error e
 			      (obj (format "~a (~a)" token val))
 			      (fname file)
+			      (location pos))))
+		   ((?token ?val ?- (and (? integer?) ?pos))
+		    (raise (duplicate::&io-parse-error e
+			      (obj (format "~a (~a)" token val))
+			      (fname "-")
 			      (location pos))))
 		   (else
 		    (raise e))))))
@@ -166,7 +171,7 @@
    (regular-grammar ()
       
       ;; blank
-      ((+ (in #\space #\newline #\tab #a012))
+      ((+ (in #\space #\newline #\tab #a012 #\return))
        (ignore))
       
       ;; comment
