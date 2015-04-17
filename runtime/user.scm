@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Tue Jan  6 16:11:14 2015 (serrano)                */
+;*    Last change :  Fri Apr 17 08:32:31 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -606,10 +606,11 @@
 ;*    access-denied ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (access-denied req #!optional message)
-   (with-access::http-request req (host port path)
+   (with-access::http-request req (path socket)
       (hop-verb 1 (hop-color req req " ACCESS DENIED")
 	 ": "
-	 host ":" port path " " 
+	 path " "
+	 (socket-hostname socket) " (" (socket-host-address socket) ") "
 	 (if (string? message) message "")
 	 "\n"))
    (instantiate::http-response-authentication
