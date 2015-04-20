@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/make_fakeuv.scm            */
+;*    /tmp/BAR/hop-3.0.0-pre14/nodejs/make_fakeuv.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  3 18:53:45 2015                          */
-;*    Last change :  Wed Mar  4 14:47:55 2015 (serrano)                */
+;*    Last change :  Mon Apr 20 14:04:42 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Small utility to build a fake __nodejs_uv module                 */
@@ -22,8 +22,10 @@
    (let loop ()
       (let ((e (read)))
 	 (unless (eof-object? e)
-	    (write (fake e))
-	    (newline)
+	    (let ((f (fake e)))
+	       (when f
+		  (write f)
+		  (newline)))
 	    (loop)))))
 
 ;*---------------------------------------------------------------------*/
@@ -50,8 +52,13 @@
 ;*---------------------------------------------------------------------*/
 (define (fake-define typ expr)
    (match-case expr
-      ((?kwd ?proto . ?body) `(,kwd ,proto ,(make-body typ)))
-      (else expr)))
+      ((?kwd (nodejs-guess-handle-type . ?args) . ?body)
+       `(,kwd (nodejs-guess-handle-type ,@args)
+	   (js-string->jsstring "TTY")))
+      ((?kwd ?proto . ?body)
+       `(,kwd ,proto ,(make-body typ)))
+      (else
+       expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-body ...                                                    */
