@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Mar 13 12:01:56 2015 (serrano)                */
+;*    Last change :  Wed Apr 22 08:30:19 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -366,6 +366,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    log-local-response ...                                           */
+;*    -------------------------------------------------------------    */
+;*    See "Apache Combined Log Format" at:                             */
+;*      http://httpd.apache.org/docs/1.3/logs.html                     */
 ;*---------------------------------------------------------------------*/
 (define (log-local-response port req resp)
    
@@ -387,7 +390,7 @@
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
 	 (two-digits (date-day d)) (display "/" port)
-	 (two-digits (date-month d)) (display "/" port)
+	 (display (month-aname (date-month d)) port) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
 	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
@@ -427,7 +430,7 @@
 	    (else
 	     (display "-" port))))
       ;; long version (add User-Agent and Referer)
-      (when (>fx (hop-log) 1)
+      (when (>=fx (hop-log) 1)
 	 (let ((agent (assq :user-agent header))
 	       (referer (assq :referer header)))
 	    (when (and (pair? agent) (pair? referer))
@@ -458,7 +461,7 @@
 		      (- (date-timezone d) 3600)
 		      (date-timezone d))))
 	 (two-digits (date-day d)) (display "/" port)
-	 (two-digits (date-month d)) (display "/" port)
+	 (display (month-aname (date-month d)) port) (display "/" port)
 	 (display (date-year d) port) (display ":" port)
 	 (two-digits (date-hour d)) (display ":" port)
 	 (two-digits (date-minute d)) (display ":" port)
@@ -475,7 +478,7 @@
       ;; Content-length
       (display "-" port)
       ;; Long version (add User-Agent and Referer)
-      (when (>fx (hop-log) 1)
+      (when (>=fx (hop-log) 1)
 	 (let ((agent   (assq :user-agent header))
 	       (referer (assq :referer header)))
 	    (when (and (pair? agent) (pair? referer))
