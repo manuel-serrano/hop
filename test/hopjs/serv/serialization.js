@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Sun Jan 18 08:41:11 2015 (serrano)                */
+/*    Last change :  Wed Apr 22 08:18:11 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server serialization                           */
@@ -20,8 +20,6 @@ function doBufTest( buf, md5 ) {
 function doTest( val ) {
    console.log( "doTest ------ " );
    val.forEach( function( el ) {
-      console.log( "el=", el );
-
       assert.ok( (el instanceof Array) && el.length == 2 );
       assert.equal( el[ 0 ].valueOf(), el[ 1 ] );
 

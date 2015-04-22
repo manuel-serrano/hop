@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr  1 18:23:46 2015 (serrano)                */
+;*    Last change :  Wed Apr 22 08:17:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -936,7 +936,6 @@
 	 (with-access::J2SSvc this (loc init)
 	    (with-access::J2SObjInit init (inits)
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
-			      
 			      (js-worker-exec @worker ,(symbol->string id)
 				 (lambda ()
 				    ,(service-body this))))))
@@ -973,7 +972,9 @@
 		      (path ,path)
 		      (id ',id)
 		      (wid ',id)
-		      (args ',args)
+		      (args ,(if (isa? init J2SObjInit)
+				 `'(#!key ,@args)
+				 `',args))
 		      (resource %resource)
 		      (source %source)
 		      ))))))
