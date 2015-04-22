@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Apr 22 08:07:16 2015 (serrano)                */
+;*    Last change :  Wed Apr 22 12:25:09 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -350,21 +350,22 @@
 	     (error "service-parse-request-post"
 		"unknown error" v)))))
    
-;*    (define (multipart-arg-value v)                                  */
-;*       (let ((header (memq :header v)))                              */
-;* 	 (cond                                                         */
-;* 	    ((memq :data v)                                            */
-;* 	     =>                                                        */
-;* 	     (lambda (data)                                            */
-;* 		(list (string->keyword (car v)) (cadr data))))         */
-;* 	    ((memq :file v)                                            */
-;* 	     =>                                                        */
-;* 	     (lambda (file)                                            */
-;* 		(let ((val (cadr file)))                               */
-;* 		   (list (string->keyword (car v)) val))))             */
-;* 	    (else                                                      */
-;* 	     (error "service-parse-request-post"                       */
-;* 		"unknown error" v)))))                                 */
+   (define (multipart-dsssl-arg-value v)
+      (let ((header (memq :header v)))
+	 (cond
+	    ((memq :data v)
+	     =>
+	     (lambda (data)
+		(list (string->keyword (car v)) (cadr data))))
+	    ((memq :file v)
+	     =>
+	     (lambda (file)
+		(let ((val (cadr file)))
+		   (list (string->keyword (car v)) val))))
+	    (else
+	     (error "service-parse-request-post"
+		"unknown error" v)))))
+   
    (define (multipart-arg-value v)
       (let ((header (memq :header v)))
 	 (cond
@@ -413,11 +414,15 @@
 		   (let ((args (multipart->list dir
 				  pi content-length boundary
 				  transfer-encoding)))
-		      (if (hopjs-encoded-arguments? args)
+		      (cond
+			 ((hopjs-encoded-arguments? args)
 			  (if (dsssl-service? svc)
 			      (multipart-value! (car args))
-			      (list (multipart-value! (car args))))
-			  (map multipart-arg-value args))))))
+			      (list (multipart-value! (car args)))))
+			 ((dsssl-service? svc)
+			  (append-map multipart-dsssl-arg-value args))
+			 (else
+			  (map multipart-arg-value args)))))))
 	    ((string=? ctype "application/x-www-form-urlencoded")
 	     (let ((body (read-chars (elong->fixnum content-length) pi)))
 		(service-parse-request-get-args (cgi-args->list body))))

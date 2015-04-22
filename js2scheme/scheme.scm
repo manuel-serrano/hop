@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 22 08:17:16 2015 (serrano)                */
+;*    Last change :  Wed Apr 22 11:24:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -900,12 +900,12 @@
 		       ((at ?fname ?loc)
 			`(js-new %this js-type-error
 			    (js-string->jsstring
-			       ,(format "wrong service \"~s\" call" name))
+			       ,(format "wrong service call \"~s\"" name))
 			    ,fname ,loc))
 		       (else
 			`(js-new %this js-type-error
 			  (js-string->jsstring
-			     ,(format "wrong service \"~s\" call" name)))))))))
+			     ,(format "wrong service call \"~s\"" name)))))))))
 
       (define (service-body this::J2SSvc)
 	 (with-access::J2SSvc this (loc body need-bind-exit-return name)
