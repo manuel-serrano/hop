@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 15 09:41:02 2015 (serrano)                */
+;*    Last change :  Sun May  3 05:06:44 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -21,6 +21,8 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
+   (include "nodejs_async.sch")
+   
    (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -92,7 +94,7 @@
    (js-put! pipe-prototype 'writeBuffer
       (js-make-function %this
 	 (lambda (this buffer)
-	    (stream-write-buffer %worker %this this buffer))
+	    (stream-write-buffer %worker %this process this buffer))
 	 1 "writeBuffer")
       #f %this)
    
@@ -100,7 +102,7 @@
    (js-put! pipe-prototype 'writeAsciiString
       (js-make-function %this 
 	 (lambda (this string handle)
-	    (stream-write-string %worker %this this
+	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-length string)
 	       "ascii" #f handle))
 	 2 'writeAsciiString)
@@ -110,7 +112,7 @@
    (js-put! pipe-prototype 'writeUtf8String
       (js-make-function %this
 	 (lambda (this string handle)
-	    (stream-write-string %worker %this this
+	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-length string)
 	       "utf8" #f handle))
 	 2 "writeUtf8String")
@@ -122,7 +124,7 @@
 	 (lambda (this string handle)
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
 		   (buffer (ucs2-string->buffer ucs2string)))
-	       (stream-write-string %worker %this this
+	       (stream-write-string %worker %this process this
 		  (js-jsstring->string string) 0 (js-jsstring-length string)
 		  "ascii" #f handle)))
 	 2 "writeUcs2String")
@@ -141,7 +143,6 @@
    (js-put! pipe-prototype 'listen
       (js-make-function %this
 		  (lambda (this backlog)
-		     (tprint "UNTESTED, example needed")
 		     (with-access::JsHandle this (handle)
 			(nodejs-pipe-listen %worker %this process this handle
 			   (->fixnum (js-tointeger backlog %this)))))
@@ -161,8 +162,8 @@
 			      (js-put! process '_errno
 				 (nodejs-err-name status) #f %this))
 			   (let ((oncomp (js-get req 'oncomplete %this)))
-			      (js-call5 %this oncomp req status
-				 this req #t #t)
+			      (!js-callback5 'connect %worker %this
+				 oncomp req status this req #t #t)
 			      (js-undefined))))
 		     req))))
 	 2 'connect)

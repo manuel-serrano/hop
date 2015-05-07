@@ -92,7 +92,7 @@ exports.createCredentials = function(options, context) {
                           context);
   if (context) return c;
 
-  if (options.key) {
+   if (options.key) {
     if (options.passphrase) {
       c.context.setKey(options.key, options.passphrase);
     } else {

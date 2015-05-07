@@ -97,6 +97,7 @@ function convertNPNProtocols(NPNProtocols, out) {
 
 
 function checkServerIdentity(host, cert) {
+   debug( "checkServerIdentify host=" + host + " cert[=" + cert + "]" );
   // Create regexp to much hostnames
   function regexpify(host, wildcards) {
     // Add trailing dot (make hostnames uniform)
@@ -140,8 +141,9 @@ function checkServerIdentity(host, cert) {
   // CN and altnames in certificate extension
   // (DNS names, IP addresses, and URIs)
   //
-  // Walk through altnames and generate lists of those names
-  if (cert.subjectaltname) {
+   // Walk through altnames and generate lists of those names
+   if (cert.subjectaltname) {
+      debug( "cert.subjectaltname=" + cert.subjectaltname );
     cert.subjectaltname.split(/, /g).forEach(function(altname) {
       if (/^DNS:/.test(altname)) {
         dnsNames.push(altname.slice(4));
@@ -188,7 +190,8 @@ function checkServerIdentity(host, cert) {
     //  client."
     // RFC6125
     if (matchCN) {
-      var commonNames = cert.subject.CN;
+       var commonNames = cert.subject.CN;
+       debug( "commonNames=" + commonNames );
       if (Array.isArray(commonNames)) {
         for (var i = 0, k = commonNames.length; i < k; ++i) {
           dnsNames.push(regexpify(commonNames[i], true));
@@ -222,8 +225,8 @@ SlabBuffer.prototype.create = function create() {
 
 
 SlabBuffer.prototype.use = function use(context, fn, size) {
-   debug( ">>> +++++++++++++++++ SlabBuffer.prototype.use size="
-	  + size + " offset=" + this.offset + " remaining=" + this.remaining );
+/*    debug( ">>> +++++++++++++++++ SlabBuffer.prototype.use size="    */
+/* 	  + size + " offset=" + this.offset + " remaining=" + this.remaining ); */
   if (this.remaining === 0) {
     this.isFull = true;
     return 0;
@@ -233,10 +236,10 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   if (size !== null) actualSize = Math.min(size, actualSize);
 
-   debug( "SlabBuffer.prototype.use this.pool.length=" + this.pool.length + " " + this.pool.constructor.name );
+   debug( ">>> SlabBuffer.prototype.use this.pool.length=" + this.pool.length + " " + this.pool.constructor.name );
 
   var bytes = fn.call(context, this.pool, this.offset, actualSize);
-   debug( "SlabBuffer.prototype.use bytes=" + bytes);
+   debug( "<<< SlabBuffer.prototype.use bytes=" + bytes);
    if (bytes > 0) {
     this.offset += bytes;
     this.remaining -= bytes;
@@ -244,9 +247,9 @@ SlabBuffer.prototype.use = function use(context, fn, size) {
 
   assert(this.remaining >= 0);
 
-   debug( "<<< +++++++++++++++++ SlabBuffer.prototype.use size=" + size
-	  + " -> " + bytes + " offset=" + this.offset
-	  + " remaining=" + this.remaining );
+/*    debug( "<<< +++++++++++++++++ SlabBuffer.prototype.use size=" + size */
+/* 	  + " -> " + bytes + " offset=" + this.offset                  */
+/* 	  + " remaining=" + this.remaining );                          */
   return bytes;
 };
 
@@ -300,7 +303,7 @@ function onCryptoStreamFinish() {
         this.pair.ssl.shutdown();
       }
 
-      if (this.pair.ssl && this.pair.ssl.error)
+       if (this.pair.ssl && this.pair.ssl.error)
         return this.pair.error();
     }
   } else {
@@ -350,7 +353,7 @@ CryptoStream.prototype.init = function init() {
 CryptoStream.prototype._write = function write(data, encoding, cb) {
   assert(this._pending === null);
 
-   debug( 'CryptoStream.prototype._write ' + this.pair.ssl );
+   debug( '>>> CryptoStream.prototype._write ' + this.pair.ssl );
   // Black-hole data
   if (!this.pair.ssl) return cb(null);
 
@@ -364,17 +367,18 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
     // Write current buffer now
     var written;
     if (this === this.pair.cleartext) {
-      debug('cleartext.write.1 called with ' + data.length + ' bytes');
+      debug('>>> clearIn called with ' + data.length + ' bytes');
       written = this.pair.ssl.clearIn(data, 0, data.length);
-       debug('clearin <- ' + written );
+       debug('<<< clearIn written=' + written );
     } else {
-      debug('encrypted.write called with ' + data.length + ' bytes');
-      written = this.pair.ssl.encIn(data, 0, data.length);
+      debug('>>> encIn called with ' + data.length + ' bytes');
+       written = this.pair.ssl.encIn(data, 0, data.length);
+       debug('<<< encIn written=' + written );
     }
 
     // Handle and report errors
     if (this.pair.ssl && this.pair.ssl.error) {
-       debug( 'CryptoStream.prototype._write RETURN WITH ERROR...' );
+       debug( '<<< CryptoStream.prototype._write RETURN WITH ERROR...' );
       return cb(this.pair.error(true));
     }
 
@@ -394,7 +398,7 @@ CryptoStream.prototype._write = function write(data, encoding, cb) {
     this.pair.maybeInitFinished();
 
     // Whole buffer was written
-      debug('CryptoStream.prototype._write written=' + written + " data.length=" + data.length);
+      debug('--- CryptoStream.prototype._write written=' + written + " data.length=" + data.length);
     if (written === data.length) {
       if (this === this.pair.cleartext) {
         debug('cleartext.write.2 succeed with ' + written + ' bytes');
@@ -463,17 +467,21 @@ CryptoStream.prototype._read = function read(size) {
 
   var out;
   if (this === this.pair.cleartext) {
-    debug('cleartext.read called with ' + size + ' bytes');
+    debug('>>> cleartext.read called with ' + size + ' bytes');
     out = this.pair.ssl.clearOut;
+    debug( "<<< clearText out=" + out );
   } else {
-    debug('encrypted.read called with ' + size + ' bytes');
+    debug('>>> encrypted.read called with ' + size + ' bytes');
     out = this.pair.ssl.encOut;
+    debug('<<< encrypted.read out=' + out );
   }
 
   var bytesRead = 0,
       start = this._buffer.offset,
       last = start;
   do {
+     debug( "tls.0 _read read=" + read + " bytesRead=" + bytesRead
+	    + " size=" + size  );
     assert(last === this._buffer.offset);
     var read = this._buffer.use(this.pair.ssl, out, size - bytesRead);
     if (read > 0) {
@@ -508,8 +516,10 @@ CryptoStream.prototype._read = function read(size) {
     debug('encrypted.read succeed with ' + bytesRead + ' bytes');
   }
 
-  // Try writing pending data
+   // Try writing pending data
+   debug( "this._pending=" + this._pending );
   if (this._pending !== null) this._writePending();
+   debug( "this._opposite._pending=" + this._opposite._pending );
   if (this._opposite._pending !== null) this._opposite._writePending();
 
   if (bytesRead === 0) {
@@ -534,8 +544,9 @@ CryptoStream.prototype._read = function read(size) {
       this.push('');
     }
   } else {
-    // Give them requested data
+     // Give them requested data
     if (this.ondata) {
+       debug( "_read this.ondata start=" + start + " " + (start + bytesRead) );
       this.ondata(pool, start, start + bytesRead);
 
       // Force state.reading to set to false
@@ -545,13 +556,15 @@ CryptoStream.prototype._read = function read(size) {
      debug( "read(0).5");
       this.read(0);
     } else {
+       debug( "_read push start=" + start + " " + (start + bytesRead) );
       this.push(pool.slice(start, start + bytesRead));
     }
   }
 
   // Let users know that we've some internal data to read
   var halfRead = this._internallyPendingBytes() !== 0;
-
+    
+   debug( "_read halfRead=" + halfRead );
   // Smart check to avoid invoking 'sslOutEnd' in the most of the cases
   if (this._halfRead !== halfRead) {
     this._halfRead = halfRead;
@@ -592,6 +605,7 @@ CryptoStream.prototype.__defineGetter__('bytesWritten', function() {
 // Example:
 // C=US\nST=CA\nL=SF\nO=Joyent\nOU=Node.js\nCN=ca1\nemailAddress=ry@clouds.org
 function parseCertString(s) {
+   debug( "parseCertString [" + s + "]" );
   var out = {};
   var parts = s.split('\n');
   for (var i = 0, len = parts.length; i < len; i++) {
@@ -616,6 +630,7 @@ function parseCertString(s) {
 CryptoStream.prototype.getPeerCertificate = function() {
   if (this.pair.ssl) {
     var c = this.pair.ssl.getPeerCertificate();
+   debug( "getPeerCertificate [" + c + "]" );
 
     if (c) {
       if (c.issuer) c.issuer = parseCertString(c.issuer);
@@ -857,6 +872,7 @@ function onclienthello(hello) {
   var self = this,
       once = false;
 
+   debug( ">>> onclienthello hello.len=" + hello.sessionId.length );
   this._resumingSession = true;
   function callback(err, session) {
     if (once) return;
@@ -864,7 +880,9 @@ function onclienthello(hello) {
 
     if (err) return self.socket.destroy(err);
 
+     debug( ">>> onclienthello.loadSession session=", typeof( session ) );
     self.ssl.loadSession(session);
+     debug( "<<< onclienthello.loadSession" );
 
     // Cycle data
     self._resumingSession = false;
@@ -877,12 +895,16 @@ function onclienthello(hello) {
   if (hello.sessionId.length <= 0 ||
       !this.server ||
       !this.server.emit('resumeSession', hello.sessionId, callback)) {
+     debug( "onclient hello calling callback..." )
     callback(null, null);
   }
+   debug( "<<< onclienthello" );
 }
 
 
 function onnewsession(key, session) {
+   debug( "onnewsession key=" + key.length
+	  + " session=" + session.length + " server=" + this.server );
   if (!this.server) return;
   this.server.emit('newSession', key, session);
 }
@@ -931,6 +953,9 @@ function SecurePair(credentials, isServer, requestCert, rejectUnauthorized,
   this._rejectUnauthorized = rejectUnauthorized ? true : false;
   this._requestCert = requestCert ? true : false;
 
+   if( this._isServer ) {
+      debug( "new Connect cert=" + this._requestCert    );
+   }
   this.ssl = new Connection(this.credentials.context,
                             this._isServer ? true : false,
                             this._isServer ? this._requestCert :
@@ -990,6 +1015,7 @@ exports.createSecurePair = function(credentials,
                                     isServer,
                                     requestCert,
                                     rejectUnauthorized) {
+   debug( "createSecutrePair cert=" + requestCert );
   var pair = new SecurePair(credentials,
                             isServer,
                             requestCert,
@@ -1001,7 +1027,7 @@ exports.createSecurePair = function(credentials,
 SecurePair.prototype.maybeInitFinished = function() {
   if (this.ssl && !this._secureEstablished && this.ssl.isInitFinished()) {
     if (process.features.tls_npn) {
-      this.npnProtocol = this.ssl.getNegotiatedProtocol();
+       this.npnProtocol = this.ssl.getNegotiatedProtocol();
     }
 
     if (process.features.tls_sni) {
@@ -1185,6 +1211,7 @@ function Server(/* [options], listener */) {
   net.Server.call(this, function(socket) {
     var creds = crypto.createCredentials(null, sharedCreds.context);
 
+     debug( "new SecurePair cert=", self.requestCert );
     var pair = new SecurePair(creds,
                               true,
                               self.requestCert,
@@ -1199,19 +1226,22 @@ function Server(/* [options], listener */) {
                                 encrypted: self._encrypted
                               });
 
-     debug( "tls call pipe Server");
+     debug( ">>> tls call pipe Server socket=", socket );
     var cleartext = pipe(pair, socket);
+     debug( "<<< tls call pipe Server socket=", socket );
     cleartext._controlReleased = false;
 
     function listener() {
       pair.emit('error', new Error('TLS handshake timeout'));
     }
 
-    if (timeout > 0) {
+     if (timeout > 0) {
+	debug( "server timeout=", timeout );
       socket.setTimeout(timeout, listener);
     }
 
-    pair.once('secure', function() {
+     pair.once('secure', function() {
+	debug( "tls on secure" );
       socket.setTimeout(0, listener);
 
       pair.cleartext.authorized = false;
@@ -1222,7 +1252,7 @@ function Server(/* [options], listener */) {
         cleartext._controlReleased = true;
         self.emit('secureConnection', pair.cleartext, pair.encrypted);
       } else {
-        var verifyError = pair.ssl.verifyError();
+         var verifyError = pair.ssl.verifyError();
         if (verifyError) {
           pair.cleartext.authorizationError = verifyError.message;
 
@@ -1248,6 +1278,7 @@ function Server(/* [options], listener */) {
   if (listener) {
     this.on('secureConnection', listener);
   }
+   debug( "<<< tls Server" );
 }
 
 util.inherits(Server, net.Server);
@@ -1258,7 +1289,8 @@ exports.createServer = function(options, listener) {
 
 
 Server.prototype.setOptions = function(options) {
-  if (typeof options.requestCert == 'boolean') {
+   if (typeof options.requestCert == 'boolean') {
+      debug( "requestCert=" + options.requestCert );
     this.requestCert = options.requestCert;
   } else {
     this.requestCert = false;
@@ -1293,8 +1325,9 @@ Server.prototype.setOptions = function(options) {
     this.sessionIdContext = options.sessionIdContext;
   } else if (this.requestCert) {
     this.sessionIdContext = crypto.createHash('md5')
-                                  .update(process.argv.join(' '))
-                                  .digest('hex');
+        .update(process.argv.join(' '))
+        .digest('hex');
+     debug( "requestCert={" + this.sessionIdContext + "]" );
   }
   if (options.cleartext) this.cleartext = options.cleartext;
   if (options.encrypted) this.encrypted = options.encrypted;
@@ -1410,9 +1443,12 @@ exports.connect = function(/* [port, host], options, cb */) {
     cleartext.npnProtocol = pair.npnProtocol;
 
     // Verify that server's identity matches it's certificate's names
-    if (!verifyError) {
+     if (!verifyError) {
+	debug( "validCert hostname=" + hostname
+	       + " peerCert=[" + pair.cleartext.getPeerCertificate() + "]" );
       var validCert = checkServerIdentity(hostname,
                                           pair.cleartext.getPeerCertificate());
+	console.error( "npn validCert=", validCert );
       if (!validCert) {
         verifyError = new Error('Hostname/IP doesn\'t match certificate\'s ' +
                                 'altnames');
@@ -1434,7 +1470,7 @@ exports.connect = function(/* [port, host], options, cb */) {
       cleartext.emit('secureConnect');
     }
   });
-  pair.on('error', function(err) {
+   pair.on('error', function(err) {
     cleartext.emit('error', err);
   });
 

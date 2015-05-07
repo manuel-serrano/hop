@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Fri Feb  6 09:47:48 2015 (serrano)                */
+;*    Last change :  Mon May  4 07:35:47 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -24,9 +24,9 @@
 
    (export (stream-shutdown ::WorkerHopThread ::JsGlobalObject
 	      ::JsObject ::JsHandle)
-	   (stream-write-buffer ::WorkerHopThread ::JsGlobalObject
+	   (stream-write-buffer ::WorkerHopThread ::JsGlobalObject ::JsProcess
 	      ::JsObject ::obj)
-	   (stream-write-string ::WorkerHopThread ::JsGlobalObject
+	   (stream-write-string ::WorkerHopThread ::JsGlobalObject ::JsProcess
 	      ::JsHandle ::bstring ::long ::long ::obj ::obj ::obj)
 	   (stream-read-start ::WorkerHopThread ::JsGlobalObject ::JsProcess
 	      ::obj ::JsHandle)
@@ -48,7 +48,9 @@
 				 (nodejs-err-name status) #f %this))
 			   (set! reqs (remq req reqs))
 			   (let ((oncomp (js-get req 'oncomplete %this)))
-			      (js-call3 %this oncomp req status this req))))))
+			      (!js-callback3 "shutdown" %worker %this
+				 oncomp req status this req)
+			      '(js-worker-tick %worker))))))
 	    (set! reqs (cons req reqs))
 	    (when (=fx res 0)
 	       req)))))
@@ -56,9 +58,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    stream-write-buffer ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (stream-write-buffer %worker %this this buffer)
+(define (stream-write-buffer %worker %this process this buffer)
    (with-access::JsTypedArray buffer (%data byteoffset length)
-      (stream-write-string %worker %this this
+      (stream-write-string %worker %this process this
 	 %data
 	 (uint32->fixnum byteoffset)
 	 (uint32->fixnum length)
@@ -67,13 +69,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    stream-write-string ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (stream-write-string %worker %this this::JsHandle
+(define (stream-write-string %worker %this process this::JsHandle
 	   string::bstring offset::long len::long
 	   encoding callback sendhandle)
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsHandle this (handle reqs)
 	 (let ((req (js-new %this js-object)))
 	    (set! reqs (cons req reqs))
+	    (with-access::JsProcess process (using-domains)
+	       (if using-domains
+		   (let ((dom (js-get process 'domain %this)))
+		      (js-put! req 'domain dom #f %this))
+		   (js-put! req 'domain (js-null) #f %this)))
 	    (js-put! req 'bytes len #f %this)
 	    (with-access::JsHandle this (handle)
 	       (set! reqs (remq req reqs))
@@ -82,6 +89,7 @@
 			       (nodejs-stream-write-queue-size handle) #f %this)
 			    (let ((oncomp (js-get req 'oncomplete %this)))
 			       (js-call3 %this oncomp req status this req)
+			       '(js-worker-tick %worker)
 			       (js-undefined)))))
 		  (if (nodejs-pipe-ipc? handle)
 		      (if (isa? sendhandle JsHandle)
@@ -132,14 +140,14 @@
 		      (js-put! process '_errno (js-string->jsstring "EOF")
 			 #f %this)
 		      (let ((onread (js-get this 'onread %this)))
-			 (!js-call3 "read-start" %this onread this
+			 (!js-callback3 "read-start" %worker %this onread this
 			    (js-undefined) (js-undefined) (js-undefined))))
 		     ((not status)
 		      ;; read error
 		      (slab-shrink! slab buf offset 0)
 		      (js-put! process '_errno (nodejs-err-name len) #f %this)
 		      (let ((onread (js-get this 'onread %this)))
-			 (!js-call0 "read-start" %this onread this)))
+			 (!js-callback0 "read-start" %worker %this onread this)))
 		     ((=fx len 0)
 		      ;; nothing read
 		      (slab-shrink! slab buf offset 0))
@@ -148,11 +156,11 @@
 		      (let* ((b (slab-shrink! slab buf offset len))
 			     (onread (js-get this 'onread %this)))
 			 (if (and (nodejs-pipe-ipc? handle) pending-type)
-			     (!js-call4 "read-start" %this
+			     (!js-callback4 "read-start" %worker %this
 				onread this b offset len
 				(nodejs-pipe-accept %worker %this this
 				   pending-type))
-			     (!js-call3 "read-start" %this
+			     (!js-callback3 "read-start" %worker %this
 				onread this b offset len))
 			 (js-undefined))))))))))
 

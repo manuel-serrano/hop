@@ -19,6 +19,9 @@ while : ; do
   -v)
     verb="$verb -v";;
 
+  -v2)
+    verb="$verb -v -v";;
+
   -s)
     verb="";;
 

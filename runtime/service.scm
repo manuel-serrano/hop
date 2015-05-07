@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Apr 22 12:25:09 2015 (serrano)                */
+;*    Last change :  Mon May  4 20:01:05 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -384,7 +384,7 @@
    
    (define (hopjs-encoded-arguments? args)
       (match-case args
-	 ((("hop" . ?-)) #t)
+	 ((("hop" . ?-) . ?-) #t)
 	 (else #f)))
    
    (define (dsssl-service? svc)
@@ -418,7 +418,7 @@
 			 ((hopjs-encoded-arguments? args)
 			  (if (dsssl-service? svc)
 			      (multipart-value! (car args))
-			      (list (multipart-value! (car args)))))
+			      (map multipart-value! args)))
 			 ((dsssl-service? svc)
 			  (append-map multipart-dsssl-arg-value args))
 			 (else

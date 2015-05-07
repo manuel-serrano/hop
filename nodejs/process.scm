@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Apr  8 16:42:10 2015 (serrano)                */
+;*    Last change :  Wed May  6 13:43:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -49,11 +49,13 @@
 	      (fs-watcher-proto (default #f))
 	      (buffer-binding (default #f))
 	      (using-domains::bool (default #f))
-	      (exiting::bool (default #f)))
+	      (exiting::bool (default #f))
+	      (tick-callback (default #f)))
 
 	   (class JsHandle::JsObject
 	      (handle (default #f))
-	      (reqs::pair-nil (default '()))))
+	      (reqs::pair-nil (default '()))
+	      (flags::int (default 0))))
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
@@ -90,8 +92,8 @@
 	       1 "fatalException"))
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
-		(tick (js-get m 'initNodeTick %this)))
-	    (js-call1 %this tick (js-undefined) %process))
+                (tick (js-get m 'initNodeTick %this)))
+            (js-call1 %this tick (js-undefined) %process))
 	 ;; events
 	 (with-access::JsObject %process (__proto__)
 	    (let* ((e (nodejs-require-core "events" %worker %this))
@@ -119,12 +121,16 @@
 			    (if (eq? (car c) 'SIGTERM)
 				(hop-sigterm-handler-set!
 				   (lambda (n)
-				      (js-call0 %this proc this)))
+				      (js-call0 %this proc this)
+				      '(js-worker-tick %worker)))
 				(signal (cdr c)
 				   (lambda (s)
-				      (js-worker-push-thunk! %worker sig
-					 (lambda ()
-					    (js-call0 %this proc this))))))))
+				      (!js-callback0 "signal" %worker %this
+					 proc this))))))
+;* 				   (lambda (s)                         */
+;* 				      (js-worker-push-thunk! %worker sig */
+;* 					 (lambda ()                    */
+;* 					    (js-call0 %this proc this)))))))) */
 			(else
 			 (js-call2 %this add this signame proc)))))
 	       
@@ -260,7 +266,34 @@
 			       (js-call0 %this exit domainv)
 			       ret)))
 		      (callback)))))
-		  
+
+	 (define need-tick-cb #f)
+	 
+	 (define tick-from-spinner #f)
+
+	 (define (spinner status)
+	    ;; see Spin, node.cc:184
+	    (when need-tick-cb
+	       (set! need-tick-cb #f)
+	       (nodejs-idle-stop %worker %this tick-spinner)
+	       (unless tick-from-spinner
+		  (set! tick-from-spinner
+		     (js-get proc '_tickFromSpinner %this)))
+	       (with-access::WorkerHopThread %worker (call state)
+		  (if (eq? state 'error)
+		      (js-worker-push-thunk! %worker "spin"
+			 (lambda ()
+			    (js-call0 %this tick-from-spinner (js-undefined))))
+		      (js-call0 %this tick-from-spinner (js-undefined))))))
+
+	 (define tick-spinner
+	    (nodejs-make-idle %worker %this spinner))
+
+	 (define (need-tick-callback this)
+	    ;; see NeedTickCallback, node.cc:215
+	    (set! need-tick-cb #t)
+	    (nodejs-idle-start %worker %this tick-spinner))
+	 
 	 ;; these stdio definitions are used during the bootstrap only
 	 ;; they will be overriden by node_stdio.js
 	 (js-put! proc 'stdout
@@ -438,8 +471,8 @@
 	       `((debug . ,(>fx (bigloo-debug) 0))
 		 (uv . #t)
 		 (ipv6 . #t)
-		 (tls_npm . #f)
-		 (tls_sni . #f)
+		 (tls_npn . #t)
+		 (tls_sni . #t)
 		 (tls . #t))
 	       %this)
 	    #f %this)
@@ -459,6 +492,7 @@
 				    (nodejs-make-idle
 				       %worker %this
 				       (lambda (_) #t)))
+				 (nodejs-idle-start %worker %this idle)
 				 (set! check
 				    (nodejs-make-check
 				       %worker %this proc)))
@@ -518,7 +552,7 @@
 	 (js-put! proc '_usingDomains
 	    (js-make-function %this
 	       (lambda (this)
-		  (with-access::JsProcess proc (using-domains)
+		  (with-access::JsProcess proc (using-domains tick-callback)
 		     (unless using-domains
 			(set! using-domains #t)
 			(with-access::WorkerHopThread %worker (call async)
@@ -534,6 +568,7 @@
 			      (error "_usingDomains"
 				 "process._nextDomainTick assigned to non-function"
 				 ndt))
+			   (set! tick-callback #f)
 			   (js-put! this '_tickCallback tdc #f %this)
 			   (js-put! this '_currentTickHandler ndt #f %this)))))
 	       0 "_usingDomains")
@@ -544,9 +579,7 @@
 	    (js-vector->jsarray (make-vector 3 0) %this)
 	    #f %this)
 	 (js-put! proc '_needTickCallback
-	    (js-make-function %this
-	       (lambda (this)
-		  (nodejs-need-tick-callback %worker %this proc))
+	    (js-make-function %this need-tick-callback
 	       0 "needTickCallback")
 	    #f %this)
 
@@ -703,8 +736,8 @@
 				    (else
 				     (error "process-fs-event-wrap"
 					"bad event" eventstr)))
-				 (!js-call3 'fs-event %this onchange this
-				    status eventstr
+				 (!js-callback3 'fs-event %worker %this
+				    onchange this status eventstr
 				    (js-string->jsstring path))))
 			   (js-jsstring->string path)))
 		     (unless (js-totest options)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr  3 10:34:42 2015 (serrano)                */
+;*    Last change :  Fri May  1 16:14:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -158,29 +158,7 @@
 	 (define (js-error-construct/stack this::JsError . args)
 	    (let ((err (apply js-error-construct this args)))
 	       (capture-stack-trace err (js-undefined))
-	       ;;(capture-stack-trace-old #f err %this args)
 	       err))
-
-	 (define (capture-stack-trace-old head this %this args)
-	    (let ((stk (call-with-output-string
-			  (lambda (op)
-			     (when (string? head)
-				(display head op)
-				(when (isa? this JsObject)
-				   (display (js-get this 'message %this) op)
-				   (newline op)))
-			     (let* ((off (match-case args
-					    ((?- (and ?off (? integer?)) ??-)
-					     off)
-					    (else
-					     0)))
-				    (stk (if (>fx off 0)
-					     (get-trace-stack (+fx off 10))
-					     (get-trace-stack 10))))
-				(display-trace-stack
-				   (list-tail stk (minfx off (length stk)))
-				   op 1))))))
-	       (js-put! this 'stack (js-string->jsstring stk) #f %this)))
 
 	 (define (capture-stack-trace err start-fun)
 	    
@@ -469,7 +447,6 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-reference-error %this)
    (lambda (this message fname loc)
-      (tprint "%js-reference-error fname=" fname " loc=" loc)
       (with-access::JsGlobalObject %this (js-reference-error)
 	 (js-new %this js-reference-error message fname loc))))
 

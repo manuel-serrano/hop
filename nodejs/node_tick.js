@@ -110,7 +110,7 @@ function initNodeTick() {
     // using domains will cause this to be overridden
     function _tickCallback() {
       var callback, nextTickLength, threw;
-
+//#:tprint( ">>> _tickCallback ", process.pid );
       if (inTick) return;
       if (infoBox[length] === 0) {
         infoBox[index] = 0;
@@ -137,11 +137,12 @@ function initNodeTick() {
       }
 
       tickDone(0);
+//#:tprint( "<<< _tickCallback ", process.pid );
     }
 
     function _tickDomainCallback() {
+//#:tprint( ">>> _tickDomainCallback ", process.pid );
       var nextTickLength, tock, callback, threw;
-
       // if you add a nextTick in a domain's error handler, then
       // it's possible to cycle indefinitely.  Normally, the tickDone
       // in the finally{} block below will prevent this, however if
@@ -186,10 +187,11 @@ function initNodeTick() {
       }
 
       tickDone(0);
+//#:tprint( "<<< _tickDomainCallback ", process.pid );
     }
 
     function _nextTick(callback) {
-      // on the way out, don't bother. it won't get fired anyway.
+       // on the way out, don't bother. it won't get fired anyway.
       if (process._exiting)
         return;
       if (infoBox[depth] >= process.maxTickDepth)
@@ -206,7 +208,7 @@ function initNodeTick() {
       }
     }
 
-    function _nextDomainTick(callback) {
+     function _nextDomainTick(callback) {
       // on the way out, don't bother. it won't get fired anyway.
       if (process._exiting)
         return;

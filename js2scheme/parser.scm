@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Mar 13 16:00:10 2015 (serrano)                */
+;*    Last change :  Thu Apr 23 08:47:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -54,7 +54,7 @@
 	    ((at ?fname ?loc)
 	     (raise
 		(instantiate::&io-parse-error
-		   (proc "js-parser")
+		   (proc "j2s-parser")
 		   (msg (if (eq? (car token) 'BAD) (cadr token) msg))
 		   (obj (if (eq? (car token) 'BAD) (cddr token) (cdr token)))
 		   (fname fname)
@@ -62,7 +62,7 @@
 	    (else
 	     (raise
 		(instantiate::&io-parse-error
-		   (proc "js-parser")
+		   (proc "j2s-parser")
 		   (msg (if (eq? (car token) 'BAD) (cadr token) msg))
 		   (obj (if (eq? (car token) 'BAD) (cddr token) (cdr token)))))))))
 
@@ -73,7 +73,7 @@
 	       ((at ?fname ?loc)
 		(raise
 		   (instantiate::&io-parse-error
-		      (proc "js-parser")
+		      (proc "j2s-parser")
 		      (msg msg)
 		      (obj (j2s->list node))
 		      (fname fname)
@@ -81,7 +81,7 @@
 	       (else
 		(raise
 		   (instantiate::&io-parse-error
-		      (proc "js-parser")
+		      (proc "j2s-parser")
 		      (msg msg)
 		      (obj (j2s->list node)))))))))
 
@@ -90,7 +90,7 @@
 	    (loc (input-port-position input-port)))
 	 (raise
 	    (instantiate::&io-parse-error
-	       (proc "js-parser")
+	       (proc "j2s-parser")
 	       (msg msg)
 	       (obj (read-line input-port))
 	       (fname fname)

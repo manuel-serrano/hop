@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Fri Jan 16 05:32:53 2015 (serrano)                */
+/*    Last change :  Mon May  4 19:35:16 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -289,19 +289,22 @@ function getExamples( dir ) {
       .map( function( d ) {
 	 var p = dir + "/" + d;
 	 var o = require( p + "/example.json" );
-	 o.dir = p;
 
-	 if( !("title" in o) ) o.title = d;
-	 if( !("service" in o) ) o.service = d;
-	 if( !("level" in o) ) o.level = 0.1;
-	 if( !("commands" in o) ) o.commands = [ CMD ];
+	 if( !("dir" in o) ) {
+	    o.dir = p;
 
-	 if( ("files" in o) ) {
-	    o.files = o.files.map( function( el ) {
-	       return dir + "/" + d + "/" + el
-	    } );
-	 } else {
-	    o.files = [ dir + "/" + d + "/" + d + ".js" ];
+	    if( !("title" in o) ) o.title = d;
+	    if( !("service" in o) ) o.service = d;
+	    if( !("level" in o) ) o.level = 0.1;
+	    if( !("commands" in o) ) o.commands = [ CMD ];
+
+	    if( ("files" in o) ) {
+	       o.files = o.files.map( function( el ) {
+		  return dir + "/" + d + "/" + el
+	       } );
+	    } else {
+	       o.files = [ dir + "/" + d + "/" + d + ".js" ];
+	    }
 	 }
 
 	 return o;

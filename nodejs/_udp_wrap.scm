@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 15 07:30:05 2015 (serrano)                */
+;*    Last change :  Sun May  3 05:20:31 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -255,8 +255,8 @@
 				    ;; that I don't understand
 				    (trace-item "oncomp=" (typeof oncomp))
 				    (unless (eq? oncomp (js-undefined))
-				       (js-call4 %this oncomp req status
-					  this req buffer))
+				       (!js-callback4 'ude-send %worker %this
+					  oncomp req status this req buffer))
 				    (js-undefined)))))))
 		  (if (=fx r 0)
 		      req
@@ -284,12 +284,13 @@
 			    (slab-shrink! slab buf offset 0)
 			    (js-put! process '_errno (nodejs-err-name len) #f %this)
 			    (let ((onmsg (js-get this 'onmessage %this)))
-			       (!js-call0 "recv-start" %this onmsg this)))
+			       (!js-callback0 "recv-start" %worker %this
+				  onmsg this)))
 			   (else
 			    ;; characters read
 			    (let ((b (slab-shrink! slab buf offset len)))
 			       (let ((onmsg (js-get this 'onmessage %this)))
-				  (!js-call5 "recv-start" %this
+				  (!js-callback5 "recv-start" %worker %this
 				     onmsg this this b offset len
 				     (js-alist->jsobject addr %this))
 				  (js-undefined))))))))))

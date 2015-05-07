@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Apr  1 18:46:47 2015 (serrano)                */
+;*    Last change :  Tue May  5 09:09:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -275,8 +275,8 @@
 				    (js-put! process '_errno
 				       (nodejs-err-name status)
 				       #f %this))
-				 (!js-call3 'fs-watcher %this onchange this
-				    curr prev status)))
+				 (!js-callback3 'fs-watcher %worker %this
+				    onchange this curr prev status)))
 			   interval))
 		     (unless (js-totest options)
 			(with-access::JsHandle this (handle)
@@ -289,7 +289,8 @@
 		  (lambda (this)
 		     (let ((onstop (js-get this 'onstop %this)))
 			(when (isa? onstop JsFunction)
-			   (!js-call0 'fs-watcher %this onstop this)))
+			   (!js-callback0 'fs-watcher %worker %this
+			      onstop this)))
 		     (with-access::JsHandle this (handle)
 			(nodejs-fs-poll-stop handle)))
 		  1 "stop")

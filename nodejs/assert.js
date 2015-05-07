@@ -291,7 +291,6 @@ function _throws(shouldThrow, block, expected, message) {
   } catch (e) {
     actual = e;
   }
-
   message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
             (message ? ' ' + message : '.');
 

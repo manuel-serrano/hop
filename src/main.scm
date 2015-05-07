@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Mar 28 17:01:12 2015 (serrano)                */
+;*    Last change :  Wed May  6 14:24:16 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -100,8 +100,7 @@
       ;; https file handling
       (cond-expand
 	 (enable-ssl
-	  (input-port-protocol-set! "https://"
-	     open-input-https-socket)))
+	  (input-port-protocol-set! "https://" open-input-https-socket)))
       ;; start zeroconf
       (when (hop-enable-zeroconf) (init-zeroconf!))
       ;; close filters and users registration before starting
@@ -248,7 +247,7 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (with-access::WorkerHopThread %worker (%this)
+	  (with-access::WorkerHopThread %worker (%this prerun)
 	     (with-access::JsGlobalObject %this (js-main)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
@@ -315,7 +314,10 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-hopscript-worker scd %global %worker)
    (if (>fx (hop-max-threads) 2)
-       (thread-start-joinable! %worker)
+       (with-access::WorkerHopThread %worker (mutex condv)
+	  (synchronize mutex
+	     (thread-start-joinable! %worker)
+	     (condition-variable-wait! condv mutex)))
        (error "hop-repl"
 	  "not enough threads to start the main worker (see --threads-max option)"
 	  (hop-max-threads))))

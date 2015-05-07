@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr  1 18:40:14 2015 (serrano)                */
+;*    Last change :  Fri May  1 15:38:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -367,15 +367,15 @@
 		 (apply procedure this args)
 		 (let ((len (length args)))
 		    (cond
-		       ((=fx arity len)
+		       ((=fx arity (+fx len 1))
 			(apply procedure this args))
-		       ((<fx arity len)
-			(apply procedure this (take args (-fx arity len))))
+		       ((<=fx arity len)
+			(apply procedure this (take args (-fx arity 1))))
 		       (else
 			(apply procedure this
 			   (append args
-			      (make-list (-fx arity len))
-			      (js-undefined)))))))))))
+			      (make-list (-fx arity (+fx len 1))
+				 (js-undefined))))))))))))
 
 (define (js-call0/debug %this loc fun this)
    (if (not (isa? fun JsFunction))
@@ -485,19 +485,18 @@
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
 	     (let ((aux (if (<fx arity 0)
-			   (apply procedure this args)
-			   (let ((len (length args)))
-			      (cond
-				 ((=fx arity len)
-				  (apply procedure this args))
-				 ((<fx arity len)
-				  (apply procedure this
-				     (take args (-fx arity len))))
-				 (else
-				  (apply procedure this
-				     (append args
-					(make-list (-fx arity len))
-					(js-undefined)))))))))
+			    (apply procedure this args)
+			    (let ((len (length args)))
+			       (cond
+				  ((=fx arity (+fx len 1))
+				   (apply procedure this args))
+				  ((<=fx arity len)
+				   (apply procedure this (take args (-fx arity 1))))
+				  (else
+				   (apply procedure this
+				      (append args
+					 (make-list (-fx arity (+fx len 1))
+					    (js-undefined))))))))))
 		($env-pop-trace env)
 		aux)))))
 

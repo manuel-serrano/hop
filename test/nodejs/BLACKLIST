@@ -24,66 +24,20 @@ simple/test-crypto-padding.js
 simple/test-crypto-stream.js
 simple/test-crypto-verify-failure.js
 simple/test-crypto.js
-simple/test-http-host-headers.js
-simple/test-http-url.parse-https.request.js
 simple/test-crypto-binary-default.js
 simple/test-domain-crypto.js
 simple/test-regress-GH-1531.js
 
 # https
-simple/test-https-byteswritten.js
-simple/test-https-client-get-url.js
-simple/test-https-client-reject.js
-simple/test-https-client-resume.js
-simple/test-https-connecting-to-http.js
-simple/test-https-drain.js
 simple/test-https-eof-for-eom.js
-simple/test-https-invalid-key.js
-simple/test-https-localaddress.js
-simple/test-https-no-reader.js
 simple/test-https-pfx.js
 simple/test-https-req-split.js
-simple/test-https-simple.js
-simple/test-https-socket-options.js
-simple/test-https-strict.js
-simple/test-https-timeout-server-2.js
-simple/test-https-timeout.js
-simple/test-https-agent.js
 
 # tls
-simple/test-tls-server-large-request.js
-simple/test-tls-client-abort3.js
-simple/test-tls-client-destroy-soon.js
-simple/test-tls-client-reject.js
-simple/test-tls-client-resume.js
-simple/test-tls-client-verify.js
-simple/test-tls-close-notify.js
-simple/test-tls-connect-given-socket.js
-simple/test-tls-connect-pipe.js
-simple/test-tls-connect-simple.js
 simple/test-tls-getcipher.js
-simple/test-tls-hello-parser-failure.js
 simple/test-tls-honorcipherorder.js
-simple/test-tls-interleave.js
-simple/test-tls-invalid-key.js
-simple/test-tls-junk-closes-server.js
-simple/test-tls-ondata.js
-simple/test-tls-over-http-tunnel.js
 simple/test-tls-passphrase.js
-simple/test-tls-pause-close.js
-simple/test-tls-pause.js
-simple/test-tls-peer-certificate-multi-keys.js
-simple/test-tls-peer-certificate.js
-simple/test-tls-remote.js
-simple/test-tls-request-timeout.js
-simple/test-tls-securepair-client.js
-simple/test-tls-securepair-server.js
-simple/test-tls-server-large-request.js
-simple/test-tls-server-slab.js
 simple/test-tls-session-cache.js
-simple/test-tls-set-ciphers.js
-simple/test-tls-set-encoding.js
-simple/test-tls-zero-clear-in.js
 
 #*---------------------------------------------------------------------*/
 #*    bad (javascript or nodejs) tests                                 */
@@ -102,6 +56,9 @@ simple/test-process-config.js
 simple/test-cluster-disconnect-with-no-workers.js
 simple/test-domain-implicit-fs.js
 
+# nodejs hangs
+simple/test-https-no-reader.js
+
 # EADDRINUSE
 simple/test-http-client-pipe-end.js
 simple/test-http-client-response-domain.js
@@ -111,6 +68,7 @@ simple/test-pipe-stream.js
 simple/test-pipe-unref.js
 simple/test-net-pipe-connect-errors.js
 simple/test-cluster-eaddrinuse.js
+simple/test-tls-connect-pipe.js
 
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
@@ -187,9 +145,14 @@ simple/test-zlib-write-after-flush.js
 simple/test-zlib-zero-byte.js
 simple/test-zlib.js
 
+# stack overflows
+simple/test-regress-GH-4015.js
+
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */
 #*---------------------------------------------------------------------*/
 #* simple/test-pipe.js                                                 */
 #* simple/test-child-process-stdout-flush.js                           */
 #* simple/test-stdout-to-file.js                                       */
+simple/test-tls-fast-writing.js
+simple/test-http-many-keep-alive-connections.js

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Apr  3 10:31:44 2015 (serrano)                */
+;*    Last change :  Wed May  6 14:25:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -48,6 +48,7 @@
 	      (onexit::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)
 	      (%process (default #f))
+	      (%retval::int (default 0))
 	      (async (default #f))
 	      (state::symbol (default 'init))
 	      (module-cache::obj (default #f))
@@ -68,6 +69,7 @@
 	   (js-worker-load-set! ::procedure)
 
 	   (generic js-worker-loop ::object)
+	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
 	   (generic js-worker-exec ::object ::bstring ::procedure)
 	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
@@ -225,7 +227,7 @@
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
-	    
+
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
@@ -446,6 +448,34 @@
 	     errval))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-tick th::object)
+   (with-access::WorkerHopThread th (%loop %process %retval
+				       tqueue subworkers call
+				       state mutex condv alivep)
+      (tprint "THIS CODE SHOULD NOT BE EXECUTED (never tested)")
+      (let loop ()
+	 (let ((nthunk (synchronize mutex
+			  (let liip ()
+			     (cond
+				((pair? tqueue)
+				 (let ((nthunk (car tqueue)))
+				    (set! tqueue (cdr tqueue))
+				    nthunk))
+				((and (eq? state 'terminated)
+				      (or (not alivep) (not (alivep)))
+				      (null? subworkers))
+				 #f)
+				(else
+				 (condition-variable-wait! condv mutex)
+				 (liip)))))))
+	    (when (pair? nthunk)
+	       (with-trace 'hopscript-worker (car nthunk)
+		  (call (cdr nthunk)))
+	       (loop))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    This code is used only when HopScript is run without LIBUV.      */
@@ -453,41 +483,24 @@
 ;*    overwrites this definition.                                      */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-loop th::object)
-   (with-access::WorkerHopThread th (mutex condv tqueue state subworkers
-				       name alivep %this call)
-      (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-      ;; install the signal handler for that thread
-      (signal sigsegv
-	 (lambda (x)
-	    (js-raise-range-error %this
-	       "Maximum call stack size exceeded"
-	       #f)))
-      ;; loop unless terminated
-      (with-handler
-	 (lambda (exn)
-	    (js-worker-exception-handler th exn 1))
-	 (unwind-protect
-	    (let loop ()
-	       (let ((nthunk (synchronize mutex
-				(let liip ()
-				   (cond
-				      ((pair? tqueue)
-				       (let ((nthunk (car tqueue)))
-					  (set! tqueue (cdr tqueue))
-					  nthunk))
-				      ((and (eq? state 'terminated)
-					    (or (not alivep) (not (alivep)))
-					    (null? subworkers))
-				       #f)
-				      (else
-				       (condition-variable-wait! condv mutex)
-				       (liip)))))))
-		  (when (pair? nthunk)
-		     (with-trace 'hopscript-worker (car nthunk)
-			(call (cdr nthunk)))
-		     (loop))))
-	    (set! state 'terminated))
-	 #t)))
+   (with-access::WorkerHopThread th (state subworkers name %this call mutex condv)
+      (synchronize mutex
+	 (condition-variable-broadcast! condv)
+	 (tprint "THIS CODE SHOULD NOT BE EXECUTED")
+	 ;; install the signal handler for that thread
+	 (signal sigsegv
+	    (lambda (x)
+	       (js-raise-range-error %this
+		  "Maximum call stack size exceeded"
+		  #f)))
+	 ;; loop unless terminated
+	 (with-handler
+	    (lambda (exn)
+	       (js-worker-exception-handler th exn 1))
+	    (unwind-protect
+	       (js-worker-tick th)
+	       (set! state 'terminated))
+	    #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */

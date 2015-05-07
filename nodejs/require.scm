@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Mar 18 12:38:42 2015 (serrano)                */
+;*    Last change :  Fri May  1 15:38:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -408,6 +408,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
+	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
 		  :filename filename
@@ -718,7 +719,10 @@
 	     (dir (dirname filename)))
 	 (trace-item "name=" name
 	    " dir=" dir
-	    " path=" (jsarray->vector(js-get mod 'paths %this) %this))
+	    " path=" (let ((paths (js-get mod 'paths %this)))
+			(if (isa? paths JsArray)
+			    (jsarray->vector paths %this)
+			    paths)))
 	 (cond
 	    ((core-module? name)
 	     name)

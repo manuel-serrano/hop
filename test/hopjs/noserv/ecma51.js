@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Jan 31 10:31:08 2015 (serrano)                */
+/*    Last change :  Wed Apr 29 14:04:53 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -175,3 +175,61 @@ assert.equal( typeof this.undefined, "undefined" );
 
 assert.equal( (function() { var undefined = 3; return undefined; })(), 3 );
 
+/*---------------------------------------------------------------------*/
+/*    arity                                                            */
+/*---------------------------------------------------------------------*/
+function foo11(a,b,c,d,e,f,g,h,i,j,k) { return a; };
+function foo8(a,b,c,d,e,f,g,h) { return a; };
+function foo6(a,b,c,d,e,f) { return a; };
+
+assert.equal( foo11( 1 ), 1 );
+assert.equal( foo11( 1, 2, 3, 4, 5, 6 ), 1 );
+assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 1 );
+assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ), 1 );
+assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ), 1 );
+
+assert.equal( foo11.apply( this, [1]), 1 );
+assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+assert.equal( foo8.apply( this, [1]), 1 );
+assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+assert.equal( foo6.apply( this, [1]), 1 );
+assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+function bar11(a,b,c,d,e,f,g,h,i,j,k) { if( arguments.length >= 0 ) return a; };
+function bar8(a,b,c,d,e,f,g,h) { if( arguments.length >= 0 ) return a; };
+function bar6(a,b,c,d,e,f) { if( arguments.length >= 0 ) return a; };
+
+assert.equal( bar11( 1 ), 1 );
+assert.equal( bar11( 1, 2, 3, 4, 5, 6 ), 1 );
+assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 1 );
+assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ), 1 );
+assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ), 1 );
+
+assert.equal( bar11.apply( this, [1]), 1 );
+assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+assert.equal( bar8.apply( this, [1]), 1 );
+assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+assert.equal( bar6.apply( this, [1]), 1 );
+assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
+assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
+assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
+assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Jan 17 10:46:56 2015 (serrano)                */
+;*    Last change :  Mon Apr 27 12:03:16 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -32,22 +32,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
-;* (register-class-serialization! JsArrayBufferView #f (lambda (s) s)) */
-;* (register-class-serialization! JsInt8Array #f (lambda (s) s))       */
-;* (register-class-serialization! JsUint8Array #f (lambda (s) s))      */
-;* (register-class-serialization! JsUint8ClampedArray #f (lambda (s) s)) */
-;* (register-class-serialization! JsInt16Array #f (lambda (s) s))      */
-;* (register-class-serialization! JsUint16Array #f (lambda (s) s))     */
-;* (register-class-serialization! JsInt32Array #f (lambda (s) s))      */
-;* (register-class-serialization! JsUint32Array #f (lambda (s) s))     */
-;* (register-class-serialization! JsFloat32Array #f (lambda (s) s))    */
-;* (register-class-serialization! JsFloat64Array #f (lambda (s) s))    */
-;*                                                                     */
-;* (register-javascript-buffer-intern! "JsDataView"                    */
-;*    javascript-buffer->arraybufferview)                              */
-;*                                                                     */
-;* (register-javascript-buffer-intern! "JsTypedArray"                  */
-;*    javascript-buffer->typedarray)                                   */
 (register-class-serialization! JsInt8Array
    (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
    (lambda (o) o))
@@ -75,134 +59,6 @@
 (register-class-serialization! JsDataView
    (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
    (lambda (o) o))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-obj->jsobject ::JsInt8Array ...                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-obj->jsobject obj::JsInt8Array %this)            */
-;*    (with-access::JsGlobalObject %this (js-int8array)                */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsArrayBufferView ...                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsArrayBufferView %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-arraybuffer)              */
-;*       (with-access::JsFunction js-arraybuffer (construct)           */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsInt8Array ...                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt8Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-int8array)                */
-;*       (with-access::JsFunction js-int8array (construct)             */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsUint8Array ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt8Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-uint8array)               */
-;*       (with-access::JsFunction js-uint8array (construct)            */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsUint8ClampledArray ...                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsUint8ClampedArray %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-uint8clampedarray)        */
-;*       (with-access::JsFunction js-uint8clampedarray (construct)     */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsInt16Array ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt16Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-int16array)               */
-;*       (with-access::JsFunction js-int16array (construct)            */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsUint16Array ...                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt16Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-uint16array)              */
-;*       (with-access::JsFunction js-uint16array (construct)           */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsInt32Array ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt32Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-int32array)               */
-;*       (with-access::JsFunction js-int32array (construct)            */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsUint32Array ...                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsInt32Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-uint32array)              */
-;*       (with-access::JsFunction js-uint32array (construct)           */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsFloat32Array ...                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsFloat32Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-float32array)             */
-;*       (with-access::JsFunction js-float32array (construct)          */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsFloat64Array ...                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsFloat64Array %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-float64array)             */
-;*       (with-access::JsFunction js-float64array (construct)          */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-intern-finalizer ::JsDataView ...                             *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-intern-finalizer obj::JsDataView %this::JsGlobalObject) */
-;*    (with-access::JsGlobalObject %this (js-dataview)                 */
-;*       (with-access::JsFunction js-dataview (construct)              */
-;* 	 (with-access::JsObject obj (__proto__)                        */
-;* 	    (set! __proto__ (js-get construct 'prototype %this)))))    */
-;*    obj)                                                             */
-   
-;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsTypedArray ...                             */
-;*---------------------------------------------------------------------*/
-;* (register-class-serialization! JsTypedArray                         */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDataView ...                                 */

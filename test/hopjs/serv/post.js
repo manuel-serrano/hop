@@ -62,7 +62,7 @@ function test() {
    req.write( postData );
    req.end();
 
-   var req = http.request( { 
+   var req = http.request( {
       hostname: hop.hostname,
       port: hop.port,
       path: '/hop/upload',
@@ -74,8 +74,10 @@ function test() {
    } );
 
    req.on( 'response', function( result ) {
+      console.log( "status=", result.statusCode );
       assert.ok( result.statusCode == 200 );
       result.on( 'data', function ( chunk ) {
+	 console.log( "chunk=", chunk.toString() );
 	 assert.ok( chunk.toString() == "OK" );
       });
    } );
@@ -85,6 +87,7 @@ function test() {
 }
 
 setTimeout( function() {
+   console.log( "tmt=", res );
    assert.ok( res === 2 );
    process.exit( res === 2 ? 0 : 1 );
 }, 500 );

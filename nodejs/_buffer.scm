@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sat Feb 14 09:46:52 2015 (serrano)                */
+;*    Last change :  Tue Apr 28 13:19:18 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -37,6 +37,7 @@
 
 	    (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 	    (js-string->jsslowbuffer ::bstring ::JsGlobalObject)
+	    (js-string->jsfastbuffer ::bstring ::JsGlobalObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
 	    (make-slowbuffer ::JsGlobalObject)
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)

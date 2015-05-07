@@ -62,7 +62,7 @@ if (process.env.NODE_DEBUG && /net/.test(process.env.NODE_DEBUG)) {
                   util.format.apply(util, arguments).slice(0, 500));
   };
 } else {
-  debug = function() { };
+   debug = function(a,b,c,d,e,f,g,h,i,j,k,l,m,n) { };
 }
 
 
@@ -434,7 +434,7 @@ Socket.prototype.destroySoon = function() {
 
 
 Socket.prototype._destroy = function(exception, cb) {
-  debug('destroy');
+   debug('_destroy ', exception);
 
   var self = this;
 
@@ -466,7 +466,7 @@ Socket.prototype._destroy = function(exception, cb) {
       debug('close handle');
     var isException = exception ? true : false;
     this._handle.close(function() {
-      debug('emit close');
+       debug('emit close.1 ', isException );
       self.emit('close', isException);
     });
     this._handle.onread = noop;
@@ -714,7 +714,7 @@ function afterWrite(status, handle, req) {
   var self = handle.owner;
   var state = self._writableState;
   if (self !== process.stderr && self !== process.stdout)
-    debug('afterWrite', status, req);
+     debug('afterWrite', status, req );
 
   // callback may come after call to destroy.
   if (self.destroyed) {
@@ -1016,7 +1016,10 @@ var createServerHandle = exports._createServerHandle =
 
 
 Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
-   debug('listen2', address, port, addressType, backlog, fd);
+/*    debug('listen2 addr=', address, " port=", port,                  */
+/* 	 " addrType=", addressType, " backlog=", backlog, " fd=", fd); */
+   debug('listen2 addr=', address, " port=", port,
+	 " addrType=", addressType, " backlog=", backlog, " fd=", fd );
   var self = this;
   var r = 0;
   // If there is not yet a handle, we need to create one and bind.

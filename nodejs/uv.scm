@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Apr  3 10:25:06 2015 (serrano)                */
+;*    Last change :  Wed May  6 14:23:35 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -52,7 +52,14 @@
 	  __nodejs__pipe-wrap
 	  __nodejs__buffer)))
    
-   (export (nodejs-uv-version::bstring)
+   (export (!js-callback0 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj)
+	   (!js-callback1 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj)
+	   (!js-callback2 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj)
+	   (!js-callback3 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj)
+	   (!js-callback4 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj)
+	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj ::obj)
+
+	   (nodejs-uv-version::bstring)
 	   (nodejs-err-name::JsStringLiteral ::int)
 	   (nodejs-process-title-init!)
 	   (nodejs-get-process-title::bstring)
@@ -81,6 +88,7 @@
 	   (nodejs-fs-poll-stop ::obj)
 
 	   (nodejs-make-idle ::WorkerHopThread ::JsGlobalObject ::procedure)
+	   (nodejs-idle-start ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (nodejs-idle-stop ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (nodejs-check?::bool ::obj)
@@ -96,7 +104,7 @@
 	   (nodejs-getuptime::double)
 	   (nodejs-kill ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 
-	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject)
+;* 	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject) */
 	   
 	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
 	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
@@ -196,6 +204,80 @@
       ((and bigloo-c enable-libuv) (pragma::long "EBADF")) (else 9)))
 
 ;*---------------------------------------------------------------------*/
+;*    next-tick ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (next-tick %worker %this)
+   (with-access::WorkerHopThread %worker (%process async)
+      (with-access::JsProcess %process (tick-callback)
+	 (unless tick-callback
+	    (set! tick-callback (js-get %process '_tickCallback %this)))
+	 (js-call0 %this tick-callback (js-undefined)))))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    nodejs-need-tick-callback ...                                    *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (nodejs-need-tick-callback %worker %this %process)          */
+;*    (js-worker-push-thunk! %worker "tick-spinner"                    */
+;*       (lambda ()                                                    */
+;* 	 (let ((tick-from-spinner (js-get %process '_tickFromSpinner %this))) */
+;* 	    (when (isa? tick-from-spinner JsFunction)                  */
+;* 	       (js-call0 %this tick-from-spinner (js-undefined)))))))  */
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback0 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback0 name %worker %this proc obj)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call0 %this proc obj)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback1 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback1 name %worker %this proc obj arg0)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call1 %this proc obj arg0)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback2 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback2 name %worker %this proc obj arg0 arg1)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call2 %this proc obj arg0 arg1)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback3 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback3 name %worker %this proc obj arg0 arg1 arg2)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call3 %this proc obj arg0 arg1 arg2)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback4 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback4 name %worker %this proc obj arg0 arg1 arg2 arg3)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call4 %this proc obj arg0 arg1 arg2 arg3)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    !js-callback5 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (!js-callback5 name %worker %this proc obj arg0 arg1 arg2 arg3 arg4)
+   (with-access::WorkerHopThread %worker (call)
+      (let ((res (call (lambda () (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)))))
+	 (next-tick %worker %this)
+	 res)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-uv-version ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-uv-version::bstring)
@@ -228,8 +310,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-inline (worker-loop::JsLoop th::WorkerHopThread)
+(define (worker-loop::JsLoop th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop)
+      (unless %loop
+	 (tprint "PAS GLOP th=" th " " (getpid)))
       %loop))
 
 ;*---------------------------------------------------------------------*/
@@ -241,54 +325,65 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-tick ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-tick th::WorkerHopThread)
+   (with-access::WorkerHopThread th (%loop %process %retval
+				       call keep-alive mutex)
+      (with-access::JsLoop %loop (async actions exiting)
+	 (let loop ((acts (synchronize mutex
+			     (let ((acts actions))
+				(set! actions '())
+				(reverse! acts)))))
+	    (with-handler
+	       (lambda (e)
+		  (when debug-catch (tprint "catch.0 " e))
+		  (let ((r (js-worker-exception-handler th e 8)))
+		     (if (=fx r 0)
+			 (begin
+			    (loop acts)
+			    (set! exiting #t))
+			 (begin
+			    (set! %retval r)
+			    (set! keep-alive #f)))))
+	       (let loop ()
+		  (when (pair? acts)
+		     (let* ((action (car acts))
+			    (actname (car action))
+			    (actproc (cdr action)))
+			(set! acts (cdr acts))
+			(with-trace 'nodejs-async actname
+			   (call actproc)))
+		     (loop))))))))
+
+(define debug-catch #t)
+
+;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    Overrides the generic functions defined in hopscript/worker      */
 ;*    to let LIBUV manages the event loop.                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-loop th::WorkerHopThread)
-   (with-access::WorkerHopThread th (mutex tqueue %process %this keep-alive services call)
-      (letrec* ((retval 0)
-		(loop (instantiate::JsLoop
+   (with-access::WorkerHopThread th (mutex condv tqueue
+				       %process %this keep-alive services
+				       call %retval prerun %loop)
+      (letrec* ((loop (instantiate::JsLoop
 			 (actions tqueue)))
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
-				 (with-access::JsLoop loop (actions exiting)
-				    (let loop ((acts (synchronize mutex
-							(let ((acts actions))
-							   (set! actions '())
-							   (reverse! acts)))))
-				       (with-handler
-					  (lambda (e)
-					     (let ((r (js-worker-exception-handler
-							 th e 8)))
-						(if (=fx r 0)
-						    (begin
-						       (loop acts)
-						       (set! exiting #t))
-						    (begin
-						       (set! retval r)
-						       (set! keep-alive #f)))))
-					  (let loop ()
-					     (when (pair? acts)
-						(let* ((action (car acts))
-						       (actname (car action))
-						       (actproc (cdr action)))
-						   (set! acts (cdr acts))
-						   (with-trace 'nodejs-async actname
-						      (call actproc)))
-						(loop)))))
+				 (js-worker-tick th)
+				 (with-access::JsLoop loop (actions)
 				    (unless (or keep-alive (pair? services) (pair? actions))
 				       (uv-unref async)
-				       (when (js-totest
-						(js-get %process '_exiting %this))
+				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))
+	 (set! %loop loop)
 	 (synchronize mutex
+	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
-	    (with-access::WorkerHopThread th (%loop)
-	       (set! %loop loop))
 	    [assert (th) (eq? th (current-thread))]
 	    (unless (>=fx (bigloo-debug) 2)
 	       (with-access::WorkerHopThread th (%this)
@@ -296,26 +391,43 @@
 		     (lambda (x)
 			(js-raise-range-error %this
 			   "Maximum call stack size exceeded" #f)))))
-	    (when (pair? tqueue) (uv-async-send async)))
+	    (when (pair? tqueue)
+	       (uv-async-send async)))
 	 (unwind-protect
-	    (with-access::WorkerHopThread th (onexit %process parent)
-	       (with-handler
-		  (lambda (e)
-		     (set! retval (js-worker-exception-handler th e 8)))
-		  (uv-run loop))
+	    (with-access::WorkerHopThread th (onexit %process parent state)
+	       (let run ()
+		  (with-handler
+		     (lambda (e)
+			(set! state 'error)
+			(when debug-catch
+			   (tprint "catch.2 " e " " (getpid)))
+			(with-handler
+			   (lambda (e)
+			      (when debug-catch
+				 (tprint "catch.3 " e " " (getpid)))
+			      (set! %retval 8))
+			   (set! %retval (js-worker-exception-handler th e 8)))
+			(when debug-catch
+			   (tprint "retval=" %retval " " (getpid)))
+			;; run one more for nexttick
+			(with-access::JsLoop loop (exiting)
+			   (set! exiting (not (=fx %retval 0))))
+			(uv-async-send async)
+			(run))
+		     (uv-run loop)))
 	       ;; call the cleanup function
-	       (when (=fx retval 0)
+	       (when (=fx %retval 0)
 		  (unless (js-totest (js-get %process '_exiting %this))
 		     (with-handler
 			(lambda (e)
 			   (exception-notify e)
-			   (set! retval 8))
+			   (set! %retval 8))
 			(when (isa? onexit JsFunction)
 			   (js-put! %process '_exiting #t #f %this)
-			   (js-call1 %this onexit %process retval)))))
+			   (js-call1 %this onexit %process %retval)))))
 	       ;; when the parent died, kill the application
 	       (unless parent
-		  (exit retval)))
+		  (exit %retval)))
 	    (with-access::WorkerHopThread th (services subworkers)
 	       ;; unregister all the worker services
 	       (for-each unregister-service! services)
@@ -351,14 +463,12 @@
 	 (if %loop
 	     (with-access::JsLoop %loop (actions async exiting)
 		(synchronize mutex
-		   (begin ;; unless exiting
-		      ;; do not add any new actions when the loop is exiting
-		      (let ((act (cons name thunk)))
-			 (unless (pair? actions)
-			    (uv-ref async)
-			    (uv-async-send async))
-			 ;; push the action to be executed (with a debug name)
-			 (set! actions (cons act actions))))))
+		   (let ((act (cons name thunk)))
+		      (unless (pair? actions)
+			 (uv-ref async)
+			 (uv-async-send async))
+		      ;; push the action to be executed (with a debug name)
+		      (set! actions (cons act actions)))))
 	     ;; the loop is not started yet (this might happend when
 	     ;; a master send a message (js-worker-post-master-message)
 	     ;; before the slave is fully initialized
@@ -401,7 +511,7 @@
 ;*    nodejs-close ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-close %worker %this process this callback)
-   (with-access::JsHandle this (handle)
+   (with-access::JsHandle this (handle flags)
       (cond
 	 ((or (not (isa? handle JsPipe))
 	      (with-access::JsPipe handle (econnreset)
@@ -409,13 +519,19 @@
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
-		   (js-worker-push-thunk! %worker "close"
-		      (lambda ()
-			 (when (isa? callback JsFunction)
-			    (js-call0 %this callback (js-undefined)))))))))
+		   (when (and (=fx (bit-and flags 1) 1)
+			      (isa? callback JsFunction))
+		      (!js-callback0 "close" %worker %this
+			 callback (js-undefined))) )))
+	  (set! flags (bit-or flags 1)))
+;* 		   (js-worker-push-thunk! %worker "close"              */
+;* 		      (lambda ()                                       */
+;* 			 (when (isa? callback JsFunction)              */
+;* 			    (js-call0 %this callback (js-undefined))))))))) */
 	 (else
 	  (when (isa? callback JsFunction)
-	     (!js-call0 'close %this callback (js-undefined)))))))
+	     (!js-callback0 'close %worker %this
+		callback (js-undefined)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-ref ...                                                   */
@@ -442,10 +558,13 @@
 	       " repeat=" repeat)
 	    (let ((proc (js-get obj 'ontimeout %this)))
 	       (when (isa? proc JsFunction)
+;* 		  (js-call1 %this proc obj status))))))                */
+;* 		  ;; to enforce that timers are executed after the     */
+;* 		  ;; check and idle watcher they are pushed on the async queue */
 		  (js-worker-push-thunk! %worker "tick-spinner"
                      (lambda ()
                         (js-call1 %this proc obj status))))))))
-   
+
    (instantiate::UvTimer
       (loop (worker-loop %worker))
       (cb (lambda (timer status)
@@ -458,18 +577,12 @@
    
    (define (to-uint64 n)
       (cond
-	 ((fixnum? n)
-	  (fixnum->uint64 n))
-	 ((not (flonum? n))
-	  #u64:0)
-	 (else
-	  (llong->uint64 (flonum->llong n)))))
-   
-   (define (start-action)
-      (uv-timer-start timer (to-uint64 start) (to-uint64 rep)))
+	 ((fixnum? n) (fixnum->uint64 n))
+	 ((not (flonum? n)) #u64:0)
+	 (else (llong->uint64 (flonum->llong n)))))
    
    (with-trace 'nodejs-async "nodejs-timer-start (pre)"
-      (start-action)))
+      (uv-timer-start timer (to-uint64 start) (to-uint64 rep))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-timer-close ...                                           */
@@ -560,11 +673,16 @@
 ;*    nodejs-make-idle ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-idle %worker %this callback)
-   (let ((idle (instantiate::UvIdle
-		  (loop (worker-loop %worker))
-		  (cb callback))))
-      (uv-idle-start idle)
-      idle))
+   (instantiate::UvIdle
+      (loop (worker-loop %worker))
+      (cb callback)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-idle-start ...                                            */
+;*---------------------------------------------------------------------*/
+(define (nodejs-idle-start %worker %this obj)
+   [assert (%worker) (eq? %worker (current-thread))]
+   (uv-idle-start obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-idle-stop ...                                             */
@@ -589,8 +707,8 @@
 		   (cb (lambda (_)
 			  (let ((cb (js-get process '_immediateCallback %this)))
 			     (when (isa? cb JsFunction)
-				(!js-call0 '_immedateCallback
-				   %this cb (js-undefined)))))))))
+				(!js-callback0 '_immedateCallback %worker %this
+				   cb (js-undefined)))))))))
       (uv-check-start check)
       check))
    
@@ -657,16 +775,6 @@
 	     r))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-need-tick-callback ...                                    */
-;*---------------------------------------------------------------------*/
-(define (nodejs-need-tick-callback %worker %this process)
-   (js-worker-push-thunk! %worker "tick-spinner"
-      (lambda ()
-	 (let ((tick-from-spinner (js-get process '_tickFromSpinner %this)))
-	    (when (isa? tick-from-spinner JsFunction)
-	       (js-call0 %this tick-from-spinner (js-undefined)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    not-implemented-exn ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (not-implemented-exn fun %this)
@@ -711,12 +819,15 @@
 (define (fs-callback %worker %this process callback name fmt res #!optional (ok '()))
    (cond
       ((not (integer? res))
-       (!js-call1 (string->symbol name) %this callback (js-undefined) res))
+       (!js-callback1 (string->symbol name) %worker %this
+	  callback (js-undefined) res))
       ((=fx res 0)
-       (!js-call1 (string->symbol name) %this callback (js-undefined) ok))
+       (!js-callback1 (string->symbol name) %worker %this
+	  callback (js-undefined) ok))
       (else
        (let ((exn (fs-errno-exn fmt res %this)))
-	  (!js-call1 (string->symbol name) %this callback (js-undefined) exn)))))
+	  (!js-callback1 (string->symbol name) %worker %this
+	     callback (js-undefined) exn)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fs-callback-error ...                                            */
@@ -725,13 +836,14 @@
    (with-access::JsGlobalObject %this (js-error)
       (let ((err (js-new %this js-error
 		    (js-string->jsstring (format "EBADF, ~a" name)))))
-	   (js-put! err 'errno EBADF #f %this)
-	   (js-put! err 'code  (js-string->jsstring "EBADF") #f %this)
-	   (if (isa? callback JsFunction)
-	       (js-worker-push-thunk! %worker "fs-callback-error"
-		  (lambda ()
-		     (js-apply %this callback (js-undefined) (cons err args))))
-	       (js-raise err)))))
+	 (js-put! err 'errno EBADF #f %this)
+	 (js-put! err 'code  (js-string->jsstring "EBADF") #f %this)
+	 (if (isa? callback JsFunction)
+	     (js-worker-push-thunk! %worker name
+		(lambda ()
+		   (js-apply %this callback (js-undefined) (cons err args))
+		   (next-tick %worker %this)))
+	     (js-raise err)))))
        
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-rename-file ...                                           */
@@ -909,13 +1021,14 @@
    
    (define (open-callback res)
       (if (isa? res UvFile)
-	  (!js-call2 'open %this callback (js-undefined) #f
+	  (!js-callback2 'open %worker %this callback (js-undefined) #f
 	     (uvfile->int %worker res))
 	  (let ((exn (fs-errno-exn
 			(format "open '~a'" (js-jsstring->string path))
 			res %this)))
 	     (js-put! exn 'path path #f %this)
-	     (!js-call2 'open %this callback (js-undefined) exn #f))))
+	     (!js-callback2 'open %worker %this
+		callback (js-undefined) exn #f))))
 
    (if (isa? callback JsFunction)
        (uv-fs-open (js-jsstring->string path) flags :mode mode
@@ -943,7 +1056,8 @@
 		    :loop (worker-loop %worker)
 		    :callback
 		    (lambda (val)
-		       (!js-call1 'close %this callback (js-undefined) val)))
+		       (!js-callback1 'close %worker %this
+			  callback (js-undefined) val)))
 		 (uv-fs-close file)))
 	  (fs-callback-error %worker %this callback "close"))))
 
@@ -975,13 +1089,15 @@
 (define (stat-cb %worker %this process callback name obj proto lbl path)
    (lambda (res)
       (if (integer? res)
-	  (!js-call2 'stat %this callback (js-undefined)
+	  (!js-callback2 'stat %worker %this
+	     callback (js-undefined)
 	     (fs-errno-path-exn
 		(format "~a: cannot stat ~a -- ~~s" name obj)
 		res %this path)
 	     #f)
 	  (let ((jsobj (stat->jsobj %this proto res)))
-	     (!js-call2 'stat %this callback (js-undefined) #f jsobj)))))
+	     (!js-callback2 'stat %worker %this
+		callback (js-undefined) #f jsobj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-fstat ...                                                 */
@@ -1089,12 +1205,14 @@
    
    (define (readlink-callback res)
       (if (integer? res)
-	  (!js-call2 'readlink %this callback (js-undefined)
+	  (!js-callback2 'readlink %worker %this
+	     callback (js-undefined)
 	     (fs-errno-exn (format "readlink: ~~a ~s"
 			      (js-jsstring->string src))
 		res %this)
 	     (js-undefined))
-	  (!js-call2 'readlink %this callback (js-undefined) '()
+	  (!js-callback2 'readlink %worker %this
+	     callback (js-undefined) '()
 	     (js-string->jsstring res))))
    
    (if (isa? callback JsFunction)
@@ -1190,15 +1308,16 @@
    (define (mkdir-callback res)
       (cond
 	 ((not (integer? res))
-	  (!js-call1 'mkdir %this callback (js-undefined) res))
+	  (!js-callback1 'mkdir %worker %this callback (js-undefined) res))
 	 ((=fx res 0)
-	  (!js-call1 'mkdir %this callback (js-undefined) '()))
+	  (!js-callback1 'mkdir %worker %this callback (js-undefined) '()))
 	 (else
 	  (let ((exn (fs-errno-path-exn
 			(format "mkdir: cannot mkdir ~a -- ~~s"
 			   (js-jsstring->string path))
 			res %this path)))
-	     (!js-call1 'mkdir %this callback (js-undefined) exn)))))
+	     (!js-callback1 'mkdir %worker %this
+		callback (js-undefined) exn)))))
    
    (if (isa? callback JsFunction)
        (uv-fs-mkdir (js-jsstring->string path) mode
@@ -1223,10 +1342,10 @@
 		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
 		    :callback (lambda (obj)
 				 (if (<fx obj 0)
-				     (!js-call3 'write %this
+				     (!js-callback3 'write %worker %this
 					callback (js-undefined)
 					obj #f buffer)
-				     (!js-call3 'write %this
+				     (!js-callback3 'write %worker %this
 					callback (js-undefined)
 					#f obj buffer)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
@@ -1250,8 +1369,10 @@
 		    :callback
 		    (lambda (obj)
 		       (if (<fx obj 0)
-			   (!js-call2 'read %this callback (js-undefined) obj #f)
-			   (!js-call2 'read %this callback (js-undefined) #f obj)))
+			   (!js-callback2 'read %worker %this
+			      callback (js-undefined) obj #f)
+			   (!js-callback2 'read %worker %this
+			      callback (js-undefined) #f obj)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
 		    :position position
 		    :loop (worker-loop %worker))
@@ -1353,13 +1474,15 @@
 	       (let ((oncomplete (js-get wrap 'oncomplete %this)))
 		  (if (isa? oncomplete JsFunction)
 		      (if (pair? res)
-			  (!js-call1 'getaddrinfo %this oncomplete (js-undefined)
+			  (!js-callback1 'getaddrinfo %worker %this
+			     oncomplete (js-undefined)
 			     (js-vector->jsarray
 				(list->vector (map! js-string->jsstring res))
 				%this))
 			  (begin
 			     (process-ares-fail %this process res)
-			     (!js-call1 'getaddrinfo %this oncomplete (js-undefined)
+			     (!js-callback1 'getaddrinfo %worker %this
+				oncomplete (js-undefined)
 				(js-undefined))))))))
 	 wrap)))
 
@@ -1371,8 +1494,8 @@
    (define (query-callback res)
       (if (pair? res)
 	  (let ((v (js-vector->jsarray (list->vector res) %this)))
-	     (!js-call2 'query %this cb (js-undefined) #f v))
-	  (!js-call2 'query %this cb (js-undefined) res '#())))
+	     (!js-callback2 'query %worker %this cb (js-undefined) #f v))
+	  (!js-callback2 'query %worker %this cb (js-undefined) res '#())))
    
    [assert () (isa? (current-thread) WorkerHopThread)]
    (with-access::JsGlobalObject %this (js-object)
@@ -1538,7 +1661,8 @@
 			       (if (< r 0)
 				   (process-fail %this process r)
 				   (let ((onconn (js-get this 'onconnection %this)))
-				      (!js-call1 'listen %this onconn this
+				      (!js-callback1 'listen %worker %this
+					 onconn this
 					 (tcp-wrap client))))))))))))
       (when (<fx r 0)
 	 (process-fail %this process r))
@@ -1591,10 +1715,11 @@
    (uv-udp-send handle buffer offset length port address
       :family family
       :loop (worker-loop %worker)
-      :callback (lambda (status)
-		   (js-worker-push-thunk! %worker "udp-send"
-		      (lambda ()
-			 (callback status))))))
+      :callback callback))
+;*       :callback (lambda (status)                                    */
+;* 		   (js-worker-push-thunk! %worker "udp-send"           */
+;* 		      (lambda ()                                       */
+;* 			 (callback status))))))                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-start ...                                        */
@@ -1656,25 +1781,31 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-write %worker %this handle buffer offset length callback)
    [assert (%worker) (eq? %worker (current-thread))]
+;*    (tprint "WriteBuffer offset=" offset " length=" length)          */
    (uv-stream-write handle buffer offset length
       :loop (worker-loop %worker)
-      :callback (lambda (status)
-		   ;; (tprint "AfterWrite status=" status)
-		   (js-worker-push-thunk! %worker "stream-write"
-		      (lambda ()
-			 (callback status))))))
+      :callback callback))
+;*       :callback (lambda (status)                                    */
+;* 		   ;; (tprint "AfterWrite status=" status)             */
+;* 		   ;; CARE: MS 2 may 2015                              */
+;* 		   (js-worker-push-thunk! %worker "stream-write"       */
+;* 		     (lambda ()                                        */
+;* 			(callback status)))                            */
+;* 		   (callback status)                                   */
+;* 		   (js-worker-tick %worker))))                         */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
-;*    [assert (%worker) (eq? %worker (current-thread))]                */
+;*    (tprint "WriteBuffer2 offset=" offset " length=" length)         */
    (uv-stream-write2 handle buffer offset length sendhandle
       :loop (worker-loop %worker)
-      :callback (lambda (status)
-		   (js-worker-push-thunk! %worker "stream-write"
-		      (lambda ()
-			 (callback status))))))
+      :callback callback))
+;*       :callback (lambda (status)                                    */
+;* 		   (js-worker-push-thunk! %worker "stream-write"       */
+;* 		      (lambda ()                                       */
+;* 			 (callback status)))                           */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
@@ -1699,10 +1830,13 @@
    [assert (%worker) (eq? %worker (current-thread))]
    (uv-stream-shutdown handle
       :loop (worker-loop %worker)
-      :callback (lambda (status handle)
-		   (js-worker-push-thunk! %worker "stream-shutdown"
-		      (lambda ()
-			 (callback status handle))))))
+      :callback callback))
+;*       :callback (lambda (status handle)                             */
+;* 		   ;; CARE: MS 2 may 2015                              */
+;* 		   (js-worker-push-thunk! %worker "stream-shutdown"    */
+;* 		      (lambda ()                                       */
+;* 			 (callback status handle)))                    */
+
 
 ;*---------------------------------------------------------------------*/
 ;*    store-stream-fd! ...                                             */
@@ -1821,22 +1955,36 @@
 		   (UV-INHERIT-FD))
 		(uv-process-options-stdio-container-fd-set! opts i handle))))))
    
+;*    (define (onexit this status term)                                */
+;*       (let ((onexit (js-get process 'onexit %this))                 */
+;* 	    (status (flonum->fixnum (int64->flonum status))))          */
+;* 	 (with-trace 'nodejs-spawn "process-onexit"                    */
+;* 	    (trace-item "status=" status)                              */
+;* 	    (when (isa? onexit JsFunction)                             */
+;* 	       (js-worker-push-thunk! %worker "exit"                   */
+;* 		  (lambda ()                                           */
+;* 		     (when (<fx status 0)                              */
+;* 			(process-fail %this %process status)           */
+;* 			(set! status -1))                              */
+;* 		     (js-call2 %this onexit process                    */
+;* 			status                                         */
+;* 			(if (=fx term 0)                               */
+;* 			    (js-undefined)                             */
+;* 			    (signal->string term)))))))))              */
+
    (define (onexit this status term)
       (let ((onexit (js-get process 'onexit %this))
 	    (status (flonum->fixnum (int64->flonum status))))
 	 (with-trace 'nodejs-spawn "process-onexit"
 	    (trace-item "status=" status)
+	    (when (<fx status 0)
+	       (process-fail %this %process status)
+	       (set! status -1))
 	    (when (isa? onexit JsFunction)
-	       (js-worker-push-thunk! %worker "exit"
-		  (lambda ()
-		     (when (<fx status 0)
-			(process-fail %this %process status)
-			(set! status -1))
-		     (js-call2 %this onexit process
-			status
-			(if (=fx term 0)
-			    (js-undefined)
-			    (signal->string term)))))))))
+	       (!js-callback2 'onexit %worker %this
+		  onexit process
+		  status
+		  (if (=fx term 0) (js-undefined) (signal->string term)))))))
 
    (let ((opts (instantiate::UvProcessOptions)))
       (with-access::UvProcessOptions opts ((oflags flags)
@@ -2024,11 +2172,12 @@
    [assert (%worker) (eq? (current-thread) %worker)]
    (uv-pipe-connect handle (js-jsstring->string name)
       :loop (worker-loop %worker)
-      :callback (lambda (status handle)
-		   ;; (tprint "pipe-connect status=" status)
-		   (js-worker-push-thunk! %worker "pipe-connect"
-		      (lambda ()
-			 (callback status handle))))))
+      :callback callback))
+;*       :callback (lambda (status handle)                             */
+;* 		   ;; (tprint "pipe-connect status=" status)           */
+;* 		   (js-worker-push-thunk! %worker "pipe-connect"       */
+;* 		      (lambda ()                                       */
+;* 			 (callback status handle))))))                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-listen ...                                           */
@@ -2044,7 +2193,7 @@
 		  (if (< status 0)
 		      (process-fail %this process status)
 		      (let ((onconn (js-get this 'onconnection %this)))
-			 (!js-call0 'listen %this onconn this)))))))
+			 (!js-callback0 'listen %worker %this onconn this)))))))
       (when (<fx r 0)
 	 (process-fail %this process r))	  
       r))

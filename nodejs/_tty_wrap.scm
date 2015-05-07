@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 15 07:30:17 2015 (serrano)                */
+;*    Last change :  Wed Apr 29 12:17:11 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -71,14 +71,14 @@
 	    (js-put! obj 'writeBuffer
 	       (js-make-function %this
 		  (lambda (this buffer)
-		     (stream-write-buffer %worker %this this buffer))
+		     (stream-write-buffer %worker %this process this buffer))
 		  1 "writeBuffer")
 	       #f %this)
 	    
 	    (js-put! obj 'writeAsciiString
 	       (js-make-function %this
 		  (lambda (this string handle)
-		     (stream-write-string %worker %this this
+		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"ascii" #f handle))
 		  2 "writeAsciiString")
@@ -87,7 +87,7 @@
 	    (js-put! obj 'writeUtf8String
 	       (js-make-function %this
 		  (lambda (this string handle)
-		     (stream-write-string %worker %this this
+		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-length string)
 			"utf8" #f handle))
 		  2 "writeUtf8String")
@@ -98,7 +98,7 @@
 		  (lambda (this string handle)
 		     (let* ((ucs2string (utf8-string->ucs2-string string))
 			    (buffer (ucs2-string->buffer ucs2string)))
-			(stream-write-string %worker %this this
+			(stream-write-string %worker %this process this
 			   (js-jsstring->string string) 0 (js-jsstring-length string)
 			   "ascii" #f handle)))
 		  2 "writeUcs2String")
