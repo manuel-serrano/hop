@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Jan 18 06:39:39 2015 (serrano)                */
+;*    Last change :  Fri May  8 07:22:44 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -32,6 +32,7 @@
 	   (class &hop-method-error::&io-parse-error)
 	   (class &hop-autoload-error::&io-error)
 	   (class &hop-security-error::&error)
+	   (class &hop-authentication-error::&error)
 	   (class &hop-injection-error::&hop-security-error)
 	   
            (abstract-class %http-message

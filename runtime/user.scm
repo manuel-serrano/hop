@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Apr 17 08:32:31 2015 (serrano)                */
+;*    Last change :  Fri May  8 07:21:57 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -649,7 +649,6 @@
 ;*---------------------------------------------------------------------*/
 (define (proxy-denied req user host)
    (instantiate::http-response-authentication
-      #;(request req)
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
 		 .

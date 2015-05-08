@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed May  6 13:43:18 2015 (serrano)                */
+;*    Last change :  Fri May  8 18:42:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -17,6 +17,9 @@
    (option (set! *warning-overriden-variables* #f))
    
    (library hopscript hop js2scheme)
+
+   (cond-expand
+      (enable-ssl (library ssl)))
 
    (include "nodejs.sch"
 	    "nodejs_debug.sch"
@@ -387,7 +390,9 @@
 		 (bigloo: . ,(bigloo-config 'release-number))
 		 (uv: . ,(nodejs-uv-version))
 		 (modules: . "11")
-		 (openssl: . ,(ssl-version))
+		 (openssl: . ,(cond-expand
+				 (enable-ssl (ssl-version))
+				 (else "-1")))
 		 (v8: . "-")
 		 (node: . ,(nodejs-version))
 		 (ares: . "-")

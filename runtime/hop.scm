@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Apr 16 07:19:29 2015 (serrano)                */
+;*    Last change :  Fri May  8 07:27:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -220,7 +220,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback proc::symbol req success fail)
+(define (make-http-callback url req success fail user-or-auth)
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "make-http-callback"
 	 (trace-item "status=" status " content-length=" clength)
@@ -261,7 +261,11 @@
 			  (status status)
 			  (header header)
 			  (input-port p)))
-		 (raise (access-denied req))))
+		 (raise
+		    (instantiate::&hop-authentication-error
+		       (proc url)
+		       (msg "Authentication requested by remote server")
+		       (obj user-or-auth)))))
 	    (else
 	     (if (procedure? fail)
 		 (fail (instantiate::xml-http-request
@@ -270,7 +274,7 @@
 			  (input-port p)))
 		 (raise
 		    (instantiate::&error
-		       (proc proc)
+		       (proc url)
 		       (msg (format "Illegal status `~a'" status))
 		       (obj (when (input-port? p) (read-string p)))))))))))
 
@@ -344,7 +348,7 @@
 			      (method method)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback 'with-url r suc fail)))
+			(hdl (make-http-callback url r suc fail #f)))
 		    (trace-item "remote path=" path)
 		    (http-send-request r hdl :body body)))))))))
 
@@ -389,7 +393,8 @@
 			 (authorization authorization)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
-		 (hdl (make-http-callback 'with-hop req suc fail)))
+		 (hdl (make-http-callback path req suc fail
+			 (or user authorization))))
 	     (trace-item "remote path=" path)
 	     (http-send-request req hdl :args args))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu May  7 16:52:52 2015 (serrano)                */
+;*    Last change :  Fri May  8 07:57:00 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -751,6 +751,7 @@
 	      (getCiphers . ,(js-new %this js-object))
 	      (getHashes . ,(js-new %this js-object))
 	      (init . ,(not-implemented "init"))
+	      (Hash . ,(not-implemented "Hash"))
 	      (DiffieHellman . ,dh)
 	      (SecureContext . ,sc)
 	      (Connection . ,conn))
