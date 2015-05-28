@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Apr 28 13:19:18 2015 (serrano)                */
+;*    Last change :  Fri May 22 06:41:09 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -413,7 +413,7 @@
 		(cond
 		   ((>fl n (exptfl 2. 32.))
 		    (js-raise-type-error %this "Bad argument" a0))
-		   ((>fl n 1073741823.0) ;; #x3fffffff
+		   ((>=fl n 1073741823.0) ;; #x3fffffff + 1
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)

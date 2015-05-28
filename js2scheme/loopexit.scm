@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun May 25 18:44:27 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Wed May 27 18:34:47 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
 ;*    -------------------------------------------------------------    */
@@ -141,9 +141,20 @@
 		       (fname (cadr loc))
 		       (location (caddr loc)))))))
 	 (else
-	  (with-access::J2SLoop (car targets) (need-bind-exit-continue)
-	     (set! target (car targets))
-	     (set! need-bind-exit-continue #t)))))
+	  ;; the first targets could be switches that have to
+	  ;; be ignored by continue
+	  (let ((loop (find (lambda (x) (isa? x J2SLoop)) targets)))
+	     (if (not loop)
+		 (raise
+		    (instantiate::&io-parse-error
+		       (proc "js-loopexit")
+		       (msg (format "Out of loop continue \"~a\"" id))
+		       (obj (j2s->list this))
+		       (fname (cadr loc))
+		       (location (caddr loc))))
+		 (with-access::J2SLoop loop (need-bind-exit-continue)
+		    (set! target loop)
+		    (set! need-bind-exit-continue #t)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -217,5 +228,3 @@
 	 (if (eq? tid id)
 	     (car env)
 	     (find-target id (cdr env))))))
-
-

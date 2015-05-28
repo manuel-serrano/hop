@@ -328,12 +328,17 @@ function onCryptoStreamFinish() {
 function onCryptoStreamEnd() {
   this._ended = true;
   if (this === this.pair.cleartext) {
-    debug('cleartext.onend');
+    debug('>>> cleartext.onend');
   } else {
-    debug('encrypted.onend');
+    debug('>>> encrypted.onend');
   }
 
-  if (this.onend) this.onend();
+   if (this.onend) this.onend();
+  if (this === this.pair.cleartext) {
+    debug('<<< cleartext.onend');
+  } else {
+    debug('<<< encrypted.onend');
+  }
 }
 
 
@@ -469,11 +474,9 @@ CryptoStream.prototype._read = function read(size) {
   if (this === this.pair.cleartext) {
     debug('>>> cleartext.read called with ' + size + ' bytes');
     out = this.pair.ssl.clearOut;
-    debug( "<<< clearText out=" + out );
   } else {
     debug('>>> encrypted.read called with ' + size + ' bytes');
     out = this.pair.ssl.encOut;
-    debug('<<< encrypted.read out=' + out );
   }
 
   var bytesRead = 0,
@@ -522,10 +525,12 @@ CryptoStream.prototype._read = function read(size) {
    debug( "this._opposite._pending=" + this._opposite._pending );
   if (this._opposite._pending !== null) this._opposite._writePending();
 
-  if (bytesRead === 0) {
+   if (bytesRead === 0) {
+      debug( "tls bytesRead == 0" );
     // EOF when cleartext has finished and we have nothing to read
     if (this._opposite._finished && this._internallyPendingBytes() === 0 ||
         this.pair.ssl && this.pair.ssl.receivedShutdown) {
+       debug( "tls perform graceful shutdow" );
       // Perform graceful shutdown
       this._done();
 
@@ -540,7 +545,8 @@ CryptoStream.prototype._read = function read(size) {
         this.push(null);
       }
     } else {
-      // Bail out
+       // Bail out
+       debug( "tls bail out" );
       this.push('');
     }
   } else {
@@ -564,7 +570,7 @@ CryptoStream.prototype._read = function read(size) {
   // Let users know that we've some internal data to read
   var halfRead = this._internallyPendingBytes() !== 0;
     
-   debug( "_read halfRead=" + halfRead );
+   debug( "_read halfRead=" + halfRead + "/" + this._halfRead );
   // Smart check to avoid invoking 'sslOutEnd' in the most of the cases
   if (this._halfRead !== halfRead) {
     this._halfRead = halfRead;
@@ -872,7 +878,9 @@ function onclienthello(hello) {
   var self = this,
       once = false;
 
-   debug( ">>> onclienthello hello.len=" + hello.sessionId.length );
+   debug( ">>> onclienthello hello=["
+	  + hello.sessionId.toString( 'hex' )
+	  + ":" + hello.sessionId.length );
   this._resumingSession = true;
   function callback(err, session) {
     if (once) return;
@@ -956,6 +964,7 @@ function SecurePair(credentials, isServer, requestCert, rejectUnauthorized,
    if( this._isServer ) {
       debug( "new Connect cert=" + this._requestCert    );
    }
+   debug( "new connect options.servername=", options.servername );
   this.ssl = new Connection(this.credentials.context,
                             this._isServer ? true : false,
                             this._isServer ? this._requestCert :
@@ -1030,8 +1039,9 @@ SecurePair.prototype.maybeInitFinished = function() {
        this.npnProtocol = this.ssl.getNegotiatedProtocol();
     }
 
-    if (process.features.tls_sni) {
+     if (process.features.tls_sni) {
       this.servername = this.ssl.getServername();
+	debug( "process.features.tls_sni getsservername=", this.servername );
     }
 
     this._secureEstablished = true;
@@ -1166,6 +1176,7 @@ SecurePair.prototype.error = function(returnOnly) {
 // cleartext.credentials (by mirroring from pair object)
 // cleartext.getCertificate() (by mirroring from pair.credentials.context)
 function Server(/* [options], listener */) {
+   debug( ">>> tls Server" );
   var options, listener;
   if (typeof arguments[0] == 'object') {
     options = arguments[0];
@@ -1247,6 +1258,7 @@ function Server(/* [options], listener */) {
       pair.cleartext.authorized = false;
       pair.cleartext.npnProtocol = pair.npnProtocol;
       pair.cleartext.servername = pair.servername;
+	debug( "tls cleartext.servername=", pair.servername );
 
       if (!self.requestCert) {
         cleartext._controlReleased = true;
@@ -1311,16 +1323,18 @@ Server.prototype.setOptions = function(options) {
   if (options.crl) this.crl = options.crl;
   if (options.ciphers) this.ciphers = options.ciphers;
   var secureOptions = options.secureOptions || 0;
-  if (options.honorCipherOrder) {
+   if (options.honorCipherOrder) {
     secureOptions |= constants.SSL_OP_CIPHER_SERVER_PREFERENCE;
   }
   if (secureOptions) this.secureOptions = secureOptions;
   if (options.NPNProtocols) convertNPNProtocols(options.NPNProtocols, this);
+
   if (options.SNICallback) {
     this.SNICallback = options.SNICallback;
   } else {
     this.SNICallback = this.SNICallback.bind(this);
   }
+
   if (options.sessionIdContext) {
     this.sessionIdContext = options.sessionIdContext;
   } else if (this.requestCert) {
@@ -1343,12 +1357,14 @@ Server.prototype.addContext = function(servername, credentials) {
                       servername.replace(/([\.^$+?\-\\[\]{}])/g, '\\$1')
                                 .replace(/\*/g, '.*') +
                       '$');
+   debug( "addContext: ", servername );
   this._contexts.push([re, crypto.createCredentials(credentials).context]);
 };
 
 Server.prototype.SNICallback = function(servername) {
   var ctx;
 
+   debug( "SNICallback: ", servername );
   this._contexts.some(function(elem) {
     if (servername.match(elem[0]) !== null) {
       ctx = elem[1];
@@ -1405,7 +1421,8 @@ exports.connect = function(/* [port, host], options, cb */) {
 
   var NPN = {};
   convertNPNProtocols(options.NPNProtocols, NPN);
-  var hostname = options.servername || options.host || 'localhost',
+   debug( "connect servername=", hostname );
+   var hostname = options.servername || options.host || 'localhost',
       pair = new SecurePair(sslcontext, false, true,
                             options.rejectUnauthorized === true ? true : false,
                             {
@@ -1448,7 +1465,7 @@ exports.connect = function(/* [port, host], options, cb */) {
 	       + " peerCert=[" + pair.cleartext.getPeerCertificate() + "]" );
       var validCert = checkServerIdentity(hostname,
                                           pair.cleartext.getPeerCertificate());
-	console.error( "npn validCert=", validCert );
+
       if (!validCert) {
         verifyError = new Error('Hostname/IP doesn\'t match certificate\'s ' +
                                 'altnames');
@@ -1486,14 +1503,17 @@ function pipe(pair, socket) {
   socket.pipe(pair.encrypted);
 
   pair.encrypted.on('close', function() {
-debug( "tls pipe.4 onclose" );
+debug( ">>> tls pipe.4 onclose" );
     process.nextTick(function() {
-debug( "tls pipe.5 onclose ontick" );
+debug( ">>> tls pipe.5 onclose nexttick" );
       // Encrypted should be unpiped from socket to prevent possible
       // write after destroy.
       pair.encrypted.unpipe(socket);
+       debug( "--- tls pipe.5 onclose nexttick" );
       socket.destroySoon();
+debug( ">>> tls pipe.5 onclose nexttick" );
     });
+debug( "<<< tls pipe.4 onclose" );
   });
 
   pair.fd = socket.fd;

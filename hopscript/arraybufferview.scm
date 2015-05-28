@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Apr 27 12:03:16 2015 (serrano)                */
+;*    Last change :  Fri May 22 07:15:29 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -396,15 +396,27 @@
 		   (js-new %this (js-get %this 'ArrayBuffer %this))
 		   #u32:0 #u32:0))
 	       ((number? (car items))
-		(if (< (car items) 0)
+		(cond
+		   ((< (car items) 0)
 		    (js-raise-range-error %this
 		       "ArrayBufferView size is not a small enough positive integer"
-		       (car items))
+		       (car items)))
+		   ((and (flonum? (car items))
+			 (>=fl (*fl (fixnum->flonum bp) (car items))
+			    1073741823.0))
+		    (js-raise-range-error %this
+		       "ArrayBufferView size is too large"
+		       (car items)))
+		   ((and (>fx bp 1) (>=fx (car items) (/fx 1073741823 bp)))
+		    (js-raise-range-error %this
+		       "ArrayBufferView size is too large"
+		       (car items)))
+		   (else
 		    (let ((len (js-touint32 (car items) %this)))
 		       (js-create-from-arraybuffer this
 			  (js-new %this (js-get %this 'ArrayBuffer %this)
 			     (uint32->fixnum (*u32 bp len)))
-			  #u32:0 len))))
+			  #u32:0 len)))))
 	       ((isa? (car items) JsArrayBuffer)
 		(with-access::JsArrayBuffer (car items) (data)
 		   (let ((len (u8vector-length data)))

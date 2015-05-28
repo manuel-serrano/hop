@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed May  6 14:23:35 2015 (serrano)                */
+;*    Last change :  Fri May 22 19:23:49 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -337,7 +337,6 @@
 				(reverse! acts)))))
 	    (with-handler
 	       (lambda (e)
-		  (when debug-catch (tprint "catch.0 " e))
 		  (let ((r (js-worker-exception-handler th e 8)))
 		     (if (=fx r 0)
 			 (begin
@@ -355,8 +354,6 @@
 			(with-trace 'nodejs-async actname
 			   (call actproc)))
 		     (loop))))))))
-
-(define debug-catch #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
@@ -399,16 +396,10 @@
 		  (with-handler
 		     (lambda (e)
 			(set! state 'error)
-			(when debug-catch
-			   (tprint "catch.2 " e " " (getpid)))
 			(with-handler
 			   (lambda (e)
-			      (when debug-catch
-				 (tprint "catch.3 " e " " (getpid)))
 			      (set! %retval 8))
 			   (set! %retval (js-worker-exception-handler th e 8)))
-			(when debug-catch
-			   (tprint "retval=" %retval " " (getpid)))
 			;; run one more for nexttick
 			(with-access::JsLoop loop (exiting)
 			   (set! exiting (not (=fx %retval 0))))
@@ -507,6 +498,8 @@
    (uv-update-time (worker-loop %worker))
    (uint64->flonum (uv-now (worker-loop %worker))))
 
+(define close-stack '())
+
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-close ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -516,13 +509,15 @@
 	 ((or (not (isa? handle JsPipe))
 	      (with-access::JsPipe handle (econnreset)
 		 (not econnreset)))
+	  (set! close-stack (cons this close-stack))
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
+		   (set! close-stack (remq! this close-stack))
 		   (when (and (=fx (bit-and flags 1) 1)
 			      (isa? callback JsFunction))
 		      (!js-callback0 "close" %worker %this
-			 callback (js-undefined))) )))
+			 callback (js-undefined))))))
 	  (set! flags (bit-or flags 1)))
 ;* 		   (js-worker-push-thunk! %worker "close"              */
 ;* 		      (lambda ()                                       */

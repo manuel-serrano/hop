@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Nov 18 09:48:53 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sun May 17 20:09:27 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/

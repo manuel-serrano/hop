@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sun Jan 18 07:18:31 2015 (serrano)                */
+;*    Last change :  Fri May 22 07:02:17 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -151,13 +151,18 @@
 			(f 0))
 
 		     ;; data
-		     (if (u8vector? i)
-			 (begin
-			    (set! f (u8vector-length i))
-			    (set! data i))
+		     (cond
+			((u8vector? i)
+			 (set! f (u8vector-length i))
+			 (set! data i))
+			((and (flonum? i) (>=fl i 1073741823.0))
+			 (js-raise-range-error %this
+			    "ArrayBufferView size is too large"
+			    i))
+			(else
 			 (let ((n (js-touint32 i %this)))
 			    (set! f (uint32->fixnum n))
-			    (set! data (make-u8vector f))))
+			    (set! data (make-u8vector f)))))
 			
 		     ;; byteLength
 		     (js-bind! %this this 'byteLength

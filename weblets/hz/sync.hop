@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/weblets/hz/sync.hop               */
+;*    serrano/prgm/project/hop/3.0.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Sun Nov 17 13:39:54 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Mon May 18 20:23:43 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -73,17 +73,16 @@
 		(when (>fx (bigloo-debug) 0)
 		   (exception-notify e))
 		(cond
+		   ((or (isa? e &hop-authentication-error)
+			(isa? e http-response-authentication))
+		    (escape url))
 		   ((isa? e &error)
 		    (with-access::&error e (msg)
 		       (list (cons url msg))))
-		   ((isa? e http-response-authentication)
-		    (escape url))
 		   (else
 		    (list (cons url e)))))
-	     (tprint ">>> HZ-SYNC-PUBLISHER URL=[" url "]")
 	     (with-url url
 		(lambda (s)
-		   (tprint "<<< HZ-SYNC-PUBLISHER s=[" s "]")
 		   (with-input-from-string s
 		      (lambda ()
 			 (filter-map (lambda (e)
@@ -93,7 +92,7 @@
 						    :stamp stamp)))
 					   (hz-db-add-or-update! w)
 					   #f))
-				     (read)))))
+			    (read)))))
 		:timeout (hz-connection-timeout)
 		:header (if basic-auth
 			    (list (list authorization: basic-auth))

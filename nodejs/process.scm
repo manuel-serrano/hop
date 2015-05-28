@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri May  8 18:42:49 2015 (serrano)                */
+;*    Last change :  Thu May 14 07:46:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -392,7 +392,7 @@
 		 (modules: . "11")
 		 (openssl: . ,(cond-expand
 				 (enable-ssl (ssl-version))
-				 (else "-1")))
+				 (else "-")))
 		 (v8: . "-")
 		 (node: . ,(nodejs-version))
 		 (ares: . "-")
@@ -702,7 +702,9 @@
 	(S_IFIFO . ,S_IFIFO)
 	(S_IFSOCK . ,S_IFSOCK)
 
-	,@signals)
+	,@signals
+
+	,@(crypto-constants))
 
       %this))
 

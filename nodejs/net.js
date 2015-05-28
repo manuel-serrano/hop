@@ -192,13 +192,13 @@ util.inherits(Socket, stream.Duplex);
 // If allowHalfOpen is true, then we need to do a shutdown,
 // so that only the writable side will be cleaned up.
 function onSocketFinish() {
+  debug('>>> onSocketFinish');
   // If still connecting - defer handling 'finish' until 'connect' will happen
   if (this._connecting) {
     debug('osF: not yet connected');
     return this.once('connect', onSocketFinish);
   }
 
-  debug('onSocketFinish');
   if (!this.readable || this._readableState.ended) {
     debug('oSF: ended, destroy', this._readableState);
     return this.destroy();
@@ -217,6 +217,7 @@ function onSocketFinish() {
     return this._destroy(errnoException(process._errno, 'shutdown'));
 
   shutdownReq.oncomplete = afterShutdown;
+  debug('<<< onSocketFinish');
 }
 
 
@@ -423,13 +424,19 @@ function maybeDestroy(socket) {
 
 
 Socket.prototype.destroySoon = function() {
-  if (this.writable)
-    this.end();
+   debug( ">>> Socket.prototype.destroySoon" );
+   if (this.writable) {
+      debug( "--- Socket.prototype.destroySoon this.writable" );
+      this.end();
+   }
 
-  if (this._writableState.finished)
+   if (this._writableState.finished) {
+      debug( "--- Socket.prototype.destroySoon this._writableState.finished" );
     this.destroy();
-  else
-    this.once('finish', this.destroy);
+   } else {
+      this.once('finish', this.destroy);
+   }
+   debug( "<<< Socket.prototype.destroySoon" );
 };
 
 

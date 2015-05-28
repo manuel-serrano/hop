@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Fri May  8 07:57:00 2015 (serrano)                */
+;*    Last change :  Fri May 22 19:46:51 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -33,6 +33,11 @@
 	       (dh (default #unspecified))
 	       (initp::bool (default #f)))
 
+	    (class JsHash::JsObject
+	       (hash::ssl-hash read-only))
+	    
+	    (class JsHmac::JsObject)
+	    
 	    (class HelloParser
 	       (%worker::WorkerHopThread read-only)
 	       (%this::JsGlobalObject read-only)
@@ -47,7 +52,8 @@
 	    __nodejs__buffer
 	    __nodejs_uv)
    
-   (export  (process-crypto ::WorkerHopThread ::JsGlobalObject)))
+   (export  (crypto-constants::pair-nil)
+	    (process-crypto ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-crypto ...                                                 */
@@ -61,6 +67,12 @@
 
 (cond-expand
    (enable-ssl
+
+;*---------------------------------------------------------------------*/
+;*    crypto-constants ...                                             */
+;*---------------------------------------------------------------------*/
+(define (crypto-constants)
+   `((SSL_OP_CIPHER_SERVER_PREFERENCE . ,(ssl-op-cipher-server-preference))))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-crypto ...                                               */
@@ -77,7 +89,7 @@
       (with-access::JsSecureContext this (ctx)
 	 (let ((met (if (pair? args)
 			(js-tostring (car args) %this)
-			"SSLv23_method")))
+			"default")))
 	    (set! ctx (instantiate::secure-context (method met))))))
 
    (define (secure-context-close this)
@@ -110,7 +122,8 @@
 
    (define (set-key this cert passphrase)
       (with-access::JsSecureContext this (ctx)
-	 (let ((pass (when (string? passphrase) passphrase)))
+	 (let ((pass (when (isa? passphrase JsStringLiteral)
+			(js-jsstring->string passphrase))))
 	    (if (isa? cert JsStringLiteral)
 		(let ((cert (js-jsstring->string cert)))
 		   (secure-context-set-key! ctx cert 0 (string-length cert) pass))
@@ -141,14 +154,34 @@
 		   (uint32->fixnum length))))))
 
    (define (load-pkcs12 this pfx pass)
-      (with-access::JsSecureContext this (ctx)
-	 (if (and (isa? pfx JsStringLiteral) (isa? pass JsStringLiteral)
-		  (secure-context-load-pkcs12 ctx
-		     (js-jsstring->string pfx)
-		     (js-jsstring->string pass)))
-	     (js-raise-type-error %this
-		(format "Bad parameter (~a, ~a) ~~a" (typeof pfx) (typeof pass))
-		pfx))))
+      (let ((pass (cond
+		     ((isa? pass JsStringLiteral)
+		      (js-jsstring->string pass))
+		     ((isa? pass JsTypedArray)
+		      (with-access::JsTypedArray pass (%data byteoffset length)
+			 (substring %data
+			    (uint32->fixnum byteoffset)
+			    (+fx (uint32->fixnum byteoffset)
+			       (uint32->fixnum length)))))
+		     (else
+		      #f))))
+	 (with-access::JsSecureContext this (ctx)
+	    (cond
+	       ((isa? pfx JsStringLiteral) 
+		(secure-context-load-pkcs12 ctx
+		   (js-jsstring->string pfx) pass))
+	       ((isa? pfx JsTypedArray)
+		(with-access::JsTypedArray pfx (%data byteoffset length)
+		   (secure-context-load-pkcs12 ctx
+		      (substring %data
+			 (uint32->fixnum byteoffset)
+			 (+fx (uint32->fixnum byteoffset)
+			    (uint32->fixnum length)))
+		      pass)))
+	       (else
+		(js-raise-type-error %this
+		   (format "Bad parameter (~a, ~a) ~~a" (typeof pfx) (typeof pass))
+		   pfx))))))
 
    (define (set-ciphers this ciphers)
       (with-access::JsSecureContext this (ctx)
@@ -412,7 +445,7 @@
       (with-access::JsSSLConnection this (ssl)
 	 (with-access::ssl-connection ssl (sni-context-callback)
 	    (set! sni-context-callback
-	       (lambda (this srvname)
+	       (lambda (ssl srvname)
 		  (let ((r (!js-callback1 "set-sni" %worker %this cb
 			      this (js-string->jsstring srvname))))
 		     (when (isa? r JsSecureContext)
@@ -559,21 +592,22 @@
 					   (request-cert (when serverp
 							    request-cert-or-server-name))
 					   (server-name (unless serverp
-							   request-cert-or-server-name))
+							   (when (isa? request-cert-or-server-name JsStringLiteral)
+							      (js-jsstring->string request-cert-or-server-name))))
 					   (reject-unauthorized reject))))))
 	    (js-bind! %this conn 'receivedShutdown
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (received-shutdown)
-				received-shutdown)))
+				(or received-shutdown (js-undefined)))))
 		       0 "receivedShutdown"))
 	    (js-bind! %this conn 'sentShutdown
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (sent-shutdown)
-				sent-shutdown)))
+				(or sent-shutdown (js-undefined)))))
 		       0 "sentShutdown"))
 	    (js-bind! %this conn 'error
 	       :get (js-make-function %this
@@ -601,22 +635,6 @@
 	 (unless (ssl-rand-status)
 	    (unless (ssl-rand-poll)))))
    
-   (define (pseudoRandomBytes this size cb)
-      (check-entropy)
-      (cond
-	 ((not (number? size))
-	  (js-raise-type-error %this "Bad argument" size))
-	 ((or (< size 0) (> size 1073741823.))
-	  (js-raise-type-error %this "Bad size" size))
-	 (else
-	  (let ((buf (js-string->jsslowbuffer
-			(ssl-rand-pseudo-bytes size)
-			%this)))
-	     (if (isa? cb JsFunction)
-		 (!js-callback2 "pseudoRandomBytes" %worker %this
-		    cb this (js-undefined) buf)
-		 buf)))))
-   
    (define (randomBytes this size cb)
       (check-entropy)
       (cond
@@ -632,6 +650,37 @@
 		 (!js-callback2 "randomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
+
+   (define (pseudoRandomBytes this size cb)
+      (check-entropy)
+      (cond
+	 ((not (number? size))
+	  (js-raise-type-error %this "Bad argument" size))
+	 ((or (< size 0) (> size 1073741823.))
+	  (js-raise-type-error %this "Bad size" size))
+	 (else
+	  (let ((buf (js-string->jsslowbuffer
+			(ssl-rand-pseudo-bytes size)
+			%this)))
+	     (if (isa? cb JsFunction)
+		 (!js-callback2 "pseudoRandomBytes" %worker %this
+		    cb this (js-undefined) buf)
+		 buf)))))
+
+   (define (get-ssl-ciphers this)
+      (let ((v (ssl-get-ciphers)))
+	 (js-vector->jsarray
+	    (vector-map! js-string->jsstring v) %this)))
+
+   (define (get-ciphers this)
+      (let ((v (evp-get-ciphers)))
+	 (js-vector->jsarray
+	    (vector-map! js-string->jsstring (list->vector v)) %this)))
+
+   (define (get-hashes this)
+      (let ((v (evp-get-hashes)))
+	 (js-vector->jsarray
+	    (vector-map! js-string->jsstring (list->vector v)) %this)))
 
    (define (buffer->string buf)
       (with-access::JsFastBuffer buf (%data byteoffset length)
@@ -731,30 +780,116 @@
 		" " args)))
 	 obj))
 
+   (define (diffie-hellman-group this group-name)
+      (let* ((dh (instantiate::dh))
+	     (name (js-jsstring->string group-name)))
+	 (error "diffie-hellman-group" "todo" group-name)))
+
+   (define (hmac-init this)
+      (error "hmac-init" "not implemented" this))
+
+   (define (hmac-update this)
+      (error "hmac-update" "not implemented" this))
+
+   (define (hmac-digest this)
+      (error "hmac-digest" "not implemented" this))
+   
+   (define hmac-proto
+      (let ((proto (with-access::JsGlobalObject %this (js-object)
+		      (js-new %this js-object))))
+	 (js-put! proto 'init
+	    (js-make-function %this hmac-update 1 "init")
+	    #f %this)
+	 (js-put! proto 'update
+	    (js-make-function %this hmac-update 1 "update")
+	    #f %this)
+	 (js-put! proto 'digest
+	    (js-make-function %this hmac-digest 1 "digest")
+	    #f %this)
+	 proto))
+
+   (define (hmac this . args)
+      (instantiate::JsHmac
+	 (__proto__ hmac-proto)))
+
+   (define (hash-update this data)
+      (with-access::JsHash this (hash)
+	 (cond
+	    ((isa? data JsStringLiteral)
+	     (let ((s (js-jsstring->string data)))
+		(ssl-hash-update! hash s 0 (string-length s)))
+	     this)
+	    ((isa? data JsTypedArray)
+	     (with-access::JsTypedArray data (%data byteoffset length)
+		(ssl-hash-update! hash %data
+		   (uint32->fixnum byteoffset)
+		   (uint32->fixnum length)))
+	     this)
+	    (else
+	     (error "hash-update" "Wrong data" data)))))
+
+   (define (hash-digest this)
+      (with-access::JsHash this (hash)
+	 (js-string->jsstring (ssl-hash-digest hash))))
+   
+   (define hash-proto
+      (let ((proto (with-access::JsGlobalObject %this (js-object)
+		      (js-new %this js-object))))
+	 (js-put! proto 'update
+	    (js-make-function %this hash-update 1 "update")
+	    #f %this)
+	 (js-put! proto 'digest
+	    (js-make-function %this hash-digest 0 "digest")
+	    #f %this)
+	 proto))
+
+   (define (hash this type)
+      (instantiate::JsHash
+	 (__proto__ hash-proto)
+	 (hash (instantiate::ssl-hash
+		  (type (js-jsstring->string type))))))
+
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
 		:prototype secure-context-proto))
 	 (conn (js-make-function %this connection 4 "Connection"
 		  :construct connection
 		  :prototype connection-proto))
-	 (dh (js-make-function %this diffie-hellman 4 "diffieHellman"
+	 (dh (js-make-function %this diffie-hellman 4 "DiffieHellman"
 		  :construct diffie-hellman
-		  :prototype diffie-hellman-proto)))
+		  :prototype diffie-hellman-proto))
+	 (dhg (js-make-function %this diffie-hellman-group 1 "DiffieHellmanGroup"))
+	 (hm (js-make-function %this hash 1 "Hmac"
+		:construct hmac
+		:prototype hmac-proto))
+	 (hs (js-make-function %this hash 1 "Hash"
+		:construct hash
+		:prototype hash-proto)))
+      
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
-	    `((PBKDF2 . ,(not-implemented "PBKDF2"))
+	    `((SecureContext . ,sc)
+	      (Connection . ,conn)
+	      (Cipher . ,(not-implemented "Cipher"))
+	      (Decipher . ,(not-implemented "Decipher"))
+	      (DiffieHellman . ,dh)
+	      (DiffieHellmanGroup . ,dhg)
+	      (Hmac . ,hm)
+	      (Hash . ,hs)
+	      (Sign . ,(not-implemented "Sign"))
+	      (Verity . ,(not-implemented "Verify"))
+	      
+	      (PBKDF2 . ,(not-implemented "PBKDF2"))
 	      (randomBytes . ,(js-make-function %this randomBytes
 				 2 "randomBytes"))
 	      (pseudoRandomBytes . ,(js-make-function %this pseudoRandomBytes
 				       2 "pseudoRandomBytes"))
-	      (getSSLCiphers . ,(not-implemented "getSLLCiphers"))
-	      (getCiphers . ,(js-new %this js-object))
-	      (getHashes . ,(js-new %this js-object))
-	      (init . ,(not-implemented "init"))
-	      (Hash . ,(not-implemented "Hash"))
-	      (DiffieHellman . ,dh)
-	      (SecureContext . ,sc)
-	      (Connection . ,conn))
+	      (getSSLCiphers . ,(js-make-function %this get-ssl-ciphers
+				   0 "getSSLCiphers"))
+	      (getCiphers . ,(js-make-function %this get-ciphers
+				0 "getCiphers"))
+	      (getHashes . ,(js-make-function %this get-hashes
+			       0 "getHashes")))
 	    %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -963,6 +1098,7 @@
 ;*---------------------------------------------------------------------*/
 )
 (else
+ (define (crypto-constants) '())
  (define (process-crypto %worker %this)
     #unspecified)))
 

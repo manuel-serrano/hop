@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Mon Apr 13 19:56:30 2015 (serrano)                */
+;*    Last change :  Wed May 20 19:06:36 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -38,7 +38,7 @@
 	      (content-length::int32 (default #s32:-1))
 	      (method::obj (default #f))
 	      (url::bstring (default ""))
-	      (upgrade::bool (default #f))
+	      (mode::symbol (default 'default))
 	      (errname (default #f))
 	      (type::symbol (default 'response))
 	      state::procedure))
@@ -72,7 +72,7 @@
 (define (reset-parsing! p::JsHttpParser)
    (with-access::JsHttpParser p (state errno prematch clen content-length
 				   status-code http-major http-minor headers
-				   flags method url upgrade type)
+				   flags method url mode type)
       (set! prematch #f)
       (set! state http-line-state)
       (set! errno 0)
@@ -85,7 +85,7 @@
       (set! clen -1)
       (set! method #f)
       (set! url "")
-      (set! upgrade #f)
+      (set! mode 'default)
       (set! type 'response)))
 
 ;*---------------------------------------------------------------------*/
@@ -94,6 +94,8 @@
 ;*    Full parser reset.                                               */
 ;*---------------------------------------------------------------------*/
 (define (reset-parser! p::JsHttpParser)
+   (when (>fx debug-parser 0)
+      (tprint "RESET-PARSER!"))
    (with-access::JsHttpParser p (state buffer shift prevec)
       (set! buffer #f)
       (set! shift 0)
@@ -200,7 +202,7 @@
 	 (tprint ">>> http-parser-execute vlen="
 	    (string-length vec) " off=" off " len=" len " -----------------"))
       (let (str stroff strend)
-	 (with-access::JsHttpParser parser (buffer shift prevec offset)
+	 (with-access::JsHttpParser parser (buffer shift prevec offset type)
 	    (set! buffer buf)
 	    (set! offset offfx)
 	    (let ((bufstart (+fx bufoff offfx)))
@@ -218,7 +220,7 @@
 		      (set! stroff bufstart)
 		      (set! strend (+fx bufstart buflen)))))
 	    (when (>=fx debug-parser 1)
-	       (tprint ">-- execute "
+	       (tprint ">-- execute " type
 		  " stroff=" stroff " strend=" strend
 		  " len=" (-fx strend stroff)
 		  " shift=" shift
@@ -235,7 +237,7 @@
 	 (let ((ip (open-input-string! str stroff strend)))
 	    (let loop ((count 0)
 		       (avail (-fx strend stroff)))
-	       (with-access::JsHttpParser parser (state upgrade errno buffer)
+	       (with-access::JsHttpParser parser (state mode errno buffer)
 		  (multiple-value-bind (nstate nread)
 		     (state ip %this parser 0 avail)
 		     (when (>=fx debug-parser 2) 
@@ -272,7 +274,16 @@
 				     " partial-parse=" nread " prevec="
 				     (string-length prevec)))
 			       byteparsed)))
-			((or (=fx nread avail) (not nstate) upgrade)
+			((and (=fx nread avail) (eq? mode 'flush-eof))
+			 ;; keep reading he message body
+			 (let ((byteparsed (+fx count nread)))
+			    (set! buffer #f)
+			    (set! state http-identity-eof)
+			    (when (>fx debug-parser 0)
+			       (tprint "<<< execute byteparsed=" byteparsed
+				  " read up to eof"))
+			    byteparsed))
+			((or (=fx nread avail) (not nstate) (eq? mode 'upgrade))
 			 (let ((byteparsed (+fx count nread)))
 			    ;; everything has been parsed
 			    (reset-parser! parser)
@@ -341,9 +352,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    http-parse-error ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (http-parse-error parser::JsHttpParser err::long msg::bstring nread)
+(define (http-parse-error parser::JsHttpParser err::long msg::bstring nread state)
    (when (>fx debug-parser 0)
-      (tprint "!!! HTTP-PARSE-ERROR nread=" nread " msg=" msg " err=" err))
+      (tprint "!!! HTTP-PARSE-ERROR nread=" nread " msg=" msg " err=" err
+	 " state=" state))
    (with-access::JsHttpParser parser (errno errname)
       (set! errno err)
       (set! errname (js-string->jsstring msg))
@@ -366,7 +378,7 @@
        ;; premature eof
        (values state (negfx nread))
        ;; parse error
-       (http-parse-error parser 13 "illegal char" nread)))
+       (http-parse-error parser 13 "illegal char" nread "eof-or-parse")))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-http-version ...                                             */
@@ -381,6 +393,13 @@
 ;*    http-line-state ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (http-line-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
+
+   (define (http-state port version len)
+      (with-access::JsHttpParser parser (method)
+	 (set! method #f))
+      (http-on-message-begin %this parser)
+      (set-http-version! parser version)
+      (http-status-state port %this parser (+fx nread len) (-fx avail len)))
 
    (define grammar
       (regular-grammar ((SP #\Space)
@@ -409,41 +428,54 @@
 	 (SP
 	  ;; HTTP request
 	  (with-access::JsHttpParser parser (method type flags prematch)
-	     (begin
-		(string? prematch)
-		(set! type 'request)
-		(set! method prematch)
-		(set! prematch #f)
-		(when (string=? method "HEAD")
-		   (set! flags (cons 'skipbody flags)))
-		(http-path-state (the-port) %this parser
-		   (+fx nread 1) (-fx avail 1)))))
+	     (cond
+		((not (string? prematch))
+		 (http-parse-error parser 16
+		    (http-error-excerpt "unexpected char" (the-failure) ip)
+		    nread "line0"))
+		((string-prefix? "HTTP/" prematch)
+		 (http-state (the-port)
+		    (substring prematch 5 (string-length prematch)) 1))
+		((string-prefix? "HTTPS/" prematch)
+		 (http-state (the-port)
+		    (substring prematch 6 (string-length prematch)) 1))
+		(else
+		 (set! type 'request)
+		 (set! method prematch)
+		 (set! prematch #f)
+		 (when (string=? method "HEAD")
+		    (set! flags (cons 'skipbody flags)))
+		 (http-path-state (the-port) %this parser
+		    (+fx nread 1) (-fx avail 1))))))
 	 ((: "HTTP/" (: (+ (in ("09"))) #\. (+ (in ("09")))) SP)
 	  ;; HTTP response
-	  (with-access::JsHttpParser parser (method)
-	     (set! method #f))
-	  (let* ((len (the-length))
-		 (http-protocol "http"))
-	     (http-on-message-begin %this parser)
-	     (set-http-version! parser (the-substring 5 (-fx len 1)))
-	     (http-status-state (the-port) %this parser
-		(+fx nread len) (-fx avail len))))
+	  (let ((len (the-length)))
+	     (http-state (the-port) (the-substring 5 (-fx len 1)) len)))
+;* 	  (with-access::JsHttpParser parser (method)                   */
+;* 	     (set! method #f))                                         */
+;* 	  (let* ((len (the-length))                                    */
+;* 		 (http-protocol "http"))                               */
+;* 	     (http-on-message-begin %this parser)                      */
+;* 	     (set-http-version! parser (the-substring 5 (-fx len 1)))  */
+;* 	     (http-status-state (the-port) %this parser                */
+;* 		(+fx nread len) (-fx avail len))))                     */
 	 ((: "HTTPS/" (: (+ (in ("09"))) #\. (+ (in ("09")))) SP)
 	  ;; HTTPS response
-	  (with-access::JsHttpParser parser (method)
-	     (set! method #f))
-	  (let* ((len (the-length))
-		 (http-protocol "https"))
-	     (set-http-version! parser (the-substring 6 (-fx len 1)))
-	     (http-status-state (the-port) %this parser
-		(+fx nread len) (-fx avail len))))
+	  (let ((len (the-length)))
+	     (http-state (the-port) (the-substring 6 (-fx len 1)) len)))
+;* 	  (with-access::JsHttpParser parser (method)                   */
+;* 	     (set! method #f))                                         */
+;* 	  (let* ((len (the-length))                                    */
+;* 		 (http-protocol "https"))                              */
+;* 	     (set-http-version! parser (the-substring 6 (-fx len 1)))  */
+;* 	     (http-status-state (the-port) %this parser                */
+;* 		(+fx nread len) (-fx avail len))))                     */
 	 ((or (: (+ (out SP CR LF)) SP)
 	      (: "HTTP" (out #\/ #\S))
 	      (: "HTTPS" (out #\/)))
-	  (tprint "M4=[" (string-for-read (the-string)) "]")
 	  (http-parse-error parser 13
-	     "HPE_INVALID_CONSTANT" nread))
-	 ((: (+ (in ("AZ"))))
+	     "HPE_INVALID_CONSTANT" nread "line1"))
+	 ((: (+ (or (in ("AZ09")) (in "/."))))
 	  ;; partial state
 	  (with-access::JsHttpParser parser (prematch)
 	     (if (string? prematch)
@@ -456,7 +488,7 @@
 	      (values http-line-state #f)
 	      (http-parse-error parser 16
 		 (http-error-excerpt "unexpected char" (the-failure) ip)
-		 nread)))))
+		 nread "line2")))))
 
    (when (>fx debug-parser 0)
       (tprint "HTTP-LINE-STATE nread=" nread " avail=" avail))
@@ -556,10 +588,10 @@
 		(+fx nread len) (-fx avail len))))
 	 ((: "\r" (out "\n"))
 	  (http-parse-error parser 12
-	     "invalid HTTP status code" nread))
+	     "invalid HTTP status code" nread "message"))
 	 ("\n"
 	  (http-parse-error parser 12
-	     "invalid HTTP status code" nread))
+	     "invalid HTTP status code" nread "message2"))
 	 ((+ (out "\r\n"))
 	  ;; partial state
 	  (values http-message-state (negfx nread)))
@@ -592,7 +624,7 @@
 	  (with-access::JsHttpParser parser (headers)
 	     (if (null? headers)
 		 (http-parse-error parser 21
-		    "invalid character in header" nread)
+		    "invalid character in header" nread "header")
 		 (let* ((len (the-length))
 			(str (the-substring 0 -2))
 			(i (string-skip str " \t")))
@@ -624,18 +656,18 @@
 					  (char=? c2 #\Newline))
 				     (loop (+fx nread 2) (-fx avail 2))
 				     (http-parse-error parser 22
-					"bad character" nread))))
+					"bad character" nread "header2"))))
 			     (else
 			      (http-parse-error parser 22
-				 "bad character" nread)))))
+				 "bad character" nread "header3")))))
 		    (http-body-state (the-port) %this parser
 		       (+fx nread len) (-fx avail len))))))
 	 (#\:
 	  (http-parse-error parser 21
-	     "invalid character in header" nread))
+	     "invalid character in header" nread "header4"))
 	 ((: (+ (or (out " :\r\n\t") (: #\space (out #\:)))) (in "\r\n"))
 	  (http-parse-error parser 21
-	     "invalid character in header" nread))
+	     "invalid character in header" nread "header5"))
 	 (else
 	  ;; partial state
 	  (values http-header-state (negfx nread)))))
@@ -650,7 +682,7 @@
 (define (http-header-value-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
 
    (define (add-header! parser value)
-      (with-access::JsHttpParser parser (headers flags content-length clen upgrade)
+      (with-access::JsHttpParser parser (headers flags content-length clen mode)
 	 (case (string->symbol (string-downcase (car headers)))
 	    ((connection)
 	     (cond
@@ -665,7 +697,7 @@
 	     (set! clen (string->integer value))
 	     (set! content-length (fixnum->int32 clen)))
 	    ((upgrade)
-	     (set! upgrade #t)))
+	     (set! mode 'upgrade)))
 	 (set! headers (cons value headers))))
 
    (define grammar
@@ -696,7 +728,7 @@
 		(+fx nread len) (-fx avail len))))
 	 ((: #\Return (out #\Newline))
 	  (http-parse-error parser 21
-	     "invalid character in header" nread))
+	     "invalid character in header" nread "header-value"))
 	 (else
 	  (values http-header-value-state (negfx nread)))))
 
@@ -708,13 +740,13 @@
 ;*    http-body-state ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (http-body-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
-   (with-access::JsHttpParser parser (flags upgrade method content-length type
+   (with-access::JsHttpParser parser (flags mode method content-length type
 					status-code)
       (when (>fx debug-parser 0)
 	 (tprint "*** HTTP-BODY-STATE nread=" nread " avail=" avail))
 
       (cond
-	 (upgrade
+	 ((eq? mode 'upgrade)
 	  (when (>fx debug-parser 0)
 	     (tprint "*** MESSAGE_COMPLETE.3.."))
 	  (http-on-message-complete %this parser)
@@ -739,7 +771,29 @@
 	  (http-on-message-complete %this parser)
 	  (values http-line-state nread))
 	 (else
-	  (http-content-state ip %this parser nread avail)))))
+	  ;; MS CARE
+	  (when (>fx avail 0)
+	     (http-on-body %this parser nread avail))
+	  (set! mode 'flush-eof)
+	  (values 'http-identity-eof (+fx nread avail))
+	  ;;(http-content-state ip %this parser nread avail)
+	  ))))
+
+;*---------------------------------------------------------------------*/
+;*    http-identity-eof ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-identity-eof ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
+   (when (>=fx debug-parser 0)
+      (tprint "HTTP-IDENTITY-EOF avail=" avail " nread=" nread))
+   (if (=fx avail 0)
+       (begin
+	  (when (>fx debug-parser 0)
+	     (tprint "*** MESSAGE_COMPLETE.7.."))
+	  (http-on-message-complete %this parser)
+	  (values #f (+fx nread avail)))
+       (begin
+	  (http-on-body %this parser nread avail)
+	  (values 'http-identity-eof (+fx nread avail)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-body-identity ...                                           */
@@ -756,7 +810,7 @@
 	    (if (=s32 content-length #s32:0)
 		(begin
 		   (when (>fx debug-parser 0)
-		      (tprint "*** HTTP-BODY-IDENTITY.2 to-read="
+		      (tprint "*** HTTP-DATA_CB on_body.1 to-read="
 			 to-read " (nread=" nread ")"))
 		   (http-on-body %this parser nread to-readfx)
 		   (when (>fx debug-parser 0)
@@ -777,17 +831,17 @@
 ;*    http-content-state ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-content-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
-   
-   (when (>fx debug-parser 0)
-      (tprint "*** HTTP-CONTENT-STATE nread=" nread " avail=" avail))
-
    (with-access::JsHttpParser parser (offset clen)
+      (when (>fx debug-parser 0)
+	 (tprint "*** HTTP-CONTENT-STATE nread=" nread " avail=" avail
+	    " clen=" clen))
       (cond
 	 ((=fx avail 0)
 	  (values http-body-state (negfx nread)))
 	 ((= clen -1)
 	  (http-on-body %this parser nread avail)
-	  (http-on-message-complete %this parser)
+	  (tprint "MS: 20 may 2015 CARE, I'M NOT SURE HERE")
+	  ;(http-on-message-complete %this parser)
 	  (values #f (+fx nread avail)))
 	 ((>=fx avail clen)
 	  (http-on-body %this parser nread clen)
@@ -836,7 +890,8 @@
 			   (set! nread (+fx nreadc (+fx chunk 2)))
 			   (set! avail (-fx availc (+fx chunk 2)))
 			   (ignore))
-			(http-parse-error parser 15 "illegal char" nread))))
+			(http-parse-error parser 15 "illegal char" nread
+			   "chunk"))))
 		(else
 		 (http-partial-chunk ip %this parser nreadc availc chunk)))))
 	 ((: (+ (in ("09afAF"))) (? #\Return))
@@ -863,12 +918,14 @@
 	  (if (char=? c #\Return)
 	      (http-partial-chunk ip %this parser
 		 (+fx nread 1) (-fx avail 1) (-fx size 1))
-	      (http-parse-error parser 14 "illegal char" nread))))
+	      (http-parse-error parser 14 "illegal char" nread
+		 "partial-chunk"))))
       ((and (>fx avail 0) (=fx size -1))
        (let ((c (read-char ip)))
 	  (if (char=? c #\Newline)
 	      (http-chunk-state ip %this parser (+fx nread 1) (-fx avail 1))
-	      (http-parse-error parser 14 "illegal char" nread))))
+	      (http-parse-error parser 14 "illegal char" nread
+		 "partial-chunk.2"))))
       ((>=fx avail (+fx 2 size))
        (when (>fx size 0)
 	  (http-on-body %this parser nread size)
@@ -878,7 +935,8 @@
 	  (if (and (char=? c1 #\Return) (char=? c2 #\Newline))
 	      (http-chunk-state ip %this parser
 		 (+fx nread (+fx size 2)) (-fx avail (+fx size 2)))
-	      (http-parse-error parser 15 "illegal char" nread))))
+	      (http-parse-error parser 15 "illegal char" nread
+		 "partial-chunk.3"))))
       (else
        (when (>fx avail 0)
 	  (let ((nreadc (+fx nread avail)))
@@ -908,7 +966,7 @@
 	  (values http-next-chunk-state nread))
 	 (else
 	  (http-parse-error parser 23
-	     "invalid character in chunk size header" nread))))
+	     "invalid character in chunk size header" nread "next-chunk"))))
    
    (when (>fx debug-parser 0)
       (tprint ">>> HTTP-NEXT-CHUNK-STATE nread=" nread " avail=" avail))
@@ -962,6 +1020,8 @@
 ;*    http-on-message-complete ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (http-on-message-complete %this parser)
+   (when (>fx debug-parser 0)
+      (tprint "http-on-message-complete"))
    (let ((cb (js-get parser 'onMessageComplete %this)))
       (when (isa? cb JsFunction)
 	 (js-call0 %this cb parser))))
@@ -1008,10 +1068,10 @@
    
    (when (>fx debug-parser 0)
       (tprint "*** HTTP-ON-HEADER-COMPLETE"))
-   (with-access::JsHttpParser parser (headers upgrade method
+   (with-access::JsHttpParser parser (headers method
 					status-code
 					http-major http-minor
-					url upgrade flags)
+					url mode flags)
       (let ((cb (js-get parser 'onHeaders %this))
 	    (jsheaders (headers->jsheaders %this parser))
 	    (jsurl (js-string->jsstring url)))
@@ -1023,10 +1083,10 @@
 		  (with-access::JsGlobalObject %this (js-object)
 		     (let ((info (js-new0 %this js-object)))
 			;; upgrade
-			(unless upgrade
+			(unless (eq? mode 'upgrade)
 			   (when (and (string? method)
 				      (string=? method "CONNECT"))
-			      (set! upgrade #t)))
+			      (set! mode 'upgrade)))
 			;; headers
 			(js-put! info 'headers jsheaders #f %this)
 			;; request or resposne
@@ -1045,7 +1105,7 @@
 			(let ((kalive (should-keep-alive? parser)))
 			   (js-put! info 'shouldKeepAlive kalive #f %this))
 			;; upgrade
-			(js-put! info 'upgrade upgrade #f %this)
+			(js-put! info 'upgrade (eq? mode 'upgrade) #f %this)
 			;; invoke the callback
 			(let ((r (js-call2 %this cb parser info (js-undefined))))
 			   (when (js-totest r)
