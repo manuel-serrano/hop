@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Wed Jan 14 09:31:54 2015 (serrano)                */
+/*    Last change :  Thu May 28 16:12:21 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -102,6 +102,7 @@ exports.Cons = hop.Cons;
 /*---------------------------------------------------------------------*/
 exports.tree = "tree";
 exports.notepad = "notepad";
+exports.spage = "spage";
 exports.fontifier = "fontifier";
 exports.wiki = "wiki";
 

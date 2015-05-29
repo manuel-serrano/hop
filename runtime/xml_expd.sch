@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Wed Jun 11 19:32:13 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Fri May 29 09:59:22 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/

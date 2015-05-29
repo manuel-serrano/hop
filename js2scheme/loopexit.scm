@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed May 27 18:34:47 2015 (serrano)                */
+;*    Last change :  Thu May 28 14:54:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -119,14 +119,6 @@
 (define-walk-method (mark-exit! this::J2SContinue targets label)
    (with-access::J2SContinue this (id loc target)
       (cond
-	 ((null? targets)
-	  (raise
-	     (instantiate::&io-parse-error
-		(proc "js-loopexit")
-		(msg "Out of loop continue")
-		(obj (j2s->list this))
-		(fname (cadr loc))
-		(location (caddr loc)))))
 	 (id
 	  (let ((t (find-target id targets)))
 	     (if t
@@ -140,21 +132,21 @@
 		       (obj (j2s->list this))
 		       (fname (cadr loc))
 		       (location (caddr loc)))))))
+	 ((find (lambda (x) (isa? x J2SLoop)) targets)
+	  ;; skip the "switch" stmt while handling "continue"
+	  =>
+	  (lambda (loop)
+	     (with-access::J2SLoop loop (need-bind-exit-continue)
+		(set! target loop)
+		(set! need-bind-exit-continue #t))))
 	 (else
-	  ;; the first targets could be switches that have to
-	  ;; be ignored by continue
-	  (let ((loop (find (lambda (x) (isa? x J2SLoop)) targets)))
-	     (if (not loop)
-		 (raise
-		    (instantiate::&io-parse-error
-		       (proc "js-loopexit")
-		       (msg (format "Out of loop continue \"~a\"" id))
-		       (obj (j2s->list this))
-		       (fname (cadr loc))
-		       (location (caddr loc))))
-		 (with-access::J2SLoop loop (need-bind-exit-continue)
-		    (set! target loop)
-		    (set! need-bind-exit-continue #t)))))))
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "js-loopexit")
+		(msg (format "Out of loop continue \"~a\"" id))
+		(obj (j2s->list this))
+		(fname (cadr loc))
+		(location (caddr loc)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
