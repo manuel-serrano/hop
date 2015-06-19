@@ -110,6 +110,11 @@ simple/test-vm-create-context-accessors.js
 simple/test-vm-create-context-arg.js
 simple/test-vm-create-context-circular-reference.js
 pummel/test-debugger-debug-brk.js
+pummel/test-regress-GH-814.js
+pummel/test-regress-GH-814_2.js
+pummel/test-tls-connect-memleak.js
+pummel/test-net-connect-memleak.js
+pummel/test-net-connect-econnrefused.js
 
 # intrinsic incompatibilities
 simple/test-abort-fatal-error.js
@@ -151,6 +156,9 @@ simple/test-zlib.js
 
 # stack overflows
 simple/test-regress-GH-4015.js
+
+# different timing
+pummel/test-process-uptime.js
 
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Sun Jan 11 20:39:30 2015 (serrano)                */
+;*    Last change :  Fri Jun 19 13:15:04 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -136,7 +136,9 @@
 	   (class zeroconf-service-event)
 
 	   (class websocket)
-	   (class ws-server))
+	   (class ws-server)
+
+	   (class clientc))
 
    (cond-expand
       ((and enable-upnp (library upnp))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jan 18 07:21:08 2015 (serrano)                */
+;*    Last change :  Fri Jun 19 15:15:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
 
-   (library hop)
+   (library hop hopwidget)
    
    (include "stringliteral.sch")
    
@@ -42,6 +42,8 @@
 	   __hopscript_worker
 	   __hopscript_websocket
 	   __hopscript_lib)
+
+   (with   __hopscript_dom)
 
    (export (js-initial-global-object)
 	   (js-new-global-object::JsGlobalObject)
@@ -364,7 +366,7 @@
       ;; getprototypeof
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
       (define (getprototypeof this o)
-	 (let ((o (js-cast-object %this o "getPrototypeOf")))
+	 (let ((o (js-cast-object o %this "getPrototypeOf")))
 	    (with-access::JsObject o (__proto__)
 	       __proto__)))
       
@@ -377,7 +379,7 @@
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
       (define (getownpropertydescriptor this o p)
-	 (let* ((o (js-cast-object %this o "getOwnPropertyDescriptor"))
+	 (let* ((o (js-cast-object o %this "getOwnPropertyDescriptor"))
 		(desc (js-get-own-property o p %this)))
 	    (js-from-property-descriptor %this desc o)))
       
@@ -391,7 +393,7 @@
       ;; getOwnPropertyNames
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.4
       (define (getownpropertynames this o p)
-	 (let ((o (js-cast-object %this o "getOwnPropertyNames")))
+	 (let ((o (js-cast-object o %this "getOwnPropertyNames")))
 	    (js-vector->jsarray (js-properties-name o #f %this) %this)))
       
       (js-bind! %this js-object 'getOwnPropertyNames
@@ -422,7 +424,7 @@
       ;; defineProperty
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6
       (define (defineproperty this obj p attributes)
-	 (let* ((o (js-cast-object %this obj "defineProperty"))
+	 (let* ((o (js-cast-object obj %this "defineProperty"))
 		(name (js-toname p %this))
 		(desc (js-to-property-descriptor %this attributes name)))
 	    (js-define-own-property o name desc #t %this)
@@ -448,7 +450,7 @@
       ;; seal
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8
       (define (seal this obj)
-	 (js-seal (js-cast-object %this obj "seal") obj))
+	 (js-seal (js-cast-object obj %this "seal") obj))
       
       (js-bind! %this js-object 'seal
 	 :value (js-make-function %this seal 1 'seal)
@@ -459,7 +461,7 @@
       ;; freeze
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9
       (define (freeze this obj)
-	 (js-freeze (js-cast-object %this obj "freeze") obj))
+	 (js-freeze (js-cast-object obj %this "freeze") obj))
       
       (js-bind! %this js-object 'freeze
 	 :value (js-make-function %this freeze 1 'freeze)
@@ -470,7 +472,7 @@
       ;; preventExtensions
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10
       (define (preventextensions this obj)
-	 (let ((o (js-cast-object %this obj "preventExtensions")))
+	 (let ((o (js-cast-object obj %this "preventExtensions")))
 	    (with-access::JsObject o (extensible)
 	       (set! extensible #f))
 	    obj))
@@ -485,7 +487,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.11
       (define (issealed this o)
 	 ;; 1
-	 (let ((o (js-cast-object %this o "isSealed")))
+	 (let ((o (js-cast-object o %this "isSealed")))
 	    (with-access::JsObject o (properties cmap)
 	       (and
 		(not cmap)
@@ -508,7 +510,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
       (define (isfrozen this o)
 	 ;; 1
-	 (let ((o (js-cast-object %this o "isFrozen")))
+	 (let ((o (js-cast-object o %this "isFrozen")))
 	    (with-access::JsObject o (properties cmap)
 	       (and
 		(or (not cmap)
@@ -535,7 +537,7 @@
       ;; isExtensible
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
-	 (let ((o (js-cast-object %this obj "Object.isExtensible")))
+	 (let ((o (js-cast-object obj %this "Object.isExtensible")))
 	    (with-access::JsObject o (extensible)
 	       extensible)))
       
@@ -548,7 +550,7 @@
       ;; keys
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
       (define (keys this obj)
-	 (let ((o (js-cast-object %this obj "Object.keys")))
+	 (let ((o (js-cast-object obj %this "Object.keys")))
 	    (js-vector->jsarray (js-properties-name o #t %this) %this)))
       
       (js-bind! %this js-object 'keys
@@ -602,14 +604,14 @@
 	 :configurable #f
 	 :get (js-make-function %this
 		 (lambda (o)
-		    (let ((o (js-cast-object %this o "__proto__")))
+		    (let ((o (js-cast-object o %this "__proto__")))
 		       (with-access::JsObject o (__proto__)
 			  __proto__)))
 		 1 'get)
 	 :set (js-make-function %this
 		 (lambda (o v)
-		    (let ((o (js-cast-object %this o "__proto__"))
-			  (v (js-cast-object %this v "__proto__")))
+		    (let ((o (js-cast-object o %this "__proto__"))
+			  (v (js-cast-object v %this "__proto__")))
 		       (with-access::JsObject o (extensible)
 			  (if (not extensible)
 			      (js-raise-type-error %this 
@@ -726,6 +728,10 @@
 	 Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
 	 STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
 	 THEAD TITLE TR TT U UL VAR)
+
+      ;; html5
+      (js-bind-tags! %this obj
+	 AUDIO VIDEO)
 
       ;; html
       (js-bind! %this obj 'HTML
@@ -874,8 +880,8 @@
 			    (js-define-own-property o p desc #t %this)))))
 	 oprops))
    
-   (let* ((o (js-cast-object %this obj "defineProperties"))
-	  (props (js-cast-object %this (js-toobject %this properties)
+   (let* ((o (js-cast-object obj %this "defineProperties"))
+	  (props (js-cast-object (js-toobject %this properties) %this
 		    "defineProperties")))
       (with-access::JsObject props (cmap elements (oprops properties))
 	 (if cmap

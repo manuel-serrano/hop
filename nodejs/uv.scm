@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri May 22 19:23:49 2015 (serrano)                */
+;*    Last change :  Tue Jun 16 11:07:32 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -107,7 +107,7 @@
 ;* 	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject) */
 	   
 	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
+	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
 	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
 	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::int ::obj)
 	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::int ::obj)
@@ -129,8 +129,8 @@
 	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj ::obj)
 	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj ::obj)
 	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
-	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::long ::obj)
-	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::long ::obj)
+	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
+	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
 	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 
 	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int)
@@ -276,6 +276,32 @@
       (let ((res (call (lambda () (js-call5 %this proc obj arg0 arg1 arg2 arg3 arg4)))))
 	 (next-tick %worker %this)
 	 res)))
+
+;*---------------------------------------------------------------------*/
+;*    to-uint64 ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (to-uint64 n)
+   (cond
+      ((fixnum? n) (fixnum->uint64 n))
+      ((not (flonum? n)) #u64:0)
+      (else (llong->uint64 (flonum->llong n)))))
+
+;*---------------------------------------------------------------------*/
+;*    to-int64 ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (to-int64 %this proc offset default)
+   (cond
+      ((fixnum? offset)
+       (fixnum->int64 offset))
+      ((flonum? offset)
+       (if (integer? offset)
+	   (flonum->int64 offset)
+	   (js-raise-type-error %this "Not an integer" offset)))
+      ((or (eq? offset (js-undefined)) (null? offset))
+       default)
+      (else
+       (js-raise-range-error %this
+	  (format "~a: too large offset (~a)" proc (typeof offset)) offset))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-uv-version ...                                            */
@@ -569,13 +595,6 @@
 ;*    nodejs-timer-start ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-timer-start %worker timer start rep)
-   
-   (define (to-uint64 n)
-      (cond
-	 ((fixnum? n) (fixnum->uint64 n))
-	 ((not (flonum? n)) #u64:0)
-	 (else (llong->uint64 (flonum->llong n)))))
-   
    (with-trace 'nodejs-async "nodejs-timer-start (pre)"
       (uv-timer-start timer (to-uint64 start) (to-uint64 rep))))
 
@@ -874,13 +893,14 @@
 	 (format "ftruncate: cannot truncate ~a to ~a -- ~~s" fd offset)
 	 res))
    
-   (let ((file (int->uvhandle %worker %this fd)))
+   (let ((file (int->uvhandle %worker %this fd))
+	 (off::int64 (to-int64 %this "ftruncate" offset #s64:0)))
       (if file
 	  (if (isa? callback JsFunction)
-	      (uv-fs-ftruncate file offset
+	      (uv-fs-ftruncate file off
 		 :callback ftruncate-callback
 		 :loop (worker-loop %worker))
-	      (uv-fs-ftruncate file offset))
+	      (uv-fs-ftruncate file off))
 	  (fs-callback-error %worker %this callback "ftruncate"))))
 
 ;*---------------------------------------------------------------------*/
@@ -1344,12 +1364,13 @@
 					callback (js-undefined)
 					#f obj buffer)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position position
+		    :position (to-int64 %this "write" position #s64:-1)
 		    :loop (worker-loop %worker)))
 	      (with-access::JsArrayBufferView buffer (%data byteoffset)
 		 (uv-fs-write (int->uvhandle %worker %this fd) %data length
 		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position position :loop (worker-loop %worker))))
+		    :position (to-int64 %this "write" position #s64:-1)
+		    :loop (worker-loop %worker))))
 	  (fs-callback-error %worker %this "write" callback #f buffer))))
 
 ;*---------------------------------------------------------------------*/
@@ -1369,11 +1390,11 @@
 			   (!js-callback2 'read %worker %this
 			      callback (js-undefined) #f obj)))
 		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position position
+		    :position (to-int64 %this "read" position #s64:-1)
 		    :loop (worker-loop %worker))
 		 (uv-fs-read file %data length
-		    :offset (+fx offset (uint32->fixnum byteoffset))
-		    :position position)))
+			     :offset (+fx offset (uint32->fixnum byteoffset))
+			     :position (to-int64 %this "read" position #s64:-1))))
 	  (fs-callback-error %worker %this "read" callback #f))))
 
 ;*---------------------------------------------------------------------*/
@@ -1485,10 +1506,11 @@
 ;*    nodejs-query ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-query %worker %this process node family cb)
-   
+
    (define (query-callback res)
       (if (pair? res)
-	  (let ((v (js-vector->jsarray (list->vector res) %this)))
+	  (let ((v (js-vector->jsarray
+		      (list->vector (map! js-string->jsstring res)) %this)))
 	     (!js-callback2 'query %worker %this cb (js-undefined) #f v))
 	  (!js-callback2 'query %worker %this cb (js-undefined) res '#())))
    
@@ -1498,29 +1520,8 @@
 		    :loop (worker-loop %worker)
 		    :callback query-callback)))
 	 (if (=fx res 0)
-	     #t
+	     (js-new %this js-object)
 	     (process-ares-fail %this process res)))))
-
-;*---------------------------------------------------------------------*/
-;*    process-aeres-fail ...                                           */
-;*---------------------------------------------------------------------*/
-(define (process-ares-fail %this process errno)
-   
-   (define errnames
-      '#("SUCCESS" "ENODATA" "EFORMERR" "ESERVFAIL" "ENOTFOUND" "ENOTIMP"
-	 "EREFUSED" "EBADQUERY" "EBADNAME" "EBADFAMILY" "EBADRESP"
-	 "ECONNREFUSED" "ETIMEOUT" "EOF" "EFILE" "ENOMEM" "EDESTRUCTION"
-	 "EBADSTR" "EBADFLAGS" "ENONAME" "EBADHINTS" "ENOTINITIALIZED"))
-   
-   (define (ares-err-name errno)
-      (let ((n (negfx errno)))
-	 (if (or (<fx n 0) (>=fx n (vector-length errnames)))
-	     "ENOTFOUND"
-	     (vector-ref errnames n))))
-
-   (js-put! process 'errno errno #f %this)
-   (js-put! process '_errno (js-string->jsstring (ares-err-name errno)) #f %this)
-   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-isip ...                                                  */
@@ -1711,10 +1712,6 @@
       :family family
       :loop (worker-loop %worker)
       :callback callback))
-;*       :callback (lambda (status)                                    */
-;* 		   (js-worker-push-thunk! %worker "udp-send"           */
-;* 		      (lambda ()                                       */
-;* 			 (callback status))))))                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-recv-start ...                                        */

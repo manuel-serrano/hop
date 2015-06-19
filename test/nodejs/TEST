@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chapters=simple
+chapters="simple pummel internet message"
 rest=
 verb=
 check=
@@ -44,7 +44,11 @@ while : ; do
     errorstop=true;;
   
   --fullname)
-    fullname=true;;  
+    fullname=true;;
+
+  -c|--chapter)
+    shift;
+    chapters=$1;;  
 
   -*)
     rest=$1;;

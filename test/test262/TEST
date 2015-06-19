@@ -15,7 +15,7 @@ while : ; do
 
   -h|--help)
     echo "usage: $0 [-v|-s] [--basedir path] [chapter0 [chapter1...]]";
-    echo "example: $0 ch07 ch10";
+    echo "example: $0 ch07 ch10 ch15/15.9";
     exit 0;;
 
   -v)

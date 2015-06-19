@@ -1075,11 +1075,11 @@ Server.prototype._listen2 = function(address, port, addressType, backlog, fd) {
 function listen(self, address, port, addressType, backlog, fd) {
   if (!cluster) cluster = require('cluster');
 
+   debug( "listen addr=", address );
   if (cluster.isMaster) {
     self._listen2(address, port, addressType, backlog, fd);
     return;
   }
-
   cluster._getServer(self, address, port, addressType, fd, function(handle,
                                                                     err) {
         // EACCESS and friends

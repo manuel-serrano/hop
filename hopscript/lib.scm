@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon May  4 19:51:35 2015 (serrano)                */
+;*    Last change :  Tue Jun 16 08:49:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -35,6 +35,7 @@
 	   (js-alist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)
 	   (js-jsobject->plist ::JsObject ::JsGlobalObject)
+	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -143,6 +144,20 @@
 	       (set! args (cons (symbol->keyword p) args))))
 	 %this)
       args))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->alist ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsobject->alist obj %this)
+   (let ((args '()))
+      (js-for-in obj
+	 (lambda (p)
+	    (let* ((n (js-jsstring->string p))
+		   (k (string->symbol n))
+		   (e (cons (string->keyword n) (js-get obj k %this))))
+	       (set! args (cons e args))))
+	 %this)
+      (reverse! args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-dsssl-args->jsargs ...                                        */

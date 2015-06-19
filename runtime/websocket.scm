@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Mar 13 11:35:20 2015 (serrano)                */
+;*    Last change :  Mon Jun 15 16:48:37 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -594,7 +594,9 @@
 		      (target ws)
 		      (data val)
 		      (value val))))
+	    (tprint "MESSAGE RECEIVED: " val)
 	    (synchronize %mutex
+	       (tprint "MESSAGE HANDLER INVOKING " val)
 	       (apply-listeners onmessages se)))))
    
    (define (read-check-byte in val)
@@ -605,6 +607,7 @@
       (with-access::websocket ws (%socket)
 	 (let ((in (socket-input %socket)))
 	    (input-timeout-set! in 0)
+	    (tprint "READING MESSAGES...")
 	    (let loop ()
 	       (let ((msg (websocket-read %socket)))
 		  (if (string? msg)
@@ -663,16 +666,20 @@
 				       (instantiate::hopthread
 					  (body (lambda ()
 						   (let loop ()
-						      (if (pair? onmessages)
-							  (unwind-protect
-							     (with-handler
-								(lambda (e) #f)
-								(read-messages))
-							     (close))
-							  (begin
-							     (synchronize %mutex
-								(condition-variable-wait! %condvar %mutex))
-							     (loop))))))))))))))))))))
+						      (synchronize %mutex
+							 (tprint "WAITING FOR HANDLER")
+							 (unless (pair? onmessages)
+							    (condition-variable-wait! %condvar %mutex)))
+						      (unwind-protect
+							 (with-handler
+							    (lambda (e) #f)
+							    (read-messages))
+							 (close)))))))))))))))))))
+;* 							  (begin       */
+;* 							     (synchronize %mutex */
+;* 								(tprint "WAITING FOR HANDLER") */
+;* 								(condition-variable-wait! %condvar %mutex)) */
+;* 							     (loop)))))))))))))))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */

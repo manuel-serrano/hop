@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Sep 20 06:46:00 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Sat Jun 13 09:23:45 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -725,6 +725,14 @@
 	      (item (cset (the-string)))
 	      (rest (ignore)))
 	  (econs (text->html-string item) rest loc)))
+      ((: (* (out ",[]\\")) #\, #\,)
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (loc (list 'at name pos))
+	      (item (cset (the-substring 0 -1))))
+	  (unread-char! #\, (the-port))
+	  (econs (text->html-string item) (ignore) loc)))
       ((: (* (out ",[]\\")) #\,)
        (let* ((port (the-port))
 	      (name (input-port-name port))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Fri Nov 21 15:20:47 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Mon Jun 15 18:24:41 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -261,13 +261,13 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-with-hop-expander x e)
    
-   (define (with-hop-local svc args success failure auth)
+   (define (with-hop-local svc args success failure auth header)
       `(with-access::hop-service (procedure-attr ,svc) (proc)
 	  (let ((req (instantiate::http-server-request
 			(authorization ,auth))))
-	     (with-hop-local (proc req ,@args) ,success ,failure ,auth))))
+	     (with-hop-local (proc req ,@args) ,success ,failure ,auth ,header))))
    
-   (define (with-hop-remote svc args success failure auth opts)
+   (define (with-hop-remote svc args success failure opts)
       `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! opts)))
    
    (match-case x
@@ -280,12 +280,13 @@
 		  (host #f)
 		  (port #f)
 		  (sync #f)
+		  (header #f)
 		  (auth #f))
 	  (cond
 	     ((null? opts)
 	      (let ((nx (let ((wh (if (and (not host) (not port))
-				      (with-hop-local svc a success fail auth)
-				      (with-hop-remote svc a success fail auth args))))
+				      (with-hop-local svc a success fail auth header)
+				      (with-hop-remote svc a success fail args))))
 			   (if sync
 			       wh
 			       `(begin ,wh #unspecified)))))
@@ -293,9 +294,9 @@
 	     ((not (keyword? (car opts)))
 	      (cond
 		 ((not success)
-		  (loop (cdr opts) args (car opts) fail host port sync auth))
+		  (loop (cdr opts) args (car opts) fail host port sync auth header))
 		 ((not fail)
-		  (loop (cdr opts) args success (car opts) host port sync auth))
+		  (loop (cdr opts) args success (car opts) host port sync auth header))
 		 (else
 		  (error "with-hop"
 		     (format "Illegal optional argument: ~a" (car opts))
@@ -311,31 +312,46 @@
 		 success fail
 		 (cadr opts)
 		 port
-		 sync auth))
+		 sync auth header))
 	     ((eq? (car opts) :port)
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
 		 success fail
 		 host
 		 (cadr opts)
-		 sync auth))
+		 sync auth header))
 	     ((eq? (car opts) :sync)
 	      (loop (cddr opts)
 		 args
 		 success fail
 		 host port
 		 (cadr opts)
-		 auth))
+		 auth header))
+	     ((eq? (car opts) :asynchronous)
+	      (loop (cddr opts)
+		 args
+		 success fail
+		 host port
+		 (not (cadr opts))
+		 auth header))
 	     ((eq? (car opts) :authorization)
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
 		 success fail
 		 host port sync
+		 (cadr opts)
+		 header))
+	     ((eq? (car opts) :header)
+	      (loop (cddr opts)
+		 (cons* (cadr opts) (car opts) args)
+		 success fail
+		 host port sync
+		 auth
 		 (cadr opts)))
 	     (else
 	      (loop (cddr opts)
 		 (cons* (cadr opts) (car opts) args)
-		 success fail host port sync auth)))))
+		 success fail host port sync auth header)))))
       (else
        (error "with-hop" "Illegal form" x))))
    

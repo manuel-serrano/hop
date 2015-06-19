@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Feb 14 11:03:58 2015 (serrano)                */
+;*    Last change :  Mon Jun 15 08:48:28 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -215,9 +215,13 @@
 	     (hop-enable-https-set! #t))
 	    (("--no-https" (help (format "Disable HTTPS")))
 	     (hop-enable-https-set! #f))
-	    (("--fast-server-event" (help (format "Enable fast Server events")))
+	    (("--https-pkey" ?pem (help "HTTPS private key file"))
+	     (hop-https-pkey-set! pem))
+	    (("--https-cert" ?pem (help "HTTPS certificate file"))
+	     (hop-https-cert-set! pem))
+	    (("--fast-server-event" (help "Enable fast Server events"))
 	     (hop-enable-fast-server-event-set! #t))
-	    (("--no-fast-server-event" (help (format "Disable fast server events")))
+	    (("--no-fast-server-event" (help "Disable fast server events"))
 	     (hop-enable-fast-server-event-set! #f))
 	    ((("-i" "--session-id") ?session (help "Set session identifier"))
 	     (hop-session-set! (string->integer session)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon May  4 19:53:54 2015 (serrano)                */
+;*    Last change :  Wed Jun 17 14:41:22 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -184,7 +184,7 @@
    (define (exit-body body)
       (if (config-get conf :return-as-exit)
 	  `((bind-exit (%jsexit) ,@body))
-	  body))
+	  `(begin ,@body)))
    
    (define (j2s-module module body)
       (with-access::J2SProgram this (nodes mode pcache-size)
@@ -202,8 +202,9 @@
 			(eval (library hop)
 			   (library hopscript)
 			   (library nodejs)
-			   (library js2scheme))
-			(library hop hopscript nodejs js2scheme)
+			   (library js2scheme)
+			   (library hopwidget))
+			(library hop hopscript nodejs js2scheme hopwidget)
 			(cond-expand
 			   (enable-libuv
 			    (library libuv)))

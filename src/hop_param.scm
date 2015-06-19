@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep 19 09:21:14 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Mon Jun 15 08:46:36 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -62,6 +62,15 @@
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
 	    
+	    (hop-https-protocol::symbol)
+	    (hop-https-protocol-set! ::symbol)
+	    
+	    (hop-https-cert::bstring)
+	    (hop-https-cert-set! ::bstring)
+	    
+	    (hop-https-pkey::bstring)
+	    (hop-https-pkey-set! ::bstring)
+	    
 	    (hop-fast-server-event-port::int)
 	    (hop-fast-server-event-port-set! ::int)
 	    
@@ -73,9 +82,6 @@
 	    
 	    (hop-enable-jobs::bool)
 	    (hop-enable-jobs-set! ::bool)
-	    
-	    (hop-https-protocol::symbol)
-	    (hop-https-protocol-set! ::symbol)
 	    
 	    (hop-enable-webdav::bool)
 	    (hop-enable-webdav-set! ::bool)
@@ -264,6 +270,12 @@
 
 (define-parameter hop-https-protocol
    'tlsv1)
+
+(define-parameter hop-https-pkey
+   "/etc/ssl/private/hop.pem")
+
+(define-parameter hop-https-cert
+   "/etc/ssl/certs/hop.pem")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-fast-server-event-port ...                                   */

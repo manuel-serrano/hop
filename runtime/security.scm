@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Wed Nov 19 07:54:05 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Fri Jun 19 15:57:41 2015 (serrano)                */
+;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
 ;*=====================================================================*/
@@ -94,10 +94,10 @@
    security-manager-default
    (lambda (v)
       (cond
-	 ((hop-rc-loaded?)
-	  (error "hop-security-manager-set!"
-		 "Security managers can be specified once hoprc.hop loaded"
-		 #f))
+;* 	 ((hop-rc-loaded?)                                             */
+;* 	  (error "hop-security-manager-set!"                           */
+;* 		 "Security managers can be specified once hoprc.hop loaded" */
+;* 		 #f))                                                  */
 	 ((eq? v 'tree)
 	  security-manager-tree-compare)
 	 ((eq? v 'unsecure)

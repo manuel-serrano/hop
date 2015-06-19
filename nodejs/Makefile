@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Mar  3 19:12:47 2015 (serrano)                */
+#*    Last change :  Wed Jun  3 14:57:13 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -126,6 +126,12 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+_crypto.scm: _crypto.sch
+
+_crypto.sch: $(BUILDETCDIR)/node_crypto_groups.h \
+  $(BUILDETCDIR)/node_crypto_groups.c
+	$(CC) $(BUILDETCDIR)/node_crypto_groups.c && ./a.out > $@
+	$(RM) a.out
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Wed Apr 22 08:30:19 2015 (serrano)                */
+;*    Last change :  Mon Jun 15 08:46:23 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -37,14 +37,13 @@
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (fprint (current-error-port)
-	    "Cannot start Hop server, exiting...")
+	 (fprint (current-error-port) "Cannot start Hop server, exiting...")
 	 (exit 2))
       (if (hop-enable-https)
 	  (cond-expand
 	     (enable-ssl
-	      (let ((cert (read-certificate "/etc/ssl/certs/hop.pem"))
-		    (pkey (read-private-key "/etc/ssl/private/hop.pem")))
+	      (let ((cert (read-certificate (hop-https-cert)))
+		    (pkey (read-private-key (hop-https-pkey))))
 		 (hop-server-socket-set!
 		    (make-ssl-server-socket (hop-port)
 		       :protocol (hop-https-protocol)

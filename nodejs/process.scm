@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu May 14 07:46:00 2015 (serrano)                */
+;*    Last change :  Sat Jun  6 18:23:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -61,7 +61,8 @@
 	      (flags::int (default 0))))
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
-	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)))
+	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
+	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-version ...                                               */
@@ -616,6 +617,22 @@
 	       2 "_kill")
 	    #t %this)
 
+;* 	 ;; _getActiveRequests                                         */
+;* 	 (js-put! proc '_getActiveRequests                             */
+;* 	    (js-make-function %this                                    */
+;* 	       (lambda (this)                                          */
+;* 		  (js-vector->jsarray (make-vector 0) %this))          */
+;* 	       0 "_getActiveRequests")                                 */
+;* 	    #t %this)                                                  */
+;*                                                                     */
+;* 	 ;; _getActiveHandles                                          */
+;* 	 (js-put! proc '_getActiveHandles                              */
+;* 	    (js-make-function %this                                    */
+;* 	       (lambda (this)                                          */
+;* 		  (js-vector->jsarray (make-vector 0) %this))          */
+;* 	       0 "_getActiveHandles")                                  */
+;* 	    #t %this)                                                  */
+
 	 ;; memoryUsage
 	 (js-put! proc 'memoryUsage
 	    (js-make-function %this
@@ -644,7 +661,7 @@
 	       :writable #f))
 	 
 	 (for-each not-implemented
-	    '(_getActiveRequest
+	    '(_getActiveRequests
 	      _getActiveHandles
 	      setgroups
 	      initgroups
@@ -783,23 +800,98 @@
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    process-aeres-fail ...                                           */
+;*---------------------------------------------------------------------*/
+(define (process-ares-fail %this process errno)
+   
+   (define errnames
+      '#("SUCCESS" "ENODATA" "EFORMERR" "ESERVFAIL" "ENOTFOUND" "ENOTIMP"
+	 "EREFUSED" "EBADQUERY" "EBADNAME" "EBADFAMILY" "EBADRESP"
+	 "ECONNREFUSED" "ETIMEOUT" "EOF" "EFILE" "ENOMEM" "EDESTRUCTION"
+	 "EBADSTR" "EBADFLAGS" "ENONAME" "EBADHINTS" "ENOTINITIALIZED"))
+   
+   (define (ares-err-name errno)
+      (let ((n (negfx errno)))
+	 (if (or (<fx n 0) (>=fx n (vector-length errnames)))
+	     "ENOTFOUND"
+	     (vector-ref errnames n))))
+
+   (js-put! process 'errno errno #f %this)
+   (js-put! process '_errno (js-string->jsstring (ares-err-name errno)) #f %this)
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    process-cares-wrap ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (process-cares-wrap %worker %this process)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "care_wrap"
-	       (format "binding not implemented ~a" name)
-	       l))
-	 0 name))
+   (define ENOTIMP -5)
    
    (define (getaddrinfo this domain family)
-      (nodejs-getaddrinfo %worker %this process domain family))
+      (nodejs-getaddrinfo %worker %this process domain
+	 (if (eq? family (js-undefined)) 4 family)))
    
    (define (query this domain family callback)
       (nodejs-query %worker %this process domain family callback))
+
+   (define (dns-resolv this nstype domain callback)
+      
+      (define (fmt-mx e)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let ((obj (js-new %this js-object)))
+	       (js-put! obj 'exchange
+		  (js-string->jsstring (car e)) #f %this)
+	       (js-put! obj 'priority
+		  (cdr e) #f %this)
+	       obj)))
+
+      (define (fmt-srv e)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let ((obj (js-new %this js-object)))
+	       (js-put! obj 'name
+		  (js-string->jsstring (car e)) #f %this)
+	       (js-put! obj 'priority
+		  (cadr e) #f %this)
+	       (js-put! obj 'weight
+		  (caddr e) #f %this)
+	       (js-put! obj 'port
+		  (cadddr e) #f %this)
+	       obj)))
+      
+      (define (fmt-naptr e)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let ((obj (js-new %this js-object)))
+	       (js-put! obj 'replacement
+		  (js-string->jsstring (car e)) #f %this)
+	       (js-put! obj 'regexp
+		  (js-string->jsstring (cadr e)) #f %this)
+	       (js-put! obj 'service
+		  (js-string->jsstring (caddr e)) #f %this)
+	       (js-put! obj 'flags
+		  (js-string->jsstring (cadddr e)) #f %this)
+	       (js-put! obj 'order
+		  (cadddr (cdr e)) #f %this)
+	       (js-put! obj 'preference
+		  (cadddr (cddr e)) #f %this)
+	       obj)))
+      
+      (with-handler
+	 (lambda (e)
+	    (process-ares-fail %this process ENOTIMP)
+	    #f)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let* ((str (js-tostring domain %this))
+		   (res (resolv str nstype))
+		   (fmt (case nstype
+			   ((ns_t_mx) fmt-mx)
+			   ((ns_t_srv) fmt-srv)
+			   ((ns_t_naptr) fmt-naptr)
+			   (else js-string->jsstring))))
+	       (js-call2 %this callback (js-undefined) #f
+		  (js-vector->jsarray
+		     (vector-map! fmt res)
+		     %this))
+	       (js-new %this js-object)))))
    
    (define (query4 this domain callback)
       (query this domain 4 callback))
@@ -810,27 +902,45 @@
    (define (gethostbyaddr this addr callback)
       (let* ((str (js-tostring addr %this))
 	     (res (hostname str)))
-	 (if (string=? res str)
+	 (if (and (string=? res str) (=fx 0 (nodejs-isip addr)))
 	     (begin
-		(js-call2 %this callback (js-undefined) -1 #f)
-		(js-put! process '_errno -1 #f %this)
+		(process-ares-fail %this process ENOTIMP)
+		;;(js-call2 %this callback (js-undefined) ENOTIMP #f)
 		#f)
 	     (begin
 		(js-call2 %this callback (js-undefined) #f
 		   (js-vector->jsarray (vector (js-string->jsstring res)) %this))
-		#t))))
+		(with-access::JsGlobalObject %this (js-object)
+		   (js-new %this js-object))))))
+
+   (define (query-cname this domain callback)
+      (dns-resolv this 'ns_t_cname domain callback))
+
+   (define (query-mx this domain callback)
+      (dns-resolv this 'ns_t_mx domain callback))
+
+   (define (query-ns this domain callback)
+      (dns-resolv this 'ns_t_ns domain callback))
    
+   (define (query-txt this domain callback)
+      (dns-resolv this 'ns_t_txt domain callback))
+
+   (define (query-srv this domain callback)
+      (dns-resolv this 'ns_t_srv domain callback))
+
+   (define (query-naptr this domain callback)
+      (dns-resolv this 'ns_t_naptr domain callback))
+
    (define (gethostbyname this name callback)
       (let ((res (hostinfo (js-tostring name %this))))
-	 (tprint "gethostbyname res=" res)
 	 (if (pair? res)
 	     (let ((addr (assq 'addresses res)))
 		(js-call2 %this callback (js-undefined) #f
 		   (js-string->jsstring (car (cdr addr))))
 		#t)
 	     (begin
-		(js-call2 %this callback (js-undefined) -1 #f)
 		(js-put! process '_errno -1 #f %this)
+		(js-call2 %this callback (js-undefined) -1 #f)
 		#f))))
 
    (with-access::JsGlobalObject %this (js-object)
@@ -842,12 +952,12 @@
 	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
 	   (queryA . ,(js-make-function %this query4 2 "queryA"))
 	   (queryAaaa . ,(js-make-function %this query6 2 "queryAaaa"))
-	   (queryCname . ,(not-implemented "queryCname"))
-	   (queryMx . ,(not-implemented "queryMx"))
-	   (queryNs . ,(not-implemented "queryNs"))
-	   (queryTxt . ,(not-implemented "queryTxt"))
-	   (querySrv . ,(not-implemented "querySrv"))
-	   (queryNaptr . ,(not-implemented "queryNaptr"))
+	   (queryCname . ,(js-make-function %this query-cname 2 "queryCname"))
+	   (queryMx . ,(js-make-function %this query-mx 2 "queryMx"))
+	   (queryNs . ,(js-make-function %this query-ns 2 "queryNs"))
+	   (queryTxt . ,(js-make-function %this query-txt 2 "queryTxt"))
+	   (querySrv . ,(js-make-function %this query-srv 2 "querySrv"))
+	   (queryNaptr . ,(js-make-function %this query-naptr 2 "querySrv"))
 	   (getHostByAddr . ,(js-make-function %this gethostbyaddr 2 "gethostbyaddr"))
 	   (getHostByName . ,(js-make-function %this gethostbyname 2 "gethostbyname")))
 	 %this)))

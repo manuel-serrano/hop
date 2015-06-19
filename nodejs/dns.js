@@ -140,9 +140,9 @@ exports.lookup = function(domain, family, callback) {
 function resolver(bindingName) {
   var binding = cares[bindingName];
 
-  return function query(name, callback) {
-    function onanswer(status, result) {
-      if (!status) {
+   return function query(name, callback) {
+     function onanswer(status, result) {
+	if (!status) {
         callback(null, result);
       } else {
         callback(errnoException(process._errno, bindingName));
@@ -151,6 +151,7 @@ function resolver(bindingName) {
 
     callback = makeAsync(callback);
     var wrap = binding(name, onanswer);
+
     if (!wrap) {
       throw errnoException(process._errno, bindingName);
     }

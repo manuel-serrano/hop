@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon May  4 21:24:13 2015 (serrano)                */
+;*    Last change :  Mon Jun 15 16:03:43 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -304,11 +304,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    proc->listener ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (proc->listener worker %this proc this)
+(define (proc->listener worker %this proc::procedure this)
    (lambda (evt)
       (js-worker-push-thunk! worker "ws-listener"
 	 (lambda ()
 	    (js-call1 %this proc this evt)))))
+
+;*---------------------------------------------------------------------*/
+;*    action->listener ...                                             */
+;*---------------------------------------------------------------------*/
+(define (action->listener worker %this action::pair this)
+   (lambda (evt)
+      (js-worker-push-thunk! worker "ws-listener"
+	 (lambda ()
+	    (when (isa? (cdr action) JsFunction)
+	       (js-call1 %this (cdr action) this evt))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */
@@ -324,7 +334,7 @@
                  (let ((name (substring (symbol->string! (car action)) 2)))
 		    (with-access::JsWebSocket this (worker)
 		       (add-event-listener! this
-			     name (proc->listener worker %this proc this)))))
+			     name (action->listener worker %this action this)))))
               1 (car action))))
 
 ;*---------------------------------------------------------------------*/
@@ -341,7 +351,7 @@
                  (let ((name (substring (symbol->string! (car action)) 2)))
 		    (with-access::JsWebSocketServer this (worker)
 		       (add-event-listener! this
-			     name (proc->listener worker %this proc this)))))
+			     name (action->listener worker %this action this)))))
               1 (car action))))
 
 ;*---------------------------------------------------------------------*/
@@ -359,7 +369,7 @@
 		    (with-access::JsWebSocketClient this (wss)
 		       (with-access::JsWebSocketServer wss (worker)
 			  (add-event-listener! this
-				name (proc->listener worker %this proc this))))))
+				name (action->listener worker %this action this))))))
               1 (car action))))
 
 ;*---------------------------------------------------------------------*/
@@ -430,7 +440,7 @@
 					  (js-worker-push-thunk! worker
 					     "wesbsocket-client"
 					     (lambda ()
-				    (tprint "onmessage run")
+						(tprint "onmessage run")
 						(apply-listeners onmessages evt))))))
 				 (loop (websocket-read socket)))))))))
 	 ws)))

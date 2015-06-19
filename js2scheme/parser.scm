@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Apr 23 08:47:01 2015 (serrano)                */
+;*    Last change :  Wed Jun 10 15:31:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1442,55 +1442,6 @@
       (let ((test (expression #f)))
 	 (consume-token! 'RPAREN)
 	 test))
-
-;*    (define (comprehension-literal-old loc expr)                     */
-;*       (consume-token! 'LPAREN)                                      */
-;*       (let* ((id (consume-token! 'ID))                              */
-;* 	     (of (consume-any!)))                                      */
-;* 	 (unless (and (eq? (car of) 'ID) (eq? (cdr of) 'of))           */
-;* 	    (parse-token-error                                         */
-;* 	       (format "expected \"of\" got \"~a\"" (cdr of)) of))     */
-;* 	 (let ((iterable (expression #f)))                             */
-;* 	    (consume-token! 'RPAREN)                                   */
-;* 	    (case (peek-token-type)                                    */
-;* 	       ((for)                                                  */
-;* 		(let* ((tok (consume-any!)))                           */
-;* 		   (instantiate::J2SComprehension                      */
-;* 		      (loc loc)                                        */
-;* 		      (decl (instantiate::J2SLet                       */
-;* 			       (id (cdr id))                           */
-;* 			       (loc (token-loc id))))                  */
-;* 		      (test (instantiate::J2SBool                      */
-;* 			       (val #t)                                */
-;* 			       (loc (token-loc id))))                  */
-;* 		      (expr (comprehension-literal-old (token-loc tok) expr)) */
-;* 		      (iterable iterable))))                           */
-;* 	       ((if)                                                   */
-;* 		(consume-any!)                                         */
-;* 		(consume-token! 'LPAREN)                               */
-;* 		(let ((test (expression #f)))                          */
-;* 		   (consume-token! 'RPAREN)                            */
-;* 		   (consume-token! 'RBRACKET)                          */
-;* 		   (instantiate::J2SComprehension                      */
-;* 		      (loc loc)                                        */
-;* 		      (decl (instantiate::J2SLet                       */
-;* 			       (id (cdr id))                           */
-;* 			       (loc (token-loc id))))                  */
-;* 		      (test test)                                      */
-;* 		      (expr expr)                                      */
-;* 		      (iterable iterable))))                           */
-;* 	       ((RBRACKET)                                             */
-;* 		(consume-any!)                                         */
-;* 		(instantiate::J2SComprehension                         */
-;* 		   (loc loc)                                           */
-;* 		   (decl (instantiate::J2SLet                          */
-;* 			    (id (cdr id))                              */
-;* 			    (loc (token-loc id))))                     */
-;* 		   (test (instantiate::J2SBool                         */
-;* 			    (val #t)                                   */
-;* 			    (loc (token-loc id))))                     */
-;* 		   (expr expr)                                         */
-;* 		   (iterable iterable)))))))                           */
    
    (define (object-literal)
       

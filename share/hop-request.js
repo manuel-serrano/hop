@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Apr  5 09:37:35 2015 (serrano)                */
+/*    Last change :  Mon Jun 15 18:09:56 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -420,18 +420,21 @@ function withHOP( svc, success, opt, force_sync ) {
    var sync = force_sync;
    var fail = false;
    var anim = true;
+   var header = false;
 
    if( opt instanceof Function ) {
       fail = opt;
-   } else if( opt != undefined ) {
-      sync = opt.sync;
-      fail = opt.fail;
-      anim = opt.anim;
+   } else if( opt instanceof Object ) {
+      if( "sync" in opt ) sync = opt.sync;
+      if( "asynchronous" in opt ) sync = !opt.asynchronous;
+      if( "fail" in opt ) fail = opt.fail;
+      if( "anim" in opt ) anim = opt.anim;
+      if( "header" in opt ) header = opt.header;
    }
-
+   
    return hop_send_request( svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
-			    false, false, false, false, "javascript" );
+			    false, false, false, false, header, "javascript" );
 }
 			    
 /*---------------------------------------------------------------------*/
@@ -441,7 +444,7 @@ function withHOP( svc, success, opt, force_sync ) {
 /*    functions.                                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, idiom ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, header, idiom ) {
    var xhr = x ? x : hop_make_xml_http_request();
 
    /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
@@ -528,6 +531,11 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    if( henv.length > 0 ) {
       xhr.setRequestHeader( 'Hop-Env', henv );
    }
+   if( header instanceof Object ) {
+      for( var k in header ) {
+	 xhr.setRequestHeader( k, header[ k ] );
+      }
+   }
    if( auth ) {
       xhr.setRequestHeader( 'Authorization', auth );
    }
@@ -589,11 +597,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 /*---------------------------------------------------------------------*/
 function hop_send_request_xdomain( e ) {
    var xhr = hop_make_xml_http_request();
-   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)" );
+   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)" );
    var key = m[ 1 ];
    var svc = m[ 2 ];
    var henv = m[ 3 ];
    var auth = m[ 4 ];
+   var header = (typeof m[ 5 ] == "string" ? JSON.parse( m[ 5 ] ) : false);
 
    function onreadystatechange() {
       if( xhr.readyState == 4 ) {
@@ -622,6 +631,11 @@ function hop_send_request_xdomain( e ) {
    if( henv.length > 0 ) {
       xhr.setRequestHeader( 'Hop-Env', henv );
    }
+   if( header instanceof Object ) {
+      for( var k in header ) {
+	 xhr.setRequestHeader( k, header[ k ] );
+      }
+   }
    if( auth.length > 0 ) {
       xhr.setRequestHeader( 'Authorization', auth );
    }
@@ -640,7 +654,7 @@ var hop_xdomain_msg = {};
 /*---------------------------------------------------------------------*/
 /*    with_hop_xdomain ...                                             */
 /*---------------------------------------------------------------------*/
-function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x ) {
+function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x, header ) {
    if( !port ) port = 80;
 
    if( sync ) {
@@ -654,7 +668,7 @@ function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, 
       var origin = "http://" + host + ":" + port;
       var src = origin + "/hop/public/xdomain"
       var msg = key + " " + svc + " " + hop_serialize_request_env() +
-	 " " + (auth ? auth : "");
+	  " " + (auth ? auth : "") + (header instanceof object ? JSON.stringify( header ) : false);
 
       hop_xdomain_msg[ key ] = { success: success, failure: failure, svc: svc };
 
@@ -712,11 +726,11 @@ function hop_xdomain_onmessage( event ) {
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity -2)) */
-function with_hop( svc, success, failure, sync, anim, timeout ) {
+function with_hop( svc, success, failure, sync, anim, timeout, header ) {
    return hop_send_request( svc, sync,
 			    success, failure,
 			    anim, hop_serialize_request_env(), false,
-			    timeout );
+			    timeout, header, "hop" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -733,7 +747,8 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 	 (authorization #f)
 	 (host #f)
 	 (port #f)
-	 (timeout #f))
+	 (timeout #f)
+	 (header #f))
       (let loop ((rest rest))
 	 (cond
 	    ((null? rest)
@@ -754,7 +769,8 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 		       ((and (string? user) (string? password))
 			(string-append "Basic "
 			   (base64-encode (string-append user ":" password)))))
-		   ,timeout)
+		   ,timeout
+		   ,header)
 		 ;; same origin with-hop
 		 `((@ hop-send-request __hop)
 		   ,svc
@@ -772,6 +788,7 @@ function with_hop( svc, success, failure, sync, anim, timeout ) {
 		   ,timeout
 		   #f
 		   ,(when (epair? svc) `',(cer svc))
+		   ,header
 		   "hop")))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))

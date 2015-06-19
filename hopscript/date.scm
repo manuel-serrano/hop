@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jan 22 08:03:50 2015 (serrano)                */
+;*    Last change :  Wed Jun 17 18:48:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -222,7 +222,7 @@
 	 ;; parse
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.2
 	 (define (js-date-parse this str)
-	    (date->seconds (parse-date (js-tostring str %this))))
+	    (*elong #e1000 (date->seconds (parse-date (js-tostring str %this)))))
 
 	 (js-bind! %this js-date 'parse
 	    :value (js-make-function %this js-date-parse 1 'parse)
@@ -265,119 +265,17 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15    */
 ;*---------------------------------------------------------------------*/
 (define (parse-date v::bstring)
-   (with-handler
-      (lambda (e)
-	 (cond
-	    ((pregexp-match "^([0-9]{1,2})/([0-9]{1,2})/[0-9]{4} ([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?day ?month ?year ?hour ?minute)
-		 (make-date
-		    :year (string->integer year)
-		    :month (string->integer month)
-		    :day (string->integer day)
-		    :hour (string->integer hour)
-		    :min (string->integer minute)))
-		(else
-		 (current-seconds))))
-	    ((pregexp-match "^[0-9]{4}$" v)
-	     (make-date
-		:timezone 0
-		:year (string->integer v)))
-	    ((pregexp-match "^([0-9]{4}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm)
-		 (make-date
-		    :year (string->integer yyyy)
-		    :min (string->integer mm)))))
-	    ((pregexp-match "^([0-9]{4})-([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm)
-		 (make-date
-		    :year (string->integer yyyy)
-		    :month (string->integer mm)))))
-	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm ?dd)
-		 (make-date
-		    :year (string->integer yyyy)
-		    :month (string->integer mm)
-		    :day (string->integer dd)))))
-	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm ?dd ?hh ?min)
-		 (make-date
-		    :year (string->integer yyyy)
-		    :month (string->integer mm)
-		    :day (string->integer dd)
-		    :hour (string->integer hh)
-		    :min (string->integer min)))))
-	    ((pregexp-match "^T([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?HH)
-		 (make-date
-		    :timezone 0
-		    :hour (string->integer HH)))))
-	    ((pregexp-match "^T([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?HH ?mm)
-		 (make-date
-		    :timezone 0
-		    :hour (string->integer HH)
-		    :min (string->integer mm)))))
-	    ((pregexp-match "^T([0-9]{2}):([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?HH ?mm ?ss)
-		 (make-date
-		    :timezone 0
-		    :hour (string->integer HH)
-		    :min (string->integer mm)
-		    :sec (string->integer ss)))))
-	    ((pregexp-match "^T([0-9]{2}):([0-9]{2}):([0-9]{2}).:([0-9]{3})$" v)
-	     =>
-	     (match-lambda
-		((?- ?HH ?mm ?ss ?sss)
-		 (make-date
-		    :timezone 0
-		    :hour (string->integer HH)
-		    :min (string->integer mm)
-		    :sec (string->integer ss)
-		    :nsec (*fx 1000 (string->integer sss))))))
-	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})([-+])([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm ?dd ?HH ?MM ?SS ?s ?TZHH ?TZMM)
-		 (let ((tz (*fx 60 (+fx (*fx 60 (string->integer TZHH)) (string->integer TZMM)))))
-		    (make-date
-		       :timezone (if (string=? s "-") (- tz) tz)
-		       :year (string->integer yyyy)
-		       :month (string->integer mm)
-		       :day (string->integer dd)
-		       :hour (string->integer HH)
-		       :min (string->integer MM)
-		       :sec (string->integer SS))))))
-	    ((pregexp-match "^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})$" v)
-	     =>
-	     (match-lambda
-		((?- ?yyyy ?mm ?dd ?HH ?MM ?SS)
-		 (make-date
-		    :timezone 0
-		    :year (string->integer yyyy)
-		    :month (string->integer mm)
-		    :day (string->integer dd)
-		    :hour (string->integer HH)
-		    :min (string->integer MM)
-		    :sec (string->integer SS)))))
-	    (else
-	     (current-date))))
-      (rfc2822-date->date v)))
+   (let ((ip (open-input-string v)))
+      (unwind-protect
+	 (with-handler
+	    (lambda (e)
+	       (input-port-reopen! ip)
+	       (with-handler
+		  (lambda (e)
+		     (current-date))
+		  (iso8601-parse-date ip)))
+	    (rfc2822-parse-date ip))
+	 (close-input-port ip))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-date-prototype! ...                                 */
@@ -520,7 +418,8 @@
 			      (date-hour val)
 			      (date-minute val)
 			      (date-second val)
-			      (/fx (date-nanosecond val) 1000)))
+			      (llong->fixnum
+				 (/llong (date-nanosecond val) #l1000000))))
 			(loop (date->utc-date val))))
 		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
@@ -811,7 +710,7 @@
    (define (date-prototype-gettimezoneoffset this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (/fx (date-timezone val) 60)
+	     (negfx (/fx (date-timezone (seconds->date (date->seconds val))) 60))
 	     +nan.0)))
 
    (js-bind! %this obj 'getTimezoneOffset
@@ -1121,8 +1020,14 @@
 ;*    date->utc-date ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (date->utc-date dt::date)
-   (let ((tz (date-timezone dt)))
-      (date-copy (seconds->date (+ (date->seconds dt) tz)) :timezone 0)))
+   (let ((tz (date-timezone dt))
+	 (ctz (date-timezone (date-copy dt))))
+      (date-copy
+	 (nanoseconds->date
+	    (- (date->nanoseconds dt)
+	       (*llong (fixnum->llong ctz)
+		  #l1000000000)))
+	 :timezone 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-date->jsdate ...                                              */

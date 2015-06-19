@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May 28 17:33:30 2015 (serrano)                */
+;*    Last change :  Fri Jun 19 16:52:06 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -275,7 +275,9 @@
 	     (if (not (or (null? (cdr a)) (pair? (cdr a))))
 		 (error (el->string el) "Illegal arguments"
 		    `(,(el->string el) ,@args))
-		 (loop (append l (cdr a)) attr body id))))
+		 (if (pair? l)
+		     (loop (append l (cdr a)) attr body id)
+		     (loop (cdr a) attr (cons (car a) body) id)))))
 	 (else
 	  (loop (cdr a) attr (cons (car a) body) id)))))
 

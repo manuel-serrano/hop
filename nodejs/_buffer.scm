@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri May 22 06:41:09 2015 (serrano)                */
+;*    Last change :  Tue Jun 16 09:53:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -36,6 +36,10 @@
 	    (class JsFastBuffer::JsTypedArray)
 
 	    (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
+	    (blit-string-ascii-clamp! ::bstring ::long ::bstring ::long ::long)
+	    (string->ucs2-string ::bstring ::long ::long)
+	    (string-utf8-normalize-utf16 ::bstring ::long ::long)
+	    (8bits-encode-utf8 ::bstring ::long ::long)
 	    (js-string->jsslowbuffer ::bstring ::JsGlobalObject)
 	    (js-string->jsfastbuffer ::bstring ::JsGlobalObject)
 	    (process-buffer ::JsGlobalObject ::JsObject)
@@ -586,18 +590,6 @@
 		   (byte-set! data (+fx 7 i) (u8vector-ref buf 0)))))))
 
    ;; binarySlice
-;*    (js-put! slowbuffer-proto 'binarySlice                           */
-;*       (js-make-function %this                                       */
-;* 	 (lambda (this::JsSlowBuffer start end)                        */
-;* 	    (with-access::JsSlowBuffer this (data)                     */
-;* 	       (tprint "binarySlice")                                  */
-;* 	       (let* ((len (-fx end start))                            */
-;* 		      (string (make-string len)))                      */
-;* 		  (when (>fx len 0)                                    */
-;* 		     (blit-string! data start string 0 len))           */
-;* 		  (js-string->jsstring string))))                      */
-;* 	 2 "binarySlice")                                              */
-;*       #f %this)                                                     */
    (js-put! slowbuffer-proto 'binarySlice
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)

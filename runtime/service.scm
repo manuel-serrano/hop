@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon May  4 20:01:05 2015 (serrano)                */
+;*    Last change :  Fri Jun 19 12:59:39 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -281,14 +281,38 @@
    (normalize args)
    ;; build the arguments list
    (apply append args))
-   
+
+;*---------------------------------------------------------------------*/
+;*    dsssl-service? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (dsssl-service? svc)
+   (with-access::hop-service svc (args)
+      (and (pair? args) (eq? (car args) #!key))))
+
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request-get svc::hop-service req::http-request)
-   (with-access::http-request req (query)
+   (with-access::http-request req (query path)
       (if (string? query)
-	  (service-parse-request-get-args (cgi-args->list query))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (string->obj vals))
+		(else
+		 (with-access::hop-service svc (id)
+		    (cond
+		       ((every string? args)
+			(if (dsssl-service? svc)
+			    (error id "bad arguments" path)
+			    (service-parse-request-get-args args)))
+		       ((every pair? args)
+			(if (dsssl-service? svc)
+			    (service-parse-request-get-args args)
+			    
+			    (error id "bad arguments" path)))
+		       (else
+			(error id "bad arguments" path)))))))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -387,10 +411,6 @@
 	 ((("hop" . ?-) . ?-) #t)
 	 (else #f)))
    
-   (define (dsssl-service? svc)
-      (with-access::hop-service svc (args)
-	 (and (pair? args) (eq? (car args) #!key))))
-
    (define (multipart->list dir pi content-length boundary transfer-encoding)
       (if (eq? transfer-encoding 'chunked)
 	  (let ((pic (http-chunks->port pi)))
@@ -423,6 +443,8 @@
 			  (append-map multipart-dsssl-arg-value args))
 			 (else
 			  (map multipart-arg-value args)))))))
+	    ((not (string? ctype))
+	     '())
 	    ((string=? ctype "application/x-www-form-urlencoded")
 	     (let ((body (read-chars (elong->fixnum content-length) pi)))
 		(service-parse-request-get-args (cgi-args->list body))))
@@ -448,7 +470,7 @@
 	 (trace-item "query=" (when (string? query) (string-for-read query)))
 	 (with-access::http-request req (method)
 	    (case method
-	       ((GET PUT)
+	       ((PUT)
 		(service-parse-request-put svc req))
 	       ((GET)
 		(service-parse-request-get svc req))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Tue May  5 09:09:30 2015 (serrano)                */
+;*    Last change :  Mon Jun  8 07:29:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -244,18 +244,14 @@
    
    (define (write this fd buffer offset length position callback)
       (nodejs-write %worker %this process fd buffer offset length
-	 (if (not (integer? position))
-	     -1
-	     (int32->fixnum (js-toint32 position %this)))
+	 position
 	 callback))
    
    (define (read this fd buffer offset length position callback)
       (nodejs-read %worker %this process fd buffer
 	 (int32->fixnum (js-toint32 offset %this))
 	 (int32->fixnum (js-toint32 length %this))
-	 (if (not (integer? position))
-	     -1
-	     (int32->fixnum (js-toint32 position %this)))
+	 position
 	 callback))
 
    (define (create-fs-watcher-proto)

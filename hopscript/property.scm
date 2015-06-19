@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr  1 18:08:39 2015 (serrano)                */
+;*    Last change :  Fri Jun 19 15:13:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -26,7 +26,8 @@
 	   __hopscript_public
 	   __hopscript_worker
 	   __hopscript_pair
-	   __hopscript_function)
+	   __hopscript_function
+	   __hopscript_lib)
 
    (export (js-object-unmap! ::JsObject)
 	   (js-toname::symbol ::obj ::JsGlobalObject)
@@ -375,7 +376,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.5       */
 ;*---------------------------------------------------------------------*/
 (define (js-to-property-descriptor %this::JsGlobalObject obj name::symbol)
-   (let* ((obj (js-cast-object %this obj "[[ToPropertyDescriptor]]"))
+   (let* ((obj (js-cast-object obj %this "ToPropertyDescriptor"))
 	  (enumerable (if (js-has-property obj 'enumerable %this)
 			  (js-toboolean (js-get obj 'enumerable %this))
 			  (js-undefined)))
@@ -649,14 +650,10 @@
 		 0
 		 'toString))
 	     (else
-;* 	      (when (isa? o &exception)                                */
-;* 		 (exception-notify o))                                 */
 	      (js-raise-type-error %this
 		 (format "no such field \"~a\" ~~a" name) o)))
 	  (let ((v ((class-field-accessor field) o)))
-	     (if (string? v)
-		 (js-string->jsstring v)
-		 v)))))
+	     (js-obj->jsobject v %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
@@ -1654,7 +1651,7 @@
 (define-generic (js-for-in obj proc %this)
    (if (or (eq? obj (js-undefined)) (eq? obj (js-null)))
        (js-undefined)
-       (js-for-in (js-cast-object %this obj "for") proc %this)))
+       (js-for-in (js-cast-object obj %this "for") proc %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsObject ...                                         */

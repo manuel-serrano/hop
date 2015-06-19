@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon May  4 19:56:07 2015 (serrano)                */
+;*    Last change :  Mon Jun 15 18:20:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -254,7 +254,8 @@
 	 (password #f)
 	 (authorization #f)
 	 (fail #f)
-	 (asynchronous (not force-sync)))
+	 (asynchronous (not force-sync))
+	 (header #f))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail opt))
@@ -265,7 +266,8 @@
 		(w (js-get opt 'password %this))
 		(a (js-get opt 'authorization %this))
 		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this)))
+		(y (js-get opt 'asynchronous %this))
+		(r (js-get opt 'header %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -284,12 +286,15 @@
 		   (lambda (xhr)
 		      (with-access::xml-http-request xhr (header)
 			 (js-call1 %this f %this
-			    (js-alist->jsobject header %this)))))))))
+			    (js-alist->jsobject header %this))))))
+	     (when (isa? r JsObject)
+		(set! header (js-jsobject->alist r %this))))))
 
       (define (with-hop callback)
 	 (with-hop-remote svc callback fail
 	    :host host :port port 
 	    :user user :password password :authorization authorization
+	    :header header
 	    :args args))
 
       (define (scheme->js val)
