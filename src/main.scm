@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May  6 14:24:16 2015 (serrano)                */
+;*    Last change :  Sun Jun 21 09:55:43 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -88,6 +88,20 @@
       (hop-loader-add! "js"
 	 (lambda (path . test)
 	    (nodejs-load path %worker)))
+      ;; js rc load
+      (when (hop-rc-loaded?)
+	 (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
+	    (if (file-exists? path)
+		(js-worker-push-thunk! %worker "hoprc"
+		   (lambda ()
+		      (nodejs-load path %worker)))
+		(let ((path (string-append (prefix (hop-rc-file)) ".js")))
+		   (when (file-exists? path)
+		      (js-worker-push-thunk! %worker "hoprc"
+			 (lambda ()
+			    (nodejs-load path %worker))))))))
+      ;; start the hopscript service worker thread
+      (hop-hopscript-worker (hop-scheduler) %global %worker)
       ;; when debugging, init the debugger runtime
       (when (>=fx (bigloo-debug) 1)
 	 (hop-debug-init! (hop-client-output-port)))
@@ -127,32 +141,35 @@
 	    ;; start the job (a la cron background tasks) scheduler
 	    (when (hop-enable-jobs)
 	       (job-start-scheduler!))
-	    ;; start the hopscript service worker thread
-	    (hop-hopscript-worker (hop-scheduler) %global %worker)
 	    ;; create the repl JS module
-	    (let ((path (file-name-canonicalize!
-			   (make-file-name (pwd) (car args)))))
-	       (nodejs-module "repl" path %worker %global))
+	    (when (hop-javascript)
+	       (let ((path (file-name-canonicalize!
+			      (make-file-name (pwd) (car args)))))
+		  (nodejs-module "repl" path %worker %global)))
 	    ;; hss extension
-	    (let ((mod (nodejs-module "hss" "hss" %worker %global))
-		  (scope (nodejs-new-scope-object %global)))
-	       ;; force the module initialization
-	       (let ((exp (call-with-input-string "false"
-			     (lambda (in)
-				(j2s-compile in :driver (j2s-plain-driver)
-				   :parser 'repl
-				   :filename "repl.js")))))
-		  ((eval! exp) %global %global scope mod)
-		  (hop-hss-foreign-eval-set!
-		     (lambda (ip)
-			(js-put! mod 'filename
-			   (js-string->jsstring (input-port-name ip)) #f
-			   %global)
-			(%js-eval-hss ip %global %worker scope)))))
+	    (when (hop-javascript)
+	       (let ((mod (nodejs-module "hss" "hss" %worker %global))
+		     (scope (nodejs-new-scope-object %global)))
+		  ;; force the module initialization
+		  (let ((exp (call-with-input-string "false"
+				(lambda (in)
+				   (j2s-compile in :driver (j2s-plain-driver)
+				      :parser 'repl
+				      :filename "repl.js")))))
+		     ((eval! exp) %global %global scope mod)
+		     (hop-hss-foreign-eval-set!
+			(lambda (ip)
+			   (js-put! mod 'filename
+			      (js-string->jsstring (input-port-name ip)) #f
+			      %global)
+			   (%js-eval-hss ip %global %worker scope))))))
 	    ;; when needed, start the HOP repl
 	    (case (hop-enable-repl)
-	       ((scm) (hop-repl (hop-scheduler)))
-	       ((js) (hopscript-repl (hop-scheduler) %global %worker)))
+	       ((scm)
+		(hop-repl (hop-scheduler)))
+	       ((js)
+		(when (hop-javascript)
+		   (hopscript-repl (hop-scheduler) %global %worker))))
 	    ;; when needed, start a loop for server events
 	    (hop-event-server (hop-scheduler))
 	    ;; execute the script file
@@ -189,9 +206,15 @@
 					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
 				  (service-filter req))))
 		  (hop-preload-services))
+	       ;; close the security
+	       (if (hop-javascript)
+		   (js-worker-push-thunk! %worker "security" security-close!)
+		   (security-close!))
 	       ;; start the main loop
 	       (scheduler-accept-loop (hop-scheduler) serv #t))
-	    (if (thread-join! %worker) 0 1)))))
+	    (if (hop-javascript)
+		(if (thread-join! %worker) 0 1)
+		0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-scheduler! ...                                               */
@@ -247,8 +270,8 @@
 	  (let ((src (string-append (basename path) ".hop")))
 	     (hop-load-weblet (make-file-name path src))))
 	 ((string-suffix? ".js" path)
-	  (with-access::WorkerHopThread %worker (%this prerun)
-	     (with-access::JsGlobalObject %this (js-main)
+	  (when (hop-javascript)
+	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
 		      (nodejs-load path %worker))))))

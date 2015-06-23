@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Jun 16 09:53:13 2015 (serrano)                */
+;*    Last change :  Tue Jun 23 12:41:53 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -42,6 +42,8 @@
 	    (8bits-encode-utf8 ::bstring ::long ::long)
 	    (js-string->jsslowbuffer ::bstring ::JsGlobalObject)
 	    (js-string->jsfastbuffer ::bstring ::JsGlobalObject)
+	    (js-jsslowbuffer->string::bstring ::JsSlowBuffer)
+	    (js-jsfastbuffer->string::bstring ::JsFastBuffer)
 	    (process-buffer ::JsGlobalObject ::JsObject)
 	    (make-slowbuffer ::JsGlobalObject)
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)
@@ -133,6 +135,22 @@
 	       (js-put! buf 'offset 0 #f %this)
 	       (js-put! buf 'parent slowbuffer #f %this)
 	       buf)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsslowbuffer->string ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-jsslowbuffer->string buf::JsSlowBuffer)
+   (with-access::JsSlowBuffer buf (data)
+      data))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsfastbuffer->string ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-jsfastbuffer->string buf::JsFastBuffer)
+   (with-access::JsFastBuffer buf (%data byteoffset length)
+      (let ((start (uint32->fixnum byteoffset))
+	    (len (uint32->fixnum length)))
+	 (substring %data start (+fx start len)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsSlowBuffer ...                         */

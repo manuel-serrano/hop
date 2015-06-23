@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon May  4 19:35:16 2015 (serrano)                */
+/*    Last change :  Tue Jun 23 15:15:01 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -358,7 +358,7 @@ service examplesRun( o ) {
 	       if( rep ) {
 		  rep = false;
 		  if( o.service ) {
-		     sendResponse( util.format( "http://localhost:%d/hop/%s", port, o.service ) );
+		     sendResponse( util.format( "http://%s:%d/hop/%s", hop.hostname, port, o.service ) );
 		  } else {
 		     sendResponse( false );
 		  }

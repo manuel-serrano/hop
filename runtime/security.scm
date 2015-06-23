@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Fri Jun 19 15:57:41 2015 (serrano)                */
+;*    Last change :  Sun Jun 21 07:04:51 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -29,7 +29,8 @@
 
    (static  (class xml-secure-attribute::xml-tilde))
 
-   (export  (secure-javascript-attr ::obj)
+   (export  (security-close!)
+	    (secure-javascript-attr ::obj)
 
 	    (hop-xml-backend-secure::xml-backend)
 
@@ -40,6 +41,18 @@
 	    (generic xml-compare a1::obj a2::obj)
 	    (xml-string-sanitize::bstring ::bstring)
 	    (xml-attribute-sanitize::obj ::obj ::keyword)))
+
+
+;*---------------------------------------------------------------------*/
+;*    *security-open* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *security-open* #t)
+
+;*---------------------------------------------------------------------*/
+;*    security-close! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (security-close!)
+   (set! *security-open* #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    secure-javascript-attr ...                                       */
@@ -94,10 +107,10 @@
    security-manager-default
    (lambda (v)
       (cond
-;* 	 ((hop-rc-loaded?)                                             */
-;* 	  (error "hop-security-manager-set!"                           */
-;* 		 "Security managers can be specified once hoprc.hop loaded" */
-;* 		 #f))                                                  */
+	 ((not *security-open*)
+	  (error "hop-security-manager-set!"
+	     "Cannot set Security managers once the server is up"
+	     v))
 	 ((eq? v 'tree)
 	  security-manager-tree-compare)
 	 ((eq? v 'unsecure)

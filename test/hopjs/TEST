@@ -69,7 +69,7 @@ run() {
 }
 
 for path in noserv/*.js; do
-    run $path --no-server
+    run $path -q --no-server
 done
 
 for path in serv/*.js; do

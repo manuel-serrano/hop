@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Jun 18 09:31:04 2015 (serrano)                */
+;*    Last change :  Tue Jun 23 15:01:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -45,6 +45,11 @@
 	    
 	    (class JsVerify::JsObject
 	       (verify::ssl-verify read-only))
+	    
+	    (class JsCipher::JsObject
+	       (cipher::ssl-cipher read-only))
+	    
+	    (class JsDecipher::JsCipher)
 	    
 	    (class HelloParser
 	       (%worker::WorkerHopThread read-only)
@@ -690,43 +695,24 @@
 	 (js-vector->jsarray
 	    (vector-map! js-string->jsstring (list->vector v)) %this)))
 
-   (define (fastbuffer->string buf)
-      (with-access::JsFastBuffer buf (%data byteoffset length)
-	 (let ((start (uint32->fixnum byteoffset))
-	       (len (uint32->fixnum length)))
-	    (substring %data start (+fx start len)))))
-
-   (define (slowbuffer->string buf)
-      (with-access::JsSlowBuffer buf (data)
-	 data))
-
+   ;; diffie-hellman
    (define (dh-set-private-key this buffer)
       (with-access::JsDH this (initp dh)
-	 (cond
-	    ((not initp)
-	    (js-raise-error %this "Not initialize" this))
-	    ((isa? buffer JsFastBuffer)
+	 (if (not initp)
+	     (js-raise-error %this "Not initialize" this)
 	     (with-access::dh dh (private-key)
-		(set! private-key (bn-bin2bn (fastbuffer->string buffer)))))
-	    ((isa? buffer JsSlowBuffer)
-	     (with-access::dh dh (private-key)
-		(set! private-key (bn-bin2bn (slowbuffer->string buffer)))))
-	    (else
-	     (js-raise-type-error %this "Argument not a buffer" buffer)))))
+		(set! private-key
+		   (bn-bin2bn
+		      (buf->string buffer "dh-set-private-key" %this)))))))
 
    (define (dh-set-public-key this buffer)
       (with-access::JsDH this (initp dh)
-	 (cond
-	    ((not initp)
+	 (if (not initp)
 	     (js-raise-error %this "Not initialize" this))
-	    ((isa? buffer JsFastBuffer)
-	     (with-access::dh dh (public-key)
-		(set! public-key (bn-bin2bn (fastbuffer->string buffer)))))
-	    ((isa? buffer JsSlowBuffer)
-	     (with-access::dh dh (public-key)
-		(set! public-key (bn-bin2bn (slowbuffer->string buffer)))))
-	    (else
-	     (js-raise-type-error %this "Argument not a buffer" buffer)))))
+	 (with-access::dh dh (public-key)
+	    (set! public-key
+	       (bn-bin2bn
+		  (buf->string buffer "dh-set-public-key" %this))))))
 
    (define (dh-generate-keys this)
       (with-access::JsDH this (initp dh)
@@ -741,14 +727,7 @@
       (with-access::JsDH this (initp dh)
 	 (unless initp
 	    (js-raise-error %this "Not initialize" this))
-	 (let* ((str (cond
-			((isa? buffer JsFastBuffer)
-			 (fastbuffer->string buffer))
-			((isa? buffer JsSlowBuffer)
-			 (slowbuffer->string buffer))
-			(else
-			 (js-raise-type-error %this "Argument not a buffer"
-			    buffer))))
+	 (let* ((str (buf->string buffer "dh-compute-secret" %this))
 		(key (bn-bin2bn str))
 		(data (dh-compute-key dh key)))
 	    (unwind-protect
@@ -761,7 +740,9 @@
 		       (js-raise-error %this "Supplied key is too large" key))
 		      (else
 		       (js-raise-error %this "Invalid key" this))))
-	       (bn-free key)))))
+	       (begin
+		  (ssl-clear-error)
+		  (bn-free key))))))
 
    (define (dh-get-prime this)
       (with-access::JsDH this (initp dh)
@@ -833,9 +814,15 @@
 	 (set! p (bn-bin2bn str))
 	 (set! g (bn-new))
 	 (when (bn-set-word g 2)
-	    (unless (dh-check dh)
-	       (with-access::JsDH obj (initp)
-		  (set! initp #t))))
+	    (cond
+	       ((dh-check dh)
+		=>
+		(lambda (m)
+		   (js-raise-error %this
+		      (format "Initialization failed (~a)" m) dh)))
+	       (else
+		(with-access::JsDH obj (initp)
+		   (set! initp #t)))))
 	 obj))
 
    (define (diffie-hellman-string2 dh obj str str2)
@@ -857,9 +844,11 @@
 	     (unless (dh-check dh)
 		(with-access::JsDH obj (initp) (set! initp #t))))
 	    ((isa? (car args) JsSlowBuffer)
-	     (diffie-hellman-string dh obj (slowbuffer->string (car args))))
+	     (diffie-hellman-string dh obj
+		(js-jsslowbuffer->string (car args))))
 	    ((isa? (car args) JsFastBuffer)
-	     (diffie-hellman-string dh obj (fastbuffer->string (car args))))
+	     (diffie-hellman-string dh obj
+		(js-jsfastbuffer->string (car args))))
 	    ((pair? (car args))
 	     (diffie-hellman-string2 dh obj (caar args) (cdar args)))
 	    (else
@@ -879,42 +868,27 @@
 	     (diffie-hellman this (cadr buf))
 	     (error "diffie-hellman-group" "todo" group-name))))
 
+   ;; hmac
    (define (hmac-init this type key)
       (if (not (isa? type JsStringLiteral))
 	  (js-raise-type-error %this
-	     "Must be give hashtype string as argument" type)
-	  (let ((key (cond
-			((isa? key JsSlowBuffer)
-			 (slowbuffer->string key))
-			((isa? key JsFastBuffer)
-			 (fastbuffer->string key))
-			(else
-			 (js-raise-type-error %this
-			    "bad argument type" key)))))
+	     "Must be given hashtype string as argument" type)
+	  (let ((key (buf->string key "hmac-init" %this)))
 	     (with-access::JsHmac this (hmac)
 		(ssl-hmac-init hmac (js-jsstring->string type) key)
 		this))))
 
    (define (hmac-update this data)
       (with-access::JsHmac this (hmac)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(ssl-hmac-update! hmac s 0 (string-length s)))
-	     this)
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(ssl-hmac-update! hmac %data
-		   (uint32->fixnum byteoffset)
-		   (uint32->fixnum length)))
-	     this)
-	    (else
-	     (error "hmac-update" "Wrong data" data)))))
+	 (multiple-value-bind (s offset len)
+	    (data->string data "hmac-update" %this)
+	    (ssl-hmac-update! hmac s offset len)
+	    this)))
 
    (define (hmac-digest this enc)
       (with-access::JsHmac this (hmac)
 	 (string-encode %this (ssl-hmac-digest hmac) enc)))
-   
+
    (define hmac-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
@@ -934,21 +908,16 @@
 	 (__proto__ hmac-proto)
 	 (hmac (instantiate::ssl-hmac))))
 
-   (define (hash-update this data)
+   ;; hash
+   (define (hash-update this data enc)
       (with-access::JsHash this (hash)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(ssl-hash-update! hash s 0 (string-length s)))
-	     this)
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(ssl-hash-update! hash %data
-		   (uint32->fixnum byteoffset)
-		   (uint32->fixnum length)))
-	     this)
-	    (else
-	     (error "hash-update" "Wrong data" data)))))
+	 (if (eq? enc (js-undefined))
+	     (multiple-value-bind (s offset len)
+		(data->string data "hash-update" %this)
+		(ssl-hash-update! hash s offset len))
+	     (let* ((s (buf->string data "hash-update" %this))
+		    (str (string-decode s enc %this)))
+		(ssl-hash-update! hash str 0 (string-length str))))))
 
    (define (hash-digest this enc)
       (with-access::JsHash this (hash)
@@ -958,7 +927,7 @@
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
 	 (js-put! proto 'update
-	    (js-make-function %this hash-update 1 "update")
+	    (js-make-function %this hash-update 2 "update")
 	    #f %this)
 	 (js-put! proto 'digest
 	    (js-make-function %this hash-digest 0 "digest")
@@ -971,46 +940,30 @@
 	 (hash (instantiate::ssl-hash
 		  (type (js-jsstring->string type))))))
 
+   ;; sign
    (define (sign-init this type)
       (if (not (isa? type JsStringLiteral))
 	  (js-raise-type-error %this
-	     "Must be give signtype string as argument" type)
+	     "Must be given signtype string as argument" type)
 	  (with-access::JsSign this (sign)
 	     (ssl-sign-init sign (js-jsstring->string type))
 	     this)))
 
-   (define (sign-update this data)
+   (define (sign-update this data enc)
       (with-access::JsSign this (sign)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(ssl-sign-update! sign s 0 (string-length s)))
-	     this)
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(ssl-sign-update! sign %data
-		   (uint32->fixnum byteoffset)
-		   (uint32->fixnum length)))
-	     this)
-	    (else
-	     (error "sign-update" "Wrong data" data)))))
+	 (if (eq? enc (js-undefined))
+	     (multiple-value-bind (s offset len)
+		(data->string data "sign-update" %this)
+		(ssl-sign-update! sign s offset len))
+	     (let* ((s (buf->string data "sign-update" %this))
+		    (str (string-decode s enc %this)))
+		(ssl-sign-update! sign str 0 (string-length str))))))
 
    (define (sign-sign this data enc)
       (with-access::JsSign this (sign)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(string-encode %this
-		   (ssl-sign-sign sign s 0 (string-length s)) enc)))
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(string-encode %this
-		   (ssl-sign-sign sign %data
-		      (uint32->fixnum byteoffset)
-		      (uint32->fixnum length))
-		   enc)))
-	    (else
-	     (error "sign-sign" "Wrong data" data)))))
+	 (multiple-value-bind (s offset len)
+	    (data->string data "sign-sign" %this)
+	    (string-encode %this (ssl-sign-sign sign s offset len) enc))))
    
    (define sign-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
@@ -1019,7 +972,7 @@
 	    (js-make-function %this sign-init 1 "init")
 	    #f %this)
 	 (js-put! proto 'update
-	    (js-make-function %this sign-update 1 "update")
+	    (js-make-function %this sign-update 2 "update")
 	    #f %this)
 	 (js-put! proto 'sign
 	    (js-make-function %this sign-sign 2 "sign")
@@ -1031,73 +984,34 @@
 	 (__proto__ sign-proto)
 	 (sign (instantiate::ssl-sign))))
 
+   ;; verify
    (define (verify-init this type)
       (if (not (isa? type JsStringLiteral))
 	  (js-raise-type-error %this
-	     "Must be give verifytype string as argument" type)
+	     "Must be given verifytype string as argument" type)
 	  (with-access::JsVerify this (verify)
 	     (ssl-verify-init verify (js-jsstring->string type))
 	     this)))
 
-   (define (verify-update this data)
+   (define (verify-update this data enc)
       (with-access::JsVerify this (verify)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(ssl-verify-update! verify s 0 (string-length s)))
-	     this)
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(ssl-verify-update! verify %data
-		   (uint32->fixnum byteoffset)
-		   (uint32->fixnum length)))
-	     this)
-	    (else
-	     (error "verify-update" "Wrong data" data)))))
+	 (if (eq? enc (js-undefined))
+	     (multiple-value-bind (s offset len)
+		(data->string data "verify-update" %this)
+		(ssl-verify-update! verify s offset len))
+	     (let* ((s (buf->string data "verify-update" %this))
+		    (str (string-decode s enc %this)))
+		(ssl-verify-update! verify str 0 (string-length str))))))
 
-   (define (verify-verify this data sig enc)
+   (define (verify-final this data sig enc)
       (with-access::JsVerify this (verify)
-	 (cond
-	    ((isa? data JsStringLiteral)
-	     (let ((s (js-jsstring->string data)))
-		(cond
-		   ((isa? sig JsStringLiteral)
-		    (let ((si (js-jsstring->string sig)))
-		       (ssl-verify-verify verify
-			  s 0 (string-length s)
-			  si 0 (string-length si))))
-		   ((isa? sig JsTypedArray)
-		    (with-access::JsTypedArray sig ((%sdata %data)
-						    (sbyteoffset byteoffset)
-						    (slength length))
-		       (ssl-verify-verify verify
-			  s 0 (string-length s)
-			  %sdata
-			  (uint32->fixnum sbyteoffset)
-			  (uint32->fixnum slength))))
-		   (else
-		    (error "verify-verify" "Wrong signature" sig)))))
-	    ((isa? data JsTypedArray)
-	     (with-access::JsTypedArray data (%data byteoffset length)
-		(cond
-		   ((isa? sig JsStringLiteral)
-		    (let ((si (js-jsstring->string sig)))
-		       (ssl-verify-verify verify %data
-			  (uint32->fixnum byteoffset)
-			  (uint32->fixnum length)
-			  si 0 (string-length si))))
-		   ((isa? sig JsTypedArray)
-		    (with-access::JsTypedArray sig ((%sdata %data)
-						    (sbyteoffset byteoffset)
-						    (slength length))
-		       (ssl-verify-verify verify %data
-			  (uint32->fixnum byteoffset)
-			  (uint32->fixnum length)
-			  %sdata
-			  (uint32->fixnum sbyteoffset)
-			  (uint32->fixnum slength)))))))
-	    (else
-	     (error "verify-verify" "Wrong data" data)))))
+	 (multiple-value-bind (ds doffset dlen)
+	    (data->string data "verify-verify" %this)
+	    (multiple-value-bind (ss soffset slen)
+	       (data->string sig "verify-verify" %this)
+	       (ssl-verify-final verify
+		  ds doffset dlen
+		  ss soffset slen)))))
    
    (define verify-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
@@ -1106,10 +1020,10 @@
 	    (js-make-function %this verify-init 1 "init")
 	    #f %this)
 	 (js-put! proto 'update
-	    (js-make-function %this verify-update 1 "update")
+	    (js-make-function %this verify-update 2 "update")
 	    #f %this)
 	 (js-put! proto 'verify
-	    (js-make-function %this verify-verify 3 "verify")
+	    (js-make-function %this verify-final 3 "verify")
 	    #f %this)
 	 proto))
 
@@ -1117,6 +1031,116 @@
       (instantiate::JsVerify
 	 (__proto__ verify-proto)
 	 (verify (instantiate::ssl-verify))))
+
+   ;; cipher
+   (define (cipher-init this type key)
+      (with-access::JsCipher this (cipher)
+	 (if (not (isa? type JsStringLiteral))
+	     (js-raise-type-error %this
+		"Must be given cipher type string as argument" type)
+	     (multiple-value-bind (s offset len)
+		(data->string key "cipher-init" %this)
+		(ssl-cipher-init cipher (js-jsstring->string type)
+		   s offset len
+		   (not (isa? this JsDecipher)))))))
+
+   (define (cipher-initiv this type key iv)
+      (with-access::JsCipher this (cipher)
+	 (if (not (isa? type JsStringLiteral))
+	     (js-raise-type-error %this
+		"Cipher must be given cipher type string as argument" type)
+	     (multiple-value-bind (ks koffset klen)
+		(data->string key "cipher-initiv" %this)
+		(multiple-value-bind (is ioffset ilen)
+		   (data->string iv "cipher-init" %this)
+		   (ssl-cipher-initiv cipher (js-jsstring->string type)
+		      ks koffset klen
+		      is ioffset ilen
+		      (not (isa? this JsDecipher))))))))
+
+   (define (cipher-update this data ienc oenc)
+      (with-access::JsCipher this (cipher)
+	 ;; this functio should be rewritten to avoid allocating
+	 ;; so many auxiliary strings 
+	 (let* ((s (buf->string data "cipher-update" %this))
+		(str (string-decode s ienc %this))
+		(so (ssl-cipher-update! cipher str 0 (string-length str))))
+	    (string-encode %this so oenc))))
+
+   (define (cipher-final this enc)
+      (with-access::JsCipher this (cipher)
+	 (with-handler
+	    (lambda (e)
+	       (with-access::&error e (msg)
+		  (js-raise-type-error %this msg e)))
+	    (string-encode %this (ssl-cipher-final cipher) enc))))
+
+   (define (cipher-set-auto-padding this ap)
+      (with-access::JsCipher this (cipher)
+	 (ssl-cipher-set-auto-padding cipher ap)))
+      
+   (define cipher-proto
+      (let ((proto (with-access::JsGlobalObject %this (js-object)
+		      (js-new %this js-object))))
+	 (js-put! proto 'init
+	    (js-make-function %this cipher-init 1 "init")
+	    #f %this)
+	 (js-put! proto 'initiv
+	    (js-make-function %this cipher-initiv 2 "initiv")
+	    #f %this)
+	 (js-put! proto 'update
+	    (js-make-function %this cipher-update 3 "update")
+	    #f %this)
+	 (js-put! proto 'final
+	    (js-make-function %this cipher-final 1 "final")
+	    #f %this)
+	 (js-put! proto 'setAutoPadding
+	    (js-make-function %this cipher-set-auto-padding 1 "setAutoPadding")
+	    #f %this)
+	 proto))
+
+   (define decipher-proto
+      (let ((proto (with-access::JsGlobalObject %this (js-object)
+		      (js-new %this js-object))))
+	 (with-access::JsObject proto (__proto__)
+	    (set! __proto__ cipher-proto))
+	 (js-put! proto 'finaltol
+	    (js-make-function %this cipher-final 1 "finaltol")
+	    #f %this)
+	 proto))
+	    
+   (define (cipher this)
+      (instantiate::JsCipher
+	 (__proto__ cipher-proto)
+	 (cipher (instantiate::ssl-cipher))))
+
+   (define (decipher this)
+      (instantiate::JsDecipher
+	 (__proto__ decipher-proto)
+	 (cipher (instantiate::ssl-cipher))))
+
+   ;; pbkdf2
+   (define (pbkdf2 this password salt iterations keylen callback)
+      (with-access::JsGlobalObject %this (js-object)
+	 (with-handler
+	    (lambda (err)
+	       (if (isa? callback JsFunction)
+		   (let ((obj (js-new %this js-object)))
+		      (js-put! obj 'ondone callback #f %this)
+		      (js-call2 %this callback obj err (js-undefined)))
+		   (raise err)))
+	    (let ((r (string-encode %this
+			(pkcs5-pbkdf2-hmac-sha1
+			   (buf->string password "pbkdf2" %this)
+			   (buf->string salt "pbkdf2" %this)
+			   iterations
+			   keylen)
+			(js-undefined))))
+	       (if (isa? callback JsFunction)
+		   (let ((obj (js-new %this js-object)))
+		      (js-put! obj 'ondone callback #f %this)
+		      (js-call2 %this callback obj (js-undefined) r))
+		   r)))))
 
    (let ((sc (js-make-function %this secure-context 1 "SecureContext"
 		:construct secure-context
@@ -1141,14 +1165,20 @@
 		:prototype sign-proto))
 	 (vf (js-make-function %this sign 1 "Verify"
 		:construct verify
-		:prototype verify-proto)))
+		:prototype verify-proto))
+	 (ci (js-make-function %this sign 1 "cipher"
+		:construct cipher
+		:prototype cipher-proto))
+	 (dc (js-make-function %this sign 1 "decipher"
+		:construct decipher
+		:prototype cipher-proto)))
       
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    `((SecureContext . ,sc)
 	      (Connection . ,conn)
-	      (Cipher . ,(not-implemented "Cipher"))
-	      (Decipher . ,(not-implemented "Decipher"))
+	      (Cipher . ,ci)
+	      (Decipher . ,dc)
 	      (DiffieHellman . ,dh)
 	      (DiffieHellmanGroup . ,dhg)
 	      (Hmac . ,hm)
@@ -1156,7 +1186,8 @@
 	      (Sign . ,sn)
 	      (Verify . ,vf)
 	      
-	      (PBKDF2 . ,(not-implemented "PBKDF2"))
+	      (PBKDF2 . ,(js-make-function %this pbkdf2
+			    5 "pbkdf2"))
 	      (randomBytes . ,(js-make-function %this randomBytes
 				 2 "randomBytes"))
 	      (pseudoRandomBytes . ,(js-make-function %this pseudoRandomBytes
@@ -1198,12 +1229,42 @@
 	      (when (>fx len 0)
 		 (blit-string-ascii-clamp! data 0 string 0 len))
 	      (js-string->jsstring string)))
-	  ((utf8)
+	  ((utf8 utf-8)
 	   (js-string->jsstring
 	      (string-utf8-normalize-utf16 data 0 (string-length data))))
 	  ((binary)
 	   (js-string->jsstring
 	      (8bits-encode-utf8 data 0 (string-length data))))
+	  (else
+	   (error "crypto" "bad encoding" encoding))))
+      (else
+       (error "crypto" "bad encoding" encoding))))
+
+;*---------------------------------------------------------------------*/
+;*    string-decode ...                                                */
+;*---------------------------------------------------------------------*/
+(define (string-decode data encoding %this)
+   (cond
+      ((eq? encoding (js-undefined))
+       data)
+      ((isa? encoding JsStringLiteral)
+       (case (string->symbol (js-jsstring->string encoding))
+	  ((buffer)
+	   data)
+	  ((hex)
+	   (if (oddfx? (string-length data))
+	       (js-raise-type-error %this "Bad input string" data)
+	       (string-hex-intern data)))
+	  ((ucs2)
+	   (string->ucs2-string data 0 (string-length data)))
+	  ((base64)
+	   (base64-decode data #f))
+	  ((ascii)
+	   data)
+	  ((utf8 utf-8)
+	   data)
+	  ((binary)
+	   (utf8->iso-latin data))
 	  (else
 	   (error "crypto" "bad encoding" encoding))))
       (else
@@ -1419,3 +1480,37 @@
  (define (process-crypto %worker %this)
     #unspecified)))
 
+;*---------------------------------------------------------------------*/
+;*    data->string ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (data->string buf proc %this::JsGlobalObject)
+   (cond
+      ((isa? buf JsStringLiteral)
+       (let ((s (js-jsstring->string buf)))
+	  (values s 0 (string-length s))))
+      ((isa? buf JsFastBuffer)
+       (with-access::JsFastBuffer buf (%data byteoffset length)
+	  (let ((start (uint32->fixnum byteoffset))
+		(len (uint32->fixnum length)))
+	     (values %data start len))))
+      ((isa? buf JsSlowBuffer)
+       (with-access::JsSlowBuffer buf (data)
+	  (values data 0 (string-length data))))
+      (else
+       (js-raise-type-error %this
+	  (string-append proc ": Not a string or buffer (" (typeof buf) ")") buf))))
+
+;*---------------------------------------------------------------------*/
+;*    buf->string ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (buf->string buf proc %this::JsGlobalObject)
+   (cond
+      ((isa? buf JsStringLiteral)
+       (js-jsstring->string buf))
+      ((isa? buf JsFastBuffer)
+       (js-jsfastbuffer->string buf))
+      ((isa? buf JsSlowBuffer)
+       (js-jsslowbuffer->string buf))
+      (else
+       (js-raise-type-error %this
+	  (string-append proc ": Not a string or buffer") buf))))

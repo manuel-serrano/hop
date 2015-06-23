@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Wed Dec  3 18:54:25 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Jun 23 15:45:03 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
 /*    -------------------------------------------------------------    */
@@ -16,7 +16,9 @@ service wsclient () {
    return <HTML> {
       <BUTTON> {
 	 onclick: ~{
-	    var ws = new WebSocket( "ws://localhost:" + ${hop.port} + "/hop/wss",
+	    var ws = new WebSocket( "ws://"
+				    + ${hop.hostname} + ":"
+				    + ${hop.port} + "/hop/wss",
 				    [ "bar", "foo" ] );
 	    
 	    ws.onopen = function( event ) {

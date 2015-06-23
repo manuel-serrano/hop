@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/buffloat.js            */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/bufferrw.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sun Sep 28 19:45:55 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Jun 23 10:42:46 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
 /*=====================================================================*/
@@ -48,4 +48,27 @@ assert.deepEqual(
    buf, new Buffer( [ 0, 0, 0x40, 0x93, 0x45, 0xd7, 0x0a, 0x3d, 0x70, 0xa4 ] ) );
    
 
+/*---------------------------------------------------------------------*/
+/*    Encoding                                                         */
+/*---------------------------------------------------------------------*/
+var buf = new Buffer( 2 );
+buf[ 0 ] = 195;
+buf[ 1 ] = 169;
 
+var s1 = buf.toString( "utf8" );
+
+assert.strictEqual( s1.charCodeAt( 0 ), 233 );
+
+buf = new Buffer( 1 );
+buf[ 0 ] = 255;
+
+var s1 = buf.toString( "utf8" );
+
+assert.strictEqual( s1.length, 1 );
+assert.strictEqual( s1.charCodeAt( 0 ), 65533 );
+
+var b2 = new Buffer( s1 );
+assert.strictEqual( b2.length, 3 );
+assert.strictEqual( b2[ 0 ], 0xef );
+assert.strictEqual( b2[ 1 ], 0xbf );
+assert.strictEqual( b2[ 2 ], 0xbd );

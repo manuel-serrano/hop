@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Jun 15 08:48:28 2015 (serrano)                */
+;*    Last change :  Sun Jun 21 06:56:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -37,7 +37,7 @@
 	 (p #f)
 	 (ep #unspecified)
 	 (dp #unspecified)
-	 (rc-file #unspecified)
+	 (rc-file #f)
 	 (mime-file #unspecified)
 	 (libraries '())
 	 (exprs '())
@@ -282,6 +282,10 @@
 
 	    ;; JavaScript
 	    (section "JavaScript")
+	    (("--js" (help "Enable JavaScript (default)"))
+	     (hop-javascript-set! #t))
+	    (("--no-js" (help "Disable JavaScript"))
+	     (hop-javascript-set! #f))
 	    (("--js-return-as-exit" (help "Consider toplevel returns as exits"))
 	     (nodejs-compiler-options-add! :return-as-exit #t)) 
 	    (("--no-js-return-as-exit" (help "Do not consider toplevel returns as exits"))
@@ -432,9 +436,8 @@
 
       ;; hoprc
       (if loadp
-	  (begin
-	     (parseargs-loadrc rc-file (hop-rc-file))
-	     (hop-rc-loaded!))
+	  (hop-rc-loaded!
+	     (or (parseargs-loadrc rc-file (hop-rc-file)) rc-file))
 	  (add-user! "anonymous" 
 	     :services '(home doc epassword wizard hz/list shutdown)
 	     :directories (hop-path)
@@ -490,6 +493,7 @@
       ;; check if a new server socket must be opened
       (when (and (integer? p) (not (=fx p (hop-port))))
 	 (init-server-socket!))
+      
       (reverse files)))
 
 ;*---------------------------------------------------------------------*/

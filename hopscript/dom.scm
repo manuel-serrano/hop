@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Jun 19 17:08:48 2015 (serrano)                */
+;*    Last change :  Sat Jun 20 08:19:09 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -60,16 +60,7 @@
 	 ((tagName:)
 	  (with-access::xml-markup o (tag)
 	     (js-string->jsstring (symbol->string tag))))
-	 ((childNodes:)
-	  (with-access::xml-markup o (body)
-	     (js-vector->jsarray
-		(list->vector
-		   (map (lambda (o)
-			   (if (string? o)
-			       (js-string->jsstring o)
-			       o))
-		      body))
-		%this)))
+	 
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((c (memq pname attributes)))
@@ -87,9 +78,24 @@
 ;*    js-get ::xml-document ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-document prop %this::JsGlobalObject)
-   (if (and (isa? prop JsStringLiteral) (string=? "id" (js-jsstring->string prop)))
-       (with-access::xml-document o (id)
-	  (js-string->jsstring id))
+   (if (isa? prop JsStringLiteral)
+       (let ((pname (js-jsstring->string prop)))
+	  (cond
+	     ((string=? "id" pname)
+	      (with-access::xml-document o (id)
+		 (js-string->jsstring id)))
+	     ((string=? "body" pname)
+	      (with-access::xml-markup o (body)
+		 (js-vector->jsarray
+		    (list->vector
+		       (map (lambda (o)
+			       (if (string? o)
+				   (js-string->jsstring o)
+				   o))
+			  body))
+		    %this)))
+	     (else
+	      (call-next-method))))
        (call-next-method)))
    
 ;*---------------------------------------------------------------------*/
@@ -107,6 +113,16 @@
 	     ((string=? "parentNode" pname)
 	      (with-access::xml-element o (parent)
 		 parent))
+	     ((string=? "childNodes" pname)
+	      (with-access::xml-markup o (body)
+		 (js-vector->jsarray
+		    (list->vector
+		       (map (lambda (o)
+			       (if (string? o)
+				   (js-string->jsstring o)
+				   o))
+			  body))
+		    %this)))
 	     (else
 	      (call-next-method))))
        (call-next-method)))
@@ -114,12 +130,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-markup ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-markup prop value throw::bool %this::JsGlobalObject)
+(define-method (js-put! o::xml-markup prop v throw::bool %this::JsGlobalObject)
    
-   (define (->obj value)
+   (define (->obj v)
       (cond
-	 ((isa? value JsStringLiteral) (js-jsstring->string value))
-	 (else value)))
+	 ((isa? v JsStringLiteral) (js-jsstring->string v))
+	 (else v)))
    
    (let loop ((pname (symbol->keyword (js-toname prop %this))))
       (case pname
@@ -130,29 +146,36 @@
 	     (let ((c (memq pname attributes)))
 		(cond
 		   ((not (pair? c))
-		    (set! attributes (cons* pname (->obj value) attributes)))
+		    (set! attributes (cons* pname (->obj v) attributes)))
 		   (else
-		    (set-car! (cdr c) (->obj value))))))))))
+		    (set-car! (cdr c) (->obj v))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-document ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-document prop value throw::bool %this::JsGlobalObject)
-   (if (and (isa? prop JsStringLiteral) (string=? "id" (js-jsstring->string prop)))
-       (with-access::xml-document o (id)
-	  (set! id (js-tostring value %this))
-	  (call-next-method))))
+(define-method (js-put! o::xml-document prop v throw::bool %this::JsGlobalObject)
+   (if (isa? prop JsStringLiteral)
+       (let ((pname (js-jsstring->string prop)))
+	  (cond
+	     ((string=? "id" pname)
+	      (with-access::xml-document o (id)
+		 (set! id (js-tostring v %this))))
+	     ((string=? "body" pname)
+	      #f)
+	     (else
+	      (call-next-method))))
+       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-element prop value throw::bool %this::JsGlobalObject)
+(define-method (js-put! o::xml-element prop v throw::bool %this::JsGlobalObject)
    (if (isa? prop JsStringLiteral)
        (let ((pname (js-jsstring->string prop)))
 	  (cond
 	     ((string=? "id" pname)
 	      (with-access::xml-element o (id)
-		 (set! id (js-tostring value %this))))
+		 (set! id (js-tostring v %this))))
 	     ((string=? "childNodes" pname)
 	      #f)
 	     ((string=? "parentNode" pname)

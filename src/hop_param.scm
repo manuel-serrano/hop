@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Jun 15 08:46:36 2015 (serrano)                */
+;*    Last change :  Sun Jun 21 06:57:12 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -117,7 +117,10 @@
 	    (hop-client-output-port-set! ::output-port)
 
 	    (hop-run-server::bool)
-	    (hop-run-server-set! ::bool))
+	    (hop-run-server-set! ::bool)
+
+	    (hop-javascript::bool)
+	    (hop-javascript-set! ::bool))
 
    (eval    (export-exports)))
 
@@ -372,4 +375,10 @@
 ;*    hop-run-server ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-run-server
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-javascript ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-javascript
    #t)

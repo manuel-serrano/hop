@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Jun 16 11:07:32 2015 (serrano)                */
+;*    Last change :  Sun Jun 21 09:39:25 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -339,7 +339,7 @@
 (define (worker-loop::JsLoop th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop)
       (unless %loop
-	 (tprint "PAS GLOP th=" th " " (getpid)))
+	 (tprint "LACKING LOOP th=" th " " (getpid)))
       %loop))
 
 ;*---------------------------------------------------------------------*/
@@ -403,6 +403,9 @@
 				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))
 	 (set! %loop loop)
+	 ;; to avoid using locks, force process structure initialization,
+	 ;; even if not used explicitly in the loop
+	 (nodejs-process th %this)
 	 (synchronize mutex
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))

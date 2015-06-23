@@ -15,21 +15,6 @@
 # failures that need to be fixed
 simple/test-http-pipeline-flood.js # Hop too slow start (need 500 setTimeout)
 
-# crypto
-simple/test-crypto-ecb.js
-simple/test-crypto-padding-aes256.js
-simple/test-crypto-padding.js
-simple/test-crypto-verify-failure.js
-simple/test-crypto.js
-simple/test-crypto-binary-default.js
-simple/test-domain-crypto.js
-
-# tls
-simple/test-tls-session-cache.js
-
-# to be fixed
-pummel/test-net-write-callbacks.js
-
 #*---------------------------------------------------------------------*/
 #*    bad (javascript or nodejs) tests                                 */
 #*---------------------------------------------------------------------*/
@@ -71,6 +56,9 @@ simple/test-pipe-unref.js
 simple/test-net-pipe-connect-errors.js
 simple/test-cluster-eaddrinuse.js
 simple/test-tls-connect-pipe.js
+
+# Bad crypto key
+simple/test-crypto.js
 
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
