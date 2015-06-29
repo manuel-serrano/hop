@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Feb 16 17:33:13 2015 (serrano)                */
+;*    Last change :  Thu Jun 25 14:38:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -39,6 +39,7 @@
    '("break"
      "case"
      "catch"
+     "const"
      "continue"
      "debugger"
      "default"
@@ -49,10 +50,10 @@
      "finally"
      "for"
      "function"
-     "service"
      "if"
      "in"
      "instanceof"
+     "let"
      "new"
      "null"
      "return"
@@ -62,6 +63,7 @@
      "true"
      "try"
      "typeof"
+     "service"
      "var"
      "void"
      "while"
@@ -69,7 +71,6 @@
 
 (define *future-reserved-list*
    '("class"
-     "const"
      "enum"
      "export"
      "extends"
@@ -79,7 +80,6 @@
 (define *future-strict-reserved-list*
    '("implements"
      "interface"
-     "let"
      "of"
      "package"
      "private"
@@ -264,22 +264,23 @@
        (token 'NUMBER (string->number (the-substring 2 (the-length)) 16)
 	  (the-length)))
       
-      (#\{   (token 'LBRACE #\{ 1))
-      (#\}   (token 'RBRACE #\} 1))
-      (#\(   (token 'LPAREN #\( 1))
-      (#\)   (token 'RPAREN #\) 1))
-      (#\[   (token 'LBRACKET #\[ 1))
-      (#\]   (token 'RBRACKET #\] 1))
-      (#\.   (token 'DOT #\. 1))
-      (#\;   (token 'SEMICOLON #\; 1))
-      (#\,   (token 'COMMA #\, 1))
-      (#\|   (token 'BIT_OR #\| 1))
-      ("||"  (token 'OR "||" 2))
-      ("|="  (token 'BIT_OR= "|=" 2))
+      (#\{ (token 'LBRACE #\{ 1))
+      (#\} (token 'RBRACE #\} 1))
+      (#\( (token 'LPAREN #\( 1))
+      (#\) (token 'RPAREN #\) 1))
+      (#\[ (token 'LBRACKET #\[ 1))
+      (#\] (token 'RBRACKET #\] 1))
+      (#\. (token 'DOT #\. 1))
+      (#\; (token 'SEMICOLON #\; 1))
+      (#\, (token 'COMMA #\, 1))
+      (#\| (token 'BIT_OR #\| 1))
+      ("||" (token 'OR "||" 2))
+      ("|=" (token 'BIT_OR= "|=" 2))
       ((or #\< #\> "<=" ">=" "==" "!=" "===" "!==" #\+ #\- #\* #\% "++" "--"
 	   "<<" ">>" ">>>" #\& #\^ #\! #\~ "&&" #\: #\= "+=" "-="  
 	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" #\/ #\?)
        (token (the-symbol) (the-string) (the-length)))
+      ("=>" (token '=> "=>" 2))
 
       ;; strings
       ((: #\" (* string_char_quote) #\")

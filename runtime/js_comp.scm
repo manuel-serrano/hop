@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Sat Dec  6 19:06:49 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Fri Jun 26 16:04:12 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -117,7 +117,7 @@
        (display obj op))
       ((string? obj)
        (display "\"" op)
-       (display (string-replace obj #\" #\') op)
+       (display (string-for-read (string-replace obj #\" #\')) op)
        (display "\"" op))
       ((boolean? obj)
        (display (if obj "true" "false") op))

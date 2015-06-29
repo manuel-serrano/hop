@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Mar  5 13:28:46 2015 (serrano)                */
+;*    Last change :  Mon Jun 29 16:48:07 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -50,6 +50,9 @@
 	      else::J2SStmt)
 	   
 	   (final-class J2SVarDecls::J2SStmt
+	      decls::pair)
+
+	   (final-class J2SLetBlock::J2SBlock
 	      decls::pair)
 	   
 	   (class J2SIdStmt::J2SStmt
@@ -112,6 +115,7 @@
 	      expr::J2SExpr)
 	   
 	   (class J2SFun::J2SExpr
+	      (this read-only (default 'this))
 	      (mode read-only (default #f))
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
@@ -143,7 +147,7 @@
 	      (cache (default #f))
 	      id::symbol)
 	   
-	   (final-class J2SRef::J2SExpr
+	   (class J2SRef::J2SExpr
 	      (decl::J2SDecl (info '("nojson"))))
 	   
 	   (class J2SWithRef::J2SExpr
@@ -154,6 +158,8 @@
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
 	      (module read-only (default #f)))
+
+	   (class J2SLetRef::J2SRef)
 	   
 	   (final-class J2SThis::J2SExpr)
 	   
@@ -181,9 +187,13 @@
 	   (class J2SDeclInit::J2SDecl
 	      (val::J2SExpr read-only))
 
-	   (class J2SLet::J2SDecl)
+	   (final-class J2SLet::J2SDecl
+	      (const::bool read-only (default #f)))
 	   
-	   (class J2SLetInit::J2SLet
+	   (wide-class J2SLetInit::J2SLet
+	      (val::J2SExpr read-only))
+	   
+	   (wide-class J2SLetOpt::J2SLet
 	      (val::J2SExpr read-only))
 	   
 	   (class J2SDeclFun::J2SDeclInit)
@@ -263,6 +273,8 @@
 	      args::pair-nil)
 	   
 	   (class J2SInit::J2SAssig)
+	   
+	   (class J2SInitLet::J2SInit)
 	   
 	   (final-class J2SAssigOp::J2SAssig
 	      op::symbol)
@@ -619,6 +631,7 @@
 (gen-walks J2SStmtExpr expr)
 (gen-walks J2SSequence (exprs))
 (gen-walks J2SVarDecls (decls))
+(gen-walks J2SLetBlock (nodes decls))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SSwitch key (cases))
 (gen-walks J2SLabel body)

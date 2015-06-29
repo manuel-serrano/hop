@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jun 16 08:21:03 2015 (serrano)                */
+;*    Last change :  Fri Jun 26 15:24:09 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -73,6 +73,10 @@
 	   
 	   (js-in?::bool ::JsGlobalObject f obj)
 	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
+
+	   (inline js-make-let::cell)
+	   (js-let-ref ::cell ::obj ::obj ::JsGlobalObject)
+	   (inline js-let-set! ::cell ::obj)
 	   
 	   (inline js-totest::bool ::obj)
 	   (js-toboolean::bool ::obj)
@@ -590,6 +594,28 @@
    (if (not (isa? obj JsObject))
        (js-raise-type-error/loc %this loc "in: not a object ~s" obj)
        (js-has-property obj (js-toname field %this) %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-let ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-let)
+   (make-cell '__undefined__))
+
+;*---------------------------------------------------------------------*/
+;*    js-let-ref ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (js-let-ref cell ident loc %this)
+   (let ((v (cell-ref cell)))
+      (if (eq? v '__undefined__)
+	  (js-raise-reference-error/loc %this loc
+	     (format "Variable undefined ~s" ident) cell)
+	  v)))
+
+;*---------------------------------------------------------------------*/
+;*    js-let-set! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-let-set! cell val)
+   (cell-set! cell val))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-totest ...                                                    */
@@ -1295,6 +1321,19 @@
       (js-raise
 	 (apply js-new %this js-reference-error
 	    (js-string->jsstring (format fmt obj)) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-reference-error/loc ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-raise-reference-error/loc %this::JsGlobalObject loc fmt::bstring obj . args)
+   (with-access::JsGlobalObject %this (js-reference-error)
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (js-raise
+	     (apply js-new %this js-reference-error
+		(js-string->jsstring (format fmt obj)) fname loc args)))
+	 (else
+	  (apply js-raise-reference-error %this fmt obj args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-error ...                                               */

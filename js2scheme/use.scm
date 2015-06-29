@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun May 25 18:45:00 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Sun Jun 28 07:45:25 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -21,7 +21,8 @@
 	   __js2scheme_utils)
 
    (export j2s-use-stage
-	   (generic j2s-use! ::obj)))
+	   (generic j2s-use! ::obj)
+	   (generic use-count ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use-stage ...                                                */
@@ -37,7 +38,7 @@
 ;*    j2s-use! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-use! this)
-   (use this))
+   (use-count this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use! ::J2SProgram ...                                        */
@@ -45,43 +46,43 @@
 (define-method (j2s-use! this::J2SProgram)
    (with-access::J2SProgram this (nodes)
       (for-each (lambda (o)
-		   (reset-decl o)
-		   (use o))
+		   (use-reset o)
+		   (use-count o))
 	 nodes)))
 
 ;*---------------------------------------------------------------------*/
 ;*    use ::J2SNode ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use this::J2SNode)
+(define-walk-method (use-count this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    use ::J2SFun ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use this::J2SFun)
+(define-walk-method (use-count this::J2SFun)
    (with-access::J2SFun this (params body)
-      (reset-decl this)
-      (use body)))
+      (use-reset this)
+      (use-count body)))
    
 ;*---------------------------------------------------------------------*/
 ;*    use ::J2SRef ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use this::J2SRef)
+(define-walk-method (use-count this::J2SRef)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (use)
 	 (set! use (+fx 1 use))))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    reset-decl ...                                                   */
+;*    use-reset ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (reset-decl this::J2SNode)
+(define-walk-method (use-reset this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    reset-decl ...                                                   */
+;*    use-reset ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (reset-decl this::J2SDecl)
+(define-walk-method (use-reset this::J2SDecl)
    (with-access::J2SDecl this (use)
       (set! use 0)))
 

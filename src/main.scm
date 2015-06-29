@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Jun 21 09:55:43 2015 (serrano)                */
+;*    Last change :  Thu Jun 25 19:06:36 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -117,9 +117,6 @@
 	  (input-port-protocol-set! "https://" open-input-https-socket)))
       ;; start zeroconf
       (when (hop-enable-zeroconf) (init-zeroconf!))
-      ;; close filters and users registration before starting
-      (hop-filters-close!)
-      (users-close!)
       ;; create the scheduler (unless the rc file has already created one)
       (unless (isa? (hop-scheduler) scheduler)
 	 (set-scheduler!))
@@ -206,10 +203,17 @@
 					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
 				  (service-filter req))))
 		  (hop-preload-services))
-	       ;; close the security
+	       ;; close the filters, users, and security
 	       (if (hop-javascript)
-		   (js-worker-push-thunk! %worker "security" security-close!)
-		   (security-close!))
+		   (js-worker-push-thunk! %worker "security"
+		      (lambda ()
+			 (hop-filters-close!)
+			 (users-close!)
+			 (security-close!)))
+		   (begin
+		      (hop-filters-close!)
+		      (users-close!)
+		      (security-close!)))
 	       ;; start the main loop
 	       (scheduler-accept-loop (hop-scheduler) serv #t))
 	    (if (hop-javascript)

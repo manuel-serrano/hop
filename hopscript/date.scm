@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 17 18:48:53 2015 (serrano)                */
+;*    Last change :  Wed Jun 24 10:28:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -222,7 +222,9 @@
 	 ;; parse
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.2
 	 (define (js-date-parse this str)
-	    (*elong #e1000 (date->seconds (parse-date (js-tostring str %this)))))
+	    (*fl 1000.
+	       (elong->flonum
+		  (date->seconds (parse-date (js-tostring str %this))))))
 
 	 (js-bind! %this js-date 'parse
 	    :value (js-make-function %this js-date-parse 1 'parse)

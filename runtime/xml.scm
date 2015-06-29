@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Jun 19 16:52:06 2015 (serrano)                */
+;*    Last change :  Sat Jun 27 06:58:32 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -929,7 +929,7 @@
 ;*---------------------------------------------------------------------*/
 (define (xml-tilde->expression::bstring obj)
    (with-access::xml-tilde obj (%js-expression body)
-      (when (not (string? %js-expression))
+      (unless (string? %js-expression)
 	 (with-access::clientc (hop-clientc) (precompiled->JS-expression)
 	    (set! %js-expression (precompiled->JS-expression body))))
       %js-expression))

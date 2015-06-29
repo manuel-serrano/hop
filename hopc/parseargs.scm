@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Feb 14 10:43:48 2015 (serrano)                */
+;*    Last change :  Sun Jun 28 06:52:27 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module hopc_parseargs
 
-   (library hop)
+   (library hop js2scheme)
    
    (import  hopc_param
 	    hopc_driver)
@@ -150,6 +150,21 @@
 	     (exit 0))
 	    (("--no-server" (help "Hop compatibility, ignored"))
 	     #unspecified)
+	    (("-p" ?port (help "Hop compatibility, ignored"))
+	     #unspecified)
+	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
+	     (j2s-compile-options-set!
+		(append '(es6-let: #t es6-const: #t es6-arrow-function: #t)
+		   (j2s-compile-options))))
+	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
+	     (j2s-compile-options-set!
+		(cons* (string->keyword opt)
+		   (cond
+		      ((or (string=? val "true") (string=? val "#t")) #t)
+		      ((or (string=? val "false") (string=? val "#f")) #f)
+		      ((string->number val) => (lambda (val) val))
+		      (else val))
+		   (j2s-compile-options))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Mar  5 15:51:20 2015 (serrano)                */
+;*    Last change :  Mon Jun 29 16:39:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -56,6 +56,14 @@
 (define-method (j2s->list this::J2SSeq)
    (with-access::J2SSeq this (nodes)
       `(,@(call-next-method) ,@(map j2s->list nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SLetBlock ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SLetBlock)
+   (with-access::J2SLetBlock this (decls nodes)
+      `(,(string->symbol (typeof this))
+	,(map j2s->list decls) ,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SVarDecls ...                                      */
@@ -327,6 +335,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
    (with-access::J2SDeclInit this (id val key)
+      `(,@(call-next-method) ,(j2s->list val))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SLetInit ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SLetInit)
+   (with-access::J2SLetInit this (id val key)
       `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/

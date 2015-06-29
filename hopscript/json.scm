@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb  5 14:51:08 2015 (serrano)                */
+;*    Last change :  Wed Jun 24 10:23:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -138,7 +138,7 @@
 		   n
 		   (let ((c (string-ref-ur str i)))
 		      (case c
-			 ((#a008 #\tab #\newline #a012 #a013 #\" #\' #\\)
+			 ((#a008 #\tab #\newline #a012 #a013 #\" #\\)
 			  (loop (+fx i 1) (+fx n 2)))
 			 (else
 			  (cond
@@ -184,10 +184,6 @@
 				((#\")
 				 (string-set! nstr w #\\)
 				 (string-set! nstr (+fx w 1) #\")
-				 (loop (+fx r 1) (+fx w 2)))
-				((#\')
-				 (string-set! nstr w #\\)
-				 (string-set! nstr (+fx w 1) #\')
 				 (loop (+fx r 1) (+fx w 2)))
 				((#\\)
 				 (string-set! nstr w #\\)

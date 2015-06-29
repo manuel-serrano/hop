@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 12 16:05:13 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Fri Jun 26 18:22:40 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -63,6 +63,11 @@
 ;*    head-runtime-system-inline ...                                   */
 ;*---------------------------------------------------------------------*/
 (define head-runtime-system-inline #f)
+
+;*---------------------------------------------------------------------*/
+;*    head-runtime-favicon ...                                         */
+;*---------------------------------------------------------------------*/
+(define head-runtime-favicon #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTML> ...                                                       */
@@ -136,11 +141,16 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
       (let* ((hopcss (make-file-path (hop-share-directory) "hop.hss"))
 	     (suffix (if (=fx (bigloo-debug) 0) "_u.js" "_s.js"))
 	     (rts (map (lambda (s) (string-append s suffix))
-		     (hop-runtime-system))))
+		     (hop-runtime-system)))
+	     (favicon (make-file-path (hop-share-directory)
+			 "icons" "hop" "hop-16x16.png")))
+	 ;; favicon to avoid /favicon.ico authentication
+	 (set! head-runtime-favicon (<LINK> :rel "shortcut icon" :href favicon))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
 	 (set! head-runtime-system-packed 
 	    (cons* (<HOP-SETUP>)
+	       
 	       (<LINK> :inline #f
 		  :rel "stylesheet"
 		  :type (hop-configure-css-mime-type) 
@@ -356,6 +366,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 
    (define context #f)
 
+   (define favico #f)
+   
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)
@@ -368,7 +380,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 
       (cond
 	 ((null? a)
-	  (let ((body (reverse! els)))
+	  (let* ((els (if favico els (cons head-runtime-favicon els)))
+		 (body (reverse! els)))
 	     (if rts
 		 (append (cond
 			    (inl head-runtime-system-inline)
@@ -392,6 +405,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		 ((:css :jscript :require :include :hz :library)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
+		  (set! favico #t)
 		  (let ((v (xml-primitive-value (cadr a))))
 		     (if (string? v)
 			 (loop (cddr a) #f rts dir path base inl packed 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Mar  6 08:06:18 2015 (serrano)                */
+;*    Last change :  Fri Jun 26 15:46:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -127,7 +127,7 @@
 (define-walk-method (resolve! this::J2SFun env mode withs wenv)
 
    (define (check-strict-mode-params params loc)
-      ;; Check the extra cnnstrains, parameter names have in in strict mode
+      ;; Check the extra cnnstrains parameter names have in strict mode
       (let loop ((p params))
 	 (when (pair? p)
 	    (with-access::J2SDecl (car p) (id)
@@ -233,9 +233,36 @@
 ;*       this))                                                        */
 
 ;*---------------------------------------------------------------------*/
+;*    resolve-let! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (resolve-let! this::J2SBlock env fmode withs wenv decls)
+   (with-access::J2SBlock this (loc endloc nodes)
+      (let* ((ndecls (map (lambda (d)
+			     (duplicate::J2SLet d))
+			decls))
+	     (nenv (append ndecls env)))
+	 (instantiate::J2SLetBlock
+	    (loc loc)
+	    (endloc endloc)
+	    (decls ndecls)
+	    (nodes (map! (lambda (n)
+			    (resolve! n nenv fmode withs wenv))
+		      nodes))))))
+   
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SBlock ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SBlock env mode withs wenv)
+   ;; a block is a letrec if it contains let or const declaration
+   (let ((ldecls (collect-let this)))
+      (if (pair? ldecls)
+	  (resolve-let! this env mode withs wenv ldecls)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SWith ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (resolve! this::J2SWith env mode withs wenv)
+(define-walk-method (resolve! this::J2SWith env mode withs wenv)
    (if (eq? mode 'normal)
        (with-access::J2SWith this (obj block loc id)
 	  (set! obj (resolve! obj env mode withs wenv))
@@ -396,6 +423,23 @@
 		     (rhs (resolve! val env mode withs wenv))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SLetInit ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SLetInit env mode withs wenv)
+   (with-access::J2SLetInit this (loc id val)
+      (let ((ndecl::J2SLet (find-decl id env)))
+	 ;; strict mode restrictions
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
+	 (when (eq? mode 'strict)
+	    (check-strict-mode-eval id "Declaration name" loc))
+	 (instantiate::J2SStmtExpr
+	    (loc loc)
+	    (expr (instantiate::J2SInitLet
+		     (loc loc)
+		     (lhs (j2sref ndecl loc withs wenv))
+		     (rhs (resolve! val env mode withs wenv))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclFun env mode withs wenv)
@@ -411,6 +455,14 @@
       (instantiate::J2SNop
 	 (loc loc))))
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    resolve! ::J2SLetInit ...                                        *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (resolve! this::J2SLetInit env mode withs wenv) */
+;*    (with-access::J2SLetInit this (loc val)                          */
+;*       (set! val (resolve! val env mode withs wenv)))                */
+;*    this)                                                            */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SAssign ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -529,7 +581,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SComprehension ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (resolve! this::J2SComprehension env mode withs wenvs)
+(define-walk-method (resolve! this::J2SComprehension env mode withs wenvs)
    (with-access::J2SComprehension this (test expr iterables decls)
       (set! iterables
 	 (map (lambda (iterable)
@@ -539,9 +591,23 @@
 	 (set! test (resolve! test nenv mode withs wenvs))
 	 (set! expr (resolve! expr nenv mode withs wenvs))
 	 this)))
-      
+
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SNode ...                                            */
+;*    collect-let ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (collect-let::pair-nil this::J2SBlock)
+   (with-access::J2SBlock this (nodes)
+      (append-map (lambda (d)
+		     (if (isa? d J2SVarDecls)
+			 (with-access::J2SVarDecls d (decls)
+			    (filter (lambda (d)
+				       (isa? d J2SLet))
+			       decls))
+			 '()))
+	 nodes)))
+
+;*---------------------------------------------------------------------*/
+;*    collect* ::J2SNode ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Collect all the variable declared in a tree.                     */
 ;*---------------------------------------------------------------------*/
@@ -549,42 +615,49 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SVarDecls ...                                        */
+;*    collect* ::J2SVarDecls ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SVarDecls)
    (with-access::J2SVarDecls this (decls)
-      (map (lambda (d)
-	      (cond
-		 ((isa? d J2SDeclFun) d)
-		 ((isa? d J2SDeclExtern) d)
-		 ((isa? d J2SDeclInit) (duplicate::J2SDecl d))
-		 (else d)))
+      (filter-map (lambda (d)
+		     (cond
+			((isa? d J2SLet) #f)
+			((isa? d J2SDeclFun) d)
+			((isa? d J2SDeclExtern) d)
+			((isa? d J2SDeclInit) (duplicate::J2SDecl d))
+			(else d)))
 	 decls)))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SDecl ...                                            */
+;*    collect* ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDecl)
    (list this))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SDeclInit ...                                        */
+;*    collect* ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDeclInit)
-   (list (duplicate::J2SDecl this)))
+   (list this))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SDeclFun ...                                         */
+;*    collect* ::J2SDeclFun ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDeclFun)
    (list this))
 
 ;*---------------------------------------------------------------------*/
-;*    collect ::J2SDeclExtern ...                                      */
+;*    collect* ::J2SDeclExtern ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDeclExtern)
    (list this))
 
+;*---------------------------------------------------------------------*/
+;*    collect* ::J2SLet ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect* this::J2SLet)
+   '())
+		  
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -594,7 +667,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDollar ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (collect* this::J2SDollar)
+(define-walk-method (collect* this::J2SDollar)
    '())
 
 ;*---------------------------------------------------------------------*/

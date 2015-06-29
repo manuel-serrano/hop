@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Jun 15 18:20:10 2015 (serrano)                */
+;*    Last change :  Fri Jun 26 09:48:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -32,6 +32,7 @@
 	   __hopscript_array)
 
    (static (class JsHopFrame::JsObject
+	      (%this read-only)
 	      (args read-only (default #f))
 	      (url read-only)))
 
@@ -63,8 +64,8 @@
 ;*    xml-attribute-encode ::JsHopFrame ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-attribute-encode o::JsHopFrame)
-   (with-access::JsHopFrame o (url)
-      (xml-attribute-encode url)))
+   (with-access::JsHopFrame o (%this)
+      (hopframe->string o %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsService ...                                  */
@@ -172,12 +173,14 @@
    (define (url-frame)
       (with-access::JsGlobalObject %this (js-hopframe-prototype)
 	 (instantiate::JsHopFrame
+	    (%this %this)
 	    (url (hop-apply-url url args))
 	    (__proto__ js-hopframe-prototype))))
    
    (define (multipart-frame)
       (with-access::JsGlobalObject %this (js-hopframe-prototype)
 	 (instantiate::JsHopFrame
+	    (%this %this)
 	    (args (unless (eq? args (js-undefined))
 		     (map (lambda (val)
 			     (cond

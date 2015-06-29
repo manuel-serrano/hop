@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun 21 06:56:58 2015 (serrano)                */
+;*    Last change :  Sun Jun 28 06:51:27 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -290,6 +290,17 @@
 	     (nodejs-compiler-options-add! :return-as-exit #t)) 
 	    (("--no-js-return-as-exit" (help "Do not consider toplevel returns as exits"))
 	     (nodejs-compiler-options-add! :return-as-exit #f))
+	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
+	     (for-each (lambda (ext)
+			  (nodejs-compiler-options-add! ext #t))
+		'(es6-let: es6-const: es6-arrow-function:)))
+	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
+	     (nodejs-compiler-options-add! (string->keyword opt)
+		(cond
+		   ((or (string=? val "true") (string=? val "#t")) #t)
+		   ((or (string=? val "false") (string=? val "#f")) #f)
+		   ((string->number val) => (lambda (val) val))
+		   (else val))))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))

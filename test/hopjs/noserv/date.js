@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jun 17 18:48:47 2015 (serrano)                */
+/*    Last change :  Wed Jun 24 10:29:05 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -13,37 +13,37 @@ var assert = require( "assert" );
 /*---------------------------------------------------------------------*/
 /*    parse                                                            */
 /*---------------------------------------------------------------------*/
-/* assert.strictEqual(                                                 */
-/*    Date.parse( "2011-10-10T14:48:00" ),                             */
-/*    new Date( "2011-10-10T14:48:00" ).valueOf() );                   */
-/*                                                                     */
-/* assert.strictEqual(                                                 */
-/*    Date.parse( "2011-05-10T14:48:00" ),                             */
-/*    new Date( "2011-05-10T14:48:00" ).valueOf() );                   */
-/*                                                                     */
-/* assert.strictEqual(                                                 */
-/*    new Date( "2011-10-10T14:48:00.000" ).valueOf(),                 */
-/*    new Date( "2011-10-10T14:48:00" ).valueOf() );                   */
-/* assert.strictEqual( 123, new Date("2011-10-10T14:48:00.123").getMilliseconds() ); */
-/*                                                                     */
-/* {*---------------------------------------------------------------------*} */
-/* {*    ISO string conversions ::Iso string conversion ...               *} */
-/* {*---------------------------------------------------------------------*} */
-/* var date = new Date( "2011-10-10T14:48:00" );                       */
-/* var nowf = new Date();                                              */
-/* var now = new Date( nowf.setMilliseconds( 0 ) );                    */
-/*                                                                     */
-/* var sdate = date.toISOString();                                     */
-/* var snowf = nowf.toISOString();                                     */
-/* var snow = now.toISOString();                                       */
-/*                                                                     */
-/* var redate = new Date( sdate );                                     */
-/* var renowf = new Date( snowf );                                     */
-/* var renow = new Date( snow );                                       */
-/*                                                                     */
-/* assert.strictEqual( date.valueOf(), redate.valueOf() );             */
-/* assert.strictEqual( nowf.valueOf(), renowf.valueOf() );             */
-/* assert.strictEqual( now.valueOf(), renow.valueOf() );               */
+assert.strictEqual(
+   Date.parse( "2011-10-10T14:48:00" ),
+   new Date( "2011-10-10T14:48:00" ).valueOf() );
+
+assert.strictEqual(
+   Date.parse( "2011-05-10T14:48:00" ),
+   new Date( "2011-05-10T14:48:00" ).valueOf() );
+
+assert.strictEqual(
+   new Date( "2011-10-10T14:48:00.000" ).valueOf(),
+   new Date( "2011-10-10T14:48:00" ).valueOf() );
+assert.strictEqual( 123, new Date("2011-10-10T14:48:00.123").getMilliseconds() );
+
+/*---------------------------------------------------------------------*/
+/*    ISO string conversions ::Iso string conversion ...               */
+/*---------------------------------------------------------------------*/
+var date = new Date( "2011-10-10T14:48:00" );
+var nowf = new Date();
+var now = new Date( nowf.setMilliseconds( 0 ) );
+
+var sdate = date.toISOString();
+var snowf = nowf.toISOString();
+var snow = now.toISOString();
+
+var redate = new Date( sdate );
+var renowf = new Date( snowf );
+var renow = new Date( snow );
+
+assert.strictEqual( date.valueOf(), redate.valueOf() );
+assert.strictEqual( nowf.valueOf(), renowf.valueOf() );
+assert.strictEqual( now.valueOf(), renow.valueOf() );
 
 /*---------------------------------------------------------------------*/
 /*    More conversions                                                 */

@@ -3,14 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Feb 14 11:28:35 2015 (serrano)                */
+;*    Last change :  Sat Jun 27 05:49:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
 ;*    This module implements the JavaScript return removal. After      */
-;*    this pass, return are not longer expected in the tree. They      */
-;*    are replaced with either bind-exit calls or by tail returns.     */
+;*    this pass, return statement are replaced with either bind-exit   */
+;*    calls or by tail returns.                                        */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu May 28 16:07:17 2015 (serrano)                */
+#*    Last change :  Sat Jun 27 07:50:44 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -41,6 +41,7 @@ POPULATION = Makefile \
   svc3/svc3.js svc3/example.json \
   svc4/svc4.js svc4/example.json \
   html/html.js html/html.hss html/example.json \
+  htmlc/htmlc.js htmlc/example.json \
   hss/hss.hss hss/hss.js hss/example.json \
   tree/tree.js tree/example.json \
   spage/spage.js spage/example.json \
@@ -54,6 +55,7 @@ POPULATION = Makefile \
   worker2/slave.js worker2/worker2.js worker2/example.json \
   worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
   worker4/slave.js worker4/worker4.js worker4/example.json \
+  worker5/slave.js worker5/worker5.js worker5/example.json \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
   widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \

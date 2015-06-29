@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jun 17 14:41:22 2015 (serrano)                */
+;*    Last change :  Mon Jun 29 17:22:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -18,6 +18,7 @@
 	   __js2scheme_dump
 	   __js2scheme_utils
 	   __js2scheme_js
+	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage)
    
@@ -300,15 +301,34 @@
 ;*    j2s-scheme ::J2SLet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLet mode return conf)
-   (error "j2s-scheme ::J2SLet" "not implemented yet" (j2s->list this)))
+   (with-access::J2SLet this (loc id name)
+      (epairify loc
+	 `(,(j2s-name name id) (js-make-let)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SLetOpt ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SLetOpt mode return conf)
+   (with-access::J2SLetOpt this (loc id name writable val)
+      (let ((expr (j2s-scheme val mode return conf))
+	    (ident (j2s-name name id)))
+	 (epairify loc
+	    `(,ident ,expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-set! lhs val result mode return conf)
-   (cond
-      ((isa? lhs J2SRef)
-       (with-access::J2SRef lhs (decl)
+   
+   (define (set decl)
+      (if (and (isa? decl J2SLet) (not (isa? decl J2SLetOpt)))
+	  (with-access::J2SLet decl (id name global)
+	     `(js-let-set! ,(j2s-name name id) ,val))
+	  `(set! ,(j2s-scheme lhs mode return conf) ,val)))
+   
+   (with-access::J2SRef lhs (decl)
+      (cond
+	 ((isa? lhs J2SRef)
 	  (with-access::J2SDecl decl (writable global id loc)
 	     (if writable
 		 (cond
@@ -318,17 +338,17 @@
 			 ,result))
 		    (result
 		     `(begin
-			 (set! ,(j2s-scheme lhs mode return conf) ,val)
+			 ,(set decl)
 			 ,result))
 		    (else
-		     `(set! ,(j2s-scheme lhs mode return conf) ,val)))
-		 val))))
-      ((not result)
-       `(set! ,(j2s-scheme lhs mode return conf) ,val))
-      (else
-       `(begin
-	   (set! ,(j2s-scheme lhs mode return conf) ,val)
-	   ,result))))
+		     (set decl)))
+		 val)))
+	 ((not result)
+	  (set decl))
+	 (else
+	  `(begin
+	      ,(set decl)
+	      ,result)))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclInit ...                                     */
@@ -408,14 +428,14 @@
 	 (epairify-deep loc
 	    (if global
 		`(begin
-		    (define ,fastid ,(jssvc->scheme val scmid mode return conf))
+		    (define ,fastid ,(jssvc->scheme val id scmid mode return conf))
 		    (define ,scmid 
 		       (js-bind! %this ,global ',id
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))
 		`(begin
-		    (define ,fastid ,(jssvc->scheme val scmid mode return conf))
+		    (define ,fastid ,(jssvc->scheme val id scmid mode return conf))
 		    (define ,scmid ,fastid)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -442,11 +462,17 @@
 ;*    j2s-scheme ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id name global)
-	 (if (and global (in-eval? return))
-	     `(js-get-global-object-name %scope ',id #f %this)
-	     (j2s-name name id)))))
+	 (cond
+	    ((isa? decl J2SLetOpt)
+	     (j2s-name name id))
+	    ((isa? decl J2SLet)
+	     `(js-let-ref ,(j2s-name name id) ',id ',loc %this))
+	    ((and global (in-eval? return))
+	     `(js-get-global-object-name %scope ',id #f %this))
+	    (else
+	     (j2s-name name id))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWithRef ...                                      */
@@ -809,30 +835,32 @@
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return conf)
 
-   (define (lambda-or-labels id args body)
+   (define (lambda-or-labels this id args body)
       (if id
 	  (let ((%id (j2s-fast-id id)))
-	     `(labels ((,%id ,(cons 'this args) ,body)) ,%id))
-	  `(lambda ,(cons 'this args)
+	     `(labels ((,%id ,(cons this args) ,body)) ,%id))
+	  `(lambda ,(cons this args)
 	      ,body)))
    
-   (define (fixarg-lambda this id body)
-      (with-access::J2SFun this (params)
+   (define (fixarg-lambda fun id body)
+      (with-access::J2SFun fun (this params)
 	 (let ((args (j2s-scheme params mode return conf)))
-	    (lambda-or-labels id args body))))
+	    (lambda-or-labels this id args body))))
    
-   (define (normal-vararg-lambda this id body)
+   (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'rest)))
-	 (lambda-or-labels id rest
-	    (jsfun-normal-vararg-body this body id rest))))
+	 (with-access::J2SFun fun (this)
+	    (lambda-or-labels this id rest
+	       (jsfun-normal-vararg-body fun body id rest)))))
    
-   (define (strict-vararg-lambda this id body)
+   (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'rest)))
-	 (lambda-or-labels id rest
-	    (jsfun-strict-vararg-body this body id rest))))
+	 (with-access::J2SFun fun (this)
+	    (lambda-or-labels this id rest
+	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode)
       (let* ((id (j2sfun-id this))
@@ -883,9 +911,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (jssvc->scheme this::J2SSvc id mode return conf)
+(define (jssvc->scheme this::J2SSvc id scmid mode return conf)
    
-   (define (j2sscheme-service this tmp id path args arity mode return)
+   (define (j2sscheme-service this tmp scmid path args arity mode return)
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
@@ -921,7 +949,7 @@
       (define (service-fix-proc->scheme this)
 	 (with-access::J2SSvc this (loc vararg)
 	    (let* ((imp `(lambda ,(cons 'this args)
-			    (js-worker-exec @worker ,(symbol->string id)
+			    (js-worker-exec @worker ,(symbol->string scmid)
 			       (lambda () ,(service-body this)))))
 		   (app `(let ((fun ,imp))
 			    (js-apply% fun ,(+fx 1 (length args)) this args))))
@@ -937,7 +965,7 @@
 	 (with-access::J2SSvc this (loc init)
 	    (with-access::J2SObjInit init (inits)
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
-			      (js-worker-exec @worker ,(symbol->string id)
+			      (js-worker-exec @worker ,(symbol->string scmid)
 				 (lambda ()
 				    ,(service-body this))))))
 		  (epairify-deep loc
@@ -966,13 +994,13 @@
       (with-access::J2SSvc this (init register)
 	 (let ((proc (service-proc->scheme this)))
 	    `(let ((@worker (js-current-worker)))
-		(js-make-service %this ,tmp ',id ,register ,arity @worker
+		(js-make-service %this ,tmp ',scmid ,register ,arity @worker
 		   (instantiate::hop-service
 		      (proc ,proc)
 		      (javascript ,(jscript-funcall init))
 		      (path ,path)
-		      (id ',id)
-		      (wid ',id)
+		      (id ',(or id scmid))
+		      (wid ',(or id scmid))
 		      (args ,(if (isa? init J2SObjInit)
 				 `'(#!key ,@args)
 				 `',args))
@@ -994,7 +1022,7 @@
 				 (with-access::JsService ,tmps (svc)
 				    (with-access::hop-service svc (path)
 				       (js-make-hopframe %this path args)))))
-		       (,tmps ,(j2sscheme-service this tmpp (or id tmpp)
+		       (,tmps ,(j2sscheme-service this tmpp (or scmid tmpp)
 				  (epairify loc
 				     `(make-hop-url-name
 					 ,(if (symbol? id)
@@ -1013,7 +1041,7 @@
 (define-method (j2s-scheme this::J2SSvc mode return conf)
    (with-access::J2SSvc this (loc)
       (epairify loc
-	 (jssvc->scheme this #f mode return conf))))
+	 (jssvc->scheme this #f #f mode return conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SParam ...                                        */
@@ -1090,6 +1118,17 @@
       (if (pair? (cdr exprs))
 	  (epairify loc `(begin ,@(j2s-scheme exprs mode return conf)))
 	  (j2s-scheme (car exprs) mode return conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SLetBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SLetBlock mode return conf)
+   (with-access::J2SLetBlock this (loc decls nodes)
+      (let ((opt (if (any (lambda (d) (isa? d J2SLetOpt)) decls)
+		     'letrec* 'let)))
+	 (epairify loc
+	    `(,opt ,(map (lambda (d) (j2s-scheme d mode return conf)) decls)
+		,@(j2s-scheme nodes mode return conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop ...                                                     */
@@ -2170,52 +2209,76 @@
 	    (j2s-scheme args mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
+;*    concat-tilde ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (concat-tilde lst)
+   (cond
+      ((null? lst)
+       '())
+      ((isa? (car lst) J2SNode)
+       (concat-tilde (cdr lst)))
+      ((not (string? (car lst)))
+       (cons (car lst) (concat-tilde (cdr lst))))
+      (else
+       (let loop ((prev lst)
+		  (cursor (cdr lst)))
+	  (cond
+	     ((null? cursor)
+	      (list (apply string-append lst)))
+	     ((string? (car cursor))
+	      (loop cursor (cdr cursor)))
+	     ((isa? (car cursor) J2SNode)
+	      (set-cdr! prev '())
+	      (cons (apply string-append lst) (concat-tilde (cdr cursor))))
+	     (else
+	      (set-cdr! prev '())
+	      (cons* (apply string-append lst)
+		 (car cursor)
+		 (concat-tilde (cdr cursor)))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STilde ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STilde mode return conf)
-   
-   (define (concat lst)
-      (cond
-	 ((null? lst)
-	  '())
-	 ((isa? (car lst) J2SNode)
-	  (concat (cdr lst)))
-	 ((not (string? (car lst)))
-	  (cons (car lst) (concat (cdr lst))))
-	 (else
-	  (let loop ((prev lst)
-		     (cursor (cdr lst)))
-	     (cond
-		((null? cursor)
-		 (list (apply string-append lst)))
-		((string? (car cursor))
-		 (loop cursor (cdr cursor)))
-		((isa? (car cursor) J2SNode)
-		 (set-cdr! prev '())
-		 (cons (apply string-append lst)
-		    (concat (cdr cursor))))
-		(else
-		 (set-cdr! prev '())
-		 (cons* (apply string-append lst)
-		    (car cursor)
-		    (concat (cdr cursor)))))))))
-   
    (with-access::J2STilde this (loc stmt)
-      (let ((js-stmt (concat (j2s-js stmt #f #f mode return conf))))
-	 (epairify loc
-	    `(instantiate::xml-tilde
-		(body (vector
-			  ',(j2s->list stmt) '() '() '()
-			  ,(cond
-			     ((null? js-stmt)
-			      "")
-			     ((null? (cdr js-stmt))
-			      (car js-stmt))
-			     ((every string? js-stmt)
-			      (apply string-append js-stmt))
-			     (else
-			      `(string-append ,@js-stmt)))))
-		(loc ',loc))))))
+      (let ((js-stmt (concat-tilde (j2s-js stmt #f #f mode return conf))))
+         (epairify loc
+            `(instantiate::xml-tilde
+		(%js-expression ,(j2s-tilde->expression this mode return conf))
+                (body (vector
+                          ',(if (bigloo-debug) (j2s->list stmt) '()) '() '() '()
+                          ,(cond
+                             ((null? js-stmt)
+                              "")
+                             ((null? (cdr js-stmt))
+                              (car js-stmt))
+                             ((every string? js-stmt)
+                              (apply string-append js-stmt))
+                             (else
+                              `(string-append ,@js-stmt)))))
+                (loc ',loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-tilde->expression ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-tilde->expression this::J2STilde mode return conf)
+   (with-access::J2STilde this (loc stmt)
+      (let* ((temp (gensym))
+	     (assign (j2s-stmt-assign stmt temp))
+	     (js-stmt (concat-tilde (j2s-js assign #f #f mode return conf)))
+	     (str (cond
+		     ((null? js-stmt)
+		      "")
+		     ((null? (cdr js-stmt))
+		      (car js-stmt))
+		     ((every string? js-stmt)
+		      (apply string-append js-stmt))
+		     (else
+		      `(string-append ,@js-stmt)))))
+	 `(string-append
+	     ,(format "(function() { var ~a; " temp)
+	     ,str
+	     ,(format " return ~a; }).call(this)" temp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDollar ...                                       */
