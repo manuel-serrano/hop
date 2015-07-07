@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jun 28 06:51:27 2015 (serrano)                */
+;*    Last change :  Tue Jul  7 10:29:57 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -97,8 +97,6 @@
 	     (set! clear-cache #t))
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-clientc-clear-cache-set! #f))
-	    (("--script-file" ?file (help "Load file before main loop"))
-	     (hop-script-file-set! file))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))

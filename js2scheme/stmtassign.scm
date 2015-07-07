@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jun 27 07:09:27 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:16:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript stmt->assignment                                      */
@@ -48,9 +48,11 @@
 ;*    j2s-stmt-assign ::J2SProgram ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-stmt-assign this::J2SProgram args)
-   (with-access::J2SProgram this (nodes)
-      (for-each (lambda (o) (assign! o args)) nodes)
-   this))
+   (with-access::J2SProgram this (headers decls nodes)
+      (for-each (lambda (o) (assign! o args)) headers)
+      (for-each (lambda (o) (assign! o args)) decls)
+      (for-each (lambda (o) (assign! o args)) nodes))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-stmt-assign ::J2SStmt ...                                    */

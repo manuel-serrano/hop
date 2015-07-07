@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun 26 15:24:09 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:01:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -608,7 +608,7 @@
    (let ((v (cell-ref cell)))
       (if (eq? v '__undefined__)
 	  (js-raise-reference-error/loc %this loc
-	     (format "Variable undefined ~s" ident) cell)
+	     (format "\"~a\" is not defined" ident) cell)
 	  v)))
 
 ;*---------------------------------------------------------------------*/

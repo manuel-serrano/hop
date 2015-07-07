@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Jul  3 11:37:50 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul  3 16:15:34 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind all the unresolved variables.                               */
 ;*=====================================================================*/
@@ -44,10 +44,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-resolve this::J2SProgram)
    (let ((env (make-hashtable)))
-      (with-access::J2SProgram this (nodes)
+      (with-access::J2SProgram this (nodes headers decls)
+	 (for-each (lambda (o) (resolve! o env)) headers)
+	 (for-each (lambda (o) (resolve! o env)) decls)
 	 (for-each (lambda (o) (resolve! o env)) nodes)
 	 ;; add the the newly declared global variables
-	 (set! nodes (append (hashtable->list env) nodes)))
+	 (set! decls (append (hashtable->list env) decls)))
       this))
 
 ;*---------------------------------------------------------------------*/

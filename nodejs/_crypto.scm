@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Jun 23 15:01:30 2015 (serrano)                */
+;*    Last change :  Tue Jul  7 11:11:42 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -1264,7 +1264,8 @@
 	  ((utf8 utf-8)
 	   data)
 	  ((binary)
-	   (utf8->iso-latin data))
+	   data)
+;* 	   (utf8->iso-latin data))                                     */
 	  (else
 	   (error "crypto" "bad encoding" encoding))))
       (else

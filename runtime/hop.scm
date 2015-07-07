@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Jun 15 18:20:07 2015 (serrano)                */
+;*    Last change :  Tue Jul  7 11:37:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -60,6 +60,7 @@
 			     (authorization #f)
 			     (header '())
 			     (anim #f)
+			     (scheme 'http)
 			     args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
@@ -366,6 +367,7 @@
 	   (header '())
 	   (authorization #f)
 	   (anim #f)
+	   (scheme 'http)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
@@ -394,6 +396,7 @@
 				    header))
 			 (method (if args 'post 'put))
 			 (authorization authorization)
+			 (scheme scheme)
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
 		 (hdl (make-http-callback path req suc fail

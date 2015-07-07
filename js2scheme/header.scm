@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Wed Feb 18 08:02:03 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 15:36:37 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -39,16 +39,16 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-hopscript-header::J2SProgram ast::J2SProgram conf)
    (when (config-get conf :hopscript-header #t)
-      (with-access::J2SProgram ast (nodes path loc mode)
+      (with-access::J2SProgram ast (headers path loc mode)
 	 (let* ((id (basename path))
 		(path (or (config-get conf :module-path #f) path)))
-	    (set! nodes (append (hopscript-header mode id path loc) nodes)))))
+	    (set! headers (hopscript-header mode id path loc)))))
    ast)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-header ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-header mode id path loc)
+(define (hopscript-header::pair mode id path loc)
    
    (define (js-def-extern js bind writable expr)
       (instantiate::J2SDeclExtern

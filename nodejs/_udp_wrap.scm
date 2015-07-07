@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sat Jun  6 18:40:45 2015 (serrano)                */
+;*    Last change :  Mon Jul  6 14:06:39 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -43,11 +43,12 @@
 	    
 	    (js-put! obj 'bind
 	       (js-make-function %this
-		  (lambda (this addr port)
+		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
-			   (nodejs-udp-bind %this process handle addr p 4))))
-		  2 "bind")
+			   (nodejs-udp-bind %this process handle addr p 4
+			      (if (eq? flags (js-undefined)) 0 flags)))))
+		  3 "bind")
 	       #f %this)
 	    
 	    (js-put! obj 'send
@@ -60,11 +61,12 @@
 	    
 	    (js-put! obj 'bind6
 	       (js-make-function %this
-		  (lambda (this addr port)
+		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
-			   (nodejs-udp-bind %this process handle addr p 6))))
-		  2 "bind6")
+			   (nodejs-udp-bind %this process handle addr p 6
+			      (if (eq? flags (js-undefined)) 0 flags)))))
+		  3 "bind6")
 	       #f %this)
 	    
 	    (js-put! obj 'send6

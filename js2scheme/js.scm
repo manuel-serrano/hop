@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Jun 27 06:17:12 2015 (serrano)                */
+;*    Last change :  Tue Jun 30 12:15:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -18,6 +18,7 @@
 	   __js2scheme_dump
 	   __js2scheme_utils
 	   __js2scheme_scheme
+	   __js2scheme_stmtassign
 	   __js2scheme_stage)
    
    (export j2s-javascript-stage
@@ -507,9 +508,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-attribute-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
-      (cons* this "function( event ) { "
-	 (append (j2s-js stmt tildec j2s-js-client-dollar mode evalp conf)
-	    '("}")))))
+      (let* ((temp (gensym))
+	     (assign (j2s-stmt-assign stmt temp)))
+	 (cons* this "function( event ) { var "
+	    (symbol->string temp) "; return"
+	    (append (j2s-js assign tildec j2s-js-client-dollar mode evalp conf)
+	       '("}"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDollar ...                                           */

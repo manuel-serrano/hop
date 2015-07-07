@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul 11 12:33:08 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul  3 16:16:04 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
 ;*=====================================================================*/
@@ -43,7 +43,9 @@
 ;*    j2s-bestpractice ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-bestpractice this::J2SProgram conf)
-   (with-access::J2SProgram this (nodes mode)
+   (with-access::J2SProgram this (headers nodes decls mode)
+      (for-each (lambda (n) (bestpractice n mode #f)) headers)
+      (for-each (lambda (n) (bestpractice n mode #f)) decls)
       (for-each (lambda (n) (bestpractice n mode #f)) nodes))
    this)
 

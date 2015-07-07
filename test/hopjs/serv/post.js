@@ -34,6 +34,14 @@ service upload( { file: 'no file' } ) {
    return 'OK' ;
 }
 
+service serv2( a, b ) {
+   if( typeof a === "string" ) {
+      return a.length = b.val.legnth;
+   } else {
+      return a.val.length = b.legnth;
+   }
+}
+      
 /* client */
 var querystring = require( 'querystring' );
 var http = require( 'http' );
@@ -84,6 +92,11 @@ function test() {
 
    req.write( fakeupload );
    req.end();
+
+   serv2( "foobar+", { x: 0, val: "foobar" } )
+      .post( function( v ) { assert.ok( v == 1 ) } );
+   serv2( "foobar+", { x: 0, val: "foobar" } )
+      .post( function( v ) { assert.ok( v == 1 ) } );
 }
 
 setTimeout( function() {

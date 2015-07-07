@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Jul 10 10:17:14 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul  3 16:15:50 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
 ;*=====================================================================*/
@@ -43,9 +43,12 @@
 ;*    j2s-property ::J2SProgram ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-property this::J2SProgram args)
-   (with-access::J2SProgram this (nodes loc pcache-size)
+   (with-access::J2SProgram this (nodes headers decls loc pcache-size)
       (let* ((count (make-counter 0))
-	     (caches (append-map (lambda (s) (property* s count)) nodes)))
+	     (caches (append
+			(append-map (lambda (s) (property* s count)) headers)
+			(append-map (lambda (s) (property* s count)) decls)
+			(append-map (lambda (s) (property* s count)) nodes))))
 	 (set! pcache-size (get count))))
    this)
 

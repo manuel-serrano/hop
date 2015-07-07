@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jun 27 05:49:34 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 17:12:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -53,8 +53,12 @@
 ;*    j2s-return ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-return this::J2SProgram args)
-   (with-access::J2SProgram this (nodes)
+   (with-access::J2SProgram this (headers decls nodes)
+      (for-each (lambda (o) (unreturn! o #f #t args)) headers)
+      (for-each (lambda (o) (unreturn! o #f #t args)) decls)
       (for-each (lambda (o) (unreturn! o #f #t args)) nodes)
+      (set! headers (trim-nop headers))
+      (set! decls (trim-nop decls))
       (set! nodes (trim-nop nodes)))
    this)
 
@@ -99,9 +103,17 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SLetBlock ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SLetBlock target tail? args)
+   (with-access::J2SLetBlock this (decls nodes)
+      (for-each (lambda (d) (unreturn! d target #f args)) decls)
+      (call-next-method)))
+      
+;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SSwitch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (unreturn! this::J2SSwitch target tail? args)
+(define-walk-method (unreturn! this::J2SSwitch target tail? args)
    (with-access::J2SSwitch this (key cases)
       (set! key (unreturn! key target tail? args))
       (cond
@@ -239,6 +251,22 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SLetInit ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SLetInit target tail? args)
+   (with-access::J2SLetInit this (val)
+      (set! val (walk! val target #f args)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SLetOpt ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SLetOpt target tail? args)
+   (with-access::J2SLetOpt this (val)
+      (set! val (walk! val target #f args)))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    untail-return! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (untail-return! this::J2SNode target)
@@ -316,3 +344,4 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return? this::J2SReturn)
    #t)
+

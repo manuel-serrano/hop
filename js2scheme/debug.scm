@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Tue Dec 30 07:20:15 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Fri Jul  3 16:16:14 2015 (serrano)                */
+;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript debugging instrumentation                             */
 ;*=====================================================================*/
@@ -41,7 +41,9 @@
 ;*    j2s-debug ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-debug this::J2SProgram conf site)
-   (with-access::J2SProgram this (nodes)
+   (with-access::J2SProgram this (headers nodes decls)
+      (for-each (lambda (n) (debug n conf site)) headers)
+      (for-each (lambda (n) (debug n conf site)) decls)
       (for-each (lambda (n) (debug n conf site)) nodes))
    this)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Jun 29 16:39:23 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:59:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -49,6 +49,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmt)
    (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SProgram ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SProgram)
+   (with-access::J2SProgram this (nodes headers decls)
+      `(,(string->symbol (typeof this))
+	headers: ,(map j2s->list headers)
+	decls: ,(map j2s->list decls)
+	nodes: ,(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSeq ...                                           */
@@ -302,6 +312,13 @@
       `(,@(call-next-method) ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SExprStmt ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SExprStmt)
+   (with-access::J2SExprStmt this (stmt)
+      `(,@(call-next-method) ,(j2s->list stmt))))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SObjInit)
@@ -342,6 +359,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetInit)
    (with-access::J2SLetInit this (id val key)
+      `(,@(call-next-method) ,(j2s->list val))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SLetOpt ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SLetOpt)
+   (with-access::J2SLetOpt this (id val key)
       `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/

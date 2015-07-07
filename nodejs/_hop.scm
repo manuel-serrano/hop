@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Jan 18 11:44:54 2015 (serrano)                */
+;*    Last change :  Mon Jul  6 14:00:42 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -48,6 +48,12 @@
 	    (define-js debugSet 1
 	       (lambda (this v) (bigloo-debug-set! (js-tointeger v %this))))
 		
+	    (define-js isServer 0
+	       (lambda (this)
+		  (cond-expand
+		     (hop-server #t)
+		     (else #f))))
+
 	    ;; misc
 	    (define-js srcDir 0
 	       (lambda (this)
@@ -59,7 +65,7 @@
 
 	    (define-js currentThread 0
 	       (lambda (this) (current-thread)))
-	    
+
 	    ;; info
 	    `(port . ,(hop-port))
 	    `(hostname . ,(js-string->jsstring (hostname)))

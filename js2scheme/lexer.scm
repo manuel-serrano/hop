@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Jun 25 14:38:59 2015 (serrano)                */
+;*    Last change :  Wed Jul  1 17:51:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -158,8 +158,8 @@
 	  (kspecial (in "!@$%^&*></-_+\\=?"))
 	  (special (or kspecial #\:))
 	  (tagid (: (* digit)
-		    (or letter digit)
-		    (* (or letter digit #\.))))
+		    (or letter digit #\_)
+		    (* (or letter digit #\_ #\.))))
 	  (unicode (: #\\ #\u
 		      (or (: (in ("0139afAF")) (= 3 (in ("09afAF"))))
 			  (: "2" (in ("19afAF")) (= 2 (in ("09afAF"))))

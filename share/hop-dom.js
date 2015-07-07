@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat Jun 27 07:46:03 2015 (serrano)                */
+/*    Last change :  Tue Jun 30 12:15:31 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -316,27 +316,31 @@ function hop_dom_create( tag, args ) {
    var len = args.length
    var m;
 
+   function valstr( val ) {
+      if( (val instanceof String) || (typeof val == "string") ) {
+	 return val;
+      } if( typeof( val ) === "function" ) {
+	 return val( undefined );
+      } else {
+	 return val.toString();
+      }
+   }
+	 
    // the attributes
    if( args[ 0 ] instanceof Object ) {
       for( var attr in args[ 0 ] ) {
 	 var val = args[ 0 ][ attr ];
 	 
 	 if( attr === "class" ) {
-	    el.className = val;
+	    el.className = valstr( val );
 	 } else if( attr === "style" ) {
-	       if( hop_config.navigator_family === "msie" ) {
-		  el.style.setAttribute( "cssText", val );
-	       } else {
-		  el.setAttribute( attr, val );
-	       }
+	    hop_style_attribute_set( el, valstr( val ) );
 	 } else if( m = attr.match( "^on(.*)" ) ) {
 	    hop_add_event_listener( el, m[ 1 ], val, true );
-	 } else if( (val instanceof String) || (typeof attr == "string") ) {
-	    el.setAttribute( attr, val );
 	 } else {
-	    el.setAttribute( attr, val.toString() );
+	    el.setAttribute( attr, valstr( val) );
 	    try {
-	       el[ attr ] = val;
+	       el[ attr ] = valstr( val );
 	    } catch( _ ) { ; }
 	 }
       }

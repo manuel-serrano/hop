@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Jun 29 17:22:18 2015 (serrano)                */
+;*    Last change :  Sun Jul  5 08:10:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -188,7 +188,7 @@
 	  `(begin ,@body)))
    
    (define (j2s-module module body)
-      (with-access::J2SProgram this (nodes mode pcache-size)
+      (with-access::J2SProgram this (mode pcache-size)
 	 (list
 	    module
 	    `(define %pcache (make-pcache ,pcache-size))
@@ -210,7 +210,7 @@
 			   (enable-libuv
 			    (library libuv)))
 			(main main))))
-	 (with-access::J2SProgram this (nodes mode pcache-size %this path)
+	 (with-access::J2SProgram this (mode pcache-size %this path)
 	    (list
 	       module
 	       `(define %pcache (make-pcache ,pcache-size))
@@ -232,8 +232,13 @@
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
 
-   (with-access::J2SProgram this (module main nodes mode name pcache-size)
-      (let ((body (flatten-nodes (j2s-scheme nodes mode return conf))))
+   (with-access::J2SProgram this (module main nodes headers decls
+					 mode name pcache-size)
+      (let ((body (flatten-nodes
+		     (append
+			(j2s-scheme headers mode return conf)
+			(j2s-scheme decls mode return conf)
+			(j2s-scheme nodes mode return conf)))))
 	 (cond
 	    (module
 	     ;; a module whose declaration is in the source
@@ -301,19 +306,26 @@
 ;*    j2s-scheme ::J2SLet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLet mode return conf)
-   (with-access::J2SLet this (loc id name)
+   (with-access::J2SLet this (loc id name global)
       (epairify loc
-	 `(,(j2s-name name id) (js-make-let)))))
+	 (if global
+	     `(define ,(j2s-name name id) (js-make-let))
+	     `(,(j2s-name name id) (js-make-let))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLetOpt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetOpt mode return conf)
-   (with-access::J2SLetOpt this (loc id name writable val)
-      (let ((expr (j2s-scheme val mode return conf))
-	    (ident (j2s-name name id)))
-	 (epairify loc
-	    `(,ident ,expr)))))
+   (with-access::J2SLetOpt this (global)
+      (if global
+	  (let ((l (map (lambda (d) (cons 'define d))
+		      (j2s-let-decl this mode return conf))))
+	     (cond
+		((null? l) #unspecified)
+		((null? (cdr l)) (car l))
+		(else `(begin ,@l))))
+	  (error "js-scheme" "Should not reached (not global)"
+	     (j2s->list this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
@@ -843,23 +855,23 @@
 	      ,body)))
    
    (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (this params)
+      (with-access::J2SFun fun (idthis params)
 	 (let ((args (j2s-scheme params mode return conf)))
-	    (lambda-or-labels this id args body))))
+	    (lambda-or-labels idthis id args body))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'rest)))
-	 (with-access::J2SFun fun (this)
-	    (lambda-or-labels this id rest
+	 (with-access::J2SFun fun (idthis)
+	    (lambda-or-labels idthis id rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'rest)))
-	 (with-access::J2SFun fun (this)
-	    (lambda-or-labels this id rest
+	 (with-access::J2SFun fun (idthis)
+	    (lambda-or-labels idthis id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode)
@@ -882,31 +894,36 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2sfun->scheme this::J2SFun mode return conf)
+(define (j2sfun->scheme this::J2SFun tmp mode return conf)
+   (with-access::J2SFun this (loc name params mode vararg)
+      (let* ((id (j2sfun-id this))
+	     (arity (if vararg -1 (+fx 1 (length params)))))
+	 (epairify-deep loc
+	    `(js-make-function %this
+		,tmp ,(length params) ',(j2s-name name id)
+		:src ,(j2s-function-src loc this conf)
+		:arity ,arity
+		:strict ,(eq? mode 'strict)
+		:alloc (lambda (o) (js-object-alloc o %this))
+		:construct ,tmp)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SFun mode return conf)
    (with-access::J2SFun this (loc name params mode vararg)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym id))
 	     (arity (if vararg -1 (+fx 1 (length params))))
-	     (fundef `(let ((,tmp ,(jsfun->lambda this mode return conf)))
-			 (js-make-function %this
-			    ,tmp ,(length params) ',(j2s-name name id)
-			    :src ,(j2s-function-src loc this conf)
-			    :arity ,arity
-			    :strict ,(eq? mode 'strict)
-			    :alloc (lambda (o) (js-object-alloc o %this))
-			    :construct ,tmp))))
+	     (lam (jsfun->lambda this mode return conf))
+	     (fundef `(let ((,tmp ,lam))
+			 ,(j2sfun->scheme this tmp mode return conf))))
 	 (epairify-deep loc
 	    (if id
 		`(let ((,id (js-undefined)))
 		    (set! ,id ,fundef)
 		    ,id)
 		fundef)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SFun ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SFun mode return conf)
-   (j2sfun->scheme this mode return conf))
 
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
@@ -1120,6 +1137,27 @@
 	  (j2s-scheme (car exprs) mode return conf))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-let-decl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-decl::pair-nil d::J2SDecl mode return conf)
+   (if (not (isa? d J2SLetOpt))
+       (list (j2s-scheme d mode return conf))
+       (with-access::J2SLetOpt d (val usage id name)
+	  (let ((ident (j2s-name name id)))
+	     (cond
+		((or (not (isa? val J2SFun)) (memq 'assig usage))
+		 (list `(,ident ,(j2s-scheme val mode return conf))))
+		((or (memq 'ref usage) (memq 'new usage))
+		 (let ((fun (jsfun->lambda val mode return conf))
+		       (tmp (j2s-fast-id id)))
+		    `((,tmp ,fun)
+		      (,ident ,(j2sfun->scheme val tmp mode return conf)))))
+		((memq 'call usage)
+		 `((,(j2s-fast-id id) ,(jsfun->lambda val mode return conf))))
+		(else
+		 '()))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLetBlock ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetBlock mode return conf)
@@ -1127,7 +1165,9 @@
       (let ((opt (if (any (lambda (d) (isa? d J2SLetOpt)) decls)
 		     'letrec* 'let)))
 	 (epairify loc
-	    `(,opt ,(map (lambda (d) (j2s-scheme d mode return conf)) decls)
+	    `(,opt ,(append-map (lambda (d)
+				   (j2s-let-decl d mode return conf))
+		       decls)
 		,@(j2s-scheme nodes mode return conf))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1484,6 +1524,13 @@
       (if (isa? expr J2SIf)
 	  (j2s-scheme expr mode return conf)
 	  (return (j2s-scheme expr mode return conf)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SExprStmt ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SExprStmt mode return conf)
+   (with-access::J2SExprStmt this (stmt)
+      (j2s-scheme stmt mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SIf ...                                           */
@@ -1855,8 +1902,12 @@
    
    (define (read-only-function ref::J2SRef)
       (with-access::J2SRef ref (decl)
-	 (when (isa? decl J2SDeclCnstFun)
-	    decl)))
+	 (cond
+	    ((isa? decl J2SDeclCnstFun)
+	     decl)
+	    ((isa? decl J2SLetOpt)
+	     (with-access::J2SLetOpt decl (usage id)
+		(unless (memq 'assig usage) decl))))))
    
    (define (call-method fun::J2SAccess args)
       (with-access::J2SAccess fun (loc obj field)
@@ -1918,9 +1969,16 @@
       (with-access::J2SPragma fun (expr)
 	 `(,expr %this ,@(j2s-scheme args mode return conf))))
 
-   (define (call-known-function fun::J2SDeclCnstFun args)
-      (with-access::J2SDeclCnstFun fun (id fun)
-	 (call-fun-function fun (j2s-fast-id id) args)))
+   (define (call-known-function fun::J2SDecl args)
+      (cond
+	 ((isa? fun J2SDeclCnstFun)
+	  (with-access::J2SDeclCnstFun fun (id fun)
+	     (call-fun-function fun (j2s-fast-id id) args)))
+	 ((isa? fun J2SLetOpt)
+	  (with-access::J2SLetOpt fun (id val)
+	     (call-fun-function val (j2s-fast-id id) args)))
+	 (else
+	  (error "js-scheme" "should not reach" (j2s->list fun)))))
 
    (define (call-unknown-function fun thisarg args)
       (let* ((len (length args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Jun 28 07:22:00 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:14:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -41,7 +41,9 @@
 ;*    j2s-ronly ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-ronly this::J2SProgram args)
-   (with-access::J2SProgram this (nodes)
+   (with-access::J2SProgram this (nodes headers decls)
+      (for-each (lambda (o) (ronly! o)) headers)
+      (for-each (lambda (o) (ronly! o)) decls)
       (for-each (lambda (o) (ronly! o)) nodes))
    this)
 
@@ -98,7 +100,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SDeclInit)
    (call-next-method)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val ronly)
       (ronly! val))
    this)
    
@@ -110,6 +112,12 @@
    (with-access::J2SLetInit this (val)
       (ronly! val))
    this)
-   
 
-
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SLetOpt ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SLetOpt)
+   (call-next-method)
+   (with-access::J2SLetOpt this (val id)
+      (ronly! val))
+   this)

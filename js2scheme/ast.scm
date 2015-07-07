@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Jun 29 16:48:07 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:54:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -36,13 +36,18 @@
 	      (pcache-size::int (default 0))
 	      (name read-only (default #f))
 	      (main read-only (default #f))
-	      (module read-only (default #f)))
+	      (module read-only (default #f))
+	      (decls::pair-nil (default '()))
+	      (headers::pair-nil (default '())))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::obj (default #unspecified)))
 	   
 	   (final-class J2SStmtExpr::J2SStmt
 	      expr::J2SExpr)
+	   
+	   (final-class J2SExprStmt::J2SExpr
+	      stmt::J2SStmt)
 	   
 	   (final-class J2SIf::J2SStmt
 	      test::J2SExpr
@@ -115,7 +120,7 @@
 	      expr::J2SExpr)
 	   
 	   (class J2SFun::J2SExpr
-	      (this read-only (default 'this))
+	      (idthis read-only (default 'this))
 	      (mode read-only (default #f))
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
@@ -127,6 +132,8 @@
 	   (class J2SSvc::J2SFun
 	      (init::J2SNode read-only)
 	      (register::bool read-only (default #t)))
+
+	   (class J2SArrow::J2SFun)
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SParam
@@ -181,7 +188,8 @@
 	      (writable (default #t))
 	      (ronly (default #f))
 	      (global::obj (default #f))
-	      (use::int (default 0))
+	      (usecnt::int (default 0))
+	      (usage::pair-nil (default '()))
 	      (type::obj (default #unspecified)))
 	   
 	   (class J2SDeclInit::J2SDecl
@@ -303,18 +311,21 @@
 	   (generic walk3 n::J2SNode p::procedure a0 a1 a2)
 	   (generic walk4 n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5 n::J2SNode p::procedure a0 a1 a2 a3 a4)
+	   (generic walk6 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   (generic walk0*::pair-nil n::J2SNode p::procedure)
 	   (generic walk1*::pair-nil n::J2SNode p::procedure a0)
 	   (generic walk2*::pair-nil n::J2SNode p::procedure a0 a1)
 	   (generic walk3*::pair-nil n::J2SNode p::procedure a0 a1 a2)
 	   (generic walk4*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4)
+	   (generic walk6*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   (generic walk0!::J2SNode n::J2SNode p::procedure)
 	   (generic walk1!::J2SNode n::J2SNode p::procedure a0)
 	   (generic walk2!::J2SNode n::J2SNode p::procedure a0 a1)
 	   (generic walk3!::J2SNode n::J2SNode p::procedure a0 a1 a2)
 	   (generic walk4!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3)
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
+	   (generic walk6!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   
 	   (macro define-walk-method)
 
@@ -379,6 +390,9 @@
 (define-generic (walk5 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
    (error "walk5" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk6 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
+   (error "walk6" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0*::pair-nil n::J2SNode p::procedure)
    (error "walk0*" "Internal Error: forgot Node type"
@@ -398,6 +412,9 @@
 (define-generic (walk5*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
    (error "walk5!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
+   (error "walk6!" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
    (error "walk0!" "Internal Error: forgot Node type"
@@ -416,6 +433,9 @@
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
    (error "walk5!" "Internal Error: forgot Node type"
+      (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk6!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
+   (error "walk6!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 
 ;*---------------------------------------------------------------------*/
@@ -614,9 +634,9 @@
 		    n))))))
 
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 5))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
 
 ;*---------------------------------------------------------------------*/
 ;*    default walk                                                     */
@@ -629,9 +649,10 @@
 (gen-walks J2STry body catch finally)
 (gen-walks J2SCatch body)
 (gen-walks J2SStmtExpr expr)
+(gen-walks J2SExprStmt stmt)
 (gen-walks J2SSequence (exprs))
 (gen-walks J2SVarDecls (decls))
-(gen-walks J2SLetBlock (nodes decls))
+(gen-walks J2SLetBlock (decls) (nodes))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SSwitch key (cases))
 (gen-walks J2SLabel body)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Wed Jun 24 16:11:11 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 11:18:58 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -313,7 +313,6 @@
 				 (cannot-authenticate "digest (3):" n)))
 			  (cannot-authenticate "digest (2):" n)))
 		   (cannot-authenticate "digest (1):" n))))))
-
    (case (car l)
       ((basic url)
        (let* ((auth (cdr l))

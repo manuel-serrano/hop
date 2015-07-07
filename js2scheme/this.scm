@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Oct  9 21:19:20 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul  3 16:14:04 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
 ;*=====================================================================*/
@@ -43,7 +43,9 @@
 ;*    j2s-this ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-this this::J2SProgram args)
-   (with-access::J2SProgram this (nodes)
+   (with-access::J2SProgram this (nodes headers decls)
+      (for-each (lambda (o) (this! o)) headers)
+      (for-each (lambda (o) (this! o)) decls)
       (for-each (lambda (o) (this! o)) nodes))
    this)
 

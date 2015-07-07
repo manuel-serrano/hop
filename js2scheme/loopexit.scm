@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu May 28 14:54:11 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 16:13:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -48,8 +48,10 @@
 ;*    j2s-loopexit ::J2SProgram ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-loopexit this::J2SProgram args)
-   (with-access::J2SProgram this (nodes)
-      (for-each (lambda (o) (mark-exit! o '() #f)) nodes))
+   (with-access::J2SProgram this (nodes headers decls)
+      (for-each (lambda (o) (mark-exit! o '() #f)) headers)
+      (for-each (lambda (o) (mark-exit! o '() #f)) nodes)
+      (for-each (lambda (o) (mark-exit! o '() #f)) decls))
    this)
 
 ;*---------------------------------------------------------------------*/

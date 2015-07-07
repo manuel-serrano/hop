@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jun 21 06:57:12 2015 (serrano)                */
+;*    Last change :  Tue Jul  7 10:36:51 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -94,9 +94,6 @@
 	    
 	    (hop-report-execution-time::bool)
 	    (hop-report-execution-time-set! ::bool)
-	    
-	    (hop-script-file::obj)
-	    (hop-script-file-set! ::obj)
 	    
 	    (hop-get-cache-size::int)
 	    (hop-get-cache-size-set! ::int)
@@ -327,12 +324,6 @@
 ;*    hop-report-execution-time ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-report-execution-time
-   #f)
-
-;*---------------------------------------------------------------------*/
-;*    hop-script-file ...                                              */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-script-file
    #f)
 
 ;*---------------------------------------------------------------------*/

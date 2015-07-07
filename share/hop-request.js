@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Jun 15 18:09:56 2015 (serrano)                */
+/*    Last change :  Fri Jul  3 11:11:25 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -431,7 +431,7 @@ function withHOP( svc, success, opt, force_sync ) {
       if( "anim" in opt ) anim = opt.anim;
       if( "header" in opt ) header = opt.header;
    }
-   
+
    return hop_send_request( svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
 			    false, false, false, false, header, "javascript" );

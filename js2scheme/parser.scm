@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jun 28 07:20:47 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 09:28:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -323,8 +323,6 @@
    
    (define (let-decl-list in-for-init?)
       ;; ES6 let block
-      (unless (config-get conf :es6-let #f)
-	 (parse-token-error "let-block disabled" (consume-any!)))
       (decl-list (consume-token! 'let) in-for-init?
 	 (lambda (loc id val)
 	    (instantiate::J2SLetInit
@@ -339,8 +337,6 @@
 
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
-      (unless (config-get conf :es6-const #f)
-	 (parse-token-error "const-block disabled" (consume-any!)))
       (decl-list (consume-token! 'const) in-for-init?
 	 (lambda (loc id val)
 	    (instantiate::J2SLetInit
@@ -734,11 +730,9 @@
    
    (define (arrow-function params)
       ;; ES6 arrow functions
-      (unless (config-get conf :es6-arrow-function #f)
-	 (parse-token-error "arrow function disabled" (consume-any!)))
       (let ((=> (consume-any!)))
-	 (instantiate::J2SFun
-	    (this '%)
+	 (instantiate::J2SArrow
+	    (idthis '%)
 	    (loc (token-loc =>))
 	    (name '||)
 	    (mode 'strict)
@@ -750,7 +744,8 @@
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID)))
 	     (params (params))
-	     (body (fun-body)))
+	     (body (fun-body))
+	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
 	    (declaration?
 	     (instantiate::J2SDeclFun
@@ -760,7 +755,7 @@
 			(loc (token-loc id))
 			(params params)
 			(name (cdr id))
-			(mode (or (javascript-mode body) 'normal))
+			(mode mode)
 			(body body)
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
@@ -768,15 +763,14 @@
 				 (name (cdr id))
 				 (writable #f)
 				 (ronly #t)
-				 (global #t)
-				 (use 0)))))))
+				 (global #t)))))))
 	    (id
 	     (co-instantiate ((fun (instantiate::J2SFun
 				      (loc (token-loc id))
 				      (decl decl)
 				      (params params)
 				      (name (cdr id))
-				      (mode (or (javascript-mode body) 'normal))
+				      (mode mode)
 				      (body body)))
 			      (decl (instantiate::J2SDeclCnstFun
 				       (loc (token-loc id))
@@ -785,15 +779,14 @@
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
-				       (fun fun)
-				       (use 0))))
+				       (fun fun))))
 		fun))
 	    (else
 	     (instantiate::J2SFun
 		(loc (token-loc token))
 		(params params)
 		(name '||)
-		(mode (or (javascript-mode body) 'normal))
+		(mode mode)
 		(body body))))))
 
    (define (init->params init)
@@ -839,8 +832,7 @@
 				 (name (cdr id))
 				 (writable #f)
 				 (ronly #t)
-				 (global #t)
-				 (use 0)))))))
+				 (global #t)))))))
 	    (id
 	     (co-instantiate ((fun (instantiate::J2SSvc
 				      (loc (token-loc id))
@@ -857,8 +849,7 @@
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
-				       (fun fun)
-				       (use 0))))
+				       (fun fun))))
 		fun))
 	    (else
 	     (instantiate::J2SSvc
@@ -1543,7 +1534,7 @@
 	       (format "expected \"of\" got \"~a\"" (cdr of)) of))
 	 (let* ((iterable (expression #f))
 		(loc (token-loc id))
-		(decl (instantiate::J2SLetInit
+		(decl (instantiate::J2SLetOpt
 			 (id (cdr id))
 			 (val (instantiate::J2SUndefined (loc loc)))
 			 (loc loc))))
@@ -1634,8 +1625,9 @@
 	 (let* ((id (consume-any!))
 		(params (params))
 		(body (fun-body))
+		(mode (or (javascript-mode body) 'normal))
 		(fun (instantiate::J2SFun
-			(mode (or (javascript-mode body) 'normal))
+			(mode mode)
 			(loc (token-loc tokname))
 			(params params)
 			(name (cdr id))
@@ -1732,7 +1724,8 @@
    (define (program dp)
       (set! tilde-level (if dp 1 0))
       (with-access::J2SBlock (source-elements) (loc endloc nodes name)
-	 (let ((module (javascript-module-nodes nodes)))
+	 (let ((module (javascript-module-nodes nodes))
+	       (mode (nodes-mode nodes)))
 	    (instantiate::J2SProgram
 	       (loc loc)
 	       (endloc endloc)
@@ -1741,19 +1734,20 @@
 	       (path (config-get conf :filename (abspath)))
 	       (main (config-get conf :module-main #f))
 	       (name (config-get conf :module-name #f))
-	       (mode (nodes-mode nodes))
-	       (nodes nodes)))))
+	       (mode mode)
+	       (nodes (map! (lambda (n) (disable-es6 n mode conf)) nodes))))))
    
    (define (eval)
       (set! tilde-level 0)
       (with-access::J2SBlock (source-elements) (loc endloc nodes)
-	 (instantiate::J2SProgram
-	    (loc loc)
-	    (endloc endloc)
-	    (path (config-get conf :filename (abspath)))
-	    (name (config-get conf :module-name #f))
-	    (mode (nodes-mode nodes))
-	    (nodes nodes))))
+	 (let ((mode (nodes-mode nodes)))
+	    (instantiate::J2SProgram
+	       (loc loc)
+	       (endloc endloc)
+	       (path (config-get conf :filename (abspath)))
+	       (name (config-get conf :module-name #f))
+	       (mode mode)
+	       (nodes (map! (lambda (n) (disable-es6 n mode conf)) nodes))))))
 
    (define (repl)
       (let ((el (repl-element)))
@@ -1765,7 +1759,7 @@
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))
-		   (nodes (list el))))
+		   (nodes (list (disable-es6 el 'normal conf)))))
 	     el)))
 
    (case (config-get conf :parser #f)
@@ -1869,4 +1863,68 @@
 	 (with-access::J2SString expr (val)
 	    (when (string-prefix? "(module " val)
 	       (call-with-input-string val read))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6 ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (disable-es6 node::J2SNode mode conf)
+   (unless (memq mode '(hopscript ecmascript6))
+      (unless (config-get conf :es6-let #f)
+	 (disable-es6-let node))
+      (unless (config-get conf :es6-arrow-function #f)
+	 (disable-es6-arrow node)))
+   node)
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-let ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-let this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-let ::J2SFun ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-let this::J2SFun)
+   (with-access::J2SFun this (mode)
+      (unless (memq mode '(hopscript ecmascript6))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-let ::J2SArrow ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-let this::J2SLetInit)
+   (with-access::J2SLetInit this (loc id)
+      (raise
+	 (instantiate::&io-parse-error
+	    (proc "js-parser")
+	    (msg "arrow/const block disabled")
+	    (obj id)
+	    (fname (cadr loc))
+	    (location (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-arrow ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-arrow this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-arrow ::J2SFun ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-arrow this::J2SFun)
+   (with-access::J2SFun this (mode)
+      (unless (memq mode '(hopscript ecmascript6))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-arrow ::J2SArrow ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-arrow this::J2SArrow)
+   (with-access::J2SArrow this (loc)
+      (raise
+	 (instantiate::&io-parse-error
+	    (proc "js-parser")
+	    (msg "arrow function disabled")
+	    (obj '=>)
+	    (fname (cadr loc))
+	    (location (caddr loc))))))

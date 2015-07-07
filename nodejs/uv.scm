@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Jun 21 09:39:25 2015 (serrano)                */
+;*    Last change :  Tue Jul  7 09:01:48 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -159,7 +159,7 @@
 	   (nodejs-tty-get-window-size ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (nodejs-udp-handle ::WorkerHopThread)
-	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int)
+	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int ::int)
 	   (nodejs-udp-send ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::bstring ::int ::procedure)
 	   (nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
 	   (nodejs-udp-recv-stop ::obj)
@@ -336,7 +336,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    worker-loop ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (worker-loop::JsLoop th::WorkerHopThread)
+(define (worker-loop th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop)
       (unless %loop
 	 (tprint "LACKING LOOP th=" th " " (getpid)))
@@ -1698,8 +1698,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-udp-bind ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-udp-bind %this process handle addr port family)
-   (let ((r (uv-udp-bind handle (js-jsstring->string addr) port :family family)))
+(define (nodejs-udp-bind %this process handle addr port family flags)
+   (let ((r (uv-udp-bind handle (js-jsstring->string addr) port
+	       :family family :flags flags)))
       (if (=fx r 0)
 	  r
 	  (begin

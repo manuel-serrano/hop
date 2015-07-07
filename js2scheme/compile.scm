@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Jun 28 07:34:08 2015 (serrano)                */
+;*    Last change :  Fri Jul  3 09:29:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -27,6 +27,7 @@
 	   __js2scheme_this
 	   __js2scheme_loopexit
 	   __js2scheme_ronly
+	   __js2scheme_use
 	   __js2scheme_property
 	   __js2scheme_letopt
 	   __js2scheme_scheme
@@ -116,6 +117,7 @@
       j2s-symbol-stage
       j2s-letopt-stage
       j2s-this-stage
+      j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
       j2s-property-stage
@@ -132,6 +134,7 @@
       j2s-bestpractice-stage
       j2s-symbol-stage
       j2s-this-stage
+      j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
       j2s-scheme-stage))
@@ -148,6 +151,7 @@
       j2s-symbol-stage
       j2s-debug-stage
       j2s-this-stage
+      j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
       j2s-scheme-stage))
@@ -163,6 +167,7 @@
       j2s-bestpractice-stage
       j2s-symbol-stage
       j2s-this-stage
+      j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
       j2s-scheme-eval-stage))
