@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sat Jun 27 06:31:36 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 09:45:07 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -124,6 +124,4 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (%xml-constructor o::xml)
    o)
-
-
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Jul  1 08:41:09 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 09:48:00 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -83,14 +83,19 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::xml-markup ...                               */
+;*    -------------------------------------------------------------    */
+;*    WARNING: Module initialization prevents this declaration to be   */
+;*    moved to xml_types!                                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! xml-markup
+   (lambda (o mode)
+      (if (eq? mode 'hop-to-hop)
+	  o
+	  (let ((p (open-output-string)))
+	     (obj->javascript-expr o p)
+	     (close-output-port p))))
    (lambda (o)
-      (let ((p (open-output-string)))
-	 (obj->javascript-expr o p)
-	 (close-output-port p)))
-   (lambda (o)
-      #unspecified))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-xhtml-xmlns ...                                              */

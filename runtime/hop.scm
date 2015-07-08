@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Jul  7 11:37:15 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 15:58:35 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -46,6 +46,7 @@
 		      #!key
 		      fail
 		      (header '())
+		      (authorization #f)
 		      (connection 'keep-alive)
 		      (timeout 0)
 		      (method 'GET)
@@ -297,7 +298,11 @@
 ;*    with-url  ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (with-url url success
-		  #!key fail (header '()) (timeout 0) (method 'GET)
+		  #!key fail
+		  (header '())
+		  (authorization #f)
+		  (timeout 0)
+		  (method 'GET)
 		  (connection 'keep-alive)
 		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
@@ -348,6 +353,7 @@
 			      (connection connection)
 			      (timeout timeout)
 			      (method method)
+			      (authorization authorization)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback url r suc fail #f)))
@@ -371,7 +377,7 @@
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
-      " http://" host ":" port
+      " " scheme "://" host ":" port
       (if (and (=fx (hop-verbose) 1) (>fx (string-length path) 80))
 	  (string-append (substring path 0 80) "...")
 	  path)

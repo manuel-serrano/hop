@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jul  7 11:43:28 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 07:12:29 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -764,6 +764,7 @@
 				   host port connection-timeout req ssl)))
 		      (out (socket-output sock))
 		      (in (socket-input sock)))
+		  (socket-option-set! sock SO_REUSEADDR: #t)
 		  (when (> timeout 0)
 		     (output-timeout-set! out timeout)
 		     (input-timeout-set! in timeout))

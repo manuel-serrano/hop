@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Jul  5 08:32:52 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 14:17:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -51,9 +51,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-symbol this::J2SProgram conf)
    (with-access::J2SProgram this (nodes loc mode headers decls)
-      (let* ((vars (append-map (lambda (s) (collect* s)) nodes))
+      (let* ((hds (append-map (lambda (s) (collect* s)) headers))
+	     (vars (append-map (lambda (s) (collect* s)) nodes))
 	     (lets (collect-let nodes))
-	     (env (append vars lets))
+	     (env (append hds vars lets))
 	     (global (config-get conf :bind-global '%scope)))
 	 (when (pair? vars)
 	    (set! decls (bind-decls! vars env mode global '() '())))

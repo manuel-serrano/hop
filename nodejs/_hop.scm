@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Jul  6 14:00:42 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 15:23:47 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -32,7 +32,8 @@
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-hop %worker %this)
-   (with-access::JsGlobalObject %this (js-object)
+   (with-access::JsGlobalObject %this (js-object __proto__)
+
       (js-alist->jsobject
 	 
 	 (list
@@ -75,7 +76,7 @@
 	    (define-js withURL 3
 	       (lambda (this url success opt)
 		  (hopjs-with-url url success opt %this)))
-	    
+
 	    ;; charset
 	    (define-js charsetConvert 3
 	       (lambda (this text from to)

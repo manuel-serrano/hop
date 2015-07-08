@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Jul  3 15:36:37 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 12:25:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -85,10 +85,10 @@
 	 `(begin
 	   (nodejs-eval %this %scope)
 	   (nodejs-function %this %scope)
-	   ,(unless (string=? id "buffer.js")
+	   ,(unless (string=? path "buffer")
 	       `(nodejs-import! %this %scope
 		   (nodejs-require-core "buffer" %worker %this) 'Buffer))
-	   ,(unless (string=? id "timers.js")
+	   ,(unless (string=? path "timers")
 	       `(nodejs-import! %this %scope
 		   (nodejs-require-core "timers" %worker %this)))))
       (instantiate::J2SUndefined

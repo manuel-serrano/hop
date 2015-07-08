@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Sat Jun 20 08:19:09 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 10:24:12 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -60,7 +60,17 @@
 	 ((tagName:)
 	  (with-access::xml-markup o (tag)
 	     (js-string->jsstring (symbol->string tag))))
-	 
+	 ((inspect:)
+	  (js-make-function %this js-inspect 1 'inspect))
+	 ((constructor)
+	  (js-undefined))
+	 ((toString:)
+	  (js-make-function %this
+	     (lambda (this)
+		(js-string->jsstring
+		   (xml->string o (hop-xml-backend))))
+	     0
+	     'toString))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((c (memq pname attributes)))

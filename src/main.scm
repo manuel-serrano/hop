@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jul  7 10:57:29 2015 (serrano)                */
+;*    Last change :  Wed Jul  8 13:44:59 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -176,7 +176,9 @@
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files)
    (let* ((%global (nodejs-new-global-object))
-	  (%worker (js-init-main-worker! %global (hop-run-server)
+	  (%worker (js-init-main-worker! %global
+		      ;; keep-alive
+		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 		      nodejs-new-global-object)))
       ;; js loader
       (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
@@ -188,8 +190,6 @@
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
 	 (nodejs-module "repl" path %worker %global))
-      (when (eq? (hop-enable-repl) 'js)
-	 (hopscript-repl (hop-scheduler) %global %worker))
       ;; preload the command-line files
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
@@ -203,6 +203,9 @@
 	    (thread-request-set! #unspecified #unspecified)))
       ;; start the javascript loop
       (hop-hopscript-worker (hop-scheduler) %global %worker)
+      ;; start the JS repl loop
+      (when (eq? (hop-enable-repl) 'js)
+	 (hopscript-repl (hop-scheduler) %global %worker))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -332,14 +335,16 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript-repl scd %global %worker)
    (if (>fx (hop-max-threads) 1)
-       (with-access::scheduler scd (size)
-	  (if (<=fx size 1)
-	      (error "hop-repl"
-		 "HOP REPL cannot be spawned without multi-threading"
-		 scd)
-	      (spawn0 scd
-		 (stage-repl
-		    (lambda () (repljs %global %worker))))))
+       (if (isa? scd scheduler)
+	   (with-access::scheduler scd (size)
+	      (if (<=fx size 1)
+		  (error "hop-repl"
+		     "HOP REPL cannot be spawned without multi-threading"
+		     scd)
+		  (spawn0 scd
+		     (stage-repl
+			(lambda () (repljs %global %worker))))))
+	   (repljs %global %worker))
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
 	  (hop-max-threads))))
