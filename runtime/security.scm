@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 22 17:58:28 2009                          */
-;*    Last change :  Sun Jun 21 07:04:51 2015 (serrano)                */
+;*    Last change :  Thu Jul  9 14:28:21 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Security management.                                             */
@@ -37,7 +37,7 @@
 	    (hop-security-manager::obj)
 	    (hop-security-manager-set! ::obj)
 
-	    (xml-tree-compare::obj ::obj ::xml-backend ::http-request)
+	    (xml-tree-compare::obj ::obj ::xml-backend ::obj)
 	    (generic xml-compare a1::obj a2::obj)
 	    (xml-string-sanitize::bstring ::bstring)
 	    (xml-attribute-sanitize::obj ::obj ::keyword)))
@@ -153,17 +153,21 @@
 			  (security security-manager-tree-compare)))
       (let* ((s (close-output-port p))
 	     (ast (skip-declaration (string->html s))))
-	 (with-handler
-	    (lambda (e)
-	       (let ((rep (http-error e req)))
-		  (if (isa? rep http-response-xml)
-		      (begin
-			 (exception-notify e)
-			 (with-access::http-response-xml rep (xml) xml))
-		      (raise e))))
-	    (begin
-	       (xml-compare (normalize-ast xml) (normalize-ast ast))
-	       xml)))))
+	 (if (isa? req http-request)
+	     (with-handler
+		(lambda (e)
+		   (let ((rep (http-error e req)))
+		      (if (isa? rep http-response-xml)
+			  (begin
+			     (exception-notify e)
+			     (with-access::http-response-xml rep (xml) xml))
+			  (raise e))))
+		(begin
+		   (xml-compare (normalize-ast xml) (normalize-ast ast))
+		   xml))
+	     (begin
+		(xml-compare (normalize-ast xml) (normalize-ast ast))
+		xml)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    skip-declaration ...                                             */

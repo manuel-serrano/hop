@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jul  8 14:15:30 2015 (serrano)                */
+;*    Last change :  Thu Jul  9 17:05:37 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1022,8 +1022,7 @@
 				 `'(#!key ,@args)
 				 `',args))
 		      (resource %resource)
-		      (source %source)
-		      ))))))
+		      (source %source)))))))
    
    (define (init->formal init::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit init (name val)

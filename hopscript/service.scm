@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jul  9 11:33:12 2015 (serrano)                */
+;*    Last change :  Thu Jul  9 17:05:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -127,7 +127,7 @@
 	    :enumerable #f)
 	 
 	 ;; HopFrame prototype and constructor
-	 (define js-hopframe-prototype
+	 (set! js-hopframe-prototype
 	    (instantiate::JsObject
 	       (__proto__ __proto__)
 	       (extensible #t)))
@@ -149,7 +149,7 @@
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'toString))
-	 
+
 	 (letrec ((js-hopframe (js-make-function %this
 				  (lambda (this url args)
 				     (js-new %this js-hopframe url args))
@@ -161,7 +161,7 @@
 						   url args)))))
 	    (js-bind! %this %this 'HopFrame
 	       :configurable #f :enumerable #f :value js-hopframe))
-	 
+
 	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -201,7 +201,7 @@
 			args)))
 	    (url url)
 	    (__proto__ js-hopframe-prototype))))
-   
+
    (cond
       ((null? args)
        (url-frame))
@@ -227,7 +227,7 @@
 	  (string->keyword (cadr arg)))
 	 (else
 	  (cadr arg))))
-   
+
    (with-access::JsHopFrame frame (url args)
       (if (pair? args)
 	  (hop-apply-url url (map hopframe-multipart-arg->arg args))
