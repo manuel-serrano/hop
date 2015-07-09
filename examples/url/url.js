@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Sun Dec 21 07:23:45 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Thu Jul  9 11:56:51 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Online translation example                                       */
 /*    -------------------------------------------------------------    */
@@ -13,23 +13,16 @@
 /*=====================================================================*/
 var hop = require( "hop" );
 
-var url_base = "http://mymemory.translated.net/api/get";
+var svc = hop.webService( "http://mymemory.translated.net/api/get" );
 
-function translateText( text, langpair ) {
-   var url = url_base
-      + "?q=" + escape( text )
-      + "&langpair=" + (langpair ? langpair : "en|fr");
-
-   return hop.withURL(
-      url,
-      function( o ) {
-	 if( o.responseStatus === 200 ) {
-	    var t = o.responseData.translatedText;
-	    
-	    return hop.charsetConvert( unescape( t ), "UTF-8" );
-	 }
-      }
-   );
+function translateText( text, lang ) {
+   var o = svc( { q: text, langpair: (lang ? lang : "en|fr") } ).postSync();
+   
+   if( o.responseStatus === 200 ) {
+      var t = o.responseData.translatedText;
+      
+      return hop.charsetConvert( unescape( t ), "UTF-8" );
+   }
 }
 
 service url() {

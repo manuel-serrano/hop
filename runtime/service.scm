@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Jul  8 09:52:01 2015 (serrano)                */
+;*    Last change :  Thu Jul  9 11:36:14 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -277,7 +277,7 @@
 		(set-car! a (string->keyword (car a)))
 		(set-cdr! a (cons (cdr a) '())))
       args)
-   ;; pack the multipe arguments occurrences
+   ;; pack the multiple arguments occurrences
    (normalize args)
    ;; build the arguments list
    (apply append args))

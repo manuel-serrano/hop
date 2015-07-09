@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jul  8 16:24:42 2015 (serrano)                */
+;*    Last change :  Thu Jul  9 11:33:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -162,55 +162,6 @@
 	    (js-bind! %this %this 'HopFrame
 	       :configurable #f :enumerable #f :value js-hopframe))
 	 
-	 
-	 ;; UrlFrame prototype and constructor
-	 (define js-urlframe-prototype
-	    (instantiate::JsObject
-	       (__proto__ __proto__)
-	       (extensible #t)))
-
-	 (js-bind! %this js-urlframe-prototype 'post
-	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame success opt)
-			 (post-url this success opt %this #f))
-		      2 'post))
-	 (js-bind! %this js-urlframe-prototype 'postSync
-	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame opt)
-			 (post-url this #f opt %this #t))
-		      1 'postSync))
-	 (js-bind! %this js-urlframe-prototype 'toString
-	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame)
-			 (js-string->jsstring (urlframe->string this %this)))
-		      0 'toString))
-	 
-	 (letrec ((js-urlframe (js-make-function %this
-				  (lambda (this url args)
-				     (js-new %this js-urlframe url args))
-				  1 'JsUrlframe
-				  :__proto__ js-function-prototype
-				  :prototype js-urlframe-prototype
-				  :construct (lambda (this url args)
-						(js-make-urlframe %this
-						   js-urlframe-prototype
-						   url args))))
-		  (js-hopurl (js-make-function %this
-				(lambda (this base)
-				   (let ((name (string->symbol
-						  (js-jsstring->string base))))
-				      (js-make-function %this
-					 (lambda (this args)
-					    (js-new %this js-urlframe base args))
-					 1 name)))
-				1 'HopUrl)))
-	    (js-bind! %this %this 'UrlFrame
-	       :configurable #f :enumerable #f :value js-urlframe)
-
-	    (js-bind! %this %this 'HopUrl
-	       :configurable #f :enumerable #f :value js-hopurl))
-
-
 	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -282,29 +233,6 @@
 	  (hop-apply-url url (map hopframe-multipart-arg->arg args))
 	  url)))
 
-;*---------------------------------------------------------------------*/
-;*    js-make-urlframe ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-make-urlframe %this::JsGlobalObject js-urlframe-prototype url args)
-   (instantiate::JsHopFrame
-      (%this %this)
-      (url url)
-      (args (if (eq? args (js-undefined))
-		'()
-		(map! (lambda (v)
-			 (if (keyword? v)
-			     v
-			     (js-tostring v %this)))
-		   (js-jsobject->plist args %this))))
-      (__proto__ js-urlframe-prototype)))
-
-;*---------------------------------------------------------------------*/
-;*    urlframe->string ...                                             */
-;*---------------------------------------------------------------------*/
-(define (urlframe->string::bstring frame::JsHopFrame %this)
-   (with-access::JsHopFrame frame (url args)
-      (hop-apply-nice-url (js-jsstring->string url) args)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-string->buffer ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -397,75 +325,6 @@
 				      scheme->js))))))
 	     (js-undefined))
 	  (with-hop
-	     (if (isa? success JsFunction)
-		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
-		 scheme->js)))))
-
-;*---------------------------------------------------------------------*/
-;*    post-url ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (post-url frame::JsHopFrame success opt %this force-sync)
-   
-   (let ((authorization #f)
-	 (fail #f)
-	 (asynchronous (not force-sync))
-	 (header #f)
-	 (timeout 0)
-	 (method 'GET))
-      (cond
-	 ((isa? opt JsFunction)
-	  (set! fail opt))
-	 ((not (eq? opt (js-undefined)))
-	  (let ((a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this))
-		(t (js-get opt 'timeout %this))
-		(m (js-get opt 'method %this))
-		(r (js-get opt 'header %this)))
-	     (unless (eq? a (js-undefined))
-		(set! authorization (js-tostring a %this)))
-	     (unless (js-totest y)
-		(when (js-in? %this 'asynchronous opt)
-		   (set! asynchronous #f)))
-	     (unless (eq? t (js-undefined))
-		(set! timeout (js-tointeger t %this)))
-	     (unless (eq? m (js-undefined))
-		(set! method (string->symbol (js-tostring m %this))))
-	     (when (isa? f JsFunction)
-		(set! fail
-		   (lambda (xhr)
-		      (with-access::xml-http-request xhr (header)
-			 (js-call1 %this f %this
-			    (js-alist->jsobject header %this))))))
-	     (when (isa? r JsObject)
-		(set! header (js-jsobject->alist r %this))))))
-      
-      (define (post callback)
-	 (with-url (urlframe->string frame %this) callback
-		   :fail fail
-		   :method method
-		   :timeout timeout
-		   :authorization authorization
-		   :header header))
-      
-      (define (scheme->js val)
-	 (js-obj->jsobject val %this))
-      
-      (if asynchronous
-	  (begin
-	     (thread-start!
-		(instantiate::hopthread
-		   (body (lambda ()
-			    (post
-			       (if (isa? success JsFunction)
-				   (lambda (x)
-				      (js-worker-exec (js-current-worker) "post"
-					 (lambda ()
-					    (js-call1 %this success %this
-					       (scheme->js x)))))
-				   scheme->js))))))
-	     (js-undefined))
-	  (post 
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)))))

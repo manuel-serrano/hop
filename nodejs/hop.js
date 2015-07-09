@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sat Jun 20 08:10:00 2015 (serrano)                */
+/*    Last change :  Thu Jul  9 11:55:56 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -43,6 +43,7 @@ exports.version = hop.version;
 /*---------------------------------------------------------------------*/
 /*    withHOP                                                          */
 /*---------------------------------------------------------------------*/
+exports.webService = hop.webService;
 exports.withURL = hop.withURL;
 
 /*---------------------------------------------------------------------*/
