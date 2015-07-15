@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sat Jul 11 07:32:49 2015 (serrano)                */
+;*    Last change :  Wed Jul 15 12:44:00 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -111,9 +111,9 @@
       (tag 'tree-leaf)
       (klass (if (string? class) class ""))
       (id (xml-make-id id 'TRLEAF))
-      (value value)
-      (icon (tree-icon icon inline "file.png"))
-      (iconerr icon)
+      (value (xml-primitive-value value))
+      (icon (tree-icon (xml-primitive-value icon) inline "file.png"))
+      (iconerr (xml-primitive-value icon))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
