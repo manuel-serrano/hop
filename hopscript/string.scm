@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb  4 11:16:47 2015 (serrano)                */
+;*    Last change :  Wed Jul 15 13:50:29 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -109,7 +109,7 @@
 	 ;; then, create a HopScript object
 	 (set! js-string
 	    (js-make-function %this
-	       (%js-string %this) 1 'JsString
+	       (%js-string %this) 1 'String
 	       :__proto__ js-function-prototype
 	       :prototype js-string-prototype
 	       :construct js-string-construct
