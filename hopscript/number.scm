@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jan 18 07:08:43 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:23:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -103,7 +103,7 @@
 
 	 ;; Create a HopScript number object constructor
 	 (set! js-number
-	    (js-make-function %this %js-number 1 'JsNumber
+	    (js-make-function %this %js-number 1 'Number
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :alloc js-number-alloc

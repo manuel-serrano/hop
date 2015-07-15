@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Dec 21 06:53:27 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Sat Jul 11 07:32:49 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -86,10 +86,10 @@
 	 (onunselect onunselect)
 	 (onopen onopen)
 	 (onclose onclose)
-	 (value value)
+	 (value (xml-primitive-value value))
 	 (inline inline)
-	 (iconopen iconopen)
-	 (iconclose iconclose)
+	 (iconopen (xml-primitive-value iconopen))
+	 (iconclose (xml-primitive-value iconclose))
 	 (body body))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jul  3 16:13:36 2015 (serrano)                */
+;*    Last change :  Sat Jul 11 06:43:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
@@ -168,7 +168,7 @@
 	 (id
 	  (let ((t (find-target id targets)))
 	     (if t
-		 (with-access::J2SLoop t (need-bind-exit-break)
+		 (with-access::J2SIdStmt t (need-bind-exit-break)
 		    (set! target t)
 		    (set! need-bind-exit-break #t))
 		 (raise

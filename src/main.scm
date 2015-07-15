@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul  8 13:44:59 2015 (serrano)                */
+;*    Last change :  Wed Jul 15 07:20:03 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -76,89 +76,90 @@
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   ;; parse the command line
-   (let ((files (parse-args args))
-	 (jsworker #f))
-      ;; extent the require search path to the Hop autoload directories
-      (nodejs-resolve-extend-path! (hop-autoload-directories))
-      ;; install the builtin filters
-      (hop-filter-add! service-filter)
-      ;; js rc load
-      (if (hop-javascript)
-	  (set! jsworker (javascript-init args files))
-	  (hop-init args files))
-      ;; now the RC is read, close user creation
-      (users-close!)
-      ;; when debugging, init the debugger runtime
-      (when (>=fx (bigloo-debug) 1)
-	 (hop-debug-init! (hop-client-output-port)))
-      ;; prepare the regular http handling
-      (init-http!)
-      (when (hop-enable-webdav) (init-webdav!))
-      (when (hop-enable-fast-server-event) (init-flash!))
-      ;; close filter installation
-      (hop-filters-close!)
-      ;; https file handling
-      (cond-expand
-	 (enable-ssl
-	  (input-port-protocol-set! "https://" open-input-https-socket)))
-      ;; start zeroconf
-      (when (hop-enable-zeroconf) (init-zeroconf!))
-      ;; create the scheduler (unless the rc file has already created one)
-      (unless (isa? (hop-scheduler) scheduler)
-	 (set-scheduler!))
-      ;; start the hop scheduler loop (i.e. the hop main loop)
-      (with-handler
-	 (lambda (e)
-	    (exception-notify e)
-	    (fprint (current-error-port)
-	       "An error has occurred in the Hop main loop, exiting...")
-	    (exit 1))
-	 (let ((serv (hop-server-socket)))
-	    ;; adjust the actual hop-port
-	    (hop-port-set! (socket-port-number serv))
-	    (hop-fast-server-event-port-set! (socket-port-number serv))
-	    ;; ready to now say hello
-	    (hello-world)
-	    ;; tune the server socket
-	    (socket-option-set! serv :TCP_NODELAY #t)
-	    ;; start the job (a la cron background tasks) scheduler
-	    (when (hop-enable-jobs)
-	       (job-start-scheduler!))
-	    ;; when needed, start the HOP repl
-	    (when (eq? (hop-enable-repl) 'scm)
-	       (hop-repl (hop-scheduler)))
-	    ;; when needed, start a loop for server events
-	    (hop-event-server (hop-scheduler))
-	    (when (hop-run-server)
-	       
-	       ;; preload all the forced services
-	       (for-each (lambda (svc)
-			    (let* ((path (string-append (hop-service-base) "/" svc))
-				   (req (instantiate::http-server-request
-					   (path path)
-					   (abspath path)
-					   (port (hop-port))
-					   (connection 'close))))
-			       (with-handler
-				  (lambda (err)
-				     (exception-notify err)
-				     (fprintf (current-error-port)
-					"*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-				  (service-filter req))))
-		  (hop-preload-services))
-	       ;; close the filters, users, and security
-	       (security-close!)
-	       ;; start the main loop
-	       (scheduler-accept-loop (hop-scheduler) serv #t))
-	    (if jsworker
-		(if (thread-join! jsworker) 0 1)
-		0)))))
+   (let ((jsworker #f))
+      ;; parse the command line
+      (multiple-value-bind (files exprs exprsjs)
+	 (parse-args args)
+	 ;; extent the require search path to the Hop autoload directories
+	 (nodejs-resolve-extend-path! (hop-autoload-directories))
+	 ;; install the builtin filters
+	 (hop-filter-add! service-filter)
+	 (hop-init args files exprs)
+	 ;; js rc load
+	 (when (hop-javascript)
+	    (set! jsworker (javascript-init args files exprsjs)))
+	 ;; now the RC is read, close user creation
+	 (users-close!)
+	 ;; when debugging, init the debugger runtime
+	 (when (>=fx (bigloo-debug) 1)
+	    (hop-debug-init! (hop-client-output-port)))
+	 ;; prepare the regular http handling
+	 (init-http!)
+	 (when (hop-enable-webdav) (init-webdav!))
+	 (when (hop-enable-fast-server-event) (init-flash!))
+	 ;; close filter installation
+	 (hop-filters-close!)
+	 ;; https file handling
+	 (cond-expand
+	    (enable-ssl
+	     (input-port-protocol-set! "https://" open-input-https-socket)))
+	 ;; start zeroconf
+	 (when (hop-enable-zeroconf) (init-zeroconf!))
+	 ;; create the scheduler (unless the rc file has already created one)
+	 (unless (isa? (hop-scheduler) scheduler)
+	    (set-scheduler!))
+	 ;; start the hop scheduler loop (i.e. the hop main loop)
+	 (with-handler
+	    (lambda (e)
+	       (exception-notify e)
+	       (fprint (current-error-port)
+		  "An error has occurred in the Hop main loop, exiting...")
+	       (exit 1))
+	    (let ((serv (hop-server-socket)))
+	       ;; adjust the actual hop-port
+	       (hop-port-set! (socket-port-number serv))
+	       (hop-fast-server-event-port-set! (socket-port-number serv))
+	       ;; ready to now say hello
+	       (hello-world)
+	       ;; tune the server socket
+	       (socket-option-set! serv :TCP_NODELAY #t)
+	       ;; start the job (a la cron background tasks) scheduler
+	       (when (hop-enable-jobs)
+		  (job-start-scheduler!))
+	       ;; when needed, start the HOP repl
+	       (when (eq? (hop-enable-repl) 'scm)
+		  (hop-repl (hop-scheduler)))
+	       ;; when needed, start a loop for server events
+	       (hop-event-server (hop-scheduler))
+	       (when (hop-run-server)
+		  ;; preload all the forced services
+		  (for-each (lambda (svc)
+			       (let* ((path (string-append (hop-service-base)
+					       "/" svc))
+				      (req (instantiate::http-server-request
+					      (path path)
+					      (abspath path)
+					      (port (hop-port))
+					      (connection 'close))))
+				  (with-handler
+				     (lambda (err)
+					(exception-notify err)
+					(fprintf (current-error-port)
+					   "*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
+				     (service-filter req))))
+		     (hop-preload-services))
+		  ;; close the filters, users, and security
+		  (security-close!)
+		  ;; start the main loop
+		  (scheduler-accept-loop (hop-scheduler) serv #t))
+	       (if jsworker
+		   (if (thread-join! jsworker) 0 1)
+		   0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-init ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-init args files)
+(define (hop-init args files exprs)
    ;; preload the command-line files
    (when (pair? files)
       (let ((req (instantiate::http-server-request
@@ -169,12 +170,26 @@
 	 ;; preload the user files
 	 (for-each (lambda (f) (load-command-line-weblet f #f)) files)
 	 ;; unset the dummy request
-	 (thread-request-set! #unspecified #unspecified))))
+	 (thread-request-set! #unspecified #unspecified)))
+   ;; evaluate the user expressions
+   (for-each (lambda (expr)
+		(call-with-input-string expr
+		   (lambda (ip)
+		      (let ((sexp (hop-read ip)))
+			 (with-handler
+			    (lambda (e)
+			       (if (isa? e &eval-warning)
+				   (begin
+				      (warning-notify e)
+				      #unspecified)
+				   (raise e)))
+			    (eval sexp))))))
+      exprs))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init args files)
+(define (javascript-init args files exprs)
    (let* ((%global (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
@@ -206,6 +221,16 @@
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
 	 (hopscript-repl (hop-scheduler) %global %worker))
+      ;; push the user expressions
+      (when (pair? exprs)
+	 (js-worker-push-thunk! %worker "cmdline"
+	    (lambda ()
+	       (for-each (lambda (expr)
+			    (call-with-input-string (string-append expr "\n")
+			       (lambda (ip)
+				  (%js-eval ip 'eval %global
+				     (js-undefined) %global))))
+		  exprs))))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -288,6 +313,27 @@
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (load-command-line-weblet f %worker)
+
+   (define (load-hop-directory path)
+      (let ((src (string-append (basename path) ".hop")))
+	 (when (file-exists? src)
+	    (hop-load-weblet (make-file-name path src)))))
+
+   (define (load-js-directory path)
+      (let ((src (string-append (basename path) ".js")))
+	 (when (file-exists? src)
+	    (hop-load-weblet (make-file-name path src)))))
+
+   (define (load-package pkg)
+      (call-with-input-file pkg
+	 (lambda (ip)
+	    (let* ((obj (javascript->obj ip))
+		   (cmain (assq 'main obj)))
+	       (when (pair? cmain)
+		  (load-command-line-weblet
+		     (make-file-name (dirname pkg) (cdr cmain)) %worker)
+		  #t)))))
+
    (let ((path (cond
 		  ((string-index f ":")
 		   f)
@@ -302,8 +348,14 @@
 	  (hop-load-hz path))
 	 ((directory? path)
 	  ;; load a directory
-	  (let ((src (string-append (basename path) ".hop")))
-	     (hop-load-weblet (make-file-name path src))))
+	  (let ((pkg (make-file-name path "package.json")))
+	     (cond
+		((not %worker)
+		 (load-hop-directory path))
+		((file-exists? pkg)
+		 (load-package pkg))
+		(else
+		 (load-js-directory path)))))
 	 ((string-suffix? ".js" path)
 	  ;; javascript
 	  (when %worker
@@ -311,9 +363,12 @@
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
 		      (nodejs-load path %worker))))))
+	 ((string=? (basename path) "package.json")
+	  (load-package path))
 	 (else
 	  ;; this is a plain file
-	  (hop-load-weblet path)))))
+	  (unless %worker
+	     (hop-load-weblet path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-repl ...                                                     */

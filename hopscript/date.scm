@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 24 10:28:41 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 12:15:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -213,7 +213,7 @@
 	       (js-call0 %this (js-get dt 'toString %this) dt)))
 	 
 	 (set! js-date
-	    (js-make-function %this %js-date 7 'JsDate
+	    (js-make-function %this %js-date 7 'Date
 	       :__proto__ js-function-prototype
 	       :prototype js-date-prototype
 	       :alloc js-date-alloc

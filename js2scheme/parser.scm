@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul  3 09:28:47 2015 (serrano)                */
+;*    Last change :  Sat Jul 11 05:36:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -749,10 +749,10 @@
 	 (cond
 	    (declaration?
 	     (instantiate::J2SDeclFun
-		(loc (token-loc id))
+		(loc (token-loc token))
 		(id (cdr id))
 		(val (instantiate::J2SFun
-			(loc (token-loc id))
+			(loc (token-loc token))
 			(params params)
 			(name (cdr id))
 			(mode mode)
@@ -766,7 +766,7 @@
 				 (global #t)))))))
 	    (id
 	     (co-instantiate ((fun (instantiate::J2SFun
-				      (loc (token-loc id))
+				      (loc (token-loc token))
 				      (decl decl)
 				      (params params)
 				      (name (cdr id))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 18 07:15:24 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:23:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -73,7 +73,7 @@
 
 	 ;; then, Create a HopScript string object
 	 (set! js-boolean
-	    (js-make-function %this %js-boolean 1 'JsBoolean
+	    (js-make-function %this %js-boolean 1 'Boolean
 	       :__proto__ js-function-prototype
 	       :prototype js-boolean-prototype
 	       :alloc js-boolean-alloc

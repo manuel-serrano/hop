@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri May 22 07:15:29 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:23:49 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -494,7 +494,7 @@
 	       (js-typedarray-alloc js-typedarray %this)
 	       items))
 
-	 (define tyname (symbol-append 'Js name))
+	 (define tyname name)
 	 
 	 (define (js-typedarray-alloc constructor::JsFunction %this)
 	    (let ((o (allocate-instance tyname)))

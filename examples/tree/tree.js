@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Sun Dec 21 06:41:41 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sat Jul 11 07:33:27 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    TREE widget example                                              */
 /*    -------------------------------------------------------------    */
@@ -22,6 +22,8 @@ function base( dir ) {
 
 function dirToTree( dir ) {
    return <TR.TREE> {
+      multiselect: true,
+      value: dir,
       <TR.TRHEAD> { base( dir ) },
       <TR.TRBODY> {
 	 service () {
@@ -40,9 +42,33 @@ function dirToTree( dir ) {
 }
 
 service tree( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
+   var t = dirToTree( dir );
    return <HTML> {
-      <HEAD> { css: TR.css, jscript: TR.jscript },
-      <BODY> { dirToTree( dir ) }
+      <HEAD> {
+	 css: TR.css,
+	 jscript: TR.jscript
+      },
+      <BODY> {
+	 <DIV> {
+	    <BUTTON> {
+	       onclick: ~{ HopTree.open( ${t} ) },
+	       "Open tree"
+	    },
+	    <BUTTON> {
+	       onclick: ~{ HopTree.close( ${t} ) },
+	       "Close tree"
+	    },
+	    <BUTTON> {
+	       onclick: ~{ console.log( HopTree.selection( ${t} ) ) },
+	       "Log selection"
+	    },
+	    <BUTTON> {
+	       onclick: ~{ HopTree.reset( ${t} ) },
+	       "Reset selection"
+	    }
+	 },
+	 t
+      }
    }
 }
 

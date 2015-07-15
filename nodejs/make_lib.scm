@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Mar  3 19:21:15 2015 (serrano)                */
+;*    Last change :  Tue Jul 14 07:19:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the nodejs heap file.                   */
@@ -21,8 +21,7 @@
 	   __nodejs_process
 	   __nodejs_repl
 	   __nodejs_uv
-	   (JsSlowBuffer __nodejs__buffer)
-	   (JsFastBuffer __nodejs__buffer))
+	   __nodejs__buffer)
    
    (eval  (class JsSlowBuffer)
           (class JsFastBuffer)

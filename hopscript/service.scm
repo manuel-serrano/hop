@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jul  9 17:05:31 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:24:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -153,7 +153,7 @@
 	 (letrec ((js-hopframe (js-make-function %this
 				  (lambda (this url args)
 				     (js-new %this js-hopframe url args))
-				  1 'JsHopFrame
+				  1 'HopFrame
 				  :__proto__ js-function-prototype
 				  :prototype js-hopframe-prototype
 				  :construct (lambda (this url args)

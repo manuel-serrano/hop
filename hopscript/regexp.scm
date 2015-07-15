@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 19 08:35:49 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:24:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -79,7 +79,7 @@
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
 	    (js-make-function %this
-	       (%js-regexp %this) 2 'JsRegExp
+	       (%js-regexp %this) 2 'RegExp
 	       :__proto__ js-function-prototype
 	       :prototype js-regexp-prototype
 	       :construct (js-regexp-construct %this)))

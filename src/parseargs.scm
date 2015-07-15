@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jul  7 10:29:57 2015 (serrano)                */
+;*    Last change :  Tue Jul 14 06:38:28 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -41,6 +41,7 @@
 	 (mime-file #unspecified)
 	 (libraries '())
 	 (exprs '())
+	 (exprsjs '())
 	 (log-file #f)
 	 (be #f)
 	 (files '())
@@ -225,8 +226,10 @@
 	     (hop-session-set! (string->integer session)))
 	    (("--no-job-restore" (help "Don't restore jobs"))
 	     (hop-job-restore-set! #f))
-	    (("--eval" ?string (help "Evaluate STRING"))
+	    ((("-e" "--eval") ?string (help "Evaluate Hop STRING"))
 	     (set! exprs (cons string exprs)))
+	    ((("-j" "--evaljs") ?string (help "Evaluate JavaScript STRING"))
+	     (set! exprsjs (cons string exprsjs)))
 	    (("--repl" (help "Start a repl"))
 	     (hop-enable-repl-set! 'scm))
 	    (("--repljs" (help "Start a JS repl"))
@@ -475,20 +478,6 @@
 	    (else
 	     (hop-fast-server-event-port-set! ep))))
       
-      (for-each (lambda (expr)
-		   (call-with-input-string expr
-		      (lambda (ip)
-			 (let ((sexp (hop-read ip)))
-			    (with-handler
-			       (lambda (e)
-				  (if (isa? e &eval-warning)
-				      (begin
-					 (warning-notify e)
-					 #unspecified)
-				      (raise e)))
-			       (eval sexp))))))
-	 exprs)
-      
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
@@ -503,7 +492,7 @@
       (when (and (integer? p) (not (=fx p (hop-port))))
 	 (init-server-socket!))
       
-      (reverse files)))
+      (values (reverse files) (reverse! exprs) (reverse! exprsjs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    set-hop-owner! ...                                               */
@@ -659,7 +648,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-clientc-filename-resolver name context-or-path)
    (cond
-      ((string-suffix? ".js" name)
+      ((or (string-suffix? ".js" name) (not (string? context-or-path)))
        (let ((scope context-or-path))
 	  (nodejs-resolve name scope (js-get scope 'module scope))))
       (else

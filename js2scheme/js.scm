@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Jun 30 12:15:11 2015 (serrano)                */
+;*    Last change :  Sat Jul 11 06:46:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -51,16 +51,6 @@
 			'normal (lambda (x) x) conf)))))))
 	 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SNode ...                                             */
-;*    -------------------------------------------------------------    */
-;*    This function returns a list of tokens and nodes. The nodes      */
-;*    are meant to used for generating source-map tables. When         */
-;*    generating JS code, they should be filtered out.                 */
-;*---------------------------------------------------------------------*/
-(define-generic (j2s-js::pair-nil this::J2SNode tildec dollarc mode evalp conf)
-   (list this (format "\"~a\"" (typeof this))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-js* ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js* this::J2SNode start end sep nodes tildec dollarc mode evalp conf)
@@ -73,6 +63,24 @@
 		    (list end)
 		    (cons sep (loop (cdr nodes)))))))))
 				
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SNode ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This function returns a list of tokens and nodes. The nodes      */
+;*    are meant to used for generating source-map tables. When         */
+;*    generating JS code, they should be filtered out.                 */
+;*---------------------------------------------------------------------*/
+(define-generic (j2s-js::pair-nil this::J2SNode tildec dollarc mode evalp conf)
+   (list this (format "\"~a\"" (typeof this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js::pair-nil ::J2SProgram ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js::pair-nil this::J2SProgram tildec dollarc mode evalp conf)
+   (with-access::J2SProgram this (headers decls nodes)
+      (let ((body (append headers decls nodes)))
+	 (j2s-js* this "{" "}" "" body tildec dollarc mode evalp conf))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SSeq ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -195,7 +203,7 @@
 ;*    j2s-js ::J2SFor ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFor tildec dollarc mode evalp conf)
-
+   
    (define (join sep el)
       (if (null? el)
 	  '()
@@ -203,7 +211,7 @@
 	     (if (null? (cdr el))
 		 (car el)
 		 (append (car el) (list sep) (loop (cdr el)))))))
-
+   
    (define (var-decl decl::J2SDecl)
       (with-access::J2SDecl decl (id)
 	 (cons (symbol->string id)
@@ -211,14 +219,25 @@
 		(with-access::J2SDeclInit decl (id val)
 		   (cons "=" (j2s-js val tildec dollarc mode evalp conf)))
 		'()))))
-
+   
+   (define (stmt-expr stmt::J2SStmtExpr)
+      (with-access::J2SStmtExpr stmt (expr)
+	 (j2s-js expr tildec dollarc mode evalp conf)))
+   
    (with-access::J2SFor this (init test incr body)
-      (cons* this "for ( "
-         (append
-	    (if (isa? init J2SVarDecls)
+      (cons* this "for( "
+	 (append
+	    (cond
+	       ((isa? init J2SVarDecls)
 		(with-access::J2SVarDecls init (decls)
-		   (cons "var " (join "," (map var-decl decls))))
-		(j2s-js init tildec dollarc mode evalp conf))
+		   (cons "var " (join "," (map var-decl decls)))))
+	       ((isa? init J2SSeq)
+		(with-access::J2SSeq init (nodes)
+		   (if (every (lambda (n) (isa? n J2SStmtExpr)) nodes)
+		       (join "," (map stmt-expr nodes))
+		       (j2s-js init tildec dollarc mode evalp conf))))
+	       (else
+		(j2s-js init tildec dollarc mode evalp conf)))
 	    '(";")
 	    (j2s-js test tildec dollarc mode evalp conf)
 	    '(";")
@@ -231,7 +250,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SForIn tildec dollarc mode evalp conf)
    (with-access::J2SForIn this (lhs obj body)
-      (cons* this "for ("
+      (cons* this "for("
          (append (if (isa? lhs J2SVarDecls)
 		     (with-access::J2SVarDecls lhs (decls)
 			(with-access::J2SDecl (car decls) (id)
@@ -327,6 +346,59 @@
 		  (cons ") : ("
 		     (append (j2s-js else tildec dollarc mode evalp conf)
 			'("))")))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SSwitch ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SSwitch tildec dollarc mode evalp conf)
+   (with-access::J2SSwitch this (key cases)
+      (cons* this "switch("
+	 (append
+	    (j2s-js key tildec dollarc mode evalp conf)
+	    '(") {")
+	    (append-map (lambda (n) (j2s-js n tildec dollarc mode evalp conf))
+	       cases)
+	    '("}")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SCase ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SCase tildec dollarc mode evalp conf)
+   (with-access::J2SCase this (expr body)
+      (cons* this "case "
+	 (append
+	    (j2s-js expr tildec dollarc mode evalp conf)
+	    '(": ")
+	    (j2s-js body tildec dollarc mode evalp conf)
+	    '("\n")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDefault ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDefault tildec dollarc mode evalp conf)
+   (with-access::J2SDefault this (expr body)
+      (cons* this "default: "
+	 (append
+	    (j2s-js body tildec dollarc mode evalp conf)
+	    '("\n")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SBreak ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SBreak tildec dollarc mode evalp conf)
+   (with-access::J2SBreak this (target id)
+      (if id
+	  (list this "break " id ";")
+	  (list this "break;"))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SContinue ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SContinue tildec dollarc mode evalp conf)
+   (with-access::J2SContinue this (target id)
+      (if id
+	  (list this "continue " id ";")
+	  (list this "continue;"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SComprehension ...                                    */

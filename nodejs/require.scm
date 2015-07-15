@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Jun 21 09:32:16 2015 (serrano)                */
+;*    Last change :  Sat Jul 11 06:15:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -80,7 +80,7 @@
 				  ;; generation
 				  (display exp op)))
 		     tree)
-		  (display "return exports;}" op)
+		  (display "\nreturn exports;}" op)
 		  (when srcmap
 		     (fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
 			filename srcmap)

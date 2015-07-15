@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed May  6 14:25:13 2015 (serrano)                */
+;*    Last change :  Fri Jul 10 14:25:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -123,7 +123,7 @@
 	 
 	 ;; then, Create a HopScript worker object constructor
 	 (set! js-worker
-	    (js-make-function %this (%js-worker %this) 2 'JsWorker
+	    (js-make-function %this (%js-worker %this) 2 'Worker
 	       :__proto__ js-function-prototype
 	       :prototype js-worker-prototype
 	       :construct (js-worker-construct %this (js-worker-load))))
