@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri May 22 07:02:17 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:15:31 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -35,8 +35,10 @@
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArrayBuffer
-   (lambda (o) (with-access::JsArrayBuffer o (data) data))
-   (lambda (o) o))
+   (lambda (o)
+      (with-access::JsArrayBuffer o (data) data))
+   (lambda (o %this)
+      (js-u8vector->jsarraybuffer o (or %this (js-initial-global-object)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */

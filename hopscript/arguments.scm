@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Jan 17 08:13:33 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:24:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -36,19 +36,13 @@
 	   (js-arguments->list ::JsArguments ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    object-serializer ::JsArray ...                                  */
+;*    object-serializer ::JsArguments ...                              */
 ;*---------------------------------------------------------------------*/
-;* (register-class-serialization! JsArguments                          */
-;*    (lambda (o)                                                      */
-;*       (call-with-output-string                                      */
-;* 	 (lambda (op)                                                  */
-;* 	    (obj->javascript-expr o op))))                             */
-;*    (lambda (s)                                                      */
-;*       (call-with-input-string s                                     */
-;* 	 javascript->jsobj)))                                          */
 (register-class-serialization! JsArguments
-   (lambda (o) (jsarray->vector o (js-initial-global-object)))
-   (lambda (o) o))
+   (lambda (o)
+      (js-arguments->vector o (js-initial-global-object)))
+   (lambda (o %this)
+      (js-vector->jsarray o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */
@@ -368,6 +362,14 @@
 	       :set thrower-set
 	       :enumerable #f :configurable #f)
 	    obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-arguments->vector..                                           */
+;*---------------------------------------------------------------------*/
+(define (js-arguments->vector obj::JsArguments %this)
+   (with-access::JsArguments obj (vec)
+      (vector-map (lambda (d) (js-property-value obj obj d %this))
+	 vec)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->list ...                                           */

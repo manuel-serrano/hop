@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 10 14:24:49 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:18:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -41,8 +41,10 @@
 ;*    object-serializer ::JsRegExp ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsRegExp
-   (lambda (o) (with-access::JsRegExp o (rx) rx))
-   (lambda (o) o))
+   (lambda (o)
+      (with-access::JsRegExp o (rx) rx))
+   (lambda (o %this)
+      (js-regexp->jsregexp o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */

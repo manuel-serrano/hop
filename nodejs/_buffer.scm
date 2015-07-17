@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Jun 23 12:41:53 2015 (serrano)                */
+;*    Last change :  Thu Jul 16 13:54:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -64,22 +64,27 @@
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsSlowBuffer
-   (lambda (o)
-      (with-access::JsArrayBuffer o (data) data))
-   (lambda (o)
-      (let ((stu (make-struct '__JsCustom__ 2 o)))
-	 (struct-set! stu 1 js-string->jsslowbuffer)
-	 stu)))
-
+   jsslowbuffer->u8vector
+   js-u8vector->jsslowbuffer)
+;*    (lambda (o)                                                      */
+;*       (with-access::JsSlowBuffer o (data) data))                    */
+;*    js-string->jsslowbuffer)                                         */
+;*    (lambda (o)                                                      */
+;*       (let ((stu (make-struct '__JsCustom__ 2 o)))                  */
+;* 	 (struct-set! stu 1 js-string->jsslowbuffer)                   */
+;* 	 stu)))                                                        */
+;*                                                                     */
 (register-class-serialization! JsFastBuffer
-   (lambda (o)
-      (with-access::JsFastBuffer o (%data length byteoffset)
-	 (make-serialization-substring %data
-	    (uint32->fixnum byteoffset) (uint32->fixnum length))))
-   (lambda (o)
-      (let ((stu (make-struct '__JsCustom__ 2 o)))
-	 (struct-set! stu 1 js-string->jsfastbuffer)
-	 stu)))
+   jsfastbuffer->u8vector
+   js-u8vector->jsfastbuffer)
+;*    (lambda (o)                                                      */
+;*       (with-access::JsFastBuffer o (%data length byteoffset)        */
+;* 	 (make-serialization-substring %data                           */
+;* 	    (uint32->fixnum byteoffset) (uint32->fixnum length))))     */
+;*    (lambda (o)                                                      */
+;*       (let ((stu (make-struct '__JsCustom__ 2 o)))                  */
+;* 	 (struct-set! stu 1 js-string->jsfastbuffer)                   */
+;* 	 stu)))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsFastBuffer ...                             */
@@ -151,6 +156,65 @@
       (let ((start (uint32->fixnum byteoffset))
 	    (len (uint32->fixnum length)))
 	 (substring %data start (+fx start len)))))
+
+;*---------------------------------------------------------------------*/
+;*    jsfastbuffer->u8vector ...                                       */
+;*---------------------------------------------------------------------*/
+(define (jsfastbuffer->u8vector o::JsFastBuffer)
+   (with-access::JsFastBuffer o (%data byteoffset length)
+      (let* ((fxlen (uint32->fixnum length))
+	     (buf (make-u8vector fxlen))
+	     (off (uint32->fixnum byteoffset)))
+	 (let loop ((i 0))
+	    (if (=fx i fxlen)
+		buf
+		(begin
+		   (u8vector-set! buf i
+		      (fixnum->uint8
+			 (char->integer (string-ref %data (+fx i off)))))
+		   (loop (+fx i 1))))))))
+
+;*---------------------------------------------------------------------*/
+;*    jsslowbuffer->u8vector ...                                       */
+;*---------------------------------------------------------------------*/
+(define (jsslowbuffer->u8vector o::JsSlowBuffer)
+   (with-access::JsSlowBuffer o (data byteoffset)
+      (let* ((fxlen (string-length data))
+	     (buf (make-u8vector fxlen)))
+	 (let loop ((i 0))
+	    (if (=fx i fxlen)
+		buf
+		(begin
+		   (u8vector-set! buf i
+		      (fixnum->uint8
+			 (char->integer (string-ref data i))))
+		   (loop (+fx i 1))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-u8vector->jsslowbuffer ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-u8vector->jsslowbuffer buf %this)
+   (let ((str (make-string (u8vector-length buf))))
+      (let loop ((i (-fx (u8vector-length buf) 1)))
+	 (if (=fx i -1)
+	     (js-string->jsslowbuffer str %this)
+	     (begin
+		(string-set! str i
+		   (integer->char (uint8->fixnum (u8vector-ref buf i))))
+		(loop (-fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-u8vector->jsfastbuffer ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-u8vector->jsfastbuffer buf %this)
+   (let ((str (make-string (u8vector-length buf))))
+      (let loop ((i (-fx (u8vector-length buf) 1)))
+	 (if (=fx i -1)
+	     (js-string->jsfastbuffer str %this)
+	     (begin
+		(string-set! str i
+		   (integer->char (uint8->fixnum (u8vector-ref buf i))))
+		(loop (-fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arraybuffer-length ::JsSlowBuffer ...                         */

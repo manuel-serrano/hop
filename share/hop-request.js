@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jul  3 11:11:25 2015 (serrano)                */
+/*    Last change :  Fri Jul 17 08:38:41 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -264,6 +264,39 @@ function hop_default_success( h, xhr ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hexToUint8 ...                                                   */
+/*---------------------------------------------------------------------*/
+function hexToUint8( str ) {
+   var l = str.length;
+   var res = new Uint8Array( l );
+   
+   var z = '0'.charCodeAt( 0 );
+   var n = '9'.charCodeAt( 0 );
+   var a = 'a'.charCodeAt( 0 );
+   var f = 'f'.charCodeAt( 0 );
+   var A = 'A'.charCodeAt( 0 );
+   
+   function hex_to_num( c ) {
+      if( (c >= z) && ( c<= n) ) {
+	 return c - z;
+      }
+      if( (c >= a) && ( c<= f) ) {
+	 return (c - a) + 10;;
+      }
+      return (c - A) + 10;
+   }
+      
+   for( var i = 0; i < l; i++ ) {
+      var d1 = hex_to_num( str.charCodeAt( i * 2 ) );
+      var d2 = hex_to_num( str.charCodeAt( i * 2 + 1 ) );
+
+      res[ i ] = (d1 << 4) + d2;
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_request_unserialize ...                                      */
 /*    -------------------------------------------------------------    */
 /*    Unserialize the object contained in the XHR response. The        */
@@ -271,24 +304,32 @@ function hop_default_success( h, xhr ) {
 /*---------------------------------------------------------------------*/
 function hop_request_unserialize( xhr, svc ) {
    var ctype = ("content_type" in xhr) ?
-      xhr[ "content_type" ] : hop_header_content_type( xhr );
+       xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   if( ctype === "application/x-javascript" ) {
-      return eval( xhr.responseText );
-   } else if( ctype === "application/x-url-hop" ) {
-      return hop_url_encoded_to_obj( xhr.responseText );
-   } else if( ctype === "application/x-json-hop" ) {
-      return hop_bytearray_to_obj( hop_json_parse( xhr.responseText ) );
-   } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
-      return hop_create_element( xhr.responseText );
-   } else if( ctype === "application/json" ) {
-      return hop_json_parse( xhr.responseText );
-   } else if( ctype === "application/x-hop" ) {
-      var a = (xhr.response instanceof ArrayBuffer) ?
-	 new Uint8Array( xhr.response ) : new Uint8Array();
-      return hop_bytearray_to_obj( a );
+   if( ctype === "application/x-hop" ) {
+      if( xhr.responseType === "arraybuffer" ) {
+	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
+      } else {
+	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ) );
+      }
    } else {
-      return xhr.responseText;
+      var rep = (xhr.responseType === "arraybuffer") ?
+	  String.fromCharCode.apply( null, new Uint8Array( xhr.response ) )
+	  : xhr.responseText;
+      
+      if( ctype === "application/x-javascript" ) {
+	 return eval( rep );
+      } else if( ctype === "application/x-url-hop" ) {
+	 return hop_url_encoded_to_obj( rep );
+      } else if( ctype === "application/x-json-hop" ) {
+	 return hop_bytearray_to_obj( hop_json_parse( rep ) );
+      } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+	 return hop_create_element( rep );
+      } else if( ctype === "application/json" ) {
+	 return hop_json_parse( rep );
+      } else {
+	 return rep;
+      }
    }
 }
 
@@ -463,10 +504,15 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    
    if( !sync ) {
       xhr.open( "PUT", svc, true );
-      
-      if( hop_config.uint8array ) {
+
+      if( ("responseType" in xhr) && hop_config.uint8array ) {
 	 xhr.onload = onreadystatechange;
-	 xhr.setRequestHeader( "Hop-Serialize", "arraybuffer" );
+	 xhr.responseType = "arraybuffer";
+	 xhr.setRequestHeader( "Hop-Serialize", "x-hop" );
+	 xhr.setRequestHeader( "Hop-ResponseType", "arraybuffer" );
+      } else if( hop_config.uint8array ) {
+	 xhr.onload = onreadystatechange;
+	 xhr.setRequestHeader( "Hop-Serialize", "x-hop" );
       } else {
 	 xhr.onreadystatechange = onreadystatechange;
 	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );

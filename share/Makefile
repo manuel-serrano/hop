@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Dec  5 10:07:46 2014 (serrano)                */
-#*    Copyright   :  2004-14 Manuel Serrano                            */
+#*    Last change :  Thu Jul 16 08:15:19 2015 (serrano)                */
+#*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -241,7 +241,9 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js hop-nodejs.js $(RTSCONFIG)
+hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
+  hop-exception.js hop-builtin-serializers.js hop-nodejs.js \
+  $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -254,7 +256,9 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js hop
                | $(BGLCPP) \
                >> $@
 
-hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js hop-nodejs.js $(RTSCONFIG)
+hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
+  hop-exception.js hop-debug.js hop-builtin-serializers.js hop-nodejs.js \
+  $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -320,6 +324,15 @@ hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
          export PATH; \
 	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
 
+hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(call compile,$(HOP),,--no-server,$< > $@) || ($(RM) -f $@; exit 1))
+
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
 #*---------------------------------------------------------------------*/
@@ -341,10 +354,10 @@ jvm-list:
 #*---------------------------------------------------------------------*/
 #*    predistrib                                                       */
 #*---------------------------------------------------------------------*/
-predistrib: hop-exception.js hop-debug.js
+predistrib: hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 predistrib-clean:
-	$(RM) hop-exception.js hop-debug.js
+	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 #*---------------------------------------------------------------------*/
 #*    cleaning                                                         */
@@ -356,6 +369,6 @@ clean:
 	$(RM) hop-runtime.sch 
 
 devclean:
-	$(RM) hop-exception.js hop-debug.js
+	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
 
 distclean: clean

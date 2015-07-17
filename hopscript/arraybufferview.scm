@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Jul 10 14:23:49 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:16:39 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -32,33 +32,66 @@
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
+(define (arraybufferview-serializer o::JsArrayBufferView)
+   (with-access::JsArrayBufferView o (%data) %data))
+
+(define-macro (arraybufferview-unserializer type bpe)
+   `(lambda (o %this)
+       (let ((this (or %this (js-initial-global-object))))
+	  (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
+	     (let ((abuf (instantiate::JsArrayBuffer
+			    (__proto__ (js-get js-arraybuffer 'prototype this))
+			    (data o))))
+		(,(symbol-append 'instantiate:: type)
+		 (__proto__ (js-get js-int8array 'prototype this))
+		 (%data o)
+		 (bpe 1)
+		 (length (u8vector-length o))
+		 (byteoffset 0)
+		 (buffer abuf)))))))
+
 (register-class-serialization! JsInt8Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsInt8Array 1))
 (register-class-serialization! JsUint8Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsUint8Array 1))
+
 (register-class-serialization! JsInt16Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsInt16Array 2))
 (register-class-serialization! JsUint16Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsUint16Array 2))
+
 (register-class-serialization! JsInt32Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsInt32Array 4))
 (register-class-serialization! JsUint32Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsUint32Array 4))
+
 (register-class-serialization! JsFloat32Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsFloat32Array 4))
+
 (register-class-serialization! JsFloat64Array
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsFloat64Array 8))
+
 (register-class-serialization! JsDataView
-   (lambda (o) (with-access::JsArrayBufferView o (%data) %data))
-   (lambda (o) o))
+   arraybufferview-serializer
+   (lambda (o %this)
+      (let ((this (or %this (js-initial-global-object))))
+	 (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
+	    (let ((abuf (instantiate::JsArrayBuffer
+			   (__proto__ (js-get js-arraybuffer 'prototype this))
+			   (data o))))
+	       (instantiate::JsDataView
+		  (__proto__ (js-get js-int8array 'prototype this))
+		  (%data o)
+		  (byteoffset 0)
+		  (buffer abuf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDataView ...                                 */
@@ -107,34 +140,34 @@
       (hop->javascript buffer op compile isexpr)
       (display ")" op)))
 
-;*---------------------------------------------------------------------*/
-;*    javascript-buffer->typedarray ...                                */
-;*    -------------------------------------------------------------    */
-;*    See __hopscript_arraybuffer                                      */
-;*---------------------------------------------------------------------*/
-(define (javascript-buffer->typedarray name args %this)
-   (let ((buf (allocate-instance (string->symbol name))))
-      (with-access::JsGlobalObject %this ((proto __proto__))
-         (with-access::JsTypedArray buf (__proto__ 
-					   extensible properties
-					   cmap elements
-					   frozen buffer %data byteoffset
-					   length bpe)
-            (set! __proto__ proto)
-            (set! cmap #f)
-            (set! elements '#())
-            (set! properties '())
-            (set! elements '#())
-	    (set! extensible #t)
-            (set! frozen (car args))
-	    (set! byteoffset (fixnum->uint32 (cadr args)))
-	    (set! length (fixnum->uint32 (caddr args)))
-	    (set! bpe (fixnum->uint32 (cadddr args)))
-	    (set! buffer (car (cddddr args)))
-	    (with-access::JsArrayBuffer buffer (data)
-	       (set! %data data))
-	    (js-put! buf 'length (u8vector-length %data) #f %this)))
-      buf))
+;* {*---------------------------------------------------------------------*} */
+;* {*    javascript-buffer->typedarray ...                                *} */
+;* {*    -------------------------------------------------------------    *} */
+;* {*    See __hopscript_arraybuffer                                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (javascript-buffer->typedarray name args %this)             */
+;*    (let ((buf (allocate-instance (string->symbol name))))           */
+;*       (with-access::JsGlobalObject %this ((proto __proto__))        */
+;*          (with-access::JsTypedArray buf (__proto__                  */
+;* 					   extensible properties       */
+;* 					   cmap elements               */
+;* 					   frozen buffer %data byteoffset */
+;* 					   length bpe)                 */
+;*             (set! __proto__ proto)                                  */
+;*             (set! cmap #f)                                          */
+;*             (set! elements '#())                                    */
+;*             (set! properties '())                                   */
+;*             (set! elements '#())                                    */
+;* 	    (set! extensible #t)                                       */
+;*             (set! frozen (car args))                                */
+;* 	    (set! byteoffset (fixnum->uint32 (cadr args)))             */
+;* 	    (set! length (fixnum->uint32 (caddr args)))                */
+;* 	    (set! bpe (fixnum->uint32 (cadddr args)))                  */
+;* 	    (set! buffer (car (cddddr args)))                          */
+;* 	    (with-access::JsArrayBuffer buffer (data)                  */
+;* 	       (set! %data data))                                      */
+;* 	    (js-put! buf 'length (u8vector-length %data) #f %this)))   */
+;*       buf))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsInt8Array ...                              */
@@ -277,7 +310,7 @@
 
 (define (js-f64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
    (let ((val (js-tonumber v %this)))
-      ($f64/u8vector-set! buf (*fx 4 i)
+      ($f64/u8vector-set! buf (*fx 8 i)
 	 (if (fixnum? val) (fixnum->flonum val) val))))
 
 (define-method (js-typedarray-ref o::JsFloat64Array) js-f64array-ref)
@@ -395,7 +428,7 @@
 		(js-create-from-arraybuffer this
 		   (js-new %this (js-get %this 'ArrayBuffer %this))
 		   #u32:0 #u32:0))
-	       ((number? (car items))
+	       ((fixnum? (car items))
 		(cond
 		   ((< (car items) 0)
 		    (js-raise-range-error %this
@@ -494,10 +527,8 @@
 	       (js-typedarray-alloc js-typedarray %this)
 	       items))
 
-	 (define tyname name)
-	 
 	 (define (js-typedarray-alloc constructor::JsFunction %this)
-	    (let ((o (allocate-instance tyname)))
+	    (let ((o (allocate-instance (symbol-append 'Js name))))
 	       (with-access::JsTypedArray o (cmap bpe __proto__ properties
 					       extensible elements)
 		  (set! cmap #f)

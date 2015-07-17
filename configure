@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Mar 26 05:48:01 2015 (serrano)                */
+#*    Last change :  Thu Jul 16 08:07:59 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -67,6 +67,7 @@ version="3.0.0"
 devel=pre
 
 hopc=$PWD/bin/hopc
+hop=$PWD/bin/hop
 bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
@@ -458,6 +459,7 @@ case $backend in
      contribsdir=/resource/share/contribs
      sharedir=/resource/share
      hopc="java -jar $PWD/bin/hopc.jar"
+     hop="java -jar $PWD/bin/hop.jar"
      break;;
   "dotnet")
      break;;
@@ -814,6 +816,7 @@ cat $mkmf.in \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
+          -e "s|@HOP@|$hop|" \
           -e "s|@HOPC@|$hopc|" \
           -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jul  1 08:38:49 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:15:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -46,8 +46,10 @@
 ;*    object-serializer ::JsArray ...                                  */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArray
-   (lambda (o) (jsarray->vector o (js-initial-global-object)))
-   (lambda (o) o))
+   (lambda (o)
+      (jsarray->vector o (js-initial-global-object)))
+   (lambda (o %this)
+      (js-vector->jsarray o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */

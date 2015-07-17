@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Jun  3 14:48:04 2015 (serrano)                */
+#*    Last change :  Thu Jul 16 08:02:18 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -31,7 +31,8 @@ POPULATION	= Makefile Makefile.weblet \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
                   hopc.sh.in hopwidget.init.in hglog.scm hopjs.el \
-                  node_crypto_groups.h node_crypto_groups.c
+                  node_crypto_groups.h node_crypto_groups.c \
+                  mkserializer.hop
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

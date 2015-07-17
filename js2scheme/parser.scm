@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jul 11 05:36:44 2015 (serrano)                */
+;*    Last change :  Wed Jul 15 16:50:29 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -52,22 +52,21 @@
       (cer token))
 
    (define (parse-token-error msg token::pair)
-      (let ((l (read-line input-port)))
-	 (match-case (token-loc token)
-	    ((at ?fname ?loc)
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "j2s-parser")
-		   (msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		   (obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token)))
-		   (fname fname)
-		   (location loc))))
-	    (else
-	     (raise
-		(instantiate::&io-parse-error
-		   (proc "j2s-parser")
-		   (msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		   (obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token)))))))))
+      (match-case (token-loc token)
+	 ((at ?fname ?loc)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "j2s-parser")
+		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
+		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token)))
+		(fname fname)
+		(location loc))))
+	 (else
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "j2s-parser")
+		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
+		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token))))))))
 
    (define (parse-node-error msg node::J2SNode)
       (with-access::J2SNode node (loc)

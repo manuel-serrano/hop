@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Jul 11 05:31:00 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:22:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -49,9 +49,10 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsFunction
    (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
-   (lambda (o) o))
+      (js-undefined))
+;*       (js-raise-type-error (js-initial-global-object)               */
+;* 	 "[[SerializeTypeError]] ~a" o))                               */
+   (lambda (o %this) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */

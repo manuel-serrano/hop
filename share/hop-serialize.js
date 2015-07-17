@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sun Jan 18 10:02:01 2015 (serrano)                */
+/*    Last change :  Fri Jul 17 08:36:13 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -666,7 +666,7 @@ function hop_obj_to_string( item ) {
 /*    hop_string_to_obj ...                                            */
 /*---------------------------------------------------------------------*/
 /*** META ((export string->obj) (arity #t)) */
-function hop_string_to_obj( s ) {
+function hop_string_to_obj( s, extension ) {
    var a = hop_config.uint8array ?
       new Uint8Array( s.length ) : new Array( s.length );
 
@@ -674,7 +674,7 @@ function hop_string_to_obj( s ) {
       a[ i ] = (s.charCodeAt( i )) & 0xff;
    }
 
-   return hop_bytearray_to_obj( a );
+   return hop_bytearray_to_obj( a, extension );
 }
 
 /*---------------------------------------------------------------------*/
@@ -725,7 +725,7 @@ function hop_url_encoded_to_obj( s ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_bytearray_to_obj( s ) {
+function hop_bytearray_to_obj( s, extension ) {
    var pointer = 0;
    var definitions = [];
    var defining = -1;
@@ -741,38 +741,63 @@ function hop_bytearray_to_obj( s ) {
    function utf8substring( s, end ) {
       var codes = new Array();
       var j = 0;
-
-      while( pointer < end ) {
-	 var code = s[ pointer++ ];
-
-	 if( code < 128 ) {
-	    codes[ j++ ] = code;
-	 } else {
-	    var code2 = s[ pointer++ ];
-	    
-	    if( code < 224 ) {
-	       codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
+      if( end - s  < 2000 ) {
+	 while( pointer < end ) {
+	    var code = s[ pointer++ ];
+	    if( code < 128 ) {
+	       codes[ j++ ] = code;
 	    } else {
-	       var code3 = s[ pointer++ ];
-
-	       if( code < 240 ) {
-		  codes[ j++ ] = ((code - 224) << 12)
-		     + ((code2 - 128) << 6) + (code3 - 128);
+	       var code2 = s[ pointer++ ];
+	       if( code < 224 ) {
+		  codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
 	       } else {
-		  code4 = s[ pointer++ ];
-
-		  codes[ j++ ] = ((code - 240) << 18)
-		     + ((code2 - 128) << 12)
-		     + ((code3 - 128) << 6)
-		     + (code4 - 128);
+		  var code3 = s[ pointer++ ];
+		  if( code < 240 ) {
+		     codes[ j++ ] = ((code - 224) << 12)
+			+ ((code2 - 128) << 6) + (code3 - 128);
+		  } else {
+		     var code4 = s[ pointer++ ];
+		     codes[ j++ ] = ((code - 240) << 18)
+			+ ((code2 - 128) << 12)
+			+ ((code3 - 128) << 6)
+			+ (code4 - 128);
+		  }
 	       }
 	    }
 	 }
+	 return String.fromCharCode.apply( null, codes );
+      } else {
+	 var res = "";
+	 while( pointer < end ) {
+	    var code = s[ pointer++ ];
+	    if( code < 128 ) {
+	       res += String.fromCharCode( code );
+	    } else {
+	       var code2 = s[ pointer++ ];
+	       if( code < 224 ) {
+		  code2 = ((code - 192) << 6) + (code2 - 128);
+		  res += String.fromCharCode( code, code2 );
+	       } else {
+		  var code3 = s[ pointer++ ];
+		  if( code < 240 ) {
+		     code3 = ((code - 224) << 12)
+			+ ((code2 - 128) << 6) + (code3 - 128);
+		     res += String.fromCharCode( code, code2, code3 );
+		  } else {
+		     var code4 = s[ pointer++ ];
+		     code4 = ((code - 240) << 18)
+			+ ((code2 - 128) << 12)
+			+ ((code3 - 128) << 6)
+			+ (code4 - 128);
+		     res += String.fromCharCode( code, code2, code3, code4 );
+		  }
+	       }
+	    }
+	 }
+	 return res;
       }
-
-      return String.fromCharCode.apply( null, codes );
    }
-   
+
    function read_integer( s ) {
       return read_size( s );
    }
@@ -927,7 +952,7 @@ function hop_bytearray_to_obj( s ) {
 
    function read_object() {
       var old_defining = defining;
-      var key, sz, clazz, fields;
+      var key, sz, clazz, fields, cinfo;
       var res;
       
       defining = -1;
@@ -965,15 +990,27 @@ function hop_bytearray_to_obj( s ) {
       }
    }
 
+   function read_extension() {
+      var item = read_item();
+      if( extension ) {
+	 return extension( item );
+      } else {
+	 return item;
+      }
+   }
+
    function read_custom_object() {
       var old_defining = defining;
-      var obj, hash, unserializer;
+      var obj, hashobj, hash_, hash, unserializer, clazz;
       var res;
       
       defining = -1;
       
-      obj = read_item();
-      hash = read_item();
+      hashobj = read_item();
+      hash_ = read_item();
+      hash = hashobj.__hop_car;
+      obj = hashobj.__hop_cdr;
+
       unserializer = hop_find_class_unserializer( hash );
 
       res = unserializer( obj );
@@ -1009,6 +1046,10 @@ function hop_bytearray_to_obj( s ) {
       return seconds_date( parseInt( read_string( s ), 10 ) );
    }
 
+   function read_nanoseconds() {
+      return new Date( parseInt( read_string( s ), 10 ) / 1000000 );
+   }
+
    function read_class() {
       var cname = read_symbol();
       var cinfo = read_item();
@@ -1016,15 +1057,30 @@ function hop_bytearray_to_obj( s ) {
       return sc_class_exists( cname ) || cinfo;
    }
 
-   function string_to_array( s ) {
-      var a = hop_config.uint8array ?
-	 new Uint8Array( s.length ) : new Array( s.length );
+   function read_hvector() {
+      var len = read_size( s );
+      var bsize = read_size( s );
+      var sym = read_item();
+      var res;
+      var cntr;
 
-      for( var i = 0, len = s.length; i < len; ++i ) {
-	 a[ i ] = (s.charCodeAt(i)) & 0xff;
+      switch( sym ) {
+        case "s8": cntr = Int8Array; break;
+        case "u8": cntr = Uint8Array; break;
+        case "s16": cntr = Int16Array; break;
+        case "u16": cntr = Uint16Array; break;
+        case "s32": cntr = Int32Array; break;
+        case "u32": cntr = Uint32Array; break;
+        case "f32": cntr = Float32Array; break;
+        case "f64": cntr = Float64Array; break;
+        default: cntr = Uint8Array; 
       }
-
-      return a;
+      
+      res = new cntr( len );
+      for( var i = 0; i < len; i++ ) {
+	 res[ i ] = read_word( s, bsize );
+      }
+      return res;
    }
    
    function read_item() {
@@ -1053,9 +1109,11 @@ function hop_bytearray_to_obj( s ) {
          case 0x45 /* E */: return read_elong( read_size( s ) );
          case 0x4c /* L */: return read_llong( read_size( s ) );
          case 0x64 /* d */: return read_date();
+         case 0x44 /* D */: return read_nanoseconds();
          case 0x6b /* k */: return read_class();
          case 0x72 /* r */: return sc_pregexp( read_string( s ) );
-         case 0x68 /* h */: return read_unsupported( "homogeneous-vector" );
+         case 0x58 /* X */: return read_extension();
+         case 0x68 /* h */: return read_hvector();
 	 case 0x56 /* V */: return read_unsupported( "typed-vector" );
 	 case 0x21 /* ! */: return read_unsupported( "cell" );
          case 0x75 /* u */: return read_unsupported( "ucs2" );
@@ -1090,18 +1148,30 @@ var hop_custom_object_regexp =
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_find_class_unserializer( hash ) {
-   return function( o ) {
-      if( typeof( o ) === "string" ) {
-	 var m = o.match( hop_custom_object_regexp );
+   var custom = hop_class_serializers[ hash ];
+   
+   if( custom ) {
+      return custom.unserializer;
+   } else {
+      return function( o ) {
+	 if( typeof( o ) === "string" ) {
+	    var m = o.match( hop_custom_object_regexp );
 
-	 if( m ) {
-	    /* kind of specialized eval */
-	    return hop_create_encoded_element( m [ 1 ] );
+	    if( m ) {
+	       /* kind of specialized eval */
+	       return hop_create_encoded_element( m [ 1 ] );
+	    } else {
+	       return sc_error( "string->obj",
+				"Cannot find custom class ("
+				+ hash
+				+ ") unserializer", o );
+	    }
 	 } else {
-	    return sc_error( "string->obj", "Cannot find custom class unserializer", o );
+	    return sc_error( "string->obj",
+			     "Cannot find custom class ("
+			     + hash
+			     + ") unserializer", hash );
 	 }
-      } else {
-	 return sc_error( "string->obj", "Cannot find custom class unserializer", hash );
       }
    }
 }
@@ -1140,6 +1210,7 @@ function hop_hextobuf( str ) {
    }
    return buf;
 }
+
 /*---------------------------------------------------------------------*/
 /*    hop_buffer ...                                                   */
 /*---------------------------------------------------------------------*/

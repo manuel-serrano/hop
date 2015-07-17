@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Jul  9 14:42:11 2015 (serrano)                */
+;*    Last change :  Thu Jul 16 18:20:19 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -374,6 +374,7 @@
 	     (lambda (x) x))
 	 :fail fail 
 	 :timeout timeout
+	 :ctx %this
 	 :method (string->symbol method))))
 
 ;*---------------------------------------------------------------------*/

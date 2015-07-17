@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jul 11 05:33:12 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 09:32:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -991,6 +991,10 @@
 			    (cond
 			       ((null? args)
 				(fun this))
+			       ((and (isa? (car args) JsObject)
+				     (null? (cdr args)))
+				(apply fun this
+				   (js-jsobject->plist (car args) %this)))
 			       ((keyword? (car args))
 				(apply fun this
 				   (js-dsssl-args->jsargs args %this)))
@@ -1013,6 +1017,7 @@
 	    `(let ((@worker (js-current-worker)))
 		(js-make-service %this ,tmp ',scmid ,register ,arity @worker
 		   (instantiate::hop-service
+		      (ctx %this)
 		      (proc ,proc)
 		      (javascript ,(jscript-funcall init))
 		      (path ,path)

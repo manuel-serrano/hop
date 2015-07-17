@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Fri May  8 07:22:44 2015 (serrano)                */
+;*    Last change :  Thu Jul 16 16:53:39 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -184,7 +184,9 @@
 	      ;; the resource directory (that contains the source file)
 	      (resource::obj (default #f))
 	      ;; the source file
-	      (source::obj read-only (default #f)))))
+	      (source::obj read-only (default #f))
+	      ;; ctx (i.e., %this for JavaScript)
+	      (ctx::obj read-only (default #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jul 15 13:50:29 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:18:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -49,7 +49,12 @@
    (lambda (o)
       (with-access::JsString o (val)
 	 (js-jsstring->string val)))
-   (lambda (o) o))
+   (lambda (o %this)
+      (let ((this (or %this (js-initial-global-object))))
+	 (with-access::JsGlobalObject this (js-string)
+	    (instantiate::JsString
+	       (val (js-string->jsstring o))
+	       (__proto__ (js-get js-string 'prototype this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */

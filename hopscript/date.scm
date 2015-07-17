@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 10 12:15:32 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:17:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -41,8 +41,10 @@
 ;*    object-serializer ::JsDate ...                                   */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsDate
-   (lambda (o) (with-access::JsDate o (val) val))
-   (lambda (o) o))
+   (lambda (o)
+      (with-access::JsDate o (val) val))
+   (lambda (o %this)
+      (js-date->jsdate o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDate ...                                     */

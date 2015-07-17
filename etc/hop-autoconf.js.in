@@ -202,7 +202,7 @@ function hop_Config() {
    // because I didn't find a way to convert a Uint8Array into a string
    // that does not blows the stack size on Chrome!
    // this.uint8array = ("Uint8Array" in window);
-   this.uint8array = false;
+   this.uint8array = ("Uint8Array" in window);
 
    /* navigator specific configuration */
    if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {

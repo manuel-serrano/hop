@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Dec  3 07:54:39 2014                          */
-/*    Last change :  Sat Dec 20 07:12:23 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Fri Jul 17 10:01:12 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A dummy service that accepts connections for user FOO.           */
 /*    -------------------------------------------------------------    */
@@ -18,6 +18,7 @@ service s_private(type) {
 }
 
 service s_public(type) {
+   console.log( "foo" );
    return '"public" authorized with ' + type;
 }
 

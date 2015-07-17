@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 10 14:23:21 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:17:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -58,8 +58,10 @@
 ;*    object-serializer ::JsNumber ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsNumber
-   (lambda (o) (with-access::JsNumber o (val) val))
-   (lambda (o) (make-struct '__JsNumber__ 1 o)))
+   (lambda (o)
+      (with-access::JsNumber o (val) val))
+   (lambda (o %this)
+      (js-number->jsnumber o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */

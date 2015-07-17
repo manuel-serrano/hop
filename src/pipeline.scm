@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Jan 21 08:51:52 2015 (serrano)                */
+;*    Last change :  Thu Jul 16 20:05:24 2015 (serrano)                */
 ;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -405,25 +405,24 @@
 	 (hop-verb 2 (hop-color req req " INTERRUPTED"))
 	 (hop-verb 2 ": " req "\n")
 	 ;; abort the request
-	 (if (and (>=fx (bigloo-debug) 1) (isa? e &exception))
-	     (with-handler
-		(lambda (e2) #unspecified)
-		(begin
-		   (exception-notify e)
-		   (with-access::http-request req (header)
-		      (let ((stk (http-header-field header hop-debug-stack:)))
-			 (when (string? stk)
-			    (with-handler
-			       (lambda (e) #f)
-			       (let ((stk (hop-debug-exception-stack
-					     (string->obj (url-decode stk)))))
-				  (when (pair? stk)
-				     (display-trace-stack stk
-					(current-error-port)
-					(if (isa? e &exception)
-					    (with-access::&exception e (stack)
-					       (+fx 1 (length stack)))
-					    1))))))))
-		   #f))
-	     #unspecified))))
+	 (with-handler
+	    (lambda (e2) #unspecified)
+	    (begin
+	       (exception-notify e)
+	       (with-access::http-request req (header)
+		  (let ((stk (http-header-field header hop-debug-stack:)))
+		     (when (string? stk)
+			(with-handler
+			   (lambda (e) #f)
+			   (let ((stk (hop-debug-exception-stack
+					 (string->obj (url-decode stk)))))
+			      (when (pair? stk)
+				 (display-trace-stack stk
+				    (current-error-port)
+				    (if (isa? e &exception)
+					(with-access::&exception e (stack)
+					   (+fx 1 (length stack)))
+					1))))))))
+	       #f))
+	 #unspecified)))
 

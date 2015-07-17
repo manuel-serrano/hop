@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Jul  9 11:36:14 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 09:39:09 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -298,7 +298,8 @@
 	  (let ((args (cgi-args->list query)))
 	     (match-case args
 		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (string->obj vals))
+		 (with-access::hop-service svc (ctx)
+		    (string->obj vals #f ctx)))
 		(else
 		 (with-access::hop-service svc (id)
 		    (cond
@@ -324,7 +325,8 @@
 	  (let ((args (cgi-args->list query)))
 	     (match-case args
 		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (string->obj vals))
+		 (with-access::hop-service svc (ctx)
+		    (string->obj vals #f ctx)))
 		(else
 		 (service-parse-request-get-args args))))
 	  '())))
@@ -362,7 +364,8 @@
 				((string=? enc "keyword")
 				 (string->keyword val))
 				(else
-				 (string->obj val))))))
+				 (with-access::hop-service svc (ctx)
+				    (string->obj val #f ctx)))))))
 		      (else
 		       val)))))
 	    ((memq :file v)
@@ -500,19 +503,31 @@
 	 (invoke-trace req id vals)
 	 (cond
 	    ((not vals)
-	     (error id "Illegal service arguments encoding" `(,id ,@vals)))
-	    ((correct-arity? proc (+fx 1 (length vals)))
+	     (error id "Illegal service arguments encoding" `(,id)))
+	    ((or (pair? vals) (null? vals))
+	     (if (correct-arity? proc (+fx 1 (length vals)))
+		 (let ((env (current-dynamic-env))
+		       (name id))
+		    ($env-push-trace env name #f)
+		    (let ((aux (apply proc req vals)))
+		       ($env-pop-trace env)
+		       aux))
+		 (error id
+		    (format "Wrong number of arguments (~a/~a)" (length vals)
+		       (-fx (procedure-arity proc) 1))
+		    `(,id ,@vals))))
+	    ((correct-arity? proc 1)
 	     (let ((env (current-dynamic-env))
 		   (name id))
 		($env-push-trace env name #f)
-		(let ((aux (apply proc req vals)))
+		(let ((aux (proc req vals)))
 		   ($env-pop-trace env)
 		   aux)))
 	    (else
 	     (error id
-		(format "Wrong number of arguments (~a/~a)" (length vals)
+		(format "Wrong number of arguments (1/~a)"
 		   (-fx (procedure-arity proc) 1))
-		`(,id ,@vals))))))
+		`(,id ,vals))))))
    
    (invoke (service-parse-request svc req)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Wed Jul  8 10:24:12 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 09:20:32 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -55,16 +55,16 @@
 ;*    js-get ::xml-markup ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-markup prop %this::JsGlobalObject)
-   (let loop ((pname (symbol->keyword (js-toname prop %this))))
+   (let loop ((pname (js-toname prop %this)))
       (case pname
-	 ((tagName:)
+	 ((tagName)
 	  (with-access::xml-markup o (tag)
 	     (js-string->jsstring (symbol->string tag))))
-	 ((inspect:)
+	 ((inspect)
 	  (js-make-function %this js-inspect 1 'inspect))
 	 ((constructor)
 	  (js-undefined))
-	 ((toString:)
+	 ((toString)
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring
@@ -73,7 +73,7 @@
 	     'toString))
 	 (else
 	  (with-access::xml-markup o (attributes)
-	     (let ((c (memq pname attributes)))
+	     (let ((c (memq (symbol->keyword pname) attributes)))
 		(cond
 		   ((not (pair? c))
 		    (js-undefined))
@@ -88,54 +88,48 @@
 ;*    js-get ::xml-document ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-document prop %this::JsGlobalObject)
-   (if (isa? prop JsStringLiteral)
-       (let ((pname (js-jsstring->string prop)))
-	  (cond
-	     ((string=? "id" pname)
-	      (with-access::xml-document o (id)
-		 (js-string->jsstring id)))
-	     ((string=? "body" pname)
-	      (with-access::xml-markup o (body)
-		 (js-vector->jsarray
-		    (list->vector
-		       (map (lambda (o)
-			       (if (string? o)
-				   (js-string->jsstring o)
-				   o))
-			  body))
-		    %this)))
-	     (else
-	      (call-next-method))))
-       (call-next-method)))
+  (case (js-toname prop %this)
+     ((id)
+      (with-access::xml-document o (id)
+	 (js-string->jsstring id)))
+     ((body)
+      (with-access::xml-markup o (body)
+	 (js-vector->jsarray
+	    (list->vector
+	       (map (lambda (o)
+		       (if (string? o)
+			   (js-string->jsstring o)
+			   o))
+		  body))
+	    %this)))
+     (else
+      (call-next-method))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-element prop %this::JsGlobalObject)
-   (if (isa? prop JsStringLiteral)
-       (let ((pname (js-jsstring->string prop)))
-	  (cond
-	     ((string=? "id" pname)
-	      (with-access::xml-element o (id)
-		 (if (string? id)
-		     (js-string->jsstring id)
-		     (js-undefined))))
-	     ((string=? "parentNode" pname)
-	      (with-access::xml-element o (parent)
-		 parent))
-	     ((string=? "childNodes" pname)
-	      (with-access::xml-markup o (body)
-		 (js-vector->jsarray
-		    (list->vector
-		       (map (lambda (o)
-			       (if (string? o)
-				   (js-string->jsstring o)
-				   o))
-			  body))
-		    %this)))
-	     (else
-	      (call-next-method))))
-       (call-next-method)))
+   (case (js-toname prop %this)
+      ((id)
+       (with-access::xml-element o (id)
+	  (if (string? id)
+	      (js-string->jsstring id)
+	      (js-undefined))))
+      ((parentNode)
+       (with-access::xml-element o (parent)
+	  parent))
+      ((string=? "childNodes" pname)
+       (with-access::xml-markup o (body)
+	  (js-vector->jsarray
+	     (list->vector
+		(map (lambda (o)
+			(if (string? o)
+			    (js-string->jsstring o)
+			    o))
+		   body))
+	     %this)))
+      (else
+       (call-next-method))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-markup ...                                         */
@@ -164,35 +158,29 @@
 ;*    js-put! ::xml-document ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::xml-document prop v throw::bool %this::JsGlobalObject)
-   (if (isa? prop JsStringLiteral)
-       (let ((pname (js-jsstring->string prop)))
-	  (cond
-	     ((string=? "id" pname)
-	      (with-access::xml-document o (id)
-		 (set! id (js-tostring v %this))))
-	     ((string=? "body" pname)
-	      #f)
-	     (else
-	      (call-next-method))))
-       (call-next-method)))
+   (case (js-toname prop %this)
+      ((id)
+       (with-access::xml-document o (id)
+	  (set! id (js-tostring v %this))))
+      ((body)
+       #f)
+      (else
+       (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::xml-element prop v throw::bool %this::JsGlobalObject)
-   (if (isa? prop JsStringLiteral)
-       (let ((pname (js-jsstring->string prop)))
-	  (cond
-	     ((string=? "id" pname)
-	      (with-access::xml-element o (id)
-		 (set! id (js-tostring v %this))))
-	     ((string=? "childNodes" pname)
-	      #f)
-	     ((string=? "parentNode" pname)
-	      #f)
-	     (else
-	      (call-next-method))))
-       (call-next-method)))
+   (case (js-toname prop %this)
+      ((id)
+       (with-access::xml-element o (id)
+	  (set! id (js-tostring v %this))))
+      ((childNodes)
+       #f)
+      ((parentNode)
+       #f)
+      (else
+       (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::xml-markup ...                                 */

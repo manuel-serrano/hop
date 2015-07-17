@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Sat Jun 27 08:10:01 2015                          */
-/*    Last change :  Sat Jun 27 08:10:49 2015 (serrano)                */
+/*    Last change :  Fri Jul 17 10:15:53 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Server side workers and services                                 */
@@ -26,6 +26,7 @@
 // 
 // Note that each slave.js worker operates its private counter. The same
 // isolation property would apply to submodules required by slave.js
+var hop = require( 'hop' );
 
 function createWorker( title ) {
    var w = new Worker( "./slave.js" );
@@ -42,10 +43,18 @@ var w1 = createWorker( 'left worker' );
 var w2 = createWorker( 'right worker' );
 
 service worker5() {
-   return <HTML> { <DIV> {
-      <IFRAME> { style: "border: 1px solid black", src: w1.svc( w1.title ) },
-      <IFRAME> { style: "border: 1px solid black", src: w2.svc( w2.title ) }
-   } }
+   return hop.HTTPResponseAsync( function( send ) {
+      setTimeout( function() {
+	 send( <HTML> { <DIV> {
+	    <IFRAME> {
+	       style: "border: 1px solid black", src: w1.svc( w1.title )
+	    },
+	    <IFRAME> {
+	       style: "border: 1px solid black", src: w2.svc( w2.title )
+	    }
+	 } } )
+      }, 1000 );
+   }, this );
 }
 
 console.log( 'worker5: service is now defined' );

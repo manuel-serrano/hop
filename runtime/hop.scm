@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jul  8 15:58:35 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:56:02 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -50,6 +50,7 @@
 		      (connection 'keep-alive)
 		      (timeout 0)
 		      (method 'GET)
+		      (ctx #f)
 		      body)
 	    (with-hop-remote path success failure
 			     #!key
@@ -62,6 +63,7 @@
 			     (header '())
 			     (anim #f)
 			     (scheme 'http)
+			     (ctx #f)
 			     args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
@@ -223,7 +225,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback url req success fail user-or-auth)
+(define (make-http-callback url req success fail user-or-auth ctx responsetype)
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "make-http-callback"
 	 (trace-item "status=" status " content-length=" clength)
@@ -236,13 +238,19 @@
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
 	     (let ((obj (case (header-content-type header)
 			   ((application/x-hop)
-			    (string->obj (read-chars clength p)))
+			    (let* ((chars (read-chars clength p))
+				   (s (if (eq? responsetype 'arraybuffer)
+					  chars
+					  (string-hex-intern chars))))
+			       (string->obj s #f ctx)))
 			   ((application/x-url-hop)
-			    (string->obj (url-decode (read-chars clength p))))
+			    (string->obj (url-decode (read-chars clength p))
+			       #f ctx))
 			   ((application/x-json-hop)
 			    (string->obj
 			       (byte-array->string 
-				  (javascript->obj (read-chars clength p)))))
+				  (javascript->obj (read-chars clength p)))
+			       #f ctx))
 			   ((application/json)
 			    (javascript->obj p))
 			   ((application/x-javascript)
@@ -304,6 +312,7 @@
 		  (timeout 0)
 		  (method 'GET)
 		  (connection 'keep-alive)
+		  (ctx #f)
 		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-URL")
@@ -356,7 +365,7 @@
 			      (authorization authorization)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback url r suc fail #f)))
+			(hdl (make-http-callback url r suc fail #f ctx 'plain)))
 		    (trace-item "remote path=" path)
 		    (http-send-request r hdl :body body)))))))))
 
@@ -374,6 +383,7 @@
 	   (authorization #f)
 	   (anim #f)
 	   (scheme 'http)
+	   (ctx #f)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
@@ -398,7 +408,10 @@
 			 (host host)
 			 (port port)
 			 (connection 'close)
-			 (header (cons '(hop-serialize: . "arraybuffer")
+			 (header (cons*
+				    '(hop-serialize: . "x-hop")
+				    '(hop-responsetype: . "arraybuffer")
+				    '(hop-client: . "hop")
 				    header))
 			 (method (if args 'post 'put))
 			 (authorization authorization)
@@ -406,7 +419,7 @@
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
 		 (hdl (make-http-callback path req suc fail
-			 (or user authorization))))
+			 (or user authorization) ctx 'arraybuffer)))
 	     (trace-item "remote path=" path)
 	     (http-send-request req hdl :args args))))))
 

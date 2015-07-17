@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 10 14:23:56 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 08:17:07 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -41,8 +41,10 @@
 ;*    object-serializer ::JsBoolean ...                                */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsBoolean
-   (lambda (o) (with-access::JsBoolean o (val) val))
-   (lambda (o) (make-struct '__JsBoolean__ 1 o)))
+   (lambda (o)
+      (with-access::JsBoolean o (val) val))
+   (lambda (o %this)
+      (js-bool->jsboolean o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */

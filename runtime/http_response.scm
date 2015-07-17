@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jul  8 07:12:29 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 09:00:34 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -92,6 +92,28 @@
 ;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop request socket)
+
+   (define (arraybuffer-request? request)
+      (with-access::http-request request (header)
+	 (let ((c (assq 'hop-responsetype: header)))
+	    (and (pair? c) (string=? (cdr c) "arraybuffer")))))
+   
+   (define (request-type request)
+      (with-access::http-request request (header)
+	 (let ((c (assq 'hop-client: header)))
+	    (when (and (pair? c) (string=? (cdr c) "hop")) 'hop-to-hop))))
+   
+   (define (response-x-hop value conn p)
+      (with-access::http-request request (connection)
+	 (let* ((str (obj->string value (request-type request)))
+		(rep (if (arraybuffer-request? request)
+			 str
+			 (string-hex-extern str))))
+	    (http-write-line p "Content-Length: " (string-length rep))
+	    (http-write-line p "Connection: " conn)
+	    (http-write-line p)
+	    (display-string rep p))))
+   
    (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
 					   header
@@ -100,7 +122,8 @@
 					   value padding
 					   bodyp 
 					   timeout)
-	 (with-access::http-request request (connection hop-serialize)
+	 (with-access::http-request request (connection
+					       (headerreq header))
 	    (let ((p (socket-output socket))
 		  (conn connection))
 	       (when (>=fx timeout 0) (output-timeout-set! p timeout))
@@ -117,6 +140,9 @@
 		      (error "http-response"
 			 "No serialization method specified"
 			 content-type))
+		     ((string-prefix? "application/x-hop" content-type)
+		      ;; fast path, bigloo serialization
+		      (response-x-hop value conn p))
 		     ((string-prefix? "application/x-javascript" content-type)
 		      ;; standard javascript serialization
 		      (set! conn 'close)
@@ -129,13 +155,6 @@
 			     (obj->javascript-expr value p)
 			     (display ")" p))
 			  (obj->javascript-expr value p)))
-		     ((string-prefix? "application/x-hop" content-type)
-		      ;; fast path, bigloo serialization
-		      (let ((s (obj->string value)))
-			 (http-write-line p "Content-Length: " (string-length s))
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-			 (display s p)))
 		     ((string-prefix? "application/x-url-hop" content-type)
 		      ;; fast path, bigloo serialization
 		      (let ((s (url-path-encode (obj->string value))))
@@ -670,10 +689,10 @@
 		 (ctype (cond
 			   ((or (not (pair? c)) (not (string? (cdr c))))
 			    "application/x-javascript")
+			   ((string=? (cdr c) "x-hop")
+			    "application/x-hop")
 			   ((string=? (cdr c) "javascript")
 			    "application/x-javascript")
-			   ((string=? (cdr c) "arraybuffer")
-			    "application/x-hop")
 			   ((string=? (cdr c) "url-arraybuffer")
 			    "application/x-url-hop")
 			   ((string=? (cdr c) "json-byte-array")

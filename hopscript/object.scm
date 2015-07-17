@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun 19 15:15:14 2015 (serrano)                */
+;*    Last change :  Thu Jul 16 16:57:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -65,8 +65,10 @@
 ;*    object-serializer ::JsObject ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsObject
-   (lambda (o) (js-jsobject->plist o (js-initial-global-object)))
-   (lambda (o) o))
+   (lambda (o ctx)
+      (js-jsobject->plist o (js-initial-global-object)))
+   (lambda (o %this)
+      (js-plist->jsobject o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
