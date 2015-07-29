@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Jul 23 17:33:02 2015 (serrano)                */
+#*    Last change :  Wed Jul 29 15:47:19 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -53,7 +53,7 @@ INCLUDES =
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile walk.sch
+POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile walk.sch token.sch
 
 include ../etc/Makefile.library
 
