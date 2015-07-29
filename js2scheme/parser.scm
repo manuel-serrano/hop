@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 29 14:50:57 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 19:47:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1050,6 +1050,14 @@
 		       expr)
 		      ((=fx new-level level)
 		       (let ((token (consume-any!)))
+			  (when (eq? type 'OHTML)
+			     ;; < operator
+			     (let* ((val (token-value token))
+				    (id (substring val 1)))
+				(token-push-back!
+				   (make-token 'ID id
+				      (token-loc token)))
+				(token-tag-set! token '<)))
 			  (loop (instantiate::J2SBinary
 				   (loc (token-loc token))
 				   (lhs expr)
@@ -1417,7 +1425,16 @@
 		(fun (j2s-tag->expr tag))
 		(args '()))))
 	 ((OHTML)
-	  (html-expression (consume-any!)))
+;* 	  (if (html-following? input-port)                             */
+	      (html-expression (consume-any!)))
+;* 	      (let* ((t (consume-any!))                                */
+;* 		     (s (symbol->string (token-value t)))              */
+;* 		     (tokid (make-token 'ID (string->symbol (substring s 1)) */
+;* 			       (token-loc t)))                         */
+;* 		     (tokop (make-token '< "<" (token-loc t))))        */
+;* 		 (token-push-back! tokid)                              */
+;* 		 (token-push-back! tokop)                              */
+;* 		 )))                                                   */
 	 ((TILDE)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2STilde
@@ -1836,7 +1853,8 @@
    (read/rp
       (regular-grammar ()
 	 ((: (* (in " \t\n")) #\{)
-	  (rgc-buffer-insert-substring! port (the-string) 0 (the-length)))
+	  (rgc-buffer-insert-substring! port (the-string) 0 (the-length))
+	  #t)
 	 (else
 	  #f))
       port))

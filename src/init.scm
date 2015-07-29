@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Mon Jun 15 08:46:23 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 17:32:48 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -46,12 +46,15 @@
 		    (pkey (read-private-key (hop-https-pkey))))
 		 (hop-server-socket-set!
 		    (make-ssl-server-socket (hop-port)
+		       :name (hop-server-mask)
 		       :protocol (hop-https-protocol)
 		       :cert cert :pkey pkey))))
 	     (else
 	      (error "hop" "SSL not supported by this version of Hop" #f)))
 	  (hop-server-socket-set!
-	     (make-server-socket (hop-port) :backlog (hop-somaxconn))))))
+	     (make-server-socket (hop-port)
+		:name (hop-server-mask)
+		:backlog (hop-somaxconn))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jul 15 07:20:03 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 17:32:41 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -422,7 +422,8 @@
 	      (not (=fx (hop-fast-server-event-port) (hop-port)))
 	      (>fx (with-access::scheduler scd (size) size) 1))
       ;; run an event server socket in a separate thread
-      (let ((serv (make-server-socket (hop-fast-server-event-port))))
+      (let ((serv (make-server-socket (hop-fast-server-event-port)
+		     :name (hop-server-mask))))
 	 (scheduler-accept-loop scd serv #f))))
 
 ;*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Mon May  7 07:51:06 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Wed Jul 29 16:44:05 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -504,7 +504,8 @@
 	     (dom-set-attribute! node "class" name)
 	     (let ((regexp (string-append name "\\b")))
 		(unless (pregexp-match regexp cname)
-		   (dom-set-attribute! node "class" (string-append cname " " name))))))))
+		   (dom-set-attribute! node "class"
+		      (string-append cname " " name))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-class! ...                                            */

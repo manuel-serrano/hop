@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jul  7 10:36:51 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 17:32:13 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -117,7 +117,10 @@
 	    (hop-run-server-set! ::bool)
 
 	    (hop-javascript::bool)
-	    (hop-javascript-set! ::bool))
+	    (hop-javascript-set! ::bool)
+
+	    (hop-server-mask::obj)
+	    (hop-server-mask-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -373,3 +376,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-javascript
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-server-mask ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-server-mask
+   #f)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jul 24 15:28:05 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 20:41:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -124,6 +124,42 @@
 	    %this))
       (display "})" op)))
 
+;*---------------------------------------------------------------------*/
+;*    js-bind-tag! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-tag! %this obj tag . tagjs)
+   `(begin
+       (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
+	  :value (js-make-function ,%this
+		    (lambda (this attrs . nodes)
+		       (if (isa? attrs JsObject)
+			   (if (null? nodes)
+			       (apply ,(symbol-append '< tag '>)
+				  (js-object->keyword-arguments attrs ,%this))
+			       (apply ,(symbol-append '< tag '>)
+				  (append
+				     (js-object->keyword-arguments attrs ,%this)
+				     nodes)))
+			   (apply ,(symbol-append '< tag '>)
+			      nodes)))
+		    2 ',tag)
+	  :writable #t
+	  :enumerable #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-bind-tags! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-macro (js-bind-tags! %this obj . tags)
+   `(begin
+       ,@(map (lambda (tag)
+		 `(begin
+		     (js-bind-tag! ,%this ,obj ,tag)
+		     (js-bind-tag! ,%this ,obj ,tag
+			,(string->symbol
+			    (string-downcase
+			       (symbol->string tag))))))
+	    tags)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    %this ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -334,6 +370,49 @@
 	       :value (js-make-function %this unescape 1 'unescape
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t)
+
+	    ;; html_base
+	    (js-bind-tags! %this %this
+	       A ABBR ACRONYM ADDRESS APPLET AREA B BASE
+	       BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
+	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
+	       DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET
+	       FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
+	       LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
+	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
+	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
+	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
+	       THEAD TITLE TR TT U UL VAR)
+
+	    ;; html5
+	    (js-bind-tags! %this %this
+	       AUDIO VIDEO)
+
+	    ;; html
+	    (js-bind! %this %this 'HTML
+	       :value (js-html-html %this) :enumerable #f)
+	    (js-bind! %this %this 'html
+	       :value (js-html-html %this) :enumerable #f)
+
+	    ;; only used with the global object, see nodejs/require.scm
+	    (js-bind! %this %this 'HEAD
+	       :value (js-html-head %this) :enumerable #f)
+	    (js-bind! %this %this 'head
+	       :value (js-html-head %this) :enumerable #f)
+
+	    ;; html_head
+	    (js-bind-tags! %this %this
+	       LINK SCRIPT STYLE)
+
+	    (js-bind-tags! %this %this IMG)
+
+	    ;; svg
+	    (js-bind-tags! %this %this
+	       SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
+	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
+	       SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
+	       SVG:TEXTPATH SVG:TREF SVG:TSPAN)
 	    
 	    ;; return the newly created object
 	    %this))))
@@ -562,42 +641,6 @@
 	 :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-bind-tag! ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-macro (js-bind-tag! %this obj tag . tagjs)
-   `(begin
-       (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
-	  :value (js-make-function ,%this
-		    (lambda (this attrs . nodes)
-		       (if (isa? attrs JsObject)
-			   (if (null? nodes)
-			       (apply ,(symbol-append '< tag '>)
-				  (js-object->keyword-arguments attrs ,%this))
-			       (apply ,(symbol-append '< tag '>)
-				  (append
-				     (js-object->keyword-arguments attrs ,%this)
-				     nodes)))
-			   (apply ,(symbol-append '< tag '>)
-			      nodes)))
-		    2 ',tag)
-	  :writable #t
-	  :enumerable #f)))
-
-;*---------------------------------------------------------------------*/
-;*    js-bind-tags! ...                                                */
-;*---------------------------------------------------------------------*/
-(define-macro (js-bind-tags! %this obj . tags)
-   `(begin
-       ,@(map (lambda (tag)
-		 `(begin
-		     (js-bind-tag! ,%this ,obj ,tag)
-		     (js-bind-tag! ,%this ,obj ,tag
-			,(string->symbol
-			    (string-downcase
-			       (symbol->string tag))))))
-	    tags)))
-   
-;*---------------------------------------------------------------------*/
 ;*    js-init-object-prototype! ...                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4       */
@@ -720,47 +763,7 @@
 	 :value (js-make-function %this
 		   js-object-prototype-propertyisenumerable 1 'propertyIsEnumerable
 		   :prototype (js-undefined))
-	 :enumerable #f)
-      
-      ;; html_base
-      (js-bind-tags! %this obj
-	 A ABBR ACRONYM ADDRESS APPLET AREA B BASE
-	 BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
-	 CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-	 DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET
-	 FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
-	 HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
-	 LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
-	 OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
-	 Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
-	 STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
-	 THEAD TITLE TR TT U UL VAR)
-
-      ;; html5
-      (js-bind-tags! %this obj
-	 AUDIO VIDEO)
-
-      ;; html
-      (js-bind! %this obj 'HTML :value (js-html-html %this) :enumerable #f)
-      (js-bind! %this obj 'html :value (js-html-html %this) :enumerable #f)
-
-      ;; only used with the global object, see nodejs/require.scm
-      (js-bind! %this obj 'HEAD :value (js-html-head %this) :enumerable #f)
-      (js-bind! %this obj 'head :value (js-html-head %this) :enumerable #f)
-
-      ;; html_head
-      (js-bind-tags! %this obj
-	 LINK SCRIPT STYLE)
-
-      (js-bind-tag! %this obj IMG)
-
-      ;; svg
-      (js-bind-tags! %this obj
-	 SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
-	 SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
-	 SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
-	 SVG:TEXTPATH SVG:TREF SVG:TSPAN)
-   ))
+	 :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-construct ...                                          */
