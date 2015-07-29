@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Jul 17 09:39:09 2015 (serrano)                */
+;*    Last change :  Sun Jul 26 07:24:39 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -61,6 +61,22 @@
 	    (expired-service-path?::bool ::bstring)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
+
+;*---------------------------------------------------------------------*/
+;*    procedure-serializer ...                                         */
+;*---------------------------------------------------------------------*/
+(register-procedure-serialization! 
+   (lambda (p)
+      (let ((attr (procedure-attr p)))
+	 (if attr
+	     attr
+	     (error "obj->string" "cannot serialize procedure" p))))
+   (lambda (o)
+      (if (isa? o hop-service)
+	  (with-access::hop-service o (args id wid path timeout ttl args)
+	     (eval `(service :path ,path :id ,id :url ,path
+		       :timeout ,timeout :ttl ,ttl ,args)))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ...                                                     */

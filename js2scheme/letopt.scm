@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Jul  5 08:25:01 2015 (serrano)                */
+;*    Last change :  Sat Jul 18 22:21:11 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -56,10 +56,16 @@
       (for-each (lambda (o) (j2s-letopt! o)) decls)
       (for-each (lambda (o) (j2s-letopt! o)) nodes)
       ;; toplevel lets optimization
-      (let ((lets (filter (lambda (x) (isa? x J2SLet)) decls)))
+      (let ((lets '())
+	    (vars '()))
+	 (for-each (lambda (x)
+		      (if (isa? x J2SLet)
+			  (set! lets (cons x lets))
+			  (set! vars (cons x vars))))
+	    decls)
 	 (when (pair? lets)
 	    ;; this modify nodes in place
-	    (set! nodes (j2s-toplevel-letopt! nodes lets)))))
+	    (set! nodes (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -328,14 +334,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Optimize toplevel let declarations.                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-toplevel-letopt! nodes::pair-nil decls::pair-nil)
+(define (j2s-toplevel-letopt! nodes::pair-nil decls::pair-nil vars::pair-nil)
    
    (define (remove-disabled!::pair-nil decls::pair-nil disabled::pair-nil)
       (for-each (lambda (d)
 		   (set! decls (remq! d decls)))
 	 disabled)
       decls)
-   
+
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -356,26 +362,27 @@
 		(if (null? inits)
 		    (loop (cdr n) decls deps res)
 		    (with-access::J2SInitLet (car inits) (rhs)
-		       (let ((used (get-used-decls rhs decls))
+		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
 			     ((null? used)
 			      ;; optimize this binding
 			      (init-let->let-opt init)
-			      (liip (cdr inits) (remq init decls) deps res))
+			      (let ((ndecls (remq (init-decl init) decls)))
+				 (liip (cdr inits) ndecls deps res)))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
 			      (init-let->let-opt init)
-			      (liip (cdr inits)
-				 (remq init decls)
-				 (cons (cons init used) deps)
-				 res))
+			      (let ((ndecls (remq (init-decl init) decls)))
+				 (liip (cdr inits) ndecls
+				    (cons (cons init used) deps)
+				    res)))
 			     (else
 			      ;; optimize this binding but mark that
-			      ;; of the variables it uses are disabled
+			      ;; the variables it uses are disabled
 			      (let ((decl (init-decl init))
-				    (used (get-used-decls rhs decls))
+				    (used (get-used-decls rhs (append decls vars)))
 				    (disabled (get-used-deps used deps)))
 				 (liip (cdr inits)
 				    (remove-disabled! decls disabled)
@@ -387,7 +394,7 @@
 	 (else
 	  ;; a regular statement
 	  (with-access::J2SNode (car n) (loc)
-	     (let ((used (get-used-decls (car n) decls)))
+	     (let ((used (get-used-decls (car n) (append decls vars))))
 		(if (null? used)
 		    ;; harmless statement, ignore it
 		    (loop (cdr n) decls deps (cons (car n) res))

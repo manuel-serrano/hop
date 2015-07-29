@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Jul 17 08:38:41 2015 (serrano)                */
+/*    Last change :  Fri Jul 17 14:19:29 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -297,6 +297,45 @@ function hexToUint8( str ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    ab2string ...                                                    */
+/*---------------------------------------------------------------------*/
+function ab2string( abuf ) {
+   var buf = new Uint8Array( abuf );
+   var pointer = 0;
+   var end = buf.length;
+   var res = "";
+   
+   while( pointer < end ) {
+      var code = buf[ pointer++ ];
+      if( code < 128 ) {
+	 res += String.fromCharCode( code );
+      } else {
+	 var code2 = buf[ pointer++ ];
+	 if( code < 224 ) {
+	    code2 = ((code - 192) << 6) + (code2 - 128);
+	    res += String.fromCharCode( code, code2 );
+	 } else {
+	    var code3 = buf[ pointer++ ];
+	    if( code < 240 ) {
+	       code3 = ((code - 224) << 12)
+		  + ((code2 - 128) << 6) + (code3 - 128);
+	       res += String.fromCharCode( code, code2, code3 );
+	    } else {
+	       var code4 = buf[ pointer++ ];
+	       code4 = ((code - 240) << 18)
+		  + ((code2 - 128) << 12)
+		  + ((code3 - 128) << 6)
+		  + (code4 - 128);
+	       res += String.fromCharCode( code, code2, code3, code4 );
+	    }
+	 }
+      }
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_request_unserialize ...                                      */
 /*    -------------------------------------------------------------    */
 /*    Unserialize the object contained in the XHR response. The        */
@@ -314,8 +353,7 @@ function hop_request_unserialize( xhr, svc ) {
       }
    } else {
       var rep = (xhr.responseType === "arraybuffer") ?
-	  String.fromCharCode.apply( null, new Uint8Array( xhr.response ) )
-	  : xhr.responseText;
+	  ab2string( xhr.response ) : xhr.responseText;
       
       if( ctype === "application/x-javascript" ) {
 	 return eval( rep );
@@ -404,13 +442,18 @@ function hop_request_onready( xhr, svc, succ, fail ) {
   	   fail( 407, xhr );
 	   return false;
 	 
-        default:
+      default:
 	   if( (typeof xhr.status === "number") &&
   	       (xhr.status > 200) && (xhr.status < 300) ) {
 	      if( hop_debug() > 0 ) {
 		 succ = xhr_hop_success_callback( succ );
 	      }
-  	      return succ( xhr.responseText, xhr );
+
+	      if( xhr.responseType == "arraybuffer" ) {
+  		 return succ( ab2string( xhr.responseText ), xhr );
+	      } else {
+  		 return succ( xhr.responseText, xhr );
+	      }
   	   } else {
 	      if( hop_debug() > 0 ) {
 		 fail = xhr_hop_failure_callback( fail );
@@ -501,7 +544,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 return false;
       }
    }
-   
+
    if( !sync ) {
       xhr.open( "PUT", svc, true );
 

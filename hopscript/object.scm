@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Jul 16 16:57:43 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 15:28:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -564,9 +564,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tag! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-bind-tag! %this obj tag)
+(define-macro (js-bind-tag! %this obj tag . tagjs)
    `(begin
-       (js-bind! ,%this ,obj ',tag
+       (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
 	  :value (js-make-function ,%this
 		    (lambda (this attrs . nodes)
 		       (if (isa? attrs JsObject)
@@ -589,7 +589,12 @@
 (define-macro (js-bind-tags! %this obj . tags)
    `(begin
        ,@(map (lambda (tag)
-		 `(js-bind-tag! ,%this ,obj ,tag))
+		 `(begin
+		     (js-bind-tag! ,%this ,obj ,tag)
+		     (js-bind-tag! ,%this ,obj ,tag
+			,(string->symbol
+			    (string-downcase
+			       (symbol->string tag))))))
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
@@ -736,16 +741,12 @@
 	 AUDIO VIDEO)
 
       ;; html
-      (js-bind! %this obj 'HTML
-	 :value (js-make-function %this
-		   (lambda (this attrs . nodes)
-		      (apply <HTML> nodes))
-		   1 'HTML)
-	 :enumerable #f)
+      (js-bind! %this obj 'HTML :value (js-html-html %this) :enumerable #f)
+      (js-bind! %this obj 'html :value (js-html-html %this) :enumerable #f)
 
       ;; only used with the global object, see nodejs/require.scm
-      (js-bind! %this obj 'HEAD
-	 :value (js-html-head %this) :enumerable #f)
+      (js-bind! %this obj 'HEAD :value (js-html-head %this) :enumerable #f)
+      (js-bind! %this obj 'head :value (js-html-head %this) :enumerable #f)
 
       ;; html_head
       (js-bind-tags! %this obj

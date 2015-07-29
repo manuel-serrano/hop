@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Jul  1 17:51:13 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 06:38:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -13,6 +13,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_lexer
+   
+   (include "token.sch")
+   
    (export (j2s-lexer)
 	   (j2s-regex-lexer)
 	   (j2s-reserved-id? ::symbol)
@@ -99,27 +102,6 @@
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'future-strict-reserved #t))
 	  *future-strict-reserved-list*)
-
-;*---------------------------------------------------------------------*/
-;*    the-choord ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    Builds a Bigloo location object                                  */
-;*---------------------------------------------------------------------*/
-(define (the-coord input-port offset)
-   `(at ,(input-port-name input-port)
-       ,(-fx (input-port-position input-port) offset)))
-
-;*---------------------------------------------------------------------*/
-;*    make-token ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (make-token type value loc)
-   (econs type value loc))
-
-;*---------------------------------------------------------------------*/
-;*    token ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-macro (token type value offset)
-   `(make-token ,type ,value (the-coord (the-port) ,offset)))
 
 ;*---------------------------------------------------------------------*/
 ;*    token-string ...                                                 */
@@ -354,6 +336,12 @@
       ((: "</" tagid ">")
        (token 'CTAG (symbol-append '< (string->symbol (the-substring 2 -1)) '>)
 	  (the-length)))
+
+      ;; HTML
+      ((: "<" tagid (in " \t\n"))
+       (token 'OHTML (the-subsymbol 0 -1) (the-length)))
+      ((: "<" tagid "/>")
+       (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length)))
       
       ;; error
       (else

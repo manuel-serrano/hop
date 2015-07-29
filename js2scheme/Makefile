@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Jul  2 12:37:06 2015 (serrano)                */
+#*    Last change :  Thu Jul 23 17:33:02 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = lexer header parser ast dump utils \
+_OBJECTS = lexer header parser html ast dump utils \
   stage compile js \
   syntax return loopexit symbol scheme ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt

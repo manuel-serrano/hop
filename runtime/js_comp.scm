@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Jun 26 16:04:12 2015 (serrano)                */
+;*    Last change :  Mon Jul 27 11:00:00 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -125,10 +125,25 @@
        (display "undefined" op))
       ((eq? obj '())
        (display "null" op))
+      ((class? obj)
+       (display (class->javascript obj) op))
       (else
        (error "hop->javascript"
 	  (format "Cannot compile value \"~a\"" (typeof obj))
 	  obj))))
+
+;*---------------------------------------------------------------------*/
+;*    class->javascript ...                                            */
+;*---------------------------------------------------------------------*/
+(define (class->javascript clazz)
+   ;; this is just an approximation, this should be implement 
+   (format "(sc_class_exists( '~a' ) ? sc_class_exists( '~a' ) : sc_register_class( new sc_Class(), '~a', sc_class_exists( '~a' ) ? sc_class_exists( '~a' ): sc_Object, ~a, undefined, sc_Object, [] ))"
+      (class-name clazz)
+      (class-name clazz)
+      (class-name clazz)
+      (class-name (class-super clazz))
+      (class-name (class-super clazz))
+      (class-hash clazz)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::object ...                                     */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Jul 17 08:36:13 2015 (serrano)                */
+/*    Last change :  Mon Jul 27 10:42:36 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -665,7 +665,7 @@ function hop_obj_to_string( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_string_to_obj ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string->obj) (arity #t)) */
+/*** META ((export string->obj) (arity -2)) */
 function hop_string_to_obj( s, extension ) {
    var a = hop_config.uint8array ?
       new Uint8Array( s.length ) : new Array( s.length );
@@ -739,63 +739,37 @@ function hop_bytearray_to_obj( s, extension ) {
    }
 
    function utf8substring( s, end ) {
-      var codes = new Array();
       var j = 0;
-      if( end - s  < 2000 ) {
-	 while( pointer < end ) {
-	    var code = s[ pointer++ ];
-	    if( code < 128 ) {
-	       codes[ j++ ] = code;
+      var res = "";
+      
+      while( pointer < end ) {
+	 var code = s[ pointer++ ];
+	 if( code < 128 ) {
+	    res += String.fromCharCode( code );
+	 } else {
+	    var code2 = s[ pointer++ ];
+	    if( code < 224 ) {
+	       code2 = ((code - 192) << 6) + (code2 - 128);
+	       res += String.fromCharCode( code, code2 );
 	    } else {
-	       var code2 = s[ pointer++ ];
-	       if( code < 224 ) {
-		  codes[ j++ ] = ((code - 192) << 6) + (code2 - 128);
+	       var code3 = s[ pointer++ ];
+	       if( code < 240 ) {
+		  code3 = ((code - 224) << 12)
+		     + ((code2 - 128) << 6) + (code3 - 128);
+		  res += String.fromCharCode( code, code2, code3 );
 	       } else {
-		  var code3 = s[ pointer++ ];
-		  if( code < 240 ) {
-		     codes[ j++ ] = ((code - 224) << 12)
-			+ ((code2 - 128) << 6) + (code3 - 128);
-		  } else {
-		     var code4 = s[ pointer++ ];
-		     codes[ j++ ] = ((code - 240) << 18)
-			+ ((code2 - 128) << 12)
-			+ ((code3 - 128) << 6)
-			+ (code4 - 128);
-		  }
+		  var code4 = s[ pointer++ ];
+		  code4 = ((code - 240) << 18)
+		     + ((code2 - 128) << 12)
+		     + ((code3 - 128) << 6)
+		     + (code4 - 128);
+		  res += String.fromCharCode( code, code2, code3, code4 );
 	       }
 	    }
 	 }
-	 return String.fromCharCode.apply( null, codes );
-      } else {
-	 var res = "";
-	 while( pointer < end ) {
-	    var code = s[ pointer++ ];
-	    if( code < 128 ) {
-	       res += String.fromCharCode( code );
-	    } else {
-	       var code2 = s[ pointer++ ];
-	       if( code < 224 ) {
-		  code2 = ((code - 192) << 6) + (code2 - 128);
-		  res += String.fromCharCode( code, code2 );
-	       } else {
-		  var code3 = s[ pointer++ ];
-		  if( code < 240 ) {
-		     code3 = ((code - 224) << 12)
-			+ ((code2 - 128) << 6) + (code3 - 128);
-		     res += String.fromCharCode( code, code2, code3 );
-		  } else {
-		     var code4 = s[ pointer++ ];
-		     code4 = ((code - 240) << 18)
-			+ ((code2 - 128) << 12)
-			+ ((code3 - 128) << 6)
-			+ (code4 - 128);
-		     res += String.fromCharCode( code, code2, code3, code4 );
-		  }
-	       }
-	    }
-	 }
-	 return res;
       }
+      
+      return res;
    }
 
    function read_integer( s ) {
@@ -983,9 +957,12 @@ function hop_bytearray_to_obj( s, extension ) {
 	 res = new Object();
 
 	 for( var i = 0; i < sz; i++ ) {
-	    res[ cinfo[ i ] ] = read_item();
+	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
 	 }
-	 
+
+	 // consume the hash number
+	 read_item();
+
 	 return res;
       }
    }
@@ -1082,6 +1059,13 @@ function hop_bytearray_to_obj( s, extension ) {
       }
       return res;
    }
+
+   function read_procedure() {
+      var svc = read_item();
+      var rsc = s.resource ? svc.resource : "/hop";
+      return eval( sc_format( svc.javascript, svc.path, rsc ) );
+			     
+   }
    
    function read_item() {
       switch( s[ pointer++ ] ) {
@@ -1114,6 +1098,7 @@ function hop_bytearray_to_obj( s, extension ) {
          case 0x72 /* r */: return sc_pregexp( read_string( s ) );
          case 0x58 /* X */: return read_extension();
          case 0x68 /* h */: return read_hvector();
+         case 0x70 /* p */: return read_procedure();
 	 case 0x56 /* V */: return read_unsupported( "typed-vector" );
 	 case 0x21 /* ! */: return read_unsupported( "cell" );
          case 0x75 /* u */: return read_unsupported( "ucs2" );
@@ -1121,7 +1106,6 @@ function hop_bytearray_to_obj( s, extension ) {
          case 0x2b /* + */: return read_unsupported( "custom" );
 	 case 0x77 /* w */: return read_unsupported( "weak-ptr" );
          case 0x74 /* t */: return read_unsupported( "tagged vectors" );
-         case 0x70 /* p */: return read_unsupported( "process" );
          case 0x65 /* e */: return read_unsupported( "process" );
          case 0x6f /* o */: return read_unsupported( "opaque" );
 	 default: pointer--; return read_integer( s );
@@ -1143,7 +1127,18 @@ function hop_bytearray_to_obj( s, extension ) {
 /*---------------------------------------------------------------------*/
 var hop_custom_object_regexp =
    new RegExp( "hop_create_encoded_element[(][ ]*\"([^\"]*)\"[ ]*[)]" );
-	       
+
+/*---------------------------------------------------------------------*/
+/*    hop_class_register_serializer ...                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export register-class-serialization!) (arity #t)) */
+function hop_class_register_serializer( clazz, serializer, unserializer ) {
+   hop_class_serializers[ clazz.sc_hash ] = {
+      serializer: serializer,
+      unserializer: unserializer
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/

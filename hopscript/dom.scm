@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Jul 17 09:20:32 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 04:55:37 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -118,7 +118,7 @@
       ((parentNode)
        (with-access::xml-element o (parent)
 	  parent))
-      ((string=? "childNodes" pname)
+      ((childNodes)
        (with-access::xml-markup o (body)
 	  (js-vector->jsarray
 	     (list->vector

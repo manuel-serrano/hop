@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul  3 16:01:26 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 15:27:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -125,6 +125,7 @@
 	   (generic js-inspect::JsStringLiteral ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)
+	   (js-html-html ::JsGlobalObject)
 
 	   ))
 
@@ -1172,11 +1173,13 @@
 		(with-access::&io-parse-error e (proc msg obj fname location)
 		   (js-raise-syntax-error %this
 		      (format "~a: ~a -- ~a" proc msg obj)
+		      obj
 		      fname location)))
 	       ((isa? e &io-error)
 		(with-access::&io-error e (proc msg obj fname location)
 		   (js-raise-error %this
 		      (format "~a: ~a -- ~a" proc msg obj)
+		      obj
 		      fname location)))
 	       ((isa? e &error)
 		(with-access::&error e (proc msg obj fname location)
@@ -1184,10 +1187,12 @@
 		      ((string=? proc "assignment")
 		       (js-raise-reference-error %this
 			  (format "~a -- ~a" msg obj)
+			  obj
 			  fname location))
 		      (else
 		       (js-raise-error %this
 			  (format "~a: ~a -- ~a" proc msg obj)
+			  obj
 			  fname location)))))
 	       (else
 		(raise e))))
@@ -1409,3 +1414,12 @@
 	       (js-object->keyword-arguments* attrs %this))
 	    nodes))
       2 'HEAD))
+
+;*---------------------------------------------------------------------*/
+;*    js-html-html ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-html-html %this)
+   (js-make-function %this
+      (lambda (this attrs . nodes)
+	 (apply <HTML> nodes))
+      1 'HTML))

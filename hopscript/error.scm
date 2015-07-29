@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jun 23 11:32:44 2015 (serrano)                */
+;*    Last change :  Sat Jul 18 10:45:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -408,6 +408,7 @@
 (define (%js-syntax-error %this)
    (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-syntax-error)
+	 (tprint "js-syntax-error fname=" fname " loc=" loc)
 	 (js-new %this js-syntax-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/

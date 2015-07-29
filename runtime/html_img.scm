@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Sat Dec 13 09:37:31 2014 (serrano)                */
-;*    Copyright   :  2007-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul 17 17:43:13 2015 (serrano)                */
+;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -175,7 +175,7 @@
 	     (body '())))
 	 ((string? src)
 	  (if (string-prefix? "data:" src)
-	      (inline-img src src src)
+	      (plain-img "inline" src)
 	      (let ((cssrc (charset-convert src (hop-locale) (hop-charset))))
 		 (cond
 		    ((and (pair? body) (string? (car body)) (null? (cdr body)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jul 11 06:15:01 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 15:03:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -467,6 +467,33 @@
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
+
+   (define (load-module-html)
+      (with-trace 'require "require@load-module-js"
+	 (with-access::WorkerHopThread worker (%this prehook)
+	    (with-access::JsGlobalObject %this (js-object js-main)
+	       (let ((hopscript (nodejs-compile filename))
+		     (this (js-new0 %this js-object))
+		     (scope (nodejs-new-scope-object %this))
+		     (mod (nodejs-module (if js-main filename ".")
+			     filename worker %this)))
+		  ;; prehooking
+		  (when (procedure? prehook)
+		     (prehook %this this scope mod))
+		  ;; main module
+		  (unless js-main (set! js-main mod))
+		  ;; create the module
+		  (with-handler
+		     (lambda (e)
+			(with-access::WorkerHopThread worker (module-cache %this)
+			   (js-delete! module-cache filename #f %this))
+			(raise e))
+		     (js-put! mod 'exports (hopscript %this this scope mod)
+			#f %this))
+		  ;; exports the HTML value
+		  ;; return the newly created module
+		  (trace-item "mod=" (typeof mod))
+		  mod)))))
    
    (define (hop-load/cache filename)
       (let ((old (hashtable-get hop-load-cache filename)))
@@ -510,6 +537,8 @@
       (cond
 	 ((string-suffix? ".js" filename)
 	  (load-module-js))
+	 ((string-suffix? ".html" filename)
+	  (load-module-html))
 	 ((string-suffix? ".hop" filename)
 	  (load-module-hop))
 	 ((string-suffix? ".so" filename)
@@ -712,7 +741,7 @@
 		   nodejs-env-path)))
 	    (else
 	     nodejs-env-path))))
-
+   
    (with-trace 'require "nodejs-resolve"
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod 'filename %this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Jul 16 18:20:19 2015 (serrano)                */
+;*    Last change :  Sat Jul 18 15:17:33 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -177,7 +177,7 @@
 		  (hop-event-broadcast! (js-tostring name %this) v)))
 
 	    ;; xml
-	    (define-js xmlCompile 3
+	    (define-js XMLCompile 3
 	       (lambda (this xml ofile backend)
 		  (let ((be (hop-get-xml-backend
 			       (if (eq? backend (js-undefined))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Jul 16 16:53:39 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 14:43:11 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -88,7 +88,7 @@
 	      (userinfo read-only (default #f))
 	      (remote-timeout read-only (default (hop-read-timeout)))
 	      (connection-timeout read-only (default (hop-connection-timeout))))
-	   
+
 	   ;; http-response-remote is a weblet backward compatibiilty type
 	   (class http-response-remote::http-response-proxy)
 	   
@@ -172,7 +172,7 @@
 	      ;; the service formals
 	      (args::obj read-only)
 	      ;; the user procedure associated
-	      (proc::procedure read-only)
+	      (proc::procedure read-only (info '(serialize: #f)))
 	      ;; the JS code calling that service
 	      (javascript::bstring read-only)
 	      ;; a time stamp

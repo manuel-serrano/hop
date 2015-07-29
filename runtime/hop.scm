@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Jul 17 08:56:02 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 14:43:20 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -160,7 +160,7 @@
 					  header userinfo scheme http)
 	     (if (or (not (isa? req http-proxy-request))
 		     (not (hop-enable-proxying)))
-		 (http-file-not-found path)
+		 (instantiate::http-response-abort)
 		 (let ((n (instantiate::http-response-proxy
 			     (scheme scheme)
 			     (method method)

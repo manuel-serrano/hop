@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Fri Jul 17 08:26:00 2015 (serrano)                */
+;*    Last change :  Fri Jul 17 18:00:15 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
@@ -34,7 +34,7 @@
    (printf "  ~a: { unserializer: function( b ) { return b } },\n"
       (class-hash JsBoolean))
    ;; JsArrayBuffer
-   (printf "  ~a: { unserializer: function( a ) { console.log( 'abuffer' ); return a.buffer } },\n"
+   (printf "  ~a: { unserializer: function( a ) { return a.buffer } },\n"
       (class-hash JsArrayBuffer))
    ;; JsDataView
    (printf "  ~a: { unserializer: function( a ) { return new DataView( a.buffer ) } },\n"
@@ -45,7 +45,7 @@
    ;; JsFastBuffer
    (printf "  ~a: { unserializer: function( b ) { return b } },\n"
       (class-hash JsFastBuffer))
-   (printf "  ~a: { unserializer: function( a ) { console.log( 'slow' ); return a.buffer } },\n"
+   (printf "  ~a: { unserializer: function( a ) { return a.buffer } },\n"
       (class-hash JsSlowBuffer))
    ;; JsFloat32Array
    (printf "  ~a: { unserializer: function( a ) { return new Float32Array( a.buffer ) } },\n"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue Jul  7 11:16:03 2015 (serrano)                */
+;*    Last change :  Sun Jul 26 07:07:32 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -39,23 +39,6 @@
 ;*---------------------------------------------------------------------*/
 (define (expand-service id wid url timeout ttl args body)
    
-   (define (pair->list args)
-      (if (list? args)
-	  args
-	  (let loop ((args args))
-	     (cond
-		((null? args) '())
-		((pair? args) (cons (car args) (loop (cdr args))))
-		(else (list args))))))
-
-   (define (args->list args)
-      (filter-map (lambda (f)
-		     (cond
-			((symbol? f) f)
-			((and (pair? f) (symbol? (car f))) (car f))
-			(else #f)))
-		  (pair->list args)))
-
    (define (call args)
       (let loop ((args args)
 		 (state 'plain))

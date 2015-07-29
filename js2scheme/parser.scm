@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 15 16:50:29 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 14:50:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -14,12 +14,16 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_parser
 
+   (include "token.sch")
+
    (import __js2scheme_lexer
+	   __js2scheme_html
 	   __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils)
 
-   (export (j2s-parser ::input-port conf::pair-nil)))
+   (export (j2s-parser ::input-port ::pair-nil)
+	   (j2s-tag->expr ::pair)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
@@ -45,12 +49,6 @@
    (define (current-loc)
       `(at ,(input-port-name input-port) ,(input-port-position input-port)))
 
-   (define (token-tag token)
-      (car token))
-   
-   (define (token-loc token)
-      (cer token))
-
    (define (parse-token-error msg token::pair)
       (match-case (token-loc token)
 	 ((at ?fname ?loc)
@@ -58,7 +56,7 @@
 	     (instantiate::&io-parse-error
 		(proc "j2s-parser")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token)))
+		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token)))
 		(fname fname)
 		(location loc))))
 	 (else
@@ -66,7 +64,7 @@
 	     (instantiate::&io-parse-error
 		(proc "j2s-parser")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
-		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (cdr token))))))))
+		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
 
    (define (parse-node-error msg node::J2SNode)
       (with-access::J2SNode node (loc)
@@ -101,18 +99,6 @@
    (define *peeked-tokens* '())
    (define *previous-token-type* #unspecified)
    (define *open-tokens* #unspecified)
-   
-   (define (read-regexp intro-token)
-      (when (eq? intro-token '/=)
-	 (unread-char! #\= input-port))
-      (let ((token (read/rp (j2s-regex-lexer) input-port)))
-	 (case (token-tag token)
-	    ((EOF)
-	     (parse-token-error "Unfinished regular expression literal" token))
-	    ((ERROR)
-	     (parse-error "Bad regular-expression literal" token))
-	    (else
-	     token))))
    
    (define (peek-token)
       (if (null? *peeked-tokens*)
@@ -150,7 +136,6 @@
    (define (pop-open-token)
       (set! *open-tokens* (cdr *open-tokens*)))
 
-      
    (define (consume-token! type)
       (let ((token (consume-any!)))
 	 (if (eq? (token-tag token) type)
@@ -162,6 +147,13 @@
    
    (define (consume! type)
       (cdr (consume-token! type)))
+   
+   (define (consume-any!)
+      (let ((res (peek-token)))
+	 (set! *previous-token-type* (car res))
+	 (set! *peeked-tokens* (cdr *peeked-tokens*))
+	 ;; (peek-token) ;; prepare new token.
+	 res))
    
    (define (consume-statement-semicolon! where)
       (cond
@@ -177,15 +169,20 @@
 	  (parse-token-error (format "~a, \"\;\" or newline expected" where)
 	     (peek-token)))))
    
-   (define (consume-any!)
-      (let ((res (peek-token)))
-	 (set! *previous-token-type* (car res))
-	 (set! *peeked-tokens* (cdr *peeked-tokens*))
-	 ;; (peek-token) ;; prepare new token.
-	 res))
-   
    (define (eof?)
       (eq? (peek-token-type) 'EOF))
+   
+   (define (read-regexp intro-token)
+      (when (eq? intro-token '/=)
+	 (unread-char! #\= input-port))
+      (let ((token (read/rp (j2s-regex-lexer) input-port)))
+	 (case (token-tag token)
+	    ((EOF)
+	     (parse-token-error "Unfinished regular expression literal" token))
+	    ((ERROR)
+	     (parse-error "Bad regular-expression literal" token))
+	    (else
+	     token))))
    
    (define (source-elements::J2SBlock)
       (let loop ((rev-ses '()))
@@ -893,7 +890,7 @@
       (let ((token (consume-token! 'ID)))
 	 (instantiate::J2SParam
 	    (loc (token-loc token))
-	    (id (cdr token)))))
+	    (id (token-value token)))))
       
    (define (params)
       (push-open-token (consume! 'LPAREN))
@@ -1201,29 +1198,13 @@
 			(arg (assig-expr #f)))
 		    (loop (cons arg rev-args)))))))
 
-   (define (xml-expression tag)
+   
+   
+   (define (js-xml-expression tag)
       
       (define (xml-err msg token)
 	 (parse-token-error msg token))
-      
-      (define (tag->expr tag)
-	 (let* ((type (symbol->string! (cdr tag)))
-		(i (string-index type #\.)))
-	    (if i
-		;; a variable access
-		(instantiate::J2SAccess
-		   (loc (token-loc tag))
-		   (obj (instantiate::J2SUnresolvedRef
-			   (loc (token-loc tag))
-			   (id (string->symbol (substring type 1 i)))))
-		   (field (instantiate::J2SString
-			     (loc (token-loc tag))
-			     (val (substring type (+fx i 1) (-fx (string-length type) 1))))))
-		;; a tag name
-		(instantiate::J2SUnresolvedRef
-		   (loc (token-loc tag))
-		   (id (string->symbol (substring type 1 (-fx (string-length type) 1))))))))
-      
+
       (let ((token (push-open-token (consume-token! 'LBRACE))))
 	 (let loop ((state 1)
 		    (attributes '())
@@ -1239,8 +1220,8 @@
 			  (let* ((name (instantiate::J2SString
 					  (loc (token-loc token))
 					  (val (if (eq? (token-tag token) 'STRING)
-						   (cdr token)
-						   (symbol->string (cdr token))))))
+						   (token-value token)
+						   (symbol->string (token-value token))))))
 				 (attr (instantiate::J2SDataPropertyInit
 					  (loc (token-loc token))
 					  (name name)
@@ -1276,9 +1257,9 @@
 				   (loc (token-loc token))
 				   (inits (reverse! attributes)))))
 		      (instantiate::J2SCall
-				  (loc (token-loc tag))
-				  (fun (tag->expr tag))
-				  (args (cons attrs (reverse! nodes)))))))
+			 (loc (token-loc tag))
+			 (fun (j2s-tag->expr tag))
+			 (args (cons attrs (reverse! nodes)))))))
 	       (else
 		(if (>fx state 0)
 		    (let ((expr (assig-expr #f)))
@@ -1286,6 +1267,14 @@
 		    (xml-err
 		       "Illegal xml expression, attribute or expression expected"
 		       (peek-token))))))))
+
+   (define (html-expression tag)
+      (html-parser input-port conf tag))
+
+   (define (xml-expression tag)
+      (if (lbrace-following? input-port)
+	  (js-xml-expression tag)
+	  (html-expression tag)))
 
    (define (tilde token)
       (with-tilde
@@ -1299,6 +1288,18 @@
 		      (nodes (reverse! rev-stats))))
 		  (else
 		   (loop (cons (statement) rev-stats))))))))
+
+   (define (tilde-expression)
+      (let ((token (consume-any!)))
+	 (instantiate::J2STilde
+	    (loc (token-loc token))
+	    (stmt (tilde token)))))
+
+   (define (dollar-expression)
+      (let* ((ignore (consume-any!))
+	    (expr (expression #f))
+	    (ignore-too (consume! 'RBRACE)))
+	 expr))
    
    (define (primary)
       (case (peek-token-type)
@@ -1317,12 +1318,12 @@
 		 (arrow-function (list token))
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
-		    (id (cdr token))))))
+		    (id (token-value token))))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef
 		(loc (token-loc token))
-		(id (cdr token)))))
+		(id (token-value token)))))
 	 ((LPAREN)
 	  (let ((token (push-open-token (consume-any!)))
 		(expr (expression #f))
@@ -1371,30 +1372,30 @@
 	  (let ((token (consume-token! 'NUMBER)))
 	     (instantiate::J2SNumber
 		(loc (token-loc token))
-		(val (cdr token)))))
+		(val (token-value token)))))
 	 ((OCTALNUMBER)
 	  (let ((token (consume-token! 'OCTALNUMBER)))
 	     (instantiate::J2SOctalNumber
 		(loc (token-loc token))
-		(val (cdr token)))))
+		(val (token-value token)))))
 	 ((STRING)
 	  (let ((token (consume-token! 'STRING)))
 	     (instantiate::J2SString
 		(escape '())
 		(loc (token-loc token))
-		(val (cdr token)))))
+		(val (token-value token)))))
 	 ((ESTRING)
 	  (let ((token (consume-token! 'ESTRING)))
 	     (instantiate::J2SString
 		(escape '(escape))
 		(loc (token-loc token))
-		(val (cdr token)))))
+		(val (token-value token)))))
 	 ((OSTRING)
 	  (let ((token (consume-token! 'OSTRING)))
 	     (instantiate::J2SString
 		(escape '(escape octal))
 		(loc (token-loc token))
-		(val (cdr token)))))
+		(val (token-value token)))))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file" (peek-token)))
 	 ((/ /=)
@@ -1409,6 +1410,14 @@
 		   (flags (cdr (cdr pattern)))))))
 	 ((OTAG)
 	  (xml-expression (consume-any!)))
+	 ((HTML)
+	  (let ((tag (consume-any!)))
+	     (instantiate::J2SCall
+		(loc (token-loc tag))
+		(fun (j2s-tag->expr tag))
+		(args '()))))
+	 ((OHTML)
+	  (html-expression (consume-any!)))
 	 ((TILDE)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2STilde
@@ -1418,24 +1427,15 @@
 	  (if (>fx tilde-level 0)
 	      (with-dollar
 		 (lambda ()
-		    (let ((ignore (consume-any!))
-			  (expr (expression #f))
-			  (ignore-too (consume! 'RBRACE)))
+		    (let* ((ignore (consume-any!))
+			   (expr (expression #f))
+			   (ignore-too (consume! 'RBRACE)))
 		       (instantiate::J2SDollar
 			  (loc (token-loc ignore))
 			  (node expr)))))
 	      (parse-token-error
 		 "Invalid ${ ... } statement"
 		 (consume-any!))))
-;* 	 ((NaN)                                                        */
-;* 	  (let ((token (consume-token! 'NaN)))                         */
-;* 	     (instantiate::J2SNumber                                   */
-;* 		(loc (token-loc token))                                */
-;* 		(val +nan.0))))                                        */
-;* 	 ((undefined)                                                  */
-;* 	  (let ((token (consume-token! 'undefined)))                   */
-;* 	     (instantiate::J2SUndefined                                */
-;* 		(loc (token-loc token)))))                             */
 	 (else
 	  (parse-token-error "unexpected token" (peek-token)))))
    
@@ -1560,56 +1560,56 @@
 	    ;; IDs are automatically transformed to strings.
 	    ((ID RESERVED)
 	     (let ((token (consume-any!)))
-		(case (cdr token)
+		(case (token-value token)
 		   ((get set)
 		    token)
 		   (else
 		    (instantiate::J2SString
 		       (loc (token-loc token))
-		       (val (symbol->string (cdr token))))))))
+		       (val (symbol->string (token-value token))))))))
 	    ((STRING)
 	     (let ((token (consume-token! 'STRING)))
 		(instantiate::J2SString
 		   (escape '())
 		   (loc (token-loc token))
-		   (val (cdr token)))))
+		   (val (token-value token)))))
 	    ((ESTRING)
 	     (let ((token (consume-token! 'ESTRING)))
 		(instantiate::J2SString
 		   (escape '(escape))
 		   (loc (token-loc token))
-		   (val (cdr token)))))
+		   (val (token-value token)))))
 	    ((OSTRING)
 	     (let ((token (consume-token! 'OSTRING)))
 		(instantiate::J2SString
 		   (escape '(escape octal))
 		   (loc (token-loc token))
-		   (val (cdr token)))))
+		   (val (token-value token)))))
 	    ((NUMBER)
 	     (let ((token (consume-token! 'NUMBER)))
 		(instantiate::J2SNumber
 		   (loc (token-loc token))
-		   (val (cdr token)))))
+		   (val (token-value token)))))
 	    ((OCTALNUMBER)
 	     (let ((token (consume-token! 'OCTALNUMBER)))
 		(instantiate::J2SOctalNumber
 		   (loc (token-loc token))
-		   (val (cdr token)))))
+		   (val (token-value token)))))
 	    ((true false null)
 	     (let ((token (consume-any!)))
 		(instantiate::J2SString
 		   (loc (token-loc token))
-		   (val (symbol->string (cdr token))))))
+		   (val (symbol->string (token-value token))))))
 	    (else
 	     (if (j2s-reserved-id? (peek-token-type))
 		 (let ((token (consume-any!)))
-		    (case (cdr token)
+		    (case (token-value token)
 		       ((get set)
 			token)
 		       (else
 			(instantiate::J2SString
 			   (loc (token-loc token))
-			   (val (symbol->string (cdr token)))))))
+			   (val (symbol->string (token-value token)))))))
 		 (parse-token-error "Wrong property name" (peek-token))))))
       
       (define (find-prop name props)
@@ -1762,11 +1762,34 @@
 	     el)))
 
    (case (config-get conf :parser #f)
+      ((tilde-expression) (tilde-expression))
+      ((dollar-expression) (dollar-expression))
       ((module) (program #f))
       ((repl) (repl))
       ((eval) (eval))
       ((client-program) (program #t))
       (else (program #f))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-tag->expr ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-tag->expr tag::pair)
+      (let* ((type (symbol->string! (cdr tag)))
+	     (i (string-index type #\.)))
+	 (if i
+	     ;; a variable access
+	     (instantiate::J2SAccess
+		(loc (token-loc tag))
+		(obj (instantiate::J2SUnresolvedRef
+			(loc (token-loc tag))
+			(id (string->symbol (substring type 1 i)))))
+		(field (instantiate::J2SString
+			  (loc (token-loc tag))
+			  (val (substring type (+fx i 1) (-fx (string-length type) 1))))))
+	     ;; a tag name
+	     (instantiate::J2SUnresolvedRef
+		(loc (token-loc tag))
+		(id (string->symbol (substring type 1 (-fx (string-length type) 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-mode-nodes ...                                        */
@@ -1805,6 +1828,18 @@
 		mode)
 	       (mode
 		(loop (cdr nodes))))))))
+
+;*---------------------------------------------------------------------*/
+;*    lbrace-following? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (lbrace-following? port)
+   (read/rp
+      (regular-grammar ()
+	 ((: (* (in " \t\n")) #\{)
+	  (rgc-buffer-insert-substring! port (the-string) 0 (the-length)))
+	 (else
+	  #f))
+      port))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-mode ...                                              */
@@ -1927,3 +1962,4 @@
 	    (obj '=>)
 	    (fname (cadr loc))
 	    (location (caddr loc))))))
+

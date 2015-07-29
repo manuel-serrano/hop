@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-15 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -3865,7 +3865,8 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
    }
 
    if( zuper != clazz ) {
-      var constr = clazz.prototype.constructor;
+      var constr = ("prototype" in clazz) ? clazz.prototype.constructor
+	  : function( c ) { return c; };
       
       clazz.prototype = new zuper();
       clazz.prototype.constructor = constr;
@@ -3880,6 +3881,8 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
    }
 
    sc_allClasses[ name ] = clazz;
+
+   return clazz;
 }
 
 /*** META ((export #t) (arity #t) (type bool)) */

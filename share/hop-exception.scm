@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Tue Jul 15 19:33:19 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Fri Jul 17 14:24:15 2015 (serrano)                */
+;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */

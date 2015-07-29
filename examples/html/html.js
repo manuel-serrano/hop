@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun  4 09:19:16 2014                          */
-/*    Last change :  Thu Jul  3 14:58:30 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Wed Jul 29 15:12:27 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HTML new tag                                                     */
 /*    -------------------------------------------------------------    */
@@ -14,28 +14,14 @@
 var hop = require( "hop" );
 
 service html() {
-   return <HTML> {
-      <HEAD> {
-	 css: html.resource( "html.hss" )
-      },
-      <BOX> {
-	 id: "box1",
-	 <BOX> {
-	    id: "box2",
-	    title: "box2",
-	    "data-count": 2,
-	    "foo"
-	 },
-	 <BOX> {
-	    id: "box3",
-	    title: "box3",
-	    class: "clickable",
-	    "data-count": 3,
-	    onclick: ~{ alert( "box3 clicked" ); },
-	    "bar"
-	 }
-      }
-   }
+   return <HTML>
+     <HEAD css=${html.resource( "html.hss" )}/>
+     <BOX id="box1">
+      <BOX id="box2" title="box2" data-count=2>foo</BOX>
+      <BOX id="box3" title="box3" class="clickable" data-count=3
+	 onclick=~{ alert( "box3 clicked" ); }>bar</BOX>
+     </BOX>
+   </HTML>;
 }
 
 function BOX( attributes, n1 ) {
@@ -47,19 +33,15 @@ function BOX( attributes, n1 ) {
 
    delete arguments[ 0 ];
    
-   return <DIV> {
-      "data-hss-tag": "box",
-      id: id,
-      class: klass,
-      attributes,
+   return <DIV data-hss-tag="box" id=${id} class=${klass} ${attributes}>
       ~{ window.addEventListener(
 	 "load",
 	 function() {
 	    var el = document.getElementById( ${id} );
 	    el.innerHTML = el.innerHTML + "/" + el.getAttribute( "data-count" );
-	 } ) },
-      arguments
-   }
+	 } ) }
+     ${arguments}
+   </DIV>;
 }
 	 
 console.log( "Go to \"http://%s:%d/hop/html\"", hop.hostname, hop.port );

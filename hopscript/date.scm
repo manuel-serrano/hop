@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 17 08:17:23 2015 (serrano)                */
+;*    Last change :  Fri Jul 24 05:51:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -45,6 +45,23 @@
       (with-access::JsDate o (val) val))
    (lambda (o %this)
       (js-date->jsdate o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsDate ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::JsDate p backend)
+   (with-access::JsDate obj (val)
+      (display val p)))
+		  
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsObject ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Used when an JS object is to pack the arguments sent to          */
+;*    an XML constructor.                                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsDate)
+   (with-access::JsDate o (val)
+      (list val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDate ...                                     */

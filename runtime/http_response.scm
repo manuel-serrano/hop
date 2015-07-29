@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Fri Jul 17 09:00:34 2015 (serrano)                */
+;*    Last change :  Wed Jul 29 14:43:34 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -38,7 +38,6 @@
 
    (export  (generic http-response::symbol ::%http-response ::obj ::socket)
 	    (generic scheme->response ::obj ::http-request)
-	    (http-response-void ::http-request)
 	    (http-send-request ::http-request ::procedure #!key body args)
 	    (chunked-flush-hook port size)))
 
@@ -756,14 +755,6 @@
 	 (proc (lambda (op) (display (read-string input-port) op))))))
    
 ;*---------------------------------------------------------------------*/
-;*    http-response-void ...                                           */
-;*---------------------------------------------------------------------*/
-(define (http-response-void req)
-   (instantiate::http-response-string
-      (charset (hop-locale))
-      (start-line "HTTP/1.0 204 No Content")))
-
-;*---------------------------------------------------------------------*/
 ;*    http-send-request ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-send-request req::http-request proc::procedure #!key args body)
@@ -851,3 +842,4 @@
 		 (port (string->integer (substring proxy (+fx i 1) len))))
 	     (make-client-socket proxy port :timeout tmt))
 	  (make-client-socket proxy 80 :timeout tmt))))
+
