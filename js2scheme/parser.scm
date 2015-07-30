@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 29 19:47:12 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 11:03:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1054,6 +1054,7 @@
 			     ;; < operator
 			     (let* ((val (token-value token))
 				    (id (substring val 1)))
+				(tprint "Should not be here val=[" val "]")
 				(token-push-back!
 				   (make-token 'ID id
 				      (token-loc token)))
@@ -1425,16 +1426,7 @@
 		(fun (j2s-tag->expr tag))
 		(args '()))))
 	 ((OHTML)
-;* 	  (if (html-following? input-port)                             */
-	      (html-expression (consume-any!)))
-;* 	      (let* ((t (consume-any!))                                */
-;* 		     (s (symbol->string (token-value t)))              */
-;* 		     (tokid (make-token 'ID (string->symbol (substring s 1)) */
-;* 			       (token-loc t)))                         */
-;* 		     (tokop (make-token '< "<" (token-loc t))))        */
-;* 		 (token-push-back! tokid)                              */
-;* 		 (token-push-back! tokop)                              */
-;* 		 )))                                                   */
+	  (html-expression (consume-any!)))
 	 ((TILDE)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2STilde
@@ -1852,7 +1844,7 @@
 (define (lbrace-following? port)
    (read/rp
       (regular-grammar ()
-	 ((: (* (in " \t\n")) #\{)
+	 ((: (* (or (in " \t\n") (or "\xc2\xa0"))) #\{)
 	  (rgc-buffer-insert-substring! port (the-string) 0 (the-length))
 	  #t)
 	 (else

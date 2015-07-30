@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Jul 24 06:38:12 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 11:01:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -338,8 +338,12 @@
 	  (the-length)))
 
       ;; HTML
-      ((: "<" tagid (in " \t\n"))
-       (token 'OHTML (the-subsymbol 0 -1) (the-length)))
+      ((: "<" tagid (+ (in " \t\n")) (or tagid "/>" ">"))
+       (let* ((str (the-string))
+	      (i (string-index str " \t\n")))
+	  (rgc-buffer-insert-substring! (the-port) str
+	     (+fx i 1) (string-length str))
+	  (token 'OHTML (string->symbol (substring str 0 i)) i)))
       ((: "<" tagid "/>")
        (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length)))
       

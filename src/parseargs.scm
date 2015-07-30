@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jul 29 17:32:00 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 10:11:47 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -208,8 +208,8 @@
 	    (section "Run")
 	    ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	     (set! p (string->integer port)))
-	    (("--server-mask-address" ?addr (help "Server IP or name masking"))
-	     (hop-server-mask-set! addr))
+	    (("--listen-addr" ?addr (help "Server listen hostname or IP"))
+	     (hop-server-listen-addr-set! addr))
 	    (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" ep)))
 	     (set! ep (string->integer port)))
 	    (("--https" (help (format "Enable HTTPS")))
