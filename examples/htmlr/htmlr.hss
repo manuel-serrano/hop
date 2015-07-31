@@ -1,0 +1,26 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.0.x/examples/htmlr/htmlr.hss          */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Jun  4 09:26:38 2014                          */
+/*    Last change :  Fri Jul 24 15:03:54 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HSS for the HTML example                                         */
+/*=====================================================================*/
+$(define-hss-type box "[data-hss-tag=box]")
+
+div {
+  border: 2px solid blue;
+  font-size: 40px;
+  padding: 4px;
+  margin: 2px;
+}
+
+.div1 {
+  border-color: green;
+}
+
+.div2:hover {
+  color: red;
+}
