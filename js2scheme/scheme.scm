@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jul 18 22:01:10 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 14:24:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -185,7 +185,7 @@
    (define (exit-body body)
       (if (config-get conf :return-as-exit)
 	  `((bind-exit (%jsexit) ,@body))
-	  `(begin ,@body)))
+	  body))
    
    (define (j2s-module module body)
       (with-access::J2SProgram this (mode pcache-size)
@@ -227,7 +227,7 @@
 			(js-new0 %this js-object)))
 		   (define %module (nodejs-module ,(basename path) ,path %worker %this))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
-		      (lambda () ,(exit-body body)))
+		      (lambda () ,@(exit-body body)))
 		   ;; (js-worker-terminate! %worker #f)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 

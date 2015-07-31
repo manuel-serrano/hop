@@ -73,3 +73,4 @@ hopscheme/hop-runtime.sch
 ^test/nodejs/log\.[0-9].*$
 ^share/hop-debug.js$
 ^scheme2js/runtime/bglcpp$
+^share/hop-builtin-serializers.js$

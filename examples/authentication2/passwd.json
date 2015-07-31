@@ -1,0 +1,7 @@
+{
+   name: "foo",
+   password: "+45fae6f23632b1d2ffe7e7aeab32c333",
+   services: ["foo", "bar"],
+   directories: ["tmp"]
+}
+   

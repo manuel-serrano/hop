@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.3.x/runtime/svg.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/svg.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Apr 20 06:58:51 2012 (serrano)                */
-;*    Copyright   :  2007-12 Manuel Serrano                            */
+;*    Last change :  Fri Jul 31 08:32:17 2015 (serrano)                */
+;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -517,11 +517,13 @@
 		       (class #f)
 		       (width #f)
 		       (height #f)
-		       (style "text-align: center" string)
-		       (src #unspecified string)
+		       (style "text-align: center")
+		       (src #unspecified)
 		       (prefix #t boolean)
 		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
 		       (attrs))
+   (set! src (xml-primitive-value src))
+   (set! style (xml-primitive-value style))
    (cond
       ((not (string? src))
        (error "<SVG:IMG>" "Illegal image src" src))

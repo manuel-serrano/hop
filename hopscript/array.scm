@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 17 08:15:01 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 14:30:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -604,7 +604,7 @@
 		  (nothask #t)
 		  ((eq? x (js-undefined)) (eq? y (js-undefined)))
 		  ((eq? y (js-undefined)) #t)
-		  (else (<= (js-call2 %this comparefn (js-undefined) x y) 0))))))
+		  (else (<= (js-tointeger (js-call2 %this comparefn (js-undefined) x y) %this) 0))))))
       
       (define (get-compare comparefn)
 	 (cond

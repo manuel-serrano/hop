@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Wed Jul 29 17:58:00 2015 (serrano)                */
+/*    Last change :  Thu Jul 30 17:07:13 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -17,6 +17,7 @@ var path = require( "path" );
 var util = require( "util" );
 var spawn = require( "child_process" ).spawn;
 var fontifier = require( hop.fontifier );
+var doc = require( "hopdoc" );
 
 var PORT = hop.port + 1;
 var PROCESSES = [];
@@ -77,7 +78,8 @@ service examples() {
 	 include: "md5",
 	 css: [ examples.resource( "libs/bootstrap/css/bootstrap.min.css" ),
 		examples.resource( "examples.hss" ),
-	        fontifier.css ],
+	        fontifier.css,
+	        doc.css ],
 	 <META> {
 	    charset: "utf-8"
 	 },
@@ -297,6 +299,7 @@ function getExamples( dir ) {
 	    if( !("service" in o) ) o.service = d;
 	    if( !("level" in o) ) o.level = 0.1;
 	    if( !("commands" in o) ) o.commands = [ CMD ];
+	    if( !("doc" in o) ) o.doc = p + "/doc.md";
 
 	    if( ("files" in o) ) {
 	       o.files = o.files.map( function( el ) {

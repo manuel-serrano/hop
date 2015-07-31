@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jan 16 10:18:00 2015 (serrano)                */
+#*    Last change :  Thu Jul 30 17:16:15 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -34,7 +34,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
   share-afile scheme2js hopscript js2scheme nodejs \
-  android node_modules
+  android node_modules doc
 
 build:
 	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
@@ -97,6 +97,9 @@ scheme2js:
 
 node_modules:
 	$(MAKE) -C node_modules build
+
+doc:
+	$(MAKE) -C doc build
 
 build-android: lib
 	$(MAKE) -C arch/android build
@@ -162,6 +165,7 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C hophz install && \
 	$(MAKE) -C etc install && \
 	$(MAKE) -C node_modules install
+	$(MAKE) -C doc install
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \
@@ -227,6 +231,7 @@ uninstall:
 	$(MAKE) -C hopscript uninstall
 	$(MAKE) -C nodejs uninstall
 	$(MAKE) -C node_modules uninstall
+	$(MAKE) -C doc uninstall
 	if [ "$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)" != "/" ]; then \
 	  $(RM) -rf $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
@@ -245,6 +250,7 @@ clean-quick:
 	$(MAKE) -C widget clean
 	$(MAKE) -C share clean
 	$(MAKE) -C node_modules clean
+	$(MAKE) -C doc clean
 
 clean:
 	$(MAKE) -C runtime clean
@@ -263,6 +269,7 @@ clean:
 	$(MAKE) -C widget clean
 	$(MAKE) -C share clean
 	$(MAKE) -C node_modules clean
+	$(MAKE) -C doc clean
 
 devclean:
 	$(MAKE) -C runtime devclean
@@ -274,6 +281,7 @@ devclean:
 	$(MAKE) -C widget devclean
 	$(MAKE) -C share devclean
 	$(MAKE) -C node_modules devclean
+	$(MAKE) -C doc devclean
 
 distclean: clean 
 	$(MAKE) -C runtime distclean
@@ -286,6 +294,7 @@ distclean: clean
 	$(MAKE) -C share distclean
 	$(MAKE) -C nodejs distclean
 	$(MAKE) -C node_modules distclean
+	$(MAKE) -C doc distclean
 	$(RM) -f etc/Makefile.hopconfig
 	$(RM) -f etc/hop.man
 	$(RM) -f etc/hopsh.man

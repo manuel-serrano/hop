@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 17 08:18:38 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 12:10:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -442,6 +442,17 @@
    
    (js-bind! %this obj 'localeCompare
       :value (js-make-function %this locale-compare 1 'localeCompare)
+      :enumerable #f)
+   
+   ;; naturalCompare
+   ;; hopscript extension
+   (define (natural-compare this::obj that)
+      (let ((s (js-tostring (js-cast-string %this this) %this))
+	    (t (js-tostring that %this)))
+	 (string-natural-compare3 s t)))
+   
+   (js-bind! %this obj 'naturalCompare
+      :value (js-make-function %this natural-compare 1 'naturalCompare)
       :enumerable #f)
    
    ;; match

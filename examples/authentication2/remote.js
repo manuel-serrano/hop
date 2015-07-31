@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Dec  3 07:54:39 2014                          */
-/*    Last change :  Fri Jul 17 10:01:12 2015 (serrano)                */
+/*    Last change :  Fri Jul 31 16:13:16 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A dummy service that accepts connections for user FOO.           */
 /*    -------------------------------------------------------------    */
-/*    run: hop -p 9999 remote.js --rc-file passwd.hop                  */
+/*    run: hop -p 9999 remote.js --rc-file passwd.json                 */
 /*         hop authentication2.js -- 9999                              */
 /*=====================================================================*/
 var hop = require( "hop" );

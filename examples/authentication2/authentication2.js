@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Fri Jan 16 10:04:20 2015 (serrano)                */
+/*    Last change :  Fri Jul 31 16:12:54 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to authenticate server-to-server requests               */
 /*    -------------------------------------------------------------    */
-/*    run: hop -p 9999 remote.js --rc-file passwd.hop                  */
+/*    run: hop -p 9999 remote.js --rc-file passwd.json                 */
 /*         hop -- authentication2.js 9999                              */
 /*=====================================================================*/
 var hop = require( "hop" );

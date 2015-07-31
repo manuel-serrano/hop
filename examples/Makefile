@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jun 27 07:50:44 2015 (serrano)                */
+#*    Last change :  Fri Jul 31 16:20:08 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -20,7 +20,7 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   README.md \
-  async/async.js async/example.json \
+  async/async.js async/example.json async/doc.md \
   arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \
@@ -36,12 +36,13 @@ POPULATION = Makefile \
   file/file.js file/example.json \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   wsclient/wsclient.js wsclient/example.json \
-  svc/svc.js svc/example.json \
-  svc2/svc2.js svc2/extern.js svc2/example.json \
+  svc/svc.js svc/example.json svc/doc.md \
+  svc2/svc2.js svc2/extern.js svc2/example.json svc2/doc.md \
   svc3/svc3.js svc3/example.json \
   svc4/svc4.js svc4/example.json \
   html/html.js html/html.hss html/example.json \
   htmlc/htmlc.js htmlc/example.json \
+  htmlr/htmlr.js htmlr/example.json htmlr/htmlr.html \
   hss/hss.hss hss/hss.js hss/example.json \
   tree/tree.js tree/example.json \
   spage/spage.js spage/example.json \
@@ -75,7 +76,8 @@ POPULATION = Makefile \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
   authentication/authentication.js authentication/example.json \
   authentication2/authentication2.js authentication2/example.json \
-  authentication2/passwd.hop authentication2/remote.js \
+  authentication2/passwd.hop authentication2/passwd.json \
+  authentication2/remote.js \
   image/image.js image/example.json \
   pair/pair.js pair/example.json \
   hzdemo/hzdemo.js hzdemo/example.json \

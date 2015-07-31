@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Jul 24 04:55:37 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 15:41:36 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -71,6 +71,15 @@
 		   (xml->string o (hop-xml-backend))))
 	     0
 	     'toString))
+	 ((getElementsByTagName)
+	  (js-make-function %this
+	     (lambda (this tag)
+		(js-vector->jsarray
+		   (list->vector
+		      (dom-get-elements-by-tag-name o (js-tostring tag %this)))
+		   %this))
+	     1
+	     'getElementsByTagName))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((c (memq (symbol->keyword pname) attributes)))
@@ -186,7 +195,7 @@
 ;*    js-has-property ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::xml-markup name %this)
-   (or (memq name '(className id attributes children))
+   (or (memq name '(className id attributes children getElementsByTagName))
        (let ((k (symbol->keyword name)))
 	  (with-access::xml-markup o (attributes)
 	     (let loop ((attributes attributes))
@@ -209,7 +218,8 @@
 		 (attrs `(,(js-string->jsstring "className")
 			  ,(js-string->jsstring "attributes")
 			  ,(js-string->jsstring "childNodes")
-			  ,(js-string->jsstring "parentNode"))))
+			  ,(js-string->jsstring "parentNode")
+			  ,(js-string->jsstring "getElementsByTagName"))))
 	 (cond
 	    ((null? attributes)
 	     (list->vector

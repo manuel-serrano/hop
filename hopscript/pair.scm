@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Tue Jun 16 08:47:52 2015 (serrano)                */
+;*    Last change :  Thu Jul 30 15:16:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -45,8 +45,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-properties-name-pair::vector o::pair %this)
    (if (epair? o)
-       `#(,(js-string->jsstring "car") ,(js-string->jsstring "cdr") ,(js-string->jsstring "cer"))
-       `#(,(js-string->jsstring "car") ,(js-string->jsstring "cdr"))))
+       `#(,(js-string->jsstring "car") ,(js-string->jsstring "cdr") ,(js-string->jsstring "cer") ,(js-string->jsstring "toArray"))
+       `#(,(js-string->jsstring "car") ,(js-string->jsstring "cdr") ,(js-string->jsstring "toArray"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-pair ...                                     */
@@ -65,7 +65,7 @@
 	  (instantiate::JsValueDescriptor
 	     (name 'cdr)
 	     (writable #t)
-	     (value (js-obj->jsobject (cdr o)  %this))
+	     (value (js-obj->jsobject (cdr o) %this))
 	     (enumerable #t)
 	     (configurable #f)))
 	 ((cer)
@@ -73,7 +73,16 @@
 	      (instantiate::JsValueDescriptor	
 		 (name 'cer)
 		 (writable #t)
-		 (value (js-obj->jsobject (cer o)  %this))
+		 (value (js-obj->jsobject (cer o) %this))
+		 (enumerable #t)
+		 (configurable #f))
+	      (js-undefined)))
+	 ((toArray)
+	  (if (epair? o)
+	      (instantiate::JsValueDescriptor	
+		 (name 'cer)
+		 (writable #t)
+		 (value (js-obj->jsobject (cer o) %this))
 		 (enumerable #t)
 		 (configurable #f))
 	      (js-undefined)))
@@ -89,6 +98,7 @@
 	 ((car) (js-obj->jsobject (car base) %this))
 	 ((cdr) (js-obj->jsobject (cdr base) %this))
 	 ((cer) (if (epair? o) (js-obj->jsobject (cer base) %this) (js-undefined)))
+	 ((toArray) (js-obj->jsobject base %this))
 	 (else (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/

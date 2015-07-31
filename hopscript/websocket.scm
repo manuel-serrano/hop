@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Jun 15 16:03:43 2015 (serrano)                */
+;*    Last change :  Fri Jul 31 11:57:47 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -429,7 +429,6 @@
 			   (let loop ((frame (websocket-read socket)))
 			      (when (string? frame)
 				 (with-access::JsWebSocketClient ws (onmessages)
-				    (tprint "onmessage set")
 				    (with-access::JsWebSocketServer wss (worker svc)
 				       (let* ((val (js-string->jsstring frame))
 					      (evt (instantiate::JsWebSocketEvent
@@ -440,7 +439,6 @@
 					  (js-worker-push-thunk! worker
 					     "wesbsocket-client"
 					     (lambda ()
-						(tprint "onmessage run")
 						(apply-listeners onmessages evt))))))
 				 (loop (websocket-read socket)))))))))
 	 ws)))

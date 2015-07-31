@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 24 15:27:54 2015 (serrano)                */
+;*    Last change :  Fri Jul 31 12:06:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1184,7 +1184,7 @@
 	       ((isa? e &error)
 		(with-access::&error e (proc msg obj fname location)
 		   (cond
-		      ((string=? proc "assignment")
+		      ((and (string? proc) (string=? proc "assignment"))
 		       (js-raise-reference-error %this
 			  (format "~a -- ~a" msg obj)
 			  obj
@@ -1355,7 +1355,7 @@
 (define-generic (js-inspect o cnt)
    (cond
       ((string? o)
-       o)
+       (js-string->jsstring o))
       ((< cnt 0)
        (js-string->jsstring "..."))
       (else

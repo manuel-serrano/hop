@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Tue Jan  6 13:21:52 2015 (serrano)                */
+/*    Last change :  Fri Jul 31 15:36:45 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing asynchronous response                     */
@@ -20,18 +20,14 @@ service async() {
       function( sendResponse ) {
          fs.readFile( async.resource( "async.js" ), "ascii",
                       function( err, data ) {
-                         sendResponse( <HTML> {
-			    <HEAD> {
-			       css: fontifier.css
-			    },
-			    <PRE> {
-			       class: "fontifier-prog",
-			       fontifier.hopFontifier( data )
-			    }
-			 } )
+                         sendResponse( <html>
+				         <head css=${fontifier.css}/>
+			                 <pre class="fontifier-prog">
+${fontifier.hop( data )}
+				         </pre>
+				       </html> )
 		      } );
-      },
-   this );
+      }, this );
 }
 
-console.log( "Go to \"http://%s:%d/hop/async\"", hop.hostname, hop.port );
+console.log( 'Go to "http://%s:%d/hop/async"', hop.hostname, hop.port );
