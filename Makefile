@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Jul 30 17:16:15 2015 (serrano)                */
+#*    Last change :  Fri Jul 31 16:21:06 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -27,7 +27,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget nodejs node_modules \
-                  examples test tools
+                  examples test tools doc
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
