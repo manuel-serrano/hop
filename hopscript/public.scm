@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jul 31 12:06:40 2015 (serrano)                */
+;*    Last change :  Sun Aug  2 08:59:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -523,22 +523,31 @@
 ;*    js-object->keyword-arguments* ...                                */
 ;*---------------------------------------------------------------------*/
 (define (js-object->keyword-arguments* obj %this)
+   
+   (define (flatten lst)
+      (let flatten ((lst lst)
+		    (res '()))
+	 (cond
+	    ((null? lst)
+	     (reverse! res))
+	    ((isa? (car lst) JsArray)
+	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
+	    (else
+	     (flatten (cdr lst) (cons (car lst) res))))))
+
    (let ((acc '()))
       (js-for-in obj
 	 (lambda (k)
-	    (let ((val (js-get obj k %this)))
+	    (let ((val (js-get obj k %this))
+		  (key (string->keyword (js-jsstring->string k))))
 	       (if (isa? val JsArray)
 		   (with-access::JsArray val (vec)
-		      (let ((l (vector->list vec)))
-			 (when (pair? l)
-			    (set! acc
-			       (append (reverse! l)
-				  (cons (string->keyword (js-jsstring->string k))
-				     acc))))))
+		      (let ((l (flatten (vector->list vec))))
+			 (if (pair? l)
+			     (set! acc (append (reverse! l) (cons key acc)))
+			     (set! acc (cons* '() (cons key acc))))))
 		   (set! acc
-		      (cons* val
-			 (string->keyword (js-jsstring->string k))
-			 acc)))))
+		      (cons* val key acc)))))
 	 %this)
       (reverse! acc)))
 

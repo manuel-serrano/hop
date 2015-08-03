@@ -1,0 +1,11 @@
+{
+   "version": "3.0.0",
+   "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
+   "chapters": [ 
+      { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
+      { "name": "Api", "icon": "glyphicon-book", "href": "api.html", "json": "api/api.json" },
+      { "name": "Core language", "icon": "glyphicon-cog", "href": "core.html", "json": "core/core.json" },
+      { "name": "Nodejs", "icon": "glyphicon-tag", "href": "nodejs.html" },
+      { "name": "License", "icon": "glyphicon-copyright-mark", "href": "license.html" }
+   ]
+}

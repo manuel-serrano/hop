@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Wed Jul 15 12:41:41 2015 (serrano)                */
+/*    Last change :  Sun Aug  2 14:49:12 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    TREE widget example                                              */
@@ -14,62 +14,45 @@
 var fs = require( 'fs' );
 var path = require( 'path' );
 var hop = require( 'hop' );
-var TR = require( hop.tree );
+var tr = require( hop.tree );
 
 function base( dir ) {
    return dir.replace( /.*\//g, "" );
 }
 
 function dirToTree( dir ) {
-   return <TR.TREE> {
-      multiselect: true,
-      value: dir,
-      <TR.TRHEAD> { base( dir ) },
-      <TR.TRBODY> {
-	 service () {
+   return <tr.tree multiselect=true value=${dir}>
+      <tr.head>${base( dir )}</tr.head>
+      <tr.body>
+         ${service () {
 	    return fs.readdirSync( dir ).map(
 	       function( p ) {
 		  var fp = path.join( dir, p );
 		  if( fs.lstatSync( fp ).isDirectory() ) {
 		     return dirToTree( fp );
 		  } else {
-		     return <TR.TRLEAF> { value: fp, p }
+		     return <tr.leaf value=${fp}>${p}<tr.leaf>
 		  }
 	       } );
-	 }
-      } </TR.TRBODY>
-   } </TR.TREE>
+	 }}
+      </tr.body>
+   </tr.tree>
 }
 
 service tree( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
    var t = dirToTree( dir );
-   return <HTML> {
-      <HEAD> {
-	 css: TR.css,
-	 jscript: TR.jscript
-      },
-      <BODY> {
-	 <DIV> {
-	    <BUTTON> {
-	       onclick: ~{ HopTree.open( ${t} ) },
-	       "Open tree"
-	    },
-	    <BUTTON> {
-	       onclick: ~{ HopTree.close( ${t} ) },
-	       "Close tree"
-	    },
-	    <BUTTON> {
-	       onclick: ~{ console.log( HopTree.selection( ${t} ) ) },
-	       "Log selection"
-	    },
-	    <BUTTON> {
-	       onclick: ~{ HopTree.reset( ${t} ) },
-	       "Reset selection"
-	    }
-	 },
-	 t
-      }
-   }
+   return <html>
+     <head css=${tr.css} jscript=${tr.jscript}/>
+     <body>
+       <div>
+        <button onclick=~{ HopTree.open( ${t} ) }>Open tree</button>
+        <button onclick=~{ HopTree.close( ${t} ) }>Close tree</button>
+	<button onclick=~{ console.log( HopTree.selection( ${t} ) ) }>Log</button>
+	<button onclick=~{ HopTree.reset( ${t} ) }>Reset</button>
+       </div>
+       ${t}
+     </body>
+   </html>;
 }
 
 console.log( "Go to \"http://%s:%d/hop/tree\"", hop.hostname, hop.port );

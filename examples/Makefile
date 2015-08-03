@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Jul 31 16:20:40 2015 (serrano)                */
+#*    Last change :  Sun Aug  2 14:34:45 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -33,7 +33,7 @@ POPULATION = Makefile \
   event/event.js event/example.json \
   fs/fs.js fs/example.json \
   url/url.js url/example.json \
-  file/file.js file/example.json \
+  file/file.js file/example.json file/doc.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   wsclient/wsclient.js wsclient/example.json \
   svc/svc.js svc/example.json svc/doc.md \
@@ -44,7 +44,7 @@ POPULATION = Makefile \
   htmlc/htmlc.js htmlc/example.json \
   htmlr/htmlr.js htmlr/example.json htmlr/htmlr.html htmlr/htmlr.hss \
   hss/hss.hss hss/hss.js hss/example.json \
-  tree/tree.js tree/example.json \
+  tree/tree.js tree/example.json tree/doc.md \
   spage/spage.js spage/example.json \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json \
@@ -52,7 +52,7 @@ POPULATION = Makefile \
   hello/hello.js hello/example.json \
   debug/debug.js debug/bugs.js debug/example.json \
   proxy/proxy.js proxy/example.json \
-  worker/slave.js worker/worker.js worker/bar.js worker/example.json \
+  worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/doc.md \
   worker2/slave.js worker2/worker2.js worker2/example.json \
   worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
   worker4/slave.js worker4/worker4.js worker4/example.json \
@@ -75,6 +75,7 @@ POPULATION = Makefile \
   widget/widget.js \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
   authentication/authentication.js authentication/example.json \
+  authentication/doc.md\
   authentication2/authentication2.js authentication2/example.json \
   authentication2/passwd.hop authentication2/passwd.json \
   authentication2/remote.js \

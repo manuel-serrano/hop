@@ -1,0 +1,222 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.0.x/doc/hss/doc.hss                   */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Aug  1 10:20:48 2015                          */
+/*    Last change :  Sun Aug  2 11:15:02 2015 (serrano)                */
+/*    Copyright   :  2015 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    HSS for the Hop.js documentation                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    grey effect                                                      */
+/*---------------------------------------------------------------------*/
+.hopdoc-grey {
+  -webkit-filter: grayscale(1) sepia(0.2);
+  filter: grayscale(1);
+  transition: 0.5s all;
+}
+
+.hopdoc-grey:hover {
+  -webkit-filter: none;
+  filter: none;
+}  
+
+/*---------------------------------------------------------------------*/
+/*    body                                                             */
+/*---------------------------------------------------------------------*/
+body {
+  position: relative;
+  color: #222;
+}
+
+/*---------------------------------------------------------------------*/
+/*    title                                                            */
+/*---------------------------------------------------------------------*/
+.jumbotron {
+  margin-top: 4px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    footer                                                           */
+/*---------------------------------------------------------------------*/
+footer {
+  border-top: 1px solid #ccc;
+  padding-top: 4ex;
+  padding-bottom: 2ex;
+  margin-left: 2em;
+  margin-right: 2em;
+  text-align: center;
+  color: #555;
+}
+
+footer button.inria {
+  line-height: 16px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    h1                                                               */
+/*---------------------------------------------------------------------*/
+h1 {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #555;
+  text-shadow: #aaa 2px 2px 2px;
+}
+
+h2 {
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #777;
+  text-shadow: #aaa 2px 2px 2px;
+}
+
+h3 {
+  text-shadow: #aaa 2px 2px 2px;
+}
+
+.jumbotron h1 {
+  border: 0;
+  text-shadow: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sections                                                         */
+/*---------------------------------------------------------------------*/
+h3.glyphicon {
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+h3.glyphicon:before {
+  font-size: 70%;
+  margin-right: 0.4em;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*---------------------------------------------------------------------*/
+/*    navigation                                                       */
+/*---------------------------------------------------------------------*/
+.navbut .btn-primary a {
+  color: white;
+}
+
+nav.sidebar {
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 20em;
+  text-overflow: ellipsis;
+  font-size: 95%;
+}
+
+nav.sidebar a {
+  color: #777;
+}
+  
+.affix-top {
+  right: 14px;
+  position: absolute;
+}
+
+.affix {
+  right: 23px;
+  top: 20px;
+}
+
+.affix-bottom {
+  right: 23px;
+  top: 20px;
+}
+
+nav.sidebar li {
+  border-left: 4px solid;
+  border-left-color: transparent;
+}
+
+nav.sidebar .active {
+  font-weight: bold;
+  border-left-color: #900;
+}
+
+nav.sidebar .active * {
+  color: #222;
+}
+
+nav.sidebar li > a {
+  padding: 4px 8px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    toc                                                              */
+/*---------------------------------------------------------------------*/
+.toc li {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.toc li .toc-description {
+  margin-left: 1em;
+  font-size: 95%;
+}
+
+.toc-description {
+  color: #666;
+}
+/*---------------------------------------------------------------------*/
+/*    blockquote                                                       */
+/*---------------------------------------------------------------------*/
+p.warning {
+  margin-top: 3ex;
+  border-left: 4px solid #f0ad4e;
+  padding-left: 4px;
+  margin-top: 1ex;
+}
+
+p.info {
+}
+
+/*---------------------------------------------------------------------*/
+/*    label                                                            */
+/*---------------------------------------------------------------------*/
+span.lbl-lg {
+  padding: 8px;
+}
+
+p + pre + p {
+  margin-top: 1ex;
+}
+
+/*---------------------------------------------------------------------*/
+/*    download                                                         */
+/*---------------------------------------------------------------------*/
+button.download {
+  color: black;
+  border-radius: 3px;
+  border: 1px solid #aaa;
+  padding-left: 1em;
+  padding-right: 1em;
+  width: 14em;
+  text-align: left;
+}
+
+div.download + div.download {
+  margin-top: 2ex;
+}
+
+button.download * {
+  color: black;
+}
+
+button.download span.content {
+  font-size: 90%;
+  font-weight: bold;
+}
+
+button.download a {
+  border: none;
+}

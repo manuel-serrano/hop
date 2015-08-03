@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Dec 21 10:55:12 2014                          */
-/*    Last change :  Sun Dec 21 11:01:35 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sun Aug  2 10:36:54 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Worker misc                                                      */
 /*    -------------------------------------------------------------    */
@@ -19,6 +19,5 @@ function count_inc( v ) {
    count += v;
    return count;
 }
-
 
 exports.count = count_inc;

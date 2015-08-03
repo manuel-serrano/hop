@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jul 30 11:03:54 2015 (serrano)                */
+;*    Last change :  Fri Jul 31 18:37:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -54,7 +54,7 @@
 	 ((at ?fname ?loc)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "j2s-parser")
+		(proc "hopscript")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token)))
 		(fname fname)
@@ -62,7 +62,7 @@
 	 (else
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "j2s-parser")
+		(proc "hopscript")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
 
@@ -73,7 +73,7 @@
 	       ((at ?fname ?loc)
 		(raise
 		   (instantiate::&io-parse-error
-		      (proc "j2s-parser")
+		      (proc "hopscript")
 		      (msg msg)
 		      (obj (j2s->list node))
 		      (fname fname)
@@ -81,7 +81,7 @@
 	       (else
 		(raise
 		   (instantiate::&io-parse-error
-		      (proc "j2s-parser")
+		      (proc "hopscript")
 		      (msg msg)
 		      (obj (j2s->list node)))))))))
 
@@ -90,7 +90,7 @@
 	    (loc (input-port-position input-port)))
 	 (raise
 	    (instantiate::&io-parse-error
-	       (proc "j2s-parser")
+	       (proc "hopscript")
 	       (msg msg)
 	       (obj (read-line input-port))
 	       (fname fname)

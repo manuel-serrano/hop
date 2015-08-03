@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Jul 16 08:15:19 2015 (serrano)                */
+#*    Last change :  Sun Aug  2 10:50:31 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -69,7 +69,7 @@ EXTRA		= hop.hss \
 #*---------------------------------------------------------------------*/
 ICONS_HOP	= logo-bg.png dashboard.png \
 		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
-                  hop-api-48x48.png hop-api-16x16.png hop.png hop.svg
+                  hop-api-48x48.png hop-api-16x16.png hop.png hop.svg inria.svg
 
 ICONS_ERRORS    = error.png error2.png client-error.png stop.png timeout.png \
                   warning.png privacy.png notfound.png

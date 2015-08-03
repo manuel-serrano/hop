@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Sat Dec 20 05:56:22 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sun Aug  2 10:24:23 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to ask user authentication                              */
 /*    -------------------------------------------------------------    */
@@ -30,18 +30,21 @@ service authenticationAccept() {
 }
 
 service authentication() {
-   var console = <DIV> {};
+   var console = <DIV/>;
 
-   return <HTML> {
-      <DIV> { "Click 3 times the \"click me\" button. Permission granted on the third request." },
-      <BUTTON> {
-	 onclick: ~{ ${authenticationAccept}()
-		     .post( function( v ) { ${console}.innerHTML = v },
-			    { fail: function( v ) { ; } } ) },
-	 "click me"
-      },
-      console
-   }
+   return <HTML>
+      <DIV>
+        Click 3 times the "click me" button.
+        Permission granted on the third request.
+      </DIV>
+      <BUTTON onclick=~{
+        ${authenticationAccept}()
+          .post( function( v ) { ${console}.innerHTML = v },
+   		 { fail: function( v ) { ; } } ) }>
+        click me
+      </BUTTON>
+      ${console}
+   </HTML>
 }
 
 console.log( "Go to \"http://%s:%d/hop/authentication\"", hop.hostname, hop.port );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Wed Jul 29 15:03:15 2015 (serrano)                */
+;*    Last change :  Sat Aug  1 06:39:05 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -38,17 +38,53 @@
       conf))
 
 ;*---------------------------------------------------------------------*/
+;*    special-tags ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (special-tags lst)
+   ;; transforms
+   ;;   '((meta) ... (p . (a ...)))
+   ;; info
+   ;;   '((<meta>) (<META>) ... (<p> . (<a> <A> ...)) (<p> . (<a> <A> ...)))
+   
+   (define (symbol-upcase val)
+      (string->symbol (string-upcase (symbol->string val))))
+
+   (define (loop entries)
+      (append-map (lambda (e)
+		     (match-case e
+			((? symbol?)
+			 `(,(symbol-append '< e '>)
+			   ,(symbol-append '< (symbol-upcase e) '>)))
+			((?tag)
+			 `((,(symbol-append '< tag '>))
+			   (,(symbol-append '< (symbol-upcase tag) '>))))
+			((?tag . (and ?d (unquote ?exp)))
+			 `((,(symbol-append '< tag '>) . ,d)
+			   (,(symbol-append '< (symbol-upcase tag) '>) . ,d)))
+			((?tag . ?list)
+			 `((,(symbol-append '< tag '>)
+			    . ,(loop list))
+			   (,(symbol-append '< (symbol-upcase tag) '>)
+			    . ,(loop list))))))
+	 entries))
+
+   (match-case lst
+      ((quasiquote ?entries) (list 'quasiquote (loop entries)))
+      (else (error "special-tags" "bad form" lst))))
+
+;*---------------------------------------------------------------------*/
 ;*    *html-special-elements* ...                                      */
 ;*---------------------------------------------------------------------*/
 (define *html-special-elements*
-   `((meta)
-     (link)
-     (br) (hr) (img) (input) (li)
-     (p . (a abbr acronym address big button caption del em
-	     i img kbd label legend 
-	     q s samp small span strike strong sub sup u var))
-     (colgroup . (col))
-     (script . ,html-parse-script)))
+   (special-tags
+      `((meta)
+	(link)
+	(br) (hr) (img) (input)
+	(p . (a abbr acronym address big button caption del em
+		i img kbd label legend 
+		q s samp small span strike strong sub sup u var))
+	(colgroup . (col))
+	(script . ,html-parse-script))))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parse-script ...                                            */
@@ -280,8 +316,9 @@
 				   (reverse! acc)) nitem)))))
 	       ((eof-object? item)
 		(xml-parse-error
-		   (format "Premature end of HTML, expecting tag `~a'"
-		      (cdr tag))
+		   (format "Premature end of HTML, expecting tag `</~a>'"
+		      (let ((s (symbol->string (cdr tag))))
+			 (substring s 1 (-fx (string-length s) 1))))
 		   item name po))
 	       (else
 		(let ((po (input-port-last-token-position port)))
