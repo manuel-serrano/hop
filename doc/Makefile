@@ -34,7 +34,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   Makefile doc.js xml.js \
   doc.json \
   api/api.json api/00-hop.md \
-  core/core.json core/html.bnf core/service.bnf core/tilde.bnf \
+  core/core.json core/html.bnf core/service.bnf core/tilde.bnf core/syntax.bnf \
   core/00-syntax.md core/01-service.md core/02-worker.md \
   license.html hop.md \
   nodejs.md \
