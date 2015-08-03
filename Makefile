@@ -44,7 +44,7 @@ build:
          $(MAKE) build-in-env)
 
 build-in-env: bindir libdir lib weblets widget nodejs \
-  $(BUILDSPECIFIC) bin share node_modules
+  $(BUILDSPECIFIC) bin share node_modules doc
 
 bindir:
 	mkdir -p bin
