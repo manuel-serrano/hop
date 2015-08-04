@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Aug  4 18:32:40 2015 (serrano)                */
+#*    Last change :  Tue Aug  4 19:12:22 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -30,8 +30,6 @@ BOOTSTRAP_POP=css/bootstrap-theme.css css/bootstrap-theme.min.css \
 
 JQUERY_POP=js/jquery.min.js
 
-ICONS_POP=package.png
-
 POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js \
@@ -39,7 +37,8 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   api/api.json api/00-hop.md \
   lang/lang.json lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md lang/01-service.md lang/02-worker.md \
-  license.html hop.md \
+  config/config.json config/00-command.md \
+  license.md hop.md \
   nodejs.md download.md \
   hss/doc.hss \
 

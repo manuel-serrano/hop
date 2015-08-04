@@ -87,5 +87,4 @@ hopscheme/hop-runtime.sch
 ^doc/lib/bootstrap/css/bootstrap-theme.css.map$
 ^doc/lib/bootstrap/css/bootstrap.css.map$
 ^doc/license.md$
-^doc/nodejs.html$
-^doc/tree.html$
+^doc/[^/]+.html$
