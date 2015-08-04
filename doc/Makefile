@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Aug  3 14:28:49 2015 (serrano)                */
+#*    Last change :  Tue Aug  4 18:32:40 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -30,37 +30,45 @@ BOOTSTRAP_POP=css/bootstrap-theme.css css/bootstrap-theme.min.css \
 
 JQUERY_POP=js/jquery.min.js
 
+ICONS_POP=package.png
+
 POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
+  $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js \
   doc.json \
   api/api.json api/00-hop.md \
-  core/core.json core/html.bnf core/service.bnf core/tilde.bnf core/syntax.bnf \
-  core/00-syntax.md core/01-service.md core/02-worker.md \
+  lang/lang.json lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
+  lang/00-syntax.md lang/01-service.md lang/02-worker.md \
   license.html hop.md \
-  nodejs.md \
-  hss/doc.hss
+  nodejs.md download.md \
+  hss/doc.hss \
 
 API_TARGETS=api.html 00-hop.html tree.html
 
-CORE_TARGETS=core.html 00-syntax.html 01-service.html 02-worker.html
+LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html
+
+CONFIG_TARGETS=config.html 00-command.html
+
+ALL_TARGETS=index.html download.html nodejs.html \
+  $(API_TARGETS) $(LANG_TARGETS) $(CONFIG_TARGETS)
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
 #*---------------------------------------------------------------------*/
-VPATH=api core ../node_modules/tree/doc
+VPATH=api lang config ../node_modules/tree/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: index.html license.html nodejs.html $(API_TARGETS) $(CORE_TARGETS)
+build: $(ALL_TARGETS)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	$(RM) $(API_TARGETS) $(CORE_TARGETS)
+	$(RM) $(API_TARGETS) $(LANG_TARGETS)
 	$(RM) license.html index.html nodejs.html
 
 devclean: clean
@@ -71,6 +79,18 @@ distclean: clean
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	mkdir -p $(DESTDIR)$(HOPDOCDIR)
+	mkdir -p $(DESTDIR)$(HOPDOCDIR)/lib
+	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)/$(HOPDOCDIR)
+	cp -r lib/bootstrap $(DESTDIR)/$(HOPDOCDIR)/lib
+	cp -r lib/jquery $(DESTDIR)/$(HOPDOCDIR)/lib
+	cp -r hss $(DESTDIR)/$(HOPDOCDIR)/hss
+	chmod $(MODFILE) -R $(DESTDIR)$(HOPDOCDIR)
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/jquery
 
 uninstall:
 
@@ -96,6 +116,11 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
-index.html: content.html doc.js xml.js hop.md
+index.html: hop.md doc.js xml.js
 	$(HOP) $(EFLAGS) --no-server -- $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    dependencies                                                     */
+#*---------------------------------------------------------------------*/
+download.html: license.md

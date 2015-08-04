@@ -91,7 +91,7 @@ ${ doc.include( doc.ROOT + "/examples/file/file.js", 13 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
-HTTPResponseFile is a much faster way to send a file to a client, althought,
+ HTTPResponseFile is a much faster way to send a file to a client, althought,
 the same behaviour can also be implemented combining standard `fs` operations
 and `HTTPResponseString` values.
 [:@warning]
@@ -103,7 +103,7 @@ This class is used to respond HTTP `401 Unauthorized` response to Web
 client.
 
 ${ <span class="label label-warning">Note:</span> }
-the class `hop.HTTPResponseAuthentication` is a convenience class.
+ the class `hop.HTTPResponseAuthentication` is a convenience class.
 The same behavior can be implemented using `hop.HTTPResponseString`
 and passing a `startLine` value in the optional argument.
 [:@warning]
@@ -151,7 +151,7 @@ console.log( hop.XMLCompile( node, false, "html5" ) );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
-explicit compilation to HTML using `hop.XMLCompile` is unncessary
+ explicit compilation to HTML using `hop.XMLCompile` is unncessary
 for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]

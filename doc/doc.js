@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Aug  3 14:27:49 2015 (serrano)                */
+/*    Last change :  Tue Aug  4 18:21:54 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -29,7 +29,8 @@ const jscript = [ P( "lib//jquery/js/jquery.min.js" ),
 /*    P ...                                                            */
 /*---------------------------------------------------------------------*/
 function P( file ) {
-   return path.normalize( path.join( ROOT, file ) );
+//   return path.normalize( path.join( ROOT, file ) );
+   return path.normalize( "./" + file );
 }
    
 /*---------------------------------------------------------------------*/
@@ -193,7 +194,7 @@ function compileIndex( content ) {
            ${chapters}
          </docxml.navchapters>
 
-         ${require( content )}
+         ${doc.parseFile( path.join( path.dirname( module.filename ), "hop.md" ) ).XML}
        </div>
        <docxml.footer root=${ROOT}/>
      </body>
@@ -206,7 +207,11 @@ function compileIndex( content ) {
 /*    top level forms                                                  */
 /*---------------------------------------------------------------------*/
 if( process.argv[ 2 ].match( /[.]md$/ ) ) {
-   compileSection( process.argv[ 2 ] );
+   if( process.argv[ 2 ] === "hop.md" ) {
+      compileIndex( "./" + process.argv[ 2 ] );
+   } else {
+      compileSection( process.argv[ 2 ] );
+   }
 } else if( process.argv[ 2 ].match( /[.]json$/ ) ) {
    compileChapter( "./" + process.argv[ 2 ] );
 } else if( process.argv[ 2 ].match( /[.]html$/ ) ) {
@@ -215,6 +220,3 @@ if( process.argv[ 2 ].match( /[.]md$/ ) ) {
    compileChapter( { title: path.basename( process.argv[ 2 ] ),
 		     files: [ process.argv[ 2 ] ] } )
 }
-      
-
-

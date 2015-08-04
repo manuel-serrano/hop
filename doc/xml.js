@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sun Aug  2 17:53:10 2015 (serrano)                */
+/*    Last change :  Tue Aug  4 16:21:51 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -134,7 +134,24 @@ function docfooter( attrs ) {
      </div>
    </footer>
 }
-   
+
+/*---------------------------------------------------------------------*/
+/*    downloadButton ...                                               */
+/*---------------------------------------------------------------------*/
+function downloadButton( attrs ) {
+   console.error( "href=" + path.basename( attrs.href ) );
+   return <button class=${"download btn btn-" + attrs.class}>
+      <a href=${attrs.href}>
+       <table>
+         <tr>
+           <td rowspan=2><span class=${"glyphicon " + attrs.icon}/></td>
+           <td class="content">${path.basename(attrs.href)}</td>
+         </tr>
+       </table>
+     </a>
+   </button>;
+}
+
 /*---------------------------------------------------------------------*/
 /*    exports                                                          */
 /*---------------------------------------------------------------------*/
@@ -143,3 +160,4 @@ exports.navbut = navbut;
 exports.navchapters = navchapters;
 exports.footer = docfooter;
 exports.copyrightYears = copyrightYears;
+exports.downloadButton = downloadButton;

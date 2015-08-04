@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Sun Aug  2 11:15:02 2015 (serrano)                */
+/*    Last change :  Tue Aug  4 16:24:34 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -70,7 +70,7 @@ h2 {
   text-shadow: #aaa 2px 2px 2px;
 }
 
-h3 {
+h3, h4 {
   text-shadow: #aaa 2px 2px 2px;
 }
 
@@ -194,14 +194,33 @@ p + pre + p {
 /*---------------------------------------------------------------------*/
 /*    download                                                         */
 /*---------------------------------------------------------------------*/
+h3 + pre {
+  font-size: 80%;
+  background-color: inherit;
+  font-family: monospace;
+  border: none;
+}
+
 button.download {
-  color: black;
   border-radius: 3px;
   border: 1px solid #aaa;
-  padding-left: 1em;
-  padding-right: 1em;
-  width: 14em;
+  padding: 1ex 1em;
+  width: 16em;
+  text-align: center;
+}
+
+button.download table {
+  width: 100%;
+}
+
+button.download table td {
+  text-align: right;
+}
+
+button.download table td.content {
+  font-weight: bold;
   text-align: left;
+  padding-left: 1em;
 }
 
 div.download + div.download {
@@ -209,14 +228,9 @@ div.download + div.download {
 }
 
 button.download * {
-  color: black;
+  color: white;
 }
 
-button.download span.content {
-  font-size: 90%;
-  font-weight: bold;
-}
-
-button.download a {
-  border: none;
+button.download a span {
+  font-size: 140%;
 }

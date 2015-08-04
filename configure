@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jul 16 08:07:59 2015 (serrano)                */
+#*    Last change :  Tue Aug  4 18:12:48 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -83,6 +83,7 @@ mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
+docdir=$prefix/share/doc/hop
 buildlibdir=$PWD/lib/hop/$version
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
@@ -147,7 +148,8 @@ while : ; do
       sharedir=$prefix/share/hop;
       mandir=$prefix/man/$mansec;
       etcdir=$prefix/etc;
-      contribsdir=$prefix/share/hop/contribs;;
+      contribsdir=$prefix/share/hop/contribs
+      docdir=$prefix/share/doc/hop;;
 
     --etcdir=*)
       etcdir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -169,6 +171,9 @@ while : ; do
 
     --contribsdir=*)
       contribsdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --docdir=*)
+      docdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --distribdir=*)
       distribdir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -345,6 +350,7 @@ while : ; do
       echo "   --mandir=dir.......... alternative Hop man directory" >&2;
       echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
+      echo "   --docdir=dir..... alternative Hop doc directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type.... default 'text/css'" >&2;
@@ -457,6 +463,7 @@ case $backend in
      libdir=/resource/lib
      webletsdir=/resource/lib/weblets
      contribsdir=/resource/share/contribs
+     docdir=/resource/share/doc/hop
      sharedir=/resource/share
      hopc="java -jar $PWD/bin/hopc.jar"
      hop="java -jar $PWD/bin/hop.jar"
@@ -862,6 +869,7 @@ cat $mkmf.in \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
           -e "s|@REPODIR@|$repodir|" \
           -e "s|@HOPSVN@|$svn|" \
@@ -895,6 +903,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
             -e "s|@MIMETYPES@|$mimetypes|" \
             -e "s|@JSMIMETYPE@|$jsmimetype|" \
             -e "s|@CSSMIMETYPE@|$cssmimetype|" \
@@ -926,6 +935,7 @@ for p in nodejs.sch; do
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
             -e "s|@MIMETYPES@|$mimetypes|" \
             -e "s|@JSMIMETYPE@|$jsmimetype|" \
             -e "s|@CSSMIMETYPE@|$cssmimetype|" \
@@ -955,6 +965,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe; do
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
             -e "s|@MIMETYPES@|$mimetypes|" \
             -e "s|@JSMIMETYPE@|$jsmimetype|" \
             -e "s|@CSSMIMETYPE@|$cssmimetype|" \
@@ -987,6 +998,7 @@ done
 #*             -e "s|@ETCDIR@|$etcdir|" \                              */
 #*             -e "s|@WEBLETSDIR@|$webletsdir|" \                      */
 #*             -e "s|@CONTRIBSDIR@|$contribsdir|" \                    */
+#*             -e "s|@DOCDIR@|$docdir|" \                    */
 #*             -e "s|@MIMETYPES@|$mimetypes|" \                        */
 #*             -e "s|@JSMIMETYPE@|$jsmimetype|" \                      */
 #*             -e "s|@CSSMIMETYPE@|$cssmimetype|" \                    */
@@ -1013,6 +1025,7 @@ cat etc/hoprc.hop.in \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $hoprc
 
@@ -1029,6 +1042,7 @@ cat etc/hopshrc.hop.in \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $hopshrc
 
@@ -1191,6 +1205,7 @@ cat etc/hop-autoconf.js.in \
           -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@LOCEVENT@|$locevent|" \
           -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
@@ -1291,6 +1306,7 @@ echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
+echo "  doc directory......................... $docdir"
 echo 
 echo "Internals:"
 echo "  bigloo compilation flags.............. $bcflags"
