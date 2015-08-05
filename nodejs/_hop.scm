@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Jul 18 15:17:33 2015 (serrano)                */
+;*    Last change :  Wed Aug  5 07:42:06 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -195,14 +195,6 @@
 			       (js-undefined)))))))
 	    
 	    ;; lib
-	    (define-js parseWebColor 1
-	       (lambda (this color)
-		  (hopjs-parse-web-color (js-tostring color %this) %this)))
-	    
-	    (define-js makeWebColor 3 
-	       (lambda (this r g b)
-		  (js-string->jsstring (make-hex-color r g b))))
-
 	    (define-js encodeURIComponent 1
 	       (lambda (this path)
 		  (js-string->jsstring
@@ -498,19 +490,6 @@
 	     (async (async-proc req))))
        (instantiate::http-response-async
 	  (async (async-proc req)))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-parse-web-color ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hopjs-parse-web-color color %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (multiple-value-bind (r g b)
-	 (parse-web-color color)
-	 (let ((obj (js-new %this js-object)))
-	    (js-put! obj 'red r #f %this)
-	    (js-put! obj 'green g #f %this)
-	    (js-put! obj 'blue b #f %this)
-	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-charset-convert ...                                        */

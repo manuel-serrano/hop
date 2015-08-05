@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Aug  2 14:34:45 2015 (serrano)                */
+#*    Last change :  Wed Aug  5 07:56:54 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -43,7 +43,7 @@ POPULATION = Makefile \
   html/html.js html/html.hss html/example.json \
   htmlc/htmlc.js htmlc/example.json \
   htmlr/htmlr.js htmlr/example.json htmlr/htmlr.html htmlr/htmlr.hss \
-  hss/hss.hss hss/hss.js hss/example.json \
+  hss/hss.hss hss/hss.js hss/example.json hss/doc.md \
   tree/tree.js tree/example.json tree/doc.md \
   spage/spage.js spage/example.json \
   tower/tower.js tower/example.json \

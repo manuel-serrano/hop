@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sat Jul 18 15:17:39 2015 (serrano)                */
+/*    Last change :  Wed Aug  5 07:40:45 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -86,8 +86,6 @@ exports.XMLCompile = hop.XMLCompile;
 /*---------------------------------------------------------------------*/
 /*    Lib                                                              */
 /*---------------------------------------------------------------------*/
-exports.parseWebColor = hop.parseWebColor;
-exports.makeWebColor = hop.makeWebColor;
 exports.encodeURIComponent = hop.encodeURIComponent;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
@@ -109,6 +107,7 @@ exports.wiki = "wiki";
 exports.security = "security";
 exports.config = "config";
 exports.user = "user";
+exports.hss = "hss";
 
 Object.seal( exports );
 Object.freeze( exports );

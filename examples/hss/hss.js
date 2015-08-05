@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Dec 17 17:24:22 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Wed Aug  5 07:58:26 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic HSS example                                                */
 /*    -------------------------------------------------------------    */
@@ -14,15 +14,13 @@
 var hop = require( 'hop' );
 
 service hss() {
-   return <HTML> {
-      <HEAD> {
-	 css: hss.resource( "hss.hss" )
-      },
-      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+   return <html>
+     <head css=${hss.resource( "hss.hss" )}/>
+     ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(
 	 function( i ) {
-	    return <DIV> { class: "div" + i, i }
+	    return <div class=${"div" + i}>${i}</div>;
 	 } )
-   }
+   </html>;
 }
 
 console.log( "Go to \"http://%s:%d/hop/hss\"", hop.hostname, hop.port );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Aug  4 18:21:54 2015 (serrano)                */
+/*    Last change :  Wed Aug  5 07:35:52 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -86,49 +86,49 @@ function compileSection( page ) {
    var ast = doc.parseFile( path.join( path.dirname( module.filename ), page ) )
    var toc = doc.toc( ast, "h3" );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
-   var key = path.dirname( title ).toLowerCase();
+   var key = path.basename( title ).toLowerCase();
 
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
            jscript=${jscript}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body data-spy="scroll" data-target="#navbar" class=${title}>
        ~{ $('body').scrollspy( { target: '#navbar' }) }
+       <docxml.navbar title=${title} key=${key}>
+         ${chapters}
+       </docxml.navbar>
+  
+       <docxml.title root=${ROOT}>${title}</docxml.title>
        <div class="container">
-          <docxml.title root=${ROOT}>${title}</docxml.title>
-          <div class="row">
-             <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
+         <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
    
-               <docxml.navchapters title=${title} key=${key}>
-                 ${chapters}
-                </docxml.navchapters>
-   
-                <h1>Table of Contents</h1>
-                  <ul class="toc">
-                    ${toc.map( function( el ) {return <li>${el}</li>} )}
-                  </ul>
-                ${ast.XML}
-             </div>
+           <h1 class="toc">Table of Contents</h1>
+           <ul class="toc">
+             ${toc.map( function( el ) {return <li>${el}</li>} )}
+           </ul>
+           ${ast.XML}
+         </div>
 
-             ${(toc.length > 0) ?
-                <div id="navbar" class="col-md-3" role="complementary">
-                   <nav class="sidebar"
-                        data-spy="affix"
-	                data-offset-top="270" data-offset-bottom="20">
-                     <ul class="nav bs-docs-sidenav">
-                       ${toc.map( function( el ) {
-                          return <li role="presentation">
-                            <a href=${el.href}>
-                              ${el.childNodes[ 0 ].replace( /[(].*$/, "")}
-                            </a>
-                          </li>;
-                       } )}
-                     </ul>
-                   </nav> 
-                </div>
-                : undefined}
-          </div>
+         <div class="row">
+            ${(toc.length > 0) ?
+               <div id="navbar" class="col-md-3" role="complementary">
+                  <nav class="sidebar"
+                       data-spy="affix"
+	               data-offset-top="270" data-offset-bottom="20">
+                    <ul class="nav bs-docs-sidenav">
+                      ${toc.map( function( el ) {
+                         return <li role="presentation">
+                           <a href=${el.href}>
+                             ${el.childNodes[ 0 ].replace( /[(].*$/, "")}
+                           </a>
+                         </li>;
+                      } )}
+                    </ul>
+                  </nav> 
+               </div>
+               : undefined}
+         </div>
        </div>
        <docxml.footer root=${ROOT}/>
      </body>
@@ -144,21 +144,19 @@ function compileChapter( json ) {
    var chapter = require( json );
    var toc = chapterEntries( chapter );
 
-   chapters.forEach( function( c ) { c.entries = chapterEntries( chapter ) } );
-   
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
            jscript=${jscript}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">
-       <div class="container">
-         <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
-         <docxml.navchapters title=${chapter.title}
-                             key=${chapter.title.toLowerCase()}>
-           ${chapters}
-         </docxml.navchapters>
+       <docxml.navbar title=${chapter.title}
+                        key=${chapter.title.toLowerCase()}>
+         ${chapters}
+       </docxml.navbar>
+       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
    
+       <div class="container">
           <h1>Table of Contents</h1>
           <ul class="toc">
            ${toc.map( function( el ) {
@@ -188,12 +186,12 @@ function compileIndex( content ) {
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">
-       <div class="container">
-         <docxml.title root=${ROOT}>Hop.js</docxml.title>
-         <docxml.navchapters title="Hop.js" key="">
-           ${chapters}
-         </docxml.navchapters>
+       <docxml.navbar title="Hop.js" key="Home">
+         ${chapters}
+       </docxml.navbar>
+       <docxml.title root=${ROOT}>Hop.js</docxml.title>
 
+       <div class="container">
          ${doc.parseFile( path.join( path.dirname( module.filename ), "hop.md" ) ).XML}
        </div>
        <docxml.footer root=${ROOT}/>

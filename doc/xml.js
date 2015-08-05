@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Tue Aug  4 16:21:51 2015 (serrano)                */
+/*    Last change :  Wed Aug  5 07:27:24 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -21,6 +21,7 @@ const path = require( "path" );
 /*---------------------------------------------------------------------*/
 function title( attrs, subtitle ) {
    return <div class="jumbotron">
+   <div class="container">
    <div class="row">
      <div class="col-md-2">
        <svg:img
@@ -35,6 +36,7 @@ function title( attrs, subtitle ) {
          <span class="label label-default lbl-lg">version ${hop.version}</span>
        </p>
      </div>
+   </div>
    </div>
    </div>;
 }
@@ -76,31 +78,43 @@ function navbut( attrs, _ ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    navchapters ...                                                  */
+/*    navbar ...                                                       */
 /*---------------------------------------------------------------------*/
-function navchapters( attrs, chapters ) {
+function navbar( attrs, chapters ) {
    if( !(chapters instanceof Array) ) { chapters = arguments[ 2 ]; }
 
-    return <ul class="nav nav-pills">
-       ${chapters.map( function( p ) {
-          var clazz = p.name.toLowerCase()==attrs.key
-	      ? "btn-primary" : "";
-	  
-          return <li role="presentation" class="active">
-	      <navbut class=${clazz}>
-  	        <a href=${p.href}>
-	          <span class=${"glyphicon " + p.icon}></span> ${p.name}
-	        </a>
-                <ul class="dropdown-menu">
-                  <li><a href=${p.href}>${p.name}</a></li>
-                  <li role="separator" class="divider"></li>
-	          ${p.entries.map( function( e ) {
-                       return <li><a href=${e.href}>${e.title}</a></li>
-		      } )}
-                </ul>
-	      </navbut>
-	    </li>} )}
-      </ul>
+   return <nav class="navbar navbar-inverse navbar-fixed-top">
+     <div class="container">
+       <ul class="nav navbar-nav">
+         ${chapters.map( function( p ) {
+	    if( p.entries.length == 0 ) {
+               var clazz = p.name.toLowerCase()==attrs.key
+		   ? "active" : "";
+               return <li class=${clazz}>
+	         <a href=${p.href}>
+	           <span class=${"glyphicon " + p.icon}></span> ${p.name}
+	         </a>
+	       </li>;
+	    } else {
+               var clazz = p.name.toLowerCase()==attrs.key
+		   ? "dropdown active" : "dropdown";
+               return <li class=${clazz}>
+	         <a href=${p.href}
+	            class="dropdown-toggle" data-toggle="dropdown" role="button"
+	            aria-haspopup="true" aria-expanded="false">
+	          <span class=${"glyphicon " + p.icon}></span> ${p.name} <span class="caret"></span>
+	         </a>
+                 <ul class="dropdown-menu">
+                   <li><a href=${p.href}>${p.name}</a></li>
+                   <li role="separator" class="divider"></li>
+	           ${p.entries.map( function( e ) {
+                        return <li><a href=${e.href}>${e.title}</a></li>
+		       } )}
+                 </ul>
+	       </li>} } )}
+       </ul>
+     </div>
+   </nav>
 }
 
 /*---------------------------------------------------------------------*/
@@ -123,6 +137,7 @@ function copyrightYears( iyear ) {
 /*---------------------------------------------------------------------*/
 function docfooter( attrs ) {
    return <footer>
+   <div class="container">
      <div class="copyright">Copyright Inria ${copyrightYears( 2006 )}  
        <button class="inria">
          <a href="http://www.inria.fr">
@@ -132,6 +147,7 @@ function docfooter( attrs ) {
          </a>
        </button>
      </div>
+     </div>
    </footer>
 }
 
@@ -139,7 +155,6 @@ function docfooter( attrs ) {
 /*    downloadButton ...                                               */
 /*---------------------------------------------------------------------*/
 function downloadButton( attrs ) {
-   console.error( "href=" + path.basename( attrs.href ) );
    return <button class=${"download btn btn-" + attrs.class}>
       <a href=${attrs.href}>
        <table>
@@ -157,7 +172,7 @@ function downloadButton( attrs ) {
 /*---------------------------------------------------------------------*/
 exports.title = title;
 exports.navbut = navbut;
-exports.navchapters = navchapters;
+exports.navbar = navbar;
 exports.footer = docfooter;
 exports.copyrightYears = copyrightYears;
 exports.downloadButton = downloadButton;

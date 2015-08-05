@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Jul 31 16:21:06 2015 (serrano)                */
+#*    Last change :  Tue Aug  4 20:39:47 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -98,7 +98,7 @@ scheme2js:
 node_modules:
 	$(MAKE) -C node_modules build
 
-doc:
+doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
 	$(MAKE) -C doc build
 
 build-android: lib

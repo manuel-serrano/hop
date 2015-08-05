@@ -1,4 +1,6 @@
 {
    "title": "API",
-   "files": [ "api", "../node_modules/tree/doc/tree.md" ]
+   "files": [ "api",
+	      "../node_modules/hss/doc/hss.md",
+	      "../node_modules/tree/doc/tree.md" ]
 }

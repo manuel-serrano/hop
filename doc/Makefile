@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Aug  4 19:12:22 2015 (serrano)                */
+#*    Last change :  Wed Aug  5 07:55:19 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -42,7 +42,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   nodejs.md download.md \
   hss/doc.hss \
 
-API_TARGETS=api.html 00-hop.html tree.html
+API_TARGETS=api.html 00-hop.html tree.html hss.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html
 
@@ -54,7 +54,9 @@ ALL_TARGETS=index.html download.html nodejs.html \
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
 #*---------------------------------------------------------------------*/
-VPATH=api lang config ../node_modules/tree/doc
+VPATH=api lang config \
+  ../node_modules/tree/doc \
+  ../node_modules/hss/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */

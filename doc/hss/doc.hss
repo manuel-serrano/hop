@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Tue Aug  4 16:24:34 2015 (serrano)                */
+/*    Last change :  Wed Aug  5 08:11:07 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -45,6 +45,7 @@ footer {
   border-top: 1px solid #ccc;
   padding-top: 4ex;
   padding-bottom: 2ex;
+  margin-top: 4ex;
   margin-left: 2em;
   margin-right: 2em;
   text-align: center;
@@ -112,6 +113,7 @@ nav.sidebar {
   width: 20em;
   text-overflow: ellipsis;
   font-size: 95%;
+  opacity: 0.9;
 }
 
 nav.sidebar a {
@@ -119,17 +121,17 @@ nav.sidebar a {
 }
   
 .affix-top {
-  right: 14px;
+/*   right: 14px;                                                      */
   position: absolute;
 }
 
 .affix {
-  right: 23px;
+/*   right: 23px;                                                      */
   top: 20px;
 }
 
 .affix-bottom {
-  right: 23px;
+/*   right: 23px;                                                      */
   top: 20px;
 }
 
@@ -187,14 +189,14 @@ span.lbl-lg {
   padding: 8px;
 }
 
-p + pre + p {
+pre + p {
   margin-top: 1ex;
 }
 
 /*---------------------------------------------------------------------*/
 /*    download                                                         */
 /*---------------------------------------------------------------------*/
-h3 + pre {
+body.download pre {
   font-size: 80%;
   background-color: inherit;
   font-family: monospace;
@@ -233,4 +235,11 @@ button.download * {
 
 button.download a span {
   font-size: 140%;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Specific page configuration                                      */
+/*---------------------------------------------------------------------*/
+body.download .toc {
+  display: none;
 }

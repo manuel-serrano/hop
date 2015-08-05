@@ -6,9 +6,9 @@ ${ var cfg = require( doc.ROOT + "/doc/doc.json" ) }
 
 ${doc.include( "./license.md" )}
 
-### Source code ###
+## Source code ##
 
-#### Stable ####
+### Stable ###
 
 ${<div class="row">
   <div class="col-xs-9">
@@ -24,7 +24,7 @@ more recent already installed.
   </div>
 </div>}
 
-##### Requirements  #####
+#### Requirements  ####
 
  1. **bigloo-${cfg.bglversion}**
  2. libunistring
@@ -47,7 +47,7 @@ but you have an up-to-date development environment installed on your machine.
   </div>
 </div>}
 
-##### Requirements  #####
+#### Requirements  ####
 
  1. libunistring
  2. openssl
@@ -70,24 +70,24 @@ libraries already installed on your machine. This version only requires
   </div>
 </div>}
 
-##### Requirements  #####
+#### Requirements  ####
 
  1. autoconf
  2. automake
  3. libtool
 
-### Git ###
+## Git ##
 
 Hop.js can be forked at
 
     ${cfg.github}
 
 
-### Binary distributions ###
+## Binary distributions ##
 
 Precompiled Hop.js distributions are availabe.
 
-#### Debian/Raspberry ####
+### Debian/Raspberry ###
 
 A Debian/Raspberry repository is available. To use it, add the following
 to your `apt` path:
