@@ -170,9 +170,9 @@ function downloadButton( attrs ) {
 /*---------------------------------------------------------------------*/
 /*    exports                                                          */
 /*---------------------------------------------------------------------*/
-exports.title = title;
-exports.navbut = navbut;
-exports.navbar = navbar;
-exports.footer = docfooter;
+exports.TITLE = title;
+exports.NAVBUT = navbut;
+exports.NAVBAR = navbar;
+exports.FOOTER = docfooter;
+exports.DOWNLOADBUTTON = downloadButton;
 exports.copyrightYears = copyrightYears;
-exports.downloadButton = downloadButton;

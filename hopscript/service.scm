@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Jul 16 17:12:41 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 06:21:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -310,7 +310,6 @@
 
       (define (scheme->js val)
 	 val)
-;* 	 (js-obj->jsobject val %this))                                 */
 
       (if asynchronous
 	  (begin

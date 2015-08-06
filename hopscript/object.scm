@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jul 29 20:41:00 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 06:37:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -152,12 +152,7 @@
 (define-macro (js-bind-tags! %this obj . tags)
    `(begin
        ,@(map (lambda (tag)
-		 `(begin
-		     (js-bind-tag! ,%this ,obj ,tag)
-		     (js-bind-tag! ,%this ,obj ,tag
-			,(string->symbol
-			    (string-downcase
-			       (symbol->string tag))))))
+		 `(js-bind-tag! ,%this ,obj ,tag))
 	    tags)))
    
 ;*---------------------------------------------------------------------*/
@@ -392,13 +387,9 @@
 	    ;; html
 	    (js-bind! %this %this 'HTML
 	       :value (js-html-html %this) :enumerable #f)
-	    (js-bind! %this %this 'html
-	       :value (js-html-html %this) :enumerable #f)
 
 	    ;; only used with the global object, see nodejs/require.scm
 	    (js-bind! %this %this 'HEAD
-	       :value (js-html-head %this) :enumerable #f)
-	    (js-bind! %this %this 'head
 	       :value (js-html-head %this) :enumerable #f)
 
 	    ;; html_head

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 31 18:37:12 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 08:09:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -23,7 +23,7 @@
 	   __js2scheme_utils)
 
    (export (j2s-parser ::input-port ::pair-nil)
-	   (j2s-tag->expr ::pair)))
+	   (j2s-tag->expr ::pair ::bool)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
@@ -1267,7 +1267,7 @@
 				   (inits (reverse! attributes)))))
 		      (instantiate::J2SCall
 			 (loc (token-loc tag))
-			 (fun (j2s-tag->expr tag))
+			 (fun (j2s-tag->expr tag #f))
 			 (args (cons attrs (reverse! nodes)))))))
 	       (else
 		(if (>fx state 0)
@@ -1423,7 +1423,7 @@
 	  (let ((tag (consume-any!)))
 	     (instantiate::J2SCall
 		(loc (token-loc tag))
-		(fun (j2s-tag->expr tag))
+		(fun (j2s-tag->expr tag #t))
 		(args '()))))
 	 ((OHTML)
 	  (html-expression (consume-any!)))
@@ -1782,23 +1782,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tag->expr ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-tag->expr tag::pair)
-      (let* ((type (symbol->string! (cdr tag)))
-	     (i (string-index type #\.)))
-	 (if i
-	     ;; a variable access
-	     (instantiate::J2SAccess
-		(loc (token-loc tag))
-		(obj (instantiate::J2SUnresolvedRef
-			(loc (token-loc tag))
-			(id (string->symbol (substring type 1 i)))))
-		(field (instantiate::J2SString
-			  (loc (token-loc tag))
-			  (val (substring type (+fx i 1) (-fx (string-length type) 1))))))
-	     ;; a tag name
-	     (instantiate::J2SUnresolvedRef
-		(loc (token-loc tag))
-		(id (string->symbol (substring type 1 (-fx (string-length type) 1))))))))
+(define (j2s-tag->expr tag::pair force-case)
+   (let ((s (symbol->string! (cdr tag))))
+      (let loop ((type (substring s 1 (-fx (string-length s) 1)))
+		 (fc force-case))
+	 (let ((i (string-index-right type #\.)))
+	    (if i
+		;; a property access
+		(let ((s (substring type (+fx i 1) (string-length type))))
+		   (instantiate::J2SAccess
+		      (loc (token-loc tag))
+		      (obj (loop (substring type 0 i) #f))
+		      (field (instantiate::J2SString
+				(loc (token-loc tag))
+				(val (if fc (string-upcase s) s))))))
+		;; a tag name
+		(instantiate::J2SUnresolvedRef
+		   (loc (token-loc tag))
+		   (id (string->symbol (if fc (string-upcase type) type)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-mode-nodes ...                                        */

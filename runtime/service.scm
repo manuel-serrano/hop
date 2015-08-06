@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jul 26 07:24:39 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 07:16:54 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -40,6 +40,8 @@
 	    __hop_http-lib)
    
    (export  (init-hop-services!)
+	    (hop-object->plist::pair ::obj)
+	    (hop-plist->object::object ::pair)
 	    (generic service?::bool ::obj)
 	    (generic service-resource::bstring ::obj #!optional file)
 	    (generic service-path::bstring ::obj)
@@ -63,6 +65,24 @@
 	    (etc-path->service ::bstring)))
 
 ;*---------------------------------------------------------------------*/
+;*    builtin class serializers                                        */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! object
+   (lambda (obj mode)
+      (if (eq? mode 'hop-to-hop)
+	  obj
+	  (hop-object->plist obj)))
+   (lambda (obj)
+      (tprint "unserialize obj=" obj)
+      (if (pair? obj)
+	  (hop-plist->object obj)
+	  obj)))
+
+(register-class-serialization! hop-service
+   (lambda (obj) obj)
+   (lambda (obj) obj))
+
+;*---------------------------------------------------------------------*/
 ;*    procedure-serializer ...                                         */
 ;*---------------------------------------------------------------------*/
 (register-procedure-serialization! 
@@ -77,6 +97,61 @@
 	     (eval `(service :path ,path :id ,id :url ,path
 		       :timeout ,timeout :ttl ,ttl ,args)))
 	  o)))
+
+;*---------------------------------------------------------------------*/
+;*    for  ....                                                        */
+;*---------------------------------------------------------------------*/
+(define-macro (for var min max . body)
+   (let ((loop (gensym 'for)))
+      `(let ,loop ((,var ,min))
+	    (when (<fx ,var ,max)
+	       ,@body
+	       (,loop (+fx ,var 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-object->plist ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-object->plist obj)
+   (let* ((args '())
+	  (klass (object-class obj))
+	  (fields (class-all-fields klass))
+	  (len (vector-length fields)))
+      (for i 0 len
+	 (let* ((f (vector-ref-ur fields i))
+		(iv (class-field-info f))
+		(val (cond
+			((and (pair? iv) (memq :client iv)) => cadr)
+			(else ((class-field-accessor f) obj))))
+		(key (symbol->keyword (class-field-name f))))
+	    (set! args (cons* key val args))))
+      (cons* ':__class__ (string->symbol (typeof obj)) args)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-plist->object ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-plist->object plist)
+   (let ((c (memq ':__class__ plist)))
+      (if (pair? c)
+	  (let* ((obj (allocate-instance (cadr c)))
+		 (klass (object-class obj))
+		 (fields (class-all-fields klass))
+		 (len (vector-length fields)))
+	     (for i 0 (-fx len 1)
+		(let* ((f (vector-ref-ur fields i))
+		       (iv (class-field-info f)))
+		   (cond
+		      ((and (pair? iv) (memq :client iv))
+		       (let ((d (class-field-default-value f)))
+			  ((class-field-mutator f) obj d)))
+		      ((memq (symbol->keyword (class-field-name f)) plist)
+		       =>
+		       (lambda (v)
+			  ((class-field-mutator f) obj (cadr v))))
+		      (else
+		       (let ((d (class-field-default-value f)))
+			  ((class-field-mutator f) obj d))))))
+	     obj)
+	  (bigloo-type-error "hop-plist->object" "plist" plist))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ...                                                     */
@@ -248,7 +323,7 @@
    (let ((o (if (vector? vals) (vector->list vals) vals)))
       (string-append base
 	 "?hop-encoding=hop"
-	 "&vals=" (url-path-encode (obj->string o)))))
+	 "&vals=" (url-path-encode (obj->string o 'hop-to-hop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-service-url ...                                        */
