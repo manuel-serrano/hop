@@ -15,14 +15,24 @@ Examples
 
 ${ doc.include( doc.EXAMPLES_DIR + "/svc/doc.md" ) }
 
+${ <span class="label label-info">svc/svc.js</span> }
+
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 13 ) }
 ```
 
 ### svcs/svc2.js ###
 
-${ doc.include( doc.EXAMPLES_DIR + "/svc/doc.md" ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/doc.md" ) }
+
+${ <span class="label label-info">svc2/svc2.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/svc2.js", 13 ) }
+```
+
+${ <span class="label label-info">svc2/extern.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 13 ) }
 ```

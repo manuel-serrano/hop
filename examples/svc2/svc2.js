@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Jan 15 21:05:17 2015 (serrano)                */
+/*    Last change :  Thu Aug  6 12:38:24 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
@@ -15,22 +15,20 @@ var hop = require( 'hop' );
 require( "./extern.js" );
 
 service svc2() {
-   return <HTML> {
-      <BUTTON> {
-	 onclick: ~{
-	    ${dummy}( { b: 22 } )
-	       .post( function( r ) {
-		  document.body.appendChild(
-		     <TABLE> {
-			r.map( function( e ) {
-			   return <TR> { <TH> { e.head }, <TD> { e.data } }
-			} )
-		     } );
-	       } )
-	 },
-	 "add"
-      }
-   }
+   return <html>
+      <button onclick=~{
+	 ${dummy}( { b: 22 } )
+	    .post( function( r ) {
+	       document.body.appendChild(
+		  <table>
+		    ${r.map( function( e ) {
+		       return <tr><th>${ e.head }</th><td>${ e.data }</td></tr>
+		    } )}
+		  </table>
+	       ) } ) }>
+	 add
+       </button>
+   </html>;
 }
 
 import service dummy();

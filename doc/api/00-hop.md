@@ -84,7 +84,7 @@ the full path of a existing file.
 
 ${ doc.include( doc.ROOT + "/examples/async/doc.md" ) }
 
-${ <span class="label label-info">file.js</span> }
+${ <span class="label label-info">file/file.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/file/file.js", 13 ) }
@@ -112,7 +112,7 @@ and passing a `startLine` value in the optional argument.
 
 ${ doc.include( doc.ROOT + "/examples/authentication/doc.md" ) }
 
-${ <span class="label label-info">authentication.js</span> }
+${ <span class="label label-info">authentication/authentication.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
@@ -125,7 +125,7 @@ ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
 
 ${ doc.include( doc.ROOT + "/examples/async/doc.md" ) }
 
-${ <span class="label label-info">async.js</span> }
+${ <span class="label label-info">async/async.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/async/async.js", 13 ) }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Jul 30 15:41:36 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 16:23:12 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -80,6 +80,15 @@
 		   %this))
 	     1
 	     'getElementsByTagName))
+	 ((getElementsByClassName)
+	  (js-make-function %this
+	     (lambda (this tag)
+		(js-vector->jsarray
+		   (list->vector
+		      (dom-get-elements-by-class o (js-tostring tag %this)))
+		   %this))
+	     1
+	     'getElementsByClassName))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((c (memq (symbol->keyword pname) attributes)))

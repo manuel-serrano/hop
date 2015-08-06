@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Aug  5 07:35:52 2015 (serrano)                */
+/*    Last change :  Thu Aug  6 18:42:08 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -80,11 +80,41 @@ function chapterEntries( chapter ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    makeToc ...                                                      */
+/*---------------------------------------------------------------------*/
+function makeToc( els, k, proc ) {
+   if( els.length == k  ) {
+      return [];
+   } else {
+      var acc = [];
+      var tag = els[ k ].tagName;
+      
+      for( var i = k; i < els.length; ) {
+	 if( els[ i ].tagName == tag ) {
+	    var el = els[ i++ ];
+	    var n = proc ? proc( el ) : el.childNodes;
+	    acc.push( <li>
+	      <a href=${"#" + el.id} role="presentation">
+		${n}</a></li> );
+	 } else if( els[ i ].tagName > tag ) {
+	    var children = makeToc( els, i, proc );
+	    acc.push( <ul>${children}</ul> );
+	    i += children.length;
+	 } else {
+	    return acc;
+	 }
+      }
+
+      return acc;
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
    var ast = doc.parseFile( path.join( path.dirname( module.filename ), page ) )
-   var toc = doc.toc( ast, "h3" );
+   var toc = doc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( title ).toLowerCase();
 
@@ -102,32 +132,26 @@ function compileSection( page ) {
        <docxml.title root=${ROOT}>${title}</docxml.title>
        <div class="container">
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
-   
            <h1 class="toc">Table of Contents</h1>
            <ul class="toc">
-             ${toc.map( function( el ) {return <li>${el}</li>} )}
+             ${makeToc( toc, 0 )}
            </ul>
            ${ast.XML}
          </div>
-
          <div class="row">
-            ${(toc.length > 0) ?
-               <div id="navbar" class="col-md-3" role="complementary">
-                  <nav class="sidebar"
-                       data-spy="affix"
-	               data-offset-top="270" data-offset-bottom="20">
-                    <ul class="nav bs-docs-sidenav">
-                      ${toc.map( function( el ) {
-                         return <li role="presentation">
-                           <a href=${el.href}>
-                             ${el.childNodes[ 0 ].replace( /[(].*$/, "")}
-                           </a>
-                         </li>;
-                      } )}
-                    </ul>
-                  </nav> 
-               </div>
-               : undefined}
+           ${(toc.length > 0) ?
+             <div id="navbar" class="col-md-3" role="complementary">
+               <nav class="sidebar"
+                    data-spy="affix"
+	            data-offset-top="270" data-offset-bottom="20">
+                 <ul class="nav bs-docs-sidenav">
+             ${makeToc( toc, 0, function( el ) { 
+		return el.childNodes[ 0 ].replace( /[(].*$/, "");
+	     } )}
+                </ul>
+             </nav> 
+             </div>
+             : undefined}
          </div>
        </div>
        <docxml.footer root=${ROOT}/>

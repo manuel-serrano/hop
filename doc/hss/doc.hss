@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Wed Aug  5 08:11:07 2015 (serrano)                */
+/*    Last change :  Thu Aug  6 18:51:01 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -111,7 +111,8 @@ nav.sidebar {
   border-radius: 4px;
   border: 1px solid #ccc;
   width: 20em;
-  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   font-size: 95%;
   opacity: 0.9;
 }
@@ -138,11 +139,22 @@ nav.sidebar a {
 nav.sidebar li {
   border-left: 4px solid;
   border-left-color: transparent;
+  text-overflow: ellipsis;
 }
 
 nav.sidebar .active {
   font-weight: bold;
   border-left-color: #900;
+}
+
+nav.sidebar ul ul .active {
+  border: none;
+}
+
+nav.sidebar ul ul .active:after {
+  content: "\25c2";
+  color: #900;
+  font-size: 90%;
 }
 
 nav.sidebar .active * {

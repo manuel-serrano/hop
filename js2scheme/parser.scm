@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Aug  6 08:09:14 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 12:28:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -32,7 +32,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-parser input-port conf::pair-nil)
 
-   (define tilde-level 0)
+   (define tilde-level (config-get conf :tilde-level 0))
 
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
@@ -1278,7 +1278,7 @@
 		       (peek-token))))))))
 
    (define (html-expression tag)
-      (html-parser input-port conf tag))
+      (html-parser input-port (cons* :tilde-level tilde-level conf) tag))
 
    (define (xml-expression tag)
       (if (lbrace-following? input-port)
@@ -1771,7 +1771,7 @@
 	     el)))
 
    (case (config-get conf :parser #f)
-      ((tilde-expression) (tilde-expression))
+      ((tilde-expression) (with-tilde tilde-expression))
       ((dollar-expression) (dollar-expression))
       ((module) (program #f))
       ((repl) (repl))

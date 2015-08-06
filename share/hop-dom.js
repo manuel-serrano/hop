@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Jul 17 14:30:18 2015 (serrano)                */
+/*    Last change :  Thu Aug  6 16:25:28 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1440,15 +1440,14 @@ function dom_get_elements_by_class( doc, name ) {
    
       if( (doc instanceof String) || (typeof doc == "string") ) {
 	 all = document.getElementsByTagName( "*" );
-	 re = new RegExp( doc + " |" + doc + "$", "g" );
+	 re = new RegExp( "\\b" + doc + "\\b", "g" );
       } else {
 	 all = doc.getElementsByTagName( "*" );
-	 re = new RegExp( name + " |" + name + "$", "g" );
+	 re = new RegExp( "\\b" + name + "\\b", "g" );
       }
 
       for( var i = 0; i < all.length; i++ ) {
 	 if( re.exec( all[ i ].className ) ) {
-	    alert( "got one: " + all[i].id );
 	    res[ n++ ] = all[ i ];
 	 }
       }

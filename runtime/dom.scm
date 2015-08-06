@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Jul 29 16:44:05 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 16:33:37 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -599,6 +599,15 @@
 ;*    dom-get-elements-by-class ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (dom-get-elements-by-class::pair-nil obj name)
+
+   (define (string-in? c name)
+      (or (string=? c name)
+	  (and (>fx (string-length c) (string-length name))
+	       (or (and (string-prefix? name c)
+			(char=? (string-ref c (string-length name)) #\space))
+		   (and (string-contains c name)
+			(pregexp-match (string-append "\\b" name "\\b") c))))))
+   
    (let loop ((obj obj))
       (cond
 	 ((pair? obj)
@@ -606,11 +615,7 @@
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body)
 	     (let ((c (dom-get-attribute obj "class")))
-		;; CARE: may be we should check that name is part
-		;; of the class attribute. If we decide to change this,
-		;; the change should be reported in the JS implementation
-		;; inside the file hop-dom.js
-		(if (and (string? c) (string=? c name))
+		(if (and (string? c) (string-in? c name))
 		    (cons obj (loop body))
 		    (loop body)))))
 	 (else

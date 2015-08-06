@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Aug  6 07:16:54 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 14:37:28 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -69,11 +69,10 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! object
    (lambda (obj mode)
-      (if (eq? mode 'hop-to-hop)
+      (if (eq? mode 'hop-client)
 	  obj
 	  (hop-object->plist obj)))
    (lambda (obj)
-      (tprint "unserialize obj=" obj)
       (if (pair? obj)
 	  (hop-plist->object obj)
 	  obj)))

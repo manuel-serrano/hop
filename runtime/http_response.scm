@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Jul 29 14:43:34 2015 (serrano)                */
+;*    Last change :  Thu Aug  6 14:38:53 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -92,6 +92,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop request socket)
 
+   (define (serialize val)
+      (obj->string val (request-type request)))
+   
    (define (arraybuffer-request? request)
       (with-access::http-request request (header)
 	 (let ((c (assq 'hop-responsetype: header)))
@@ -100,11 +103,13 @@
    (define (request-type request)
       (with-access::http-request request (header)
 	 (let ((c (assq 'hop-client: header)))
-	    (when (and (pair? c) (string=? (cdr c) "hop")) 'hop-to-hop))))
+	    (if (and (pair? c) (string=? (cdr c) "hop"))
+		'hop-to-hop
+		'hop-client))))
    
    (define (response-x-hop value conn p)
       (with-access::http-request request (connection)
-	 (let* ((str (obj->string value (request-type request)))
+	 (let* ((str (serialize value))
 		(rep (if (arraybuffer-request? request)
 			 str
 			 (string-hex-extern str))))
@@ -112,7 +117,7 @@
 	    (http-write-line p "Connection: " conn)
 	    (http-write-line p)
 	    (display-string rep p))))
-   
+
    (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
 					   header
@@ -156,7 +161,7 @@
 			  (obj->javascript-expr value p)))
 		     ((string-prefix? "application/x-url-hop" content-type)
 		      ;; fast path, bigloo serialization
-		      (let ((s (url-path-encode (obj->string value))))
+		      (let ((s (url-path-encode (serialize value))))
 			 (http-write-line p "Content-Length: " (string-length s))
 			 (http-write-line p "Connection: " conn)
 			 (http-write-line p)
@@ -165,7 +170,7 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-		      (byte-array->json (obj->string value) p))
+		      (byte-array->json (serialize value) p))
 		     ((string-prefix? "application/json" content-type)
 		      ;; json encoding
 		      (set! conn 'close)
