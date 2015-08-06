@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Thu Aug  6 18:51:01 2015 (serrano)                */
+/*    Last change :  Thu Aug  6 19:02:31 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -210,9 +210,7 @@ pre + p {
 /*---------------------------------------------------------------------*/
 body.download pre {
   font-size: 80%;
-  background-color: inherit;
   font-family: monospace;
-  border: none;
 }
 
 button.download {
@@ -252,6 +250,7 @@ button.download a span {
 /*---------------------------------------------------------------------*/
 /*    Specific page configuration                                      */
 /*---------------------------------------------------------------------*/
-body.download .toc {
+body.download ul.toc,
+body.download h1.toc {
   display: none;
 }
