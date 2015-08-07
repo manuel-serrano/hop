@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Aug  6 18:42:08 2015 (serrano)                */
+/*    Last change :  Fri Aug  7 10:16:49 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -36,8 +36,12 @@ function P( file ) {
 /*---------------------------------------------------------------------*/
 /*    chapters ...                                                     */
 /*---------------------------------------------------------------------*/
-const chapters = require( "./doc.json" ).chapters
-      .map( function( c ) { c.entries = chapterEntries( c ); return c; } );
+const chapters = require( "./doc.json" )
+      .chapters
+      .map( function( c ) {
+	 c.entries = chapterEntries( c );
+	 return c;
+      } );
 
 /*---------------------------------------------------------------------*/
 /*    chapterEntries ...                                               */
@@ -143,7 +147,7 @@ function compileSection( page ) {
              <div id="navbar" class="col-md-3" role="complementary">
                <nav class="sidebar"
                     data-spy="affix"
-	            data-offset-top="270" data-offset-bottom="20">
+	            data-offset-top="215" data-offset-bottom="100">
                  <ul class="nav bs-docs-sidenav">
              ${makeToc( toc, 0, function( el ) { 
 		return el.childNodes[ 0 ].replace( /[(].*$/, "");
@@ -165,6 +169,7 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
+   console.error( "compilerChapter json=", json );
    var chapter = require( json );
    var toc = chapterEntries( chapter );
 
@@ -179,9 +184,13 @@ function compileChapter( json ) {
          ${chapters}
        </docxml.navbar>
        <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
-   
+
        <div class="container">
-          <h1>Table of Contents</h1>
+         ${chapter.description ? <div class="page-header">
+	   ${markdown.parse( chapter.description ).XML}
+	   </div> : ""}
+	 
+          <h1 class="toc">Table of Contents</h1>
           <ul class="toc">
            ${toc.map( function( el ) {
                         return <li>
@@ -209,7 +218,7 @@ function compileIndex( content ) {
            jscript=${jscript}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body class="home" data-spy="scroll" data-target="#navbar">
        <docxml.navbar title="Hop.js" key="Home">
          ${chapters}
        </docxml.navbar>

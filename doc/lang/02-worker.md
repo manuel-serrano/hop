@@ -9,7 +9,7 @@ Each worker possses its own isolated memory heap. That is, workers cannot
 shared JavaScript objects. They have different JavaScript global objects.
 
 ### new hop.Worker( path ) ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 
 Examples

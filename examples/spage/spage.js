@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Fri May 29 10:22:23 2015 (serrano)                */
+/*    Last change :  Fri Aug  7 07:16:25 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SPAGE widget example                                             */
@@ -21,27 +21,32 @@ function base( dir ) {
 }
 
 function dirToSpage( dir ) {
-   return <SP.SPTAB> {
-      <SP.SPTABHEAD> { base( dir ) },
-      service () {
-	 return fs.readdirSync( dir ).map(
-	    function( p ) {
-	       var fp = path.join( dir, p );
-	       if( fs.lstatSync( fp ).isDirectory() ) {
-		  return dirToSpage( fp );
-	       } else {
-		  return <DIV> { value: fp, p }
-	       }
-	    } );
-      }
-   } </SP.SPTAB>
+   return <SP.sptab>
+     <SP.sptabhead>${ base( dir ) }</SP.sptabhead>
+     ${service () {
+	return fs.readdirSync( dir ).map(
+	   function( p ) {
+	      var fp = path.join( dir, p );
+	      if( fs.lstatSync( fp ).isDirectory() ) {
+		 return dirToSpage( fp );
+	      } else {
+		 return <div value=${fp}>${p}</div>;
+	      }
+	   } );
+     } }
+   </SP.sptab>
 }
 
 service spage( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
-   return <HTML> {
-      <HEAD> { css: SP.css, jscript: SP.jscript },
-      <BODY> { <SP.SPAGE> { <SP.SPHEAD> { dir }, dirToSpage( dir ) } }
+   return <html>
+     <head css=${SP.css} jscript=${SP.jscript}/>
+     <body>
+       <SP.spage>
+	 <SP.sphead>${ dir }</SP.sphead>
+	 ${dirToSpage( dir )}
+       </SP.spage>
+     </body>
+   </html>;
    }
-}
 
 console.log( "Go to \"http://%s:%d/hop/spage\"", hop.hostname, hop.port );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Thu Aug  6 19:02:31 2015 (serrano)                */
+/*    Last change :  Fri Aug  7 10:18:32 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -35,7 +35,7 @@ body {
 /*    title                                                            */
 /*---------------------------------------------------------------------*/
 .jumbotron {
-  margin-top: 4px;
+  margin-top: 40px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -48,7 +48,7 @@ footer {
   margin-top: 4ex;
   margin-left: 2em;
   margin-right: 2em;
-  text-align: center;
+  text-align: left;
   color: #555;
 }
 
@@ -80,9 +80,21 @@ h3, h4 {
   text-shadow: none;
 }
 
+h1.toc, h1.markdown {
+  font-size: 170%;
+}
+
+h2.markdown {
+  font-size: 160%;
+}
+
 /*---------------------------------------------------------------------*/
 /*    sections                                                         */
 /*---------------------------------------------------------------------*/
+h3.glyphicon {
+  color: #666;
+}
+
 h3.glyphicon {
   font-family: inherit;
   font-weight: 500;
@@ -90,7 +102,7 @@ h3.glyphicon {
 }
 
 h3.glyphicon:before {
-  font-size: 70%;
+  font-size: 65%;
   margin-right: 0.4em;
   font-family: 'Glyphicons Halflings';
   font-style: normal;
@@ -122,18 +134,15 @@ nav.sidebar a {
 }
   
 .affix-top {
-/*   right: 14px;                                                      */
   position: absolute;
 }
 
 .affix {
-/*   right: 23px;                                                      */
-  top: 20px;
+  top: 80px;
 }
 
 .affix-bottom {
-/*   right: 23px;                                                      */
-  top: 20px;
+  top: 80px;
 }
 
 nav.sidebar li {
@@ -165,6 +174,13 @@ nav.sidebar li > a {
   padding: 4px 8px;
 }
 
+/*---------------------------------------------------------------------*/
+/*    description                                                      */
+/*---------------------------------------------------------------------*/
+div.page-header {
+  font-size: 130%;
+}
+  
 /*---------------------------------------------------------------------*/
 /*    toc                                                              */
 /*---------------------------------------------------------------------*/
@@ -253,4 +269,11 @@ button.download a span {
 body.download ul.toc,
 body.download h1.toc {
   display: none;
+}
+
+body.home pre {
+  background: inherit;
+  border: none;
+  border-left: 2px solid #aaa;
+  border-radius: 0;
 }

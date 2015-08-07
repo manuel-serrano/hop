@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Wed Aug  5 07:27:24 2015 (serrano)                */
+/*    Last change :  Fri Aug  7 06:54:21 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -92,7 +92,8 @@ function navbar( attrs, chapters ) {
 		   ? "active" : "";
                return <li class=${clazz}>
 	         <a href=${p.href}>
-	           <span class=${"glyphicon " + p.icon}></span> ${p.name}
+	           <span class=${"glyphicon " + p.icon}></span>
+		   ${p.name}
 	         </a>
 	       </li>;
 	    } else {
@@ -109,10 +110,11 @@ function navbar( attrs, chapters ) {
                    <li role="separator" class="divider"></li>
 	           ${p.entries.map( function( e ) {
                         return <li><a href=${e.href}>${e.title}</a></li>
-		       } )}
+		   } )}
                  </ul>
-	       </li>} } )}
-       </ul>
+	       </li>
+	    } } )}
+	  </ul>
      </div>
    </nav>
 }

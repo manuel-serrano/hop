@@ -13,7 +13,7 @@ Configuration
 -------------
 
 ### hop.shareDir ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The `share` directory of the Hop installation.
 
 ```hopscript
@@ -21,7 +21,7 @@ console.log( "share:", hop.shareDir );
 ```
 
 ### hop.binDir ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The `bin` directory of the Hop installation.
 
 ```hopscript
@@ -29,7 +29,7 @@ console.log( "bin:", hop.binDir );
 ```
 
 ### hop.libDir ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The `lib` directory of the Hop installation.
 
 ```hopscript
@@ -37,7 +37,7 @@ console.log( "lib:", hop.libDir );
 ```
 
 ### hop.port ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The port number of the running Hop server.
 
 ```hopscript
@@ -45,7 +45,7 @@ console.log( "port:", hop.port );
 ```
 
 ### hop.hostname ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The host name of the running Hop server.
 
 ```hopscript
@@ -54,7 +54,7 @@ console.log( "hostname:", hop.hostname );
 
 
 ### hop.version ###
-[:@glyphicon glyphicon-star-empty]
+[:@glyphicon glyphicon-tag]
 The Hop version.
 
 ```hopscript
@@ -66,16 +66,16 @@ Responses
 ---------
 
 ### new hop.HTTPResponseHop( obj, [option] ) ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 ### hop.HTTPResponseXml ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 ### hop.HTTPResponseString ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 ### new hop.HTTPResponseFile( path, [option] ) ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 This class is used to respond files to clients. The argument `path` is
 the full path of a existing file.
@@ -97,7 +97,7 @@ and `HTTPResponseString` values.
 [:@warning]
 
 ### new hop.HTTPResponseAuthentication( msg, [option] ) ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 This class is used to respond HTTP `401 Unauthorized` response to Web
 client.
@@ -105,7 +105,7 @@ client.
 ${ <span class="label label-warning">Note:</span> }
  the class `hop.HTTPResponseAuthentication` is a convenience class.
 The same behavior can be implemented using `hop.HTTPResponseString`
-and passing a `startLine` value in the optional argument.
+and passing a `tagstLine` value in the optional argument.
 [:@warning]
 
 #### Example ####
@@ -119,7 +119,7 @@ ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
 ```
 
 ### hop.HTTPResponseAsync ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 #### Example ####
 
@@ -132,13 +132,13 @@ ${ doc.include( doc.ROOT + "/examples/async/async.js", 13 ) }
 ```
 
 ### hop.HTTPResponseProxy ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 Miscellaneous
 -------------
 
 ### hop.XMLCompile( node [, ofile] [, backend] ) ###
-[:@glyphicon glyphicon-star]
+[:@glyphicon glyphicon-tags]
 
 Compile a XML `node` into HTML. If no output file is specified,
 the product of the compilation is returned in a buffer. The

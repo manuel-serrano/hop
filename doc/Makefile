@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Aug  6 14:53:41 2015 (serrano)                */
+#*    Last change :  Fri Aug  7 08:53:22 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -35,6 +35,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   Makefile doc.js xml.js \
   doc.json \
   api/api.json api/00-hop.md \
+  widget/widget.json \
   lang/lang.json lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md lang/01-service.md lang/02-worker.md \
   config/config.json config/00-command.md config/10-edit.md \
@@ -42,21 +43,25 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   nodejs.md download.md \
   hss/doc.hss \
 
-API_TARGETS=api.html 00-hop.html tree.html hss.html
+API_TARGETS=api.html 00-hop.html hss.html config.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html
+
+WIDGET_TARGETS=widget.html tree.html spage.html
 
 CONFIG_TARGETS=config.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
-  $(API_TARGETS) $(LANG_TARGETS) $(CONFIG_TARGETS)
+  $(API_TARGETS) $(LANG_TARGETS) $(CONFIG_TARGETS) $(WIDGET_TARGETS)
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
 #*---------------------------------------------------------------------*/
-VPATH=api lang config \
+VPATH=api lang config widget \
   ../node_modules/tree/doc \
-  ../node_modules/hss/doc
+  ../node_modules/spage/doc \
+  ../node_modules/hss/doc \
+  ../node_modules/config/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */

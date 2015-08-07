@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Aug  6 18:41:33 2015 (serrano)                */
+;*    Last change :  Fri Aug  7 06:31:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -264,13 +264,12 @@ usage: (js-return)  -- [RET]"
 	  (hopjs-debug '())
 	  (be (progn (hopjs-beginning-of-defun (point)) (point))))
       (save-excursion
-	(let ((p (nth 9 (parse-partial-sexp pos be))))
-	  (while (and (consp p) (eq loop 'loop))
-	    (when (> (car p) (point-min))
-	      (goto-char (- (car p) 1))
-	      (if (looking-at "[~$]{")
-		  (setq loop nil)
-		(setq p (cdr p)))))))
+	(let ((p (nth 9 (parse-partial-sexp be pos))))
+	  (while (and (consp p) (eq loop 'loop) (> (car p) (point-min)))
+	    (goto-char (- (car p) 1))
+	    (if (looking-at "[~$]{")
+		(setq loop nil)
+	      (setq p (cdr p))))))
       (hopjs-debug "~~~ hopjs-html-p, loop=%s be=%d" loop be)
       (when (eq loop 'loop)
 	(goto-char be)
@@ -308,13 +307,15 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-html-previous-line-indent ...                              */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-html-previous-line-indent (point-min)
+(defun hopjs-html-previous-line-indent (pmin)
   (save-excursion
     (previous-line)
     (beginning-of-line)
     (back-to-indentation)
-    (when (> (point) point-min)
+    (when (> (point) pmin)
       (cond
+       ((looking-at "^[ \t]*$")
+	(hopjs-html-previous-line-indent pmin))
        ((looking-at hopjs-re-entering-html)
 	;; entering HTML mode
 	(hopjs-debug "hopjs-html-previous-line-indent: entering HTML")
@@ -331,7 +332,7 @@ usage: (js-return)  -- [RET]"
        ((looking-at "[^<>]+=[^<>]+/>$")
 	;; attribute + closing
 	(hopjs-debug "hopjs-html-previous-line-indent: attr + close")
-	(- (hopjs-html-previous-line-indent point-min) hopjs-indent-level-html))
+	(- (hopjs-html-previous-line-indent pmin) hopjs-indent-level-html))
        ((looking-at "[^<>]+=[^<>]")
 	;; attribute
 	(hopjs-debug "hopjs-html-previous-line-indent: attr")
