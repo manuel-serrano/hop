@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Aug  6 14:37:28 2015 (serrano)                */
+;*    Last change :  Fri Aug  7 20:01:23 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -70,8 +70,8 @@
 (register-class-serialization! object
    (lambda (obj mode)
       (if (eq? mode 'hop-client)
-	  obj
-	  (hop-object->plist obj)))
+	  (hop-object->plist obj)
+	  obj))
    (lambda (obj)
       (if (pair? obj)
 	  (hop-plist->object obj)
@@ -117,12 +117,14 @@
 	  (len (vector-length fields)))
       (for i 0 len
 	 (let* ((f (vector-ref-ur fields i))
-		(iv (class-field-info f))
-		(val (cond
-			((and (pair? iv) (memq :client iv)) => cadr)
-			(else ((class-field-accessor f) obj))))
-		(key (symbol->keyword (class-field-name f))))
-	    (set! args (cons* key val args))))
+		(iv (class-field-info f)))
+	    (let ((v (when (pair? iv) (memq :serialize iv))))
+	       (when (or (not v) (cadr v))
+		  (let ((val (cond
+				((and (pair? iv) (memq :client iv)) => cadr)
+				(else ((class-field-accessor f) obj))))
+			(key (symbol->keyword (class-field-name f))))
+		     (set! args (cons* key val args)))))))
       (cons* ':__class__ (string->symbol (typeof obj)) args)))
 
 ;*---------------------------------------------------------------------*/
@@ -135,7 +137,7 @@
 		 (klass (object-class obj))
 		 (fields (class-all-fields klass))
 		 (len (vector-length fields)))
-	     (for i 0 (-fx len 1)
+	     (for i 0 len
 		(let* ((f (vector-ref-ur fields i))
 		       (iv (class-field-info f)))
 		   (cond

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Aug  7 10:16:49 2015 (serrano)                */
+/*    Last change :  Fri Aug  7 19:45:29 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -169,7 +169,6 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
-   console.error( "compilerChapter json=", json );
    var chapter = require( json );
    var toc = chapterEntries( chapter );
 

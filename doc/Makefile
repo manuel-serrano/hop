@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Aug  7 08:53:22 2015 (serrano)                */
+#*    Last change :  Fri Aug  7 19:45:58 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -49,15 +49,15 @@ LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-CONFIG_TARGETS=config.html 00-command.html 10-edit.html
+ENV_TARGETS=env.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
-  $(API_TARGETS) $(LANG_TARGETS) $(CONFIG_TARGETS) $(WIDGET_TARGETS)
+  $(API_TARGETS) $(LANG_TARGETS) $(ENV_TARGETS) $(WIDGET_TARGETS)
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
 #*---------------------------------------------------------------------*/
-VPATH=api lang config widget \
+VPATH=api lang env widget \
   ../node_modules/tree/doc \
   ../node_modules/spage/doc \
   ../node_modules/hss/doc \
@@ -87,10 +87,10 @@ distclean: clean
 install:
 	mkdir -p $(DESTDIR)$(HOPDOCDIR)
 	mkdir -p $(DESTDIR)$(HOPDOCDIR)/lib
-	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)/$(HOPDOCDIR)
-	cp -r lib/bootstrap $(DESTDIR)/$(HOPDOCDIR)/lib
-	cp -r lib/jquery $(DESTDIR)/$(HOPDOCDIR)/lib
-	cp -r hss $(DESTDIR)/$(HOPDOCDIR)/hss
+	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)$(HOPDOCDIR)
+	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
+	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
+	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODFILE) -R $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
