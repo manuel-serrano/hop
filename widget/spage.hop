@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sun May 31 12:12:12 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 08:22:19 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -27,7 +27,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    SPAGE ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-tag <SPAGE> ((id (xml-make-id 'SPAGE) string)
+(define-tag <SPAGE> ((id (xml-make-id 'SPAGE))
 		     (onchange #f)
 		     (class #f)
 		     (attr)
@@ -62,7 +62,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    SPHEAD ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-tag <SPHEAD> ((id (xml-make-id 'SPHEAD) string)
+(define-tag <SPHEAD> ((id (xml-make-id 'SPHEAD))
 		      (attr)
 		      body)
    (instantiate::xml-sphead-element
@@ -166,7 +166,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-tag <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD) string)
+(define-tag <SPTABHEAD> ((id (xml-make-id 'SPTABHEAD))
 			 (onclick #f)
 			 (attr)
 			 body)

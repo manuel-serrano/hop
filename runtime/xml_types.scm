@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Wed Jul  8 09:45:07 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 14:04:58 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -79,6 +79,7 @@
 	    (class xml-style::xml-cdata)
 	    
 	    (class xml-tilde::xml
+	       (lang read-only (default 'hop))
 	       (body read-only)
 	       (parent (default #f))
 	       (src read-only (default #f))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Fri Aug  7 07:16:25 2015 (serrano)                */
+/*    Last change :  Sat Aug  8 14:11:37 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SPAGE widget example                                             */
@@ -38,10 +38,12 @@ function dirToSpage( dir ) {
 }
 
 service spage( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
+   var d = <span>0</span>;
    return <html>
      <head css=${SP.css} jscript=${SP.jscript}/>
      <body>
-       <SP.spage>
+       <div>depth: ${d}</div>
+       <SP.spage id="sp" onchange=~{${d}.innerHTML = HopSpage.depth( "sp" )}>
 	 <SP.sphead>${ dir }</SP.sphead>
 	 ${dirToSpage( dir )}
        </SP.spage>

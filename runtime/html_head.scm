@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Jul 11 07:20:05 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 14:38:59 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -78,6 +78,9 @@
 		   (cond
 		      ((not (pair? body))
 		       body)
+		      ((xml-unpack (car body))
+		       =>
+		       (lambda (v) (loop (append v (cdr body)))))
 		      ((and (string? (car body))
 			    (not (string-skip (car body) "\n\t ")))
 		       (loop (cdr body)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jul 30 14:24:12 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 14:17:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2303,22 +2303,23 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STilde mode return conf)
    (with-access::J2STilde this (loc stmt)
-      (let ((js-stmt (concat-tilde (j2s-js stmt #f #f mode return conf))))
-         (epairify loc
-            `(instantiate::xml-tilde
-		(%js-expression ,(j2s-tilde->expression this mode return conf))
-                (body (vector
-                          ',(if (bigloo-debug) (j2s->list stmt) '()) '() '() '()
-                          ,(cond
-                             ((null? js-stmt)
-                              "")
-                             ((null? (cdr js-stmt))
-                              (car js-stmt))
-                             ((every string? js-stmt)
-                              (apply string-append js-stmt))
-                             (else
-                              `(string-append ,@js-stmt)))))
-                (loc ',loc))))))
+      (let* ((js-stmt (concat-tilde (j2s-js stmt #f #f mode return conf)))
+	     (js (cond
+		    ((null? js-stmt)
+		     "")
+		    ((null? (cdr js-stmt))
+		     (car js-stmt))
+		    ((every string? js-stmt)
+		     (apply string-append js-stmt))
+		    (else
+		     `(string-append ,@js-stmt))))
+	     (expr (j2s-tilde->expression this mode return conf)))
+	 (epairify loc
+	    `(instantiate::xml-tilde
+		(lang 'javascript)
+		(%js-expression ,expr)
+		(body (vector ',(if (bigloo-debug) (j2s->list stmt) '()) '() '() '() ,js #f))
+		(loc ',loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tilde->expression ...                                        */
@@ -2337,10 +2338,12 @@
 		      (apply string-append js-stmt))
 		     (else
 		      `(string-append ,@js-stmt)))))
-	 `(string-append
-	     ,(format "(function() { var ~a; " temp)
-	     ,str
-	     ,(format " return ~a; }).call(this)" temp)))))
+	 (if (string? str)
+	     (format "(function() { var ~a; ~a\nreturn ~a; }).call(this)" temp str temp)
+	     `(string-append
+		 ,(format "(function() { var ~a; " temp)
+		 ,str
+		 ,(format "\nreturn ~a; }).call(this)" temp))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDollar ...                                       */

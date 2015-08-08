@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jun 24 10:29:05 2015 (serrano)                */
+/*    Last change :  Sat Aug  8 14:28:43 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -25,6 +25,15 @@ assert.strictEqual(
    new Date( "2011-10-10T14:48:00.000" ).valueOf(),
    new Date( "2011-10-10T14:48:00" ).valueOf() );
 assert.strictEqual( 123, new Date("2011-10-10T14:48:00.123").getMilliseconds() );
+
+/*---------------------------------------------------------------------*/
+/*    Month                                                            */
+/*---------------------------------------------------------------------*/
+var dm = new Date();
+dm.setMonth( 0 );
+
+assert.ok( dm.getMonth() == 0 );
+assert.ok( dm.getYear() == 115 );
 
 /*---------------------------------------------------------------------*/
 /*    ISO string conversions ::Iso string conversion ...               */

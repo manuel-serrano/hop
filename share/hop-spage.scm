@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Fri May 29 09:23:17 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 14:11:50 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -16,6 +16,9 @@
    
    (JS     hop_add_native_event_listener
            HopEvent)
+   
+   (scheme2js-pragma
+          (HopSpage (JS HopSpage)))
    
    (export (spage-init spage onchange)
 	   (spage-reset-size spage)
@@ -35,7 +38,8 @@
 	   (spage-depth spage)
 	   (spage-current-tab spage)
 	   (find-spage id)
-	   (find-sptab id)))
+	   (find-sptab id)
+	   HopSpage))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-init ...                                                   */
@@ -617,17 +621,31 @@
 ;*    spage-head ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (spage-head spage)
+   (when (string? spage) (set! spage (dom-get-element-by-id spage)))
    (dom-first-child spage.sphead))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (spage-tab spage)
+   (when (string? spage) (set! spage (dom-get-element-by-id spage)))
    (dom-first-child spage.spcontent))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-depth ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (spage-depth spage)
+   (when (string? spage) (set! spage (dom-get-element-by-id spage)))
    spage.num)
 
+;*---------------------------------------------------------------------*/
+;*    JavaScritp interface                                             */
+;*---------------------------------------------------------------------*/
+(define HopSpage
+   (let ((obj (js-new (@ Object js))))
+      (js-field-set! obj "pop" spage-pop)
+      (js-field-set! obj "popUpdate" spage-pop-update)
+      (js-field-set! obj "depth" spage-depth)
+      (js-field-set! obj "findTab" find-sptab)
+      (js-field-set! obj "findSpage" find-spage)
+      obj))

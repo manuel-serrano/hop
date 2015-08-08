@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 24 05:51:44 2015 (serrano)                */
+;*    Last change :  Sat Aug  8 14:29:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -960,8 +960,9 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((month (js-tonumber month %this))
-		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
-		(set! val (date-copy val :month month :day date))
+		   (date (unless (eq? date (js-undefined))
+			    (js-tonumber date %this))))
+		(set! val (date-copy val :month (+ 1 month) :day date))
 		(date->seconds val))
 	     val)))
 
@@ -978,7 +979,7 @@
 	 (if (date? val)
 	     (let ((month (js-tonumber month %this))
 		   (date (when date (js-tonumber date %this))))
-		(set! val (date-copy val :month month :day date))
+		(set! val (date-copy val :month (+ 1 month) :day date))
 		(date->seconds val))
 	     val)))
 
