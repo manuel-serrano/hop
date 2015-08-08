@@ -6,7 +6,7 @@
    "chapters": [ 
       { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
       { "name": "Download", "icon": "glyphicon-cloud-download", "href": "download.html" },
-      { "name": "Env", "icon": "glyphicon-cog", "href": "env.html", "json": "env/env.json" },
+      { "name": "Dev", "icon": "glyphicon-cog", "href": "dev.html", "json": "dev/dev.json" },
       { "name": "Lang", "icon": "glyphicon-blackboard", "href": "lang.html", "json": "lang/lang.json" },
       { "name": "Api", "icon": "glyphicon-book", "href": "api.html", "json": "api/api.json" },
       { "name": "Nodejs", "icon": "glyphicon-tag", "href": "nodejs.html" },
