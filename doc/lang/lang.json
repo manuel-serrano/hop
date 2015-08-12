@@ -1,4 +1,5 @@
 {
    "title": "Core Language",
-   "files": [ "lang" ]
+   "files": [ "lang" ],
+   "description": "lang.md"
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jul 30 10:11:47 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 11:20:01 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -97,6 +97,7 @@
 	    (("--clear-cache" (help "Clear all caches"))
 	     (set! clear-cache #t))
 	    (("--no-clear-cache" (help "Don't clear any cache"))
+	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))

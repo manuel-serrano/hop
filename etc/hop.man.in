@@ -4,7 +4,7 @@
 .ti -.2i
 ..
 .SH NAME
-hop @RELEASE@ \- `an Everyware Development Kit'
+hop @RELEASE@ \- `a Multitier Web Development Kit'
 
 .SH SYNOPSIS
 .B hop

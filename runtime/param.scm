@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Jun 20 07:12:07 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 11:19:17 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -157,6 +157,9 @@
 
 	    (hop-hss-foreign-eval::procedure)
 	    (hop-hss-foreign-eval-set! ::procedure)
+
+	    (hop-hss-clear-cache::obj)
+	    (hop-hss-clear-cache-set! ::obj)
 
 	    (hop-enable-proxying::bool)
 	    (hop-enable-proxying-set! ::bool)
@@ -802,6 +805,12 @@
 	    (proc "read")
 	    (msg "No foreign evaluator given")
 	    (obj "{")))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hss-clear-cache ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hss-clear-cache
+   #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-weblet-weblet-name ...                               */

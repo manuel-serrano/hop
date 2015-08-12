@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Aug  7 19:45:29 2015 (serrano)                */
+/*    Last change :  Wed Aug 12 19:12:59 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -29,7 +29,6 @@ const jscript = [ P( "lib//jquery/js/jquery.min.js" ),
 /*    P ...                                                            */
 /*---------------------------------------------------------------------*/
 function P( file ) {
-//   return path.normalize( path.join( ROOT, file ) );
    return path.normalize( "./" + file );
 }
    
@@ -186,7 +185,9 @@ function compileChapter( json ) {
 
        <div class="container">
          ${chapter.description ? <div class="page-header">
-	   ${markdown.parse( chapter.description ).XML}
+	   ${ fs.existsSync( ROOT + chapter.description ) ?
+	      doc.parseFile( ROOT + chapter.description ).XML
+	      : markdown.parse( chapter.description ).XML }
 	   </div> : ""}
 	 
           <h1 class="toc">Table of Contents</h1>

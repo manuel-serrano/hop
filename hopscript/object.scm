@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Aug  6 06:37:16 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 08:26:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -24,6 +24,7 @@
    (import __hopscript_types
 	   __hopscript_string
 	   __hopscript_stringliteral
+	   __hopscript_symbol
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -68,7 +69,9 @@
    (lambda (o ctx)
       (js-jsobject->plist o (js-initial-global-object)))
    (lambda (o %this)
-      (js-plist->jsobject o (or %this (js-initial-global-object)))))
+      (if (eq? %this 'hop)
+	  o
+	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -194,6 +197,7 @@
 	    (js-init-arraybuffer! %this)
 	    (js-init-arraybufferview! %this)
 	    (js-init-string! %this)
+	    (js-init-symbol! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
 	    (js-init-math! %this)

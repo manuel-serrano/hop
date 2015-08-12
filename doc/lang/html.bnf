@@ -28,6 +28,7 @@
   | <number>
   | <date>
   | <$-Expression>
+  | <~-Expression>
   | <HtmlExpression>
 
 <TagArguments> -->

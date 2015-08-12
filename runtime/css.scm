@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Dec 31 09:07:04 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Wed Aug 12 11:23:02 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -358,6 +358,7 @@
    (set! hss-cache
       (if (hop-cache-enable)
 	  (instantiate::cache-disk
+	     (clear (hop-hss-clear-cache))
 	     (path (make-cache-name "hss"))
 	     (out (lambda (o p) (css-write o p))))
 	  (instantiate::cache-memory

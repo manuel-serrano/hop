@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Sat Aug  8 13:54:07 2015 (serrano)                */
+;*    Last change :  Mon Aug 10 11:24:35 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -312,7 +312,6 @@
 ;*    hopscheme->sexp ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hopscheme->sexp hs wrapper)
-   (tprint "hs " (format "~s" (hopscheme-src hs)))
    (let ((env (map (lambda (l)
 		      (list (car l) (wrapper (cadr l))))
 		 (hopscheme-env hs))))

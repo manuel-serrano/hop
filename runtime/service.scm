@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Aug  7 20:01:23 2015 (serrano)                */
+;*    Last change :  Sun Aug  9 06:49:53 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -72,7 +72,7 @@
       (if (eq? mode 'hop-client)
 	  (hop-object->plist obj)
 	  obj))
-   (lambda (obj)
+   (lambda (obj ctx)
       (if (pair? obj)
 	  (hop-plist->object obj)
 	  obj)))
@@ -612,6 +612,7 @@
 	     (let ((env (current-dynamic-env))
 		   (name id))
 		($env-push-trace env name #f)
+		    (tprint "id.2=" id " proc=" proc " vals=" vals)
 		(let ((aux (proc req vals)))
 		   ($env-pop-trace env)
 		   aux)))
@@ -681,7 +682,7 @@
 	  (cond
 	     ((null? (cdr exp))
 	      (apply string-append "["
-		     (reverse! (cons* "]" (exp->eval-string (car exp)) res))))
+		 (reverse! (cons* "]" (exp->eval-string (car exp)) res))))
 	     (else
 	      (loop (cdr exp)
 		    (cons* "," (exp->eval-string (car exp)) res)))))))

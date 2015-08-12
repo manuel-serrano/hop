@@ -1,0 +1,21 @@
+Compatibilities & Standards
+===========================
+
+HopScript is based on JavaScript and aim at ensuring compatibility
+with this language.
+
+  * HopScript fully supports [ECMAScript 5][es5]
+  * HopScript also support some [ECMAScript 6][es6] features:
+    * arrow functions.
+    * `let` and `const` bindings.
+    * Symbols
+  * HopScript supports most [Nodejs][nodejs] APIs (see Section
+  [Nodejs](nodejs.html))
+    
+${ <span class="label label-warning">Note:</span> }
+ ECMAScript 6 features requires `use strict` or `use hopscript` modes.
+[:@warning]
+
+[es5]: http://www.ecma-international.org/ecma-262/5.1
+[es6]: http://www.ecma-international.org/ecma-262/6.0
+[nodejs]: https://nodejs.org/api

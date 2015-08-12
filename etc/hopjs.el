@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Aug  7 06:31:30 2015 (serrano)                */
+;*    Last change :  Sun Aug  9 06:59:06 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -72,7 +72,7 @@
   (concat hopjs-re-open-tag "\\|" hopjs-re-close-tag "\\|[$~]{"))
 
 (defconst hopjs-re-entering-html
-  "[a-zA-Z_$][.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\([^>]\\|[^/]>\\)")
+  "\\(var[ \t ]*\\)?[a-zA-Z_$][.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\([^>]\\|[^/]>\\)")
 
 ;*---------------------------------------------------------------------*/
 ;*    debugging                                                        */
@@ -366,15 +366,15 @@ usage: (js-return)  -- [RET]"
 	'blank)
        ((looking-at "<[^>]*/>")
 	'tag)
-       ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>$")
+       ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>;?$")
 	'tag)
        ((looking-at "<[^>/ ]*\\(>[ \t]*$\\| \\)")
 	'otag)
-       ((looking-at "</[^>]*>$")
+       ((looking-at "</[^>]*>;?$")
 	'ctag)
        ((looking-at "[$~]{")
 	'hop)
-       ((looking-at "[^<>]+=[^<>]+/>$")
+       ((looking-at "[^<>]+=[^<>]+/>;?$")
 	(if (memq (progn (previous-line) (beginning-of-line) (hopjs-html-line-type))
 		  '(blank attr 'otag))
 	    'otag

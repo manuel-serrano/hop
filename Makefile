@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Aug  4 20:39:47 2015 (serrano)                */
+#*    Last change :  Wed Aug 12 11:39:10 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ do: build
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
-                  configure .hoprelease .hgignore
+                  configure .hoprelease .hgignore README.md
 POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
@@ -44,7 +44,7 @@ build:
          $(MAKE) build-in-env)
 
 build-in-env: bindir libdir lib weblets widget nodejs \
-  $(BUILDSPECIFIC) bin share node_modules doc
+  $(BUILDSPECIFIC) bin share node_modules
 
 bindir:
 	mkdir -p bin
@@ -100,6 +100,9 @@ node_modules:
 
 doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
 	$(MAKE) -C doc build
+
+test:
+	$(MAKE) -C test
 
 build-android: lib
 	$(MAKE) -C arch/android build
@@ -165,7 +168,6 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C hophz install && \
 	$(MAKE) -C etc install && \
 	$(MAKE) -C node_modules install
-	$(MAKE) -C doc install
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \

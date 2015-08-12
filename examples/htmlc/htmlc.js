@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun  4 09:19:16 2014                          */
-/*    Last change :  Wed Jul 29 15:15:35 2015 (serrano)                */
+/*    Last change :  Sun Aug  9 06:26:15 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HTML client-side attributes                                      */
@@ -14,27 +14,27 @@
 var hop = require( "hop" );
 
 service htmlc() {
-   return <HTML>
+   return <html>
       ~{ function getTitle() { return "client-side attributes"; } }
       ~{ function getStyle() { return "color: blue"; } }
-      <DIV title="server-side attributes"
+      <div title="server-side attributes"
 	 style="color: green; border: 1px solid green">
 	 server-side attributes
-      </DIV>
-      <DIV title=~{ getTitle() } style=~{ getStyle() }>
+      </div>
+      <div title=~{ getTitle() } style=~{ getStyle() }>
 	 client-side attributes
-      </DIV>
-      <DIV title=~{ "client-side attributes" }
+      </div>
+      <div title=~{ "client-side attributes" }
 	 style=~{ "color: red; border: 1px solid red" }>
 	 client-side attributes
-      </DIV>
-      <IFRAME src=${iframe( "server-side src" )}/>
-      <IFRAME src=~{ ${iframe}( "client-side src" )}/>
-   </HTML>;   
+      </div>
+      <iframe src=${iframe( "server-side src" )}/>
+      <iframe src=~{ ${iframe}( "client-side src" )}/>
+   </html>;   
 }
 
 service iframe( n ) {
-   return <HTML>${n}</HTML>;
+   return <html>${n}</html>;
 }
 
 iframe.path = "/hop/htmlc/iframe";

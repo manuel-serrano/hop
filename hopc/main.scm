@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Jun  4 15:11:43 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Wed Aug 12 16:50:16 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -33,8 +33,10 @@
    (for-each register-eval-srfi! (hop-srfis))
    ;; set the library load path
    (bigloo-library-path-set! (hop-library-path))
-    ;; define the Hop macros
+   ;; define the Hop macros
    (hop-install-expanders!)
+   ;; disable caching
+   (hop-cache-enable-set! #f)
    ;; parse the command line
    (let ((exprs (parse-args args)))
       ;; access file

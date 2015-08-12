@@ -68,11 +68,51 @@ Responses
 ### new hop.HTTPResponseHop( obj, [option] ) ###
 [:@glyphicon glyphicon-tags]
 
+This class is used to respond values to client requests.
+
+Example:
+```hopscript
+service getObj() {
+  return new hop.HTTPResponseHop( { key: "foo", value: [ 1,2 3 ] } );
+```
+
+${ <span class="label label-warning">Note:</span> }
+ In normal situation, it is not necessary to explicitly build the
+`HTTPResponseHop` object as the runtime system automatically constructs
+one when the response of a service is a compound JavaScript object.
+[:@warning]
+
+
 ### hop.HTTPResponseXml ###
 [:@glyphicon glyphicon-tags]
 
+This class is used to deliver XML documents to client. 
+
+Example:
+```hopscript
+service getXml() {
+  return new hop.HTTPResponseXML( <div>a div</div> );
+```
+
+${ <span class="label label-warning">Note:</span> }
+ In normal situation, it is not necessary to explicitly build the
+`HTTPResponseXML` object as the runtime system automatically constructs
+one when the response of a service is an XML fragment.
+[:@warning]
+
+
 ### hop.HTTPResponseString ###
 [:@glyphicon glyphicon-tags]
+
+This class is used to deliver plain character strings to client.
+
+Example:
+```hopscript
+service getXml() {
+  return new hop.HTTPResponseString(
+    "This resource does not exist here!",
+    { startLine: "HTTP/1.0 404 File not found" } ) 
+```
 
 ### new hop.HTTPResponseFile( path, [option] ) ###
 [:@glyphicon glyphicon-tags]

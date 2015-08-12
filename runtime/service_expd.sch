@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Jul 26 07:07:32 2015 (serrano)                */
+;*    Last change :  Sun Aug  9 06:48:07 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -138,6 +138,7 @@
 					     (port (hop-port))
 					     (path ,url))))))))
 	      (,svc (instantiate::hop-service
+		       (ctx 'hop)
 		       (wid ,(if (symbol? wid) `',wid wid))
 		       (id ,id)
 		       (path ,path)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Jul 30 11:01:57 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 09:34:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -274,6 +274,9 @@
       ((: #\' (* (or string_char_dquote (: #\\ all) line_cont)) #\')
        (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
 
+;*       ;; template strings                                           */
+
+      ;; hopscript pragma
       ((: #\# #\:
 	  (: (* digit)
 	     (or letter special)
@@ -281,6 +284,8 @@
        (let* ((len (the-length))
 	      (sym (string->symbol (the-substring 2 len))))
 	  (token (if (eq? sym 'pragma) 'PRAGMA 'HOP) sym len)))
+
+      ;; hopscript escapes
       ("~{"
        (token 'TILDE (the-string) (the-length)))
       ("${"
@@ -290,8 +295,6 @@
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
-;* 	     ((eq? symbol 'undefined)                                  */
-;* 	      (token symbol symbol (the-length)))                      */
 	     ((getprop symbol 'reserved)
 	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))

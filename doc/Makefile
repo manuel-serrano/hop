@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Aug  8 06:41:45 2015 (serrano)                */
+#*    Last change :  Wed Aug 12 19:19:36 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -34,18 +34,20 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js \
   doc.json \
-  api/api.json api/00-hop.md \
+  api/api.json api/00-hop.md api/10-dom.md \
   widget/widget.json \
-  lang/lang.json lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
-  lang/00-syntax.md lang/01-service.md lang/02-worker.md \
+  lang/lang.json lang.md \
+  lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
+  lang/00-syntax.md lang/01-es6.md lang/01-service.md lang/02-worker.md \
   dev/dev.json dev/00-command.md dev/10-edit.md \
   license.md hop.md \
   nodejs.md download.md \
   hss/doc.hss \
 
-API_TARGETS=api.html 00-hop.html hss.html config.html
+API_TARGETS=api.html 00-hop.html 10-dom.html hss.html config.html
 
-LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html
+LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
+  01-es6.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
@@ -91,12 +93,14 @@ install:
 	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
-	chmod $(MODFILE) -R $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/jquery
+	chmod $(MODFILE) $(ALL_TARGETS:%=$(DESTDIR)$(HOPDOCDIR)/%)
+	chmod $(MODFILE) $(JQUERY_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/jquery/%)
+	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
 
 uninstall:
 
@@ -109,24 +113,28 @@ uninstall:
 #*    .md -> .html                                                     */
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
-	$(HOP) $(EFLAGS) --no-server -- $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    .json -> .html                                                   */
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
-	$(HOP) $(EFLAGS) --no-server -- $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
 index.html: hop.md doc.js xml.js
-	$(HOP) $(EFLAGS) --no-server -- $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    dependencies                                                     */
 #*---------------------------------------------------------------------*/
 download.html: license.md
+lang.html: lang.md

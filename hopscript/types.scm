@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jul  8 15:20:24 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 09:13:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -21,6 +21,7 @@
    (use __hopscript_object
 	__hopscript_string
 	__hopscript_stringliteral
+	__hopscript_symbol
 	__hopscript_number
 	__hopscript_date
 	__hopscript_error
@@ -87,6 +88,7 @@
 	      (js-dataview::JsFunction (default (class-nil JsFunction)))
 	      (js-boolean::JsFunction (default (class-nil JsFunction)))
 	      (js-string::JsFunction (default (class-nil JsFunction)))
+	      (js-symbol::JsFunction (default (class-nil JsFunction)))
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
@@ -108,6 +110,7 @@
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
+	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-main (default #f)))
 	   
 	   (class JsArray::JsObject
@@ -147,6 +150,9 @@
 
 	   (class JsString::JsObject
 	      (val::JsStringLiteral read-only))
+
+	   (class JsSymbol::JsObject
+	      (val::bstring read-only))
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
@@ -338,6 +344,7 @@
 ;*---------------------------------------------------------------------*/
 (define js-string-undefined (js-string->jsstring "undefined"))
 (define js-string-object (js-string->jsstring "object"))
+(define js-string-symbol (js-string->jsstring "symbol"))
 (define js-string-number (js-string->jsstring "number"))
 (define js-string-boolean (js-string->jsstring "boolean"))
 (define js-string-string (js-string->jsstring "string"))
@@ -352,6 +359,8 @@
    (cond
       ((isa? obj JsFunction)
        js-string-function)
+      ((isa? obj JsSymbol)
+       js-string-symbol)
       ((isa? obj JsObject)
        js-string-object)
       ((or (real? obj) (integer? obj))

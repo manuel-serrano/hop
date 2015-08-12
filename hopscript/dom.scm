@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Aug  6 16:23:12 2015 (serrano)                */
+;*    Last change :  Mon Aug 10 10:15:39 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -68,7 +68,7 @@
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring
-		   (xml->string o (hop-xml-backend))))
+		   (xml->string this (hop-xml-backend))))
 	     0
 	     'toString))
 	 ((getElementsByTagName)
@@ -76,7 +76,7 @@
 	     (lambda (this tag)
 		(js-vector->jsarray
 		   (list->vector
-		      (dom-get-elements-by-tag-name o (js-tostring tag %this)))
+		      (dom-get-elements-by-tag-name this (js-tostring tag %this)))
 		   %this))
 	     1
 	     'getElementsByTagName))
@@ -85,10 +85,22 @@
 	     (lambda (this tag)
 		(js-vector->jsarray
 		   (list->vector
-		      (dom-get-elements-by-class o (js-tostring tag %this)))
+		      (dom-get-elements-by-class this (js-tostring tag %this)))
 		   %this))
 	     1
 	     'getElementsByClassName))
+	 ((appendChild)
+	  (js-make-function %this
+	     (lambda (this child)
+		(dom-append-child! this child))
+	     1
+	     'appendChild))
+	 ((removeChild)
+	  (js-make-function %this
+	     (lambda (this child)
+		(dom-remove-child! this child))
+	     1
+	     'removeChild))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((c (memq (symbol->keyword pname) attributes)))
@@ -136,6 +148,10 @@
       ((parentNode)
        (with-access::xml-element o (parent)
 	  parent))
+      ((nextSibling)
+       (dom-next-sibling o))
+      ((previousSibling)
+       (dom-previous-sibling o))
       ((childNodes)
        (with-access::xml-markup o (body)
 	  (js-vector->jsarray

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Jul 27 10:42:36 2015 (serrano)                */
+/*    Last change :  Mon Aug 10 16:55:01 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -876,7 +876,7 @@ function hop_bytearray_to_obj( s, extension ) {
 
       hd.__hop_car = read_item();
       hd.__hop_cdr = read_item();
-
+      
       return res;
    }
 
@@ -1062,9 +1062,17 @@ function hop_bytearray_to_obj( s, extension ) {
 
    function read_procedure() {
       var svc = read_item();
-      var rsc = s.resource ? svc.resource : "/hop";
-      return eval( sc_format( svc.javascript, svc.path, rsc ) );
-			     
+
+      if( svc == undefined ) {
+	 return undefined;
+      } else {
+	 var rsc = svc.resource ? svc.resource : "/hop";
+	 if( svc.javascript) {
+	    return eval( sc_format( svc.javascript, svc.path, rsc ) );
+	 } else {
+	    return undefined;
+	 }
+      }
    }
    
    function read_item() {

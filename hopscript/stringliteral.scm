@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jul 17 10:03:30 2015 (serrano)                */
+;*    Last change :  Sun Aug  9 06:49:28 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -41,7 +41,10 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsStringLiteral
    js-jsstring->string
-   js-string->jsstring)
+   (lambda (o %this)
+      (if (eq? %this 'hop)
+	  o
+	  (js-string->jsstring o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ::JsStringLiteral ...                               */

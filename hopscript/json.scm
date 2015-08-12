@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Jun 24 10:23:04 2015 (serrano)                */
+;*    Last change :  Wed Aug 12 08:57:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -310,6 +310,8 @@
 		(js-string->jsstring "false"))
 	       ((eq? value (js-undefined))
 		value)
+	       ((isa? value JsSymbol)
+		(js-string->jsstring "undefined"))
 	       (else
 		(set! gap (string-append gap indent))
 		(cond

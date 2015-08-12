@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Fri Feb 21 13:37:23 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Wed Aug 12 11:17:04 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -81,11 +81,13 @@
 ;*---------------------------------------------------------------------*/
 (define (%cache-disk-new c::cache-disk)
    (with-access::cache-disk c (path clear map %table max-entries register)
-      ;; cleanup the cache directory when configured
-      (when clear (delete-path path))
       ;; create the new directory if it does not exist
-      (unless (or (directory? path) (make-directories path))
-	 (error "instantiate::cache" "Can't create directory" path))
+      (cond
+	 ((directory? path)
+	  ;; cleanup the cache directory when configured
+	  (when clear (for-each delete-path (directory->path-list path))))
+	 ((not (make-directories path))
+	  (error "instantiate::cache" "Can't create directory" path)))
       (set! %table (make-hashtable (*fx 4 max-entries)))
       (when register (set! *all-caches* (cons c *all-caches*)))
       ;; the name of the cache map path
