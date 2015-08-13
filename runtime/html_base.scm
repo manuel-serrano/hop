@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Thu Aug 13 19:17:22 2015 (serrano)                */
+;*    Last change :  Thu Aug 13 19:59:13 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -144,6 +144,7 @@
 (define-xml-element <CODE>)
 (define-xml xml-empty-element #t <COL>)
 (define-xml-element <COLGROUP>)
+(define-xml-element <DATALIST>)
 (define-xml-element <DD>)
 (define-xml-element <DEL>)
 (define-xml-element <DFN>)
