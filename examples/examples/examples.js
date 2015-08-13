@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Thu Jul 30 17:07:13 2015 (serrano)                */
+/*    Last change :  Thu Aug 13 14:35:55 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -48,7 +48,7 @@ service examples() {
    var title = <SPAN> {};
    var description = <SPAN> { class: "description" };
    var tags = <SPAN> {};
-   var doc = <DIV> {};
+   var docn = <DIV> {};
    var sources = <DIV> {};
    var consoles = <DIV> { class: "consoles" };
    var stitle = <SPAN> {};
@@ -129,12 +129,12 @@ service examples() {
 				 ${url}.href = ${o.url};
 				 ${description}.innerHTML = ${o.description};
 				 ${tags}.innerHTML = ${o.tags.join( ", " )};
-				 ${doc}.innerHTML = "";
+				 ${docn}.innerHTML = "";
 
 				 // get the documentation
 				 ${examplesDoc}( ${o} )
-				    .post( function( doc ) {
-				       ${doc}.appendChild( doc );
+				    .post( function( n ) {
+				       ${docn}.appendChild( n );
 				    } );
 
 				 var el = document.getElementById( "example" );
@@ -253,7 +253,7 @@ service examples() {
 		     },
 		     <DIV> {
 			class: "panel-body",
-			doc,
+			docn,
 		     }
 		  },
 		  sources,

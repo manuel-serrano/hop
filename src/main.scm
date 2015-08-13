@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jul 30 10:25:14 2015 (serrano)                */
+;*    Last change :  Thu Aug 13 14:59:31 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -86,10 +86,9 @@
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
 	 ;; js rc load
-	 (when (hop-javascript)
-	    (set! jsworker (javascript-init args files exprsjs)))
-	 ;; now the RC is read, close user creation
-	 (users-close!)
+	 (if (hop-javascript)
+	     (set! jsworker (javascript-init args files exprsjs))
+	     (users-close!))
 	 ;; when debugging, init the debugger runtime
 	 (when (>=fx (bigloo-debug) 1)
 	    (hop-debug-init! (hop-client-output-port)))
@@ -231,6 +230,10 @@
 				  (%js-eval ip 'eval %global
 				     (js-undefined) %global))))
 		  exprs))))
+      ;; close user registration
+      (js-worker-push-thunk! %worker "cmdline"
+	 (lambda ()
+	    (users-close!)))
       ;; return the worker for the main loop to join
       %worker))
 

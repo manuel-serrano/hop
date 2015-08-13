@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Aug 12 11:20:01 2015 (serrano)                */
+;*    Last change :  Thu Aug 13 14:57:04 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -588,7 +588,9 @@
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
    (if (string? rc-file)
-       (%hop-load-rc rc-file)
+       (if (member (suffix rc-file) '("hop" "scm"))
+	   (%hop-load-rc rc-file)
+	   rc-file)
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
 	      (%hop-load-rc path)

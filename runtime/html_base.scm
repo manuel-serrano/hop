@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Dec 17 17:31:56 2014 (serrano)                */
-;*    Copyright   :  2010-14 Manuel Serrano                            */
+;*    Last change :  Thu Aug 13 19:17:22 2015 (serrano)                */
+;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -44,6 +44,7 @@
 	    (<CODE> . ::obj)
 	    (<COL> . ::obj)
 	    (<COLGROUP> . ::obj)
+	    (<DATALIST> . ::obj)
 	    (<DD> . ::obj)
 	    (<DEL> . ::obj)
 	    (<DFN> . ::obj)

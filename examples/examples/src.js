@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Wed Jul 29 18:03:31 2015 (serrano)                */
+/*    Last change :  Thu Aug 13 14:37:28 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -29,6 +29,9 @@ service examplesSrc( path ) {
 	    lbegin = 11;
 	 } else if( path.match( /[.]json$/ ) ) {
 	    lbegin = 0;
+	 } else if( path.match( /[.]html$/ ) ) {
+	    lbegin = 0;
+	    fontify = fontifier.xml;
 	 } else if( path.match( /[.]hop$/ ) ) {
 	    fontify = fontifier.hop;
 	    lbegin = 0;

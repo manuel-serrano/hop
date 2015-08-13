@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Aug 10 09:57:10 2015 (serrano)                */
+#*    Last change :  Thu Aug 13 15:07:51 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -77,7 +77,7 @@ POPULATION = Makefile \
   authentication/authentication.js authentication/example.json \
   authentication/doc.md\
   authentication2/authentication2.js authentication2/example.json \
-  authentication2/passwd.hop authentication2/passwd.json \
+  authentication2/passwd.hop authentication2/passwd.js \
   authentication2/remote.js \
   image/image.js image/example.json \
   pair/pair.js pair/example.json \

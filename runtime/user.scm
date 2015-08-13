@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jul  3 11:18:58 2015 (serrano)                */
+;*    Last change :  Thu Aug 13 15:02:09 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -146,34 +146,41 @@
 	    (else
 	     (case (car a)
 		((:groups)
-		 (if (not (and (list? (cadr a)) (every symbol? (cadr a))))
-		     (error "add-user!" "Illegal group" (cadr a))
-		     (set! g (cadr a))))
+		 (when (cadr a)
+		    (if (not (and (list? (cadr a)) (every symbol? (cadr a))))
+			(error "add-user!" "Illegal group" (cadr a))
+			(set! g (cadr a)))))
 		((:password)
-		 (if (not (string? (cadr a)))
-		     (error "add-user!" "Illegal password" (cadr a))
-		     (set! p (cadr a))))
+		 (when (cadr a)
+		    (if (not (string? (cadr a)))
+			(error "add-user!" "Illegal password" (cadr a))
+			(set! p (cadr a)))))
 		((:services)
-		 (if (not (or (eq? (cadr a) '*)
-			      (and (list? (cadr a)) (every symbol? (cadr a)))))
-		     (error "add-user!" "Illegal services" (cadr a))
-		     (unless (eq? s '*)
-			(set! s (cadr a)))))
+		 (when (cadr a)
+		    (if (not (or (eq? (cadr a) '*)
+				 (and (list? (cadr a)) (every symbol? (cadr a)))))
+			(error "add-user!" "Illegal services" (cadr a))
+			(unless (eq? s '*)
+			   (set! s (cadr a))))))
 		((:directories)
-		 (unless (eq? d '*)
-		    (cond
-		       ((eq? (cadr a) '*)
-			(set! d '*))
-		       ((and (list? (cadr a)) (every string? (cadr a)))
-			(set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
-		       (else
-			(error "add-user!" "Illegal directories" (cadr a))))))
+		 (when (cadr a)
+		    (unless (eq? d '*)
+		       (cond
+			  ((eq? (cadr a) '*)
+			   (set! d '*))
+			  ((and (list? (cadr a)) (every string? (cadr a)))
+			   (set! d (append (map file-name-unix-canonicalize (cadr a)) d)))
+			  (else
+			   (error "add-user!" "Illegal directories" (cadr a)))))))
 		((:preferences)
-		 (set! c (append c (cadr a))))
+		 (when (cadr a)
+		    (set! c (append c (cadr a)))))
 		((:preferences-filename)
-		 (set! cname (cadr a)))
+		 (when (cadr a)
+		    (set! cname (cadr a))))
 		((:uuid)
-		 (set! u (cadr a)))
+		 (when (cadr a)
+		    (set! u (cadr a))))
 		(else
 		 (error "add-user!" "Illegal argument" args)))
 	     (loop (cddr a)))))))

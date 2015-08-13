@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Aug  5 07:58:26 2015 (serrano)                */
+/*    Last change :  Thu Aug 13 13:18:26 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic HSS example                                                */
@@ -19,7 +19,7 @@ service hss() {
      ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(
 	 function( i ) {
 	    return <div class=${"div" + i}>${i}</div>;
-	 } )
+	 } )}
    </html>;
 }
 

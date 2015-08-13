@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Aug 10 14:34:28 2015 (serrano)                */
+;*    Last change :  Thu Aug 13 13:16:25 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -885,7 +885,6 @@
 ;*    parse-html ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (parse-html ip clen)
-   (tprint "PARSE-HTML ip=" ip)
    (html-parse ip
       :content-length clen
       :procedure (lambda (tag attributes body)
