@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jul 24 15:03:08 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 16:03:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -469,7 +469,7 @@
 		  mod)))))
 
    (define (load-module-html)
-      (with-trace 'require "require@load-module-js"
+      (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
 	       (let ((hopscript (nodejs-compile filename))
@@ -488,9 +488,9 @@
 			(with-access::WorkerHopThread worker (module-cache %this)
 			   (js-delete! module-cache filename #f %this))
 			(raise e))
+		     ;; exports the HTML value
 		     (js-put! mod 'exports (hopscript %this this scope mod)
 			#f %this))
-		  ;; exports the HTML value
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))

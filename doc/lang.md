@@ -8,7 +8,8 @@ with this language.
   * HopScript also support some [ECMAScript 6][es6] features:
     * arrow functions.
     * `let` and `const` bindings.
-    * Symbols
+    * Symbols.
+    * Template strings.
   * HopScript supports most [Nodejs][nodejs] APIs (see Section
   [Nodejs](nodejs.html))
     

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Wed Dec 31 09:06:20 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Fri Aug 14 16:05:58 2015 (serrano)                */
+;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/

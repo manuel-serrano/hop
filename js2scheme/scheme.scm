@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Aug  8 14:17:13 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 10:09:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -665,18 +665,20 @@
 	 (else val))))
 
 ;*---------------------------------------------------------------------*/
+;*    utf8-index ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (utf8-index str)
+   (let ((len (string-length str)))
+      (let loop ((i 0))
+	 (when (<fx i len)
+	    (if (>fx (char->integer (string-ref str i)) 127)
+		i
+		(loop (+fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-string val loc)
-   
-   (define (utf8-index str)
-      (let ((len (string-length str)))
-	 (let loop ((i 0))
-	    (when (<fx i len)
-	       (if (>fx (char->integer (string-ref str i)) 127)
-		   i
-		   (loop (+fx i 1)))))))
-   
    (let ((ui (utf8-index val)))
       (if (not ui)
 	  ;; this is an ascii string
@@ -687,6 +689,32 @@
 	  (epairify loc
 	     `(js-string->jsstring
 		 (string-ascii-sentinel-set! ,val ,ui))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2STemplate ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2STemplate mode return conf)
+   (with-access::J2STemplate this (loc exprs)
+      (epairify loc
+	 `(js-stringlist->jsstring
+	     (list
+		,@(map (lambda (expr)
+			  (if (isa? expr J2SString)
+			      (with-access::J2SString expr (val)
+				 (let ((ui (utf8-index val)))
+				    (if (not ui)
+					;; this is an ascii string
+					`(string-ascii-sentinel-set!
+					    ,val ,(string-length val))
+					;; this is an utf8 string
+					`(string-ascii-sentinel-set!
+					    ,val ,ui))))
+			      (with-access::J2SNode expr (loc)
+				 (epairify loc
+				    `(js-tostring
+					,(j2s-scheme expr mode return conf)
+					%this)))))
+		     exprs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SString ...                                       */

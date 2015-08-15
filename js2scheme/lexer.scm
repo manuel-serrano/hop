@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Aug 12 09:34:00 2015 (serrano)                */
+;*    Last change :  Sat Aug 15 09:23:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -17,6 +17,7 @@
    (include "token.sch")
    
    (export (j2s-lexer)
+	   (j2s-template-lexer)
 	   (j2s-regex-lexer)
 	   (j2s-reserved-id? ::symbol)
 	   (j2s-strict-reserved-id? ::symbol)))
@@ -106,10 +107,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    token-string ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-macro (token-string value offset)
+(define-macro (token-string value offset . tag)
    `(let ((s ,value))
        (if (utf8-string? s)
-	   (make-token 'STRING s (the-coord (the-port) ,offset))
+	   (make-token ,(if (pair? tag) (car tag) ''STRING)
+	      s (the-coord (the-port) ,offset))
 	   (make-token 'BAD (cons "wrong UTF8 string" s) (the-coord (the-port) ,offset)))))
 
 ;*---------------------------------------------------------------------*/
@@ -274,8 +276,10 @@
       ((: #\' (* (or string_char_dquote (: #\\ all) line_cont)) #\')
        (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
 
-;*       ;; template strings                                           */
-
+      ;; template strings
+      (#\`
+       (read/rp j2s-template-grammar (the-port)))
+      
       ;; hopscript pragma
       ((: #\# #\:
 	  (: (* digit)
@@ -361,6 +365,48 @@
 	     (else
 	      (token 'ERROR c 1)))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-template-grammar ...                                         */
+;*---------------------------------------------------------------------*/
+(define j2s-template-grammar
+   (regular-grammar ()
+      ((or (: (* (out "`{")) "`")
+	   (: (* (out "`$")) "`")
+	   (: (* (or (out "`$") (: #\$ (out "`${")))) "`")
+	   (: (* (or (out "`$") (: #\$ (out "`${")))) "$`"))
+       ;; template string no escape
+       (let ((str (the-substring 0 -1)))
+	  (token-string  str (the-length) 'TSTRING)))
+      
+      ((: (* (or (out "`$") (: #\$ (out "${")))) "${")
+       ;; template string with escape sequence
+       (rgc-buffer-unget-char (the-port) (char->integer #\{))
+       (token 'TEMPLATE (the-substring 0 -1) (the-length)))
+      
+      ((: (* (or (out "`$") (: #\$ (out "${")))) "$$")
+       ;; template string with escape, with double $$
+       (let ((str (the-substring 0 -1)))
+	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
+	  (token-string (pregexp-replace "[$][$]" str "$")
+	     (the-length) 'TEMPLATE)))
+      
+      ((: (* (or (out "`$") (: #\$ (out "${")))) "$${")
+       ;; template string with escape, with double $$
+       (let ((str (the-substring 0 -1)))
+	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
+	  (token-string (pregexp-replace "[$][$]" str "$")
+	     (the-length) 'TEMPLATE)))
+      
+      (else
+       (let ((c (the-failure)))
+	  (cond
+	     ((eof-object? c)
+	      (token 'EOF c 0))
+	     ((and (char? c) (char=? c #a000))
+	      (token 'PRAGMA #unspecified 1))
+	     (else
+	      (token 'ERROR c 1)))))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    no-line-terminator ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -577,6 +623,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-lexer)
    j2s-grammar)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-template-lexer ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-template-lexer)
+   j2s-template-grammar)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-regex-lexer ...                                              */

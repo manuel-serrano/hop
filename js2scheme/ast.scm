@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul  3 16:54:32 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 09:50:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -224,7 +224,7 @@
 	   
 	   (final-class J2SNull::J2SLiteral)
 	   (final-class J2SUndefined::J2SLiteral)
-	   
+
 	   (class J2SLiteralValue::J2SLiteral
 	      val)
 	   
@@ -239,6 +239,9 @@
 	   (final-class J2SArray::J2SLiteral
 	      len::int
 	      exprs::pair-nil)
+	   
+	   (final-class J2STemplate::J2SExpr
+	      (exprs::pair read-only))
 	   
 	   (final-class J2SParen::J2SExpr
 	      expr::J2SExpr)
@@ -660,6 +663,7 @@
 (gen-walks J2SForIn lhs obj body)
 (gen-walks J2SWhile test body)
 (gen-walks J2SCase expr body)
+(gen-walks J2STemplate (exprs))
 (gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)
 (gen-walks J2SBinary lhs rhs)

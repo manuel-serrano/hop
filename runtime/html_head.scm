@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Aug  8 14:38:59 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 16:16:36 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -81,8 +81,8 @@
 		      ((xml-unpack (car body))
 		       =>
 		       (lambda (v) (loop (append v (cdr body)))))
-		      ((and (string? (car body))
-			    (not (string-skip (car body) "\n\t ")))
+		      ((let ((v (xml-primitive-value (car body))))
+			  (and (string? v) (not (string-skip v "\n\t "))))
 		       (loop (cdr body)))
 		      ((not (xml-markup-is? (car body) 'head))
 		       (cons (<HEAD>)
@@ -370,7 +370,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
    (define context #f)
 
    (define favico #f)
-   
+
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)

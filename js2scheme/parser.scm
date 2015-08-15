@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Aug  6 12:28:54 2015 (serrano)                */
+;*    Last change :  Sat Aug 15 08:34:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -121,10 +121,10 @@
 	     (cons token *peeked-tokens*))))
    
    (define (peek-token-type)
-      (car (peek-token)))
+      (token-tag (peek-token)))
    
    (define (peek-token-value)
-      (cdr (peek-token)))
+      (token-value (peek-token)))
    
    (define (at-new-line-token?)
       (eq? *previous-token-type* 'NEWLINE))
@@ -166,7 +166,7 @@
 	      (eq? (peek-token-type) 'EOF))
 	  (peek-token))
 	 (else
-	  (parse-token-error (format "~a, \"\;\" or newline expected" where)
+	  (parse-token-error (format "~a, \"\;\", or newline expected" where)
 	     (peek-token)))))
    
    (define (eof?)
@@ -1150,7 +1150,18 @@
 		(clazz clazz)
 		(args args)))
 	  (access-or-call (primary) loc #f)))
-   
+
+
+   (define (tag-call-arguments loc)
+      (let* ((exprs (template-expressions))
+	     (strs (filter (lambda (e) (isa? e J2SString)) exprs))
+	     (vals (filter (lambda (e) (not (isa? e J2SString))) exprs)))
+	 (cons (instantiate::J2SArray
+		  (loc loc)
+		  (exprs strs)
+		  (len (length strs)))
+	    vals)))
+	      
    (define (access-or-call expr loc call-allowed?)
       (let loop ((expr expr))
 	 (case (peek-token-type)
@@ -1188,6 +1199,11 @@
 			  (fun expr)
 			  (args (arguments))))
 		 expr))
+	    ((TSTRING TEMPLATE)
+	     (instantiate::J2SCall
+		(loc loc)
+		(fun expr)
+		(args (tag-call-arguments loc))))
 	    (else
 	     expr))))
    
@@ -1309,7 +1325,42 @@
 	    (expr (expression #f))
 	    (ignore-too (consume! 'RBRACE)))
 	 expr))
+
+   (define (template-expressions::pair)
+
+      (define (block->expresion stmt)
+	 (when (isa? stmt J2SBlock)
+	    (with-access::J2SBlock stmt (nodes)
+	       (when (and (pair? nodes) (null? (cdr nodes)))
+		  (when (isa? (car nodes) J2SStmtExpr)
+		     (with-access::J2SStmtExpr (car nodes) (expr)
+			expr))))))
+      
+      (let loop ((tok (consume-any!))
+		 (vals '()))
+	 (let ((val (instantiate::J2SString
+		       (loc (token-loc tok))
+		       (val (token-value tok)))))
+	    (case (token-tag tok)
+	       ((TSTRING)
+		(reverse! (cons val vals)))
+	       ((TEMPLATE)
+		(let* ((stmt (statement))
+		       (expr (block->expresion stmt)))
+		   (if expr
+		       (loop (read/rp (j2s-template-lexer) input-port)
+			  (cons* expr val vals))
+		       (parse-node-error "Expression expected" stmt))))
+	       (else
+		(parse-token-error
+		   (format "Invalid template string (~a)" (token-tag tok))
+		   tok))))))
    
+   (define (template-expression)
+      (instantiate::J2STemplate
+	 (loc (token-loc (peek-token)))
+	 (exprs (template-expressions))))
+      
    (define (primary)
       (case (peek-token-type)
 	 ((PRAGMA)
@@ -1387,8 +1438,8 @@
 	     (instantiate::J2SOctalNumber
 		(loc (token-loc token))
 		(val (token-value token)))))
-	 ((STRING)
-	  (let ((token (consume-token! 'STRING)))
+	 ((STRING TSTRING)
+	  (let ((token (consume-any!)))
 	     (instantiate::J2SString
 		(escape '())
 		(loc (token-loc token))
@@ -1405,6 +1456,8 @@
 		(escape '(escape octal))
 		(loc (token-loc token))
 		(val (token-value token)))))
+	 ((TEMPLATE)
+	  (template-expression))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file" (peek-token)))
 	 ((/ /=)

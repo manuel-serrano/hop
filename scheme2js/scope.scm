@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/scope.scm               */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/scope.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Mon Aug 19 08:10:21 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Aug 14 06:38:12 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript scopes                                                */
 ;*=====================================================================*/
@@ -960,7 +960,8 @@
 ;* 	    "  other-vars=" (map node->list other-vars) "\n"           */
 ;* 	    "  scope-vars=" (map node->list scope-vars) "\n"           */
 ;* 	    "  bindings=" (map node->list bindings) "\n"               */
-;* 	    "  body=" (node->list this))                               */
+;* 	    "  body=" (node->list this)                                */
+;* 	    )                                                          */
 	 (cond
 	    ((null? frame-vars)
 	     (default-walk! this))
@@ -1009,6 +1010,7 @@
 			     (operands actuals)))
 		    (mod (duplicate::Module env
 			    (body call))))
+;* 		(tprint "ACTUALS=" (map node->list actuals))           */
 		(captured-vars mod)
 		call))
 	    (else

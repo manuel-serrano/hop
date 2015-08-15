@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Aug  6 12:30:33 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 16:11:12 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -349,16 +349,12 @@
    (regular-grammar (strict tag conf)
       ((+ (in " \t\n\r"))
        (ignore))
-      ((: #\" (* (or (out #\\ #\") (: #\\ all))) #\")
+      ((or (: #\" (* (or (out "~$\\\"") (: #\\ all) (: (in "~$") (out "{")))) #\")
+	   (: #\' (* (or (out "~$\\'") (: #\\ all) (: (in "~$") (out "{")))) #\'))
        (instantiate::J2SString
 	  (escape '())
 	  (loc (the-coord (the-port) (-fx (the-length) 1)))
-	  (val (the-substring 1 (-fx (the-length) 1)))))
-      ((: #\' (* (or (out #\\ #\') (: #\\ all))) #\')
-       (instantiate::J2SString
-	  (escape '())
-	  (loc (the-coord (the-port) (-fx (the-length) 1)))
-	  (val (the-substring 1 (-fx (the-length) 1)))))
+	  (val (the-substring 1 -1))))
       ((: (+ digit) (? (or "%" "px" "cm" "em" "mm" "inch")))
        (if strict
 	   (xml-parse-error (format "Illegal `~a' attribute value" tag)
@@ -383,10 +379,22 @@
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
        (j2s-parser (the-port) (cons* :parser 'tilde-expression conf)))
+      ((or (: "\"~{" (* (or (out #\\ #\") (: #\\ all))) "}\"")
+	   (: "'~{" (* (or (out #\\ #\') (: #\\ all))) "}'"))
+       (let ((str (the-substring 1 -1)))
+	  (call-with-input-string str
+	     (lambda (ip)
+		(j2s-parser ip (cons* :parser 'tilde-expression conf))))))
       ("${"
        (let ((str (the-string)))
 	  (rgc-buffer-insert-substring! (the-port) str 0 2))
        (j2s-parser (the-port) (cons* :parser 'dollar-expression conf)))
+      ((or (: "\"${" (* (or (out #\\ #\") (: #\\ all))) "}\"")
+	   (: "'${" (* (or (out #\\ #\') (: #\\ all))) "}'"))
+       (let ((str (the-substring 1 -1)))
+	  (call-with-input-string str
+	     (lambda (ip)
+		(j2s-parser ip (cons* :parser 'dollar-expression conf))))))
       (else
        (let ((c (the-failure)))
 	  (if (not (eof-object? c))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Aug  2 08:59:50 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 16:17:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1421,7 +1421,7 @@
 	 (apply <HEAD> :idiom "javascript" :context %this
 	    (when (isa? attrs JsObject)
 	       (js-object->keyword-arguments* attrs %this))
-	    nodes))
+	    (filter (lambda (n) (isa? n xml)) nodes)))
       2 'HEAD))
 
 ;*---------------------------------------------------------------------*/

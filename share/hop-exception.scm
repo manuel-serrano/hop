@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Jul 17 14:24:15 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 07:14:24 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -221,11 +221,11 @@
 	    (if (pair? c)
 		(symbol->string (cdr c))
 		"client"))))
-   
+
    (define (frame-klass rest)
       (string-append "hop-exception-frame-"
 	 (frame-type rest)))
-   
+
    (define (js-name s)
       (if (symbol? s)
 	  (symbol->string s)
@@ -233,7 +233,7 @@
 
    (define (js-file f)
       (pregexp-replace "[?]js=.*$" f ""))
-   
+
    (define (<TR:LINE> klass name . src)
       (<TR> :class klass
 	 (<TD> :class "hop-exception-frame-id"
@@ -288,35 +288,35 @@
 		 ((? string?)
 		  (<TR> (<TH> f)))))
 	 stack))
-   
-   (let loop ((l stack)
+
+  '(let loop ((l stack)
 	      (s skip))
-      (cond
-	 ((null? l)
-	  "")
-	 ((= s 0)
-	  (<DIV> :data-hss-class "hop-exception-stack"
-	     :data-idiom ((@ hop_idiom js))
-	     :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
-				  "hop" "all")
-	     (if (string=? ((@ hop_idiom js)) "scheme")
-		 (<BUTTON> "Show JavaScript frames"
-		    :onclick ~(let* ((p this.parentNode)
-				     (c (p.getAttribute "data-debug-mode")))
-				 (if (equal? c "all")
-				     (begin
-					(innerHTML-set! this "Show JavaScript frames")
-					(p.setAttribute "data-debug-mode" "hop"))
-				     (begin
-					(innerHTML-set! this "Hide JavaScript frames")
-					(p.setAttribute "data-debug-mode" "all")))
-				 (stop-event-propagation event))))
-	     (<TABLE> :data-hss-class "hop-exception-stack"
-		:onclick ~(stop-event-propagation event)
-		(<TR> (<TH> "Execution stack:"))
-		(pp-stack l))))
-	 (else
-	  (loop (cdr l) (- s 1))))))
+    (cond
+       ((null? l)
+	"")
+       ((= s 0)
+	(<DIV> :data-hss-class "hop-exception-stack"
+	   :data-idiom ((@ hop_idiom js))
+	   :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
+				"hop" "all")
+	   (if (string=? ((@ hop_idiom js)) "scheme")
+	       (<BUTTON> "Show JavaScript frames"
+		  :onclick ~(let* ((p this.parentNode)
+				   (c (p.getAttribute "data-debug-mode")))
+			       (if (equal? c "all")
+				   (begin
+				      (innerHTML-set! this "Show JavaScript frames")
+				      (p.setAttribute "data-debug-mode" "hop"))
+				   (begin
+				      (innerHTML-set! this "Hide JavaScript frames")
+				      (p.setAttribute "data-debug-mode" "all")))
+			       (stop-event-propagation event))))
+	   (<TABLE> :data-hss-class "hop-exception-stack"
+	      :onclick ~(stop-event-propagation event)
+	      (<TR> (<TH> "Execution stack:"))
+	      (pp-stack l))))
+       (else
+	(loop (cdr l) (- s 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION> ...                                                  */

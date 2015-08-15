@@ -2,6 +2,6 @@
    "tags": ["html"],
    "files": [ "htmlr.js", "htmlr.html", "htmlr.hss" ],
    "description": "Required HTML",
-   "doc": "This example shows how to write HTML into a required module",
+   "doc": "This example shows how to write HTML into a required module.",
    "level": 1
 }

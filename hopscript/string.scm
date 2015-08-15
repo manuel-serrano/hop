@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jul 30 12:10:49 2015 (serrano)                */
+;*    Last change :  Sat Aug 15 07:09:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -136,9 +136,23 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t)
+
+	 ;; raw
+	 ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
+	 (define (js-string-raw this . a)
+	    (js-stringlist->jsstring
+	       (map! (lambda (v) (js-tostring v %this) a))))
+		    
+	 (js-bind! %this js-string 'raw
+	    :value (js-make-function %this
+		      js-string-raw 1 'raw)
+	    :writable #t
+	    :enumerable #f
+	    :configurable #t)
 	 
 	 ;; prototype properties
 	 (init-builtin-string-prototype! %this js-string js-string-prototype)
+	 
 	 ;; bind String in the global object
 	 (js-bind! %this %this 'String
 	    :configurable #f :enumerable #f :value js-string)

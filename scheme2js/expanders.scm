@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/expanders.scm           */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/expanders.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 10:52:12 2011                          */
-;*    Last change :  Fri Aug  2 17:32:43 2013 (serrano)                */
-;*    Copyright   :  2007011-13 Florian Loitsch, Manuel Serrano        */
+;*    Last change :  Fri Aug 14 06:13:47 2015 (serrano)                */
+;*    Copyright   :  2007011-15 Florian Loitsch, Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -381,7 +381,7 @@
 ;*    multiple-value-bind-expander ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Since JS is not tail-rec, use a weird expansion to evaluate      */
-;*    the body fo the form in a tail-rec context.                      */
+;*    the body of the form in a tail-rec context.                      */
 ;*---------------------------------------------------------------------*/
 (define (multiple-value-bind-expander x e)
    (match-case x

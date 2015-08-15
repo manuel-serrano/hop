@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sun Aug  9 06:59:06 2015 (serrano)                */
+;*    Last change :  Fri Aug 14 14:44:19 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -25,12 +25,23 @@
 ;*    hopjs-mode-hook ...                                              */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-mode-hook ()
+  ;; syntax
+  (hopjs-syntax)
   ;; key bindings
   (hopjs-key-bindings)
   ;; font lock
   (font-lock-add-keywords nil hopjs-font-lock-keywords)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-syntax ...                                                 */
+;*---------------------------------------------------------------------*/
+(defun hopjs-syntax ()
+  "Syntax table for `hopjs-mode'."
+  (let ((table (syntax-table)))
+    (modify-syntax-entry ?\` "\"    " table)
+    table))
 
 ;*---------------------------------------------------------------------*/
 ;*    font-lock ...                                                    */
@@ -326,7 +337,7 @@ usage: (js-return)  -- [RET]"
 	(current-column))
        ((looking-at "<[a-zA-Z_$][.0-9a-zA-Z_$]*[ ]+\\([^>]\\)[^>]*$")
 	;; open tag + attribute
-	(goto-char (match-beginning (if ending 0 1)))
+	(goto-char (match-beginning 0))
 	(hopjs-debug "hopjs-html-previous-line-indent: open + attr")
 	(current-column))
        ((looking-at "[^<>]+=[^<>]+/>$")

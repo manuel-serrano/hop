@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Fri Oct 31 20:43:35 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Aug 14 06:27:42 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -650,7 +650,7 @@
 		      "  ~e" ;; declared-vars
 		      "  ~e" ;; body
 		      (each (lambda (var)
-			       "var ~a;\n"
+			       "/* v2 */ var ~a;\n"
 			       (with-access::Named-Var var (js-id) js-id))
 			 declared-vars)
 		      (walk body p #t #f))))))))
@@ -678,7 +678,7 @@
 	  (?@ stmt? "~@;\n") ;; should never happen.
 	  "/* WITH */ let"))
       (else
-       (display "/* WITH */" p)
+       (display "/* WITH */ " p)
        (with-access::Frame-alloc this (vars)
 	  (for-each (lambda (v)
 		       (with-access::Named-Var v (js-id)
