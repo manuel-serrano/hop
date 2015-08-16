@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Aug  6 14:45:50 2015 (serrano)                */
+#*    Last change :  Sun Aug 16 08:22:46 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -18,8 +18,8 @@
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile Makefile.weblet \
-                  Makefile.mercurial Makefile.version Makefile.library \
+POPULATION	= Makefile Makefile.weblet Makefile.library \
+                  Makefile.mercurial Makefile.git Makefile.version \
 		  Makefile.hopconfig.in \
                   configure.scm.in libraries.sch.in \
                   configure_noarch.sch.in configure_macosx.sch.in \

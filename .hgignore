@@ -88,3 +88,5 @@ hopscheme/hop-runtime.sch
 ^doc/lib/bootstrap/css/bootstrap.css.map$
 ^doc/license.md$
 ^doc/[^/]+.html$
+^\.git/
+^examples.old/
