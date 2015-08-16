@@ -1,0 +1,105 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    .../prgm/project/hop/2.4.x/arch/debian/debian/postinst.in        */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Tue Dec 18 10:55:54 2007                          */
+#*    Last change :  Fri Jul 20 07:06:26 2012 (serrano)                */
+#*    Copyright   :  2007-12 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    Add the HOP desktop entries from the configuration files         */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    maemo specifics                                                  */
+#*---------------------------------------------------------------------*/
+if [ "@DEBIAN@ " = "maemo " ]; then
+  # Where to store the desktop file, usually, this is
+  # /usr/share/applications/hildon
+  #hildondir=`pkg-config osso-af-settings --variable=desktopentrydir`
+  prefixhildondir=@PREFIX@/share/applications/hildon
+  hildondir=/usr/share/applications/hildon
+  
+  #* path="/etc/hildon-desktop"                                          */
+  #* home_conf="$path/home.conf"                                         */
+  #* home_entry="[/usr/share/applications/hildon/hop.desktop]"           */
+  
+  # The clock might be wrong and we know that we need to update the icon
+  # cache so we just force it.
+  
+  gtk-update-icon-cache -f /usr/share/icons/hicolor
+  
+  # Now that the icon cache is uptodate, we move the .desktop file into
+  # place.  Doing this only now prevents the Task navigator from
+  # reconstructing the menu before the icon is available.  This trick is
+  # not really necessary when using maemo-select-menu-location (as we do
+  # below), since maemo-select-menu-location will trigger the
+  # reconstructing of the Taks navigator menu as well.
+  
+  mv $hildondir/hop.inactive $hildondir/hop.desktop
+  
+  # Now we are ready to let the user move the entry around, but only if
+  # this is a new install
+  
+  if [ "@MAEMOHASLOCATION@ " = "yes " ]; then
+    oldversion="$2"
+    if [ -z "$oldversion" ]; then
+      maemo-select-menu-location hop.desktop
+    fi
+  fi
+fi
+
+#* echo $home_entry | cat - $home_conf > $path/home_conf.tmp           */
+#* mv $path/home_conf.tmp $home_conf                                   */
+
+#*---------------------------------------------------------------------*/
+#*    ldconfig                                                         */
+#*---------------------------------------------------------------------*/
+search=`grep @HOPPREFIX@ /etc/ld.so.conf`
+
+if [ "$search" != "@HOPPREFIX@/lib" ]; then
+  echo "@HOPPREFIX@/lib" >> /etc/ld.so.conf
+fi
+
+ldconfig
+
+#*---------------------------------------------------------------------*/
+#*    Add Hop user                                                     */
+#*---------------------------------------------------------------------*/
+if ! getent passwd | grep -q "^@HOPUSER@:"; then
+  adduser --system --ingroup users --shell /bin/sh hop
+fi
+
+#*---------------------------------------------------------------------*/
+#*    init script                                                      */
+#*---------------------------------------------------------------------*/
+if [ "@DEBIAN@ " = "maemo " ]; then
+  init=true
+else
+  # MS 20 jul 2012, don't understand why ldconfig is not sufficient, it appears,
+  # that it is also needed to adjust LD_LIBRARY_PATH for the init script 
+  # questioning below
+  export LD_LIBRARY_PATH=@HOPPREFIX@/lib:$LD_LIBRARY_PATH
+
+  if @HOPPREFIX@/bin/hop --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
+    init=true
+  else
+    init=false
+  fi
+fi
+
+if [ "$init " = "true " ]; then
+  update-rc.d hop defaults
+  echo "Hop will now be automatically spawned when the machine boots"
+  echo "To run it now, use:"
+  echo "   \"/etc/init.d/hop start\""
+else
+  echo "Note: Hop will not be started automatically on boot."
+  echo ""
+  echo "To spawn it in background on behalf of user @HOPUSER@, issue:"
+  echo "   \"/etc/init.d/hop start\""
+  echo "Edit \"/etc/default/hop\" to change default configuration."
+  echo ""
+  echo "Alternatively, run it with:"
+  echo "    \"hop -v\""
+fi

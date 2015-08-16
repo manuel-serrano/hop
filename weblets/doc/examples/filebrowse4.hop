@@ -1,0 +1,18 @@
+;; an example of INPUT and FILECHOOSER on double tab
+(<HTML>
+    (<HEAD>
+       :include "hop-paned" "hop-file" "hop-window")
+    (<BODY>
+       (<INPUT> :type 'url
+	  :onkeydown
+	  ~(when (= (event-key-code event) 9)
+	      (if (and this.stamp
+		       (< (- event.timeStamp this.stamp) 180))
+		  (window-open :parent document.body
+		     :width 640
+		     :height 480
+		     :src (<FILECHOOSER>
+			     :url "/tmp"
+			     :onopen (alert "FILEBROWSE=" this.value)))
+		  (set! this.stamp event.timeStamp)))
+	  "/tmp")))

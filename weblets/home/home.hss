@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/home/home.hss            */
+/*    serrano/prgm/project/hop/2.3.x/weblets/home/home.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Sep 26 14:30:51 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Fri Jun  1 15:11:23 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -12,11 +12,14 @@
 /*---------------------------------------------------------------------*/
 /*    User configuration                                               */
 /*---------------------------------------------------------------------*/
-$(define font-family "Lucida Grande, Verdana, Lucida, Helvetica, Arial")
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
-$(define background "#e0e0e0")
-$(define border-color "#bbb")
-$(define home-color "#f9f9f9")
+
+$(define bg-color "#DCDAD5")
+$(define bg-color2 (color-lighter bg-color))
+$(define border-color "#8f8a7f")
+$(define notepad-color "#FFF7D1")
+$(define notepad-color2 "#F1DF8C")
+
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
 $(define pagearea-color "#fff")
@@ -57,9 +60,12 @@ $(define button-padding "padding-left: 5px;
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
-  background-color: $background;
-  font-family: $font-family;
-  overflow: scroll;
+  background-color: $bg-color2;
+  font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
+  font-size: 11pt;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
 }
 
 img.logo {
@@ -73,7 +79,8 @@ tt {
 }
 
 h1 {
-  font-size: 100%;
+  font-size: 110%;
+  text-shadow: #aaa 2px 2px 2px;
 }
 
 h2 {
@@ -82,6 +89,129 @@ h2 {
 
 table td {
   text-align: left;
+}
+
+a {
+  text-decoration: none;
+  color: #00a;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/*---------------------------------------------------------------------*/
+/*    title and main element                                           */
+/*---------------------------------------------------------------------*/
+div#title {
+  width: 100%;
+  font-size: 150%;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
+}
+
+div#body {
+  background: $bg-color2;
+  background-image: -moz-linear-gradient( -90deg, $bg-color, $bg-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($bg-color), to($bg-color2));
+  min-width: 45em;
+  padding-left: 4em;
+  padding-right: 4em;
+  padding-top: 4ex;
+}
+
+table#home {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100em;
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 4px 4px 4px #666;
+}
+
+table#acm-award {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/*---------------------------------------------------------------------*/
+/*    notepad                                                          */
+/*---------------------------------------------------------------------*/
+notepad {
+  font-size: 100%;
+  width: 100%;
+}
+
+notepad-tabs {
+  background-color: transparent;
+  padding: 0;
+  padding-left: 10px;
+  height: 22px;
+  vertical-align: bottom;
+}
+
+nptab {
+  font-size: small;
+  border-color: $border-color;
+  border-bottom-color: $notepad-color;
+  margin: 0 4px 0 0;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  top: 0;
+}
+
+nptab img {
+  vertical-align: middle;
+  padding-right: 2px;
+}
+
+nptab-active {
+  background-color: $notepad-color;
+  border-bottom-color: $notepad-color;
+  background-image: -moz-linear-gradient( -90deg, $notepad-color, $notepad-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, $notepad-color, to($notepad-color2));
+  color: black;
+  text-shadow: #999 2px 2px 2px;
+}
+
+nptab-inactive:hover {
+  color: black;
+  text-shadow: #999 2px 2px 2px;
+}
+
+nptab-body {
+  border-color: $border-color;
+  background: transparent;
+}
+
+notepad-body {
+  border: 1px solid $border-color;
+  padding: 10px;
+  background-color: $notepad-color;
+  background-image: -moz-linear-gradient( -90deg, $notepad-color, $notepad-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($notepad-color), to($notepad-color2));
+}
+
+div.hop-tab {
+  background: white;
+  background-repeat: no-repeat;
+  background-position: 50% 250px;
+  background-image: url( "etc/icons/logo-bg-128x128.png" );
+  min-width: 200px;
+  min-height: 400px;
+  margin-top: 0px;
+  border: 1px solid $(color-lighter border-color 2);
+  border-radius: 3px;
+  padding: 4px;
+  font-size: 11pt;
+  height: 100%;
 }
 
 /*--- forms -----------------------------------------------------------*/
@@ -120,23 +250,6 @@ input[type=radio]#share {
   color: red;
 }
 
-table.home {
-  width: 48em;
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid $border-color;
-  background-color: white;
-}
-
-div#title {
-  width: 40em;
-  font-size: x-large;
-  font-weight: bold;
-  border-bottom: 1px solid $border-color;
-  margin-bottom: 20px;
-  padding-bottom: 1px;
-}
-
 div#result {
   text-align: center;
   width: 40em;
@@ -147,66 +260,6 @@ div#result {
   margin-top: 10px;
   padding-top: 10px;
 }  
-
-/*--- notepad ---------------------------------------------------------*/
-notepad-tabs {
-  background-color: transparent;
-  padding: 0;
-  padding-left: 10px;
-  margin-left: 10px;
-  margin-right: 0;
-  height: 22px;
-  vertical-align: bottom;
-}
-
-nptab {
-  font-size: small;
-  border-color: $border-color;
-  border-bottom: 0;
-  margin: 0 4px 0 0;
-  padding-top: 1px;
-}
-
-nptab img {
-  vertical-align: bottom;
-  padding-right: 2px;
-}
-
-nptab-active {
-  background-color: $home-color;
-  border-bottom-color: $home-color;
-  color: #8381de;
-}
-
-nptab-body {
-  border-color: $border-color;
-}
-
-notepad-body {
-  border: 1px solid $border-color;
-  padding: 10px;
-  font-size: small;
-  background-color: $home-color;
-}
-
-/*--- doc -------------------------------------------------------------*/
-table.hop-doc {
-  font-size: small;
-}
-
-table.hop-doc th {
-  vertical-align: top;
-}
-  
-table.hop-doc th:after {
-  content: ":";
-}
-
-table.hop-doc td {
-  font-family: monospace;
-  font-size: large;
-  vertical-align: bottom;
-}
 
 /*---------------------------------------------------------------------*/
 /*    Misc                                                             */
@@ -243,7 +296,7 @@ div.motd {
 
 span.feature {
   color: #ff6c00;
-  font-style: italic;
+/*   font-style: italic;                                               */
 }
 
 /*---------------------------------------------------------------------*/
@@ -268,7 +321,7 @@ hr {
 /*--- iframe ----------------------------------------------------------*/
 iframe.weblets {
   width: 98%;
-  height: 500px;
+  height: 600px;
   overflow: auto;
   border: 1px solid $border-color;
   margin: 5px;
@@ -276,43 +329,30 @@ iframe.weblets {
 }
 
 /*---------------------------------------------------------------------*/
-/*    Presentation                                                     */
-/*---------------------------------------------------------------------*/
-div.hop-tab {
-  background: white;
-  background-repeat: no-repeat;
-  background-position: 50% 250px;
-  background-image: url( "etc/icons/logo-bg-128x128.png" );
-  min-width: 200px;
-  min-height: 200px;
-  margin-top: 5px;
-  border: 1px solid $border-color;
-  padding: 2px;
-}
-
-/*---------------------------------------------------------------------*/
 /*    Demo                                                             */
 /*---------------------------------------------------------------------*/
-$(hop-hss-type! "demo" "div.demo")
-$(define demo-background "#496bce")
+$(define demo-background "#FFDA61")
 $(define toolbar-opacity "0.9")
-$(define toolbar-background (color-lighter "#496bce"))
+$(define toolbar-background (color-lighter demo-background))
 
-demo {
-  width: 800px;
-  height: 600px;
-  background-color: #496bce;
+nptab-body#demo div.hop-tab {
+  padding: 0;
+}
+
+div.demo {
+  width: 100%;
+  height: 700px;
+  background-color: $demo-background;
   overflow: auto;
-  border: 2px double #aaa;
   z-index: 1001;
 }
   
-demo div.toolbar {
+div.demo div.toolbar {
   position: relative;
   left: 0px;
   top: 50px;
   width: 50px;
-  height: 500px;
+  height: 550px;
   background: $toolbar-background;
   border-right: 1px outset #ccc;
   border-top: 1px outset #ccc;
@@ -348,13 +388,129 @@ span.icon {
 /*---------------------------------------------------------------------*/
 /*    Download                                                         */
 /*---------------------------------------------------------------------*/
+$(define download-color "#e6ffbd")
+$(define download-src-color "#feffb4")
+$(define download-vm-color "#bdc5ff")
+
+/* logos and sections */
+img.download-logo {
+  padding-right: 4px;
+  float: left;
+  width: 32px;
+  height: 32px;
+}
+
+/* download button */
+a.download-button {
+  color: black;
+}
+
+a.download-button:hover {
+  text-decoration: none;
+}
+  
+div.download-button {
+  display: inline-block;
+  text-decoration: none;
+  padding: 0 8px 0 8px;
+  font-size: 90%;
+  width: 14em;
+  border: 1px solid #ddd;
+  border-bottom-color: #777;
+  border-right-color: #777;
+  border-radius: 4px;
+}
+
+a.download-button:hover div.download-button {
+  text-decoration: none;
+  text-shadow: #aaa 2px 2px 2px;
+}
+
+img.download-button {
+  margin-right: 8px;
+  border: 0;
+}
+
+table.download-button {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th.download-button,
+td.download-button {
+  white-space: nowrap;
+  text-align: left;
+}  
+
+/* stable source */
+a.download-stable div.download-button {
+  background: $download-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-color 2), $download-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-color 2)), to( $download-color ));
+}
+
+a.download-stable:hover div.download-button {
+  box-shadow: 0px 0px 8px $(color-darker download-color 4);
+}
+  
+a.download-stable td.download-button {
+  color: $(color-darker download-color 8);
+}
+
+/* vm */
+a.download-vm div.download-button {
+  background: $download-vm-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-vm-color 2), $download-vm-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-vm-color 2)), to( $download-vm-color ));
+}
+
+a.download-vm:hover div.download-button {
+  box-shadow: 0px 0px 8px $(color-darker download-vm-color 4);
+}
+  
+a.download-vm td.download-button {
+  color: $(color-darker download-vm-color 8);
+}
+
+/* devel source */
+a.download-src div.download-button {
+  background: $download-color;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter download-src-color 2), $download-src-color );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter download-src-color 2)), to( $download-src-color ));
+}
+
+a.download-devel:hover div.download-button,
+a.download-src:hover div.download-button {
+  box-shadow: 0px 0px 8px $(color-darker download-src-color 4);
+}
+
+a.download-devel td.download-button {
+  color: $(color-darker download-src-color 7);
+}
+
+/* download-source */
+table#download-source {
+  margin-left: 1em;
+}
+
+td.download-source {
+  width: 16em;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* download-android */
+#download-android,
+#download-maemo {
+  border: 1px solid #ccc;
+}
+
 div.os-download {
   width: 100%;
   padding-top: 0.5ex;
 }
 
 div.download-header {
-  text-decoration: underline;
   font-weight: bold;
   padding-bottom: 1ex;
 }
@@ -368,14 +524,26 @@ table.os-download {
 
 table.os-download-stable {
   width: 50em;
-  background: #daffbd;
+  margin-bottom: 5ex;
+  background: #e6ffbd;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#e6ffbd"), #e6ffbd );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#e6ffbd")), to( #e6ffbd ));
+  box-shadow: 3px 3px 3px #666;
+}
+
+table.os-download-maemo {
+  width: 35em;
+  background: #fff6ee;
   margin-bottom: 5ex;
 }
 
 table.os-download-unstable {
   width: 35em;
-  background: #ffe;
   margin-bottom: 2ex;
+  background: #ffe;
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#feffb4"), #feffb4 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#feffb4")), to( #feffb4 ));
+  box-shadow: 3px 3px 3px #666;
 }
 
 table.os-download td.type {
@@ -409,6 +577,22 @@ table.download span.stable {
 table.download span.old {
   font-weight: bold;
   color: #ff8010;
+}
+
+nptab-body#download pre,
+nptab-body#community pre {
+  font-size: 75%;
+}
+
+#license {
+  background: #ffe;
+  border: 1px solid #999;
+  margin-left: 2em;
+}
+
+#download pre,
+#community pre {
+  max-width: 50em;
 }
 
 /*---------------------------------------------------------------------*/
@@ -445,7 +629,9 @@ div.app {
   color: #777;
 }
 
-div.app a.iddn {
+div.app span.iddn {
+  margin-left: auto;
+  margin-right: auto;
   font-family: $typewriter;
   color: #777;
   border-top: 1px solid #ccc;
@@ -454,6 +640,104 @@ div.app a.iddn {
   text-decoration: none;
 }
 
-div.app a.iddn:hover {
-  text-decoration: underline;
+div.app span.iddn a.iddn {
+  color: #777;
 }
+
+div.app span.iddn a.iddn:hover {
+  text-decoration: underline;
+  color: #777;
+}
+
+/*---------------------------------------------------------------------*/
+/*    video                                                            */
+/*---------------------------------------------------------------------*/
+nptab-body#video div.hop-tab {
+  border: 0;
+  background: transparent;
+}
+
+div.video {
+  float: left;
+  width: 320px;
+  height: 320px;
+  border: 1px solid white;
+  border-radius: 4px;
+  padding: 10px;
+  background: black;
+  color: white;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+div.video-title {
+  font-weight: bold;
+  font-size: 110%;
+  color: #FFF800;
+}
+
+div.video-legend {
+  font-size: 90%;
+}
+
+div.video-alternate {
+  font-family: $typewriter;
+  font-size: 70%;
+}
+
+div.video a {
+  color: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    doc                                                              */
+/*---------------------------------------------------------------------*/
+a.doc-article {
+  color: black;
+  background-color: #ffe;
+}
+
+div.doc-article {
+  box-shadow: 4px 4px 4px #333;
+  border: 1px solid #777;
+  background-color: white;
+  border-radius: 2px;
+  font-size: 80%;
+  width: 12em;
+  height: 10ex;
+  padding: 2px;
+}
+
+div.doc-article-title {
+  text-shadow: #aaa 2px 2px 2px;
+  font-weight: bold;
+  font-size: 110%;
+}
+
+div.doc-article-date {
+  font-size: 85%;
+}
+
+div.doc-article-body {
+  padding-top: 1ex;
+}
+
+table.hop-doc {
+  font-size: small;
+}
+
+table.hop-doc th {
+  vertical-align: top;
+}
+  
+table.hop-doc th:after {
+  content: ":";
+}
+
+table.hop-doc td {
+  font-family: monospace;
+  font-size: large;
+  vertical-align: bottom;
+}
+

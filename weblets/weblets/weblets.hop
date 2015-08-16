@@ -1,12 +1,16 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/weblets/weblets.hop       */
+;*    serrano/prgm/project/hop/2.2.x/weblets/weblets/weblets.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 12 13:33:00 2006                          */
-;*    Last change :  Wed May  6 11:47:59 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 16:51:36 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets distribution weblet.                                 */
+;*    -------------------------------------------------------------    */
+;*    This weblet is used to implement a weblet server. It is not      */
+;*    to be used by regular clients. Clients who wish to install       */
+;*    Weblets must use HZ.                                             */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -23,6 +27,7 @@
 	    weblets/list
 	    weblets/synclist
 	    weblets/rss
+	    weblets/resolve
 	    (get-weblets dir #!optional weblet)))
 
 ;*---------------------------------------------------------------------*/
@@ -32,6 +37,7 @@
    (<HTML>
       (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
+	 :include "hop-foot"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
 	    :title "Latest HOP weblets"
@@ -81,6 +87,7 @@
    (<HTML>
       (<HEAD> :favicon (service-resource weblets "etc/favicon.png")
 	 :title "Hop Weblets"
+	 :include "hop-foot"
 	 :jscript (make-file-path (hop-weblets-directory) "hz" "hz-install.js")
 	 :css (service-resource weblets "weblets.hss"))
       (<BODY>
@@ -104,6 +111,19 @@
 	 (else
 	  (instantiate::http-response-file
 	     (file path))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblets/resolve ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Returns a URL usable by weblets/download                         */
+;*---------------------------------------------------------------------*/
+(define-service (weblets/resolve #!key weblet)
+   ;; check if we can resolve a weblet name (containing stars) and
+   ;; if we can, return the URL of the actual weblet
+   (let ((path (hz-resolve-name weblet (list (weblets-repository)))))
+      (if (and (string? path) (file-exists? path))
+	  (basename path)
+	  "")))
 
 ;*---------------------------------------------------------------------*/
 ;*    update-alist! ...                                                */
@@ -165,48 +185,49 @@
 ;*    weblets/rss ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (weblets/rss)
-   (let ((link (format "http://~a:~a"
-		       (hop-server-hostname)
-		       (hop-port)
-		       (hop-service-path weblets))))
-      (<RSS>
-	 (<RSS:CHANNEL>
-	    (<RSS:TITLE> "HOP")
-	    (<RSS:LINK> link)
-	    (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
-	    (<RSS:LAST-BUILD-DATE> (current-date))
-	    (<RSS:GENERATOR> "Hop")
-	    (<RSS:IMAGE>
-	       (<RSS:URL> (format "http://~a:~a~a"
-				  (hop-server-hostname)
-				  (hop-port)
-				  (service-resource weblets "etc/logo.png")))
+   (with-access::hop-service weblets (path)
+      (let ((link (format "http://~a:~a"
+		     (hop-server-hostname)
+		     (hop-port)
+		     path)))
+	 (<RSS>
+	    (<RSS:CHANNEL>
 	       (<RSS:TITLE> "HOP")
-	       (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
-	    (map (lambda (path)
-		    (let* ((info (with-input-from-string (package-info path)
-				    read))
-			   (title (find-info info 'name ""))
-			   (version (find-info info 'version ""))
-			   (link (find-info info 'publisher link))
-			   (description (find-info info 'title ""))
-			   (author (find-info info 'author ""))
-			   (date (seconds->date (file-modification-time path))))
-		       (<RSS:ITEM>
-			  (<RSS:TITLE> (xml-string-encode title) " v" version)
-			  (<RSS:LINK> link)
-			  (<RSS:DESCRIPTION> description)
-			  (<RSS:AUTHOR> author)
-			  (<RSS:PUB-DATE> (date->rfc2822-date date)))))
-		 (let ((l (sort (lambda (p1 p2)
-				   (>=elong (file-modification-time p1)
-					    (file-modification-time p2)))
-				(get-weblets (weblets-repository)))))
-		    (if (> (length l) (weblets-rss-number-of-entries))
-			(let ((le (list-ref l (weblets-rss-number-of-entries))))
-			   (set-cdr! le '())
-			   l)
-			l)))))))
+	       (<RSS:LINK> link)
+	       (<RSS:DESCRIPTION> "The latest weblets in the HOP repository")
+	       (<RSS:LAST-BUILD-DATE> (current-date))
+	       (<RSS:GENERATOR> "Hop")
+	       (<RSS:IMAGE>
+		  (<RSS:URL> (format "http://~a:~a~a"
+				(hop-server-hostname)
+				(hop-port)
+				(service-resource weblets "etc/logo.png")))
+		  (<RSS:TITLE> "HOP")
+		  (<RSS:DESCRIPTION> "The latest weblets in the HOP repository"))
+	       (map (lambda (path)
+		       (let* ((info (with-input-from-string (package-info path)
+				       read))
+			      (title (find-info info 'name ""))
+			      (version (find-info info 'version ""))
+			      (link (find-info info 'publisher link))
+			      (description (find-info info 'title ""))
+			      (author (find-info info 'author ""))
+			      (date (seconds->date (file-modification-time path))))
+			  (<RSS:ITEM>
+			     (<RSS:TITLE> (xml-string-encode title) " v" version)
+			     (<RSS:LINK> link)
+			     (<RSS:DESCRIPTION> description)
+			     (<RSS:AUTHOR> author)
+			     (<RSS:PUB-DATE> (date->rfc2822-date date)))))
+		  (let ((l (sort (lambda (p1 p2)
+				    (>=elong (file-modification-time p1)
+				       (file-modification-time p2)))
+			      (get-weblets (weblets-repository)))))
+		     (if (> (length l) (weblets-rss-number-of-entries))
+			 (let ((le (list-ref l (weblets-rss-number-of-entries))))
+			    (set-cdr! le '())
+			    l)
+			 l))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblets ...                                                  */
@@ -215,13 +236,16 @@
    ;; get the whole file list
    (let ((table (make-hashtable)))
       (for-each (lambda (file)
-		   (multiple-value-bind (name version)
-		      (package-name-parse file)
-		      (when (or (not weblet) (string=? weblet name))
-			 (hashtable-update! table name
-					    (lambda (old)
-					       (cons (cons version file) old))
-					    (list (cons version file))))))
+		   (with-handler
+		      (lambda (e)
+			 #f)
+		      (multiple-value-bind (name version)
+			 (package-name-parse file)
+			 (when (or (not weblet) (string=? weblet name))
+			    (hashtable-update! table name
+					       (lambda (old)
+						  (cons (cons version file) old))
+					       (list (cons version file)))))))
 		(directory->list dir))
       ;; get the list
       (map (lambda (f)

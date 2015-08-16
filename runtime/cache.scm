@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/cache.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/cache.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Apr  1 06:54:00 2006                          */
-;*    Last change :  Wed Apr 29 14:20:23 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Mon Feb 10 14:04:19 2014 (serrano)                */
+;*    Copyright   :  2006-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    LRU file caching.                                                */
 ;*=====================================================================*/
@@ -28,7 +28,7 @@
 	      (%table (default #f))
 	      (%head (default #f))
 	      (%tail (default #f))
-	      (%mutex (default (make-mutex)))
+	      (%mutex (default (make-mutex "cache")))
 	      (register::bool (default #t))
 	      (max-entries::long (default 128))
 	      (current-entries::long (default 0))
@@ -38,6 +38,7 @@
 	   (class cache-disk::cache
 	      (%cache-disk-new)
 	      (path read-only)
+	      (clear read-only (default #t))
 	      (map (default #f))
 	      (out::procedure read-only)
 	      (max-file-size::elong (default #e100000)))
@@ -55,9 +56,8 @@
 	   (%cache-memory-new ::cache-memory)
 	   (generic cache-clear ::cache)
 	   (generic cache->list ::cache)
-	   (cache-memory-get::obj ::cache ::bstring)
 	   (generic cache-get::obj ::cache ::bstring)
-	   (generic cache-put! ::cache ::bstring ::obj)))
+	   (generic cache-put!::obj ::cache ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *all-caches* ...                                                 */
@@ -80,18 +80,18 @@
 ;*    %cache-disk-new ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (%cache-disk-new c::cache-disk)
-   (with-access::cache-disk c (path map %table max-entries register)
-      ;; cleanup the cache directory, unless we restore it
-      (unless (hop-restore-disk-cache) (delete-path path))
+   (with-access::cache-disk c (path clear map %table max-entries register)
+      ;; cleanup the cache directory when configured
+      (when clear (delete-path path))
+      ;; create the new directory if it does not exist
       (unless (or (directory? path) (make-directories path))
-	 (error 'instantiate::cache "Can't create directory" path))
+	 (error "instantiate::cache" "Can't create directory" path))
       (set! %table (make-hashtable (*fx 4 max-entries)))
       (when register (set! *all-caches* (cons c *all-caches*)))
       ;; the name of the cache map path
       (unless (string? map) (set! map (make-file-name path "cache.map")))
-      (when (and (hop-restore-disk-cache) (file-exists? map))
-	 ;; restore the cache
-	 (cache-restore! c))
+      ;; restore the cache
+      (when (file-exists? map) (cache-restore! c))
       c))
 
 ;*---------------------------------------------------------------------*/
@@ -106,8 +106,9 @@
 ;*    cache-entry-valid? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (cache-entry-valid? ce path)
-   (and (cache-entry? ce)
-	(signature-equal? (cache-entry-signature ce) (cache-signature path))))
+   (and (isa? ce cache-entry)
+	(with-access::cache-entry ce (signature)
+	   (signature-equal? signature (cache-signature path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    signature-equal? ...                                             */
@@ -119,7 +120,7 @@
 ;*    cache-signature ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (cache-signature path)
-   (file-modification-time path))
+   (bit-xorelong (file-modification-time path) (fixnum->elong (hop-session))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-cache ...                                               */
@@ -127,9 +128,10 @@
 (define (for-each-cache proc::procedure c::cache)
    (with-access::cache c (%head)
       (let loop ((h %head))
-	 (when (cache-entry? h)
+	 (when (isa? h cache-entry)
 	    (proc h)
-	    (loop (cache-entry-%next h))))))
+	    (with-access::cache-entry h (%next)
+	       (loop %next))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-clear ::cache ...                                          */
@@ -164,93 +166,98 @@
 		 (res '()))
 	 (if (not tail)
 	     res
-	     (loop (cache-entry-%prev tail) (cons tail res))))))
-
-;*---------------------------------------------------------------------*/
-;*    cache-memory-get ...                                             */
-;*---------------------------------------------------------------------*/
-(define (cache-memory-get c::cache path::bstring)
-   (with-access::cache c (%table %head %tail %mutex validity)
-      (mutex-lock! %mutex)
-      (let ((ce (hashtable-get %table path)))
-	 (cond
-	    ((validity ce path)
-	     (with-access::cache-entry ce (value %prev %next)
-		(unless (eq? %head ce)
-		   (when %prev
-		      (if %next
-			  (begin
-			     (cache-entry-%prev-set! %next %prev)
-			     (cache-entry-%next-set! %prev %next))
-			  (begin
-			     (cache-entry-%next-set! %prev #f)
-			     (set! %tail %prev)))
-		      (set! %prev #f)
-		      (set! %next %head)
-		      (cache-entry-%prev-set! %head ce)
-		      (set! %head ce)))
-		(mutex-unlock! %mutex)
-		value))
-	    ((cache-entry? ce)
-	     (hashtable-remove! %table path)
-	     (with-access::cache-entry ce (value %prev %next)
-		(if %prev
-		    (cache-entry-%next-set! %prev %next)
-		    (set! %head %next))
-		(if %next
-		    (cache-entry-%prev-set! %next %prev)
-		    (set! %tail #f))
-		(mutex-unlock! %mutex)
-		#f))
-	    (else
-	     (mutex-unlock! %mutex)
-	     #f)))))
+	     (with-access::cache-entry tail (%prev)
+		(loop %prev (cons tail res)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-get ::cache ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (cache-get c::cache path::bstring)
-   (cache-memory-get c path))
+   (with-access::cache c (%table %head %tail %mutex validity current-entries)
+      (synchronize %mutex
+	 (let ((ce (hashtable-get %table path)))
+	    (cond
+	       ((validity ce path)
+		(with-access::cache-entry ce (%prev %next)
+		   (unless (eq? %head ce)
+		      (when %prev
+			 (if %next
+			     (begin
+				(with-access::cache-entry %next ((prev %prev))
+				   (set! prev %prev))
+				(with-access::cache-entry %prev ((next %next))
+				   (set! next %next)))
+			     (begin
+				(with-access::cache-entry %prev (%next)
+				   (set! %next #f))
+				(set! %tail %prev)))
+			 (set! %prev #f)
+			 (set! %next %head)
+			 (with-access::cache-entry %head (%prev)
+			    (set! %prev ce))
+			 (set! %head ce)))
+		   ce))
+	       ((isa? ce cache-entry)
+		(hashtable-remove! %table path)
+		(set! current-entries (-fx current-entries 1))
+		(with-access::cache-entry ce (%prev %next)
+		   (if %prev
+		       (with-access::cache-entry %prev ((next %next))
+			  (set! next %next))
+		       (set! %head %next))
+		   (if %next
+		       (with-access::cache-entry %next ((prev %prev))
+			  (set! prev %prev))
+		       (set! %tail %prev))
+		   #f))
+	       (else
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-get ::cache-disk ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (cache-get c::cache-disk path::bstring)
-   (with-access::cache-disk c (%table %head %tail validity %mutex)
-      (mutex-lock! %mutex)
-      (let ((ce (hashtable-get %table path)))
-	 (cond
-	    ((and (validity ce path) (file-exists? (cache-entry-value ce)))
-	     (with-access::cache-entry ce (value %prev %next)
-		(when %prev
+   (with-access::cache-disk c (%table %head %tail validity %mutex current-entries)
+      (synchronize %mutex
+	 (let ((ce (hashtable-get %table path)))
+	    (cond
+	       ((and ce
+		     (validity ce path)
+		     (with-access::cache-entry ce (value) (file-exists? value)))
+		(with-access::cache-entry ce (%prev %next)
+		   (when %prev
+		      (if %next
+			  (begin
+			     (with-access::cache-entry %next ((prev %prev))
+				(set! prev %prev))
+			     (with-access::cache-entry %prev ((next %next))
+				(set! next %next)))
+			  (begin
+			     (with-access::cache-entry %prev (%next)
+				(set! %next #f))
+			     (set! %tail %prev)))
+		      (set! %prev #f)
+		      (set! %next %head)
+		      (with-access::cache-entry %head (%prev)
+			 (set! %prev ce))
+		      (set! %head ce))
+		   ce))
+	       ((isa? ce cache-entry)
+		(hashtable-remove! %table path)
+		(set! current-entries (-fx current-entries 1))
+		(with-access::cache-entry ce (value %prev %next)
+		   (if (file-exists? value) (delete-file value))
+		   (if %prev
+		       (with-access::cache-entry %prev ((next %next))
+			  (set! next %next))
+		       (set! %head %next))
 		   (if %next
-		       (begin
-			  (cache-entry-%prev-set! %next %prev)
-			  (cache-entry-%next-set! %prev %next))
-		       (begin
-			  (cache-entry-%next-set! %prev #f)
-			  (set! %tail %prev)))
-		   (set! %prev #f)
-		   (set! %next %head)
-		   (cache-entry-%prev-set! %head ce)
-		   (set! %head ce))
-		(mutex-unlock! %mutex)
-		value))
-	    ((cache-entry? ce)
-	     (hashtable-remove! %table path)
-	     (with-access::cache-entry ce (value %prev %next)
-		(if (file-exists? value) (delete-file value))
-		(if %prev
-		    (cache-entry-%next-set! %prev %next)
-		    (set! %head %next))
-		(if %next
-		    (cache-entry-%prev-set! %next %prev)
-		    (set! %tail #f))
-		(mutex-unlock! %mutex)
-		#f))
-	    (else
-	     (mutex-unlock! %mutex)
-	     #f)))))
+		       (with-access::cache-entry %next ((prev %prev))
+			  (set! prev %prev))
+		       (set! %tail %prev))
+		   #f))
+	       (else
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-restore! ::cache ...                                       */
@@ -265,64 +272,66 @@
       (let ((omap (with-input-from-file map read))
 	    (t (make-hashtable)))
 	 (delete-file map)
-	 (set! uid (car omap))
-	 (for-each (lambda (e)
-		      (match-case e
-			 ((?upath ?sig ?value)
-			  (when (and (file-exists? upath) (file-exists? value))
-			     (let ((ce (instantiate::cache-entry
-					  (value value)
-					  (signature sig)
-					  (upath upath))))
-				(when (validity ce upath)
-				   (cache-add-entry! c ce)
-				   (hashtable-put! t value #t)))))))
-		   (cadr omap))
-	 (hashtable-put! t (make-file-name path "cache.map") #t)
-	 (for-each (lambda (f)
-		      (unless (hashtable-get t f)
-			 (delete-file f)))
-		   (directory->path-list path)))))
+	 (when (pair? omap)
+	    (set! uid (car omap))
+	    (for-each (lambda (e)
+			 (match-case e
+			    ((?upath ?sig ?value)
+			     (when (and (file-exists? upath)
+					(file-exists? value))
+				(let ((ce (instantiate::cache-entry
+					     (value value)
+					     (signature sig)
+					     (upath upath))))
+				   (when (validity ce upath)
+				      (cache-add-entry! c ce)
+				      (hashtable-put! t value #t)))))))
+		      (cadr omap))
+	    (hashtable-put! t (make-file-name path "cache.map") #t)
+	    (for-each (lambda (f)
+			 (unless (hashtable-get t f)
+			    (delete-file f)))
+		      (directory->path-list path))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-generic (cache-put! c::cache upath::bstring value::obj))
+(define-generic (cache-put!::cache-entry c::cache upath::bstring value::obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache-disk ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (cache-put! c::cache-disk upath::bstring value)
+(define-method (cache-put!::cache-entry c::cache-disk upath::bstring value)
    (with-access::cache-disk c (%table %head %tail %mutex
 				      max-entries current-entries uid
 				      path max-file-size out)
-      (when (or (<=elong max-file-size #e0)
-		(<elong (file-size upath) max-file-size))
-	 (mutex-lock! %mutex)
-	 (let* ((name (format "~a-~a" uid (basename upath)))
-		(cpath (make-file-name path name))
-		(ce (instantiate::cache-entry
-		       (value cpath)
-		       (upath upath)
-		       (signature (cache-signature upath)))))
-	    ;; make sure that the cache path exists
-	    (cond
-	       ((not (file-exists? path))
-		(make-directories path))
-	       ((not (directory? path))
-		(delete-file path)
-		(make-directories path)))
-	    ;; put the file in the cache
-	    (let ((p (open-output-file cpath)))
-	       (when (output-port? p)
-		  (unwind-protect
-		     (out value p)
-		     (close-output-port p))))
-	    ;; and the entry in the cache
-	    (set! uid (+fx 1 uid))
-	    (cache-add-entry! c ce)
-	    (mutex-unlock! %mutex)
-	    cpath))))
+      (when (and (hop-cache-enable)
+		 (or (<=elong max-file-size #e0)
+		     (<elong (file-size upath) max-file-size)))
+	 (synchronize %mutex
+	    (let* ((name (format "~a-~a" uid (basename upath)))
+		   (cpath (make-file-name path name))
+		   (ce (instantiate::cache-entry
+			  (value cpath)
+			  (upath upath)
+			  (signature (cache-signature upath)))))
+	       ;; make sure that the cache path exists
+	       (cond
+		  ((not (file-exists? path))
+		   (make-directories path))
+		  ((not (directory? path))
+		   (delete-file path)
+		   (make-directories path)))
+	       ;; put the file in the cache
+	       (let ((p (open-output-file cpath)))
+		  (when (output-port? p)
+		     (unwind-protect
+			(out value p)
+			(close-output-port p))))
+	       ;; and the entry in the cache
+	       (set! uid (+fx 1 uid))
+	       (cache-add-entry! c ce)
+	       ce)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-put! ::cache-memory ...                                    */
@@ -331,16 +340,16 @@
    (with-access::cache-memory c (%table %head %tail %mutex
 					max-entries
 					max-file-size)
-      (when (or (<=elong max-file-size #e0)
-		(<elong (file-size upath) max-file-size))
+      (when (and (hop-cache-enable)
+		 (or (<=elong max-file-size #e0)
+		     (<elong (file-size upath) max-file-size)))
 	 (let ((ce (instantiate::cache-entry
 		      (value value)
 		      (upath upath)
 		      (signature (cache-signature upath)))))
-	    (mutex-lock! %mutex)
-	    (cache-add-entry! c ce)
-	    (mutex-unlock! %mutex)
-	    value))))
+	    (synchronize %mutex
+	       (cache-add-entry! c ce))
+	    ce))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-add-entry! ::cache ...                                     */
@@ -359,13 +368,18 @@
 	 (if (<fx current-entries max-entries)
 	     (set! current-entries (+fx 1 current-entries))
 	     (begin
-		(hashtable-remove! %table (cache-entry-upath %tail))
-		(set! %tail (cache-entry-%prev %tail))
-		(cache-entry-%next-set! %tail #f)))
+		(with-access::cache-entry %tail (upath)
+		   (hashtable-remove! %table upath))
+		(with-access::cache-entry %tail (%prev)
+		   (set! %tail %prev))
+		(with-access::cache-entry %tail (%next)
+		   (set! %next #f))))
 	 (if %head
 	     (begin
-		(cache-entry-%next-set! ce %head)
-		(cache-entry-%prev-set! %head ce)
+		(with-access::cache-entry ce (%next)
+		   (set! %next %head))
+		(with-access::cache-entry %head (%prev)
+		   (set! %prev ce))
 		(set! %head ce))
 	     (begin
 		(set! %head ce)
@@ -389,21 +403,27 @@
 (define-method (cache-add-entry! c::cache-memory ce::cache-entry)
    (with-access::cache-memory c (%table %head %tail max-entries current-entries
 					max-file-size)
-      (hashtable-put! %table (cache-entry-upath ce) ce)
-      (if (<fx current-entries max-entries)
-	  (set! current-entries (+fx 1 current-entries))
-	  (begin
-	     (hashtable-remove! %table (cache-entry-upath %tail))
-	     (set! %tail (cache-entry-%prev %tail))
-	     (cache-entry-%next-set! %tail #f)))
-      (if %head
-	  (begin
-	     (cache-entry-%next-set! ce %head)
-	     (cache-entry-%prev-set! %head ce)
-	     (set! %head ce))
-	  (begin
-	     (set! %head ce)
-	     (set! %tail ce)))))
+      (with-access::cache-entry ce (upath)
+	 (hashtable-put! %table upath ce)
+	 (if (<fx current-entries max-entries)
+	     (set! current-entries (+fx 1 current-entries))
+	     (begin
+		(with-access::cache-entry %tail (upath)
+		   (hashtable-remove! %table upath))
+		(with-access::cache-entry %tail (%prev)
+		   (set! %tail %prev))
+		(with-access::cache-entry %tail (%next)
+		   (set! %next #f))))
+	 (if %head
+	     (begin
+		(with-access::cache-entry ce (%next)
+		   (set! %next %head))
+		(with-access::cache-entry %head (%prev)
+		   (set! %prev ce))
+		(set! %head ce))
+	     (begin
+		(set! %head ce)
+		(set! %tail ce))))))
    
 
    

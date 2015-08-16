@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/configure                         */
+#*    serrano/prgm/project/hop/2.5.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue May  5 17:18:36 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Tue Feb 11 19:28:19 2014 (serrano)                */
+#*    Copyright   :  2004-14 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -21,21 +21,26 @@ jfile=bgljfile
 btags=bgltags
 bdepend=bgldepend
 cc=
-flashcc=mtasc
-fflags="-main -version 9 -cp std8 -swf"
+flashcc=/usr/bin/mtasc
+fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
+link=dynamic
 unzip=unzip
-gzip="gzip -9"
+gzip="GZIP=-9 gzip"
 install="install -m a+r,u+r"
 jar="jar cfm"
+javac=javac
 
+devmode=product
 debug=no
 
-bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR)"
+bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+bhflags=
+btflags="-gtrace"
 
 bcflagsdev=""
-bcflagsdbg="-copt -g"
-bcflagsdbg2="-g -O2 -cg"
+bcflagsdbg="-copt -g -O2"
+bcflagsdbg2="-g -cg"
 bcflagspmem="-pmem -O2 -fno-user-inlining"
 bcflagspmem2="-pmem2 -O2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
@@ -44,57 +49,76 @@ bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
 
-blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR)"
+blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
 mimetypes=/etc/mime.types
-jsmimetype="text/javascript"
+jsmimetype="application/x-javascript"
 cssmimetype="text/css"
+
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
+bglcloselibs="web multimedia"
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.0.0"
-devel=pre
+version="2.5.0"
+devel=rc
+
+hopc=$PWD/bin/hopc
+bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
 date=`date +"%d %B %Y"`
 
-url="http://hop.inria.fr/"
+url="http://hop.inria.fr"
 
 etcdir=$prefix/etc
 bindir=$prefix/bin
 libdir=$prefix/lib
 sharedir=$prefix/share/hop
-mandir=$prefix/man/man1
+mansec=man1
+mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
 buildlibdir=$PWD/lib
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
+distribdir=$HOME/prgm/project/hop/repository
 buildbindir=$PWD/bin
 
-bigloorequired=3.2b
-bigloourl=http://www.inria.fr/mimosa/fp/Bigloo
+buildspecific=
+installspecific=
+
+bigloorequired=4.1a
+bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
 
 if [ "$USER " = "serrano " ]; then
   distribdir=$HOME/prgm/distrib
+  repodir=$HOME/prgm/project/hop/repository
 else
   distribdir=.
+  repodir=.
 fi
 
 # User controlled optional features
-ssl="no"
+ssl=""
 locevent="true"
 threads=""
+
+zeroconf="#f"
+zeroconfbe="no"
+avahi=""
+
+upnp=""
 
 hopsrfis=""
 
 rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js"
 
 hopservicebase="/hop"
-hopjs='"hop.js"'
+hopjssanssuffix='"hop"'
 hopjsfiles='"hop-autoconf.js" "runtime.js"'
  
 for p in $rts; do
@@ -102,6 +126,8 @@ for p in $rts; do
 done
 
 arch=noarch
+
+felix=
 
 # Argument parsing
 while : ; do
@@ -114,7 +140,7 @@ while : ; do
       bindir=$prefix/bin;
       libdir=$prefix/lib;
       sharedir=$prefix/share/hop;
-      mandir=$prefix/man/man1;
+      mandir=$prefix/man/$mansec;
       etcdir=$prefix/etc;
       contribsdir=$prefix/share/hop/contribs;;
 
@@ -131,7 +157,7 @@ while : ; do
       sharedir="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --mandir=*)
-      mandir="`echo $1 | sed 's/^[^=]*=//'`";;
+      mandir="`echo $1 | sed 's/^[^=]*=//'`"/$mansec;;
 
     --webletsdir=*)
       webletsdir="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -154,11 +180,17 @@ while : ; do
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --bglafile=*)
+      afile="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloolibdir=*)
+      bigloolibdir="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --backend=*)
       backend="`echo $1 | sed 's/^[^=]*=//'`";;
 
-    --cigloo=*)
-      cigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+    --link=*)
+      link="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --afile=*)
       afile="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -184,9 +216,6 @@ while : ; do
     --bhflags=*)
       bhflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
-    --brflags=*)
-      brflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
-
     --bcflagsdev=*)
       bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -194,20 +223,23 @@ while : ; do
       ccflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --devel)
+      devmode="devel";
       bcflagsrts=;
       bcflagsdev=-cg;
       bscm2jsflags=;;
 
     --debug)
+      devmode="debug";
       debug=yes;
-      bcflagsrts=;
-      bscm2jsflags=;
+      bcflagsrts=-g;
+      bscm2jsflags=-g;
       bcflags="$bcflags $bcflagsdbg";;
 
     --debug2)
+      devmode="debug2";
       debug=yes;
-      bcflagsrts=;
-      bscm2jsflags=;
+      bcflagsrts=-g;
+      bscm2jsflags=-g;
       bcflags="$bcflags $bcflagsdbg2";;
 
     --pmem)
@@ -228,6 +260,18 @@ while : ; do
 
     --disable-ssl)
       ssl=no;;
+
+    --enable-avahi)
+      avahi=yes;;
+
+    --disable-avahi)
+      avahi=no;;
+
+    --enable-upnp)
+      upnp=yes;;
+
+    --disable-upnp)
+      upnp=no;;
 
     --gzip=*)
       gzip="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -250,8 +294,24 @@ while : ; do
     --srfi=*)
       hopsrfis="$hopsrfis `echo $1 | sed 's/^[^=]*=//'`";;
 
+    --library=*)
+      libraries="$libraries `echo $1 | sed 's/^[^=]*=//'`";;
+
     --macosx-bundle|--macosx)
+      bcflags="$bcflags -copt -I../arch/macosx";
       arch=macosx;;
+
+    --android)
+      buildspecific=build-android;
+      installspecific=install-android;
+      arch=android;;
+
+    --apache-felix=*)
+      felix="`echo $1 | sed 's/^[^=]*=//'`";
+      link=felix;
+      hopsrfis="$hopsrfis boot-from-java"
+      ;;
+
 
     -*)
       echo "*** Configure error, unknown option $1" >&2;
@@ -269,37 +329,73 @@ while : ; do
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type.... default 'text/css'" >&2;
       echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
+      echo "   --bigloolibdir=path... The Bigloo lib-dir path" >&2;
       echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
-      echo "   --cigloo=comp......... The Cigloo compiler" >&2;
+      echo "   --link=method......... The link method [static,dynamic,library,felix]" >&2;
       echo "   --afile=afile......... The Bigloo afile tool" >&2;
       echo "   --btags=btags......... The Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
       echo "   --gzip................ The GNU zipper ($gzip)" >&2;
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
-      echo "   --bcflags=args........ The compilation options" >&2;
+      echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
+      echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
       echo "   --bhflags=args........ The heap options" >&2;
-      echo "   --brflags=args........ The heap options" >&2;
-      echo "   --ccflags=args........ The heap options" >&2;
+      echo "   --ccflags=args........ The C compilation options" >&2;
       echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
       echo "   --pmem[2]............. Enables memory profiling mode" >&2;
       echo "   --profile............. Enables Bigloo profiling mode" >&2;
       echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
-      echo "   --enable-ssl.......... Enables SSL support" >&2;
-      echo "   --disable-ssl......... Disables SSL support (default)" >&2;
+      echo "   --enable-ssl.......... Enables SSL support (default)" >&2;
+      echo "   --disable-ssl......... Disables SSL support" >&2;
       echo "   --enable-locevent..... Enables location event support (default)" >&2;
       echo "   --disable-locevent.... Disables location event support" >&2;
       echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
       echo "   --disable-threads..... Disables multi-threading support" >&2;
-      echo "   --srfi=sym............ Activate this srfi (during compilation and runtime)" >&2;
-      echo "   --macosx.............. Prepare the production of a MacOSX bundle" >&2;
-      exit -1;
+      echo "   --enable-avahi........ Enables AVAHI support (default)" >&2;
+      echo "   --disable-avahi....... Disables AVAHI support" >&2;
+      echo "   --enable-upnp......... Enables UPNP support (default)" >&2;
+      echo "   --disable-upnp........ Disables UPNP support" >&2;
+      echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
+      echo "   --library=lib......... Add extra lib to Hop" >&2;
+      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
+      echo "   --android............. Prepares the production of an Android apk" >&2;
+      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
+      echo "   --apache-felix=path... Path to felix.jar" >&2;
+      exit 255;
   esac
   shift
 done
+
+#*---------------------------------------------------------------------*/
+#*    Versioning                                                       */
+#*---------------------------------------------------------------------*/
+if [ ! -x .hoprelease ]; then
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=$devel
+minor=
+EOF
+  chmod a+rx .hoprelease
+fi
+
+. ./.hoprelease
+
+if [ "$state " != "$devel " ]; then
+  state=$devel
+  minor=1
+  cat > .hoprelease <<EOF
+#!/bin/sh
+major=$version
+state=$devel
+minor=1
+EOF
+  chmod a+rx .hoprelease
+fi
 
 #*---------------------------------------------------------------------*/
 #*    First check if bigloo exists and if it is recent enough          */
@@ -327,11 +423,70 @@ if [ $? != "0" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Check the Bigloo libraries                                       */
+#*    Check the backend                                                */
 #*---------------------------------------------------------------------*/
-bgllibdir=`$bigloo -q -eval "(begin (print *ld-library-dir*) (exit 0))"`
+case $backend in
+  "native")
+     break;;
+  "jvm")
+     etcdir=/resource/etc
+     libdir=/resource/lib
+     webletsdir=/resource/lib/weblets
+     contribsdir=/resource/share/contribs
+     sharedir=/resource/share
+     hopc="java -jar $PWD/bin/hopc.jar"
+     break;;
+  "dotnet")
+     break;;
+  *)
+      echo "*** Configure error, Illegal backend $backend" >&2;
+      echo "see configure --help" >&2;
+      exit -1;
+esac
 
-if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
+#*---------------------------------------------------------------------*/
+#*    We are now able to set the correct value for cc since we know    */
+#*    what Bigloo is.                                                  */
+#*---------------------------------------------------------------------*/
+if [ "$cc " = " " ]; then
+  cc=`$bigloo -eval '(begin (print *cc*) (exit 0))'`
+fi
+
+if [ "$bigloolibdir " = " " ]; then
+  bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+else
+  bcflags="$bcflags -lib-dir $bigloolibdir"
+fi
+
+if [ "$ccflags " = " " ]; then
+  ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
+  if [ "$debug " = "yes " ]; then
+    ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
+  fi
+  ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Check that Bigloo compiles and binary runs                       */
+#*---------------------------------------------------------------------*/
+tmp=`$bigloo -eval '(begin (print (os-tmp)) (exit 0))'`
+cat > $tmp/bigloo-test-hop.scm <<EOF
+(module test (main main))
+
+(define (main args)
+  (exit (-fx 1 (string->integer (cadr args)))))
+EOF
+
+$bigloo $tmp/bigloo-test-hop.scm -o $tmp/bigloo-test-hop || exit 1
+
+$tmp/bigloo-test-hop 1 || exit 1
+
+rm -f $tmp/bigloo-test-hop $tmp/bigloo-test-hop.scm $tmp/bigloo-test-hop.o
+
+#*---------------------------------------------------------------------*/
+#*    Check the Bigloo required libraries                              */
+#*---------------------------------------------------------------------*/
+if [ ! -f $bigloolibdir/web.heap ]; then
   echo "*** ERROR:configure:bigloo web. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
@@ -340,7 +495,7 @@ if [ ! -f $bgllibdir/bigloo/$bglversion/web.heap ]; then
   exit 1;
 fi
 
-if [ ! -f $bgllibdir/bigloo/$bglversion/multimedia.heap ]; then
+if [ ! -f $bigloolibdir/multimedia.heap ]; then
   echo "*** ERROR:configure:bigloo multimedia. Aborting"
   echo ""
   echo "This error is due to a bad Bigloo installation. It might be that"
@@ -353,7 +508,7 @@ fi
 #*    SSL                                                              */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = " " ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/ssl.heap ]; then
+  if [ ! -f $bigloolibdir/ssl.heap ]; then
     ssl=no
   else
     ssl=yes
@@ -361,14 +516,25 @@ if [ "$ssl " = " " ]; then
 fi
 
 if [ "$ssl" = "yes" ]; then
+  if [ ! -f $bigloolibdir/ssl.heap ]; then
+    echo "*** ERROR:configure:bigloo ssl. Aborting"
+    echo ""
+    echo "This error is due to a bad Bigloo installation. It might be that"
+    echo "you have installed Bigloo without the SSL support. Please"
+    echo "check your Bigloo installation, or configure Hop without ssl."
+    exit 1;
+  fi
+
   hopsrfis="$hopsrfis enable-ssl"
+  libraries="$libraries ssl"
+  bglcloselibs="$bglcloselibs ssl"
 fi
 
 #*---------------------------------------------------------------------*/
 #*    Threads                                                          */
 #*---------------------------------------------------------------------*/
 if [ "$threads " = " " ]; then
-  if [ -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+  if [ -f $bigloolibdir/pthread.heap ]; then
     threads=yes
   else
     threads=no
@@ -376,7 +542,7 @@ if [ "$threads " = " " ]; then
 fi
 
 if [ "$threads" = "yes" ]; then
-  if [ ! -f $bgllibdir/bigloo/$bglversion/pthread.heap ]; then
+  if [ ! -f $bigloolibdir/pthread.heap ]; then
     echo "*** ERROR:configure:bigloo pthread. Aborting"
     echo ""
     echo "You have request a multi-threading support but it appears that"
@@ -385,7 +551,85 @@ if [ "$threads" = "yes" ]; then
     echo "or re-configure and re-install your Bigloo compiler."
     exit 1;
   fi
+
   hopsrfis="$hopsrfis enable-threads"
+  libraries="$libraries pthread"
+  bglcloselibs="$bglcloselibs pthread"
+else
+  if [ "$avahi " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Avahi requires threads, either disable avahi (--disable-avahi)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    avahi=no;
+  fi
+  if [ "$upnp " = "yes " ]; then
+    echo "*** ERROR:configure:bigloo pthread. Aborting"
+    echo ""
+    echo "Upnp requires threads, either disable upnp (--disable-upnp)"
+    echo "or enable threads (--enable-threads)"
+    exit 1;
+  else
+    upnp=no;
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Avahi                                                            */
+#*---------------------------------------------------------------------*/
+if [ "$avahi " = " " ]; then
+  if [ -f $bigloolibdir/avahi.heap ]; then
+    avahi=yes
+  else
+    avahi=no
+  fi
+fi
+
+if [ "$avahi " = "yes " ]; then
+  if [ ! -f $bigloolibdir/avahi.heap ]; then
+    echo "*** ERROR:configure:bigloo avahi. Aborting"
+    echo ""
+    echo "You have request a avahi support but it appears that"
+    echo "the installed Bigloo compiler does not support avahi."
+    echo "You must either, configure Hop without avahi support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-avahi"
+  zeroconf="#t"
+  zeroconfbe="avahi"
+  libraries="$libraries avahi"
+  bglcloselibs="$bglcloselibs avahi"
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Upnp                                                             */
+#*---------------------------------------------------------------------*/
+if [ "$upnp " = " " ]; then
+  if [ -f $bigloolibdir/upnp.heap ]; then
+    upnp=yes
+  else
+    upnp=no
+  fi
+fi
+
+if [ "$upnp " = "yes " ]; then
+  if [ ! -f $bigloolibdir/upnp.heap ]; then
+    echo "*** ERROR:configure:bigloo upnp. Aborting"
+    echo ""
+    echo "You have request a upnp support but it appears that"
+    echo "the installed Bigloo compiler does not support upnp."
+    echo "You must either, configure Hop without upnp support"
+    echo "or re-configure and re-install your Bigloo compiler."
+    exit 1;
+  fi
+
+  hopsrfis="$hopsrfis enable-upnp"
+  libraries="$libraries upnp"
+  bglcloselibs="$bglcloselibs upnp"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -405,25 +649,10 @@ if [ $? != "0" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Check the backend                                                */
+#*    Jvm zip libs                                                     */
 #*---------------------------------------------------------------------*/
-case $backend in
-  "native")
-     break;;
-  "jvm")
-     etcdir=/resource/etc
-     libdir=/resource/lib
-     webletsdir=/resource/lib/weblets
-     contribsdir=/resource/share/contribs
-     sharedir=/resource/share
-     break;;
-  "dotnet")
-     break;;
-  *)
-      echo "*** Configure error, Illegal backend $backend" >&2;
-      echo "see configure --help" >&2;
-      exit -1;
-esac
+jvmziplibs=
+jvminits=
 
 #*---------------------------------------------------------------------*/
 #*    Weblets dir                                                      */
@@ -432,47 +661,24 @@ if [ "$webletsdir " = " " ]; then
   webletsdir=$libdir/hop/$version/weblets;
 fi
 
-#*---------------------------------------------------------------------*/
-#*    We are now able to set the correct value for cc since we know    */
-#*    what Bigloo is.                                                  */
-#*---------------------------------------------------------------------*/
-if [ "$cc " = " " ]; then
-  cc=`$bigloo -eval '(begin (print *cc*) (exit 0))'`
-fi
-
-bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
-if [ "$ccflags " = " " ]; then
-  ccflags=`grep '^CFLAGS=' $bigloolibdir/Makefile.config | sed 's/^[A-Z]*=//'`
-  if [ "$debug " = "yes " ]; then
-    ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
-  fi
-  ccflags="$ccflags -I $bigloolibdir"
-fi
-
-#*---------------------------------------------------------------------*/
-#*    Jvm zip libs                                                     */
-#*---------------------------------------------------------------------*/
-jvmziplibs=
-jvminits=
-
 # Hop librairies
-for p in scheme2js hopscheme hop; do
-  elib="$buildlibdir/$p"_e-$version.zip;
+for p in scheme2js hopscheme hop hopwidget; do
+  elib="$buildlibdir/$p"_es-$version.zip;
   slib="$buildlibdir/$p"_s-$version.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
 done
 
 # Bigloo libraries
-for p in web multimedia sqlite ssl calendar mail; do
-  elib="$bigloolibdir/bigloo$p"_e-$bglversion.zip;
+for p in web multimedia sqlite ssl calendar mail text; do
+  elib="$bigloolibdir/bigloo$p"_es-$bglversion.zip;
   slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
   jvmziplibs="$elib $slib $jvmziplibs";
   jvminits="$bigloolibdir/$p"".init $jvminits";
 done
 
 #pth
-elib="$bigloolibdir/bigloopth"_e-$bglversion.zip;
-slib="$bigloolibdir/bigloopth"_s-$bglversion.zip;
+elib="$bigloolibdir/bigloopthread"_es-$bglversion.zip;
+slib="$bigloolibdir/bigloopthread"_s-$bglversion.zip;
 jvmziplibs="$elib $slib $jvmziplibs";
 jvminits="$bigloolibdir/pthread.init $jvminits";
 
@@ -485,28 +691,54 @@ jvminits="$bigloolibdir/pthread.init $jvminits";
 #*---------------------------------------------------------------------*/
 for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
+    bhflags="$bhflags -srfi $srfi";
 done
+
+#*---------------------------------------------------------------------*/
+#*    Apache Felix                                                     */
+#*---------------------------------------------------------------------*/
+if [ "$felix " != " " ]; then
+   if [ ! -f "$felix" ]; then
+      echo "*** Configure error, Apache Felix not found in $felix" >&2;
+      exit 1;
+   fi
+
+   if [ "$backend " != "jvm " ]; then
+      echo "*** Configure error, Apache Felix requires the jvm backend" >&2;
+      exit 1;
+   fi
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
-  bigloossl="'bigloossl";
-  bigloossllib="-lbigloossl_s-$""(RELEASE)";
+  bigloossllibs="-lbigloossl_s-$""(RELEASE)";
+  bigloossllibu="-lbigloossl_u-$""(RELEASE)";
 else
-  bigloossl="";
-  bigloossllib="";
+  bigloossllibs="";
+  bigloossllibu="";
 fi
 
 if [ "$threads " = "yes " ]; then
-  bigloopth="'bigloopth";
-  bigloopthlib="-lbigloopth_s-$""(RELEASE)";
+  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
+  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
+  bigloogc="-lbigloogc_fth-$""(RELEASE)"
 else
-  bigloopth="";
-  bigloopthlib="";
+  bigloopthlibs="";
+  bigloopthlibu="";
+  bigloogc="-lbigloogc-$""(RELEASE)"
 fi
 
 mkmf=etc/Makefile.hopconfig
+
+bglcloselibs_u=
+bglcloselibs_s=
+
+for p in $bglcloselibs; do
+  bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
+  bglcloselibs_s="$bglcloselibs_s -lbigloo$p""_s-$""(RELEASE)";
+done
 
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
@@ -518,9 +750,12 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
+          -e "s|@HOPC@|$hopc|" \
+          -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
           -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
-          -e "s|@CIGLOO@|$cigloo|" \
           -e "s|@AFILE@|$afile|" \
           -e "s|@JFILE@|$jfile|" \
           -e "s|@BTAGS@|$btags|" \
@@ -531,7 +766,10 @@ cat $mkmf.in \
           -e "s|@GZIP@|$gzip|" \
           -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
+          -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BHFLAGS@|$bhflags|" \
+          -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
           -e "s|@BLFLAGS@|$blflags|" \
@@ -540,9 +778,13 @@ cat $mkmf.in \
           -e "s|@JVMINITS@|$jvminits|" \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
+          -e "s|@BUILDDIR@|$PWD|" \
           -e "s|@BUILDLIBDIR@|$PWD/lib|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
+          -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+          -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+          -e "s|@INSTALLSPECIFIC@|$installspecific|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
@@ -552,17 +794,22 @@ cat $mkmf.in \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
           -e "s|@DISTRIBDIR@|$distribdir|" \
+          -e "s|@REPODIR@|$repodir|" \
           -e "s|@HOPSVN@|$svn|" \
           -e "s|@HOPDISTRIBDIR@|$distribdir|" \
-          -e "s|@BIGLOOSSLLIB@|$bigloossllib|" \
-          -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
+          -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \
+          -e "s|@BIGLOOSSLLIBU@|$bigloossllibu|" \
+          -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
+          -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
+          -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
+          -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u|" \
+          -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s|" \
     >> $mkmf
 
 # runtime/configure.scm
-for p in configure.scm configure-noarch.sch configure-macosx.sch; do
+for p in configure.scm configure_noarch.sch configure_macosx.sch configure_android.sch; do
   configure=runtime/$p
   rm -f $configure 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $configure
@@ -571,6 +818,7 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch; do
             -e "s|@BIGLOOVERSION@|$bglversion|" \
             -e "s|@BRANCH@|$branch|" \
             -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
             -e "s|@URL@|$url|" \
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
@@ -582,9 +830,10 @@ for p in configure.scm configure-noarch.sch configure-macosx.sch; do
             -e "s|@MIMETYPES@|$mimetypes|" \
             -e "s|@JSMIMETYPE@|$jsmimetype|" \
             -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-            -e "s|@HOPJS@|$hopjs|" \
+            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
             -e "s|@HOPJSFILES@|$hopjsfiles|" \
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@HOPZEROCONF@|$zeroconf|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
@@ -593,6 +842,7 @@ done
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $hoprc
 cat etc/hoprc.hop.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -631,27 +881,42 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
-          -e "s|@BIGLOOSSL@|$bigloossl|" \
-          -e "s|@BIGLOOPTH@|$bigloopth|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
     >> $init
 echo "" >> $init
 
-echo "(cond-expand ((not hop-eval)" >> $init
-echo "(register-eval-srfi! 'hop-eval)" >> $init
-cat runtime/xml-expd.sch >> $init
+echo "(cond-expand" >> $init
+echo "   (bigloo-compile" >> $init
+cat runtime/xml_expd.sch >> $init
 echo "" >> $init
-cat runtime/param-expd.sch >> $init
+cat runtime/param_expd.sch >> $init
 echo "" >> $init
-cat runtime/hss-expd.sch >> $init
+cat runtime/hss_expd.sch >> $init
 echo "" >> $init
-cat runtime/prefs-expd.sch >> $init
+cat runtime/prefs_expd.sch >> $init
 echo "" >> $init
-cat runtime/service-expd.sch >> $init
+cat runtime/service_expd.sch >> $init
+echo "" >> $init
+cat runtime/verbose_expd.sch >> $init
 echo "" >> $init
 cat runtime/expanders.sch >> $init
 echo "" >> $init
-echo "(hop-install-expanders!)) (else #unspecified))" >> $init
+echo "(hop-install-expanders!)" >> $init
+echo "   ))" >> $init
 chmod a-w $init
+
+# lib/hopwidget.init
+init=lib/hopwidget.init
+mkdir -p lib
+rm -f $init 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hopwidget.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
+    >> $init
+echo "" >> $init
 
 # lib/scheme2js.init
 init=lib/scheme2js.init
@@ -683,6 +948,23 @@ cat etc/hopscheme.init.in \
 echo "" >> $init
 chmod a-w $init
 
+# lib/hopdroid.init
+if [ "$arch " = "android " ]; then
+  init=lib/hopdroid.init
+  mkdir -p lib
+  mkdir -p hopdroid/o
+
+  rm -f $init 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $init
+ 
+  cat etc/hopdroid.init.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+      >> $init
+  echo "" >> $init
+  chmod a-w $init
+fi
+  
 # share/hop-autoconf.js
 init=share/hop-autoconf.js
 mkdir -p share
@@ -693,6 +975,7 @@ cat etc/hop-autoconf.js.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
@@ -707,6 +990,19 @@ cat etc/hop-autoconf.js.in \
 echo "" >> $init
 chmod a-w $init
 
+# src/libraries.sch
+lib=src/libraries.sch
+rm -f $lib 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $lib
+
+cat etc/libraries.sch.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@LIBRARIES@|$libraries|" \
+    >> $lib
+echo "" >> $lib
+chmod a-w $lib
+
+# man pages
 for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
   cat $p.in \
       | sed -e "s|@RELEASE@|$version|" \
@@ -716,23 +1012,54 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
             -e "s|@DEBUG@|$debug|" \
             -e "s|@BIGLOO@|$bigloo|" \
             -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
       > $p
 done
 
 #*---------------------------------------------------------------------*/
-#*    Summary                                                          */
+#*    Debian script                                                    */
 #*---------------------------------------------------------------------*/
-if [ ! -x .hoprelease ]; then
-  cat > .hoprelease <<EOF
-#!/bin/sh
-major=$version
-state=
-minor=
-EOF
-  chmod a+rx .hoprelease
+if [ "$state " != " " ]; then
+  minorversion=-$state$minor
+else
+  minorversion=
 fi
 
-. ./.hoprelease
+# debian
+deb=arch/debian/makedeb.sh
+rm -f $deb 2> /dev/null
+echo "#!/bin/sh" > $deb
+echo "#* Automatically generated file (don't edit) */" >> $deb
+
+
+cat $deb.in \
+   | sed -e "s|#!/bin/sh||" \
+         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+         -e "s|@VERSION@|$version|" \
+         -e "s|@MINOR@|$minorversion|" \
+   > $deb  
+chmod a+rx $deb
+ 
+# android
+and=arch/android/makeapk.sh
+rm -f $and 2> /dev/null
+echo "#!/bin/sh" > $and
+echo "#* Automatically generated file (don't edit) */" >> $and
+
+cat $and.in \
+   | sed -e "s|#!/bin/sh||" \
+         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+         -e "s|@VERSION@|$hopversion|" \
+         -e "s|@MINOR@|$minorversion|" \
+   >> $and  
+chmod a+rx $and
+ 
+#*---------------------------------------------------------------------*/
+#*    Summary                                                          */
+#*---------------------------------------------------------------------*/
+
+# Generate the config.status file to please debian packages
+echo "configuration completed" > config.status
 
 echo "** Configuration summary **"
 echo 
@@ -740,22 +1067,27 @@ echo "Release:"
 echo "  hop release number.................... $version $state$minor"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
-echo "  bigloo compilation flags.............. $bcflags"
-echo "  runtime compilation flags............. $bcflagsrts"
+echo "  link.................................. $link"
+echo "  devel mode............................ $devmode"
+echo 
+echo "Optional features:"
+echo "  multi-threading....................... $threads"
+echo "  https support......................... $ssl"
+echo "  zeroconf.............................. $zeroconfbe"
 echo
 echo "Directories where Hop will be installed:"
 echo "  etc directory......................... $etcdir"
-echo "  binaries.............................. $bindir"
-echo "  libraries............................. $libdir"
+echo "  bin directory......................... $bindir"
+echo "  lib directory......................... $libdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"
 echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
+echo "  bigloo compilation flags.............. $bcflags"
+echo "  runtime compilation flags............. $bcflagsrts"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
-echo "  multi-threading....................... $threads"
-echo "  https support......................... $ssl"
 

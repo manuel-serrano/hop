@@ -1,0 +1,80 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.3.x/share/hop-gauge.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Tue Apr 13 09:01:57 2010                          */
+/*    Last change :  Thu May  3 10:54:17 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP gauge CSS                                                    */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hop_hop-gauge)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type gauge "div[data-hss-tag=hop-gauge]")
+
+$(define-hss-type gaugefill "div[data-hss-tag=hop-gauge-fill]")
+
+$(define-hss-type gaugetext "div[data-hss-tag=hop-gauge-text]")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+gauge {
+  border-radius: 2px;
+  border: 1px solid #555;
+  background-color: #eeeeee;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(white), to(#dddddd));
+  background-image: -moz-linear-gradient( -90deg, white, #dddddd );
+  font-size: 8pt;
+  font-family: arial;
+  overflow: hidden;
+}
+
+gaugefill {
+  background-color: #14a3eb;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($(color-lighter "#14a3eb" 4)), to(#14a3eb));
+  background-image: -moz-linear-gradient( -90deg, $(color-lighter "#14a3eb" 4), #14a3eb );
+}
+
+gaugetext {
+  font-weight: bold;
+  background-color: transparent;
+  color: black;
+  font-size: inherit;
+  font-family: inherit;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+gauge {
+  position: relative;
+  color: transparent;
+  z-index: 0;
+}
+
+gaugefill {
+  position: absolute;
+  top: 0; bottom: 0; right: 0; left: 0;
+  display: inline-block;
+  z-index: 1;
+}
+
+gaugetext  {
+  position: absolute;
+  top: 0; bottom: 0; right: 0; left: 0;
+  text-align: center;
+  display: inline-block;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+}

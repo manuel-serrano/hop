@@ -174,7 +174,6 @@ looks like:
 <markup> <MAP>
 <markup> <MARQUEE>
 <markup> <MENU>
-<markup> <META>
 <markup> <NOFRAMES>
 <markup> <NOSCRIPT>
 <markup> <OBJECT>
@@ -326,6 +325,6 @@ summarizes the most frequent ones.
 </markup>
 
 == See also ==
-<see-also><CANVAS></see-also>
+<see-also><CANVAS>, <HEAD>, <META></see-also>
 
 </doc>

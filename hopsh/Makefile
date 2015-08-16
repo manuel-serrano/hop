@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/hopsh/Makefile                   */
+#*    serrano/prgm/project/hop/2.5.x/hopsh/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Fri Nov 28 11:16:20 2008 (serrano)                */
+#*    Last change :  Sun Nov 17 11:09:23 2013 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds HopSh                                   */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ EXEC		= hopsh
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hopsh-param parseargs main repl login
+MODULES		= hopsh_param parseargs main repl login
 
 INCLUDES	= 
 
@@ -60,12 +60,11 @@ $(CLASS_DIR):
 	mkdir -p $@
 
 $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
-	@ $(call compile,BIGLOO,BCFLAGS,-o $@ $(OBJECTS))
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$@)
 
 $(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) META-INF/MANIFEST.MF jvm-stdlibs jvm-share jvm-lib
 	@ $(JAR) $@ META-INF/MANIFEST.MF -C o/class_s .
-	@ $(call done,$(COLOR),"Binary ",$@,"...done.")
+	@ $(call done,$@)
 
 jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
 	for p in $(JVMZIPLIBS); do \
@@ -122,10 +121,10 @@ o/class_s/lib/hop/$(HOPRELEASE):
 #*    The implicit `.scm.o' rule                                       */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
-	@ $(call compile,BIGLOO,BCFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm .afile
-	@ $(call compile,BIGLOO,BJVMFLAGS,$< -o $@ -c)
+	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -162,33 +161,34 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
-	chmod $(BMASK) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 install-jvm:
-	mkdir -p $(DESTDIR)$(HOPBINDIR)
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/$(EXEC)
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	/bin/rm -f .afile
-	/bin/rm -f $(OBJECTS)
-	/bin/rm -f $(MODULES:%=%.c)
-	/bin/rm -rf o
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC)
-	/bin/rm -f $(BUILDBINDIR)/$(EXEC).jar
-	/bin/rm -rf META-INF
+	$(RM) -f .afile
+	$(RM) -f $(OBJECTS)
+	$(RM) -f $(MODULES:%=%.c)
+	$(RM) -rf o
+	$(RM) -f $(BUILDBINDIR)/$(EXEC)
+	$(RM) -f $(BUILDBINDIR)/$(EXEC).jar
+	$(RM) -rf META-INF
 
 devclean: clean
+
+distclean: clean
 
 cleanall: devclean
 

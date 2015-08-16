@@ -2,7 +2,11 @@
 
 == Description ==
 
-[[weblets|WEBLETS]] is a Hop program meant for distributing weblets.
+[[weblets|WEBLETS]] is a Hop program meant for distributing weblets. It 
+implements a weblet server. This weblet implements the //server side//
+of the Hop weblet management. The client side is implemented by the
+[[hz|HZ]] weblet. Normal users should only care about [[hz|HZ]]. 
+
 
 ~~
 ,(<TABLE> :class "weblet-facts"

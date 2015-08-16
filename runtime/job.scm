@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/job.scm                   */
+;*    serrano/prgm/project/hop/2.4.x/runtime/job.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 14 14:53:17 2005                          */
-;*    Last change :  Mon May  4 13:47:13 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Thu Apr 11 08:21:16 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop JOB management                                               */
 ;*=====================================================================*/
@@ -14,33 +14,26 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_job
 
-   (cond-expand
-      (enable-threads (library pthread)))
-
+   (include "thread.sch")
+   
    (import  __hop_param
+	    __hop_thread
 	    __hop_read)
 
-   (export  (class job
+   (static  (class job
 	       (%thread (default #unspecified))
-	       (expression::pair-nil read-only)
-	       (restore::pair-nil read-only)
+	       (expression::obj read-only (default #f))
+	       (proc::procedure read-only)
+	       date::llong
 	       (name::bstring read-only)
-	       (state::symbol (default 'queue))
-	       (data::obj (default #unspecified))
-	       date::elong
 	       (repeat::int (default 1))
-	       (interval::elong read-only (default #e-1))))
+	       (interval::llong read-only (default #l-1))))
 	   
    (export  (job-start-scheduler!)
-	    (jobs-queue::pair-nil)
-	    (jobs-run::pair-nil)
-	    (jobs-end::pair-nil)
-	    (job-schedule! ::pair-nil ::pair-nil ::elong ::long ::elong)
-	    (job-restore! ::pair-nil ::pair-nil ::elong ::long ::elong)
-	    (job-reschedule! ::job . ::obj)
-	    (job-abort! ::job)
-	    (job-cancel! ::job)
-	    (job-find ::bstring)))
+	    (job-schedule! ::pair-nil ::llong ::long ::llong)
+	    (job-restore! ::pair-nil ::llong ::long ::llong)
+	    (after ::obj ::procedure)
+	    (timeout ::obj ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Scheduler control                                                */
@@ -53,7 +46,6 @@
 ;*---------------------------------------------------------------------*/
 (define *jobs-queue* '())
 (define *jobs-run* '())
-(define *jobs-end* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    job-start-scheduler! ...                                         */
@@ -67,188 +59,157 @@
 ;*    job-start-scheduler-inner! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (job-start-scheduler-inner!)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (thread-start!	(make-thread job-scheduler 'job-scheduler))
-	 (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
-	    (when (file-exists? f)
-	       (hop-load f))))))
+   (cond-expand
+      (enable-threads
+       (synchronize *job-mutex*
+	  (thread-start!
+	     (instantiate::hopthread
+		(name "job-scheduler")
+		(body job-scheduler)))
+	  (let ((f (make-file-name (hop-var-directory) (hop-job-file))))
+	     (when (file-exists? f)
+		(hop-load f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    start-job! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (start-job! job)
-   (with-access::job job (expression name state %thread date interval repeat)
-      (let* ((proc (eval expression))
-	     (t (make-thread (lambda () (proc job)) name)))
-	 (set! %thread t)
-	 (set! *jobs-run* (cons job *jobs-run*))
-	 (jobs-dump)
-	 (thread-cleanup-set! t (lambda (t)
-				   (with-lock *job-mutex*
-				      (lambda ()
-					 (set! %thread #unspecified)
-					 (set! *jobs-run*
-					       (remq! job *jobs-run*))
-					 (if (=fx repeat 0)
-					     (begin
-						(set! state 'end)
-						(set! *jobs-end*
-						      (cons job *jobs-end*)))
-					     (set! state 'queue))))))
-	 
-	 (set! state 'run)
-	 (thread-start! t)
-	 (cond
-	    ((<fx repeat 0)
-	     (set! date (+elong interval date)) 
-	     (job-add! job))
-	    ((>fx repeat 1)
-	     (set! repeat (-fx repeat 1))
-	     (set! date (+elong interval date)) 
-	     (job-add! job))
-	    (else
-	     (set! repeat 0)))
-	 job)))
+   (cond-expand
+      (enable-threads
+       (with-access::job job (proc name %thread date interval repeat)
+	  (let ((t (instantiate::hopthread
+		      (name name)
+		      (body (lambda ()
+			       (let ((res (proc job)))
+				  (set! %thread #unspecified)
+				  (set! *jobs-run* (remq! job *jobs-run*))
+				  (cond
+				     ((<fx repeat 0)
+				      (when res
+					 (set! date (+llong interval (current-milliseconds)))
+					 (job-add! job)))
+				     ((>fx repeat 1)
+				      (set! repeat (-fx repeat 1))
+				      (set! date (+llong interval (current-milliseconds))) 
+				      (job-add! job))
+				     (else
+				      (set! repeat 0)))))))))
+	     (set! %thread t)
+	     (set! *jobs-run* (cons job *jobs-run*))
+	     (when (pair? *jobs-queue*)
+		(jobs-dump))
+	     (thread-start! t)
+	     job)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-queue ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (jobs-queue)
-   (with-lock *job-mutex*
-      (lambda ()
-	 *jobs-queue*)))
+   (synchronize *job-mutex* *jobs-queue*))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-run ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (jobs-run)
-   (with-lock *job-mutex*
-      (lambda ()
-	 *jobs-run*)))
-
-;*---------------------------------------------------------------------*/
-;*    jobs-end ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (jobs-end)
-   (with-lock *job-mutex*
-      (lambda ()
-	 *jobs-end*)))
+   (synchronize *job-mutex* *jobs-run*))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-scheduler ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (job-scheduler)
-   (mutex-lock! *job-mutex*)
-   (let loop ()
-      (jobs-dump)
-      (cond
-	 ((null? *jobs-queue*)
-	  (condition-variable-wait! *job-condvar* *job-mutex*)
-	  (loop))
-	 ((<=elong (job-date (car *jobs-queue*))
-		   (date->seconds (current-date)))
-	  (start-job! (car *jobs-queue*))
-	  (set! *jobs-queue* (cdr *jobs-queue*))
-	  (loop))
-	 (else
-	  (let ((tmt (*fx 1000
-			  (elong->fixnum
-			   (-elong (job-date (car *jobs-queue*))
-				   (date->seconds (current-date)))))))
-	     (condition-variable-wait! *job-condvar* *job-mutex* tmt)
-	     (loop))))))
+   (synchronize *job-mutex*
+      (let loop ()
+	 (jobs-dump)
+	 (cond
+	    ((null? *jobs-queue*)
+	     (condition-variable-wait! *job-condvar* *job-mutex*)
+	     (loop))
+	    ((<=llong (with-access::job (car *jobs-queue*) (date) date)
+		(current-milliseconds))
+	     (let ((job (car *jobs-queue*)))
+		(set! *jobs-queue* (cdr *jobs-queue*))
+		(start-job! job))
+	     (loop))
+	    (else
+	     (with-access::job (car *jobs-queue*) (date)
+		(let ((tmt (-llong date (current-milliseconds))))
+		   (condition-variable-wait! *job-condvar* *job-mutex* tmt)
+		   (loop))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-add! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (job-add! j::job)
-   (let ((d (job-date j)))
+   (let ((d (with-access::job j (date) date)))
       (cond
+	 ((<=llong d (current-milliseconds))
+	  (start-job! j))
 	 ((null? *jobs-queue*)
 	  (set! *jobs-queue* (list j))
-	  (condition-variable-signal! *job-condvar*))
-	 ((<elong d (job-date (car *jobs-queue*)))
+	  (synchronize *job-mutex*
+	     (condition-variable-signal! *job-condvar*)))
+	 ((<llong d (with-access::job (car *jobs-queue*) (date) date))
 	  (set! *jobs-queue* (cons d *jobs-queue*))
-	  (condition-variable-signal! *job-condvar*))
+	  (synchronize *job-mutex*
+	     (condition-variable-signal! *job-condvar*)))
 	 (else
 	  (let loop ((jobs (cdr *jobs-queue*))
 		     (prev *jobs-queue*))
 	     (cond
 		((null? jobs)
 		 (set-cdr! prev (cons j '())))
-		((<elong d (job-date (car jobs)))
+		((<llong d (with-access::job (car jobs) (date) date))
 		 (set-cdr! prev (cons j jobs)))
 		(else
-		 (loop (cdr jobs) jobs))))))))
+		 (loop (cdr jobs) jobs)))))))
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    %job-schedule! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (%job-schedule! expr restore start repeat interval)
-   (let* ((now (date->seconds (current-date)))
+(define (%job-schedule! expr start repeat interval)
+   (let* ((now (current-milliseconds))
 	  (job (instantiate::job
 		  (name (symbol->string (gensym 'job)))
 		  (expression expr)
-		  (restore restore)
-		  (date (if (<elong start 0) now start))
+		  (proc (eval expr))
+		  (date (if (<llong start 0) now start))
 		  (repeat repeat)
 		  (interval interval))))
-      (if (or (<elong start #e0) (>=elong start now))
-	  (job-add! job)
-	  (set! *jobs-end* (cons job *jobs-end*)))
+      (when (or (<llong start #l0) (>=llong start now))
+	 (job-add! job))
       job))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-schedule! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (job-schedule! expr restore start repeat interval)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (%job-schedule! expr restore start repeat interval))))
-;*                                                                     */
+(define (job-schedule! expr start repeat interval)
+   (synchronize *job-mutex*
+      (%job-schedule! expr start repeat interval)))
+
 ;*---------------------------------------------------------------------*/
 ;*    job-restore! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (job-restore! expr restore start repeat interval)
-   ((eval restore))
-   (%job-schedule! expr restore start repeat interval))
+(define (job-restore! expr start repeat interval)
+   (%job-schedule! expr start repeat interval))
 
-;*---------------------------------------------------------------------*/
-;*    job-reschedule! ...                                              */
-;*---------------------------------------------------------------------*/
-(define (job-reschedule! j::job . start-time)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (unless (job-%thread j)
-	    (with-access::job j (date)
-	       (set! *jobs-queue* (remq! j *jobs-queue*))
-	       (if (null? start-time)
-		   (begin
-		      (set! date (date->seconds (current-date)))
-		      (start-job! j))
-		   (begin
-		      (set! date (date->seconds (car start-time)))
-		      (job-add! j))))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    job-abort! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (job-abort! j::job)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (when (thread? (job-%thread j))
-	    (thread-terminate! (job-%thread j))
+   (synchronize *job-mutex*
+      (with-access::job j (%thread)
+	 (when (isa? %thread thread)
+	    (thread-terminate! %thread)
 	    (set! *jobs-run* (remq! j *jobs-run*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-cancel! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (job-cancel! j::job)
-   (with-lock *job-mutex*
-      (lambda ()
-	 (set! *jobs-queue* (remq! j *jobs-queue*))
-	 (jobs-dump))))
+   (synchronize *job-mutex*
+      (set! *jobs-queue* (remq! j *jobs-queue*))
+      (jobs-dump)))
 
 ;*---------------------------------------------------------------------*/
 ;*    job-find ...                                                     */
@@ -259,33 +220,77 @@
 	 (cond
 	    ((null? jobs)
 	     #f)
-	    ((string=? (job-name (car jobs)) name)
+	    ((string=? (with-access::job (car jobs) (name) name) name)
 	     (car jobs))
 	    (else
 	     (loop (cdr jobs))))))
-   (with-lock *job-mutex*
-      (lambda ()
-	 (or (search *jobs-queue*)
-	     (search *jobs-run*)
-	     (let ((j (search *jobs-end*)))
-		(when (job? j)
-		   (set! *jobs-end* (remq! j *jobs-end*))
-		   j))))))
+   (synchronize *job-mutex*
+      (or (search *jobs-queue*) (search *jobs-run*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jobs-dump ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (jobs-dump)
+   
    (define (job-dump j)
-      (print `"(job-restore!")
-      (display " '") (write (job-expression j)) (newline)
-      (display " '") (write (job-restore j)) (newline)
-      (display " ") (write (job-date j))
-      (print " ;; " (seconds->date (job-date j)))
-      (display " ") (write (job-repeat j))
-      (display " ") (write (job-interval j)) (newline)
-      (print " )"))
-   (with-output-to-file (make-file-name (hop-var-directory) (hop-job-file))
-      (lambda ()
-	 (for-each job-dump *jobs-queue*))))
-	    
+      (with-access::job j (expression date repeat interval)
+	 (when expression
+	    (print `"(job-restore!")
+	    (display " '") (write expression) (newline)
+	    (display " ") (write date)
+	    (print " ;; " (seconds->date (llong->elong (/llong date #l1000))))
+	    (display " ") (write repeat)
+	    (display " ") (write interval) (newline)
+	    (print " )"))))
+   
+   (when (pair? *jobs-queue*)
+      (unless (directory? (hop-var-directory))
+	 (make-directories (hop-var-directory)))
+      (when (directory? (hop-var-directory))
+	 (let ((path (make-file-name (hop-var-directory) (hop-job-file))))
+	    (with-output-to-file path
+	       (lambda ()
+		  (for-each job-dump *jobs-queue*)))))))
+
+;*---------------------------------------------------------------------*/
+;*    current-milliseconds ...                                         */
+;*---------------------------------------------------------------------*/
+(define (current-milliseconds::llong)
+   (/llong (current-microseconds) #l1000))
+   
+;*---------------------------------------------------------------------*/
+;*    ->llong ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (->llong who n)
+   (cond
+      ((llong? n) n)
+      ((integer? n) (fixnum->llong n))
+      ((elong? n) (elong->llong n))
+      ((real? n) (fixnum->llong (flonum->fixnum n)))
+      (else (bigloo-type-error who "number" n))))
+
+;*---------------------------------------------------------------------*/
+;*    after ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (after tmt proc)
+   (let* ((i (->llong "after" tmt))
+	  (job (instantiate::job
+		 (name "after")
+		 (proc (lambda (j) (proc)))
+		 (date (+llong (current-milliseconds) i))
+		 (repeat 0))))
+      (job-add! job)))
+
+;*---------------------------------------------------------------------*/
+;*    timeout ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (timeout tmt proc)
+   (when (proc)
+      (let* ((i (->llong "timeout" tmt))
+	     (job (instantiate::job
+		     (name "timeout")
+		     (proc (lambda (j) (proc)))
+		     (date (+llong (current-milliseconds) i))
+		     (interval i)
+		     (repeat -1))))
+	 (job-add! job))))

@@ -1,0 +1,191 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/weblets/color/color.hss           */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Thu Jul 16 10:39:17 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    COLOR's CSS                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module color_hss
+    (import color_config))
+
+/*---------------------------------------------------------------------*/
+/*    Global configuration                                             */
+/*---------------------------------------------------------------------*/
+$(define border-color "#bbb")
+
+/*---------------------------------------------------------------------*/
+/*    General markups                                                  */
+/*---------------------------------------------------------------------*/
+body {
+  background: #e0e0e0;
+  font-family: arial, sans serif;
+}
+
+tt {
+  font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
+  font-size: 80%;
+}
+
+table td {
+  text-align: left;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Main frame                                                       */
+/*---------------------------------------------------------------------*/
+table.main {
+  width: 70%;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  border-radius: 0.5em;
+}
+
+td#title {
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 20px;
+  padding-bottom: 1px;
+}
+
+table.main td.main {
+  vertical-align: top;
+}
+  
+table.body {
+  width: 100%;
+}
+
+/*--- logo ------------------------------------------------------------*/
+table.main img.logo {
+  padding: 20px 25px 0 25px;
+}
+
+table.main div.version {
+  margin-left: 3px;
+  margin-right: 3px;
+  padding-top: 5px;
+  font-size: 60%;
+  text-align: center;
+  color: #777;
+  font-weight: bold;
+}
+
+/*--- doc button ------------------------------------------------------*/
+div.buttons {
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  margin-top: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid $border-color;
+}
+
+div.buttons div.button {
+  text-align: center;
+  margin-left: 6px;
+  margin-right: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: 1px solid $border-color;
+  background: #f9f9f9;
+  -moz-border-radius: 0.3em;
+}
+
+div.buttons div.prefs {
+  margin-top: 1em;
+}
+
+img.doc {
+  vertical-align: bottom;
+  border: none;
+  padding-right: 4px;
+}
+
+a.doc {
+  font-family: Arial,Helvetica,sans-serif;
+  font-weight: bold; 
+  font-size: 80%;
+  vertical-align: center;
+  cursor: default;
+  color: black;
+  text-decoration: none;
+}
+
+a.doc:hover {
+  color: #8381de;
+}
+
+/*---------------------------------------------------------------------*/
+/*    preferences                                                      */
+/*---------------------------------------------------------------------*/
+table.hop-prefs input.hop-pr-editor-expr {
+  border-width: 1px;
+}
+
+button.hop-prefs-save {
+  border-width: 1px;
+} 
+
+/*---------------------------------------------------------------------*/
+/*    dashboard                                                        */
+/*---------------------------------------------------------------------*/
+body.dashboard {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: black;
+  color: white;
+}
+
+colorchooser.dashboard {
+  border: 0;
+}
+
+table.colorchooser-element {
+  color: white;
+  font-size: 7pt;
+  border: 1px solid #777;
+  background: #222;
+  border-radius: 0.2em;
+  padding: 3px;
+}
+
+table.colorchooser-element td.main {
+  vertical-align: top;
+}
+
+table.colorchooser-element td.value {
+  font-family: monospace;
+  width: 10em;
+  color: red;
+}
+
+table.colorchooser-element input[type=radio] {
+  color: blue;
+}
+
+table.colorchooser-element button.grab,
+table.colorchooser-element button.grab:hover {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url( etc/grab.png );
+  border-radius: 0.2em;
+  background-color: #444;
+  border-width: 1px;
+}
+
+table.colorchooser-element button.grab:hover {
+  background-color: #666;
+}
+

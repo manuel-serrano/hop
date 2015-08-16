@@ -1,5 +1,18 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module statements
    (import nodes
+	   dump-node
 	   error
 	   tools
 	   export-desc
@@ -36,7 +49,7 @@
 		       #!optional (use-var? #t))
    (if use-var?
        (let* ((tmp (Ref-of-new-Var 'stmp))
-	      (tmp-var (Ref-var tmp)))
+	      (tmp-var (with-access::Ref tmp (var) var)))
 	  (with-access::Begin stmt-begin (exprs)
 	     (cons-set! exprs
 			(walk! (var-assig tmp-var n)
@@ -49,7 +62,7 @@
 	  (cons-set! exprs
 		     (walk! n surrounding-fun #f)) ;; n is at stmt-level now.
 	  (instantiate::Const
-	     (location (Node-location n))
+	     (location (with-access::Node n (location) location))
 	     (value #unspecified)))))
 
 
@@ -79,8 +92,7 @@
 (define-nmethod (If.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-If this (test then else stmt-test? stmt-then? stmt-else?)
       (cond
-	 ((and (not stmt-begin)
-	       stmt-test?)
+	 ((and (not stmt-begin) stmt-test?)
 	  (shrink! this)
 	  ;; test-statement needs to be moved out of test.
 	  (let ((bnode (instantiate::Begin (exprs (list this)))))
@@ -88,11 +100,9 @@
 	     (set! then (walk! then surrounding-fun #f))
 	     (set! else (walk! else surrounding-fun #f))
 	     bnode))
-	 ((and stmt-begin
-	       (or stmt-then? stmt-else?))
+	 ((and stmt-begin (or stmt-then? stmt-else?))
 	  (move-to-begin this walk! surrounding-fun stmt-begin))
-	 ((and stmt-begin
-	       stmt-test?)
+	 ((and stmt-begin stmt-test?)
 	  (shrink! this)
 	  ;; we can leave the if at the current location, but we have to move
 	  ;; the test to the surrounding stmt-begin.
@@ -108,8 +118,7 @@
 (define-nmethod (Case.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Case this (key clauses stmt-key?)
       (cond
-	 ((and (not stmt-begin)
-	       stmt-key?)
+	 ((and (not stmt-begin) stmt-key?)
 	  (shrink! this)
 	  ;; key-statement needs to be moved out of key.
 	  (let ((bnode (instantiate::Begin (exprs (list this)))))
@@ -145,31 +154,33 @@
    ;; stmt-begin must be #f
    [assert (stmt-begin) (not stmt-begin)]
    (default-walk! this surrounding-fun #f))
-   
+
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Stmt-Begin ...                                          */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Stmt-Begin.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Begin this (exprs stmt-exprs)
       (cond
 	 ((null? exprs)
 	  (shrink! this)
 	  this)
-	 ((or (not stmt-exprs)
-	      (not stmt-begin))
+	 ((or (not stmt-exprs) (not stmt-begin))
 	  (shrink! this)
 	  (default-walk! this surrounding-fun #f))
-	 ((and (car stmt-exprs)
-	       (not (any? (lambda (x) x) (cdr stmt-exprs))))
+	 ((and (car stmt-exprs) (not (any (lambda (x) x) (cdr stmt-exprs))))
 	  (shrink! this)
 	  ;; only the first expression is in stmt-form.
 	  ;; simply pass the stmt-begin to it.
 	  (default-walk! this surrounding-fun stmt-begin))
-	 (else ;; we have a stmt-begin, and at least one el in stmt-form.
+	 (else
+	  ;; we have a stmt-begin, and at least one el in stmt-form.
 	  ;; find the last one.
 	  (let* ((last-p (let loop ((exprs exprs)
 				    (stmt-exprs stmt-exprs)
 				    (last-p #f))
 			    (cond
 			       ((null? exprs)
-				last-p) ;; there must be one.
+				last-p) 
 			       ((car stmt-exprs)
 				(loop (cdr exprs) (cdr stmt-exprs) exprs))
 			       (else
@@ -192,8 +203,12 @@
 		    (set! exprs remaining)
 		    (default-walk! this surrounding-fun #f))))))))
 
-(define-nmethod (Call.stmts! surrounding-fun stmt-begin)
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Stmt-Call ...                                           */
+;*---------------------------------------------------------------------*/
+(define-nmethod (Stmt-Call.stmts! surrounding-fun stmt-begin)
    (with-access::Stmt-Call this (operator operands stmt-operator? stmt-operands)
+      
       (define (stmt-ops-count)
 	 (let loop ((ops (cons stmt-operator? (or stmt-operands '())))
 		    (count 0))
@@ -239,12 +254,12 @@
 		       (walk! n surrounding-fun #f))))
 		
 		(define (unaffected? n)
-		   (or (Const? n)
-		       (and (Ref? n)
+		   (or (isa? n Const)
+		       (and (isa? n Ref)
 			    (with-access::Ref n (var)
 			       (with-access::Var var (constant?)
 				  constant?)))))
-		
+
 		(set! operator (move-stmt-walk operator stmt-operator? #t))
 
 		(if (not stmt-operands)
@@ -267,14 +282,23 @@
 		(shrink! this)
 		this))))))
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Frame-alloc ...                                         */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Frame-alloc.stmts! surrounding-fun stmt-begin)
    this)
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Frame-push ...                                          */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Frame-push.stmts! surrounding-fun stmt-begin)
    (if (not stmt-begin)
        (default-walk! this surrounding-fun #f)
        (move-to-begin this walk! surrounding-fun stmt-begin)))
 
+;*---------------------------------------------------------------------*/
+;*    stmts! ::Return ...                                              */
+;*---------------------------------------------------------------------*/
 (define-nmethod (Return.stmts! surrounding-fun stmt-begin)
    (if stmt-begin
        (move-to-begin this walk! surrounding-fun stmt-begin
@@ -299,6 +323,8 @@
        this))
 
 (define-nmethod (Pragma.stmts! surrounding-fun stmt-begin)
+   (with-access::Pragma this (args)
+      (for-each (lambda (a) (walk! a surrounding-fun #f)) args))
    this)
 
 ;; Tail-rec and Tail-rec-Call do not exist anymore.

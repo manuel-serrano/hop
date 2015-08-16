@@ -1,18 +1,13 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/share/hop-window.js              */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-window.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Sep 19 14:46:53 2007                          */
-/*    Last change :  Wed Jan 14 08:21:12 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Sun Aug 11 15:32:59 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP unified window API                                           */
 /*=====================================================================*/
-
-/*---------------------------------------------------------------------*/
-/*    Dynamic load                                                     */
-/*---------------------------------------------------------------------*/
-dom_add_head_script( hop_share_directory() + "/hop-fx.js" );
 
 /*---------------------------------------------------------------------*/
 /*    HopWindowEvent ...                                               */
@@ -28,11 +23,11 @@ function HopWindowEvent() {
 /*---------------------------------------------------------------------*/
 function hop_iwindow_invoke_listener( lst, event ) {
    while( sc_isPair( lst ) ) {
-      lst.car( event );
+      lst.__hop_car( event );
 
       if( event.isStopped ) break;
 
-      lst = lst.cdr;
+      lst = lst.__hop_cdr;
    }
 }
 
@@ -105,9 +100,17 @@ function hop_get_window( o ) {
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_zindex ...                                           */
+/*    -------------------------------------------------------------    */
+/*    This uses a two stage initialization that support multiple       */
+/*    inclusion of the hop-window.js file.                             */
 /*---------------------------------------------------------------------*/
-var hop_iwindow_zindex = 0;
-var hop_iwindow_count = 0;
+var hop_iwindow_zindex;
+var hop_iwindow_count;
+
+if( typeof hop_iwindow_count !== "number" ) {
+   hop_iwindow_zindex = 0;
+   hop_iwindow_count = 0;
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_close ...                                            */
@@ -117,7 +120,7 @@ function hop_iwindow_close( win ) {
 
    hop_iwindow_invoke_listener( win.onclose, evt );
 
-   if( !evt.isStopped ) node_style_set( win, "display", "none" );
+   if( !evt.isStopped ) win.parentNode.removeChild( win );
 }
 
 /*---------------------------------------------------------------------*/
@@ -148,34 +151,16 @@ function hop_iwindow_maximize( win ) {
 	 if( win.user_parent ) {
 	    var p = win.parentNode;
 
-	    if( win.el_shadow_box != null ) {
-	       node_style_set( win.el_win, "width",
-			       (p.offsetWidth - win.el_shadow_box.offsetWidth) +
-			       "px" );
-	       node_style_set( win.el_win, "height",
-			       (p.offsetHeight - win.el_shadow_box.offsetHeight) +
-			       "px" );
-	    } else {
-	       node_style_set( win.el_win, "width", p.offsetWidth + "px" );
-	       node_style_set( win.el_win, "height", p.offsetHeight + "px" );
-	    }
+	    node_style_set( win.el_win, "width", p.offsetWidth + "px" );
+	    node_style_set( win.el_win, "height", p.offsetHeight + "px" );
 
 	    node_style_set( win, "top", (hop_element_y( p ) + 1) + "px" );
 	    node_style_set( win, "left", (hop_element_x( p ) + 1) + "px" );
 	 } else {
-	    if( win.el_shadow_box != null ) {
-	       node_style_set( win.el_win, "width",
-			       window.innerWidth -
-			       (win.el_shadow_box.offsetWidth - 2) + "px" );
-	       node_style_set( win.el_win, "height",
-			       window.innerHeight -
-			       (win.el_shadow_box.offsetHeight - 2) + "px" );
-	    } else {
-	       node_style_set( win.el_win, "width",
-			       (window.innerWidth - 2) + "px" );
-	       node_style_set( win.el_win, "height",
-			       (window.innerHeight - 2) + "px" );
-	    }
+	    node_style_set( win.el_win, "width",
+			    (window.innerWidth - 2) + "px" );
+	    node_style_set( win.el_win, "height",
+			    (window.innerHeight - 2) + "px" );
 
 	    node_style_set( win, "top", 0 );
 	    node_style_set( win, "left", 0 );
@@ -253,26 +238,31 @@ function hop_iwindow_clip( win ) {
       var px = hop_element_x( parent );
       var py = hop_element_y( parent );
 
-      var top = 'auto';
-      var right = 'auto';
-      var bottom = 'auto';
-      var left = 'auto';
-      
-      if( x < px )
-	 left = ((px - x) + 'px');
-      if( y < py )
-	 top = ((py - y) + 'px');
-      if( x + win.offsetWidth > px + parent.offsetWidth )
-	 right = ((px + parent.offsetWidth) - x) + 'px';
-      if( y + win.offsetHeight > py + parent.offsetHeight )
-	 bottom = ((py + parent.offsetHeight) - y) + 'px';
+      if( (x < px)
+	  || (y < py)
+	  || (x + win.offsetWidth > px + parent.offsetWidth)
+	  || (y + win.offsetHeight > py + parent.offsetHeight) ) {
+	 /* some clipping is needed */
+	 var top, right, bottom, left;
 
-      node_style_set( win, 'clip', 'rect( ' + top + ', ' +
-		      right + ', ' +
-		      bottom + ', ' +
-		      left + ') ');
+	 left = ( x < px ) ? (px - x) + "px" : "auto";
+	 top = ( y < py ) ? (py - y) + "px" : "auto";
+	 right = (x + win.offsetWidth > px + parent.offsetWidth) ?
+	    ((px + parent.offsetWidth) - x) + "px" : "99999px";
+	 bottom = (y + win.offsetHeight > py + parent.offsetHeight) ?
+	    ((py + parent.offsetHeight) - y) + "px" : "99999px";
+
+	 node_style_set( win, 'clip', 'rect( '
+			 + top + ', '
+			 + right + ', '
+			 + bottom + ", "
+			 + left + ' ) ');
+      } else {
+	 node_style_set( win, 'clip', 'inherit' );
+      }
    }
 }
+   
 
 /*---------------------------------------------------------------------*/
 /*    hop_iwindow_drag ...                                             */
@@ -283,17 +273,14 @@ function hop_iwindow_drag( event, win ) {
    var dx = hop_event_mouse_x( event ) - win.offsetLeft;
    var dy = hop_event_mouse_y( event ) - win.offsetTop;
    var ocursor = win.el_handle.style.cursor;
-   var obg = node_style_get( win.el_win, "background" );
    var p = win.parentNode;
    var px = hop_element_x( p );
    var py = hop_element_y( p );
 
    hop_iwindow_raise( win );
-   
+
    node_style_set( win.el_content, "visibility", "hidden" );
    node_style_set( win.el_handle, "cursor", "move" );
-   node_style_set( win.el_win, "background", "white" );
-   node_style_set( win, "clip", "auto" );
 
    var mousemove = function( event ) {
       var nx = (hop_event_mouse_x( event ) - dx);
@@ -304,7 +291,7 @@ function hop_iwindow_drag( event, win ) {
 	 var ny0 = hop_event_mouse_y( event ) - dy0;
 
 	 if( win.clip ) {
-	    /* because we will apply cplipping once the drag */
+	    /* because we will apply clipping once the drag  */
 	    /* is over, we only ensure that the window does  */
 	    /* not escape on the top of the window.          */
 	    node_style_set( win, "left", nx + "px" );
@@ -330,7 +317,6 @@ function hop_iwindow_drag( event, win ) {
       hop_remove_event_listener( document, "mouseup", mouseup );
       node_style_set( win.el_handle, "cursor", ocursor );
       node_style_set( win.el_content, "visibility", "visible" );
-      node_style_set( win.el_win, "background", obg );
 
       /* clip the window */
       if( win.clip ) hop_iwindow_clip( win );
@@ -366,25 +352,23 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
    var y0 = hop_event_mouse_y( event );
    var w0 = win.el_win.offsetWidth;
    var h0 = win.el_win.offsetHeight;
-   var obg = node_style_get( win.el_win, "background" );
+   var obg = node_computed_style_get( win.el_win, "background" );
    var wx0 = hop_element_x( win );
    var wy0 = hop_element_y( win );
-   var pow = hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
-   var poh = hop_element_y( win.parentNode) + win.parentNode.offsetHeight - 8;
+   var pow = (win.parentNode == document.body) ? -1 : hop_element_x( win.parentNode ) + win.parentNode.offsetWidth - 8;
+   var poh = (win.parentNode == document.body) ? -1 : hop_element_y( win.parentNode) + win.parentNode.offsetHeight - 8;
    var mousemove;
 
-   node_style_set( win.el_content, "border", "0" );
    node_style_set( win.el_content, "display", "none" );
    node_style_set( win.el_win, "background", "white" );
-   node_style_set( win, "clip", "auto" );
 
    if( widthp && heightp ) {
       mousemove = function( event ) {
 	 var nw = (w0 + (hop_event_mouse_x( event ) - x0));
 	 var nh = (h0 + (hop_event_mouse_y( event ) - y0));
 
-	 if( (nw > 0) && ((nw + wx0) < pow) &&
-	     (nh > 0) && ((nh + wy0) < poh) ) {
+	 if( ((pow <= 0) || ((nw > 0) && ((nw + wx0) < pow))) &&
+	     ((poh <= 0) || ((nh > 0) && ((nh + wy0) < poh))) ) {
 	    node_style_set( win.el_win, "width", nw + "px" );
 	    node_style_set( win.el_win, "height", nh + "px" );
 	 }
@@ -395,7 +379,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	 mousemove = function( event ) {
 	    var nw = (w0 + (hop_event_mouse_x( event ) - x0));
 
-	    if( (nw > 0) && ((nw + wx0) < pow) )
+	    if( (pow <= 0) || ((nw > 0) && ((nw + wx0) < pow)) )
 	       node_style_set( win.el_win, "width", nw + "px" );
 	 };
 	 hop_add_event_listener( document, "mousemove", mousemove );
@@ -403,8 +387,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	 if( heightp ) {
 	    mousemove = function( event ) {
 	       var nh = (h0 + (hop_event_mouse_y( event ) - y0));
-
-	       if( (nh > 0) && ((nh + wy0) < poh) )
+	       if( (poh <= 0) || ((nh > 0) && ((nh + wy0) < poh)) )
 		  node_style_set( win.el_win, "height", nh + "px" );
 	    };
 	    hop_add_event_listener( document, "mousemove", mousemove );
@@ -417,6 +400,7 @@ function hop_iwindow_evresize_inner( event, win, widthp, heightp ) {
 	       node_style_set( win.el_win, "width", w + "px" );
 	       node_style_set( win.el_win, "height", (h0 + (hop_event_mouse_y( event ) - y0)) + "px" );
 	    }
+
 	    hop_add_event_listener( document, "mousemove", mousemove );
 	 }
       }
@@ -454,17 +438,19 @@ function hop_iwindow_evresize( event, win, widthp, heightp ) {
 /*---------------------------------------------------------------------*/
 function make_hop_iwindow( id, klass, parent ) {
    var win = document.createElement( "div" );
-   var cla = (klass == "hop-window" ? klass : "hop-window " + klass);
+   
+   if( klass ) win.className = klass;
+   id = id.replace( /[ '"<>&;]/g, "_" );
    win.id = id;
-   win.className = cla;
-   win.name = "hop-window";
+
+   win.setAttribute( "hssclass", "hop-window" );
 
    var handle = "\
 <table id='" + id + "-handle' class='hop-window-handle' width='100%'\n\
        cellpadding='0' cellspacing='0' border='0'>\n\
   <tr class='hop-window-handle'>\n\
-    <td class='hop-window-iconify' align='left' onclick='hop_iwindow_iconify( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
-    <td class='hop-window-maximize' align='left' onclick='hop_iwindow_maximize( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
+    <td class='hop-window-iconify' align='left' onclick='hop_stop_propagation( event, true ); hop_iwindow_iconify( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
+    <td class='hop-window-maximize' align='left' onclick='hop_stop_propagation( event, true ); hop_iwindow_maximize( document.getElementById( \"" + id + "\") )'>&#160;</td>\n\
     <td class='hop-window-up-title'>\n\
       <table class='hop-window-title' width='100%' border='0' cellspacing='0' cellpadding='0'>\n\
         <tr>\n\
@@ -474,7 +460,7 @@ function make_hop_iwindow( id, klass, parent ) {
         </tr>\n\
       </table>\n\
     </td> \n\
-    <td class='hop-window-close' align='right' onclick='hop_iwindow_close( document.getElementById( \"" + id + "\" ) )'>&#160;</td>\n\
+    <td class='hop-window-close' align='right' onclick='hop_stop_propagation( event, true ); hop_iwindow_close( document.getElementById( \"" + id + "\" ) )'>&#160;</td>\n\
   </tr>\n\
 </table>\n";
 
@@ -489,12 +475,13 @@ function make_hop_iwindow( id, klass, parent ) {
 
    var t = "\n\
 <div class='hop-window-inner' id='" + id + "-win'>\n\
+  <div class='hop-window-content-border'></div>\n\
   <div class='hop-window-content' id='" + id + "-content'>\n\</div>\n\
   <div class='hop-window-handle' id='" + id + "-handle'>" + handle + "</div>\n\
   <div class='hop-window-foot'>" + foot + "</div>\n\
 </div>";
 
-   win.innerHTML = hop_fx_make_shadow( 'hop-window-shadow', t );
+   win.innerHTML = hop_fx_make_shadow( t );
 
    if( parent ) {
       if( (parent instanceof String) || (typeof parent === "string") )
@@ -518,32 +505,50 @@ function make_hop_iwindow( id, klass, parent ) {
    win.el_title = document.getElementById( id + "-title" );
 
    win.el_shadow = win.childNodes[ 0 ];
-   win.el_shadow_box = document.getElementById( id + "-shadow-box" );
    win.resizable = true;
    win.iconifiedp = false;
    win.oniconify = false;
    win.onresize = false;
    win.onmaximize = false;
+   win.onclose = false;
+   win.onmove = false;
+   win.onraise = false;
 
    hop_add_event_listener(
       win.el_handle,
       "mousedown",
-      function( event ) { hop_iwindow_drag( event, win ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_drag( event, win )
+      } );
 
    hop_add_event_listener(
       win.el_resize_middle,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, false, true ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, false, true )
+      } );
 
    hop_add_event_listener(
       win.el_resize_right,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, true, true ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, true, true )
+      } );
 
    hop_add_event_listener(
       win.el_resize_left,
       "mousedown",
-      function( event ) { hop_iwindow_evresize( event, win, false, false ) } );
+      function( event ) {
+	 hop_stop_propagation( event, true );
+	 hop_iwindow_evresize( event, win, false, false )
+      } );
+   hop_add_event_listener(
+      win,
+      "click",
+      function( event ) { hop_stop_propagation( event, true ); } );
 
    win.hop_add_event_listener = hop_iwindow_add_event_listener;
    win.hop_remove_event_listener = hop_iwindow_remove_event_listener;
@@ -577,10 +582,10 @@ function hop_iwindow_src_set( win, src, width, height ) {
       };
 
       if( typeof src == "function" ) {
-	 hop( src(), cb );
+	 with_hop( src(), cb );
       } else {
 	 if( (src instanceof String) || (typeof src == "string") ) {
-	    hop( src, cb );
+	    with_hop( src, cb );
 	 } else {
 	    alert( "*** Hop Error, Illegal `iwindow' content -- " + src
 		   + " (" + typeof src + ")" );
@@ -596,7 +601,6 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
    var win = document.getElementById( id );
    var isnew = false;
 
-   klass = klass ? ("hop-window " + klass) : "hop-window";
    if( win == null ) {
       win = make_hop_iwindow( id, klass, parent );
       isnew = true;
@@ -610,6 +614,7 @@ function hop_iwindow_open( id, src, title, klass, width, height, x, y, bg, resiz
       node_style_set( win.el_content, "background", bg );
    }
    node_style_set( win.el_content, "display", "none" );
+   node_style_set( win.el_content, "overflow", "hidden" );
 
    hop_iwindow_src_set( win, src, width, height );
    
@@ -666,7 +671,7 @@ var Kclip = sc_jsstring2keyword( "clip" );
 /*---------------------------------------------------------------------*/
 /*    hop_window_open ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-open)) */
+/*** META ((export window-open) (arity -1)) */
 function hop_window_open() {
    var title = "Hop", id, parent, src, klass, width, height, left, top;
    var background, resizable = true;
@@ -694,20 +699,14 @@ function hop_window_open() {
       if( typeof src == "function" ) src = src();
 
       if( (src instanceof String) || (typeof src === "string" ) ) {
-	 if( width )
-	    prop += ",width=" + unpx( width );
-	 else
-	    prop += ",width=" + hop_current_window_width();
-	 if( height )
-	    prop += ",height=" + unpx( height );
-	 else
-	    prop += ",height=" + hop_current_window_height();
 	 if( left != undefined ) prop += ",screenX=" + left + ",left=" + left;
 	 if( top != undefined  ) prop += ",screenY=" + top + ",top=" + top;
 
-	 if( prop.charAt( 0 ) == ',' ) {
-	    prop = prop.substring( 1, prop.length );
-	 }
+	 prop = "width="
+	    + (width ? unpx( width ) : hop_current_window_width())
+	    + ",height="
+	    + (height ? unpx( height ) : hop_current_window_height())
+	    + (( prop.charAt( 0 ) == ',' ) ? prop : "," + prop );
 
 	 var win = window.open( src, title, prop );
 	 win.iconify = function( w ) { ; };
@@ -809,7 +808,7 @@ function hop_window_open() {
       } else {
 	 if( !src && parent ) {
 	    if( body ) {
-	       dom_append_child( div, k );
+	       dom_add_child( div, k );
 	    } else {
 	       body = dom_create( "div", k );
 	    }
@@ -840,7 +839,7 @@ function hop_window_open() {
 /*---------------------------------------------------------------------*/
 /*    hop_tab_open ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export tab-open)) */
+/*** META ((export tab-open) (arity -1)) */
 function hop_tab_open() {
    var src;
    var i = 0, l = arguments.length;
@@ -862,7 +861,7 @@ function hop_tab_open() {
 /*---------------------------------------------------------------------*/
 /*    hop_window_iconify ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-iconify)) */
+/*** META ((export window-iconify) (arity #t)) */
 function hop_window_iconify( o ) {
    return hop_get_window( o ).iconify();
 }
@@ -870,7 +869,7 @@ function hop_window_iconify( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_close ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-close)) */
+/*** META ((export window-close) (arity #t)) */
 function hop_window_close( o ) {
    return hop_get_window( o ).close();
 }
@@ -899,7 +898,7 @@ function hop_window_resize( o, w, h ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_iwindow ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export iwindow?)) */
+/*** META ((export iwindow?) (arity #t)) */
 function hop_is_iwindow( o ) {
    return o.hop_add_event_listener == hop_iwindow_add_event_listener;
 }
@@ -907,7 +906,7 @@ function hop_is_iwindow( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_window ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export window?)) */
+/*** META ((export window?) (arity #t)) */
 function hop_is_window( o ) {
    return hop_is_iwindow( o ) || (win instanceof Window);
 }
@@ -915,7 +914,7 @@ function hop_is_window( o ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_x ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-x)) */
+/*** META ((export window-x) (arity #t)) */
 function hop_window_x( win ) {
    if( win instanceof Window ) {
       if( "left" in win ) return win.left;
@@ -929,7 +928,7 @@ function hop_window_x( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_x_set ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-x-set!)) */
+/*** META ((export window-x-set!) (arity #t)) */
 function hop_window_x_set( win, x ) {
    if( win instanceof Window ) {
       if( "top" in win ) return win.moveTo( x, win.top );
@@ -946,7 +945,7 @@ function hop_window_x_set( win, x ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_y ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-y)) */
+/*** META ((export window-y) (arity #t)) */
 function hop_window_y( win ) {
    if( win instanceof Window ) {
       if( "top" in win ) return win.top;
@@ -960,7 +959,7 @@ function hop_window_y( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_y_set ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-y-set!)) */
+/*** META ((export window-y-set!) (arity #t)) */
 function hop_window_y_set( win, y ) {
    if( win instanceof Window ) {
       if( "left" in win ) return win.moveTo( win.left, y );
@@ -978,7 +977,7 @@ function hop_window_y_set( win, y ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_width ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-width)) */
+/*** META ((export window-width) (arity #t)) */
 function hop_window_width( win ) {
    if( win instanceof Window ) {
       if( "outerWidth" in win ) return win.outerWidth;
@@ -992,7 +991,7 @@ function hop_window_width( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_width_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-width-set!)) */
+/*** META ((export window-width-set!) (arity #t)) */
 function hop_window_width_set( win, width ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.resizeTo( width, win.outerHeight );
@@ -1010,7 +1009,7 @@ function hop_window_width_set( win, width ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_height ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-height)) */
+/*** META ((export window-height) (arity #t)) */
 function hop_window_height( win ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.outerHeight;
@@ -1024,7 +1023,7 @@ function hop_window_height( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_height_set ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-height-set!)) */
+/*** META ((export window-height-set!) (arity #t)) */
 function hop_window_height_set( win, height ) {
    if( win instanceof Window ) {
       if( "outerHeight" in win ) return win.resizeTo( win.outerWidth, height );
@@ -1042,7 +1041,7 @@ function hop_window_height_set( win, height ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_title ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-title)) */
+/*** META ((export window-title) (arity #t)) */
 function hop_window_title( win ) {
    if( win instanceof Window ) {
       return win.name;
@@ -1054,7 +1053,7 @@ function hop_window_title( win ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_title_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-title-set!)) */
+/*** META ((export window-title-set!) (arity #t)) */
 function hop_window_title_set( win, title ) {
    if( win instanceof Window ) {
       try {
@@ -1070,7 +1069,7 @@ function hop_window_title_set( win, title ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_style_get ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-style-get)) */
+/*** META ((export window-style-get) (arity #t)) */
 function hop_window_style_get( win, prop ) {
    return node_style_get( win.el_win, prop );
 }
@@ -1078,7 +1077,7 @@ function hop_window_style_get( win, prop ) {
 /*---------------------------------------------------------------------*/
 /*    hop_window_style_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export window-style-set!)) */
+/*** META ((export window-style-set!) (arity #t)) */
 function hop_window_style_set( win, prop, val ) {
    return node_style_set( win.el_win, prop, val );
 }

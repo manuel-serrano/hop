@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed May  6 11:55:27 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Thu Dec 26 06:58:23 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_service
    
-   (include "service.sch")
+   (include "service.sch"
+            "verbose.sch")
    
    (library web)
    
@@ -26,31 +27,34 @@
 	    __hop_http-error
 	    __hop_http-response
 	    __hop_cgi
+	    __hop_xml-types
 	    __hop_xml
-	    __hop_hop-extra
-	    __hop_hop-file
-	    __hop_prefs
-	    __hop_js-lib
+	    __hop_html-base
+	    __hop_html-head
+	    __hop_preferences
+	    __hop_xdomain
+	    __hop_js-comp
 	    __hop_user
 	    __hop_weblets
-	    __hop_hop-audio)
+	    __hop_hop)
    
    (export  (init-hop-services!)
 	    (inline service?::bool ::obj)
+	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
-	    (get-service-url::bstring #!optional (prefix ""))
+	    (gen-service-url::bstring #!key (prefix "") (public #f))
 	    (hop-service-path? ::bstring)
 	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-url::bstring ::bstring ::pair-nil)
 	    (service-funcall-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
-            (%eval::%http-response ::obj ::http-request ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
 	    (expired-service-path?::bool ::bstring)
 	    (service-resource::bstring ::procedure #!optional file)
 	    (service-path::bstring ::procedure)
+	    (service-proc::procedure ::procedure)
 	    (service-base-url::bstring ::procedure ::http-request)
 	    (service-etc-path-table-fill! ::bstring)
 	    (etc-path->service ::bstring)))
@@ -59,13 +63,13 @@
 ;*    service? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (service? obj)
-   (and (procedure? obj) (hop-service? (procedure-attr obj))))
+   (and (procedure? obj) (isa? (procedure-attr obj) hop-service)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mutexes ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define *service-mutex* (make-mutex))
-(define *expiration-mutex* (make-mutex))
+(define *service-mutex* (make-mutex "service"))
+(define *expiration-mutex* (make-mutex "expiration"))
 (define *service-table-mutex* (make-mutex "hop-service-table"))
 (define *service-etc-table-mutex* (make-mutex "hop-service-etc-table"))
 (define *service-serialize-mutex* (make-mutex "hop-service-serialize"))
@@ -85,14 +89,13 @@
 ;*    get-all-services ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (get-all-services req)
-   (with-lock *service-table-mutex*
-      (lambda ()
-	 (delete-duplicates!
-	  (filter (lambda (svc)
-		     (with-access::hop-service svc (id wid)
-			(or (authorized-service? req wid)
-			    (authorized-service? req id))))
-		  (hashtable->list *service-table*))))))
+   (synchronize *service-table-mutex*
+      (delete-duplicates!
+	 (filter (lambda (svc)
+		    (with-access::hop-service svc (id wid)
+		       (or (authorized-service? req wid)
+			   (authorized-service? req id))))
+	    (hashtable->list *service-table*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-hop-services! ...                                           */
@@ -100,22 +103,20 @@
 ;*    Create the first HOP services.                                   */
 ;*---------------------------------------------------------------------*/
 (define (init-hop-services!)
-   (init-hop-file-services!)
    (init-hop-prefs-services!)
-   (init-hop-audio-services!))
+   (init-hop-xdomain-service!))
 
 ;*---------------------------------------------------------------------*/
-;*    get-service-url ...                                              */
+;*    gen-service-url ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (get-service-url #!optional (prefix ""))
-   (with-lock *service-table-mutex*
-      (lambda ()
-	 (set! *service-table-count* (+fx 1 *service-table-count*))
-	 (format "~a/~a~a"
-		 (hop-service-weblet-name)
-		 prefix
-		 *service-table-count*))))
- 
+(define (gen-service-url #!key (prefix "") (public #f))
+   (synchronize *service-table-mutex*
+      (set! *service-table-count* (+fx 1 *service-table-count*))
+      (format (if public "public/~a/~a~a" "~a/~a~a")
+	 (hop-service-weblet-name)
+	 prefix
+	 *service-table-count*)))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-service-path? ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -130,22 +131,22 @@
 ;*    hop-request-service-name ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-request-service-name req)
-   (let* ((path (http-request-path req))
-	  (len (string-length path)))
-      (let loop ((i 1))
-	 (cond
-	    ((=fx i len)
-	     path)
-	    ((char=? (string-ref path i) #\?)
-	     (substring path 0 i))
-	    (else
-	     (loop (+fx i 1)))))))
+   (with-access::http-request req (path)
+      (let ((len (string-length path)))
+	 (let loop ((i 1))
+	    (cond
+	       ((=fx i len)
+		path)
+	       ((char=? (string-ref path i) #\?)
+		(substring path 0 i))
+	       (else
+		(loop (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-nice-url ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    This is used for fix arity function in order to build nice URLS. */
-;*    When at least an argument is not a string, it falls back to      */
+;*    When at least one argument is not a string, it falls back to     */
 ;*    hop-apply-url.                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-apply-nice-url base vals)
@@ -160,20 +161,18 @@
 	  (all-keyword-string? (cddr vals)))
 	 (else
 	  #f)))
-   
+
    (cond
       ((null? vals)
        base)
       ((all-keyword-string? vals)
        (let loop ((vals vals)
-		  (sep "?")
 		  (strs '()))
 	  (if (null? vals)
 	      (apply string-append base strs)
 	      (loop (cddr vals)
-		    "&"
 		    (let ((str (string-append
-				sep
+				(if (pair? (cddr vals)) "&" "?")
 				(keyword->string (car vals))
 				"="
 				(url-path-encode (cadr vals)))))
@@ -194,7 +193,7 @@
 ;*    service-funcall-url ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (service-funcall-url svc . vals)
-   (if (not (hop-service? svc))
+   (if (not (isa? svc hop-service))
        (bigloo-type-error 'service-funcall-url 'service svc)
        (with-access::hop-service svc (path)
 	  (hop-apply-url path vals))))
@@ -205,25 +204,43 @@
 (define (service-handler svc req)
    
    (define (invoke proc vals)
-      (if (correct-arity? proc (length vals))
-	  (apply proc vals)
-	  (error (hop-service-id svc)
-		 "Wrong number of arguments"
-		 `(,(hop-service-id svc) ,@vals))))
+      (with-access::hop-service svc (id)
+	 (hop-verb 2 (hop-color req req " INVOKE.svc")
+	    " "
+	    (with-output-to-string
+	       (lambda ()
+		  (write-circle (cons id vals))))
+	    "\n")
+	 (cond
+	    ((not vals)
+	     (error id
+		"Illegal service arguments encoding"
+		`(,id ,vals)))
+	    ((correct-arity? proc (length vals))
+	     (apply proc vals))
+	    (else
+	     (error id
+		(format "Wrong number of arguments (~a/~a)" (length vals)
+		   (procedure-arity proc))
+		`(,id ,@vals))))))
    
-   (let* ((ca (http-request-cgi-args req))
-	  (enc (cgi-arg "hop-encoding" ca)))
-      (cond
-	 ((null? (cdr ca))
-	  (invoke (hop-service-proc svc) '()))
-	 ((and (string? enc) (string=? enc "hop"))
-	  (http-request-charset-set! req 'UTF-8)
-	  (invoke (hop-service-proc svc) (serialized-cgi-arg "vals" ca)))
-	 (else
-	  (invoke (hop-service-proc svc)
-		  (append-map (lambda (p)
-				 (list (string->keyword (car p)) (cdr p)))
-			      (cdr ca)))))))
+   (let ((ca (http-request-cgi-args req)))
+      (with-access::hop-service svc (proc id)
+	 (cond
+	    ((null? (cdr ca))
+	     (invoke proc '()))
+	    ((equal? (cgi-arg "hop-encoding" ca) "hop")
+	     (with-access::http-request req (charset)
+		(set! charset 'UTF-8))
+	     (let ((vals (serialized-cgi-arg "vals" ca)))
+		(if (or (null? vals) (pair? vals))
+		    (invoke proc vals)
+		    (error id "Illegal arguments" vals))))
+	    (else
+	     (invoke proc
+		(append-map (lambda (p)
+			       (list (string->keyword (car p)) (cdr p)))
+		   (cdr ca))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -250,7 +267,7 @@
 	 ((8)
 	  (service (a0 a1 a2 a3 a4 a5 a6 a7) (proc a0 a1 a2 a3 a4 a5 a6 a7)))
 	 (else
-	  (error 'procedure->service "arity not supported" proc)))))
+	  (error "procedure->service" "arity not supported" proc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exp->eval-string ...                                             */
@@ -261,7 +278,7 @@
    (cond
       ((string? exp)
        (string-replace exp #\Newline #\space))
-      ((xml-tilde? exp)
+      ((isa? exp xml-tilde)
        (let ((body (xml-tilde->expression exp)))
 	  (let ((l (string-length body)))
 	     (if (substring-at? body ";\n" (-fx l 2))
@@ -287,24 +304,6 @@
 	     (else
 	      (loop (cdr exp)
 		    (cons* "," (exp->eval-string (car exp)) res)))))))
-
-;*---------------------------------------------------------------------*/
-;*    %eval ...                                                        */
-;*---------------------------------------------------------------------*/
-(define (%eval exp req cont)
-   (let ((s (hop->json (procedure->service (lambda (res) (cont res))) #f #f)))
-      (instantiate::http-response-hop
-	 (backend (hop-xml-backend))
-	 (content-type (xml-backend-mime-type (hop-xml-backend)))
-	 (request req)
-	 (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	 (xml (<HTML>
-		 (<HEAD>)
-		 (<BODY>
-		    (<SCRIPT>
-		       (format "hop( ~a( eval( '~a' ) ), true )"
-			       s
-			       (exp-list->eval-string exp)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    equal-path? ...                                                  */
@@ -341,37 +340,58 @@
 			  (+fx r (+fx (bit-lsh r 3) (char->integer c))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    service-exists? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (service-exists? svc)
+   (let* ((abspath (string-append (hop-service-base) "/" svc))
+	  (loaded (synchronize *service-mutex*
+		     (hashtable-get *service-table* abspath))))
+      (or loaded
+	  (let ((creq (current-request))
+		(th (current-thread)))
+	     (unwind-protect
+		(let ((req (instantiate::http-server-request
+			      (user (anonymous-user))
+			      (localclientp #t)
+			      (lanclientp #t)
+			      (abspath abspath)
+			      (method 'GET))))
+		   (current-request-set! th req)
+		   (autoload-filter req))
+		(current-request-set! th creq))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
-;*    -------------------------------------------------------------    */
-;*    This filter is executed after the AUTOLOAD-FILTER. Hence         */
-;*    when the default service is selected, the entire HOP loop        */
-;*    has to be re-executed in order to properly autoload the          */
-;*    initial weblet.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (service-filter req)
-   (when (http-server-request? req)
-      (with-access::http-server-request req (abspath user service)
+   (when (isa? req http-server-request)
+      (with-access::http-server-request req (abspath user service method)
 	 (when (hop-service-path? abspath)
-	    (mutex-lock! *service-mutex*)
-	    (let loop ((svc (hashtable-get *service-table* abspath))
-		       (armed #f))
-	       (mutex-unlock! *service-mutex*)
+	    (let loop ((svc (synchronize *service-mutex*
+			       (hashtable-get *service-table* abspath))))
 	       (cond
-		  ((hop-service? svc)
+		  ((isa? svc hop-service)
+		   (when (hop-force-reload-service)
+		      (set! svc (force-reload-service svc)))
 		   (set! service svc)
 		   (with-access::hop-service svc (ttl path id wid)
 		      (cond
-			 ((=fx ttl 1)
-			  (unregister-service! svc))
-			 ((>fx ttl 1)
-			  (set! ttl (-fx ttl 1))))
-		      (cond
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
-			  #f)
+			  (http-invalidated-service-error req))
 			 ((or (authorized-service? req wid)
 			      (authorized-service? req id))
-			  (scheme->response (service-handler svc req) req))
+			  (cond
+			     ((eq? method 'HEAD)
+			      (instantiate::http-response-string))
+			     ((>fx ttl 0)
+			      (unwind-protect
+				 (scheme->response (service-handler svc req) req)
+				 (if (=fx ttl 1)
+				     (unregister-service! svc)
+				     (set! ttl (-fx ttl 1)))))
+			     (else
+			      (scheme->response (service-handler svc req) req))))
 			 (else
 			  (user-service-denied req user id)))))
 		  (else
@@ -384,19 +404,39 @@
 				  (or (=fx l1 l2)
 				      (and (=fx l1 (+fx l2 1))
 					   (char=? (string-ref abspath l2)
-						   #\/)))))
+					      #\/)))))
 			  (set! abspath
-				(string-append (hop-service-base) "/" ini))
+			     (string-append (hop-service-base) "/" ini))
 			  ;; resume the hop loop in order to autoload
 			  ;; the initial weblet
 			  'hop-resume)
-			 (armed
-			  #f)
 			 ((autoload-filter req)
-			  (mutex-lock! *service-mutex*)
-			  (loop (hashtable-get *service-table* abspath) #t))
+			  =>
+			  (lambda (o)
+			     (if (eq? o #t)
+				 (let ((s (synchronize *service-mutex*
+					     (hashtable-get *service-table* abspath))))
+				    (if (not s)
+					(http-service-not-found abspath)
+					(loop s)))
+				 (http-error o))))
 			 (else
-			  #f))))))))))
+			  (http-service-not-found abspath)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    force-reload-service ...                                         */
+;*---------------------------------------------------------------------*/
+(define (force-reload-service svc)
+   (with-access::hop-service svc (resource source path)
+      (if (and (string? resource) (string? source))
+	  (let ((file (make-file-path resource source)))
+	     (if (file-exists? file)
+		 (if (eq? (hop-load-modified file) #unspecified)
+		     svc
+		     (synchronize *service-mutex*
+			(hashtable-get *service-table* path)))
+		 svc))
+	  svc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-service! ...                                            */
@@ -405,35 +445,35 @@
    (with-access::hop-service svc (path id)
       (let ((sz (hashtable-size *service-table*)))
 	 (hop-verb 4 (hop-color 1 "" "REG. SERVICE ")
-		   "(" (/fx sz 2) "): "
-		   svc " " path "\n")
-	 (mutex-lock! *service-mutex*)
-	 ;; CARE: for security matters, service re-definition should probably
-	 ;; be for
-	 (when (hashtable-get *service-table* path)
-	    (cond
-	       ((>fx (bigloo-debug) 0)
-		(warning 'register-service! "Service re-defined -- " id))
-	       ((not (hop-allow-service-override))
-		(error id
-		       "Service re-definition not permitted"
-		       "use `-g' or `--allow-service-override' options to enable re-definitions"))))
-	 (hashtable-put! *service-table* path svc)
-	 (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
-	    (hashtable-put! *service-table* (string-append path "/") svc))
-	 (let ((l (string-length path)))
-	    (let loop ((i (+fx (string-length (hop-service-base)) 1)))
+	    "(" (/fx sz 2) "): "
+	    svc " " path "\n")
+	 (synchronize *service-mutex*
+	    ;; CARE: for security matters, service re-definition should probably
+	    ;; be for
+	    (when (hashtable-get *service-table* path)
 	       (cond
-		  ((>=fx i l)
-		   (hop-weblets-set! (cons svc (hop-weblets))))
-		  ((char=? (string-ref path i) #\/)
-		   #unspecified)
-		  (else
-		   (loop (+fx i 1))))))
-	 (when (=fx (remainder sz *service-table-count*) 0)
-	    (flush-expired-services!))
-	 (mutex-unlock! *service-mutex*)
-	 svc)))
+		  ((not (hop-allow-redefine-service))
+		   (mutex-unlock! *service-mutex*)
+		   (error id
+		      "Service re-definition not permitted"
+		      "use `--devel' or `-s0' options to enable re-definitions"))
+		  ((and (>fx (bigloo-debug) 0) (not (hop-force-reload-service)))
+		   (warning 'register-service! "Service re-defined -- " id))))
+	    (hashtable-put! *service-table* path svc)
+	    (unless (char=? #\/ (string-ref path (-fx (string-length path) 1)))
+	       (hashtable-put! *service-table* (string-append path "/") svc))
+	    (let ((l (string-length path)))
+	       (let loop ((i (+fx (string-length (hop-service-base)) 1)))
+		  (cond
+		     ((>=fx i l)
+		      (hop-weblets-set! (cons svc (hop-weblets))))
+		     ((char=? (string-ref path i) #\/)
+		      #unspecified)
+		     (else
+		      (loop (+fx i 1))))))
+	    (when (=fx (remainder sz *service-table-count*) 0)
+	       (flush-expired-services!))
+	    svc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-expired? ...                                             */
@@ -461,10 +501,9 @@
 ;*---------------------------------------------------------------------*/
 (define (unregister-service! svc)
    (with-access::hop-service svc (path)
-      (mutex-lock! *service-mutex*)
-      (hashtable-remove! *service-table* path)
-      (hashtable-remove! *service-table* (string-append path "/"))
-      (mutex-unlock! *service-mutex*)))
+      (synchronize *service-mutex*
+	 (hashtable-remove! *service-table* path)
+	 (hashtable-remove! *service-table* (string-append path "/")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *expiration-table*                                               */
@@ -476,19 +515,16 @@
 ;*    expired-service-path? ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (expired-service-path? path)
-   (mutex-lock! *expiration-mutex*)
-   (let ((r (hashtable-get *expiration-table* path)))
-      (mutex-unlock! *expiration-mutex*)
-      r))
+   (synchronize *expiration-mutex*
+      (hashtable-get *expiration-table* path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-service-path-expired! ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (mark-service-path-expired! path)
-   (mutex-lock! *expiration-mutex*)
-   (hashtable-put! *expiration-table* path #t)
-   (mutex-unlock! *expiration-mutex*)
-   #f)
+   (synchronize *expiration-mutex*
+      (hashtable-put! *expiration-table* path #t)
+      #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-resource ...                                             */
@@ -505,6 +541,13 @@
 (define (service-path svc)
    (with-access::hop-service (procedure-attr svc) (path)
       path))
+   
+;*---------------------------------------------------------------------*/
+;*    service-proc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (service-proc svc)
+   (with-access::hop-service (procedure-attr svc) (proc)
+      proc))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-base-url ...                                             */
@@ -529,17 +572,16 @@
 ;*    service-etc-path-table-fill! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (service-etc-path-table-fill! file)
-   (with-lock *service-etc-table-mutex*
-      (lambda ()
-	 (let ((etc (make-file-name (dirname file) "etc"))
-	       (svc (string->symbol (prefix (basename file)))))
-	    (when (directory? etc)
-	       (let loop ((dir (file-name-unix-canonicalize etc)))
-		  (for-each (lambda (f)
-			       (let ((path (make-file-name dir f)))
-				  (hashtable-put! *etc-table* path svc)
-				  (when (directory? path) (loop path))))
-			    (directory->list dir))))))))
+   (synchronize *service-etc-table-mutex*
+      (let ((etc (make-file-name (dirname file) "etc"))
+	    (svc (string->symbol (prefix (basename file)))))
+	 (when (directory? etc)
+	    (let loop ((dir (file-name-unix-canonicalize etc)))
+	       (for-each (lambda (f)
+			    (let ((path (make-file-name dir f)))
+			       (hashtable-put! *etc-table* path svc)
+			       (when (directory? path) (loop path))))
+		  (directory->list dir)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    etc-path->service ...                                            */

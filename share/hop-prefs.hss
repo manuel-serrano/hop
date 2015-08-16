@@ -1,13 +1,28 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-prefs.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-prefs.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:33:24 2008                          */
-/*    Last change :  Fri Aug 15 14:26:47 2008 (serrano)                */
-/*    Copyright   :  2008 Manuel Serrano                               */
+/*    Last change :  Thu Jan  6 09:58:25 2011 (serrano)                */
+/*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for <PREFS> markups                                          */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type prefs "table.hop-prefs")
+$(define-hss-type prlabel "table.hop-prefs td.hop-prefs-label")
+$(define-hss-type prsep "table.hop-prefs td.hop-prefs-separator")
+$(define-hss-type pr "table.hop-prefs tr.hop-pr")
+$(define-hss-type pr-name "table.hop-prefs td.hop-pr-name")
+$(define-hss-type pr-editor "table.hop-prefs td.hop-pr-editor")
+$(define-hss-type pr-editor-expr "table.hop-prefs input.hop-pr-editor-expr")
+$(define-hss-type pr-editor-bool "table.hop-prefs table.hop-pr-editor-bool")
+$(define-hss-type pr-editor-text "table.hop-prefs textarea.hop-pr-editor-text")
+$(define-hss-type pr-editor-list "table.hop-prefs div.hop-pr-editor-list")
+$(define-hss-type pr-editor-alist "table.hop-prefs div.hop-pr-editor-alist")
 
 /*---------------------------------------------------------------------*/
 /*    <PREFS>                                                          */
@@ -40,6 +55,11 @@ pr-name:after {
   content: ":";
 }
 
+pr-editor {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
 pr-editor-bool {
   white-space: nowrap;
   color: #00c;
@@ -58,6 +78,32 @@ pr-editor-expr.hop-pr-changed {
 pr-editor-text {
   width: 100%;
   color: #00c;
+}
+
+slider.hop-pr-editor-slider {
+  width: 100%;
+}
+
+pr-editor-list,
+pr-editor-alist {
+  width: 100%;
+  max-height: 12ex;
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+
+td.hop-pr-editor-list-button {
+  width: 6em;
+  text-align: center;
+}
+
+pr-editor-list table,
+pr-editor-alist table {
+  width: 100%;
+}
+
+pr-editor-alist th {
+  width: 25%;
 }
 
 /*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/src/scheduler.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/src/scheduler.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
-;*    Last change :  Sun Apr 19 06:29:45 2009 (serrano)                */
-;*    Copyright   :  2008-09 Manuel Serrano                            */
+;*    Last change :  Wed Jul 24 14:56:18 2013 (serrano)                */
+;*    Copyright   :  2008-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -16,33 +16,23 @@
    
    (library hop)
    
-   (cond-expand
-      (enable-threads
-       (library pthread))
-      (else
-       (export (class pthread::nothread))))
-
-   (cond-expand
-      ((not enable-threads)
-       (eval (class pthread))))
-   
-   (export (class hopthread::pthread
-		  (proc::procedure (default (lambda (t) #f)))
-		  (condv::condvar read-only (default (make-condition-variable)))
-		  (mutex::mutex read-only (default (make-mutex)))
-		  (scheduler::scheduler (default (scheduler-nil)))
-		  (info::obj (default #unspecified))
-		  (request::obj (default #f))
-		  (onerror::obj (default #f))
-		  (error-args::vector read-only (default (make-vector 3)))
-		  (error-args-length::int (default 0))
-		  (inbuf::bstring (default (make-string 512)))
-		  (outbuf::bstring (default (make-string 8192)))
-		  (flushbuf::bstring (default (make-string 16)))
-		  (userdata::obj (default #unspecified)))
+   (export (class scdthread::hopthread
+	      (proc::procedure (default (lambda (t) #f)))
+	      (condv::condvar read-only (default (make-condition-variable)))
+	      (mutex::mutex read-only (default (make-mutex)))
+	      (scheduler::scheduler (default (class-nil scheduler)))
+	      (info::obj (default #unspecified))
+	      (request::obj (default #f))
+	      (onerror::obj (default #f))
+	      (error-args::vector read-only (default (make-vector 3)))
+	      (error-args-length::int (default 0))
+	      (inbuf::bstring (default (make-string 512)))
+	      (outbuf::bstring (default (make-string 8192)))
+	      (flushbuf::bstring (default (make-string 16)))
+	      (userdata::obj (default #unspecified)))
 
            (macro debug-thread-info-set! thread info)
-	   (macro with-stage-handler thread args . body)
+	   (macro with-stage-handler handler args . body)
 
 	   (class &ignore-exception::&exception)
 	   
@@ -93,16 +83,16 @@
 ;*     - it avoids installing a new error handler at the entry         */
 ;*       of each stage by using a per-thread handler.                  */
 ;*     - it avoids creating closure for handlers by storing the        */
-;*       free variables of the handler inside hopthread specific       */
+;*       free variables of the handler inside scdthread specific       */
 ;*       fields.                                                       */
 ;*---------------------------------------------------------------------*/
 (define-macro (with-stage-handler handler args . body)
    (let ((len (length args)))
-      `(begin
-	  (hopthread-onerror-set! thread ,handler)
-	  (hopthread-error-args-length-set! thread ,len)
+      `(with-access::scdthread thread (onerror error-args-length error-args)
+	  (set! onerror ,handler)
+	  (set! error-args-length ,len)
 	  ,@(map (lambda (v i)
-		    `(vector-set! (hopthread-error-args thread) ,i ,v))
+		    `(vector-set! error-args ,i ,v))
 		 args
 		 (iota len))
 	  ,@body)))
@@ -223,43 +213,51 @@
    (set! *thread-info* info))
 	  
 ;*---------------------------------------------------------------------*/
-;*    thread-info ::hopthread ...                                      */
+;*    thread-info ::scdthread ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-info th::hopthread)
-   (hopthread-info th))
+(define-method (thread-info th::scdthread)
+   (with-access::scdthread th (info)
+      info))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-info ::hopthread ...                                      */
+;*    thread-info ::scdthread ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-info-set! th::hopthread info)
-   (hopthread-info-set! th info))
+(define-method (thread-info-set! th::scdthread i)
+   (with-access::scdthread th (info)
+      (set! info i)))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-request ::hopthread ...                                   */
+;*    thread-request ::scdthread ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-request th::hopthread)
-   (hopthread-request th))
+(cond-expand
+   (enable-threads
+      (define-method (thread-request th::scdthread)
+	 (with-access::scdthread th (request)
+	    request))))
 
 ;*---------------------------------------------------------------------*/
-;*    thread-request-set! ::hopthread ...                              */
+;*    thread-request-set! ::scdthread ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (thread-request-set! th::hopthread req)
-   (hopthread-request-set! th req))
+(cond-expand
+   (enable-threads
+    (define-method (thread-request-set! th::scdthread req)
+	 (with-access::scdthread th (request)
+	    (set! request req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheduler-default-handler ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (scheduler-default-handler e)
    (cond
-      ((&ignore-exception? e)
+      ((isa? e &ignore-exception)
        #unspecified)
-      ((&exception? e)
+      ((isa? e &exception)
        (exception-notify e))
       (else
        (fprint (current-error-port) "*** INTERNAL ERROR, uncaught exception: "
-	       (find-runtime-type e))
+	       (typeof e))
        (let ((th (current-thread)))
-	  (when (thread? th)
+	  (when (isa? th thread)
 	     (tprint "Thread: " th
 		     " thread-info: " (thread-info th)
 		     " exception=" e))))))
@@ -268,26 +266,29 @@
 ;*    scheduler-error-handler ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (scheduler-error-handler e t)
-   (with-access::hopthread t (onerror error-args-length error-args)
+   (with-access::scdthread t (onerror error-args-length error-args)
       (if (procedure? onerror)
-	  (with-handler
-	     scheduler-default-handler
-	     (case error-args-length
-		((0)
-		 (onerror e))
-		((1)
-		 (onerror e (vector-ref error-args 0)))
-		((2)
-		 (onerror e
-			  (vector-ref error-args 0)
-			  (vector-ref error-args 1)))
-		((3)
-		 (onerror e
-			  (vector-ref error-args 0)
-			  (vector-ref error-args 1)
-			  (vector-ref error-args 2)))
-		(else
-		 (onerror e))))
+	  (let ((onerr onerror))
+	     (set! onerror #f)
+	     (with-handler
+		scheduler-default-handler
+		(case error-args-length
+		   ((0)
+		    (onerr e))
+		   ((1)
+		    (onerr e
+			   (vector-ref error-args 0)))
+		   ((2)
+		    (onerr e
+			   (vector-ref error-args 0)
+			   (vector-ref error-args 1)))
+		   ((3)
+		    (onerr e
+			   (vector-ref error-args 0)
+			   (vector-ref error-args 1)
+			   (vector-ref error-args 2)))
+		   (else
+		    (onerr e)))))
 	  (scheduler-default-handler e))))
 
 ;*---------------------------------------------------------------------*/

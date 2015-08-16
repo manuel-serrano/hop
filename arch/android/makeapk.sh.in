@@ -1,0 +1,406 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/2.4.x/arch/android/makeapk.sh.in        */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Mon Sep 27 11:21:42 2010                          */
+#*    Last change :  Tue Apr 23 09:05:25 2013 (serrano)                */
+#*    Copyright   :  2010-13 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    The shell script to build the .apk for Hop on Android            */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    Global user configuration                                        */
+#*---------------------------------------------------------------------*/
+VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
+MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
+BIGLOOVERSION=@BIGLOOREQUIRED@
+HOPDEBUG=false
+
+HOPURL=http://hop.inria.fr
+HOPPORT=8080
+HOPTHREADS=6
+HOPZEROCONF=true
+
+HOPCONSOLELOG=false
+HOPDEBUGLEVEL=
+HOPVERBOSELEVEL=-v
+
+REPOSITORY=/users/serrano/prgm/distrib
+
+ANDROIDBIGLOOLIB=
+CC=
+
+CONFIGUREOPTS=
+
+ANDROIDROOT=/misc/virtual/android/r07
+ANDROIDGIT=$ANDROIDROOT/eclair-git
+ANDROIDSDK=$ANDROIDROOT/android-sdk-linux_x86
+ANDROIDNDK=$ANDROIDROOT/android-ndk-r4b
+
+ANDROIDSDKVERSION=10
+ANDROIDSDKVERSION=16
+
+BIGLOO=bigloo
+AFILE=bglafile
+
+PREFIX=/data/data/fr.inria.hop
+
+REPOSITORY=/users/serrano/prgm/distrib
+if [ "$REPODIR " != " " ]; then
+  REPOSITORY=$REPODIR;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    private configuration                                            */
+#*---------------------------------------------------------------------*/
+hopversion=$VERSION$MINOR
+
+builddir=build.hop
+
+basedir=`dirname $0`
+
+ant=/usr/share/apache-ant/bin/ant
+
+if [ "$MAKEJOBS " = " " ]; then
+  MAKEJOBS=2
+fi
+
+makeopt=-j$MAKEJOBS
+
+# link should be set to "library" as soon as the GC support dynamic loading
+link=static
+
+#*---------------------------------------------------------------------*/
+#*    actions                                                          */
+#*---------------------------------------------------------------------*/
+action_untar=yes;
+action_configure=yes;
+action_make=yes;
+action_install=yes;
+action_weblets_devel=yes
+action_repository=no
+action_mode=release
+action_mode=debug
+
+while : ; do
+  case $1 in
+    "")
+      break;;
+
+    --hopversion=*)
+      hopversion="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --biglooversion=*)
+      BIGLOOVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-root=*)
+      ANDROIDROOT="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-sdk=*)
+      ANDROIDSDK="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-ndk=*)
+      ANDROIDNDK="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-git=*)
+      ANDROIDGIT="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-sdkversion=*)
+      ANDROIDSDKVERSION="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --android-debug=*)
+      case `echo $1 | sed 's/^[^=]*=//'` in
+        "")
+          HOPDEBUG=false;;
+        -g) 
+          HOPCONSOLELOG=true;
+          HOPDEBUG=true;
+          HOPZEROCONF=false;
+          CONFIGUREOPTS=--devel;;
+        -g2) 
+          HOPCONSOLELOG=true;
+          HOPDEBUGLEVEL=-g;
+          HOPDEBUG=true;
+          HOPZEROCONF=false;
+          CONFIGUREOPTS=--debug;;
+        -g3) 
+          HOPCONSOLELOG=true;
+          HOPDEBUGLEVEL=-g2;
+          HOPDEBUG=true;
+          HOPZEROCONF=false;
+          CONFIGUREOPTS=--debug2;;
+      esac
+      ;;
+
+    --droid-gcc=*)
+      CC="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --untar=*)
+      action_untar="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --configure=*)
+      action_configure="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --make=*)
+      action_make="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --install=*)
+      action_install="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --weblets-devel=*)
+      action_weblets_devel="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --install-repo=*)
+      action_repository="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --repository=*)
+      REPOSITORY="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --mode=*)
+      action_mode="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --patch=*)
+      patch="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --builddir=*)
+      builddir="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --)
+      shift;
+      CONFIGUREOPTS="$CONFIGUREOPTS $*";;
+
+
+    -*)
+      echo "*** makeapk, unknown option $1" >&2;
+      echo >&2;
+      echo "Usage: makeapk [options] -- configureopts" >&2;
+      echo "   --hopversion=version........... hop version to install" >&2;
+      echo "   --androidroot=dir.............. android root directory" >&2;
+      echo "   --androidsdk=dir............... sdk path (defaults androidroot/android-sdk-linux_x86)" >&2;
+      echo "   --android-ndk=dir.............. ndk path (defaults androidroot/android-ndk-r4b)" >&2;
+      echo "   --android-git=dir.............. git path" >&2;
+      echo "   --android-debug=[-g|-g2|-g3]... debug enabling" >&2;
+      echo "   --droid-gcc=path............... gcc (defaults androidroot/biglooXXX/arch/android/droid-gcc)" >&2;
+      echo "   --untar=yes|no................. untar Hop" >&2;
+      echo "   --configure=yes|no............. configure Hop" >&2;
+      echo "   --make=yes|no.................. make Hop" >&2;
+      echo "   --install=yes|no............... install Hop" >&2;
+      echo "   --install-repo=yes|no.......... install in the Hop repo" >&2;
+      echo "   --weblets-devel=yes|no......... full weblets installations" >&2;
+      echo "   --repository=dir............... output target directory" >&2;
+      echo "   --mode=debug|release........... output target directory" >&2;
+      echo "   --patch=file................... patch file after tar" >&2;
+      echo "" >&2;
+      echo "Example:" >&2;
+      echo "   $0 --untar=no --make=no --install=no --weblets-devel=no" >&2;
+      exit -1;;
+
+    *)
+      echo "*** ERROR: unknown option \"$1\"";
+      exit 1;;
+  esac
+  shift
+done
+
+tmp=`pwd`/$builddir
+
+android=$tmp/hop-$hopversion/android
+branch=`echo $hopversion | sed -e "s/[-].*$//g"`
+
+if [ "$ANDROIDBIGLOOLIB " = " " ]; then
+  ANDROIDBIGLOOLIB=$ANDROIDROOT/local/lib/bigloo/$BIGLOOVERSION
+fi
+
+if [ "$CC " = " " ]; then
+  CC=$ANDROIDROOT/bigloo$BIGLOOVERSION/arch/android/droid-gcc
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Install the Hop source code                                      */
+#*---------------------------------------------------------------------*/
+if [ $action_untar = "yes" ]; then
+  /bin/rm -rf $tmp
+  mkdir -p $tmp
+
+  tar xfz $REPOSITORY/hop-$hopversion.tar.gz -C $tmp
+
+  if [ "$patch " != " " ]; then
+    echo "patching with $patch..."
+    patch -d $tmp/hop-$hopversion -p1 -i $patch
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
+#*    configure                                                        */
+#*---------------------------------------------------------------------*/
+if [ $action_configure = "yes" ]; then
+  (cd $tmp/hop-$hopversion && \
+   ./configure \
+      --bigloo=$BIGLOO \
+      --bglafile=$AFILE \
+      --prefix=$PREFIX \
+      --libdir=$PREFIX/hoplib \
+      --cc=$CC \
+      --bigloolibdir=$ANDROIDBIGLOOLIB \
+      --link=$link \
+      --disable-ssl \
+      --disable-avahi \
+      --android \
+      --library=mail \
+      --library=calendar \
+      --library=text \
+      --library=phone \
+      --library=hopdroid \
+      $CONFIGUREOPTS ) || exit 1
+fi
+
+#*---------------------------------------------------------------------*/
+#*    compile                                                          */
+#*---------------------------------------------------------------------*/
+mkdir -p $android
+
+if [ $action_make = "yes" ]; then
+  make $makeopt -C $tmp/hop-$hopversion || exit 1
+fi
+
+if [ $action_install = "yes" ]; then
+  mkdir -p $android/assets
+  make -C $tmp/hop-$hopversion install \
+    HOPETCDIR=$android/assets/etc \
+    HOPBINDIR=$android/assets/bin \
+    HOPLIBDIR=$android/assets/hoplib \
+    HOPSHAREDIR=$android/assets/share/hop \
+    HOPMANDIR=$android/assets/man \
+    HOPWEBLETSDIR=$android/assets/hoplib/hop/$branch/weblets \
+    HOPCONTTRIBSDIR=$android/assets/conttribs \
+    || exit 1
+  
+  # cleanup useless file
+  if [ "$link" = "static" ]; then
+    /bin/rm $android/assets/bin/hop-$branch
+    /bin/rm $android/assets/bin/hopc
+    /bin/rm $android/assets/bin/hophz
+    /bin/rm $android/assets/bin/hopsh
+    /bin/rm $android/assets/hoplib/hop/$branch/*.so
+    /bin/rm $android/assets/hoplib/hop/$branch/*.heap
+    /bin/rm $android/assets/hoplib/hop/$branch/*.a
+    /bin/rm $android/assets/hoplib/*.so
+  fi
+  
+  /bin/rm -rf $android/assets/man
+  /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/home
+
+  # optional devel weblets
+  if [ $action_weblets_devel != "yes" ]; then
+    /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/doc
+    /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/wiki
+    /bin/rm -rf $android/assets/hoplib/hop/$branch/weblets/hzbuilder
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
+#*    apk build                                                        */
+#*---------------------------------------------------------------------*/
+for p in local.properties ant.properties; do
+  cat $basedir/$p.in \
+    | sed -e "s|@ANDROIDSDK@|$ANDROIDSDK|" \
+          -e "s|@BASEDIR@|$basedir|" \
+    > $android/$p || exit 1
+done
+
+for p in build.xml Android.mk; do \
+  cp $basedir/$p $android
+done
+
+for p in AndroidManifest.xml project.properties; do \
+  rm -f $android/$p.in
+  cat $basedir/$p.in \
+    | sed -e "s|@HOPVERSION@|$hopversion|" \
+          -e "s|@HOPDEBUG@|$HOPDEBUG|" \
+          -e "s|@ANDROIDSDKVERSION@|$ANDROIDSDKVERSION|" \
+          -e "s|@HOPPORT@|$HOPPORT|" \
+          -e "s|@HOPTHREADS@|$HOPTHREADS|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
+          -e "s|@HOPURL@|$HOPURL|" > $android/$p
+done
+
+for p in jni src res; do \
+  cp -r $basedir/$p $android
+done
+
+for p in res/values/strings.xml; do \
+  rm -f $android/$p.in
+  cat $basedir/$p.in \
+    | sed -e "s|@HOPVERSION@|$hopversion|" \
+          -e "s|@HOPPORT@|$HOPPORT|" \
+          -e "s|@HOPTHREADS@|$HOPTHREADS|" \
+          -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
+          -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" \
+          -e "s|@HOPVERBOSELEVEL@|$HOPVERBOSELEVEL|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
+          -e "s|@HOPURL@|$HOPURL|" > $android/$p
+done
+
+for p in res/xml/preferences.xml; do \
+  rm -f $android/$p.in
+  cat $basedir/$p.in \
+    | sed -e "s|@HOPCONSOLELOG@|$HOPCONSOLELOG|" \
+          -e "s|@HOPZEROCONF@|$HOPZEROCONF|" \
+          -e "s|@HOPVERBOSELEVEL@|$HOPVERBOSELEVEL|" \
+          -e "s|@HOPDEBUGLEVEL@|$HOPDEBUGLEVEL|" > $android/$p
+done
+
+# the apkbuilder ignores the .afiles, so we change their names
+# and the installer changes them back
+for afile in `find $android/assets -name .afile -print`; do
+  # dot.afile
+  dot_afile=`dirname $afile`/dot`basename $afile`
+  mv $afile $dot_afile
+done
+
+# rename .js.gz into .jsgz (otherwise ANT complains)
+for jsgz in $android/assets/share/hop/*.js.gz; do
+  base=`basename $jsgz .js.gz`
+
+  if [ "$base " !=  "* " ]; then
+    mv $jsgz $android/assets/share/hop/$base.jsgz
+  fi
+done
+
+$ANDROIDNDK/ndk-build -C $android V=1 || exit 1
+
+#* # build the jmdns jar file                                          */
+#* echo "> ====================================================="      */
+#* (cd $tmp/hop-$hopversion/arch/android &&                            */
+#*  mkdir build &&                                                     */
+#*  javac -d build javax/jmdns/JmmDNS.java &&                          */
+#*  (cd $android/src && javac -d . -classpath .:$tmp/hop-$hopversion/arch/android/build:$ANDROIDGIT/out/target/common/obj/JAVA_LIBRARIES/android_stubs_current_intermediates/classes fr/inria/hop/HopPluginJmDns.java) && */
+#*  cd build && jar cf jmdns.jar javax && cd .. &&                     */
+#*  $ANDROIDGIT/out/host/linux-x86/bin/dx --dex \                      */
+#*    --output=$android/assets/hoplib/jmdns.jar \                      */
+#*    fr/inria/hop/HopPluginJmDns.class build/jmdns.jar)               */
+#* echo "< ====================================================="      */
+
+# cleanup old apk
+for p in $tmp/hop-$hopversion/android/bin/*.apk; do
+    /bin/rm -f $p
+done
+
+# build the .apk
+(cd $android &&
+ $ant -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" $action_mode <<EOF
+hophop
+hophop
+
+EOF
+if [ "$? " != "0 " ]; then
+  exit 1
+fi
+) || exit 1
+
+# copy the apk in the repo directory
+if [ $action_repository = "yes" ]; then
+  cp $android/bin/hop-$action_mode.apk $REPOSITORY/android/hop-$hopversion.apk
+fi

@@ -1,0 +1,228 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.5.x/widget/colorchooser.hop           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
+;*    Last change :  Fri Sep 13 05:51:02 2013 (serrano)                */
+;*    Copyright   :  2009-13 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Color Chooser implementation                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hopwidget-colorchooser
+
+   (library hop)
+
+   (import  __hopwidget-spinbutton
+	    __hopwidget-slider)
+   
+   (export  (<COLORCHOOSER> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    <COLORCHOOSER> ...                                               */
+;*---------------------------------------------------------------------*/
+(define-tag <COLORCHOOSER> ((id #unspecified string)
+			    (onselect #f)
+			    (attributes)
+			    body)
+   (let ((cc (xml-make-id id 'colorchooser))
+	 (satval (xml-make-id 'satval))
+	 (hmodel (xml-make-id 'hmodel))
+	 (color (xml-make-id 'color))
+	 (rgb (xml-make-id 'rgb))
+	 (oidsp (xml-make-id 'opacity))
+	 (oidsl (xml-make-id 'opacity))
+	 (huespinbutton (xml-make-id 'hue))
+	 (satspinbutton (xml-make-id 'saturation))
+	 (valspinbutton (xml-make-id 'value))
+	 (redspinbutton (xml-make-id 'red))
+	 (greenspinbutton (xml-make-id 'green))
+	 (bluespinbutton (xml-make-id 'blue))
+	 (hue (xml-make-id 'hue))
+	 (sat (xml-make-id 'sat))
+	 (val (xml-make-id 'value))
+	 (red (xml-make-id 'red))
+	 (green (xml-make-id 'green))
+	 (blue (xml-make-id 'blue))
+	 (grid1 (<DIV> :class "hop-colorchooser-grid hop-colorchooser-grid-tl"))
+	 (grid2 (<DIV> :class "hop-colorchooser-grid hop-colorchooser-grid-br")))
+      (list
+       (<TABLE> :hssclass "hop-colorchooser" :class "hop-colorchooser"
+	  :id cc
+	  :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))
+	  :oncolorselect (cond
+			    ((isa? onselect xml-tilde)
+			     (xml-tilde->statement onselect))
+			    ((string? onselect)
+			     onselect)
+			    (else
+			     #f))
+	  attributes
+	  (<TR> :class "hop-colorchooser-mainrow"
+	     (<TD>
+		(<TABLE> :cellspacing 0 :cellpadding 0 :class "hop-colorchooser"
+		   (<TR>
+		      (<TD>
+			 (<DIV> :class "hop-colorchooser-satval" :id satval
+			    :onmousedown ~(colorchooser-satval-mousedown event $cc)
+			    :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))
+			    grid1
+			    grid2)))
+		   (<TR>
+		      (<TD>
+			 (<DIV> :class "hop-colorchooser-color"
+			    (<DIV> :class "hop-colorchooser-color-fg" :id color)
+			    (<DIV> :class "hop-colorchooser-color-bg"))))
+		   (<TR>
+		      (<TD>
+			 (<INPUT> :class "hop-colorchooser-rgb" :id rgb :type 'text
+			    :value "#ff0000"
+			    :onchange ~(colorchooser-value-set! $cc this.value))))))
+	     (<TD>
+		(<DIV> :class "hop-colorchooser-hmodel" :id hmodel
+		   :onmousedown ~(colorchooser-hmodel-mousedown event $cc)
+		   :onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+	     (<TD>
+		(<TABLE> :class "hop-colorchooser"
+		   (<TR>
+		      (<TD>
+			 (<TABLE> :class "hop-colorchooser hop-colorchooser-selectors"
+			    (<TR> :class "hop-colorchooser-opacity"
+			       (<TH> "A")
+			       (<TD>
+				  (<SLIDER> :id oidsl :min 0 :max 255 :value 255 :caption #f
+				     :onchange ~(let* ((a0 (slider-value this))
+						       (a (/ a0 255)))
+						   (spinbutton-value-set! $oidsp a0)
+						   (node-style-set! $color :opacity a)
+						   (hop-colorchooser-onchange (dom-get-element-by-id $cc)))))
+			       (<TD>
+				  (<SPINBUTTON> :id oidsp :min 0 :max 255 :value 255
+				     :onchange ~(let* ((a0 (spinbutton-value this))
+						       (a (/ a0 255)))
+						   (slider-value-set! $oidsl a0)
+						   (node-style-set! $color :opacity a)
+						   (hop-colorchooser-onchange (dom-get-element-by-id $cc))))))
+			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
+			    (<TR>
+			       (<TH> "H")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id hue
+					:onmousedown ~(colorchooser-hue-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id huespinbutton :min 0 :max 360
+				     :value ~360
+				     :onchange ~(colorchooser-update-hue! $cc (spinbutton-value this)))))
+			    (<TR>
+			       (<TH> "S")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id sat
+					:onmousedown ~(colorchooser-saturation-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id satspinbutton :min 0 :max 100
+				     :value ~100
+				     :onchange ~(colorchooser-update-saturation! $cc (spinbutton-value this)))))
+			    (<TR>
+			       (<TH> "V")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id val
+					:onmousedown ~(colorchooser-value-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id valspinbutton :min 0 :max 100
+				     :value ~100
+				     :onchange ~(colorchooser-update-value! $cc (spinbutton-value this)))))
+			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
+			    (<TR>
+			       (<TH> "R")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id red
+					:onmousedown ~(colorchooser-red-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id redspinbutton :min 0 :max 255
+				     :value ~255
+				     :onchange ~(colorchooser-update-red! $cc (spinbutton-value this)))))
+			    (<TR>
+			       (<TH> "G")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id green
+					:onmousedown ~(colorchooser-green-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id greenspinbutton :min 0 :max 255
+				     :value ~0
+				     :onchange ~(colorchooser-update-green! $cc (spinbutton-value this)))))
+			    (<TR>
+			       (<TH> "B")
+			       (<TD> (<DIV> :class "hop-colorchooser-colorscale" :id blue
+					:onmousedown ~(colorchooser-blue-mousedown event $cc)
+					:onmouseup ~(colorchooser-reset-mousemove! (dom-get-element-by-id $cc))))
+			       (<TD>
+				  (<SPINBUTTON> :id bluespinbutton :min 0 :max 255
+				     :value ~0
+				     :onchange ~(colorchooser-update-blue! $cc (spinbutton-value this)))))
+			    (<TR> (<TD> :class "hop-colorchooser-sep" :colspan 3 ""))
+			    (<TR> (if (null? body)
+				      (<TD> :class "hop-colorchooser-okcancel" :colspan 3
+					 (<BUTTON> :class "hop-colorchooser-cancel"
+					    :onclick ~(hop-colorchooser-oncancel (dom-get-element-by-id $cc))
+					    (<SPAN> :class "hop-colorchooser-cancel" " "))
+					 (<BUTTON> :class "hop-colorchooser-ok"
+					    :onclick ~(hop-colorchooser-onselect (dom-get-element-by-id $cc))
+					    (<SPAN> :class "hop-colorchooser-ok" " ")))
+				      (<TD> :class "hop-colorchooser-body" :colspan 3 body))))))))))
+       ~(add-event-listener! window "ready"
+	   (lambda ()
+	      ;; init the colorchooser object
+	      (let ((cc (dom-get-element-by-id $cc)))
+		 ;; default values
+		 (set! cc.hue 360)
+		 (set! cc.saturation 100)
+		 (set! cc.value 100)
+		 ;; inner widgets
+		 (set! cc.huespinbutton (dom-get-element-by-id $huespinbutton))
+		 (set! cc.satspinbutton (dom-get-element-by-id $satspinbutton))
+		 (set! cc.valspinbutton (dom-get-element-by-id $valspinbutton))
+		 (set! cc.redspinbutton (dom-get-element-by-id $redspinbutton))
+		 (set! cc.greenspinbutton (dom-get-element-by-id $greenspinbutton))
+		 (set! cc.bluespinbutton (dom-get-element-by-id $bluespinbutton))
+		 (set! cc.color (dom-get-element-by-id $color))
+		 (set! cc.rgb (dom-get-element-by-id $rgb))
+		 (set! cc.huecolorscale (dom-get-element-by-id $hue))
+		 (set! cc.satcolorscale (dom-get-element-by-id $sat))
+		 (set! cc.valcolorscale (dom-get-element-by-id $val))
+		 (set! cc.redcolorscale (dom-get-element-by-id $red))
+		 (set! cc.greencolorscale (dom-get-element-by-id $green))
+		 (set! cc.bluecolorscale (dom-get-element-by-id $blue))
+		 (set! cc.spinbuttonopacity (dom-get-element-by-id $oidsp))
+		 (set! cc.slideropacity (dom-get-element-by-id $oidsl))
+		 ;; init satval
+		 (let ((satval (dom-get-element-by-id $satval)))
+		    (set! satval.grid1 $grid1)
+		    (set! satval.grid2 $grid2)
+		    (set! cc.satval satval))
+		 ;; hmodel init
+		 (let ((hmodel (dom-get-element-by-id $hmodel)))
+		    (colorchooser-init-hmodel hmodel)
+		    (set! cc.hmodel hmodel))
+		 ;; colorscale init
+		 (colorchooser-init-colorscale (dom-get-element-by-id $hue))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $sat))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $val))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $red))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $green))
+		 (colorchooser-init-colorscale (dom-get-element-by-id $blue))
+		 (colorchooser-update-colorscales! cc)
+		 #t))))))
+    
+;*---------------------------------------------------------------------*/
+;*    obj->proc ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (obj->proc obj)
+   (cond
+      ((isa? obj xml-tilde)
+       (format "function( event ) { ~a }" (xml-tilde->return obj)))
+      ((string? obj)
+       (format "function( event ) { ~a }" obj))))
+

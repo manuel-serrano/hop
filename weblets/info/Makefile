@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/info/Makefile            */
+#*    serrano/prgm/project/hop/2.2.x/weblets/info/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:44:09 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Sat Dec 25 19:02:07 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -24,9 +24,10 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES		= info.hop
 
-POPULATION	= Makefile info.hss \
+POPULATION	= Makefile info.hss info.scm \
                   etc/weblet.info.in etc/info.wiki.in \
                   etc/logo.png etc/favicon.png \
+                  etc/maze.scm \
                   $(SOURCES)
 
 #*---------------------------------------------------------------------*/
@@ -34,7 +35,7 @@ POPULATION	= Makefile info.hss \
 #*---------------------------------------------------------------------*/
 build: etc/weblet.info etc/$(TITLE).wiki .afile
 
-.afile: $(SOURCES)
+.afile: $(SOURCES) etc/maze.scm
 	$(AFILE) -suffix hop $(POPULATION) -o .afile
 
 clean:
@@ -45,8 +46,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

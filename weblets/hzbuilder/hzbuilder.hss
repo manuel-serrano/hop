@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/1.10.x/weblets/hzbuilder/hzbuilder.hss      */
+/*    .../prgm/project/hop/2.0.x/weblets/hzbuilder/hzbuilder.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Sep 29 11:00:36 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Tue Dec 22 05:39:52 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HZBUILDER's CSS                                                  */
 /*=====================================================================*/
@@ -28,6 +28,10 @@ body {
   font-family: arial, sans serif;
 }
 
+div.foot {
+  margin-top: 2ex;
+}
+
 tt {
   font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
   font-size: 80%;
@@ -42,7 +46,7 @@ span.browse {
   font-size: 85%;
   padding: 0px 1.1em 0px 1.1em;
   border: 1px solid #aaa;
-  -moz-border-radius: 0.3em;
+  border-radius: 0.3em;
   cursor: default;
 }
 
@@ -60,7 +64,7 @@ table.main {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 td#title {
@@ -111,7 +115,7 @@ div.buttons div.button {
   padding-right: 5px;
   border: 1px solid $border-color;
   background: #f9f9f9;
-  -moz-border-radius: 0.3em;
+  border-radius: 0.3em;
 }
 
 div.buttons div.prefs {
@@ -149,7 +153,7 @@ table.form {
   background: #ffe;
   padding: 5px;
   margin-bottom: 1ex;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.form tr.form > td {
@@ -294,10 +298,10 @@ div#hzb-log {
   left: 100px;
   right: 100px;
   background: white;
-  -moz-opacity: 0.92;
   border: 4px dashed #555;
   padding-left: 5px;
   padding-right: 5px;
+  opacity: 0.92;
 }
 
 div#hzb-log {

@@ -1,0 +1,158 @@
+<doc> Spage widget
+
+== Description ==
+
+These markups implement //Spages// in HOP documents. A //spage// 
+is a container. It is built using the ++<SPAGE>++ constructor. A
+//spage// contains a header (++<SPHEAD>++) and one or
+several pads (++<SPTAB>++). Each //pad// contains a header (++<SPTABHEAD>++)
+which is always visible and a body. The body is only visible when
+the pad is selected. Only one pad is selected at a time.
+
+
+~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
+The markups presented in this page are not yet supported on
+client side programming. They are only supported on server side.])
+
+== Synopsis ==
+
+=== Server ===
+
+  (<SPAGE> arg ...)
+  (<SPHEAD> arg ...)
+  (<SPTAB> arg ...)
+  (<SPTABHEAD> arg ...)
+
+=== Client ===
+  
+  (spage-select spage pad [history #t] [callback #f])
+  (spage-selection spage)
+
+=== Requirements ===
+
+Client codes using //Spages// need to load the script ++hop-spage.js++.
+They also need to load the ++hop-spage.css++ style sheet. Hence, documents
+using //Spages// must include in their header, the following statement:
+
+
+  (<HEAD> :include "hop-spage")
+
+
+== Examples ==
+
+<example><SPAGE></example>
+
+
+== Server Definitions ==
+<server>
+
+=== ++<SPAGE>++ ===
+<markup> <SPAGE>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :onchange    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+This function creates a //spage//. Its first child can be 
+++<SPHEAD>++. Its others children are all ++<SPTAB>++. The argument :onchange
+is an listener invoked each time the current tab changes. The target of the
+event sent to this listener is the new selected tab. Onchange listeners
+can also be installed via ++add-event-listener!++ such as:
+
+  (<BODY>
+     (<SPAGE> :id "myspage"
+        (<SPHEAD> "A spage")
+        (<SPTAB> (<SPTABHEAD> "A tab") "foo")
+        (<SPTAB> (<SPTABHEAD> "Another tab") "foo"))
+     ~(add-event-listener! (dom-get-element-by-id "myspage") "change"
+         (lambda (event) (alert event.target))))
+
+</markup>
+
+=== ++<SPHEAD>++ ===
+<markup> <SPHEAD>
+
+<arguments>
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| body         |  element   |  empty       | the body.                               |
+</arguments>
+
+This function creates an optional //spage// header.
+</markup>
+
+=== ++<SPTAB>++ ===
+<markup> <SPTAB>
+
+<arguments>
+^  attributes  ^   type     ^   default    ^  short description                      ^
+| :id          |  string    |  //random//  | element identifier.                     |
+| :onselect    |  function  |      -       | a function to invoke on pad selection.  |
+| body         |  element   |  empty       | the body.                               |
+</arguments>
+
+This function creates a //tab//. The first child of //tab// __must__
+be a ++<SPTABHEAD>++.
+
+A //sptab// may be //inlined// or //on-demand//. Inlined sptabs
+receive their content at creation time. On-demand sptabs ask the
+server a new content each time they are selected. Tabs body of
+on-demand //spage// must use the ++<DELAY>++ markup. The argument
+:onselect is an listener invoked each time the tab is pushed. The
+target of the event sent to this listener is the new selected tab. The
+field ++action++ is either ++"push"++ or ++"pop"++ depending on how
+the tab has been selected. Onselect listeners can also be installed
+via ++add-event-listener!++:
+
+</markup>
+
+=== ++<SPTABHEAD>++ ===
+<markup> <SPTABHEAD>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| body         |  element  |  empty       | the body.                   |
+</arguments>
+
+Creates a tab header.
+
+</markup>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(spage-selection spage)++ ===
+<procedure> spage-selection
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| spage     |  spage or string   | the spage.           |
+</arguments>
+
+This function returns the currently selected in a //spage//.
+
+</procedure>
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-spage.hss++ ===
+
+The file ++hop-spage.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share>hop-spage.hss</share>
+</style>
+
+== See also ==
+<see-also><NOTEPAD>, <TABSLIDER></see-also>
+
+</doc>

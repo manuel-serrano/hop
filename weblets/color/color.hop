@@ -1,0 +1,189 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.3.x/weblets/color/color.hop           */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
+;*    Last change :  Sat Jan 28 18:41:55 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    HOP color                                                        */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module color
+   (import color_config)
+   (export color
+	   color/documentation))
+
+;*---------------------------------------------------------------------*/
+;*    color/documentation ...                                          */
+;*---------------------------------------------------------------------*/
+(define-service (color/documentation)
+   (let* ((file (service-resource color/documentation "etc/color.wiki"))
+	  (url (format "/hop/doc/weblet?weblet=~a" file)))
+      (instantiate::http-response-string
+	 (start-line "HTTP/1.0 301 Moved Permanently")
+	 (header (list (cons 'location: url))))))
+
+;*---------------------------------------------------------------------*/
+;*    color ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-service (color)
+   (<HTML>
+      (<HEAD> :title "Color"
+	 :favicon (service-resource color "etc/favicon.png")
+	 :base (service-base-url color (current-request))
+	 :include "hop-color" "hop-foot"
+	 :css "color.hss")
+      (<BODY>
+	 (<DIV> :align 'center
+	    (<TABLE> :class "main"
+	       (<COLGROUP> (<COL> :width "0*"))
+	       (<TR>
+		  (<TD> :class "main"
+		     (<IMG> :class "logo" :src "etc/logo.png")
+		     (<DIV> :class "version"
+			(<DIV> "Color v " (color-version))
+			(<DIV> (color-date)))
+		     (<DIV> :class "buttons"
+			(<DIV> :class "button doc"
+			   (<A> :title "Documentation"
+			      :class "doc"
+			      :href "documentation"
+			      :onclick ~(set! this.href ($color/documentation))
+			      :target "_blank"
+			      :title "Color documentation"
+			      (<IMG> :class "doc"
+				 :inline #t
+				 :src (service-resource color "etc/doc.png"))
+			      "Help"))))
+		  (<TD> :class "main"
+		     (<TABLE> :class "body"
+			(<TR> (<TD> :class "main" :id "title"
+				 "Color  - a Hop Color Chooser"))
+			(<TR> (<TD> :class "main"
+				 (<COLORCHOOSER>))))))))
+	 (<FOOT>))))
+
+;*---------------------------------------------------------------------*/
+;*    color/dashboard ...                                              */
+;*---------------------------------------------------------------------*/
+(define-service (color/dashboard)
+   (let ((id (symbol->string (gensym)))
+	 (id2 (symbol->string (gensym))))
+      ~(begin
+	  (define color-element #f)
+	  
+	  (define colors
+	     '#("#fffd6b"
+		"#ffff6f"
+		"#ffff8f"
+		"#ffffaf"
+		"#ffffdf"
+		"#ffffe7"
+		"#fffff0"))
+
+	  (define attr :background-color)
+	  
+	  (define (color-event-listener e)
+	     (cond
+		((eq? e.value 'install-onclick)
+		 (add-event-listener!
+		  document.body
+		  "click"
+		  (lambda (e)
+		     (let* ((el e.target)
+			    (bg (node-style-get el :background-color))
+			    (i 0))
+			(let ((c (node-computed-style-get el attr)))
+			   (unless (eq? c #unspecified)
+			      (with-hop ($(service (c) (hop-event-signal! id2 (cons 'set-color c))) c))))
+			(timeout
+			 60
+			 (lambda ()
+			    (cond
+			       ((< i 7)
+				(node-style-set! el :background-color (vector-ref colors i))
+				(set! i (+ i 1))
+				#t)
+			       (else
+				(if (eq? bg #unspecified)
+				    (node-style-set! el :background-color "inherit")
+				    (node-style-set! el :background-color bg))
+				#f))))
+			(remove-event-listener! document.body "click" arguments.callee)
+			(set! color-element el)
+			(stop-event-propagation e #f)))))
+		(color-element
+		 (set! attr (car e.value))
+		 (node-style-set! color-element (car e.value) (cdr e.value)))
+		(else
+		 (set! attr (car e.value)))))
+	  
+	  (add-event-listener! server $id color-event-listener)
+	  
+	  (window-open :id "color/dashboard"
+	     :title "Color Chooser"
+	     :parent document.body
+	     :width 465
+	     :height 320
+	     :left (/ (- (main-window-width) 400) 2)
+	     :top (- (main-window-height) 370)
+	     :src (<IFRAME> :src ($color/dashboard-panel $id $id2) :class "hop"
+		     :style "border: 0; width: 100%; height: 100%; padding: 0; background: black")))))
+
+;*---------------------------------------------------------------------*/
+;*    color/dashboard-panel ...                                        */
+;*---------------------------------------------------------------------*/
+(define-service (color/dashboard-panel id id2)
+   (<HTML> :class "dashboard"
+      (<HEAD> :include "hop-color"
+	 :base (service-base-url color (current-request))
+	 :include "hop-foot"
+	 :css "color.hss")
+      (<BODY>
+	 
+	 ~(define cs :background-color)
+
+	 ~(define (hop-signal val)
+	     (with-hop ($(service (id v)
+			    (hop-event-signal! id v)) $id val)))
+
+	 ~(add-event-listener! server $id2
+	     (lambda (e)
+		(colorchooser-value-set! $id e.value)))
+	 
+	 (<COLORCHOOSER> :class "dashboard" :id id
+	    :onchange ~(let ((val (cons cs (colorchooser-value this))))
+			  (hop-signal val))
+	    (<TABLE> :class "colorchooser-element"
+	       (<TR>
+		  (<TD> :class "main"
+		     (<BUTTON> :onclick ~(hop-signal 'install-onclick)
+			:class "grab"
+			(<IMG> :inline #t :src "etc/grab.png")))
+		  (<TD> :class "main"
+		     (<TABLE>
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "bg"
+				    :checked ~(eq? cs :background-color)
+				    :onclick ~(set! cs :background-color)))
+			   (<TD> "background"))
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "fg"
+				    :checked ~(eq? cs :color)
+				    :onclick ~(set! cs :color)))
+			   (<TD> "foreground"))
+			(<TR>
+			   (<TD> (<INPUT> :type 'radio
+				    :name "color"
+				    :value "border"
+				    :checked ~(eq? cs :border-color)
+				    :onclick ~(set! cs :border-color)))
+			   (<TD> "border"))))))))))

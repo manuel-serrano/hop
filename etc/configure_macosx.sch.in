@@ -1,0 +1,107 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.4.x/etc/configure_macosx.sch.in       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
+;*    Last change :  Mon Sep 16 17:06:24 2013 (serrano)                */
+;*    -------------------------------------------------------------    */
+;*    HOP configuration (tuned for MacOSX bundle)                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The directives                                                   */
+;*---------------------------------------------------------------------*/
+(directives
+
+   (extern (include "common/macosx_bundle.h")
+	   (macro resource-dir-fill!::int (::string ::int) "resourceDirFill"))
+   
+   (export %etc-directory
+	   %bin-directory
+	   %lib-directory
+	   %share-directory
+	   %contribs-directory
+	   %weblets-directory))
+
+;*---------------------------------------------------------------------*/
+;*    *macosx-bundle-dir* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *macosx-bundle-dir*
+   (let* ((str (make-string 1024))
+          (len (resource-dir-fill! str 1024)))
+      (when (<fx len 0)
+         (error "hop configure" "could not get bundle directory" #f))
+      (string-shrink! str len)
+      ;; resource directory is inside bundle directory.
+      (file-name-unix-canonicalize! (dirname str))))
+
+;*---------------------------------------------------------------------*/
+;*    Install directories ...                                          */
+;*---------------------------------------------------------------------*/
+(define %etc-directory
+   (make-file-path *macosx-bundle-dir* "@ETCDIR@"))
+(define %bin-directory
+   (make-file-path *macosx-bundle-dir* "@BINDIR@"))
+(define %lib-directory
+   (make-file-path *macosx-bundle-dir* "@LIBDIR@"))
+(define %share-directory
+   (make-file-path *macosx-bundle-dir* "@SHAREDIR@"))
+(define %contribs-directory
+   (make-file-path *macosx-bundle-dir* "@CONTRIBSDIR@"))
+(define %weblets-directory
+   (make-file-path *macosx-bundle-dir* "@WEBLETSDIR@"))
+
+(define-inline (hop-etc-directory) %etc-directory)
+(define-inline (hop-bin-directory) %bin-directory)
+(define-inline (hop-lib-directory) %lib-directory)
+(define-inline (hop-share-directory) %share-directory)
+(define-inline (hop-contribs-directory) %contribs-directory)
+(define-inline (hop-weblets-directory) %weblets-directory)
+
+;*---------------------------------------------------------------------*/
+;*    hop-library-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define %bigloo-lib-path
+   (make-file-path (hop-lib-directory) "bigloo" "@BIGLOOVERSION@"))
+(define %hop-lib-path
+   (make-file-path *macosx-bundle-dir* "@LIBPATH@"))
+
+(define (hop-library-path)
+   (cond-expand
+      (bigloo-jvm
+       (cons* "resource/bigloo" %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))
+      (else
+       (cons* %bigloo-lib-path %hop-lib-path (hop-lib-directory) (bigloo-library-path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-rc-directory ...                                   */
+;*---------------------------------------------------------------------*/
+;* (define (hop-configure-rc-directory)                                */
+;*    (make-file-path (or (getenv "HOME") "/") "Library/Preferences/hop")) */
+(define (hop-configure-rc-directory)
+   (let* ((host (hostname))
+	  (home (or (getenv "HOME") "/"))
+	  (conf (or (getenv "XDG_CONFIG_HOME") (make-file-name home ".config")))
+	  (pref "hop"))
+      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+	 (if (string? host)
+	     (let ((conf/h (make-file-name conf (string-append pref "." host))))
+		(if (and (file-exists? conf/h) (directory? conf/h))
+		    conf/h
+		    (if (string=? (suffix host) "")
+			(make-file-name conf pref)
+			(loop (prefix host)))))
+	     (make-file-name conf pref)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-var-directory ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-var-directory)
+   (make-file-path (or (getenv "HOME") "/") "Library/Application Support/hop"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-cache-directory ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-cache-directory)
+   (make-file-path (or (getenv "HOME") "/") "Library/Caches/hop"))
+

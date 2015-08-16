@@ -1,0 +1,157 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.2.x/share/hop-paned.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Aug 17 16:08:51 2005                          */
+/*    Last change :  Mon Jan 17 13:39:21 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP paned CSS                                                    */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module _hss-paned)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type paned "div[hssclass=hop-paned]"
+
+   :body "div.hop-paned-inner"
+
+   (define-hss-property (inner-border v)
+      (format "div.hop-paned-inner { border: ~l; }" v))
+   (define-hss-property (pan-border v)
+      (format "div.hop-paned-pan { border: ~l; }" v))
+   (define-hss-property (padding v)
+      (format "div.hop-paned-pan { padding: ~l; }" v))
+   (define-hss-property (fraction v)
+      (format "span.hop-paned-fraction { width: ~l; }" v)))
+
+$(define-hss-type paned-cursor "div.hop-paned-cursor")
+
+$(define-hss-type paned-pan "div.hop-paned-pan")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations ...                                          */
+/*---------------------------------------------------------------------*/
+/* <public> */
+paned {
+  border: 1px outset #333;
+  inner-border: 5px solid #ccc;
+  pan-border: 1px inset #333;
+  background: white;
+  padding: 0;
+  fraction: 30%;
+}
+
+paned-cursor {
+  background-color: #ccc;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 0;
+  cursor: move;
+}
+
+paned-cursor:hover {
+  background-color: #999;
+}
+
+paned-pan {
+  overflow: hidden;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    Common configuration                                             */
+/*---------------------------------------------------------------------*/
+paned {
+  width: 300px;
+  height: 200px;
+  position: relative;
+}
+
+div.hop-paned-inner {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+div.hop-pan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+span.hop-paned-fraction {
+  display: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Vertical pan                                                     */
+/*---------------------------------------------------------------------*/
+div.hop-paned-vertical > div.hop-paned-el1 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+div.hop-paned-vertical > div.hop-paned-el2 {
+  position: absolute;
+  right: 0;
+  left: 109px;
+  top: 0;
+  bottom: 0;
+}
+
+div.hop-paned-vertical > div.hop-paned-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  left: 102px;
+  width: 7px;
+  min-width: 7px;
+  background-image: url( "icons/hop-paned/vcursor.png" );
+}
+
+/*---------------------------------------------------------------------*/
+/*    Horizontal pan                                                   */
+/*---------------------------------------------------------------------*/
+div.hop-paned-horizontal > div.hop-paned-el1 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100;
+  top: 0;
+  bottom: 0;
+}
+
+div.hop-paned-horizontal > div.hop-paned-el2 {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 107px;
+  bottom: 0;
+}
+
+div.hop-paned-horizontal > div.hop-paned-cursor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100px;
+  bottom: 0;
+  margin: 0;
+  height: 7px;
+  background-image: url( "icons/hop-paned/hcursor.png" );
+}
+
+
+  

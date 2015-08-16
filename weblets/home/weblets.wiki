@@ -1,10 +1,12 @@
 Weblets (HOP applications) are locally managed by the 
 ,(<A> :href "http://localhost:8080/hop/hz"
       (<SPAN> :style {font-variant: small-caps} "Hz"))
-(don't click that link unless you have a HOP server running on your local
-host, waiting connections on port 8080) weblet manager. This weblet is
+weblet manager. This weblet is
 in charge on //installing//, //removing//, //updating//, and //configuring//
 weblets through a visual web interface.
+
+~~ **Links below are operational only when a HOP server runs on your local
+host.**
 
 ============================================================================
 

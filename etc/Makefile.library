@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/2.5.x/etc/Makefile.library              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon May  4 11:29:01 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Sun Nov 17 10:35:14 2013 (serrano)                */
+#*    Copyright   :  2006-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -18,33 +18,39 @@ HEAPJVM_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).jheap
 # Where to store the library class files
 PBASE		= bigloo.$(TARGETNAME)
 CLASS_DIR	= o/class_s/bigloo/$(TARGETNAME)
-CLASS_EDIR	= o/class_e/bigloo/$(TARGETNAME)
-DOTNET_OBJ_DIR	= o/dotnet_s
-DOTNET_OBJ_EDIR	= o/dotnet_e
+CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
+# the library version
+LIBVERSION	= $(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .cs .obj
+.SUFFIXES: .scm .class .java .o .hop
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm
-	@ $(call compile2,BIGLOO,BCFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
+
+o/%.o: %.hop
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-c,$< -o $@)
+
+%.scm: %.hop
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),-s,$< -o $@)
 
 $(CLASS_DIR)/%.class: %.scm
-	@ $(call compile2,BIGLOO,BJVMFLAGS,BLFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 $(CLASS_EDIR)/%.class: %.scm
-	@ $(call compile2,BIGLOO,BJVMFLAGS,BLJVMFLAGS,$< -o $@ -c)
+	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
 
-$(DOTNET_OBJ_DIR)/%.obj: %.scm
-	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLFLAGS,$< -o $@ -c)
+$(CLASS_DIR)/%.class: %.hop
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
 
-$(DOTNET_OBJ_EDIR)/%.obj: %.scm
-	@ $(call compile2,BIGLOO,BDOTNETFLAGS,BLDOTNETFLAGS,$< -o $@ -c)
+$(CLASS_EDIR)/%.class: %.hop
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
@@ -54,22 +60,20 @@ $(DOTNET_OBJ_EDIR)/%.obj: %.scm
 heap-c: .afile $(HEAP_FILE)
 heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
-$(HEAP_FILE): make-lib.scm .afile 
+$(HEAP_FILE): make_lib.scm .afile
 	@ $(RM) -f $(HEAP_FILE)
-	@ $(call compile2,BIGLOO,BCFLAGS,BHFLAGS,$< -addheap $@ -heap-library $(TARGETNAME))
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(call heap,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),$<,-heap-library $(TARGETNAME),-addheap, $@)
 
-$(HEAPJVM_FILE): .jfile .afile make-lib.scm
+$(HEAPJVM_FILE): .jfile .afile make_lib.scm
 	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make-lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
-	@ $(call done,$(COLOR),"",$@,"...done.")
+	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make_lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
 
 #*---------------------------------------------------------------------*/
 #*    lib                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: lib-c lib-jvm lib-dotnet
+.PHONY: lib-c lib-jvm
 
-lib: lib-jvm lib-dotnet
+lib: lib-jvm
 
 #*--- lib-c -----------------------------------------------------------*/
 lib-c: $(TAGS) o lib-c-static lib-c-shared
@@ -77,42 +81,43 @@ lib-c: $(TAGS) o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: .afile o 
-	$(MAKE) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
+lib-c-static: .afile $(OBJECTS)
+	$(MAKE) LIBVERSION=$(LIBVERSION) \
+                $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a \
+	        $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
 
 # lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) lib-c.$(SHAREDSUFFIX); \
+           $(MAKE) LIBVERSION=$(LIBVERSION) lib-c.$(SHAREDSUFFIX); \
         fi
 
+# we have 4 versions of each library:
+# safe and unsafe, runtime and evaluation time
+# evaltime libs have to link to runtime libs, but with matching safeness
 lib-c.$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX)
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
-	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX) && \
-        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
-              lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
-	@ $(call done,$(COLOR),"",$@,"...done.")
-
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX): \
+# safe runtime
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
 	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
              BOOTLIBDIR=$(BUILDLIBDIR) \
              FORCELD=true \
              LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+             SONAME=lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
+	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX): \
+# safe evaltime
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX): \
    .afile $(EOBJECTS)
 	@ $(MAKE) shared-lib \
              LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
@@ -120,89 +125,87 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX): \
              OBJECTS=$(EOBJECTS) \
              FORCELD=true \
              LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX) \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS) $(HOPCLOSELIBS_E)"
-	@ $(call done,$(COLOR),"",$@,"...done.")
+             SONAME=lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
+             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
+	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
+# unsafe runtime
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
+	@ $(MAKE) shared-link-lib \
+             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
+             BOOTLIBDIR=$(BUILDLIBDIR) \
+             FORCELD=true \
+             LIBDEST=$@ \
+             LIBSRC=$< \
+             SONAME=lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
+	@ $(call done,$@)
+
+# unsafe evaltime
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX): \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
+	@ $(MAKE) shared-link-lib \
+             LDINSTALLNAMEDIR=$(LDINSTALLNAMEDIRROOT)/hop/$(HOPRELEASE) \
+             BOOTLIBDIR=$(BUILDLIBDIR) \
+             OBJECTS=$(EOBJECTS) \
+             FORCELD=true \
+             LIBDEST=$@ \
+             LIBSRC=$< \
+             SONAME=lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX) \
+             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
+	@ $(call done,$@)
+
+# and the static versions
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a: .afile $(OBJECTS)
+	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a $(OBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+	@ $(call done,$@)
+
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
 	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
-        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+        $(RM) -f lib$(TARGETNAME)_u-$(LIBVERSION).a && \
+        $(LN_S) lib$(TARGETNAME)_s-$(LIBVERSION).a lib$(TARGETNAME)_u-$(LIBVERSION).a
+	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
-	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a $(OBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	@ $(call done,$(COLOR),"",$@,"...done.")
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a: $(EOBJECTS)
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a $(EOBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+	@ $(call done,$@)
+
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+	@ cd $(BUILDLIBDIR) && \
+        $(RM) -f lib$(TARGETNAME)_eu-$(LIBVERSION).a && \
+        $(LN_S) lib$(TARGETNAME)_es-$(LIBVERSION).a lib$(TARGETNAME)_eu-$(LIBVERSION).a
+	@ $(call done,$@)
 
 #*--- lib-jvm ---------------------------------------------------------*/
 lib-jvm: $(TAGS) $(CLASS_DIR) $(CLASS_EDIR) lib.zip
 
-$(CLASS_DIR): 
+$(CLASS_DIR):
 	mkdir -p $(CLASS_DIR)
 
-$(CLASS_EDIR): 
+$(CLASS_EDIR):
 	mkdir -p $(CLASS_EDIR)
 
-lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip \
-         $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
+lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip \
+         $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
 
-$(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip: .afile .jfile $(BGL_CLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip: .afile .jfile $(BGL_CLASSES)
 	@ $(RM) -f $@
 	@ (cd o/class_s && \
 	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_DIR:o/class_s/%=%)/*.class)
-	@ echo "$@ done..."
+	@ $(call done,$@)
 	@ echo "-------------------------------"
 
-$(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip: .afile .jfile $(BGL_ECLASSES)
+$(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip: .afile .jfile $(BGL_ECLASSES)
 	@ $(RM) -f $@
-	@ (cd o/class_e && \
-	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_e/%=%)/*.class)
-	@ echo "$@ done..."
-	@ echo "-------------------------------"
-
-#*--- lib-dotnet ---------------------------------------------------------*/
-lib-dotnet: $(TAGS) $(DOTNET_OBJ_DIR) $(DOTNET_OBJ_EDIR) lib.dll
-
-$(DOTNET_OBJ_DIR):
-	mkdir -p $(DOTNET_OBJ_DIR)
-
-$(DOTNET_OBJ_EDIR):
-	mkdir -p $(DOTNET_OBJ_EDIR)
-
-lib.dll: $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-         $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
-
-$(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_OBJ) $(DOTNET_OBJ_SRC)
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	@ (cd $(DOTNET_OBJ_DIR) && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll \
-                $(DOTNET_OBJ_SRC:$(DOTNET_OBJ_DIR)/%=%) \
-		$(BGL_DOTNET_OBJ:$(DOTNET_OBJ_DIR)/%=%))
-	@ echo "$@ done..."
-	 (cd o/dotnet_s && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-                $(DOTNET_OBJ_SRC:$(DOTNET_OBJ_DIR)/%=%) \
-		$(BGL_DOTNET_OBJ:$(DOTNET_OBJ_DIR)/%=%))
-	@ echo "$@ done..."
-	@ echo "-------------------------------"
-
-$(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_EOBJ)
-	@ $(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
-	@ (cd $(DOTNET_OBJ_EDIR) && \
-	  $(DOTNETCSCC) \
-		$(DOTNETFTDLLPATH) $(DOTNETLINKBIGLOODLL) \
-                 -shared -o $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll \
-                            $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll \
-		$(BGL_DOTNET_EOBJ:$(DOTNET_OBJ_EDIR)/%=%))
-	@ echo "$@ done..."
+	@ (cd o/class_es && \
+	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_es/%=%)/*.class)
+	@ $(call done,$@)
 	@ echo "-------------------------------"
 
 #*---------------------------------------------------------------------*/
@@ -211,30 +214,27 @@ $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll: .afile $(BGL_DOTNET_EOBJ)
 stdclean:
 	$(RM) -f $(OBJECTS) $(_BGL_OBJECTS:%=%.c)
 	$(RM) -f $(EOBJECTS)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_e-$(HOPRELEASE).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap 
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(LIBVERSION).zip
+	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -rf $(CLASS_DIR)
-	$(RM) -rf $(DOTNET_OBJ_DIR)
 	$(RM) -f *~
 	$(RM) -f *.mco
 	$(RM) -f *.ast
 
 udeclean:
 	$(RM) -f .afile .etags .jfile
-
-devclean: cleanall
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -243,6 +243,8 @@ clean: stdclean
 	$(RM) -rf o
 
 cleanall: stdclean udeclean
+
+devclean: cleanall
 
 distclean: cleanall
 
@@ -255,59 +257,62 @@ distclean: cleanall
 
 install: install-$(BACKEND)
 
-install-native:
-	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap && \
-        $(MAKE) install-lib \
+install-native: install-native-heap install-native-libs
+
+install-native-heap:
+	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).heap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+install-native-libs:
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
-                LIB=lib$(TARGETNAME)_s-$(HOPRELEASE) && \
-        $(MAKE) install-shared-lib \
+                LIB=lib$(TARGETNAME)_s-$(LIBVERSION) && \
+        $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_e-$(HOPRELEASE) && \
-        $(MAKE) install-lnlib \
+                LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
+        $(MAKE) install-link-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_s-$(HOPRELEASE) \
-                LN=lib$(TARGETNAME)_u-$(HOPRELEASE)
+                LN=lib$(TARGETNAME)_s-$(LIBVERSION) \
+                LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
+        $(MAKE) install-link-lib \
+                INSTALL="$(INSTALL)" \
+                BOOTLIBDIR=$(BUILDLIBDIR) \
+                FILDIR=$(HOPFILDIR) \
+                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LN=lib$(TARGETNAME)_es-$(LIBVERSION) \
+                LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 install-jvm:
 
-install-dotnet:
-	$(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME).jheap $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll && \
-        $(INSTALL) $(BUILDLIBDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll && \
-        chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll 
-
-uninstall:
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_e-$(HOPRELEASE)
+uninstall: uninstall-native-heap uninstall-native-libs
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(HOPRELEASE).dll
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_e-$(HOPRELEASE).dll
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
+
+uninstall-native-heap:
+	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
+
+uninstall-native-libs:
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: dep
-dep: 
+dep:
 	@(num=`grep -n '^#bdepend start' Makefile | awk -F: '{ print $$1}' -`;\
           head -n `expr $$num - 1` Makefile > /tmp/Makefile.aux)
 	@ $(DEPEND) -fno-mco \

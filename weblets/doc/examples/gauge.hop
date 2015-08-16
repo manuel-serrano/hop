@@ -1,0 +1,20 @@
+;; Two gauges
+(<HTML>
+   (<HEAD> :include "hop-gauge")
+   (<TABLE> :style "width: 400px"
+      (<TR>
+	 (<TD> 
+	    "gauge1: "
+	    (<GAUGE> :id "g1" :value 0 :format "~a / 99"))
+	 (<TD> 
+	    "gauge2: "
+	    (<GAUGE> :id "g2" :value 99 :onchange
+	       ~(let ((p (round (* 100 (/ event.value 99)))))
+		   (gauge-text-set! this (format "~a %" p))
+		   (stop-event-propagation event #f))))))
+   (<BUTTON> :onclick ~(let loop ((i 0))
+			  (when (<= i 99)
+			     (gauge-value-set! "g1" i)
+			     (gauge-value-set! "g2" (- 99 i))
+			     (after 10 (lambda () (loop (+ i 1))))))
+      "start"))

@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-12 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module callcc-locations
    (import config
 	   nodes
@@ -53,8 +65,8 @@
       (let ((target (call-target operator)))
 	 (when target
 	    (widen!::Call/cc-Call this (target target))
-	    (when (Lambda? target)
-	       (unless (Call/cc-Lambda? target)
+	    (when (isa? target Lambda)
+	       (unless (isa? target Call/cc-Lambda)
 		  (widen!::Call/cc-Lambda target))
 	       (with-access::Call/cc-Lambda target (callers)
 		  (unless (memq current-fun callers)
@@ -75,7 +87,7 @@
    (default-walk this #f))
 
 (define-nmethod (Lambda.mark current-fun)
-   (when (Mark-Env-assume-call/cc? env)
+   (when (with-access::Mark-Env env (assume-call/cc?) assume-call/cc?)
       (mark-call/cc-fun this))
    (default-walk this this))
 
@@ -83,10 +95,10 @@
    (let* ((higher-target (call-target param))
 	  (target-var (constant-var higher-target)))
       (cond
-	 ((and (Lambda? higher-target)
-	       (Lambda-call/cc? higher-target))
+	 ((and (isa? higher-target Lambda)
+	       (with-access::Lambda higher-target (call/cc?) call/cc?))
 	  #t)
-	 ((Lambda? param)
+	 ((isa? param Lambda)
 	  ;; maybe the target has just not yet been traversed.
 	  ;; -> put us into the callers list of the higher-target.
 	  ;; we are technically not calling the higher-target, but this
@@ -104,16 +116,18 @@
 	  ;; for now don't mark us as call/cc
 	  #f)
 	 ((and target-var
-	       (eq? (Var-kind target-var) 'imported)
-	       (Export-Desc-runtime?
-		(Var-export-desc target-var)))
+	       (eq? (with-access::Var target-var (kind) kind) 'imported)
+	       (with-access::Var target-var (export-desc)
+		  (with-access::Export-Desc export-desc (runtime?) runtime?)))
 	  ;; true if target-var is higher.
-	  (Export-Desc-higher? (Var-export-desc target-var)))
+	  (with-access::Var target-var (export-desc)
+	     (with-access::Export-Desc export-desc (higher?) higher?)))
 	 ((and target-var
-	       (eq? (Var-kind target-var) 'imported)
-	       (not (Export-Desc-higher?
-		     (Var-export-desc target-var)))
-	       (not (Mark-Env-extern-always-call/cc? env)))
+	       (eq? (with-access::Var target-var (kind) kind)  'imported)
+	       (not (with-access::Var target-var (export-desc)
+		       (with-access::Export-Desc export-desc (higher?) higher?)))
+	       (not (with-access::Mark-Env env (extern-always-call/cc?)
+		       extern-always-call/cc?)))
 	  ;; do-nothing
 	  #f)
 	 (else
@@ -143,31 +157,37 @@
 	 (cond
 	    ;; optim.
 	    ((and var
-		  (eq? (Var-kind var) 'imported)
-		  (Export-Desc-higher? (Var-export-desc var))
-		  (Export-Desc-higher-params (Var-export-desc var)))
+		  (eq? (with-access::Var var (kind) kind) 'imported)
+		  (with-access::Var var (export-desc)
+		     (with-access::Export-Desc export-desc (higher?) higher?))
+		  (with-access::Var var (export-desc)
+		     (with-access::Export-Desc export-desc (higher-params) higher-params)))
 	     ;; higher-params contains a list of parameters that are treated as
 	     ;; functions. If any of them is .call/cc? then the call is unsafe.
 	     ;; The other parameters are safe (never invoked).
-	     (when (any? (lambda (param-nb)
-			    (if (>fx param-nb nb-params)
-				;; not enough arguments. This will yield an
-				;; error, but not a call/cc-call.
-				#f
-				(unsafe-param? (list-ref operands param-nb)
-					       this current-fun env)))
-			 (Export-Desc-higher-params (Var-export-desc var)))
+	     (when (any (lambda (param-nb)
+			   (if (>fx param-nb nb-params)
+			       ;; not enough arguments. This will yield an
+			       ;; error, but not a call/cc-call.
+			       #f
+			       (unsafe-param? (list-ref operands param-nb)
+				  this current-fun env)))
+		      (with-access::Var var (export-desc)
+			 (with-access::Export-Desc export-desc (higher-params) higher-params)))
 		(unless (not current-fun) (mark-call/cc-fun current-fun))
 		(set! call/cc? #t)))
 	    ((and var
-		  (eq? (Var-kind var) 'imported)
-		  (not (Export-Desc-higher? (Var-export-desc var)))
-		  (or (Export-Desc-runtime? (Var-export-desc var))
-		      (not (Mark-Env-extern-always-call/cc? env))))
+		  (eq? (with-access::Var var (kind) kind) 'imported)
+		  (not (with-access::Var var (export-desc)
+			  (with-access::Export-Desc export-desc (higher?) higher?)))
+		  (or (with-access::Var var (export-desc)
+			 (with-access::Export-Desc export-desc (runtime?) runtime?))
+		      (not (with-access::Mark-Env env (extern-always-call/cc?)
+			      extern-always-call/cc?))))
 	     ;; do nothing. safe call.
 	     'do-nothing)
-	    ((and (Lambda? target)
-		  (not (Lambda-call/cc? target)))
+	    ((and (isa? target Lambda)
+		  (not (with-access::Lambda target (call/cc?) call/cc?)))
 	     ;; the target has not yet been marked as call/cc. However this
 	     ;; might happen later on. -> add this fun to the verify list.
 	     (with-access::Call/cc-Call this (verify-later-targets)
@@ -189,7 +209,9 @@
    ;; as call/cc.
    ;; the surrounding function however has already been marked correctly.
    (with-access::Call/cc-Call this (verify-later-targets call/cc?)
-      (when (any? Lambda-call/cc? verify-later-targets)
+      (when (any (lambda (v)
+		    (with-access::Lambda v (call/cc?) call/cc?))
+	       verify-later-targets)
 	 (set! call/cc? #t))))
 
 (define (shrink tree)

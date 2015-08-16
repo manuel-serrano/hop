@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/sync.hop               */
+;*    serrano/prgm/project/hop/2.5.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Wed May  6 10:55:45 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sun Nov 17 13:39:54 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/
@@ -52,7 +52,9 @@
    (hz-db-sync-stamp-inc!)
    (hz-sync-standard-weblets!)
    (bind-exit (escape)
-      (append-map (lambda (p) (hz-sync-publisher! p escape)) (hz-publishers))))
+      (append-map (lambda (p)
+		     (hz-sync-publisher! p escape))
+	 (hz-publishers))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-sync-publisher! ...                                           */
@@ -64,22 +66,31 @@
 		       (lambda ()
 			  (hashtable-get *url-authenticate-table* url))))
 	      (basic-auth (when (pair? auth)
-			     (http-basic-authorization (car auth) (cdr auth)))))
+			     (http-basic-authorization (car auth) (cdr auth))))
+	      (stamp (hz-db-sync-stamp)))
 	  (with-handler
 	     (lambda (e)
+		(when (>fx (bigloo-debug) 0)
+		   (exception-notify e))
 		(cond
-		   ((&error? e)
-		    (list (cons url (&error-msg e))))
-		   ((http-response-authentication? e)
+		   ((isa? e &error)
+		    (with-access::&error e (msg)
+		       (list (cons url msg))))
+		   ((isa? e http-response-authentication)
 		    (escape url))
 		   (else
 		    (list (cons url e)))))
+	     (tprint ">>> HZ-SYNC-PUBLISHER URL=[" url "]")
 	     (with-url url
 		(lambda (s)
+		   (tprint "<<< HZ-SYNC-PUBLISHER s=[" s "]")
 		   (with-input-from-string s
 		      (lambda ()
 			 (filter-map (lambda (e)
-					(let ((w (info->weblet e :authorization basic-auth)))
+					(let ((w (info->weblet e
+						    :authorization basic-auth
+						    :publisher pub
+						    :stamp stamp)))
 					   (hz-db-add-or-update! w)
 					   #f))
 				     (read)))))
@@ -105,17 +116,21 @@
       (when (file-exists? ifile)
 	 (with-handler
 	    (lambda (e)
-	       (when (&error? e) (error-notify e))
+	       (when (isa? e &error) (error-notify e))
 	       #f)
 	    (with-input-from-file ifile
 	       (lambda ()
-		  (let ((w (info->weblet (cons* `(category "hop")
-						`(home "/hop")
-						(read))
-					 :name (basename dir)
-					 :url dir)))
-		     (weblet-driver-set! w "standard")
-		     (weblet-install-set! w (weblet-version w))
+		  (let* ((i (read))
+			 (i2 (if (assq 'category i)
+				 i
+				 (cons `(category "hop") i)))
+			 (i3 (if (assq 'home i2)
+				 i2
+				 (cons `(home "/hop") i2)))
+			 (w (info->weblet i3 :name (basename dir) :url dir)))
+		     (with-access::weblet w (version driver install)
+			(set! driver "standard")
+			(set! install version))
 		     (hz-db-add-or-update! w)))))))
    
    (define (sync-dir! dir)

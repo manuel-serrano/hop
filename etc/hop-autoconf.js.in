@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/etc/hop-autoconf.js.in           */
+/*    serrano/prgm/project/hop/2.5.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Jan 23 15:00:19 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Fri Jul 26 10:26:02 2013 (serrano)                */
+/*    Copyright   :  2006-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -19,26 +19,60 @@ var undefined;
 /*---------------------------------------------------------------------*/
 /*    Name and version                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export hop-name)) */
+/*** META ((export hop-name) (arity #t)) */
 function hop_name() {
    return "Hop";
 }
 
-/*** META ((export hop-version)) */
+/*** META ((export hop-version) (arity #t)) */
 function hop_version() {
    return "@VERSION@";
 }
 
-/*** META ((export hop-backend)) */
+/*** META ((export hop-backend) (arity #t)) */
 function hop_backend() {
    return "@BACKEND@";
 }
 
-/*** META ((export hop-url)) */
+/*** META ((export hop-url) (arity #t)) */
 function hop_url() {
    return "@URL@";
 }
 
+/*---------------------------------------------------------------------*/
+/*    HopServer                                                        */
+/*---------------------------------------------------------------------*/
+function HopServer( host, ip ) {
+   this.name = hop_name();
+   this.version = hop_version();
+   this.backend = hop_backend();
+   this.url = hop_url();
+   this.host = host;
+   this.ip = ip;
+
+   this.hop_add_event_listener = hop_add_server_event_listener;
+   this.hop_remove_event_listener = hop_remove_server_event_listener;
+
+   this.reconnect = function( wait, max ) {
+      if( this.state === 3 ) {
+	 if( "reconnect" in hop_servevt_proxy ) {
+	    hop_servevt_proxy.reconnect( wait, max );
+	 }
+      }
+   }
+}
+
+HopServer.prototype.sc_toDisplayString = function() {
+   return "[HopServer]";
+}
+HopServer.prototype.sc_toWriteString = function() {
+   return "[HopServer]";
+}
+   
+HopServer.prototype.toString = function() {
+   return "[HopServer]";
+}
+   
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
@@ -49,7 +83,7 @@ var hop_enable_location_event = @LOCEVENT@;
 /*    -------------------------------------------------------------    */
 /*    The prefix of all HOP weblets.                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export hop-service-base)) */
+/*** META ((export hop-service-base) (arity #t)) */
 function hop_service_base() {
    return "@HOPSERVICEBASE@";
 }
@@ -69,6 +103,17 @@ function hop_get_flash_version() {
 	    return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
 	 }
       }
+   } else {
+      try {
+	 if( "ActiveXObject" in window ) {
+	    axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
+	    var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
+	    if( m != null ) {
+	       return m[ 1 ];
+	    }
+	 }
+      } catch (e) {
+      }
    }
 
    return 0;
@@ -81,85 +126,224 @@ function hop_get_flash_version() {
 /*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
-  /* cpu speed */
-  this.cpu_speed = 100;
-  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
-  if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
-  if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
-  
-  /* gpu speed */
-  this.gpu_speed = 100;
-  if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
+   /* body */
+   if( ("body" in document) && (document.body != null) ) {
+      this.body = document.body;
+   } else {
+      if( ("documentElement" in document) && (document.documentElement != null) ) {
+	 this.body = document.documentElement;
+      } else {
+	 this.body = document.getElementsByTagName( "body" )[ 0 ];
+      }
+   }
+      
+   /* cpu speed */
+   this.cpu_speed = 100;
+   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.cpu_speed = 40;
+   if( navigator.platform.indexOf( "armv5" ) >= 0 ) this.cpu_speed = 30;
+   if( navigator.platform.indexOf( "WinCE" ) >= 0 ) this.cpu_speed = 30;
 
-  /* pointing device */
-  this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
+   /* gpu speed */
+   this.gpu_speed = 100;
+   if( navigator.platform.indexOf( "armv6" ) >= 0 ) this.gpu_speed = 30;
 
-  /* flash version */
-  this.flash_version = hop_get_flash_version();
+   /* js speed */
+   this.js_speed = 50;
 
-  /* default navigator setting (firefox settings) */
-  this.mouse_left_button = 0;
-  this.flash_external_interface = false;
-  this.flash_audio = false;
-  this.flash_markup = "embed";
-  this.inline_image = false;
+   /* pointing device */
+   this.is_tablet = ( navigator.userAgent.indexOf( "Tablet" ) >= 0 );
 
-  /* navigator specific configuration */
-  if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
-     this.navigator_family = "msie";
-     this.mouse_left_button = 1;
-     this.flash_external_interface = true;
-     this.flash_audio = false;
-     this.flash_markup = "object";
-     this.inline_image = false;
-     if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
-	hop_enable_location_event = false;
-     }
-  } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
-     this.navigator_family = "opera";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = false;
-     this.flash_audio = false;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-  } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
-     this.navigator_family = "safari";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = false;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-  } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
-     this.navigator_family = "webkit";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = false;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-  } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
-     this.navigator_family = "khtml";
-     this.mouse_left_button = 1;
-     this.flash_external_interface = true;
-     this.flash_audio = false;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-  } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
-     this.navigator_family = "mozilla";
-     this.mouse_left_button = 0;
-     this.flash_external_interface = true;
-     this.flash_audio = true;
-     this.flash_markup = "embed";
-     this.inline_image = true;
-  } else {
-     alert( "Unknown navigator (" + navigator.userAgent +
-	    "), using default settings..." );
-  }
+   /* html5 */
+   this.html5_video = "play" in document.createElement( "video" );
+   var audio = document.createElement( "audio" );
+
+   if( !"HTMLAudioElement" in window ) {
+      this.html5_audio = false;
+   } else {
+      this.html5_audio = 
+	 ("play" in audio) 
+	 && (audio.constructor === window[ "HTMLAudioElement" ])
+	 && ((audio.canPlayType( "audio/ogg" ) != "")
+             || (audio.canPlayType( "audio/mpeg" ) != ""));
+   }
+
+   /* flash version */
+   this.flash_version = hop_get_flash_version();
+   this.flash_external_interface = false;
+   this.flash_audio = false;
+   this.flash_serverevent = false;
+   this.flash_markup = "embed";
+
+   /* Geolocation */
+   this.geolocation = (navigator.geolocation ? true : false);
+
+   /* default navigator setting */
+   this.mouse_left_button = 0;
+
+   this.inline_image = false;
+   this.filtered_errors = [];
+   this.css = 2.1;
+   this.css_transition = false;
+   this.xhr_multipart = false; // see hop_make_xml_http_request conf
+   this.clone_innerHTML = true; // see hop_create_element (hop-dom.js)
+   this.eval_innerHTML = false;
+   this.websocket = false;
+   this.server_event = "long polling";
+   this.hashchange_event = ("onhashchange" in window);
+   this.history = false;
+   // MS 12jan2012: cannot manage to get arraybuffer works correctly
+   // because I didn't find a way to convert a Uint8Array into a string
+   // that does not blows the stack size on Chrome!
+   // this.uint8array = ("Uint8Array" in window);
+   this.uint8array = false;
+
+   /* navigator specific configuration */
+   if( navigator.userAgent.indexOf( "MSIE" ) >= 0 ) {
+      this.js_speed = 20;
+      this.navigator_family = "msie";
+      this.mouse_left_button = 1;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "object";
+      this.inline_image = false;
+      if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
+	 hop_enable_location_event = false;
+      }
+   } else if( navigator.userAgent.indexOf( "Opera" ) >= 0 ) {
+      this.js_speed = 70;
+      this.navigator_family = "opera";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = false;
+      this.flash_audio = false;
+      this.flash_serverevent = false;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+   } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
+      this.js_speed = 100;
+      this.navigator_family = "chrome";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.css = 3;
+      this.css_transition = true;
+      if( ! "Window" in window || window.Window === undefined ) {
+	 window.Window = window.constructor;
+      }
+   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
+      this.js_speed = 80;
+      this.navigator_family = "safari";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.css_transition = true;
+   } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
+      this.navigator_family = "webkit";
+      this.js_speed = 80;
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.css_transition = true;
+   } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
+      this.navigator_family = "khtml";
+      this.mouse_left_button = 1;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+   } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
+      if( navigator.userAgent.match( /(?:[4-9]|[1-9][0-9]+).[0-9][^ ]*$/ ) ) {
+         /* Firefox 4.0 */
+         this.js_speed = 100;	    
+         this.css = 3;
+         this.css_transition = true;
+      } else if( navigator.userAgent.match( /3.[56][^ ]*$/ ) ) {
+         /* Firefox 3.5, 3.6 */
+         this.js_speed = 75;	    
+         this.css = 3;
+      } else if( navigator.userAgent.match( /3.0[^ ]*$/ ) ) {
+         /* Firefox 3.0, 3.1 */
+         this.js_speed = 60;	    
+      } else {
+         this.js_speed = 50;
+      }
+      
+      this.navigator_family = "mozilla";
+      this.mouse_left_button = 0;
+      this.flash_external_interface = true;
+      this.flash_audio = true;
+      this.flash_serverevent = true;
+      this.flash_markup = "embed";
+      this.inline_image = true;
+      this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
+   } else {
+      alert( "Unknown navigator (" + navigator.userAgent +
+	     "), using default settings..." );
+   }
+   
+   /* Screen Dimensions */
+   this.screen_width = screen.width;
+   this.screen_height = screen.height;
+   this.screen_available_width = screen.availWidth;
+   this.screen_available_height = screen.availHeight;
+   this.screen_color_depth = screen.colorDepth;
+   
+   /* Android webkit adjustments */
+   if( this.flash_audio ) {
+      if( navigator.userAgent.indexOf( "Android 2.1" ) ||
+          navigator.userAgent.indexOf( "Android 2.0" ) ) {
+	 this.flash_audio = false;
+      }
+   }
+
+   if( this.flash_serverevent ) {
+      if( navigator.userAgent.indexOf( "Android 2.3" ) ) {
+	 this.flash_serverevent = false;
+      }
+   }
+   
+   this.version = hop_version();
+   this.backend = hop_backend();
+   this.tprint_mode = "both";
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_config ...                                                   */
 /*---------------------------------------------------------------------*/
 var hop_config = new hop_Config();
+
+/*---------------------------------------------------------------------*/
+/*    hop_config_get ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export hop-config) (arity #f)) */
+function hop_config_get( key ) {
+   if( arguments.length == 0 ) {
+      var l = null;
+      
+      for( var p in hop_config ) {
+	 var c = new sc_Pair( sc_jsstring2symbol( p ), hop_config[ p ]);
+	 l = new sc_Pair( c, l );
+      }
+      
+      return l;
+   } else if( !sc_isSymbol( key ) && !sc_isKeyword( key ) ) {
+      return false;
+   } else if( sc_isSymbol( key ) ) {
+      return hop_config[ sc_symbol2jsstring( key ) ];
+   } else {
+      return hop_config[ sc_keyword2jsstring( key ) ];
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_flash_minversion_set ...                                     */
@@ -176,34 +360,101 @@ function hop_flash_audio_set( v ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_innerHTML_need_evalp ...                                     */
-/*    -------------------------------------------------------------    */
-/*    This test sets the variable hop_innerHTML_need_eval to           */
-/*    false if innerHTML evaluates the scripts contained in the        */
-/*    DOM nodes it receives as argument.                               */
+/*    cloneScriptNode ...                                              */
 /*---------------------------------------------------------------------*/
-var hop_innerHTML_need_evalp = true;
+function cloneScriptNode( node ) {
+   if( node.nodeType != 1 ) {
+      return node;
+   }
 
-var tmp = document.createElement( "div" );
+   if( (node.tagName !== "SCRIPT") && (node.tagName !== "script") ) {
+      var childs = node.childNodes;
 
-try {
-   tmp.innerHTML = "<script type='text/javascript'>hop_innerHTML_need_evalp = false</script>";
-   if( ("body" in document) && (document.body != null) ) {
-      document.body.appendChild( tmp );
-      document.body.removeChild( tmp );
+      for( var i = childs.length - 1; i >= 0; i-- ) {
+	 var n = cloneScriptNode( childs[ i ] );
+	 if( n != childs[ i ] ) {
+	    node.replaceChild( n, childs[ i ] );
+	 }
+      }
+
+      return node;
    } else {
-      if( ("documentElement" in document) &&  
-          (document.documentElement != null) ) {
-	 document.documentElement.appendChild( tmp );
-	 document.documentElement.removeChild( tmp );
+      var t = document.createTextNode( node.innerHTML );
+      var s = document.createElement( "SCRIPT" );
+
+      s.id = node.id;
+
+      if( "text" in s ) 
+	 s.text = node.innerHTML;
+      else
+	 s.appendChild( t );
+
+      return s;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_config.eval_innerHTML                                        */
+/*    -------------------------------------------------------------    */
+/*    Check whether setting innerHTML property evaluates the           */
+/*    textual scripts.                                                 */
+/*---------------------------------------------------------------------*/
+((function () {
+   var tmp = document.createElement( "div" );
+
+   hop_config.body.appendChild( tmp );
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.eval_innerHTML = true;<\u002fscript>";
+   hop_config.body.removeChild( tmp );
+}))
+
+/*---------------------------------------------------------------------*/
+/*    hop_config.clone_innerHTML                                       */
+/*    -------------------------------------------------------------    */
+/*    Check whether the browser requires elements created by assigning */
+/*    the innerHTML field of their parent to be cloned.                */
+/*---------------------------------------------------------------------*/
+((function () {
+   var tmp = document.createElement( "div" );
+   tmp.innerHTML = "<script type='text/javascript'>hop_config.clone_innerHTML_tmp = 1;<\u002fscript>";
+
+   hop_config.clone_innerHTML_tmp = 0;
+
+   hop_config.body.appendChild( tmp );
+   hop_config.body.removeChild( tmp );
+
+   if( hop_config.clone_innerHTML_tmp == 1 ) {
+      // cloning not needed because the script got evaluated
+      hop_config.clone_innerHTML = false;
       } else {
-	 var body = document.getElementsByTagName( "body" )[ 0 ];
-	 body.appendChild( tmp );
-	 body.removeChild( tmp );
+      // check if cloning is effective
+      var s = tmp.childNodes[ 0 ];
+      tmp.removeChild( s );
+      tmp.appendChild( cloneScriptNode( s ) );
+
+      hop_config.body.appendChild( tmp );
+      hop_config.body.removeChild( tmp );
+
+      if( hop_config.clone_innerHTML_tmp == 1 ) {
+	 hop_config.clone_innerHTML = true;
+      } else {
+         alert( "hop auto-configuration: cannot get innerHTML to evaluate script nodes!" );
+alert( "hop_config.eval_innerHTML: " + hop_config.eval_innerHTML );
+	 throw new Error( "innerHTML-set!: cannot get innerHTML to evaluate script nodes!" );
       }
    }
-} catch( e ) {
-     ;
+   
+   delete hop_config.clone_innerHTML_tmp;
+}))
+
+/*---------------------------------------------------------------------*/
+/*    hop_json_parse ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_json_parse;
+
+if( "JSON" in window ) {
+   hop_json_parse = JSON.parse;
+} else {
+   hop_json_parse = function( o ) { return hop_unjson( eval( o ) ); };
 }
 
 /*---------------------------------------------------------------------*/
@@ -245,7 +496,7 @@ function hop_properties_values_to_string( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_is_html_element ...                                          */
 /*---------------------------------------------------------------------*/
-/*** META ((export html-element?)) */
+/*** META ((export html-element?) (arity 1)) */
 var hop_is_html_element;
 
 if( !("HTMLElement" in window) ) {
@@ -262,7 +513,7 @@ if( !("HTMLElement" in window) ) {
 	 return (obj != null) && (obj instanceof HTMLElement);
       }
    } else {
-      /* this is konqueror */
+      /* this is (an old) konqueror */
       var ifproto = ifr.__proto__;
       hop_is_html_element = function hop_is_html_element( obj ) {
 	 return (obj instanceof HTMLElement) || (obj.__proto__ == ifproto);
@@ -316,30 +567,67 @@ if( !("HTMLSelectElement" in window) ) {
 /*---------------------------------------------------------------------*/
 /*    hop_make_xml_http_request ...                                    */
 /*---------------------------------------------------------------------*/
+/*** META ((export make-xml-http-request) (JS hop_make_xml_http_request)) */
+
 var hop_make_xml_http_request;
 
 if( "XMLHttpRequest" in window ) {
    var req = new XMLHttpRequest();
-   if( "overrideMimeType" in req ) {
-      hop_make_xml_http_request = function hop_make_xml_http_request() {
-	 var req = new XMLHttpRequest();
-	 /* this is required by some versions of Mozilla */
-/* 	 req.overrideMimeType( "text/xml" );                           */
-	 return req;
-      }
-   } else {
-      hop_make_xml_http_request = function hop_make_xml_http_request() {
-	 return new XMLHttpRequest();
+   
+   hop_make_xml_http_request = function hop_make_xml_http_request() {
+      return new XMLHttpRequest();
+   }
+   if( "multipart" in req ) {
+      hop_config.xhr_multipart = true;
+      if( hop_config.server_event === "long polling" ) {
+         hop_config.server_event = "xhr_multipart";
       }
    }
 } else {
    if( "ActiveXObject" in window ) {
       hop_make_xml_http_request = function hop_make_xml_http_request() {
+	 function hop_make_activexobject( ax ) {
+	    var o = new Object();
+	    var a = new ActiveXObject( ax );
+
+	    o.activex = a;
+	    
+	    o.open = function( msg, svc, sync ) {
+	       a.onreadystatechange = function() {
+		  o.status = a.status;
+		  o.readyState = a.readyState;
+		  o.responseText = a.responseText;
+		  
+		  o.onreadystatechange();
+	       }
+	       if( sync ) {
+		  var r = a.open( msg, svc, sync );
+		  o.status = a.status;
+		  o.readyState = a.readyState;
+		  o.responseText = a.responseText;
+		  
+		  return r;
+	       } else 
+		  return a.open( msg, svc, sync );
+	    }
+	    
+	    o.send = function( v ) {
+	       return a.send( v );
+	    }
+	    
+	    o.setRequestHeader = function( v ) {
+	       return a.setRequestHeader( v );
+	    };
+	    
+	    return o;
+	 }
 	 try {
-	    return new ActiveXObject( "Msxml2.XMLHTTP" );
+	    /* don't try to play with prototypes, because   */
+	    /* ActiveXObject are not fullfledged JS objects */
+	    return hop_make_activexobject( "Msxml2.XMLHTTP" );
 	 } catch( e ) {
 	    try {
-	       return new ActiveXObject( "Microsoft.XMLHTTP" );
+	       return hop_make_activexobject( "Microsoft.XMLHTTP" );
 	    } catch( e ) {
 	       alert( "*** ERROR: Don't know how to create XMLHttpRequest" );
 	    }
@@ -359,10 +647,23 @@ if( "XMLHttpRequest" in window ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    web socket                                                       */
+/*---------------------------------------------------------------------*/
+if( "MozWebSocket" in window ) {
+  window.WebSocket = window.MozWebSocket;
+}
+
+if( "WebSocket" in window ) {
+   hop_config.server_event = "websocket";
+   hop_config.websocket = true;
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_header_content_type ...                                      */
 /*---------------------------------------------------------------------*/
-var hop_header_content_type;
 var hop_header_autoconf = hop_make_xml_http_request();
+var hop_header_content_type;
+var hop_header_hop_serialize;
 
 if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
    hop_header_content_type = function hop_header_content_type( http ) {
@@ -380,13 +681,22 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 	 return "application/text";
       }
    }
+   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
+      var h = http.getResponseHeader( "Hop-Serialize" );
+
+      if( h ) {
+	 return h;
+      } else {
+	 return "javascript";
+      }
+   }
 } else {
    hop_header_content_type = function hop_header_content_type( http ) {
       var hds = http.getAllResponseHeaders();
       var i = hds.indexOf( "Content-Type" );
-
       if( i < 0 ) i = hds.indexOf( "content-type" );
       if( i < 0 ) i = hds.indexOf( "Content-type" );
+      
       if( i < 0 ) return "application/text";
 
       var j = hds.indexOf( "\n", i + 1 );
@@ -398,70 +708,131 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       else
 	 return "application/text";
    }
+   hop_header_hop_serialize = function hop_header_hop_serialize( http ) {
+      var hds = http.getAllResponseHeaders();
+      var i = hds.indexOf( "Hop-Serialize" );
+
+      if( i < 0 ) return "javascript";
+      
+      var j = hds.indexOf( "\n", i + 1 );
+      return (j >= 0) ? hds.substring( i + 15, j - 1 )
+                      : hds.substring( i + 15, s.length );
+   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
-function node_style_set_native( obj, prop, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
+function node_style_set_native( el, prop, value ) {
+   var obj = el;
 
-   if( sc_isKeyword( prop ) )
-      prop = sc_keyword2jsstring( prop );
-   
-   if( !(value instanceof String) && (typeof value !== "string") ) {
-      if( !value && (value != 0) ) {
-	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value + " obj: " + obj );
-      } else {
-	 value = value.toString();
+   if( (el instanceof String) || (typeof el === "string") ) {
+      obj = document.getElementById( el );
+      
+      if( obj === undefined ) {
+	 sc_error( "node-style-set!", "Cannot find object", el );
       }
    }
 
-   obj.style.setProperty( prop, value, "" );
-}
+   for( var i = 1; i < arguments.length; i += 2 ) {
+      var p = arguments[ i ];
+      var v = arguments[ i + 1 ];
 
-function node_style_set_array( obj, prop, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
 
-   if( sc_isKeyword( prop ) )
-      prop = sc_keyword2jsstring( prop );
-   
-   if( !(value instanceof String) && (typeof value !== "string") ) {
-      if( !value && (value != 0) ) {
-	 throw new Error( "node-style-set: illegal \"" + prop + "\" value: "
-			  + value + " obj: " + obj );
+      if( v == undefined ) {
+	 sc_error( "node-style-set!",
+		   "undefined value for property \"" + p + "\"",
+		   el );
       } else {
-	 value = value.toString();
+	 if( !v ) {
+	    v = "0";
+	 } else {
+	    if( !(v instanceof String) && (typeof v !== "string") ) {
+	       v = v.toString();
+	    }
+	 }
+	 
+	 if( p in obj.style ) {
+	    obj.style[ p ] =  v;
+	 } else {
+	    obj.style.setProperty( p, v, "" );
+	 }
       }
    }
-   
-   obj.style[ prop ] = value;
 }
 
-/*** META ((export node-style-set!)) */
-var node_style_set = function( obj, property, value ) {
-   if( (obj instanceof String) || (typeof obj === "string") )
-      obj = document.getElementById( obj );
-
-   if( "setProperty" in obj.style ) {
-      node_style_set = node_style_set_native;
-      return node_style_set_native( obj, property, value );
-   } else {
-      node_style_set = node_style_set_array;
-      return node_style_set_array( obj, property, value );
+function node_style_set_array( el, prop, value ) {
+   var obj = el;
+   
+   if( (el instanceof String) || (typeof el === "string") ) {
+      obj = document.getElementById( el );
+      
+      if( obj === undefined ) {
+	 sc_error( "node-style-set!", "Cannot find object", el );
+      }
    }
+
+   for( var i = 1; i < arguments.length; i += 2 ) {
+      var p = arguments[ i ];
+      var v = arguments[ i + 1 ];
+
+      if( sc_isKeyword( p ) )
+	 p = sc_keyword2jsstring( p );
+      
+      if( v == undefined ) {
+	 sc_error( "node-style-set!",
+		   "undefined value for property \"" + p + "\"",
+		   el );
+      } else {
+	 if( !v ) {
+	    v = "0";
+	 } else {
+	    if( !(v instanceof String) && (typeof v !== "string") ) {
+	       v = v.toString();
+	    }
+	 }
+	 
+	 obj.style[ p ] = v;
+      }
+   }
+}
+
+/*** META ((export node-style-set!) (arity -3)) */
+var node_style_set = function( el, prop, value ) {
+   var obj = el;
+
+   if( (el instanceof String) || (typeof el === "string") ) {
+      obj = document.getElementById( el );
+      
+      if( obj === undefined ) {
+	 sc_error( "node-style-set!", "Cannot find object", el );
+      }
+   }
+
+   try {
+      if( "setProperty" in obj.style ) {
+         node_style_set = node_style_set_native;
+      	 return node_style_set_native.apply( null, arguments );
+      } else {
+	 node_style_set = node_style_set_array;
+	 return node_style_set_array.apply( null, arguments );
+      }
+   } catch( exc ) {
+      var msg = "message" in exc ? exc.message : "Cannot set style";
+
+      sc_error( "node-style-set!", msg, el );
+  }
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_active_location_timeout ...                                  */
+/*    hop_hashchange_timeout ...                                       */
 /*    -------------------------------------------------------------    */
 /*    The frequency, new locations are checked. On slow CPU (e.g.,     */
 /*    ARM processors), use a reduced frequency.                        */
 /*---------------------------------------------------------------------*/
-var hop_active_location_timeout =
+var hop_hashchange_timeout =
    ((hop_config.cpu_speed < 66) ? 100 : 250);
 
 /*---------------------------------------------------------------------*/
@@ -481,7 +852,7 @@ try {
 /*---------------------------------------------------------------------*/
 var hop_add_native_event_listener = undefined;
 var hop_remove_native_event_listener = undefined;
-/*** META ((export stop-event-propagation)) */
+/*** META ((export stop-event-propagation) (arity -2)) */
 var hop_stop_propagation = undefined;
 var hop_has_event20 = false;
 
@@ -494,7 +865,13 @@ try {
 if( hop_has_event20 ) {
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
       if( "addEventListener" in obj ) {
-	 return obj.addEventListener( event, proc, capture );
+         var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
+         var i = "on" + event + "hdl";
+
+         if( !(i in obj ) ) obj[ i ] = [];
+         obj[ i ][ proc ] = f;
+
+	 return obj.addEventListener( event, f, capture );
       } else {
 	 throw new Error( "add-event-listener!: cannot add `" 
 			  + event + "' listener for object: "
@@ -504,7 +881,17 @@ if( hop_has_event20 ) {
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
       if( "removeEventListener" in obj ) {
-	 return obj.removeEventListener( event, proc, capture );
+	var i = "on" + event + "hdl";
+        var h = obj[ i ];
+
+        if( h !== undefined ) {
+	   var p = obj[ i ][ proc ];
+
+	   if( p !== undefined ) {
+	      h[ p ] = undefined;
+	      return obj.removeEventListener( event, p, capture );
+	   }
+	}
       } else {
 	 throw new Error( "remove-event-listener!: cannot remove `"
 			  + event + "' listener for object: "
@@ -518,26 +905,32 @@ if( hop_has_event20 ) {
       event.isStopped = true;
    }
 } else {
+   var hop_event_counter = 0;
+   
    hop_add_native_event_listener = function( obj, event, proc, capture ) {
-      var p = function(_) { return proc( window.event ) };
+      var f = (hop_debug() > 0) ? hop_callback( proc, sc_cons( obj + "<-" + event, null ), obj ) : proc;
+      var procid = "on" + event + hop_event_counter++;
+      obj[ procid ] = f;
+      var p = function( e ) { return obj[ procid ]( window.event ); };
       var i = "on" + event + "hdl";
 
       if( obj[ i ] === undefined ) obj[ i ] = [];
-      obj[ i ][ proc ] = p;
-
+      obj[ i ][ proc ] = { proc: p, id: procid };
+      
       return obj.attachEvent( "on" + event, p );
    }
 
    hop_remove_native_event_listener = function( obj, event, proc, capture ) {
       var i = "on" + event + "hdl";
-      var h = obj[ i ];
 
-      if( h !== undefined ) {
+      if( i in obj ) {
 	 var p = obj[ i ][ proc ];
+	 
+	 delete obj[ p.id ];
+	 delete obj[ i ][ proc ] ;
 
-	 if( p !== undefined ) {
-	    h[ p ] = undefined;
-	    return obj.detachEvent( "on" + event, p );
+	 if( p.proc !== undefined ) {
+	    return obj.detachEvent( "on" + event, p.proc );
 	 }
       }
 
@@ -569,18 +962,20 @@ function hop_deinline_image( el, src ) {
 /*---------------------------------------------------------------------*/
 /*    mouse coords ...                                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export event-mouse-x)) */
+/*** META ((export event-mouse-x) (arity 1)) */
 var hop_event_mouse_x = undefined;
-/*** META ((export event-mouse-y)) */
+/*** META ((export event-mouse-y) (arity 1)) */
 var hop_event_mouse_y = undefined;
-/*** META ((export event-mouse-button)) */
+/*** META ((export event-mouse-button) (arity 1)) */
 var hop_event_mouse_button = undefined;
-/*** META ((export event-key-code)) */
+/*** META ((export event-key-code) (arity 1)) */
 var hop_event_key_code = undefined;
 /*** META ((export event-value)
+           (arity #t)
            (peephole: (postfix ".value"))) */
 function hop_event_value( evt ) { return evt.value; }
 /*** META ((export event-response-text)
+           (arity #t)
            (peephole: (postfix ".responseText"))) */
 function hop_event_response_text( evt ) { return evt.responseText; }
 
@@ -634,41 +1029,85 @@ switch( hop_config.mouse_left_button ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_current_window_width/height ...                              */
+/*    hop_window_width/height ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export current-window-width)) */
-var hop_current_window_width = undefined;
-/*** META ((export current-window-height)) */
-var hop_current_window_height = undefined;
+/*** META ((export main-window-width) (arity 0)) */
+var hop_main_window_width = undefined;
+/*** META ((export main-window-height) (arity 0)) */
+var hop_main_window_height = undefined;
+/*** META ((export main-window-orientation) (arity 0)) */
+var hop_main_window_orientation = undefined;
 
 if( isNaN( window.innerWidth ) ) {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return document.documentElement.clientWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return document.documentElement.clientHeight;
    }
 } else {
-   hop_current_window_width = function hop_current_window_width() {
+   hop_main_window_width = function hop_main_window_width() {
       return window.innerWidth;
    }
-   hop_current_window_height = function hop_current_window_height() {
+   hop_main_window_height = function hop_main_window_height() {
       return window.innerHeight;
    }
 }
 
+var hop_orientation = false;
+hop_main_window_orientation = function hop_main_window_orientation() {
+  if( !hop_orientation ) {
+     hop_orientation = sc_jsstring2symbol( "landscape" );
+  }
+  return hop_orientation;
+}
+
+/* backward compatibility */
+/*** META ((export current-window-width) (arity 0)) */
+var hop_current_window_width = hop_main_window_width;
+/*** META ((export current-window-height) (arity 0)) */
+var hop_current_window_height = hop_main_window_height;
+
+/*---------------------------------------------------------------------*/
+/*    hop_screen_dimensions ...                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export screen-dimensions) (arity -1)) */
+function hop_screen_dimensions( unit ) {
+   if( !unit ) unit = "cm";
+
+   var d = document.createElement( "div" );
+   var h = document.getElementsByTagName( "body" )[ 0 ];
+
+   node_style_set( d, "visibility", "hidden" );
+   node_style_set( d, "border", "0" );
+   d.innerHTML = ".";
+
+   h.appendChild( d );
+   
+   node_style_set( d, "width", "1" + unit );
+   node_style_set( d, "height", "1" + unit );
+
+   var res =
+      new sc_Pair( Math.round( hop_config.screen_width / d.offsetWidth ),
+		   Math.round( hop_config.screen_height / d.offsetHeight ) );
+
+   h.removeChild( d );
+
+   return res;
+}
+   
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_height ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-height)) */
+/*** META ((export iframe-scroll-height) (arity #t)) */
 function hop_iframe_scroll_height( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollHeight;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollHeight;
       } else {
-	 return iframe.height;
+	 return e.scrollHeight;
       }
    }
 }
@@ -676,15 +1115,15 @@ function hop_iframe_scroll_height( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_iframe_scroll_width ...                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export iframe-scroll-width)) */
+/*** META ((export iframe-scroll-width) (arity #t)) */
 function hop_iframe_scroll_width( e ) {
-   if( "contentDocument" in e ) {
+   if( "contentDocument" in e && e.contentDocument != undefined ) {
       return e.contentDocument.body.scrollWidth;
    } else {
-      if( "document" in e ) {
+      if( "document" in e && e.document != undefined ) {
 	 return e.document.body.scrollWidth;
       } else {
-	 return iframe.width;
+	 return e.scrollWidth;
       }
    }
 }
@@ -692,7 +1131,7 @@ function hop_iframe_scroll_width( e ) {
 /*---------------------------------------------------------------------*/
 /*    hop_get_selection                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export get-selection)) */
+/*** META ((export get-selection) (arity 0)) */
 var hop_get_selection;
 
 if( window.getSelection ) {
@@ -711,6 +1150,35 @@ if( window.getSelection ) {
 	 } else {
 	    return "";
 	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_uint8array_to_string ...                                     */
+/*---------------------------------------------------------------------*/
+var hop_uint8array_to_string;
+
+if( hop_config.uint8array ) {
+   var a = new Uint8Array( 1 );
+   var s;
+   a[ 0 ] = 111;
+   try {
+      s = String.fromCharCode.apply( null, a );
+   } catch( _ ) { ; }
+
+   if( typeof s === "string" && s.charCodeAt( 0 ) === 111 ) {
+      hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
+	 return String.fromCharCode.apply( null, o );
+      }
+   } else {
+      hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
+	 var a = new Array( o.length );
+
+	 for( var i = o.length -1; i >=0; i-- )
+	    a[ i ] = o[ i ];
+	 
+	 return String.fromCharCode.apply( null, a );
       }
    }
 }

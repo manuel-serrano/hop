@@ -1,0 +1,282 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.5.x/share/hop.hss                     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 25 07:01:42 2004                          */
+/*    Last change :  Thu Aug  8 11:34:01 2013 (serrano)                */
+/*    Copyright   :  2004-13 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Standard HOP HSS                                                 */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    Math                                                             */
+/*---------------------------------------------------------------------*/
+mi {
+  font-family: cmmi10;
+}
+
+mo {
+  font-family: cmr10;
+}
+
+/*---------------------------------------------------------------------*/
+/*    url ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    Some browsers (IE in particular) does not support inlined        */
+/*    image inside a URL specification. Hence, window icons cannot     */
+/*    be cached. Once these browsers are fixed, the inlining could     */
+/*    be enabled.                                                      */
+/*---------------------------------------------------------------------*/
+$(define (url file)
+    (let ((fname (make-file-name (hop-share-directory) file))
+          (enable-image-inlining #f))
+       (if (and enable-image-inlining (file-exists? fname))
+	   (let ((p (open-input-file fname)))
+	      (if (input-port? p)
+		  (unwind-protect
+		     (format "url( \"data:~a;base64,~a\" )"
+			     (mime-type file (format "image/~a" (suffix file)))
+			     (base64-encode (read-string p) 0))
+		     (close-input-port p))
+		  (format "url( ~s )" file)))
+	   (format "url( ~s )" file))))
+
+/*---------------------------------------------------------------------*/
+/*    Busy animation                                                   */
+/*---------------------------------------------------------------------*/
+div.hop-busy-anim {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  z-index: 1000000;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  border: 0;
+}      
+  
+/*---------------------------------------------------------------------*/
+/*    Exceptions                                                       */
+/*---------------------------------------------------------------------*/
+body[data-hss-class=hop-exception] {
+  background-color: #555558;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+}
+
+div[data-hss-class=hop-exception-frame] {
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+  position: fixed;
+  z-index: 100000;
+}
+
+div[data-hss-class=hop-exception-background] {
+  background-color: #222225;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+  position: fixed;
+  z-index: 100001;
+  opacity: 0.7;
+}
+
+div[data-hss-class=hop-exception] {
+  overflow: auto;
+  background: white;
+  border: 4px dashed;
+  border-color: red;
+  color: black;
+  top: 30px; bottom: 30px;
+  left: 30px; right: 30px;
+  position: fixed;
+  z-index: 100002;
+  margin: 100px;
+  opacity: 1;
+}
+
+div[data-hss-class=hop-exception].notfound {
+  border-color: #f1d630;
+}
+div[data-hss-class=hop-exception].warning {
+  border-color: darkorange;
+}
+
+span[data-hss-class=hop-exception-img] {
+  display: inline-block;
+  position: absolute;
+  z-index: 100003;
+  left: 10px;
+  top: 10px;
+  width: 64px;
+  height: 64px;
+  background-image: url( "icons/errors/error.png" );
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+}
+
+div[data-hss-class=hop-exception].warning > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/warning.png" );
+}
+div[data-hss-class=hop-exception].notfound > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/notfound.png" );
+}
+div[data-hss-class=hop-exception].remote > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/error2.png" );
+}
+div[data-hss-class=hop-exception].client > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/client-error.png" );
+}
+div[data-hss-class=hop-exception].security > span[data-hss-class=hop-exception-img] {
+  background-image: url( "icons/errors/privacy.png" );
+}
+
+div[data-hss-class=hop-exception-body] {
+  z-index: 100003;
+  position: absolute;
+  left: 74px; 
+  top: 30px;
+  right: 1em;
+  bottom: 1ex;
+  font-size: 14pt;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  font-family: sans-serif;
+  font-weight: normal;
+}
+
+div[data-hss-class=hop-exception-title] {
+  font-family: sans-serif;
+  font-size: x-large;
+  font-weight: bold;
+  border-bottom: 1px solid #bbb;
+  color: red;
+}
+
+div[data-hss-class=hop-exception].notfound div[data-hss-class=hop-exception-title] {
+  color: #f1d630;
+}
+
+div[data-hss-class=hop-exception-stack] button {
+  margin-bottom: 1ex;
+}
+
+table[data-hss-class=hop-exception-stack] {
+  font-weight: normal;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+table[data-hss-class=hop-exception-stack] th {
+  text-align: left;
+  font-size: 11pt;
+  white-space: nowrap;
+}
+
+table[data-hss-class=hop-exception-stack] td {
+  font-family: monospace;
+  font-size: 9pt;
+  padding-left: 1em;
+  white-space: nowrap;
+}
+
+td.hop-exception-frame-line {
+  color: #333;
+}
+
+.hop-exception-frame-js {
+  display: none;
+}
+.hop-exception-js {
+  display: none;
+}
+div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-frame-js {
+  display: table-row;
+}
+
+div[data-hss-class=hop-exception-stack][data-debug-mode=all] .hop-exception-js {
+  display: block;
+}
+
+.hop-exception-frame-js td.hop-exception-frame-line {
+  color: #666;
+}
+
+.hop-exception-frame-client,
+.hop-exception-frame-html {
+  color: #a00;
+}
+
+.hop-exception-frame-server {
+  color: #00a;
+}
+
+.hop-exception-frame-server td.hop-exception-frame-id {
+  text-align: left;
+}
+
+.hop-exception-frame-server td.hop-exception-frame-id:before {
+  content: "$";
+}
+
+table[data-hss-class=hop-exception-msg] {
+  margin-bottom: 20px;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  padding-top: 20px;
+  font-family: sans-serif;
+  font-size: 14pt;
+  margin-right: 20px;
+  padding-right: 20px;
+}
+
+table[data-hss-class=hop-exception-msg] tt {
+  font-family: monospace;
+  font-weight: 200;
+  color: inherit;
+  font-size: 95%;
+}
+
+table[data-hss-class=hop-exception-msg] th {
+  color: #777;
+  font-weight: bold;
+  text-align: left;
+  font-size: 105%;
+}
+
+div[data-hss-class=hop-exception-stack] {
+  border-top: 1px dashed #bbb;
+  background-color: inherit;
+  padding-top: 2ex;
+  padding-bottom: 2ex;
+  font-weight: bold;
+  font-size: 85%;
+  color: black;
+}
+
+
+span[data-hss-class=hop-eval-error] {
+  border: 3px dashed red;
+  color: black;
+  font-weight: bold;
+}
+
+span[data-hss-class=hop-parse-error] {
+  border: 3px dashed darkorange;
+  color: black;
+  font-weight: bold;
+}
+
+div[data-hss-class=hop-exception] tt {
+  color: #00a;
+}
+
+/*---------------------------------------------------------------------*/
+/*    small screens                                                    */
+/*---------------------------------------------------------------------*/
+@media all and (max-width: 1024px) {
+  div[data-hss-class=hop-exception] {
+     margin: 0;
+  }
+}
+

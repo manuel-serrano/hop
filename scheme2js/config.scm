@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module config
    (export (config-init! #!optional config)
 	   (extend-config configuration conf value)
@@ -14,9 +26,9 @@
 
 
 (define (configs-backup)
-   (thread-parameter '*config*))
+   (thread-parameter '*scheme2js-config*))
 (define (configs-restore! backuped-config)
-   (thread-parameter-set! '*config* backuped-config))
+   (thread-parameter-set! '*scheme2js-config* backuped-config))
 
 
 (define (extend-config c conf val)
@@ -28,23 +40,24 @@
 
 (define (read-config c conf)
    (let ((tmp (assq conf c)))
-      (and tmp
-	   (cdr tmp))))
+      (and tmp (cdr tmp))))
 
 (define (config-init! #!optional config)
-   (thread-parameter-set! '*config* (or config '())))
+   (thread-parameter-set! '*scheme2js-config* (or config '())))
 
 (define (config conf)
-   (read-config (thread-parameter '*config*) conf))
+   (read-config (or (thread-parameter '*scheme2js-config*) *default-config*)
+      conf))
+
 (define scheme2js-config config)
 
 (define (config-set! conf val)
-   (let ((configuration (thread-parameter '*config*)))
+   (let ((configuration (thread-parameter '*scheme2js-config*)))
       (let ((tmp (assq conf configuration)))
 	 (unless (and tmp
 		      (equal? val (cdr tmp)))
 	    ;; thread-parameter-set! is expensive->only update when needed.
-	    (thread-parameter-set! '*config*
+	    (thread-parameter-set! '*scheme2js-config*
 				   (cons (cons conf val) configuration))))))
 
 (define *O0*
@@ -146,23 +159,37 @@
 (define (Obench-config) *Obench*)
 
 (define *default-config*
-   (append '((infotron . #f)
-	     (direct-js-object-access . #t)
-	     (procedures-provide-js-this . #f)
-	     (unresolved=JS . module)
-	     (export-globals . module)
-	     (encapsulate-modules . #f)
-	     (trampoline . #f)
-	     (print-locations . #f)
-	     (return . #f)
-	     (suspend/resume . #f)
-	     (call/cc . #f)
-	     (extern-always-call/cc . #f)
-	     (include-paths . ())
-	     (indent . 2)
-	     (statics-suffix . #f)
-	     (bigloo-modules . #t))
-	   *O1*))
+   (append
+      '((direct-js-object-access . #t)
+	(procedures-provide-js-this . #f)
+	(allow-unresolved . module)
+	(export-globals . module)
+	(encapsulate-modules . #f)
+	(trampoline . #f)
+	(print-locations . #f)
+	(return . #f)
+	(suspend/resume . #f)
+	(call/cc . #f)
+	(extern-always-call/cc . #f)
+	(include-paths . ())
+	(indent . 2)
+	(statics-suffix . #f)
+	(bigloo-modules . #t)
+	(source-map . #f)
+	(compress . #f)
+	(call-check . #t)
+	(debug . #f)
+	(meta . #f)
+	(arity-check . #f)
+	(type-check . #f)
+	(module-resolver . ,(lambda (mod files dir) #f))
+	(tmp-dir . ,(os-tmp))
+	(javascript-let . #f)
+	(frame-push . #f)
+	(use-strict . #t))
+      `((library-path . ,(bigloo-library-path)))
+      *O1*))
+
 (define (default-config-alist)
    *default-config*)
     

@@ -1,0 +1,10 @@
+body {
+  background: #000;
+  font-family: Arial;
+}
+
+h1 {
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}

@@ -1,5 +1,6 @@
 body {
-  background: #ddf;
+  background: #ebfe86;
+  font-family: Arial;
 }
 
 h1 {
@@ -18,4 +19,35 @@ table {
 div.entry {
   background: #ccc; 
   border: 1px solid black;
+}
+
+tabslider {
+  position: absolute; 
+  top: 8ex; 
+  bottom: 10px; 
+  left: 10px; 
+  right: 10px; 
+  width: auto; 
+  height: auto;
+}
+
+tabslider div.hop-tabslider-head-inactive {
+  color: black;
+}
+
+tabslider div.hop-tabslider-head-inactive:hover {
+  color: black;
+  background: #f7f7f7;
+  text-shadow: 0px 0px 16px #CFFF33;
+}  
+
+div.hop-tabslider-content {
+  overflow: auto;
+  font-size: 10px;
+  background-color: #FEFF98;
+}
+
+p {
+  font-size: 80%;
+  font-style: italic;
 }

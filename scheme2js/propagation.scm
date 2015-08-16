@@ -1,4 +1,19 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.5.x/scheme2js/propagation.scm         */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Florian Loitsch                                   */
+;*    Creation    :  2007-12                                           */
+;*    Last change :  Fri Jul 19 15:31:15 2013 (serrano)                */
+;*    Copyright   :  2013 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Constant/Variable propagation                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
 (module propagation
+   
    (import config
 	   tools
 	   nodes
@@ -9,6 +24,7 @@
 	   side
 	   verbose
 	   mutable-strings)
+   
    (static (class Prop-Env
 	      call/cc?::bool
 	      suspend/resume?::bool
@@ -23,10 +39,14 @@
 	   (wide-class Prop-Var::Var
 	      (escaping-mutated?::bool (default #f))
 	      (current (default #f)))
-	   (class List-Box
+	   (class Prop-List-Box
 	      v::pair-nil))
+   
    (export (propagation! tree::Module)))
 
+;*---------------------------------------------------------------------*/
+;*    propagation! ...                                                 */
+;*---------------------------------------------------------------------*/
 ;; uses While -> must be after while-pass
 ;;
 ;; locally propagate variables/constants. -> Removes var-count.
@@ -50,6 +70,9 @@
       (pass1 tree)
       (pass2! tree)))
 
+;*---------------------------------------------------------------------*/
+;*    pass1 ...                                                        */
+;*---------------------------------------------------------------------*/
 (define (pass1 tree)
    (verbose " propagation1")
    (changed tree (instantiate::Prop-Env
@@ -58,13 +81,19 @@
 		    (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
 	    #f '() #f))
 
+;*---------------------------------------------------------------------*/
+;*    widen-vars! ...                                                  */
+;*---------------------------------------------------------------------*/
 (define (widen-vars! vars)
    (for-each (lambda (v)
 		(widen!::Prop-Var v
 		   (escaping-mutated? #f)
 		   (current #f)))
 	     vars))
-   
+
+;*---------------------------------------------------------------------*/
+;*    widen-scope-vars! ...                                            */
+;*---------------------------------------------------------------------*/
 (define (widen-scope-vars! s::Scope)
    (with-access::Scope s (scope-vars)
       (widen-vars! scope-vars)))
@@ -89,22 +118,22 @@
       (widen-vars! runtime-vars)
       (widen-vars! imported-vars)
       (widen!::Prop-Var this-var))
-   (default-walk this this '() (make-List-Box '())))
+   (default-walk this this '() (instantiate::Prop-List-Box (v '()))))
 
 (define-nmethod (Lambda.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
-   (widen!::Prop-Var (Lambda-this-var this))
-   (default-walk this this '() (make-List-Box '())))
+   (widen!::Prop-Var (with-access::Lambda this (this-var) this-var))
+   (default-walk this this '() (instantiate::Prop-List-Box (v '()))))
 
 ;; result will be merged into orig
 ;; relies on the fact that all boxes will only append elements in front (using
 ;; cons). Searches for the 'orig'-list in all boxes, and simply merges the
 ;; elements that are before the 'orig'.
-(define (merge-call/ccs! orig::List-Box boxes::pair-nil)
-   (with-access::List-Box orig (v)
+(define (merge-call/ccs! orig::Prop-List-Box boxes::pair-nil)
+   (with-access::Prop-List-Box orig (v)
       (let ((orig-list v))
 	 (for-each (lambda (b)
-		      (let loop ((other-v (List-Box-v b))
+		      (let loop ((other-v (with-access::Prop-List-Box b (v) v))
 				 (last #f))
 			 (cond
 			    ((and (eq? orig-list other-v)
@@ -114,32 +143,32 @@
 			    ((eq? orig-list other-v)
 			     ;; replace tail with the current v
 			     (set-cdr! last v)
-			     (set! v (List-Box-v b)))
+			     (set! v (with-access::Prop-List-Box b (v) v)))
 			    (else
 			     (loop (cdr other-v) other-v)))))
 		   boxes))))
 
 (define-nmethod (If.changed surrounding-fun surrounding-whiles call/ccs)
-   (if (Prop-Env-call/cc? env)
+   (if (with-access::Prop-Env env (call/cc?) call/cc?)
        ;; the default-method works fine, but is not optimized: if there's a
        ;; call/cc in the 'then'-branch, then any var-update in the else-branch
        ;; would be seen as an update inside the call/cc-loop.
        (with-access::If this (test then else)
 	  (walk test surrounding-fun surrounding-whiles call/ccs)
-	  (let ((then-call/ccs (duplicate::List-Box call/ccs))
-		(else-call/ccs (duplicate::List-Box call/ccs)))
+	  (let ((then-call/ccs (duplicate::Prop-List-Box call/ccs))
+		(else-call/ccs (duplicate::Prop-List-Box call/ccs)))
 	     (walk then surrounding-fun surrounding-whiles then-call/ccs)
 	     (walk else surrounding-fun surrounding-whiles else-call/ccs)
 	     (merge-call/ccs! call/ccs (list then-call/ccs else-call/ccs))))
        (default-walk this surrounding-fun surrounding-whiles call/ccs)))
 
 (define-nmethod (Case.changed surrounding-fun surrounding-whiles call/ccs)
-   (if (Prop-Env-call/cc? env)
+   (if (with-access::Prop-Env env (call/cc?) call/cc?)
        ;; default-walk would work here too (as for the If), but optimized...
        (with-access::Case this (key clauses)
 	  (walk key surrounding-fun surrounding-whiles call/ccs)
 	  (let ((call/ccs-clauses (map (lambda (ign)
-					  (duplicate::List-Box call/ccs))
+					  (duplicate::Prop-List-Box call/ccs))
 				       clauses)))
 	     (for-each (lambda (clause call/ccs-clause)
 			  (walk clause surrounding-fun surrounding-whiles
@@ -152,9 +181,9 @@
 (define-nmethod (Call.changed surrounding-fun surrounding-whiles
 			      call/ccs)
    (default-walk this surrounding-fun surrounding-whiles call/ccs)
-   (when (and (Call-call/cc? this)
-	      (Prop-Env-call/cc? env))
-      (with-access::List-Box call/ccs (v)
+   (when (and (with-access::Call this (call/cc?) call/cc?)
+	      (with-access::Prop-Env env (call/cc?) call/cc?))
+      (with-access::Prop-List-Box call/ccs (v)
       (cons-set! v this)
       
       ;; the call/cc might come back into the while-loop -> the variables
@@ -178,7 +207,6 @@
 (define-nmethod (Let.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
    (default-walk this surrounding-fun surrounding-whiles call/ccs))
-
 
 (define-nmethod (While.changed surrounding-fun surrounding-whiles call/ccs)
    (widen-scope-vars! this)
@@ -222,7 +250,7 @@
 	 (for-each update-while surrounding-whiles)
 
 	 ;; update the call/ccs (which in turn will update their whiles
-	 (for-each update-call/cc-call (List-Box-v call/ccs)))))
+	 (for-each update-call/cc-call (with-access::Prop-List-Box call/ccs (v) v)))))
 
 (define (pass2! tree)
    (verbose " propagation2")
@@ -230,14 +258,14 @@
 		       (call/cc? (config 'call/cc))
 		       (suspend/resume? (config 'suspend/resume))
 		       (bigloo-runtime-eval? (config 'bigloo-runtime-eval)))
-	       (make-List-Box '())))
+	       (instantiate::Prop-List-Box (v '()))))
 
 ;; b1 will be the result-box
-(define (merge-vals! b1::List-Box boxes::pair-nil)
+(define (merge-vals! b1::Prop-List-Box boxes::pair-nil)
    (define *all-vars* '())
 
-   (define (get-vars b::List-Box)
-      (with-access::List-Box b (v)
+   (define (get-vars b::Prop-List-Box)
+      (with-access::Prop-List-Box b (v)
 	 (for-each (lambda (p)
 		      (let ((var (car p)))
 			 (when (not (memq var *all-vars*))
@@ -245,8 +273,8 @@
 			    (cons-set! *all-vars* var))))
 		   v)))
 
-   (define (merge b::List-Box)
-      (with-access::List-Box b (v)
+   (define (merge b::Prop-List-Box)
+      (with-access::Prop-List-Box b (v)
 	 (for-each (lambda (p)
 		      (let ((var (car p))
 			    (val (cdr p)))
@@ -258,14 +286,14 @@
 				'do-nothing)
 			       ((not current)
 				(set! current val))
-			       ((and (Const? val)
-				     (Const? current))
-				(unless (eqv? (Const-value val)
-					      (Const-value current))
+			       ((and (isa? val Const)
+				     (isa? current Const))
+				(unless (eqv? (with-access::Const val (value) value)
+					      (with-access::Const current (value) value))
 				   (set! current 'unknown)))
-			       ((and (Ref? val) (Ref? current))
-				(unless (eq? (Ref-var val)
-					     (Ref-var current))
+			       ((and (isa? val Ref) (isa? current Ref))
+				(unless (eq? (with-access::Ref val (var) var)
+					     (with-access::Ref current (var) var))
 				   (set! current 'unknown)))
 			       (else
 				(set! current 'unknown))))))
@@ -277,7 +305,7 @@
    (merge b1)
    (for-each (lambda (b) (merge b))
 	     boxes)
-   (with-access::List-Box b1 (v)
+   (with-access::Prop-List-Box b1 (v)
       (set! v (map (lambda (var)
 		      (with-access::Prop-Var var (current)
 			 (let ((tmp current))
@@ -285,28 +313,28 @@
 			    (cons var tmp))))
 		   *all-vars*))))
 
-(define (assq-val x b::List-Box)
-   (let ((tmp (assq x (List-Box-v b))))
+(define (assq-val x b::Prop-List-Box)
+   (let ((tmp (assq x (with-access::Prop-List-Box b (v) v))))
       (and tmp (cdr tmp))))
 
-(define (update-val b::List-Box x val)
-   (with-access::List-Box b (v)
+(define (update-val b::Prop-List-Box x val)
+   (with-access::Prop-List-Box b (v)
       (cons-set! v (cons x val))))
 
-(define (kill-var b::List-Box var)
-   (with-access::List-Box b (v)
+(define (kill-var b::Prop-List-Box var)
+   (with-access::Prop-List-Box b (v)
       (set! v (map (lambda (p)
 		      (let ((other-var (car p))
 			    (other-val (cdr p)))
-			 (if (and (Ref? other-val)
-				  (eq? var (Ref-var other-val))
+			 (if (and (isa? other-val Ref)
+				  (eq? var (with-access::Ref other-val (var) var))
 				  (not (eq? other-var var)))
 			     (cons other-var 'unknown)
 			     p)))
 		   v))))
 
-(define-nmethod (Node.propagate! var/vals::List-Box)
-   (error 'propagate
+(define-nmethod (Node.propagate! var/vals::Prop-List-Box)
+   (error "propagate"
 	  "Internal Error: forgot node type"
 	  this))
 
@@ -328,11 +356,12 @@
 	       ;;   (let ((x y)) (if x (set! y (not y))))
 	       ;; ->
 	       ;;   (if y (set! y (not y)))
-	       ((and (not (Prop-Env-suspend/resume? env))
-		     (Ref? val)
-		     (not (Prop-Var-escaping-mutated? (Ref-var val))))
-		(var-reference (Ref-var val) :location val))
-	       ((and (Const? val)
+	       ((and (not (with-access::Prop-Env env (suspend/resume?) suspend/resume?))
+		     (isa? val Ref)
+		     (not (with-access::Ref val (var)
+			     (with-access::Prop-Var var (escaping-mutated?) escaping-mutated?))))
+		(var-reference (with-access::Ref val (var) var) :location val))
+	       ((and (isa? val Const)
 		     (with-access::Const val (value)
 			(or (number? value)
 			    (symbol? value)
@@ -343,22 +372,32 @@
 				 (not (>fx (string-length value) 15)))
 			    (eqv? #unspecified value))))
 		(instantiate::Const
-		   (location (Node-location val))
-		   (value (Const-value val))))
+		   (location (with-access::Node val (location) location))
+		   (value (with-access::Const val (value) value))))
 	       (else
 		this))))))
 
 (define-nmethod (Module.propagate! var/vals)
-   (default-walk! this (make-List-Box '())))
+   (default-walk! this (instantiate::Prop-List-Box (v '()))))
 
 (define-nmethod (Lambda.propagate! var/vals)
-   ;; no need to add formals.
-   (default-walk! this (make-List-Box '())))
+   (with-access::Lambda this (formals)
+      (for-each (lambda (formal)
+		   (with-access::Ref formal (var)
+		      (with-access::Prop-Var var (current)
+			 (set! current 'unknown))))
+		formals)
+      (let ((lb (instantiate::Prop-List-Box
+		   (v (map (lambda (formal)
+			      (with-access::Ref formal (var)
+				 (cons var 'unknown)))
+			 formals)))))
+	 (default-walk! this lb))))
 
 (define-nmethod (If.propagate! var/vals)
    (with-access::If this (test then else)
       (set! test (walk! test var/vals))
-      (let ((tmp-var/vals (duplicate::List-Box var/vals)))
+      (let ((tmp-var/vals (duplicate::Prop-List-Box var/vals)))
 	 (set! then (walk! then var/vals))
 	 (set! else (walk! else tmp-var/vals))
 	 (merge-vals! var/vals (list tmp-var/vals))
@@ -369,7 +408,7 @@
       (set! key (walk! key var/vals))
    
       (let ((var/vals-clauses (map (lambda (ign)
-				      (duplicate::List-Box var/vals))
+				      (duplicate::Prop-List-Box var/vals))
 				   clauses)))
 	 (set! clauses (map! (lambda (clause var/vals-clause)
 				(walk! clause var/vals-clause))
@@ -383,8 +422,8 @@
 
 (define-nmethod (Set!.propagate! var/vals)
    (define (transitive-value val)
-      (if (Begin? val)
-	  (transitive-value (car (last-pair (Begin-exprs val))))
+      (if (isa? val Begin)
+	  (transitive-value (car (last-pair (with-access::Begin val (exprs) exprs))))
 	  val))
 
    (with-access::Set! this (lvalue val)
@@ -405,29 +444,32 @@
 
 (define-nmethod (Call.propagate! var/vals)
    (define (constant-value? n)
-      (or (Const? n)
-	  (and (Ref? n)
-	       (with-access::Var (Ref-var n) (constant? value id)
-		  (and constant?
-		       value
-		       (Const? value)
-		       (or (pair? (Const-value value))
-			   (vector? (Const-value value)))
-		       #t)))))
+      (or (isa? n Const)
+	  (and (isa? n Ref)
+	       (with-access::Ref n (var)
+		  (with-access::Var var (constant? value id)
+		     (and constant?
+			  value
+			  (isa? value Const)
+			  (with-access::Const value (value)
+			     (or (pair? value) (vector? value)))
+			  #t))))))
    
    (default-walk! this var/vals)
    (with-access::Call this (operator operands)
-      (if (and (Prop-Env-bigloo-runtime-eval? env)
-	       (Ref? operator)
+      (if (and (with-access::Prop-Env env (bigloo-runtime-eval?) bigloo-runtime-eval?)
+	       (isa? operator Ref)
 	       (runtime-ref? operator)
-	       (every? constant-value? operands))
+	       (every constant-value? operands))
 	  ;; for most runtime-functions we should be able to compute the result
 	  ;; right now. (obviously a "print" won't work now...)
 	  ;;
 	  ;; optimize-runtime-op is at bottom of file.
-	  (or (optimize-runtime-op (Var-id (Ref-var operator)) operands
-				   (Node-location operator))
-	      this)
+	  (with-access::Ref operator (var)
+	     (with-access::Var var (id)
+		(or (optimize-runtime-op id operands
+		       (with-access::Node operator (location) location))
+		    this)))
 	  this)))
 
 (define-nmethod (Frame-alloc.propagate! var/vals)
@@ -452,13 +494,15 @@
    (with-access::Break this (val label)
       (set! val (walk! val var/vals))
       (with-access::Prop-Label label (var/vals-list)
-	 (cons-set! var/vals-list (duplicate::List-Box var/vals)))
+	 (cons-set! var/vals-list (duplicate::Prop-List-Box var/vals)))
       this))
 
 (define-nmethod (Continue.propagate! var/vals)
    this)
 
 (define-nmethod (Pragma.propagate! var/vals)
+   (with-access::Pragma this (args)
+      (for-each (lambda (a) (walk! a var/vals)) args))
    (default-walk! this var/vals))
 
 ;; Tail-rec and Tail-rec-Call must not exist anymore.
@@ -471,9 +515,10 @@
       ;; if the test is true (which is currently the case), then we can't exit
       ;; the loop only by a break. -> clear the current var/vals. Any
       ;; surrounding Labeled will therefore ignore the result of var/vals.
-      (when (and (Const? test) (Const-value test))
-	 (let ((tmp (duplicate::List-Box var/vals)))
-	    (List-Box-v-set! var/vals '())
+      (when (and (isa? test Const) (with-access::Const test (value) value))
+	 (let ((tmp (duplicate::Prop-List-Box var/vals)))
+	    (with-access::Prop-List-Box var/vals (v)
+	       (set! v '()))
 	    (set! var/vals tmp))) ;; <== we replace the var/vals given as param
       ;; ------ var/vals is not the var/vals given as parameter anymore !!!
       (for-each (lambda (var)
@@ -499,9 +544,12 @@
 
 (define (optimize-runtime-op op operands location)
    (define (operand->val op)
-      (let ((tmp (if (Const? op)
-		     (Const-value op)
-		     (Const-value (Var-value (Ref-var op))))))
+      (let ((tmp (if (isa? op Const)
+		     (with-access::Const op (value) value)
+		     (with-access::Ref op (var)
+			(with-access::Var var (value)
+			   (with-access::Const value (value)
+			      value))))))
 	 (cond
 	    ((or (number? tmp)
 		 (char? tmp)
@@ -530,7 +578,9 @@
 		      (keyword? fst-operand)
 		      (eq? fst-operand #unspecified))
 		  (with-handler
-		     (lambda (e) #f)
+		     (lambda (e)
+			(exception-notify e)
+			#f)
 		     (instantiate::Const
 			(location location)
 			(value (apply equal? (map operand->val operands)))))
@@ -549,7 +599,9 @@
 	    string->keyword string-ref string-copy
 	    bit-not bit-and bit-or bit-xor bit-lsh bit-rsh bit-ursh length)
        (with-handler
-	  (lambda (e) #f)
+	  (lambda (e)
+	     (exception-notify e)
+	     #f)
 	  (let ((res (eval `(,op ,@(map operand->val operands)))))
 	     (instantiate::Const
 		(location location)
@@ -558,7 +610,9 @@
 	    cadar cddar caaar cdaar caddr cdddr caadr cdadr
 	    member memq memv length assoc assq assv)
        (with-handler
-	  (lambda (e) #f)
+	  (lambda (e)
+	     (exception-notify e)
+	     #f)
 	  (let ((res (eval `(,op ,@(map operand->val operands)))))
 	     ;; if the result is a pair, ... we ignore it. (in case it has been
 	     ;; shared... ex: (cdr '(1 2)) would yield '(2). But when producing

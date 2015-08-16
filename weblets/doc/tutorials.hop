@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/doc/tutorials.hop        */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/tutorials.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 10:15:54 2006                          */
-;*    Last change :  Sun Feb  8 07:15:04 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 16:20:09 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP tutorials                                                */
 ;*=====================================================================*/
@@ -13,16 +13,18 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hopdoc_tutorials
+
+   ~(import hopdoc_client)
    
-   (import hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_api
-	   hopdoc_widgets
-	   hopdoc_search)
+   (import  hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_api
+	    hopdoc_widgets
+	    hopdoc_search)
    
-   (export (<TUTORIALS> req)
-	   (<TUTORIALREF> lbl file)
-	   doc/tutorial))
+   (export  (<TUTORIALS> req)
+	    (<TUTORIALREF> lbl file)
+	    doc/tutorial))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TUTORIALS> ...                                                  */
@@ -85,7 +87,8 @@
 				   (<PRE> :class "console"
 				      (decorate-api-wiki-code expr)))))
 			    (else
-			     ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+			     (with-access::wiki-syntax (doc-wiki-syntax) (plugins)
+				(plugins id))))))
 	     (keyword list)
 	     (pre list)
 	     (tt (wiki-tt-parser

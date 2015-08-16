@@ -1,0 +1,84 @@
+(module hophome_demos-popart
+   (import (popart-api "popart-api-1.0.*.hz"))
+   ~(import (popart-api_client "popart-api-1.0.*.hz"))
+   (export (home/demos/popart)))
+
+(define-service (home/demos/popart)
+   (<HTML>
+      (<HEAD> :include "popart-api-1.0.*.hz"
+	 :css (service-resource home/demos/popart "popart.hss"))
+      (<BODY>
+	 ~(define (local-url src)
+	     (if (string-prefix? "http://" src)
+		 ($home/demos/popart/proxy src)
+		 src))
+	 (<H1> "HTML5 Canvas Image Modifications")
+	 (<DIV> "Url: "
+		(<INPUT> :type 'text :id "URL")
+		" " 
+		(<BUTTON> "Select"
+			  :onclick ~(let* ((in (dom-get-element-by-id "URL"))
+					   (src in.value))
+				       (for-each (lambda (e)
+						    (popart-img-src-set! e (local-url src)))
+						 '("img1" "img2" "img3" "img4")))))
+	 (<BR>)
+	 (<TABLE>
+	    (<TR>
+	       (<TD>
+		  (<DIV> :class "selector"
+		     (<ICON> :src "http://ead.univ-angers.fr/~iuttcweb/2008/iuttcwebg13/images/maryline.jpg")
+		     (<ICON> :src "http://www.iainclaridge.co.uk/blog/wp-content/uploads/inspiration_can.jpg")
+		     (<ICON> :src "http://www.herodote.net/Images/Mao.jpg")
+		     (<ICON> :src "http://disneyexclusiveonline.com/images/disney_exclusive_online_store_mickey_mouse.jpg"))
+		  (<DIV> :class "warhol"
+		     (<TABLE> 
+			(<TR>
+			   (<TD> (<POPART:IMG> :src "etc/maryline.png"
+				    :id "img1"
+				    :colors '("#fc1b00" "#7da781" "#ffde0a")))
+			   (<TD> (<POPART:IMG> :src "etc/maryline.png"
+				    :id "img2"
+				    :colors '("#3aa20e" "#ffaff0" "#f1feb9"))))
+			(<TR>
+			   (<TD> (<POPART:IMG> :src "etc/maryline.png"
+				    :id "img3"
+				    :colors '("#1e1c32" "#df6361" "#9dcae7")))
+			   (<TD> (<POPART:IMG> :src "etc/maryline.png"
+				    :id "img4"
+				    :colors '("#2126fe" "#fd8261" "#99fdcc"))))))))))))
+
+(define-service (home/demos/popart/proxy src)
+   (multiple-value-bind (scheme uinfo host port abspath)
+      (http-url-parse src)
+      (instantiate::http-response-remote
+	 (host host)
+	 (port port)
+	 (path abspath)
+	 (header `((Host: . ,host)))
+	 (request (current-request)))))
+
+(define (<ICON> #!key src)
+   (let ((id (symbol->string (gensym))))
+      (<IMG> :id id
+	 :class "icon"
+	 :onclick ~(for-each (lambda (e)
+				(popart-img-src-set! e (local-url $src)))
+			     '("img1" "img2" "img3" "img4"))
+	 :style "display: none"
+	 :onload ~(let* ((el (dom-get-element-by-id $id))
+			 (w el.width)
+			 (h el.height))
+		     (let* ((ratio (/ w h))
+			    (nh 64)
+			    (nw (* ratio nh)))
+			(if (> w h)
+			    (begin
+			       (set! el.width nw)
+			       (set! el.height nh))
+			    (begin
+			       (set! el.width nw)
+			       (set! el.height nh))))
+		     (node-style-set! el :display "inline"))
+	 :src src)))
+

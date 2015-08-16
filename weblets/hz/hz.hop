@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hop                 */
+;*    serrano/prgm/project/hop/2.3.x/weblets/hz/hz.hop                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 08:37:11 2006                          */
-;*    Last change :  Tue May  5 10:49:28 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Fri May 25 18:48:22 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP weblets managers.                                            */
 ;*=====================================================================*/
@@ -15,13 +15,14 @@
 (module hz
    
    (import hz_config
-	   hz_markup
+	   hz_xml
 	   hz_db
+	   hz_weblet
 	   hz_install
-	   hz_package)
+	   hz_package
+	   hz_api)
    
    (export hz
-	   hz/weblet
 	   hz/documentation
 	   hz/preferences
 	   hz/install
@@ -61,7 +62,9 @@
 		:title "Hop Hz Preferences"
 		:base (service-base-url hz/preferences req)
 		:favicon "etc/favicon.png"
-		:include "hop-prefs"
+		(<META> :name "viewport"
+		   :content "width=device-width, initial-scale=1.")
+		:include "hop-foot" "hop-prefs"
 		:css "hz.hss")
 	     (<HZ:BODY>
 		(<DIV> :id "body"
@@ -76,17 +79,76 @@
 	  (user-access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
-	     (<HZ> req :weblet (hz-install-url url))))))
+	     (let ((w (hz-install-url url)))
+		(cond
+		   ((isa? w weblet)
+		    (<HZ> req :weblet w))
+		   ((list? w)
+		    (match-case w
+		       ((?status ?url ?msg)
+			(http-error
+			 (format "Cannot install weblet from ~s\n~a" url msg)))
+		       (else
+			(http-error w))))
+		   (else
+		    (http-error w))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/run ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/run #!key url)
+(define-service (hz/run #!key url install service #!rest args)
+   
+   (define (run name version)
+      (<HTML>
+	 (let ((svc (string-append "/hop/"
+				   (if service
+				       (string-append name "/" service)
+				       name))))
+	    ~(set! document.location $(hop-apply-nice-url svc args)))))
+   
+   (hz-db-init!)
    (multiple-value-bind (name version)
       (package-url-parse url)
-      (hz-load url)
-      (<HTML>
-	 ~(set! document.location (string-append "/hop/" $name)))))
+      (with-handler
+	 (lambda (e)
+	    (http-error e))
+	 (begin
+	    (if install
+		(let ((w (or (let ((w (hz-db-find-by-url url)))
+				(when (and (isa? w weblet)
+					   (with-access::weblet w (directory)
+					      (directory? directory)))
+				   w))
+			     (hz-install-url url))))
+		   (cond
+		      ((isa? w weblet)
+		       (run name version))
+		      ((not (pair? w))
+		       (http-error w))
+		      (else
+		       (case (car w)
+			  ((404)
+			   (http-error (instantiate::&io-file-not-found-error
+					  (proc "hz/run")
+					  (msg "File not found")
+					  (obj url))))
+			  (else
+			   (http-error (instantiate::&io-error
+					  (proc "hz/run")
+					  (msg (format "File not found (~a)"
+						       (car w)))
+					  (obj url))))))))
+		(begin
+		   (hz-load url)
+		   (run name version)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/check ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (hz/check)
+   (instantiate::http-response-file
+      (start-line "HTTP/1.1 200 ok")
+      (file (service-resource hz "etc/favicon.png"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */

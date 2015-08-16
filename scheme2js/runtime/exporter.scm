@@ -1,6 +1,19 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module exporter
    (main my-main))
 
+;; (export #t) will search its name from the exported Js-function.
 ;; unmarshalling recognizes the following patterns:
 ;; is-XX, has-YY, ZZ-bang which are converted to XX?, YY? and ZZ!
 ;;
@@ -17,6 +30,8 @@
 ;; --constant-functions will only add the (constant #f) clause to
 ;; functions. This is purely syntactic. var f = function() {}; will _not_ be
 ;; exported as (constant #t). but function f() {}; will.
+;;
+;; (arity #t) will search the arity from the function.
 
 (define *ignored-prefixes* '())
 (define *out-file* #f)
@@ -31,6 +46,8 @@
 (define *constant-functions?* #f)
 
 (define *scheme2js-modules?* #f)
+
+(define *scheme2js-macros?* #f)
 
 (define (unmarshall s)
    (define (is-has-bang str)
@@ -101,12 +118,14 @@
 
 (define (construct-scheme2js-module-clause exports-ht macros-ht)
    `(module ,(string->symbol *module-name*)
-       (export-macros ,@(hashtable-map macros-ht
-				       (lambda (ignored macro)
-					  macro)))
+       ,@(if *scheme2js-macros?*
+	     `((export-macros ,@(hashtable-map macros-ht
+				   (lambda (ignored macro)
+				      macro))))
+	     '())
        (export ,@(hashtable-map exports-ht
-				(lambda (scheme-name export-clause)
-				   (cons scheme-name export-clause))))))
+		    (lambda (scheme-name export-clause)
+		       (cons scheme-name export-clause))))))
 
 (define (construct-bigloo-module-clause exports-ht macros-ht)
    `(module ,(string->symbol *module-name*)
@@ -125,7 +144,12 @@
    (hashtable-for-each macros-ht
 		       (lambda (ignored macro)
 			  (pp macro))))
-   
+
+(define (fixup-arity! meta js-arity)
+   (let ((t (assq 'arity meta)))
+      (when (and t (eq? (cadr t) #t))
+	 (set-car! (cdr t) js-arity))))
+
 (define (print-module-clause metas)
    (let ((exports-ht (make-hashtable))
 	 (macros-ht (make-hashtable)))
@@ -135,6 +159,8 @@
 	  (let ((var (car var/kind/meta))
 		(kind (cadr var/kind/meta))
 		(meta (caddr var/kind/meta)))
+	     (when (eq? kind 'function)
+		(fixup-arity! meta (cadddr var/kind/meta)))
 	     (cond
 		((eq? kind 'macro)
 		 (hashtable-put! macros-ht (caadr meta) meta))
@@ -144,7 +170,7 @@
 			 (filter (lambda (assoc)
 				    (not (eq? (car assoc) 'export)))
 				 meta))
-			(with-JS (if (assoc 'JS without-export)
+			(with-JS (if (assq 'JS without-export)
 				     ;; there is already a JS-clause
 				     without-export
 				     (cons (list 'JS var)
@@ -180,7 +206,7 @@
       (("--module" ?name (help "The module name"))
        (set! *module-name* name))
       (("--ignored-prefixes" ?list
-			     (help "scheme-list of ignored prefixes"))
+	  (help "scheme-list of ignored prefixes"))
        (set! *ignored-prefixes* (with-input-from-string list read)))
       (("--no-camelCase" (help "Disable camel-case unmarshalling"))
        (set! *camel-case?* #f))
@@ -189,11 +215,14 @@
       (("--constant" (help "Add (constant? #t) clause to every export"))
        (set! *constant?* #t))
       (("--constant-functions"
-	(help "Add (constant? #t) clause to exported functions."))
+	  (help "Add (constant? #t) clause to exported functions."))
        (set! *constant-functions?* #t))
       (("--scheme2js-modules"
-	(help "Create scheme2js-modules and not Bigloo modules."))
+	  (help "Create scheme2js-modules and not Bigloo modules."))
        (set! *scheme2js-modules?* #t))
+      (("--no-macros"
+	  (help "Disable export-macro clause"))
+       (set! *scheme2js-macros?* #f))
       (else
        (set! *in-files* (append! *in-files* (list else))))))
 

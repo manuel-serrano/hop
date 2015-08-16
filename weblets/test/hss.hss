@@ -1,0 +1,30 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/weblets/test/hss.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Thu Feb 24 13:57:44 2005                          */
+/*    Last change :  Thu Jul 16 11:52:39 2009 (serrano)                */
+/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HSS for the HSS TEST                                             */
+/*=====================================================================*/
+
+lframe.lframe-left {
+  -hop-label-align: left;
+}
+
+lframe.lframe-left lflabel {
+  color: red;
+}
+
+lframe.lframe-center {
+  -hop-label-align: center;
+  -hop-label-margin: 30px 10px 10px 10px;
+}
+
+lframe.lframe-right {
+  -hop-label-align: right;
+  -hop-label-border-radius: 0;
+  -hop-label-border: 2px ridge green;
+  font-weight: bold;
+}

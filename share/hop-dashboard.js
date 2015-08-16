@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-dashboard.js            */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-dashboard.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  8 17:03:46 2007                          */
-/*    Last change :  Mon Apr 13 09:36:46 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Mon Jan  6 18:27:13 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The Hop dashboard client-side driver.                            */
 /*=====================================================================*/
@@ -12,7 +12,9 @@
 /*---------------------------------------------------------------------*/
 /*    dashboard global variables                                       */
 /*---------------------------------------------------------------------*/
-var hop_dashboard_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH1wcIDyYL6ytvWQAAAvBJREFUOMulkl9sU2UYh5/v9GvP0j9Lu27UOseWRR1ygVEGkTkkRo3BC0XvjOGCGEJijHoh/okXXpgMdMn0wgv1zkQxGokT5gg3Ms1EXFLYBm5MJszRdt1a2wI9pz075zufF2Llnid5b5/83vf9Ca01t4MEaBdfAxpQaLxNAUO+urE79kxXd7Td83yu/lUu51cK4+ue9SGo85oGoLimD/0r+A+NOtC/9a6R/a/0hR957A4KhRKlko/hdaQmT+X2HRud2rvw59w7wAjgNROARuMd2LNn0yfDnz5I2wZJdvk6sxeu4K0rWoKS/oEe4ok75dFvYu+fnf0Z4AMAobUmKb7Y3L8tnTlyfFdLMiW5MFPm6lKdtg4NaE58ZyN0BN+PYVXC/HDiS5Vbnd1+XY+cNQCEEC+/9Np9LcmU5NjRRc5llshM5VCewF03yOeK9N1f4srlRdaKio2dA4GAId8GMAA6U7FndTHFLycrCMPn0cfvppAFzwVfCVaymh2DPbywP8H8+cvohiQajT/RFKTT4eTEtz6H3iwwOJDg5PESyfZOzBZJOBKgXkvz8eFVduxMEU7kyWYLhGQs2jyir31qdQczJKi5AWbOKIRvsDDvIADnhiZzpkHDVnT1hFiacxBh9X8PytVq5Z4uZ0OtGKA1blIue0yMLzPxvcLF42/LYttgG9GYpLiqEYbGcat2c4VcoTjuR0tU1yRTkzZvDKVo7wyyYjUoWTbxZIR3h3u5NO8wf87GNG1sJ/9T840JMbxlc19Ppq/jYbmYr/HZWJpYVDE2aqGUZvfTrYRCQZ5/aprcooNj/OZXrJmdlj5y2rjZ6NnfFy6+tVzLkIwEeXF3gdGv1nlga4TtD8X4cazOc7vmWL7kouQfVKzpIYH89ZYEH6GxpMZ+vbe7dygeuleUS60oX+IpH6t+AyNYxDMuUrWnD4N+T2DaNf35rQL75tT7Q2bgYNhse1L4ZlQphaurtuOunXLVtWEwJkEgCNIU3A7/AOe0ahFx9Ik0AAAAAElFTkSuQmCC";
+var hop_dashboard_icon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAOCAYAAABpcp9aAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9oCCwoMOSyXA1oAAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAAwpJREFUSMfVlc2PlEUQxn9V1Q0uGXbB3XF2DpOFYLIYOIyGk8ZwUA8bOXGEM0dvnoQjXojh4N8A/geamAA3SUjkIu6BKIqJ4scOkQ0f6+4w3Ry633k/5kWOYiVv5unuqXqe6q7uErJd+Uw7D7f47p/tOJgEHC+hqRK8sblvr6x98HG4ASAAX1/Qj0ab8fN9HWFut0CMeaXAAsQyUnXYWJpaLH+kGmY6mcMHEAViG8eslu2n8OBhZO8euXrik/C+XLuovd/vxz8GXQEFCfDLX5GVnkDMeFnKOFUBBdbMUxFGyJqKBAChmQkQYplMk4MWLT3h2JFFvrp+n/k9nLGT78qthY7sn3sFVOGdt17jyeMnqAlvF1jBFFQFVUFUMKvg/GmeUwW15GMqiFT8AbU0pxoxIfvNcrRqEfj70Q7D1QXWf9pa063tOOjMCc4Eb8K3329w517EGSUWcCY4A2fgXWzF5Sd4Jxw9aNz5LbDLF/4R5yX7gTdJY23naNXihcl4wv75XeyM8W78FDe3uyzl4RtdnG1AA9dNnoPLOAeXhc7aDqfX4ItzypEDQqz8V2qVIq0cz9WST5BUvSljc+AN1n/YYP3ngKthweV1p3mHKthl7HPZDLrCwonxVMqp84H1uwHvitMBM8EMvEux2zj+TUthDkgT+RU4fKiL6QiJkdXXE0Yi5LsXQ76DFVzsohDpLwrzH45n9vPU+cDls8qxw0oMgMR8Wvm22izHaouW4kWbPq1Aqj8X8U748e6Im7cnOF/BuWZNBefSzlWx0+Tfe7VdfGGnPw3cvB3wHpyT6X1wTlo52rSYRZxJ4wQ80zfvwGAJZynrlZVuwpWsE5YaFkn7qAqXz+oLG5Jppea1iCUzHG1ampYSyEEi8Ou9Ed/cmnB8aCV+08rSabW0sPkYjg+t3sykMZTZZleEaHK0ahkmLbUETMoG1O8t8Z6NiAH6/YwBsdycKvVew4U6idPGHZsiY6Vwa8llvwZHf3lxVksErJFAv79U28/l3lIr/i/sRVocwKUv/+T/as8APE1e9+GhqPQAAAAASUVORK5CYII=";
+var hop_dashboard_icon_height = "14px";
+var hop_dashboard_icon_width = "48px";
 
 var hop_dashboard_anim_speed = 10;
 var hop_dashboard_populated = false;
@@ -21,24 +23,42 @@ var hop_dashboard_container = false;
 var hop_dashboard_icon_size = 32;
 var hop_dashboard_interval = false;
 var hop_dashboard_opacity = "0.70";
+var hop_dashboard_panel_background = "#B7AE8A";
+var hop_dashboard_panel_icon_background = "#E9E0BA";
+var hop_dashboard_panel_opacity = "0.50";
 
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_start_applet ...                                   */
 /*---------------------------------------------------------------------*/
 function hop_dashboard_start_applet( name, svc ) {
    function success( obj, xhr ) {
+      if( obj === true ) {
+	 return true;
+      }
+      
       if( hop_is_html_element( obj ) ) {
 	 document.body.appendChild( obj );
 	 return true;
       }
-      
+
       if( (obj instanceof String) || (typeof obj === "string") ) {
 	 return alert( obj );
       }
+
+      // fallback
+      window.open( sc_dirname( svc ), name );
    }
 
-   function failure( obj, xhr ) {
-      window.open( sc_dirname( svc ), name );
+   function failure( xhr ) {
+      if( xhr.status == 404 ) {
+	 window.open( sc_dirname( svc ), name );
+      } else {
+	 if( xhr.exception ) {
+	    hop_callback_handler( xhr.exception, xhr.precontext );
+	 } else {
+	    sc_error( svc, "Cannot open dashboard", xhr.responseText );
+	 }
+      }
    }
 
    if( (svc.indexOf( "http://" ) === 0) || (svc.indexOf( "https://" ) === 0) )
@@ -61,13 +81,13 @@ function hop_dashboard_populate( proc ) {
       div2.innerHTML = "";
 
       while( h !== null ) {
-	 var p = h.car;
+	 var p = h.__hop_car;
 	 var app = document.createElement( "span" );
 	 var img = document.createElement( "img" );
 		   
-	 img.src = p.cdr.car
-	 img.title = p.car;
-	 app.title = p.car;
+	 img.src = p.__hop_cdr.__hop_car
+	 img.title = p.__hop_car;
+	 app.title = p.__hop_car;
 
 	 node_style_set( app, "width", app_size + "px");
 	 node_style_set( app, "height", app_size + "px");
@@ -77,15 +97,19 @@ function hop_dashboard_populate( proc ) {
 	 node_style_set( app, "float", "left");
 		   
 	 app.onmouseover = function( e ) {
-	    node_style_set( this, "background", "#fff" );
-	    node_style_set( this, "border", "1px outset #542d73" );
+	    node_style_set( this, "background", hop_dashboard_panel_icon_background );
+	    node_style_set( this, "-moz-border-radius", "4px" );
+	    node_style_set( this, "-webkit-border-radius", "4px" );
+	    node_style_set( this, "border", "1px solid #FFD93D" );
 	 }
 	 app.onmouseout = function( e ) {
 	    node_style_set( this, "background", "inherit" );
 	    node_style_set( this, "border", "1px solid transparent" );
+	    node_style_set( this, "-moz-border-radius", "4px" );
+	    node_style_set( this, "-webkit-border-radius", "4px" );
 	 }
-	 app.name = p.car
-	 app.svc = p.cdr.cdr.car;
+	 app.name = p.__hop_car
+	 app.svc = p.__hop_cdr.__hop_cdr.__hop_car;
 	 app.onclick = function( e ) {
 	    hop_dashboard_start_applet( this.name, this.svc );
 	 }
@@ -93,7 +117,7 @@ function hop_dashboard_populate( proc ) {
 	 app.appendChild( img );
 	 div.appendChild( app );
 
-	 h = h.cdr;
+	 h = h.__hop_cdr;
 	 width += (app_size + 10);
       }
 
@@ -101,7 +125,7 @@ function hop_dashboard_populate( proc ) {
       node_style_set( div, "left", ((hop_current_window_width()-width)/2) + "px" );
       node_style_set( div, "width", width + "px" );
       node_style_set( div2, "bottom", "-" + app_size + 8 + "px" );
-      node_style_set( div2, "left", ((hop_current_window_width()-width)/2) + "px" );
+      node_style_set( div2, "left", (1+((hop_current_window_width()-width)/2)) + "px" );
       node_style_set( div2, "width", width + "px" );
       node_style_set( div2, "height", app_size + 10 + "px" );
 
@@ -116,7 +140,34 @@ function hop_dashboard_populate( proc ) {
    
    with_hop( "/hop/dashboard/populate", populate, permission_denied );
 }   
-   
+
+/*---------------------------------------------------------------------*/
+/*    hop_dashboard_key_prev ...                                       */
+/*---------------------------------------------------------------------*/
+var hop_dashboard_key_prev = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_dashboard_key_listener ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_dashboard_key_listener( event ) {
+   var key = hop_event_key_code( event );
+   if( (key == 72) && (hop_dashboard_key_prev == 18) ) {
+      var el = document.getElementById( "hop-dashboard-frame" );
+      hop_stop_propagation( event, false );
+      hop_dashboard_key_prev = 0;
+      
+      if( el ) {
+	 
+	 document.body.removeChild( el );
+	 document.body.removeChild( document.getElementById( "hop-dashboard-frame-mask" ) );
+      } else {
+	 with_hop( "/hop/hop/dashboard", false, false );
+      }
+   } else {
+      hop_dashboard_key_prev = key;
+   }
+}
+
 /*---------------------------------------------------------------------*/
 /*    hop_dashboard_activate ...                                       */
 /*---------------------------------------------------------------------*/
@@ -214,23 +265,21 @@ function hop_dashboard_button_init() {
    
    but.className = "hop-dashboard-button";
    node_style_set( but, "position", "fixed" );
-   node_style_set( but, "bottom", "1px" );
-   node_style_set( but, "left", "1px" );
+   node_style_set( but, "bottom", "0" );
+   node_style_set( but, "left", "20px" );
    node_style_set( but, "z-index", "10000" );
-   node_style_set( but, "background", "#eeeeee" );
+   node_style_set( but, "background", "none" );
    node_style_set( but, "border-color", "#542d73" );
    node_style_set( but, "border-style", "outset" );
-   node_style_set( but, "border-width", "1px" );
-   node_style_set( but, "padding-top", "1px" );
-   node_style_set( but, "padding-left", "1px" );
-   node_style_set( but, "width", "18px" );
-   node_style_set( but, "height", "18px" );
-   node_style_set( but, "-moz-border-radius", "2px" );
+   node_style_set( but, "border-width", "0" );
+   node_style_set( but, "padding-top", "0" );
+   node_style_set( but, "padding-left", "0" );
+   node_style_set( but, "width", hop_dashboard_icon_width );
+   node_style_set( but, "height", hop_dashboard_icon_height );
    node_style_set( but, "-moz-opacity", hop_dashboard_opacity );
-   node_style_set( but, "-webkit-border-radius", "2px" );
    node_style_set( but, "-webkit-opacity", hop_dashboard_opacity );
    node_style_set( but, "opacity", hop_dashboard_opacity );
-   node_style_set( but, "border-radius", "2px" );
+   node_style_set( but, "user-select", "none" );
 
    var icon = document.createElement( "img" );
    
@@ -243,7 +292,7 @@ function hop_dashboard_button_init() {
       node_style_set( but, "opacity", hop_dashboard_opacity )
    };
    but.onclick = hop_toggle_dashboard;
-   icon.title = "Toggle Hop Dashboard";
+   icon.title = "Toggle Hop Dashboard [alt-h]";
 
    if( hop_config.inline_image ) {
       icon.src = hop_dashboard_icon;
@@ -271,7 +320,9 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div, "z-index", "10001" );
    node_style_set( div, "background", "transparent" );
    node_style_set( div, "border", "0" );
-   node_style_set( div, "opacity", "0.95" );
+   node_style_set( div, "opacity", hop_dashboard_opacity );
+   node_style_set( div, "-moz-opacity", hop_dashboard_opacity );
+   node_style_set( div, "-webkit-opacity", hop_dashboard_opacity );
    node_style_set( div, "border-left-width", "1px" );
    node_style_set( div, "border-left-style", "solid" );
    node_style_set( div, "border-left-color", "#ccc" );
@@ -288,13 +339,13 @@ function hop_dashboard_control_panel_init() {
    node_style_set( div2, "position", "fixed" );
    node_style_set( div2, "display", "block" );
    node_style_set( div2, "z-index", "10000" );
-   node_style_set( div2, "background", "#eeeeee" );
-   node_style_set( div2, "-moz-opacity", hop_dashboard_opacity );
-   node_style_set( div2, "-webkit-opacity", hop_dashboard_opacity );
-   node_style_set( div2, "opacity", hop_dashboard_opacity );
+   node_style_set( div2, "background", hop_dashboard_panel_background );
+   node_style_set( div2, "-moz-opacity", hop_dashboard_panel_opacity );
+   node_style_set( div2, "-webkit-opacity", hop_dashboard_panel_opacity );
+   node_style_set( div2, "opacity", hop_dashboard_panel_opacity );
 
    div.onmouseover = function() {
-      node_style_set( hop_dashboard_container, "-moz-opacity", "1" )
+      node_style_set( hop_dashboard_container, "-webkit-opacity", "1" )
       node_style_set( hop_dashboard_container, "-moz-opacity", "1" )
       node_style_set( hop_dashboard_container, "opacity", "1" )
    };
@@ -314,10 +365,12 @@ function hop_dashboard_control_panel_init() {
 function hop_dashboard_init() {
    hop_dashboard_control_panel_init();
    hop_dashboard_button_init();
-   hop_load( "hop_window.js" );
+/*    hop_load( hop_share_directory() + "/hop-window.js" );            */
+   hop_add_native_event_listener( document, "keydown",
+				  hop_dashboard_key_listener, true );
 }
 
 /*---------------------------------------------------------------------*/
 /*    runtime initialization                                           */
 /*---------------------------------------------------------------------*/
-hop_window_onload_add( hop_dashboard_init );
+hop_add_event_listener( window, "ready", hop_dashboard_init, true );

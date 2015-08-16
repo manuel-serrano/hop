@@ -1,0 +1,39 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.2.x/share/hop-sorttable.hss           */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Mon Jan  9 13:43:05 2006                          */
+/*    Last change :  Sun Nov  7 08:31:24 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Hop sorttable CSS                                                */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type sorttable "span[hssclass=hop-sorttable] table")
+
+span[hssclass=hop-sorttable] a.hop-sortheader {
+  text-decoration: none;
+}
+
+span[hssclass=hop-sorttable] span.hop-sortarrow {
+  border-style: solid;
+  border-color: transparent;
+  border-width: 1px;
+  font-size: small;
+  font-weight: bold;
+  width: 1em;
+  white-space: pre;
+}
+
+span[hssclass=hop-sorttable] span.hop-sortarrow:hover {
+  border-style: dotted;
+  border-color: black;
+  border-width: 1px;
+}
+
+span[hssclass=hop-sorttable] a.hop-sortheader:visited {
+  border: 2px solid yellow;
+}

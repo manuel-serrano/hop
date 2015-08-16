@@ -1,0 +1,68 @@
+;; On the fly video conversion into ogg/theora
+(module video-encode
+   (library multimedia)
+   (cond-expand
+      ((library gstreamer) (library gstreamer)))
+   (export (video->theora path)))
+
+(define (video-theora-enc path dest)
+   (cond-expand
+      ((library gstreamer)
+       (let* ((pipeline (instantiate::gst-pipeline))
+	      (source (gst-element-factory-make "filesrc" :location path))
+	      (decoder (gst-element-factory-make "decodebin"))
+	      (csp (gst-element-factory-make "ffmpegcolorspace"))
+	      (encoder (gst-element-factory-make "theoraenc" :quality 63))
+	      (mux (gst-element-factory-make "oggmux"))
+	      (sink (gst-element-factory-make "bglportsink" :port dest))
+	      (bus (gst-pipeline-bus pipeline)))
+	  
+	  ;; create the pipeline
+	  (gst-bin-add! pipeline source decoder csp encoder mux sink)
+	  
+	  (gst-element-link! source decoder)
+	  (gst-element-link! csp encoder mux sink)
+	  
+	  (gst-object-connect! decoder
+			       "new-decoded-pad"
+			       (lambda (el pad x)
+				  (let ((sinkpad (gst-element-compatible-pad
+						  csp
+						  pad (gst-pad-caps pad))))
+				     (when sinkpad
+					(gst-pad-link! pad sinkpad)))))
+	  
+	  (gst-element-state-set! pipeline 'playing)
+	  
+	  ;; wait for the resize to complete
+	  (let loop ()
+	     (let ((msg (gst-bus-poll bus)))
+		(cond
+		   ((gst-message-eos? msg)
+		    'done)
+		   ((gst-message-error? msg)
+		    (error 'video-theora-enc
+			   "Cannot encode video"
+			   (gst-message-error-string msg)))
+		   (else
+		    (loop)))))
+	  
+	  ;; stop the pipeline
+	  (gst-element-state-set! pipeline 'null)))
+      (else
+       #unspecified)))
+
+(define-service (video/theora path)
+   (if (or (is-suffix? path "ogv") (is-suffix? path "ogg"))
+       (instantiate::http-response-file
+	  (content-type "video/ogg")
+	  (file path))
+       (cond-expand
+	  ((library gstreamer)
+	   (instantiate::http-response-procedure
+	      (content-type "video/ogg")
+	      (proc (lambda (op) (video-theora-enc path op)))))
+	  (else
+	   (instantiate::http-response-file
+	      (content-type (mime-type path "text/plain"))
+	      (file path))))))

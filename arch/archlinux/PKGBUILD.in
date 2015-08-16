@@ -1,0 +1,43 @@
+# Contributor: Manuel Serrano <Manuel.Serrano@inria.fr>
+
+pkgname=hop
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc="a Software Development Kit for the Web"
+url='http://hop.inria.fr'
+license=('GPL' 'LGPL')
+arch=('i686' 'x86_64' 'arm')
+depends=('bigloo>=@BGLVERSION@')
+makedepends=('bigloo>=@BGLVERSION@')
+install=hop.install
+source=(ftp://ftp-sop.inria.fr/indes/fp/Hop/$pkgname-$pkgver.tar.gz)
+md5sums=('@MD5SUM@')
+backup=('etc/conf.d/hop')
+
+build() {
+  cd $startdir/src/$pkgname-$pkgver
+  ./configure --prefix=/usr --etcdir=/etc/hop
+  make || return 1
+}
+
+package() {
+  cd $startdir/src/$pkgname-$pkgver
+  make DESTDIR=$pkgdir install
+
+  mkdir -p $pkgdir/etc/conf.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/conf.d/hop.in $pkgdir/etc/conf.d/hop
+
+  mkdir -p $pkgdir/etc/rc.d
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/rc.d/hop.in $pkgdir/etc/rc.d/hop
+  chmod a+rx $pkgdir/etc/rc.d/hop
+
+  mkdir -p $pkgdir/usr/lib/systemd/system
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.service.in $pkgdir/usr/lib/systemd/system/hop.service
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/systemd/hop.socket.in $pkgdir/usr/lib/systemd/system/hop.socket
+  chmod a+r $pkgdir/usr/lib/systemd/system/hop.service
+  chmod a+r $pkgdir/usr/lib/systemd/system/hop.socket
+
+  mkdir -p $pkgdir/usr/bin
+  cp $startdir/src/$pkgname-$pkgver/arch/archlinux/bin/hop.sh $pkgdir/usr/bin/hop.sh
+  chmod a+rx $pkgdir/usr/bin/hop.sh
+}

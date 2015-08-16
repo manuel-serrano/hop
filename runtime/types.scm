@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/2.4.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Apr  8 14:12:52 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Sun Aug 19 06:27:46 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -14,21 +14,25 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_types
    
-   (import __hop_param)
-
-   (use    __hop_xml)
+   (import __hop_param
+	   __hop_xml-types)
    
    (export (class user
-	       (name::bstring read-only)
-	       (groups::pair-nil read-only (default '()))
-	       (password::bstring read-only)
-	       (services read-only)
-	       (directories read-only)
-	       (preferences-filename::obj read-only)
-	       (preferences::pair-nil (default '()))
-	       (data::obj (default #unspecified)))
+	      (name::bstring read-only)
+	      (uuid::obj read-only (default #unspecified))
+	      (groups::pair-nil read-only (default '()))
+	      (password::bstring read-only)
+	      (services read-only)
+	      (directories read-only)
+	      (preferences-filename::obj read-only)
+	      (preferences::pair-nil (default '()))
+	      (data::obj (default #unspecified))
+	      (authentication::symbol read-only (default 'basic)))
 
 	   (class &hop-method-error::&io-parse-error)
+	   (class &hop-autoload-error::&io-error)
+	   (class &hop-security-error::&error)
+	   (class &hop-injection-error::&hop-security-error)
 	   
            (abstract-class %http-message
 	      (seconds::elong read-only (default (current-seconds)))
@@ -40,8 +44,9 @@
 	   
 	   (class http-request::%http-message
 	      (id::int read-only (default -1))
-	      (user::user read-only (default (user-nil)))
+	      (user::user read-only)
 	      (localclientp::bool (default #f))
+	      (lanclientp::bool (default #f))
 	      (hook::procedure (default (lambda (rep) rep)))
 	      (transfer-encoding (default #f))
 	      (http::symbol (default 'HTTP/1.1))
@@ -53,17 +58,17 @@
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
-	      (connection::symbol (default 'keep-alive)))
+	      (connection::symbol (default 'keep-alive))
+	      (authorization (default #f))
+	      (connection-timeout::int (default 0)))
 
 	   (final-class http-server-request::http-request
-	      (authorization (default #f))
 	      (service::obj (default #unspecified)))
 
 	   (wide-class http-server-request+::http-server-request
 	      (%env (default #f)))
 
-	   (class http-proxy-request::http-request
-	      (proxy-authorization (default #f)))
+	   (class http-proxy-request::http-request)
 
 	   (class xml-http-request
 	      (status::int read-only)
@@ -71,67 +76,86 @@
 	      (input-port read-only))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type (default #f))
-	      (request::http-request (default (http-request-nil)))
+	      (content-type::obj read-only (default #f))
+	      (request::http-request (default (class-nil http-request)))
 	      (bodyp::bool read-only (default #t)))
 
 	   (class http-response-abort::%http-response)
 	   
-	   (class http-response-remote::%http-response
+	   (class http-response-proxy::%http-response
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
-	      (scheme::symbol read-only (default '?))
+	      (scheme::symbol read-only (default 'http))
  	      (port::bint read-only (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))
-	      (remote-timeout read-only (default #f))
-	      (connection-timeout read-only (default #f)))
+	      (remote-timeout read-only (default (hop-read-timeout)))
+	      (connection-timeout read-only (default (hop-connection-timeout))))
 
+	   ;; http-response-remote is a weblet backward compatibiilty type
+	   (class http-response-remote::http-response-proxy)
+
+	   (class http-response-proxy-websocket::http-response-proxy)
+	   
 	   (class http-response-filter::%http-response
 	      (response::%http-response read-only)
 	      (statusf::procedure (default (lambda (x) x)))
 	      (headerf::procedure (default (lambda (x) x)))
 	      bodyf::procedure)
 
-	   (abstract-class %http-response-local::%http-response
+	   (abstract-class %http-response-server::%http-response
 	      (server::bstring (default (hop-server-name)))
  	      (start-line::bstring read-only (default "HTTP/1.1 200 Ok")))
 
-	   (class http-response-authentication::%http-response-local
-	      (body read-only (default #f)))
+	   (class http-response-autoload::%http-response-server)
 
-	   (class http-response-hop::%http-response-local
-	      (backend read-only (default (hop-xml-backend)))
+	   (class http-response-xml::%http-response-server
+	      (backend read-only)
 	      (xml read-only))
 	   
-	   (class http-response-js::%http-response-local
-	      (backend read-only (default (hop-xml-backend)))
+	   (class http-response-hop::%http-response-server
+	      (backend read-only)
+	      (padding::obj (default #f))
 	      (value::obj read-only))
 	   
-	   (class http-response-procedure::%http-response-local
+	   (class http-response-procedure::%http-response-server
 	      (proc::procedure read-only))
 	   
-	   (class http-response-raw::%http-response-local
+	   (class http-response-raw::%http-response-server
 	      (connection::obj read-only (default #f))
 	      (proc::procedure read-only))
 
-	   (class http-response-file::%http-response-local
+	   (class http-response-file::%http-response-server
 	      (file::bstring read-only))
 	   
 	   (class http-response-shoutcast::http-response-file)
 	   
-	   (class http-response-string::%http-response-local
+	   (class http-response-string::%http-response-server
 	      (body::bstring read-only (default "")))
+
+	   (class http-response-authentication::http-response-string)
+
+	   (class http-response-websocket::%http-response-server
+	      (connection::symbol read-only (default 'Upgrade))
+	      (origin::obj read-only (default #f))
+	      (location::obj read-only (default #f))
+	      (protocol::obj read-only)
+	      (sec read-only (default #f))
+	      (accept read-only (default #f)))
 
 	   (class http-response-error::http-response-string)
 
-	   (class http-response-cgi::%http-response-local
+	   (class http-response-cgi::%http-response-server
 	      (cgibin::bstring read-only))
 
-	   (class http-response-persistent::%http-response)
+	   (class http-response-persistent::%http-response
+	      (body (default #f)))
 	   
-	   (class http-response-put::%http-response-local
+	   (class http-response-chunked::%http-response
+	      (body (default #f)))
+	   
+	   (class http-response-put::%http-response-server
 	      (uri::bstring read-only))
 
 	   (class hop-service
@@ -217,7 +241,15 @@
       (let ((old-hook hook))
 	 (set! hook (lambda (rep)
 		       (let* ((rep2 (h rep))
-			      (res (if (%http-response? rep2)
+			      (res (if (isa? rep2 %http-response)
 				       rep2
 				       rep)))
 			  (old-hook res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    exception-notify ::&hop-autoload-error ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (exception-notify exc::&hop-autoload-error)
+   (with-access::&hop-autoload-error exc (proc obj msg)
+      (fprintf (current-error-port) "~a: cannot autoload ~s\n" proc msg)
+      (exception-notify obj)))

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/doc/Makefile              */
+#*    serrano/prgm/project/hop/2.2.x/weblets/doc/Makefile              */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue May  5 07:54:19 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Fri Dec 10 08:20:46 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the DOC weblet                                   */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES         = doc.hop config.hop \
+SOURCES         = doc.hop config.hop doc.scm \
                   api.hop tutorials.hop libraries.hop weblets.hop \
                   search.hop widgets.hop wiki.hop services.hop index.hop
 API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
@@ -34,28 +34,36 @@ API_POP		= access.wiki base64.wiki cache.wiki cgi.wiki config.wiki \
                   notepad.wiki pan.wiki param-misc.wiki \
                   param-rc.wiki parameter.wiki \
                   read.wiki service.wiki slider.wiki sorttable.wiki \
-                  sound.wiki sqlite.wiki multimedia.wiki tabslider.wiki \
-                  timeout.wiki tooltip.wiki tree.wiki url.wiki wiki.wiki \
+                  sqlite.wiki multimedia.wiki tabslider.wiki \
+                  timeout.wiki tree.wiki url.wiki wiki.wiki \
                   window.wiki xml.wiki symbol.wiki rss.wiki history.wiki \
                   regexp.wiki output.wiki webdav.wiki \
-                  charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki
+                  charset.wiki svg.wiki mathml.wiki canvas.wiki login.wiki \
+                  condexpand.wiki lframe.wiki spinbutton.wiki gauge.wiki \
+                  colorchooser.wiki font.wiki javascript.wiki \
+                  audio.wiki video.wiki spage.wiki
 CORE_POP	= core.wiki
+JS_POP		= js-interface.wiki
 EXAMPLES_POP	= base64.hop editor-form.hop editor.hop \
                   canvas.hop canvas2.hop canvas3.hop canvas4.hop canvas5.hop \
                   filebrowse.hop filebrowse2.hop \
+                  filebrowse3.hop filebrowse4.hop\
                   filter-1.hop filter-2.hop \
                   foldlist-1.hop foldlist-2.hop hook-1.hop inline.hop \
                   iwindow.hop notepad-1.hop notepad-2.hop notepad-3.hop \
                   paned-1.hop paned-2.hop parameter.hop request-1.hop rss.hop \
                   service-2.hop service-3.hop service-4.hop \
                   service-5.hop service-6.hop slider-1.hop slider-2.hop \
-                  sorttable.hop sound-1.hop sound-2.hop sound-3.hop \
-                  tabslider-1.hop tabslider-2.hop \
-                  tooltip-1.hop tree-1.hop tree-2.hop \
+                  sorttable.hop tabslider-1.hop tabslider-2.hop \
+                  tree-1.hop tree-2.hop \
                   prefs-1.hop \
                   wiki.hop wiki2.hop window.hop history-1.hop history-2.hop \
                   cookie.hop webdav.hop svg.hop svg2.hop svg3.hop mathml.hop \
-                  login.hop json.hop busyanim.hop musicplay.hop form.hop
+                  login.hop json.hop busyanim.hop musicplay.hop form.hop \
+                  lframe.hop spinbutton.hop colorchooser.hop S3.hop \
+                  audio-server.hop audio-browser-1.hop audio-browser-2.hop \
+                  video.hop videoenc.hop gauge.hop beers.hop \
+                  spage.hop
 WEBLETS_POP	= .keep
 WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
                   paragraph.wiki plugin.wiki section.wiki syntax.wiki \
@@ -64,7 +72,7 @@ WIKI_POP	= basic.wiki hop.wiki link.wiki lists.wiki misc.wiki \
 TUTORIAL_POP	= 00-hello.wiki 01-ajax.wiki 02-hss.wiki 03-proxy.wiki \
 		  04-authentication.wiki 05-rss.wiki 06-hz.wiki \
                   07-hoprc.wiki 08-history.wiki 09-resource.wiki \
-                  10-javascript.wiki
+                  11-rest.wiki
 
 POPULATION	= Makefile doc.hss doc.scm \
                   examples api core wiki tutorials etc/weblet.info.in \
@@ -76,6 +84,7 @@ POPULATION	= Makefile doc.hss doc.scm \
                   $(SOURCES) \
 		  $(API_POP:%=api/%) \
 		  $(CORE_POP:%=core/%) \
+		  $(JS_POP:%=js/%) \
 		  $(EXAMPLES_POP:%=examples/%) \
 		  $(WEBLETS_POP:%=weblets/%) \
 		  $(WIKI_POP:%=wiki/%) \
@@ -91,8 +100,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

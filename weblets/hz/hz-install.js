@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/hz/hz-install.js         */
+/*    serrano/prgm/project/hop/2.3.x/weblets/hz/hz-install.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 16 11:07:40 2007                          */
-/*    Last change :  Thu Oct  2 08:00:47 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Fri Jun  1 08:19:16 2012 (serrano)                */
+/*    Copyright   :  2007-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Create a click and install panel                                 */
 /*=====================================================================*/
@@ -15,9 +15,9 @@
 var hop_install_stamp = 0;
 
 /*---------------------------------------------------------------------*/
-/*    hop_install_weblet ...                                           */
+/*    hop_hz_install_weblet ...                                        */
 /*---------------------------------------------------------------------*/
-function hop_install_weblet( url, srci, srcr, parent ) {
+function hop_hz_install_weblet( url, srci, srcr, parent, publisher ) {
    var srci = srci ? srci : 'hz-install.png';
    var srcr = srcr ? srcr : 'hz-run.png';
    var base = url;
@@ -25,25 +25,36 @@ function hop_install_weblet( url, srci, srcr, parent ) {
    if( i >= 0 ) base = url.substring( i + 1, url.length );
 
    var m = base.match( "((.*)-[0-9]+[.][0-9]+(?:[.][0-9]+)?(?:-(?:r|rc|pre)[0-9]+)?).hz" );
+
+   if( !m ) {
+      alert( "Illegal weblet base name \"" + base + "\"" );
+      return ;
+   }
+   
    var namev = (m.length > 1) ? m[ 1 ] : base;
    var name = (m.length > 2) ? m[ 2 ] : namev;
 
    hop_install_stamp++;
-   
+
+   var check = 'var i = new Image(); i.onerror = function() {alert( "Host \\\"" + host.value + ":" + port.value + "\\\" is not accessible. \\n\\nPlease check that Hop is running on that host before installing or running a weblet." )}; i.src = "http://" + host.value + ":" + port.value + ' + '"/hop/hz/check";';
    var oninstall = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
       'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
-      'this.href = "http://" + host.value + ":" + port.value + ' +
-      '"/hop/hz/install?url=' + encodeURIComponent( url ) + '";';
+      'var a = this;' +
+      check +
+      'a.href = "http://" + host.value + ":" + port.value + ' +
+      '"/hop/hz/install?url=' + encodeURIComponent( url ) + '&publisher=' + encodeURIComponent( publisher ) + '";';
    var onrun = 'var host = document.getElementById( "hop_click_and_install_host_' + hop_install_stamp + '" );' +
-      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' + 
-      'this.href = "http://" + host.value + ":" + port.value + ' +
+      'var port = document.getElementById( "hop_click_and_install_port_' + hop_install_stamp + '" );' +
+      'var a = this;' +
+      check +
+      'a.href = "http://" + host.value + ":" + port.value + ' +
       '"/hop/hz/run?url=' + encodeURIComponent( url ) + '";';
 
    var host = "<table style='font-size: 60%'>" +
       "<tr><td colspan='2' width='100%'><div style='width: 100%; border-bottom: 1px solid #777'>HOP</td></tr>" +
       "<tr><th>host:</th><td><input id='hop_click_and_install_host_" + hop_install_stamp + "' size='10 type='text' value='localhost' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr>" +
       "<tr><th>port:</th><td><input id='hop_click_and_install_port_" + hop_install_stamp + "' size='4 type='text' value='8080' style='border: 1px solid #bbb; color: #555; font-size: inherit'/></td></tr></table>";
-   var panel = "<table class='hz-install' style='background: #daffbd; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
+   var panel = "<table class='hz-install' style='background: #E6FFBD; border: 1px solid #bbb; -moz-border-radius: 0.5em; font-family: arial; padding-left: 1em; padding-right: 1em'>" +
       "<tr><th colspan='3' style='font-size: 110%' align='left'>" + namev + ".hz</th></tr>" + 
       "<tr>" +
       "<td><table style='border-collapse: collapse'>" +

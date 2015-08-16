@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.hss              */
+/*    serrano/prgm/project/hop/2.3.x/weblets/doc/doc.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sun Feb  8 08:46:32 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Mon May 21 16:34:30 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -93,6 +93,10 @@ table td {
   text-align: left;
 }
 
+td#doc-icon {
+  width: 96px;
+}
+
 /*--- forms -----------------------------------------------------------*/
 button {
   border-width: 1px;
@@ -135,7 +139,9 @@ textarea {
 }
 
 table.doc {
-  width: 45em;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
@@ -151,6 +157,8 @@ div#title {
   margin-bottom: 20px;
   padding-bottom: 1px;
   text-align: left;
+  text-shadow: #999 2px 2px 2px;
+  font-family: Arial, Lucida Grande, Verdana, Lucida, Helvetica;
 }
 
 div#result {
@@ -166,6 +174,7 @@ div#result {
 
 /*--- popup-menu ------------------------------------------------------*/
 div.popup-menu {
+  user-select: none;
   cursor: pointer;
   display: none;
   font-size: x-small;
@@ -178,7 +187,8 @@ div.popup-menu {
   z-index: 10;
   background-color: $popup-menu-color;
   border: $popup-menu-border;
-  -moz-opacity: $doc-opacity;
+  opacity: $doc-opacity;
+  box-shadow: 3px 3px 10px #222;
 }
 
 div.popup-menu tt {
@@ -186,6 +196,7 @@ div.popup-menu tt {
 }
 
 table.popup-menu {
+  user-select: none;
   width: 18em;
   font-weight: normal;
   font-size: x-small;
@@ -193,6 +204,7 @@ table.popup-menu {
 
 table.popup-menu td tt:hover {
   text-decoration: underline;
+  color: #00a;
 }
 
 /*--- fold list -------------------------------------------------------*/
@@ -232,10 +244,12 @@ notepad-body {
 
 nptab {
   border-color: $border-color;
+  user-select: none;
 }
 
 nptab-active {
-  background-color: $doc-color;
+  color: white;
+  background-color: #999;
   border-bottom-color: $doc-color;
 }
 
@@ -294,6 +308,7 @@ search-bar {
   padding: 2px;
   background-color: $header-color;
   margin-bottom: 10px;
+  user-select: none;
 }
 
 search-menu {
@@ -330,6 +345,13 @@ div.iwindow-menu {
 }
 
 /*--- api-index -------------------------------------------------------*/
+div.api span.api-toc:after {
+  content: "\2006\2386";
+  vertical-align: top;
+  font-size: 90%;
+  font-weight: 200;
+}
+
 div.api span.api-toc:hover {
   text-decoration: underline;
   cursor: pointer;
@@ -426,9 +448,9 @@ doc span.href {
   font-size: small;
 }
 
-pre {
-  max-width: 120em;
-}
+/* pre {                                                               */
+/*   max-width: 120em;                                                 */
+/* }                                                                   */
 
 doc pre span.href,
 doc toc span.href,
@@ -1185,10 +1207,12 @@ table.global-search td:hover {
 table.weblet-facts {
   margin-top: 2ex;
   margin-left: 2em;
-  padding: 2px;
-  font-size: 80%;
+  padding: 4px;
+  padding-right: 1em;
+  font-size: 85%;
   border: 1px solid $border-color;
   background: #eeffdd;
+  border-radius: 3px;
 }
 
 table.weblet-facts th:after {
@@ -1199,4 +1223,12 @@ table.weblet-facts td.logo {
   vertical-align: top;
   padding-right: 10px;
   padding-left: 10px;
+}
+
+table.weblet-facts th {
+  color: #777;
+}
+
+table.weblet-facts td {
+  font-weight: bold;
 }

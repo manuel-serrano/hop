@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/home/widgets.hop         */
+;*    serrano/prgm/project/hop/2.2.x/weblets/home/widgets.hop          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:19:21 2006                          */
-;*    Last change :  Thu Jan 15 07:30:54 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Mon Mar  7 14:19:29 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOME widgets.                                                */
 ;*=====================================================================*/
@@ -26,82 +26,73 @@
    (<HTML>
       (<HEAD>
 	 :title "Hop Home page"
-	 :include "hop-notepad" "hop-window" "hop-foldlist"
-	 :jscript (make-file-path (hop-flash-directory) "swfobject.js")
+	 :include "hop-notepad" "hop-window" "hop-window-orange" "hop-foldlist"
+	 :include "hop-foot"
+	 :css (service-resource home "../wiki/wiki.hss")
+	 :jscript (make-file-path (hop-share-directory) "flash" "swfobject.js")
 	 :favicon (service-resource home "etc/gohome.png")
 	 (<LINK> :rel "alternate" :type "application/rss+xml"
 	    :title "Latest HOP weblets"
 	    :href "home/rss")
 	 :css (service-resource home "home.hss"))
       (<BODY>
-	 (<DIV> :align "center"
-	    (<TABLE> :class "home"
+	 (<DIV> :id "body"
+	    (<TABLE> :id "home"
 	       (<TR>
-		  (<TD> :valign "top"
+		  (<TD> :valign "top" :style "width: 64px"
 		     (<IMG> :class "logo"
 			:inline #t
 			:alt "Home page logo" 
 			:src (service-resource home "etc/logo.png")))
 		  (<TD> :valign "top"
-		     (<TABLE>
+		     (<TABLE> :style "width: 100%"
 			(<TR>
 			   (<TD>
 			      (<DIV> :id "title" "Hop Home Page")))
 			(<TR>
 			   (<TD>
-			      obj)))))))
-	 (<DIV> :class "foot"
-	    (<FOOT-BUTTON>
-	       :href "http://www.inria.fr/mimosa"
-	       :title "INRIA"
-	       :inline #t
-	       :src "inria.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.gnu.org/licenses/gpl.html"
-	       :title "Gnu GPL"
-	       :inline #t
-	       :src "gpl.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.mozilla.org/"
-	       :title "Firefox"
-	       :inline #t
-	       :src "firefox.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.mozilla.org/"
-	       :title "Mozilla"
-	       :inline #t
-	       :src "mozilla.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.apple.com/macosx/features/safari/"
-	       :title "Safari"
-	       :inline #t
-	       :src "safari.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.opera.com"
-	       :title "Opera"
-	       :inline #t
-	       :src "opera.png")
-	    (<FOOT-BUTTON>
-	       :href "http://www.konqueror.org/"
-	       :title "Konqueror"
-	       :inline #t
-	       :src "konqueror.png")
-	    (<FOOT-BUTTON>
-	       :href "http://validator.w3.org/check/referer"
-	       :title "Valid xml"
-	       :inline #t
-	       :src "html401.png")
-	    (<FOOT-BUTTON>
-	       :href "http://jigsaw.w3.org/css-validator/check/referer"
-	       :title "Valid CSS"
-	       :inline #t
-	       :src "css.png")
-	    (<FOOT-BUTTON>
-	       :inline #t
-	       :href "home/rss"
-	       :title "HOP rss"
-	       :src (make-file-path (hop-share-directory)
-				    "buttons" "rss.png"))))))
+			      obj))))))
+	    (<DIV> :class "foot"
+	       (<FOOT-BUTTON>
+		  :href "http://www.inria.fr/indes"
+		  :title "INRIA"
+		  :inline #t
+		  :src "inria.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.gnu.org/licenses/gpl.html"
+		  :title "Gnu GPL"
+		  :inline #t
+		  :src "gpl.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.mozilla.org/"
+		  :title "Firefox"
+		  :inline #t
+		  :src "firefox.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.mozilla.org/"
+		  :title "Mozilla"
+		  :inline #t
+		  :src "mozilla.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.apple.com/macosx/features/safari/"
+		  :title "Safari"
+		  :inline #t
+		  :src "safari.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.opera.com"
+		  :title "Opera"
+		  :inline #t
+		  :src "opera.png")
+	       (<FOOT-BUTTON>
+		  :href "http://www.konqueror.org/"
+		  :title "Konqueror"
+		  :inline #t
+		  :src "konqueror.png")
+	       (<FOOT-BUTTON>
+		  :inline #t
+		  :href "home/rss"
+		  :title "HOP rss"
+		  :src (make-file-path (hop-share-directory) "buttons" "rss.png")))))))
       
 				     
 	     

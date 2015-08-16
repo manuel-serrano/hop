@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/weblets/hz/hz.hss                 */
+/*    serrano/prgm/project/hop/2.2.x/weblets/hz/hz.hss                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Mar 17 08:39:36 2006                          */
-/*    Last change :  Wed May  6 10:26:32 2009 (serrano)                */
-/*    Copyright   :  2006-09 Manuel Serrano                            */
+/*    Last change :  Mon Jan 17 14:35:30 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Admi CSS                                                         */
 /*=====================================================================*/
@@ -25,13 +25,16 @@ $(define button-padding "padding-left: 5px;
   padding-top: 0;
   padding-bottom: 0")
 
+$(define-hss-property (-hop-background-gradient l prio)
+   (format "background-color: ~a;
+  background: -moz-linear-gradient( -90deg, ~a, ~a);
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(~a), to(~a));"
+  (car l) (car l) (cadr l) (car l) (cadr l)))
 
 /*---------------------------------------------------------------------*/
 /*    Local rewriting                                                  */
 /*---------------------------------------------------------------------*/
-$(hop-hss-type! "main" "table.main")
 $(hop-hss-type! "foot" "div.foot")
-$(hop-hss-type! "main-title" "div#title")
 $(hop-hss-type! "vbox" "table.vbox")
 $(hop-hss-type! "sync" "table.sync")
 $(hop-hss-type! "authentication" "table.authentication")
@@ -46,11 +49,20 @@ $(hop-hss-type! "preferences" "table.preferences")
 body {
   background: #e0e0e0;
   font-family: arial, sans serif;
+  padding: 0;
+  margin: 0;
 }
 
 body.hz-list {
   background: transparent;
 }
+
+div.body {
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+  margin-top: 50px;
+}  
 
 /*--- forms -----------------------------------------------------------*/
 button {
@@ -104,30 +116,31 @@ table td {
 }
 
 /*--- main table ------------------------------------------------------*/
-main {
-  width: 45em;
-  margin-top: 20px;
+table.main {
+  width: 100%;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
-main td.logo {
+table.main td.logo {
+  width: 96px;
+  text-align: center;
   vertical-align: top;
 }
 
-main img.logo {
-  padding: 20px;
+table.content {
+  width: 100%;
 }
 
-main-title {
-  width: 35em;
+div#title {
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
 }
   
 /*--- foot ------------------------------------------------------------*/
@@ -154,10 +167,6 @@ foot table.foot-logo {
 }
 
 /*--- notepad ---------------------------------------------------------*/
-notepad-title {
-  background: transparent;
-}
-
 notepad-tabs {
   background: transparent;
 }
@@ -185,43 +194,32 @@ nptab-active {
 }
 
 /*--- paned -----------------------------------------------------------*/
-div.hop-paned {
+paned {
   width: 100%;
-  height: inherit;
-  border: 0;
+  min-height: 60ex;
   border: 1px solid $border-color;
   padding: 0;
   margin: 0;
+  pan-border: 1px solid $info-color;
+  fraction: 200px;
 }
 
-div.hop-paned-cursoroff {
-  border: 1px solid $border-color;
-  background: rgb(204,204,204);
-  background-repeat: no-repeat;
-  background-position: center;
+paned-cursor {
+  background-color: rgb(204,204,204);
 }
 
-div.hop-paned-cursoron {
-  border: 1px solid $border-color;
+paned-cursor:hover {
   cursor: move;
-  background: rgb(220,220,220);
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: rgb(220,220,220);
 }
    
-table.hop-vpaned {
-  border: 1px solid $info-color;
-  border: 0;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-td.hop-vpaned-pan {
+paned-pan {
   border: 0;
   padding: 0;
   margin: 0;
   vertical-align: top;
   background: white;
+  overflow: auto;
 }
 
 /*--- tree ------------------------------------------------------------*/
@@ -464,13 +462,8 @@ span.title {
 
 /*--- weblets ---------------------------------------------------------*/
 weblets {
-  min-height: 60ex;
 }
 
-weblets div.hop-paned {
-  height: 100%;
-}
-  
 weblets div.weblet {
   font-size: small;
   padding: 2px;
@@ -520,9 +513,9 @@ weblets table.weblet td.author {
   color: #777;
 }
 
-weblets table.weblet .title {
-  font-style: italic;
-  font-size: x-small;
+weblets table.weblet span.title {
+  font-weight: bold;
+  text-shadow: #999 1px 1px 1px;
 }
 
 weblets table.weblet a.home {
@@ -544,22 +537,32 @@ weblets td.homepage tt {
   font-size: 120%;
 }
 
+weblets span.requires {
+  font-weight: bold;
+  color: #555;
+}
+
+weblets span.incompatible {
+  font-weight: bold;
+  color: #D00;
+}
+
 weblets div.action {
-  background: #daffbd;
+  background: #E6FFBD;
   border: 1px solid $border-color;
   padding-left: 15px;
   padding-right: 15px;
   padding-top: 4px;
   padding-bottom: 4px;
   margin: 5px;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
   display: table;
+   -hop-background-gradient: #E6FFBD #D5FD93;
 }
 
 weblets div.action table td {
   vertical-align: middle;
   font-weight: bold;
-  font-size: small;
 }
 
 weblets div.action table td.action span {
@@ -621,11 +624,6 @@ preferences {
   font-size: small;
 }
 
-preferences col.col1 {
-  width: 30%;
-  border: 1px solid red;
-}
-
 preferences th {
   text-align: left;
 }
@@ -656,7 +654,29 @@ preferences input.pref_applied {
 preferences input.pref_saved {
   color: blue;
 }
-  
+
+div#hz-resolver {
+  margin-top: 2ex;
+  border-top: 1px solid $border-color;
+}
+
+table.hz-resolver {
+  width: 100%;
+}
+
+table.hz-resolver input {
+  width: 100%;
+}
+
+table.hz-resolver col.col1 {
+  width: 10em;
+}
+
+#hz-resolver-comment {
+  font-size: 90%;
+  margin-top: 2ex;
+}
+
 /*--- publishers ------------------------------------------------------*/
 div.hz-publishers {
   margin: 2px;
@@ -760,7 +780,7 @@ div.login table.login {
   width: 100%;
   padding-left: 3em;
   padding-right: 3em;
-  -moz-border-radius: 0;
+  border-radius: 0;
 }
 
 div.login table.login input {
@@ -820,4 +840,35 @@ table.hz-cache tr.even {
 }  
 
 
+/*---------------------------------------------------------------------*/
+/*    small screens                                                    */
+/*---------------------------------------------------------------------*/
+@media all and (max-width: 1024px) {
+  body {
+    background: white;
+  }
 
+  div.body {
+    width: 100%;
+    margin-top: 0;
+    background: white;
+  }
+
+  table.main {
+    border: 0;
+  }
+
+  table.main td.logo {
+    width: 52px;
+  }
+
+  weblets div.action {
+    padding-left: 5px;
+    padding-right: 5px;
+    font-size: 11px;
+  }
+
+  paned {
+    fraction: 160px;
+  }
+}

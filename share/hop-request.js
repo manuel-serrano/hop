@@ -1,13 +1,14 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Apr 18 18:38:34 2009 (serrano)                */
-/*    Copyright   :  2004-09 Manuel Serrano                            */
+/*    Last change :  Tue Jan  7 09:38:32 2014 (serrano)                */
+/*    Copyright   :  2004-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
+"use strict";
 
 /*---------------------------------------------------------------------*/
 /*    hop_anim_latency ...                                             */
@@ -19,7 +20,14 @@ var hop_anim_latency = 400;
 /*---------------------------------------------------------------------*/
 /*    hop_busy_anim ...                                                */
 /*---------------------------------------------------------------------*/
+var hop_busy_vis_16_16 = false;
+var hop_busy_vis_32_32 = false;
+
 var hop_busy_anim_16_16 = "data:image/gif;base64,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";
+
+var hop_busy_anim_32_32_simple = "data:image/gif;base64,R0lGODlhIAAgALMMAOxiJlM8GvrYydTOxu1sNPGJXPjErX5tU15IKJ+Sf/Snhb62qf///wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBQAMACwAAAAAIAAgAAAETJDJSau9OOvNu/9gKI6YQQBoqq4AYXAnK6sEN9+pjd/6Lve+FTCY2xBZw2OSuAw2fc9dFDflGY+q6kz728SwtY0J/CKZz+i0es3ORAAAIfkECQUADAAsAAAAACAAIAAABEWQyUmrvTjrzbv/YCiOmgKcaIoqoeqm7fvGskrX6I0DOt7XP1lwBtrBisbT0LW0IZPN4yepfBqjOZDJyCJ5v+CweEzmRAAAIfkECQUADAAsAAAAACAAIAAABEKQyUmrvTjrzbv/YCiOXQGcKFCQU+qykpvCjIzS9onnu93LvxcsBwjOhjykTwlkCllE4815hCZZJtmKxu16v+AwKwIAIfkECQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOIGCSmQmgmMpe7lvF8kTXzF3rMv/6LCBKSCKOjCJkSFk64STMT9QzfVqv2KzWEwEAIfkEBQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOISCQmolm6nq1bgXH00wzNp3Hu9uvP1SQNBwVRcfS6VZbMnFOZhI0fVqv2Kw2EwEAIfkEBQUADAAsDgAGAAMAFAAABAkwyEmrvTjrGgEAIfkEBQUADAAsCwAGAAkAFAAABBLwhEmDrDjrzbv/YCiOZHhhRwQAIfkEBQUADAAsCAAGAA8AFAAABBYwhUkrlTbrzbv/YCiOZGmeaKpeYBIBACH5BAkFAAwALAYABgAUABQAAAQdcKFAq70BSczv7GAojmRpnmiqrmzrvnD7ndpMahEAIfkECQUADAAsAAAAACAAIAAABEWQyUmrvTjrzbv/YCiOWhKcaIomoeqm7fvGskrX6I0HOt7XP1lwBtrBisbT0LW0IZPN4yepfBqjOZDJyCJ5v+CweEzmRAAAIfkECQUADAAsAAAAACAAIAAABEKQyUmrvTjrzbv/YCiO3RGcaHCQU+qykpvCjIzS9onnu93LvxcsFwjOhjykTwlkCllE4815hCZZJtmKxu16v+AwKwIAIfkECQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOYGCSmRmgmMpe7lvF8kTXzF3rMv/6LCBKSCKOjCJkSFk64STMT9QzfVqv2KzWEwEAIfkEBQUADAAsAAAAACAAIAAABDyQyUmrvTjrzbv/YCiOYTCQmolm6nq1bgXH00wzNp3Hu9uvP1SQNBwVRcfS6VZbMnFOZhI0fVqv2Kw2EwEAIfkEBQUADAAsDgAGAAMAFAAABAkQyEmrvTjrGgEAIfkEBQUADAAsCwAGAAkAFAAABBKwgEmBrDjrzbv/YCiOZHhhRQQAIfkEBQUADAAsCAAGAA8AFAAABBZQgUkrlTbrzbv/YCiOZGmeaKpeoBIBACH5BAUFAAwALAYABgAUABQAAAQd0BBAq72ASMzv7GAojmRpnmiqrmzrvnD7ndpMahEAOw==";
+
+var hop_busy_anim_32_32 = "data:image/gif;base64,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";
 
 /*---------------------------------------------------------------------*/
 /*    hop_apply_form_url ...                                           */
@@ -53,7 +61,7 @@ function hop_apply_form_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_apply_url ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function hop_apply_url( service, args ) {
    if( sc_isPair( args ) ) {
       return service
@@ -73,151 +81,102 @@ function hop_apply_url( service, args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_default_failure ...                                          */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
-function hop_default_failure( xhr ) {
-   var div = document.getElementById( "hop_default_failure" );
-   var div2 = document.getElementById( "hop_default_failure_background" );
-
-   var notify_error = function( d, xhr ) {
-      if( xhr.responseError ) {
-	 d.appendChild( xhr.responseError );
-      } else {
-	 var t = xhr.responseText;
-	 if( t ) {
-	    t = t.replace( /<!DOCTYPE[^>]*>/g, "" );
-	    t = t.replace( /<head[^>]*>/g, "<div style='display: none;'>" );
-	    t = t.replace( /<\/head>/g, "</div>" );
-	    t = t.replace( /<(meta|link)[^>]*>/g, "<span style='display: none'></span>" );
-	    t = t.replace( /<html[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/html>/g, "</div>" );
-	    t = t.replace( /<body[^>]*>/g, "<div style='width: 100%; height: 100%; overflow: auto'>" );
-	    t = t.replace( /<\/body>/g, "</div>" );
-	    t = t.replace( /&quot;/g, "\"" );
-	    d.innerHTML = t;
-	 } else {
-	    d.innerHTML = "Status: " + xhr.status + " -- " + xhr.statusText;
-	 }
-      }
-   }
-      
-   if( !div ) {
-      var w = (hop_current_window_width() / 8) + "px";
-      var ch = hop_current_window_height();
-      var t = (ch > 800 ? "50px" : "10px");
-
-      div = document.createElement( "div" );
-      div.id = "hop_default_failure";
-      div.align = "center";
-      node_style_set( div, "position", "fixed" );
-      node_style_set( div, "top",  t );
-      node_style_set( div, "bottom", t );
-      node_style_set( div, "left", w );
-      node_style_set( div, "right", w );
-      node_style_set( div, "text-align", "center" );
-      node_style_set( div, "border", "5px dashed #f87d0f" );
-      node_style_set( div, "z-index", "10000" );
-      node_style_set( div, "background", "#fff" );
-      node_style_set( div, "padding", "4px" );
-      node_style_set( div, "padding-bottom", "8px" );
-      node_style_set( div, "overflow", "hidden" );
-      node_style_set( div, "background", "#F0F2F2" );
-   } else {
-      div.innerHTML = "";
+/*** META ((export #t) (arity #t)) */
+function hop_default_failure( exc, xhr ) {
+   if( !document ) {
+      alert( "with-hop failed!" );
+      return;
    }
 
-   if( !div2 ) {
-      div2 = document.createElement( "div" );
-      div2.id = "hop_default_failure_background";
-      div2.align = "center";
-      node_style_set( div2, "position", "fixed" );
-      node_style_set( div2, "top", "0" );
-      node_style_set( div2, "bottom", "0" );
-      node_style_set( div2, "left", "0" );
-      node_style_set( div2, "right", "0" );
-      node_style_set( div2, "background", "#333" );
-      node_style_set( div2, "opacity", "0.9" );
-      node_style_set( div2, "overflow", "hidden" );
-      node_style_set( div2, "text-align", "center" );
-      node_style_set( div2, "z-index", "9999" );
-      node_style_set( div2, "text-align", "center" );
+   var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
+   nexc.name = "with-hop";
+   nexc.scObject = "status: " + xhr.status;
+   nexc.scOffset = 3;
+   nexc.scClientOnly = true;
 
-      document.body.appendChild( div2 );
-   }
-
-   if( xhr.status >= 500 ) {
-      node_style_set( div, "border", "5px dashed red" );
-   } else {
-      node_style_set( div, "border", "5px dashed #f87d0f" );
-   }
-
-   notify_error( div, xhr );
-   div2.appendChild( div );
-   
-   node_style_set( div2, "display", "block" );
-   hop_add_event_listener( div2,
-			   "click",
-			   function() {
-			      node_style_set( div2, "display", "none" );
-			   } );
+   throw nexc;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_anim_16_16 ...                                               */
 /*---------------------------------------------------------------------*/
 function hop_anim_16_16( title ) {
-   var vis = document.createElement( "div" );
-      
-   node_style_set( vis, "position", "fixed" );
-   node_style_set( vis, "top", "5px" );
-   node_style_set( vis, "right", "5px" );
-   node_style_set( vis, "z-index", "100" );
-   node_style_set( vis, "background", "#eeeeee" );
-   node_style_set( vis, "border-color", "black" );
-   node_style_set( vis, "border-style", "outset" );
-   node_style_set( vis, "border-width", "1px" );
-   node_style_set( vis, "padding-top", "3px" );
-   node_style_set( vis, "width", "20px" );
-   node_style_set( vis, "height", "20px" );
-   node_style_set( vis, "-moz-border-radius", "0.2em" );
-   node_style_set( vis, "-moz-opacity", "0.7" );
-      
-   vis.title = title;
-   vis.align = "center";
+   if( !hop_busy_vis_16_16 ) {
+      var vis = document.createElement( "div" );
+      vis.className = "hop-busy-anim";
+      vis.count = false;
 
-   var img = document.createElement( "img" );
-   img.className = "hop-busy-anim";
+      var img = document.createElement( "img" );
+      img.className = "hop-busy-anim";
 
-   if( !hop_config.inline_image ) {
-      img.src = hop_share_directory() + "/icons/busy-anim-16.gif";
-   } else {
-      img.src = hop_busy_anim_16_16;
+      if( !hop_config.inline_image ) {
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-16.gif";
+      } else {
+	 img.src = hop_busy_anim_16_16;
+      }
+
+      vis.appendChild( img );
+      
+      hop_busy_vis_16_16 = vis;
+   }
+   return hop_busy_vis_16_16;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_anim_32_32 ...                                               */
+/*---------------------------------------------------------------------*/
+function hop_anim_32_32( title ) {
+   if( !hop_busy_vis_32_32 ) {
+      var vis = document.createElement( "div" );
+      vis.className = "hop-busy-anim";
+      vis.count = false;
+
+      var img = document.createElement( "img" );
+      img.className = "hop-busy-anim";
+
+      if( !hop_config.inline_image ) {
+	 img.src = hop_share_directory() + "/icons/anims/busy-anim-32.gif";
+      } else {
+	 img.src = hop_busy_anim_32_32;
+      }
+
+      vis.appendChild( img );
+      hop_busy_vis_32_32 = vis;
    }
 
-   vis.appendChild( img );
- 
-   return vis;
+   return hop_busy_vis_32_32;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim ...                                             */
 /*---------------------------------------------------------------------*/
-var hop_default_anim = hop_anim_16_16;
+var hop_default_anim = hop_anim_32_32;
+var hop_anim_container = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim_set ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-hop-default-anim-set!)) */
-function hop_default_anim_set( anim ) {
+/*** META ((export with-hop-default-anim-set!) (arity -2)) */
+function hop_default_anim_set( anim, container ) {
    var old = hop_default_anim;
-   hop_default_anim = anim;
+   if( typeof( anim ) == "string" ) {
+      var img = hop_anim_32_32( "custom" ).firstChild;
+
+      img.src = anim;
+   }
+
+   if( container ) {
+      hop_anim_container = container;
+   }
+   
    return old;
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_default_anim_get ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-hop-default-anim)) */
-function hop_default_anim_get( ) {
+/*** META ((export with-hop-default-anim) (arity #t)) */
+function hop_default_anim_get() {
    return hop_default_anim;
 }
 
@@ -225,232 +184,460 @@ function hop_default_anim_get( ) {
 /*    hop_anim_vis ...                                                 */
 /*---------------------------------------------------------------------*/
 var hop_anim_vis = false;
-var hop_anim_service = false;
-var hop_anim_interval;
 var hop_anim_fun = false;
 
 /*---------------------------------------------------------------------*/
 /*    hop_stop_anim ...                                                */
 /*---------------------------------------------------------------------*/
-function hop_stop_anim() {
-   if( hop_anim_interval ) {
-      if( hop_has_setInterval ) clearInterval( hop_anim_interval );
-      hop_anim_interval = false;
+function hop_stop_anim( xhr ) {
+   if( xhr.hop_anim ) {
+      if( xhr.hop_anim_interval ) {
+	 clearInterval( xhr.hop_anim_interval );
+	 xhr.hop_anim_interval = false;
+      }
+
+      if( xhr.hop_anim != true ) {
+	 xhr.hop_anim.count--;
+	 if( xhr.hop_anim.count == 1 )
+	    node_style_set( xhr.hop_anim, "display", "none" );
+      }
    }
 }
    
 /*---------------------------------------------------------------------*/
-/*    hop_anim ...                                                     */
+/*    hop_start_anim ...                                               */
 /*---------------------------------------------------------------------*/
-function hop_anim( service, user_anim ) {
-   hop_stop_anim();
+function hop_start_anim( service, user_anim ) {
+   var anim = user_anim( service );
 
-   if( hop_anim_service == service ) {
-      if( hop_anim_vis && (hop_anim_fun == user_anim) ) {
-	 hop_anim_vis.title = service;
-	 // node_style_set( hop_anim_vis, "visibility", "visible" );
-	 node_style_set( hop_anim_vis, "display", "block" );
-	 return hop_anim_vis;
+   if( !anim.count ) {
+      if( typeof( hop_anim_container ) === "string" ) {
+	 hop_anim_container = document.getElementById( hop_anim_container );
+	 }
+      if( !hop_anim_container ) {
+	 hop_anim_container = document.body;
+      }
+
+      hop_anim_container.appendChild( anim );
+      anim.count = 2;
+   } else {
+      anim.count++;
+      anim.title = service;
+      node_style_set( anim, "display", "block" );
+   }
+
+   return anim;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_default_success ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_default_success( h, xhr ) {
+   return h;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_unserialize ...                                      */
+/*    -------------------------------------------------------------    */
+/*    Unserialize the object contained in the XHR response. The        */
+/*    unserialization method depends on the mime type of the response. */
+/*---------------------------------------------------------------------*/
+function hop_request_unserialize( xhr, svc ) {
+   var ctype = ("content_type" in xhr) ?
+      xhr[ "content_type" ] : hop_header_content_type( xhr );
+
+   if( ctype === "application/x-javascript" ) {
+      return eval( xhr.responseText );
+   } else if( ctype === "application/x-url-hop" ) {
+      return hop_url_encoded_to_obj( xhr.responseText );
+   } else if( ctype === "application/x-json-hop" ) {
+      return hop_bytearray_to_obj( hop_json_parse( xhr.responseText ) );
+   } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
+      return hop_create_element( xhr.responseText );
+   } else if( ctype === "application/json" ) {
+      return hop_json_parse( xhr.responseText );
+   } else if( ctype === "application/x-hop" ) {
+      var a = (xhr.response instanceof ArrayBuffer) ?
+	 new Uint8Array( xhr.response ) : new Uint8Array();
+      return hop_bytearray_to_obj( a );
+   } else {
+      return xhr.responseText;
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_request_onready ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_request_onready( xhr, svc, succ, fail ) {
+
+   function xhr_hop_success_callback( succ ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+	 return succ;
       } else {
-	 hop_anim_vis = user_anim( service );
-	 document.body.appendChild( hop_anim_vis );
-	 return hop_anim_vis;
+	 return hop_callback( succ, xhr.precontext, "with-hop" );
       }
    }
+      
+   function xhr_hop_failure_callback( fail ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+	 return fail;
+      } else {
+	 /* restore the context at the moment of the xhr */
+	 var ctx = xhr.precontext;
+
+	 /* prepend the server context to the pre xhr context */
+	 var hd = xhr.getResponseHeader( "Hop-Debug-Stack" );
+	 if( typeof hd === "string" ) {
+	    var sstack = hop_url_encoded_to_obj( hd );
+	    ctx = sc_cons( "Server Trace:", sc_appendBang( sstack, ctx ) );
+	 }
+
+	 return hop_callback( fail, ctx, "with-hop" )
+      }
+   }
+      
+   try {
+      switch( xhr.status ) {
+        case 200: {
+	   var o;
+	   
+	   if( hop_debug() > 0 ) {
+	      succ = xhr_hop_success_callback( succ );
+	      
+	      try {
+		 o = hop_request_unserialize( xhr, svc );
+	      } catch( e ) {
+		 hop_callback_handler( e, xhr.precontext );
+	      }
+	   } else {
+	      o = hop_request_unserialize( xhr, svc );
+	   }
+
+	   return succ( o, xhr );
+	}
+	 
+        case 204:
+  	   return false;
+	 
+        case 259:
+	   hop_set_cookie( xhr );
+	   return false;
+	 
+        case 400:
+	   if( hop_debug() > 0 ) {
+	      fail = xhr_hop_failure_callback( fail );
+	   }
+	   return false;
+	 
+        case 407:
+	   if( hop_debug() > 0 ) {
+	      fail = xhr_hop_failure_callback( fail );
+	   }
+  	   fail( 407, xhr );
+	   return false;
+	 
+        default:
+	   if( (typeof xhr.status === "number") &&
+  	       (xhr.status > 200) && (xhr.status < 300) ) {
+	      if( hop_debug() > 0 ) {
+		 succ = xhr_hop_success_callback( succ );
+	      }
+  	      return succ( xhr.responseText, xhr );
+  	   } else {
+	      if( hop_debug() > 0 ) {
+		 fail = xhr_hop_failure_callback( fail );
+	      }
+  	      fail( xhr.status, xhr );
+  	      return false;
+  	   }
+      }
+   } finally {
+      if( typeof hop_stop_anim === "function" ) { 
+	 hop_stop_anim( xhr );
+      }
+   }
+      
    return false;
 }
-
-/*---------------------------------------------------------------------*/
-/*    hop_responsetext_error ...                                       */
-/*---------------------------------------------------------------------*/
-function hop_responsetext_error( xhr ) {
-   if( xhr.responseText.length > 80 )
-      return xhr.responseText.substring( 0, 80 );
-   else
-      return xhr.responseText;
-}
-
+   
 /*---------------------------------------------------------------------*/
 /*    hop_send_request ...                                             */
 /*    -------------------------------------------------------------    */
 /*    In this function SUCCESS and FAILURE are *always* bound to       */
 /*    functions.                                                       */
-/*    -------------------------------------------------------------    */
-/*    This function DOES NOT evaluates its result.                     */
 /*---------------------------------------------------------------------*/
-function hop_send_request( svc, sync, success, failure, anim, henv, auth ) {
-   var xhr = hop_make_xml_http_request();
-   /* MS, 20 Jun 08: I cannot understand why but sometime hop_error is */
-   /* unbound (at least in Firefox) when used inside a catch! Binding  */
-   /* it to a local var elimintates this problem.                      */
-   var hop_err = hop_error;
-   var hop_err_html = hop_error_html;
-   var hop_reperror = hop_responsetext_error;
-   var hop_header_ctype = hop_header_content_type;
-   var fail = (typeof failure == "function") ? failure : hop_default_failure;
+/*** META ((export #t) (arity #t)) */
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc ) {
+   var xhr = x ? x : hop_make_xml_http_request();
+
+   /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
+   /* are unbound (at least in Firefox) when used inside a catch! Binding  */
+   /* it to a local var eliminates this problem.                           */
+   var succ = (typeof success === "function") ? success : hop_default_success;
+   var fail = (typeof failure === "function") ? failure : hop_default_failure;
    
-   var err = function( exc, xhr, ctype ) {
-      var txt = hop_reperror( xhr );
-      var fun = ctype ? ("with-hop [content-type=" + ctype + "]") : "with-hop";
-      
-      return hop_err( fun, exc, txt, svc );
-   }
-
    function onreadystatechange() {
-      if( xhr.readyState == 4 ) {
-	 try {
-	    var status = xhr.status;
-
-	    switch( status ) {
-	       case 200:
-		  try {
-		     var ctype = hop_header_ctype( xhr );
-		     var expr;
-		     
-		     if( ctype === "application/x-javascript" ) {
-			/* ctype must match the value hop-json-mime-type */
-			/* which is defined in runtime/param.scm.        */
-			try {
-			   expr = eval( xhr.responseText );
-			} catch( exc ) {
-			   xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
-			   fail( xhr );
-			   expr = false;
-			}
-
-			return success( expr, xhr );
-		     } else if( (ctype === "text/html") ||
-				(ctype === "application/xhtml+xml") ) {
-			var el = hop_create_element( xhr.responseText );
-
-			return success( el, xhr );
-		     } else {
-			return success( xhr.responseText, xhr );
-		     }
-		  } catch( exc ) {
-		     xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
-		     fail( xhr );
-		     return false;
-		  }
-
-	       case 204:
-		  return false;
-
-	       case 257:
-		  return hop_js_eval( xhr );
-
-	       case 258:
-		  if( xhr.responseText != null )
-		     return eval( xhr.responseText );
-		  else
-		     return false;
-
-	       case 259:
-		  hop_set_cookie( xhr );
-		  return false;
-
-	       case 407:
-		  xhr.responseError = hop_err_html( svc, "Bad authentication", xhr.responseText );
-		  fail( xhr );
-		  return false;
-
-	       default:
-		  if( (typeof status == "number") &&
-		      (status > 200) && (status < 300) ) {
-		     if( success ) {
-			return success( xhr.responseText, xhr );
-		     }
-		  } else {
-		     fail( xhr );
-		     return false;
-		  }
-	    }
-	 } catch( exc ) {
-	    xhr.responseError = hop_err_html( svc, exc, xhr.responseText );
-
-	    fail( xhr );
-	    return false;
-	 } finally {
-	    try {
-	       if( hop_anim_vis != false ) {
-		  node_style_set( hop_anim_vis, "display", "none" );
-	       }
-	       hop_anim_service = false;
-	    } catch( e ) {
-	       ;
-	    }
-	 }
+      if( this.readyState == 4 ) {
+	 return hop_request_onready( this, svc, succ, fail );
+      } else {
+	 return false;
       }
-
-      return false;
    }
 
    if( !sync ) {
+      xhr.open( "PUT", svc, true );
+      
+      if( hop_config.uint8array ) {
+	 xhr.onload = onreadystatechange;
+	 xhr.setRequestHeader( "Hop-Serialize", "arraybuffer" );
+      } else {
+	 xhr.onreadystatechange = onreadystatechange;
+	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );
+      }
+   } else {
+      xhr.open( "PUT", svc, false );
+      
       xhr.onreadystatechange = onreadystatechange;
+      xhr.setRequestHeader( "Hop-Serialize", "javascript" );
    }
 
-   xhr.open( "GET", svc, (sync != true) );
+   if( t ) {
+      if( "setTimeouts" in xhr ) {
+	 xhr.setTimeouts = t;
+      } else {
+	 xhr.timeout = t;
+	 xhr.ontimeout = fail;
+      }
+   }
 
-   xhr.setRequestHeader( 'Connection', 'close' );
+   if( (hop_debug() > 0)
+       && (svc.indexOf( "/hop/public/server-debug" ) != 0) ) {
+      /* debug mode, get the context and send the client-stack to the */
+      /* server, except if we are calling a debug service.            */
+      try {
+	 throw new Error( "with-hop" );
+      } catch( e ) {
+	 var i = svc.indexOf( "?" );
+	 var svcname = i ? svc.substring( 0, i ) : svc;
+
+	 if( svcname.indexOf( "/hop/" ) == 0 ) {
+	    svcname = svcname.substring( 5 );
+	 }
+
+	 var typ = sc_cons( sc_jsstring2symbol( "type" ),
+			    sc_jsstring2symbol( "client" ) );
+	 var fmt = sc_cons( sc_jsstring2symbol( "format" ),
+			    sc_jsstring2string( "~~~a" ) );
+	 var name = "(with-hop (" + svcname + "...) ...)";
+	 var frame = sc_cons( name,
+			      sc_cons( loc,
+				       sc_cons( fmt, sc_cons( typ, null ) ) ) );
+	 var estk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var stk = sc_cons( "With-Hop trace:", sc_cons( frame, estk ) );
+	 
+         xhr.precontext = stk;
+         xhr.setRequestHeader( 'Hop-Debug-Stack', hop_bigloo_serialize( stk ) );
+      }
+   }
+
    xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   // to force the response to be interpreted as latin-1:
-   // xhr.overrideMimeType( 'text/html; charset=ISO-8859-1' );
-   
-   if( henv.length > 0 ) {
-      xhr.setRequestHeader( 'Hop-Env', hop_serialize_request_env() );
+   if( hop_config.navigator_family != "safari" &&
+       hop_config.navigator_family != "chrome" &&
+       hop_config.navigator_family != "webkit" ) {
+      xhr.setRequestHeader( 'Connection', 'close' );
    }
-
+   if( henv.length > 0 ) {
+      xhr.setRequestHeader( 'Hop-Env', henv );
+   }
    if( auth ) {
       xhr.setRequestHeader( 'Authorization', auth );
    }
-   
-   try {
-      if( anim ) hop_anim_service = svc;
+   if( ("multipart" in xhr) && (xhr.multipart === true) ) {
+      /* This header is needed to let the server */
+      /* disable timeout for this connection     */
+      xhr.setRequestHeader( 'Xhr-Multipart', "true" );
+   }
 
+   xhr.svc = svc;
+   try {
       xhr.send( null );
 
-      hop_stop_anim();
-      
-      if( anim && hop_has_setInterval ) {
-	 var a = (anim instanceof Function) ? anim : hop_default_anim;
-
-	 hop_anim_interval =
-	    setInterval( function() { hop_anim( svc, a ) }, hop_anim_latency );
+      if( anim ) {
+	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
+	 
+	 if( hop_has_setInterval ) {
+	    xhr.hop_anim = true;
+	    xhr.hop_anim_interval =
+	       setInterval( function() {
+		     clearInterval( xhr.hop_anim_interval );
+		     if( xhr.hop_anim == true )
+			xhr.hop_anim = hop_start_anim( svc, a );
+		  }, hop_anim_latency );
+	 } else {
+	    xhr.hop_anim_interval = false;
+	    xhr.hop_anim = hop_start_anim( svc, a );
+	 }
+      } else {
+	 xhr.hop_anim = false;
       }
 
       if( sync ) {
 	 if( xhr.readyState == 4 ) {
-	    onreadystatechange();
+	    return xhr.onreadystatechange();
 	 } else {
-	    hop_error( "with-hop", 
-		       "synchronous call failed",
-		       "readyState: " + xhr.readyState,
-		       svc );
+	    var exc = new Error( "\"" + svc
+				 + " \", with-hop synchronous call failed -- "
+				 + "readyState: " + xhr.readyState );
+	    hop_callback_handler( exc, xhr.precontext );
 	 }
       }
    } catch( e ) {
-      if( hop_anim_vis != false ) {
-	 node_style_set( hop_anim_vis, "display", "none" );
+      if( typeof hop_stop_anim === "function" ) { 
+	 hop_stop_anim( xhr );
       }
-      hop_anim_service = false;
 
-      hop_error( "with-hop", e, "Cannot call server", svc );
+      throw e;
    }
 
    return xhr;
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_send_request_xdomain ...                                     */
+/*    -------------------------------------------------------------    */
+/*    In this function SUCCESS and FAILURE are *always* bound to       */
+/*    functions.                                                       */
+/*---------------------------------------------------------------------*/
+function hop_send_request_xdomain( e ) {
+   var xhr = hop_make_xml_http_request();
+   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)" );
+   var key = m[ 1 ];
+   var svc = m[ 2 ];
+   var henv = m[ 3 ];
+   var auth = m[ 4 ];
+
+   function onreadystatechange() {
+      if( xhr.readyState == 4 ) {
+	 var ctype = hop_header_content_type( xhr );
+	 var serialize = hop_header_hop_serialize( xhr );
+
+	 e.source.postMessage(
+	    key
+	       + " " + xhr.status
+	       + " " + ctype
+	       + " " + serialize 
+	       + " " + xhr.responseText,
+	    e.origin );
+      }
+   }
+
+   xhr.onreadystatechange = onreadystatechange;
+   xhr.open( "PUT", svc, true );
+   
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   if( hop_config.navigator_family != "safari" &&
+       hop_config.navigator_family != "chrome" &&
+       hop_config.navigator_family != "webkit" ) {
+      xhr.setRequestHeader( 'Connection', 'close' );
+   }
+   if( henv.length > 0 ) {
+      xhr.setRequestHeader( 'Hop-Env', henv );
+   }
+   if( auth.length > 0 ) {
+      xhr.setRequestHeader( 'Authorization', auth );
+   }
+
+   xhr.send( null );
+
+   return xhr;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xdomain_key ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_xdomain_key =  0;
+var hop_xdomain_msg = {};
+
+/*---------------------------------------------------------------------*/
+/*    with_hop_xdomain ...                                             */
+/*---------------------------------------------------------------------*/
+function with_hop_xdomain( host, port, svc, sync, success, failure, anim, henv, auth, t, x ) {
+   if( !port ) port = 80;
+
+   if( sync ) {
+      sc_error( svc,
+		"cross domain with-hop must be asynchronous",
+		host + ":" + port, 2 );
+   } else {
+      var key = hop_xdomain_key++;
+      var id = "__xdomain:" + host + ":" + port;
+      var el = document.getElementById( id );
+      var origin = "http://" + host + ":" + port;
+      var src = origin + "/hop/public/xdomain"
+      var msg = key + " " + svc + " " + hop_serialize_request_env() +
+	 " " + (auth ? auth : "");
+
+      hop_xdomain_msg[ key ] = { success: success, failure: failure, svc: svc };
+
+      if( !el ) {
+	 el = document.createElement( "iframe" );
+	 el.src = src;
+	 el.id = id;
+
+	 hop_add_event_listener( el, "load", function() {
+	    el.contentWindow.postMessage( msg, origin );
+	 }, true );
+
+
+	 hop_add_event_listener( window, "message", function( event ) {
+	    if( event.origin === origin ) {
+	       hop_xdomain_onmessage( event, key );
+	    }
+	 }, false );
+	 
+	 node_style_set( el, "display", "none" );
+	 document.body.appendChild( el );
+      } else {
+	 hop_add_event_listener( el, "load", function() {
+	    el.contentWindow.postMessage( msg, origin );
+	 }, true );
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xdomain_onmessage ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_xdomain_onmessage( event ) {
+   var xhr = new Object();
+   var m = event.data.match( "([^ ]+) ([0-9]+) ([^ ]+) ([^ ]+)( *)" );
+   var key = m[ 1 ];
+   
+   xhr.status = parseInt( m[ 2 ] );
+   xhr.content_type = m[ 3 ];
+   xhr.hop_serialize = m[ 4 ];
+   xhr.responseText = event.data.substring( m[ 0 ].length );
+   
+   // Install a fake 'getResponseHeader' procedure to please
+   // 'xhr_hop_failure_callback'.
+   xhr.getResponseHeader = function(h) { return null; };
+
+   hop_request_onready( xhr,
+			hop_xdomain_msg[ key ].svc,
+			hop_xdomain_msg[ key ].success,
+			hop_xdomain_msg[ key ].failure );
+}
+
+
+/*---------------------------------------------------------------------*/
 /*    with_hop ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
-function with_hop( svc, success, failure, sync, anim ) {
-   if( !success ) success = function( h ) { return h };
-   if( !failure ) failure = hop_default_failure;
-   
+/*** META ((export #t) (arity -2)) */
+function with_hop( svc, success, failure, sync, anim, timeout ) {
    return hop_send_request( svc, sync,
 			    success, failure,
-			    true, hop_serialize_request_env(), false );
+			    anim, hop_serialize_request_env(), false,
+			    timeout );
 }
 
 /*---------------------------------------------------------------------*/
@@ -464,27 +651,48 @@ function with_hop( svc, success, failure, sync, anim ) {
 	 (anim #t)
 	 (user #f)
 	 (password #f)
-	 (authorization #f))
+	 (authorization #f)
+	 (host #f)
+	 (port #f)
+	 (timeout #f))
       (let loop ((rest rest))
 	 (cond
 	    ((null? rest)
-	     `((@ hop_send_request _)
-	                        ,svc
-				,sync
-				,(or success '(lambda (h) h))
-				,(or fail '(@ hop_default_failure _))
-				,anim
-				((@ hop_serialize_request_env _))
-				,(cond
-				    (authorization
-				     authorization)
-				    ((and (string? user)
-					  (string? password))
-				     (string-append
-				      "Basic "
-				      (base64-encode
-				       (string-append
-					user ":" password)))))))
+	     (if host
+		 ;; xdomain with-hop
+		 `((@ with_hop_xdomain js)
+		   ,host
+		   ,port
+		   ,svc
+		   ,sync
+		   ,(or success '(lambda (h) h))
+		   ,(or fail '(@ hop_default_failure js))
+		   ,anim
+		   ((@ hop-serialize-request-env __hop))
+		   ,(cond
+		       (authorization
+			authorization)
+		       ((and (string? user) (string? password))
+			(string-append "Basic "
+			   (base64-encode (string-append user ":" password)))))
+		   ,timeout)
+		 ;; same origin with-hop
+		 `((@ hop-send-request __hop)
+		   ,svc
+		   ,sync
+		   ,(or success '(lambda (h) h))
+		   ,(or fail '(@ hop_default_failure js))
+		   ,anim
+		   ((@ hop-serialize-request-env __hop))
+		   ,(cond
+		       (authorization
+			authorization)
+		       ((and (string? user) (string? password))
+			(string-append "Basic "
+			   (base64-encode (string-append user ":" password)))))
+		   ,timeout
+		   #f
+		   ,(when (epair? svc) `',(cer svc)))))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)
@@ -510,6 +718,21 @@ function with_hop( svc, success, failure, sync, anim ) {
 		 (error 'with-hop "Illegal :password argument" rest)
 		 (set! password (cadr rest)))
 	     (loop (cddr rest)))
+	    ((eq? (car rest) :timeout)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :timeout argument" rest)
+		 (set! timeout (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :host)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :host argument" rest)
+		 (set! host (cadr rest)))
+	     (loop (cddr rest)))
+	    ((eq? (car rest) :port)
+	     (if (null? (cdr rest))
+		 (error 'with-hop "Illegal :port argument" rest)
+		 (set! port (cadr rest)))
+	     (loop (cddr rest)))
 	    ((not success)
 	     (set! success (car rest))
 	     (loop (cdr rest)))
@@ -521,71 +744,6 @@ function with_hop( svc, success, failure, sync, anim ) {
 */
 
 /*---------------------------------------------------------------------*/
-/*    hop ...                                                          */
-/*    -------------------------------------------------------------    */
-/*    This is an old deprecated form that is only used in conjunction  */
-/*    with JavaScript client codes.  This function is not used by      */
-/*    WITH-HOP and it should be used from Hop client-side code.        */
-/*---------------------------------------------------------------------*/
-function hop( svc, success, failure, sync ) {
-   if( success == true ) {
-      location.href = svc;
-      return true;
-   }
-
-   if( !success ) success = function( h ) { return h; }
-   if( !failure ) failure = hop_default_failure;
-
-   return hop_send_request( svc, sync,
-			    success, failure,
-			    true, hop_serialize_request_env() );
-}
-
-/*---------------------------------------------------------------------*/
-/*    with_hop_callcc ...                                              */
-/*---------------------------------------------------------------------*/
-/* function with_hop_callcc( service ) {                               */
-/*    var sc_storage = sc_CALLCC_STORAGE;                              */
-/*    if (sc_storage.doRestore) {                                      */
-/*       var res = sc_callcc();                                        */
-/*       if (res.failure)                                              */
-/* 	 throw res.value; // TODO                                      */
-/*       else                                                          */
-/* 	 return res.value;                                             */
-/*    } else {                                                         */
-/*       sc_callcc(function(k) {                                       */
-/* 	 function success(val) {                                       */
-/* 	    k({value: val});                                           */
-/* 	 };                                                            */
-/* 	 function failure(val) {                                       */
-/* 	    k({failure: true, value: val});                            */
-/* 	 };                                                            */
-/* 	 hop( service,                                                 */
-/* 	      function( http ) {                                       */
-/* 		 switch( http.status ) {                               */
-/* 		 case 200:                                             */
-/* 		    if( hop_is_http_json( http ) ) {                   */
-/* 		       success( eval( http.responseText ) );           */
-/* 		    } else {                                           */
-/* 		       success( http.responseText );                   */
-/* 		    }                                                  */
-/* 		    return;                                            */
-/* 		 case 202:                                             */
-/* 		    success( hop_unserialize( http.responseText ) );   */
-/* 		    return;                                            */
-/* 		 default:                                              */
-/* 		    success( http );                                   */
-/* 		    return;                                            */
-/* 		 }                                                     */
-/* 	      },                                                       */
-/* 	      failure );                                               */
-/* 	 sc_EMPTY_CALLCC(); // abort execution here.                   */
-/*       });                                                           */
-/*    }                                                                */
-/*    return undefined; // for FF2.0                                   */
-/* }                                                                   */
-
-/*---------------------------------------------------------------------*/
 /*    hop_request_env ...                                              */
 /*---------------------------------------------------------------------*/
 var hop_request_env = [];
@@ -595,6 +753,7 @@ var hop_request_env_invalid = false;
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_request_env ...                                    */
 /*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
 function hop_serialize_request_env() {
    if( hop_request_env_invalid ) {
       var tmp = null;
@@ -629,7 +788,7 @@ function hop_request_reset() {
 /*---------------------------------------------------------------------*/
 /*    hop_request_set ...                                              */
 /*---------------------------------------------------------------------*/
-/*** META ((export request-set!)) */
+/*** META ((export request-set!) (arity #t)) */
 function hop_request_set( key, val ) {
    hop_request_env_invalid = true;
    hop_request_env[ key ] = val;
@@ -640,7 +799,9 @@ function hop_request_set( key, val ) {
 /*    hop_request_get ...                                              */
 /*---------------------------------------------------------------------*/
 /*** META ((export request-get)
-           (peephole: (hole 1 "hop_request[" key"]"))) */
+           (arity #t)
+           (peephole (hole 1 "hop_request[" key"]")))
+*/
 function hop_request_get( key ) {
    return hop_request[ key ];
 }

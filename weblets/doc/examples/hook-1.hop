@@ -16,7 +16,7 @@
 (when (hop-filters-open?)
    ;; when the first Hop request is answered, for security reasons;
    ;; it is no longer possible to add new hook or filter
-   (hop-http-response-remote-hook-add!
+   (hop-http-response-proxy-hook-add!
     (lambda (req resp)
        (or (linux-kernel-hooking req resp)
 	   resp))))

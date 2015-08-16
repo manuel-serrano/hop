@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.10.x/weblets/info/info.hop            */
+;*    serrano/prgm/project/hop/2.5.x/weblets/info/info.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Oct  3 09:17:40 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Tue Aug 13 06:46:23 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP info weblet                                                  */
 ;*=====================================================================*/
@@ -12,8 +12,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module weblet_info)
+(module weblet_info
+   
+   ~(import weblet_info-client)
+   ~(js navigator)
+   
+   (import weblet_info-maze)
+   
+   (export info/perfs/script/server
+	   info/perfs/network/keepalive
+	   info/perfs/network/close
+	   info/perfs/network/file
+	   info/perfs/network/withhop))
 
+;*---------------------------------------------------------------------*/
+;*    perfs-base ...                                                   */
+;*---------------------------------------------------------------------*/
+(define perfs-base-config
+   '((cpu: "xeon W3570 3.2GHz")
+     (bigloo: "3.5b (native)")
+     (os: "linux 2.6.35-ARCH")
+     (navigator: "firefox 3.6.13")))
+
+(define perfs-base-val
+   '((server-script: 39.88)
+     (client-script: 66.26)
+     (client-dom: 8.95)
+     (network-keep-alive: 5.83)
+     (network-close: 4.1)
+     (network-file: 28.12)
+     (network-with-hop: 0.01)))
+     
 ;*---------------------------------------------------------------------*/
 ;*    info-event ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -31,7 +60,7 @@
 (define traffic-hook
    (lambda (req rep)
       (when traffic-hookingp
-	 (with-access::http-request req (http host port path user seconds)
+	 (with-access::http-request req (http host port path (u user) seconds)
 	    (hop-event-broadcast! info-event
 				  (<TR> :class "remote"
 				     (<TD> :nowrap #t
@@ -39,15 +68,96 @@
 				     (<TD> :nowrap #t
 					path)
 				     (<TD> :nowrap #t
-					(if (user? user) (user-name user) ""))
+					(if (isa? u user)
+					    (with-access::user u (name)
+					       name)
+					    ""))
 				     (<TD> :nowrap #t
-					(seconds->date date))))))
+					(seconds->date seconds))))))
       rep))
 
 ;*---------------------------------------------------------------------*/
 ;*    remote-hook ...                                                  */
 ;*---------------------------------------------------------------------*/
-(hop-http-response-remote-hook-add! traffic-hook)
+(when (> (bigloo-debug) 0)
+   (hop-http-response-proxy-hook-add! traffic-hook))
+
+;*---------------------------------------------------------------------*/
+;*    info-fonts ...                                                   */
+;*---------------------------------------------------------------------*/
+(define info-fonts
+   '("cmr10"
+     "cursive"
+     "monospace"
+     "serif"
+     "fantasy"
+     "default"
+     "Andale Mono"
+     "Arial"
+     "Arial Black"
+     "Arial Narrow"
+     "Arial Rounded MT Bold"
+     "Balker"
+     "Bitstream Charter"
+     "Bitstream Vera Sans"
+     "Bitstream Vera Sans Mono"
+     "Bitstream Vera Sans Serif"
+     "Bookman Old Style"
+     "Bradley Hand ITC"
+     "Century"
+     "Century Gothic"
+     "Charter"
+     "Clean"
+     "Comic Sans MS"
+     "Courier"
+     "Courier New"
+     "DejaVu Sans"
+     "DejaVu Sans Mono"
+     "DejaVu Serif"
+     "Dingbats"
+     "Georgia"
+     "Gentium"
+     "Engadget"
+     "Euclid"
+     "Fixed"
+     "FreeMono"
+     "FreeSans"
+     "FreeSerif"
+     "Garamond"
+     "Helvetica"
+     "Impact"
+     "jGaramond"
+     "King"
+     "Liberation Mono"
+     "Liberation Sans"
+     "Liberation Serif"
+     "Lucida"
+     "LucidaBright"
+     "Lucida Console"
+     "Lucida Typewriter"
+     "Luxi Mono"
+     "Luxi Sans"
+     "Luxi Serif"
+     "Mathematica1"
+     "Modena"
+     "Monotype Corsiva"
+     "Monospace"
+     "New Century Schoolbook"
+     "Papyrus"
+     "Penguin Attack"
+     "sans"
+     "sans serif"
+     "sans-serif"
+     "STIXGeneral"
+     "Tahoma"
+     "TeX"
+     "Times"
+     "Times New Roman"
+     "Trebuchet MS"
+     "Utopia"
+     "Verdana"
+     "Verona"
+     ))
 
 ;*---------------------------------------------------------------------*/
 ;*    info weblet ...                                                  */
@@ -62,19 +172,23 @@
 	  (<HTML>
 	     (<HEAD> :favicon (service-resource info "etc/favicon.png")
 		:title "Hop Info weblet"
+		(<META> :name "viewport"
+		   :content "width=device-width, initial-scale=1.")
 		:base (service-base-url info req)
-		:include "hop-notepad" "hop-sorttable"
-		:css "info.hss")
+		:include "hop-notepad" "hop-sorttable" "hop-font" "hop-foot"
+		:include "hop-gauge" "hop-file" "hop-paned" "md5"
+		:css "info.hss"
+		:jscript "info.scm" "etc/maze.scm")
 	     (<BODY>
 		:onunload ~(with-hop ($(service ()
 					  (set! traffic-hookingp #f))))
-		(<DIV> :align "center"
+		(<DIV> :class "body"
 		   (<TABLE> :class "info"
 		      (<TR>
-			 (<TD>
+			 (<TD> :id "logo"
 			    (<IMG> :src "etc/logo.png"))
 			 (<TD>
-			    (<TABLE>
+			    (<TABLE> :width "100%"
 			       (<TR>
 				  (<TD>
 				     (<DIV> :id "title"
@@ -85,20 +199,25 @@
 					(<NOTEPAD>
 					   (<NPHEAD> "")
 					   (<NPTAB>
-					      (<NPTABHEAD> "Uptime")
-					      (<DELAY>
-						 (lambda ()
-						    (<MISC>))))
-					   (<NPTAB>
 					      (<NPTABHEAD> "Config")
 					      (<DELAY>
 						 (lambda ()
 						    (<CONFIG>))))
 					   (<NPTAB>
-					      (<NPTABHEAD> "Weblets")
+					      (<NPTABHEAD> "Server")
 					      (<DELAY>
 						 (lambda ()
-						    (<WEBLETS>))))
+						    (<CONFIG:SERVER>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Client")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG:CLIENT>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Fonts")
+					      (<DELAY>
+						 (lambda ()
+						    (<CONFIG:FONT>))))
 					   (<NPTAB>
 					      (<NPTABHEAD> "Caches")
 					      (<DELAY>
@@ -113,7 +232,12 @@
 					      (<NPTABHEAD> "Traffic")
 					      (<DELAY>
 						 (lambda ()
-						    (<TRAFFIC>)))))))))))))
+						    (<TRAFFIC>))))
+					   (<NPTAB>
+					      (<NPTABHEAD> "Perfs")
+					      (<DELAY>
+						 (lambda ()
+						    (<PERFS>)))))))))))))
 		(<FOOT>)))
 	  (user-access-denied req))))
 
@@ -134,77 +258,170 @@
    "No preference for this weblet")
 
 ;*---------------------------------------------------------------------*/
-;*    <MISC> ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<MISC>)
-   (set! traffic-hookingp #f)
-   (<TABLE>
-      :class "hop-info"
-      (<TR>
-	 (<TH> :align 'right "Version")
-	 (<TD> :align 'left (hop-version)))
-      (<TR>
-	 (<TH> :align 'right "Hop")
-	 (<TD> :align 'left (hop-name)))
-      (<TR>
-	 (<TH> :align 'right "Uptime")
-	 (<TD> :align 'left (hop-uptime)))
-      (<TR>
-	 (<TH> :align 'right "System")
-	 (<TD> :align 'left (os-name)))
-      (<TR>
-	 (<TH> :align 'right "Arch")
-	 (<TD> :align 'left (os-arch)))))
-
-;*---------------------------------------------------------------------*/
 ;*    <CONFIG> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<CONFIG>)
-   (<TABLE>
-      :class "hop-info"
-      (<TR>
-	 (<TH> :align 'right "Var directory")
-	 (<TD> :align 'left (hop-var-directory)))
-      (<TR>
-	 (<TH> :align 'right "Cache directory")
-	 (<TD> :align 'left (hop-cache-directory)))
-      (<TR>
-	 (<TH> :align 'right "RC directory")
-	 (<TD> :align 'left (hop-rc-directory)))
-      (<TR>
-	 (<TH> :align 'right "RC file")
-	 (<TD> :align 'left (hop-rc-file)))
-      (<TR>
-	 (<TH> :align 'right "Default charset")
-	 (<TD> :align 'left (hop-charset)))
-      (<TR>
-	 (<TH> :align 'right "Default locale")
-	 (<TD> :align 'left (hop-locale)))
-      (<TR>
-	 (<TH> :align 'right "Connection ttl")
-	 (<TD> :align 'left (hop-connection-ttl)))
-      (<TR>
-	 (<TH> :align 'right "Connection timeout")
-	 (<TD> :align 'left (hop-connection-timeout)))
-      (<TR>
-	 (<TH> :align 'right "Keep alive timeout")
-	 (<TD> :align 'left (hop-keep-alive-timeout)))
-      (<TR>
-	 (<TH> :align 'right "Remote keep alive timeout")
-	 (<TD> :align 'left (hop-remote-keep-alive-timeout)))))
+   (with-access::http-request (current-request) (socket)
+      (list
+	 (<H1> "Uptime")
+	 (set! traffic-hookingp #f)
+	 (<TABLE>
+	    :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Version")
+	       (<TD> :align 'left (hop-version)))
+	    (<TR>
+	       (<TH> :align 'right "Hop")
+	       (<TD> :align 'left (hop-name)))
+	    (<TR>
+	       (<TH> :align 'right "Uptime")
+	       (<TD> :align 'left (hop-uptime)))
+	    (<TR>
+	       (<TH> :align 'right "System")
+	       (<TD> :align 'left (os-name)))
+	    (<TR>
+	       (<TH> :align 'right "Arch")
+	       (<TD> :align 'left (os-arch)))
+	    (<TR>
+	       (<TH> :align 'right "Server IP")
+	       (<TD> :align 'left (<TT> (hop-server-hostip))
+		  " (" (hop-server-name) ")"))
+	    (<TR>
+	       (<TH> :align 'right "Client IP")
+	       (<TD> :align 'left (<TT> (socket-host-address socket))
+		  " (" (socket-hostname socket) ")")))
+	 (<H1> "Server configuration")
+	 (<TABLE> :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Var directory")
+	       (<TD> :align 'left (hop-var-directory)))
+	    (<TR>
+	       (<TH> :align 'right "Cache directory")
+	       (<TD> :align 'left (hop-cache-directory)))
+	    (<TR>
+	       (<TH> :align 'right "RC directory")
+	       (<TD> :align 'left (hop-rc-directory)))
+	    (<TR>
+	       (<TH> :align 'right "RC file")
+	       (<TD> :align 'left (hop-rc-file)))
+	    (<TR>
+	       (<TH> :align 'right "Default charset")
+	       (<TD> :align 'left (symbol->string (hop-charset))))
+	    (<TR>
+	       (<TH> :align 'right "Default locale")
+	       (<TD> :align 'left (symbol->string (hop-locale))))
+	    (<TR>
+	       (<TH> :align 'right "Connection ttl")
+	       (<TD> :align 'left (hop-connection-ttl)))
+	    (<TR>
+	       (<TH> :align 'right "Connection timeout")
+	       (<TD> :align 'left (hop-connection-timeout)))
+	    (<TR>
+	       (<TH> :align 'right "Keep alive timeout")
+	       (<TD> :align 'left (hop-keep-alive-timeout)))
+	    (<TR>
+	       (<TH> :align 'right "Remote keep alive timeout")
+	       (<TD> :align 'left (hop-proxy-keep-alive-timeout))))
+	 (<H1> "Server Features")
+	 (<TABLE> :class "hop-info"
+	    (<TR>
+	       (<TH> :align 'right "Webdav")
+	       (<TD> :align 'left (if (hop-enable-webdav) "on" "off")))
+	    (<TR>
+	       (<TH> :align 'right "Zeroconf")
+	       (<TD> :align 'left (if (hop-enable-zeroconf) "on" "off"))))
+	 (<H1> "Weblets")
+	 (<DIV> :class "autoload"
+	    (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
+	       "Reset autoload table")
+	    (<TABLE> :class "info-autoload"
+	       (<TR> (<TH> "Autoload directories currently used"))
+	       (map (lambda (dir)
+		       (<TR> (<TD> dir)))
+		  (get-autoload-directories)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    <WEBLETS> ...                                                    */
+;*    <CONFIG:SERVER> ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (<WEBLETS>)
-   (<DIV> :class "autoload"
-      (<BUTTON> :onclick ~(with-hop ($(service () (reset-autoload!))))
-	 "Reset autoload table")
-      (<TABLE> :class "info-autoload"
-	 (<TR> (<TH> "Autoload directories currently used"))
-	 (map (lambda (dir)
-		 (<TR> (<TD> dir)))
-	      (get-autoload-directories)))))
+(define (<CONFIG:SERVER>)
+   (<TABLE> :class "hop-info"
+      (map (lambda (e)
+	      (<TR> (<TH> :align 'right (symbol->string (car e)))
+		    (<TD> :align 'left (with-output-to-string
+					  (lambda ()
+					     (display (cdr e)))))))
+	   (bigloo-configuration))))
+   
+;*---------------------------------------------------------------------*/
+;*    <CONFIG:CLIENT> ...                                              */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG:CLIENT>)
+   ~(<TABLE> :class "hop-info"
+       (<TR> (<TH> :align 'right "user-agent")
+	     (<TD> :align 'left navigator.userAgent))
+       (map (lambda (e)
+	       (<TR> (<TH> :align 'right (symbol->string (car e)))
+		     (<TD> :align 'left (with-output-to-string
+					   (lambda ()
+					      (display (cdr e)))))))
+	    (hop-config))))
+
+;*---------------------------------------------------------------------*/
+;*    <CONFIG:FONT> ...                                                */
+;*---------------------------------------------------------------------*/
+(define (<CONFIG:FONT>)
+   ~(let ((odd #t))
+       
+       (define (sample-font-set!)
+	  (let* ((el (dom-get-element-by-id "info-font-entry"))
+		 (el2 (dom-get-element-by-id "info-font-size"))
+		 (size (if (string=? el2.value "") #f (string->number el2.value))))
+	     (node-style-set! "info-font-sample" :font-family
+			      (string-append el.value ", serif"))
+	     (innerHTML-set! "info-font-result"
+			     (format "\"~a~a\" ~a"
+				     el.value
+				     (if size (format ",~apt " size) " ")
+				     (if (font-exists? el.value size)
+					 "exists"
+					 "does not exists")))))
+       
+       (<DIV> :class "info-font"
+	  (<TABLE> :class "info-font-user"
+	     (<TR> (<TD> :style "width: 8em" "Font Family: ")
+		   (<TD> (<INPUT> :class "info-font" :id "info-font-entry"
+			    :onkeyup (when (memq event.which '(10 13))
+					(sample-font-set!))))
+		   (<TD> :style "width: 3em" "Size: ")
+		   (<TD> (<INPUT> :class "info-font" :id "info-font-size"
+			    :onkeyup (when (memq event.which '(10 13))
+					(sample-font-set!))
+			    ""))
+		   (<TD> :style "width: 3em"
+		      (<BUTTON> :onclick (sample-font-set!) "check")))
+	     (<TR> (<TD> :colspan 5 :id "info-font-result"
+		      ""))
+	     (<TR> (<TD> :colspan 5
+		      (<TEXTAREA> :id "info-font-sample"
+			 :style "font-family: serif"
+			 "ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789 ~!@#$%^&*()_+=-,./<>?;':
+mmmmmmmmmmlil"))))
+	  (<TABLE> :class "info-font"
+	     (<TR> :class "info-font-header" (<TH> "Font Name") (<TH> "available"))
+	     (map (lambda (f)
+		     (set! odd (not odd))
+		     (let ((exist (font-exists? f)))
+			(<TR> :class (if odd "odd" "even")
+			   :style (if exist "color: black" "color: #bbb")
+			   (<TD> :class "font-name"
+			      :style (format "font-family: ~a, serif" f)
+			      f)
+			   (if exist
+			       (<TD> :class "font-result" "yes")
+			       (<TD> :class "font-result" "no")))))
+		  $info-fonts)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    <CACHES> ...                                                     */
@@ -216,28 +433,31 @@
 	     (d (<DIV> :class "cache-files"
 		   (<TABLE> :class "cache-files"
 		      (map (lambda (ce)
-			      (<TR>
-				 (<TD>
-				    (<A> :href (format "http://~a:~a~a"
-						       (http-request-host req)
-						       (http-request-port req)
-						       (cache-entry-upath ce))
-				       (cache-entry-upath ce))
-				    " " (round
-					 (/ (file-size (cache-entry-upath ce))
-					    1024))
-				    "KB")))
+			      (with-access::cache-entry ce (upath)
+				 (with-access::http-request req (host port)
+				    (<TR>
+				       (<TD>
+					  (<A> :href (format "http://~a:~a~a"
+							host
+							port
+							upath)
+					     upath)
+					  " " (round
+						 (/ (file-size upath) 1024))
+					  "KB")))))
 			   l)))))
 	 (<TABLE> :class "info-cache"
 	    (<TR>
-	       (<TH> (cache-disk-path c)))
+	       (<TH> (with-access::cache-disk c (path) path)))
 	    (<TR>
 	       (<TD> (format "~a files, ~a KB on cache."
 			     (length l)
 			     (round
 			      (/ (apply + (map (lambda (ce)
 						  (file-size
-						   (cache-entry-upath ce)))
+						     (with-access::cache-entry ce
+							   (upath)
+							upath)))
 					       l))
 				 1024)))))
 	    (<TR> (<TD> "&#160;"))
@@ -258,15 +478,18 @@
 	    (<TD> :width "20%" :valign 'top
 	       (<DIV> :class "caches"
 		  (map (lambda (c)
-			  (<DIV> :class "cache-link"
-			     :width "100%"
-			     :onclick ~(with-hop ($(service () (info-cache c)))
-					  (lambda (h)
-					     (innerHTML-set! $d h)))
-			     (make-file-name
-			      (basename (dirname (cache-disk-path c)))
-			      (basename (cache-disk-path c)))))
-		       (filter cache-disk? (registered-caches)))))
+			  (with-access::cache-disk c (path)
+			     (<DIV> :class "cache-link"
+				:width "100%"
+				:onclick ~(with-hop ($(service () (info-cache c)))
+					     (lambda (h)
+						(innerHTML-set! $d h)))
+				(make-file-name
+				   (basename (dirname path))
+				   (basename path)))))
+		       (filter (lambda (c)
+				  (isa? c cache-disk))
+			  (registered-caches)))))
 	    (<TD> :width "80%" :valign 'top
 	       d)))))
 
@@ -294,24 +517,265 @@
 		       e.removeChild( ch[ i ] );
 	            }
 		  } "clear"))
-       (<DIV> :class "traffic"
-	  ~(add-event-listener! $info-event "server"
-				(lambda (e)
-				   (let ((t (event-response-text e)))
-				      (innerHTML-set! $traffic
-						      (string-append
-						       $traffic.innerHTML t)))))
-	  (<SORTTABLE> traffic)))))
+       (if (> (bigloo-debug) 0)
+	   (<DIV> :class "traffic"
+	      ~(add-event-listener! server $info-event
+		  (lambda (e)
+		     (let ((t (event-response-text e)))
+			(innerHTML-set! $traffic
+					(string-append
+					 $traffic.innerHTML t)))))
+	      (<SORTTABLE> traffic))
+	   (<DIV> :class "traffic"
+	      "Run Hop in debug mode (-g option) to activate traffic live inspection.")))))
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/script/server ...                                     */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/script/server)
+   (multiple-value-bind (res rtime stime utime)
+      (time (lambda () (maze 20)))
+      (cons (+ stime utime) (md5sum (apply string-append res)))))
+
+;*---------------------------------------------------------------------*/
+;*    perfs-network-image ...                                          */
+;*---------------------------------------------------------------------*/
+(define perfs-network-image
+   (let ((file (make-file-path (hop-share-directory) "icons" "hop" "hop-16x16.png")))
+      (file->string file)))
+
+;*---------------------------------------------------------------------*/
+;*    perfs-network-response-keepalive ...                             */
+;*---------------------------------------------------------------------*/
+(define perfs-network-response-keepalive
+   (instantiate::http-response-string
+      (content-type (mime-type "hop-16x16.png" "image/png"))
+      (body perfs-network-image)))
+
+;*---------------------------------------------------------------------*/
+;*    perfs-response-file ...                                          */
+;*---------------------------------------------------------------------*/
+(define perfs-network-response-file
+   (instantiate::http-response-file
+      (content-type "text/html")
+      (file (make-file-path (hop-share-directory) "hop.js"))))
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/network/keepalive ...                                 */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/network/keepalive #!key key)
+   perfs-network-response-keepalive)
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/network/file ...                                      */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/network/file #!key key)
+   perfs-network-response-file)
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/network/close ...                                     */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/network/close #!key key)
+   (let ((req (current-request)))
+      (with-access::http-request req (connection)
+	 (set! connection 'close))
+      (instantiate::http-response-string
+	 (request req)
+	 (content-type (mime-type "hop-16x16.png" "image/png"))
+	 (body perfs-network-image))))
+
+;*---------------------------------------------------------------------*/
+;*    info/perfs/network/withhop ...                                   */
+;*---------------------------------------------------------------------*/
+(define-service (info/perfs/network/withhop #!key key)
+   0)
+
+;*---------------------------------------------------------------------*/
+;*    <PERFS> ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (<PERFS>)
+   (list
+    (<H1> "Base configuration")
+    (<TABLE> :id "perfs-base-config"
+       (map (lambda (c)
+	       (<TR>
+		  (<TH> (keyword->string (car c)))
+		  (<TD> (cadr c))))
+	    perfs-base-config))
+    (<H1> "Benchmarks")
+    (<TABLE> :class "perfs-results"
+       (<TR> :class "perfs-head"
+	  (<TH> :colspan 2 "server script")
+	  (<TH> :colspan 2 "client script")
+	  (<TH> :colspan 2 "client dom")
+	  (<TH> :colspan 1 :rowspan 2 "score"))
+       (<TR> :class "perfs-subhead"
+	  (<TH> "time") (<TH> "score")
+	  (<TH> "time") (<TH> "score")
+	  (<TH> "time") (<TH> "score"))
+       (<TR>
+	  (<TD> :class "perfs-val" :id "perfs-server-script-val")
+	  (<TD> :class "perfs-score" :id "perfs-server-script-score" "-")
+	  (<TD> :class "perfs-val" :id "perfs-client-script-val")
+	  (<TD> :class "perfs-score" :id "perfs-client-script-score" "-")
+	  (<TD> :class "perfs-val" :id "perfs-client-dom-val")
+	  (<TD> :class "perfs-score" :id "perfs-client-dom-score" "-")
+	  (<TD> :id "perfs-script-score"))
+       (<CAPTION> "Time in milliseconds. score=100*measured-time/base-time. The higher the score, the better."))
+    (<BR>)
+    (<TABLE> :class "perfs-results"
+       (<TR> :class "perfs-head"
+	  (<TH> :colspan 2 "network keep-alive")
+	  (<TH> :colspan 2 "network close")
+	  (<TH> :colspan 2 "network file")
+	  (<TH> :colspan 2 "network with-hop")
+	  (<TH> :colspan 1 :rowspan 2 "score"))
+       (<TR> :class "perfs-subhead"
+	  (<TH> "time") (<TH> "score")
+	  (<TH> "time") (<TH> "score")
+	  (<TH> "time") (<TH> "score")
+	  (<TH> "time") (<TH> "score"))
+       (<TR>
+	  (<TD> :class "perfs-val" :id "perfs-network-keepalive-val")
+	  (<TD> :class "perfs-score" :id "perfs-network-keepalive-score" "-")
+	  (<TD> :class "perfs-val" :id "perfs-network-close-val")
+	  (<TD> :class "perfs-score" :id "perfs-network-close-score" "-")
+	  (<TD> :class "perfs-val" :id "perfs-network-file-val")
+	  (<TD> :class "perfs-score" :id "perfs-network-file-score" "-")
+	  (<TD> :class "perfs-val" :id "perfs-network-withhop-val")
+	  (<TD> :class "perfs-score" :id "perfs-network-withhop-score" "-")
+	  (<TD> :id "perfs-network-score"))
+       (<CAPTION> "Time in milliseconds. score=100*measured-time/base-time. The higher the score, the better."))
+    (<H1> "Console")
+    (<TABLE>
+       (<TR>
+	  (<TD> :id "perfs-benchmark-name")
+	  (<TD> (<GAUGE> :id "perfs-gauge" :value 0))))
+    (<BR>)
+    (<DIV> :id "perfs-div")
+    (<IMG> :id "perfs-img")
+    (<IFRAME> :id "perfs-iframe")
+    (<H2> "Script benchmarks")
+    (<DIV> :class "perfs-buttons"
+       (<BUTTON> :onclick ~(run-server-benchmark
+			    $(cadr (assq server-script: perfs-base-val))
+			    "perfs-server-script-val"
+			    "perfs-server-script-score"
+			    (make-script-default-kont "perfs-script-score" #f))
+	  "run server script")
+       (<BUTTON> :onclick ~(run-client-benchmark
+			    $(cadr (assq client-script: perfs-base-val))
+			    "perfs-client-script-val"
+			    "perfs-client-script-score"
+			    (make-script-default-kont "perfs-script-score" #f))
+	  "run client script")
+       (<BUTTON> :onclick ~(run-dom-benchmark
+			    $(cadr (assq client-dom: perfs-base-val))
+			    "perfs-client-dom-val"
+			    "perfs-client-dom-score"
+			    (make-script-default-kont "perfs-script-score" #f))
+	  "run dom")
+       (<BUTTON> :onclick ~(run-server-benchmark
+			    $(cadr (assq server-script: perfs-base-val))
+			    "perfs-server-script-val"
+			    "perfs-server-script-score"
+			    (make-script-default-kont
+			     "perfs-script-score"
+			     (lambda (s)
+				(run-client-benchmark
+				 $(cadr (assq client-script: perfs-base-val))
+				 "perfs-client-script-val"
+				 "perfs-client-script-score"
+				 (make-script-default-kont
+				  "perfs-script-score"
+				  (lambda (s)
+				     (run-dom-benchmark
+				      $(cadr (assq client-dom: perfs-base-val))
+				      "perfs-client-dom-val"
+				      "perfs-client-dom-score"
+				      (make-script-default-kont "perfs-script-score" #f))))))))
+	  :class "perfs-all"
+	  "run all"))
+    (<H2> "Network benchmarks")
+    (<DIV> :class "perfs-buttons"
+       (<BUTTON> :onclick ~(run-network-keepalive-benchmark
+			    $(cadr (assq network-keep-alive: perfs-base-val))
+			    "perfs-img"
+			    "perfs-network-keepalive-val"
+			    "perfs-network-keepalive-score"
+			    (make-network-default-kont "perfs-network-score" #f))
+	  "run keep-alive")
+       (<BUTTON> :onclick ~(run-network-close-benchmark
+			    $(cadr (assq network-close: perfs-base-val))
+			    "perfs-img"
+			    "perfs-network-close-val"
+			    "perfs-network-close-score"
+			    (make-network-default-kont "perfs-network-score" #f))
+	  "run close")
+       (<BUTTON> :onclick ~(run-network-file-benchmark
+			    $(cadr (assq network-file: perfs-base-val))
+			    "perfs-iframe"
+			    "perfs-network-file-val"
+			    "perfs-network-file-score"
+			    (make-network-default-kont "perfs-network-score" #f))
+	  "run file")
+       (<BUTTON> :onclick ~(run-network-withhop-benchmark
+			    $(cadr (assq network-with-hop: perfs-base-val))
+			    "perfs-img"
+			    "perfs-network-withhop-val"
+			    "perfs-network-withhop-score"
+			    (make-network-default-kont "perfs-network-score" #f))
+	  "run with-hop")
+       (<BUTTON> :onclick ~(run-network-keepalive-benchmark
+			    $(cadr (assq network-keep-alive: perfs-base-val))
+			    "perfs-img"
+			    "perfs-network-keepalive-val"
+			    "perfs-network-keepalive-score"
+			    (make-network-default-kont
+			     "perfs-network-score"
+			     (lambda (s)
+				(run-network-close-benchmark
+				 $(cadr (assq network-close: perfs-base-val))
+				 "perfs-img"
+				 "perfs-network-close-val"
+				 "perfs-network-close-score"
+				 (make-network-default-kont
+				  "perfs-network-score"
+				  (lambda (s)
+				     (run-network-file-benchmark
+				      $(cadr (assq network-file: perfs-base-val))
+				      "perfs-iframe"
+				      "perfs-network-file-val"
+				      "perfs-network-file-score"
+				      (make-network-default-kont
+				       "perfs-network-score"
+				       (lambda (s)
+					  (run-network-withhop-benchmark
+					   $(cadr (assq network-with-hop: perfs-base-val))
+					   "perfs-img"
+					   "perfs-network-withhop-val"
+					   "perfs-network-withhop-score"
+					   (make-network-default-kont
+					    "perfs-network-score"
+					    #f)))))))))))
+	  :class "perfs-all"
+	  "run all"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENTS> ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (<EVENTS>)
    (<TABLE> :class "events"
-      (<COLGROUP> (<COL> :span 2 :width "50%"))
-      (<TR> (<TD> :colspan 2 (<EVENT-CLIENTS>) " connected clients."))
-      (<TR> (<TH> :class "events" "Flash") (<TH> :class "events" "Ajax"))
-      (<TR> (<TD> (<EVENT-FLASH>)) (<TD> (<EVENT-AJAX>)))))
+      (<COLGROUP> (<COL> :span 3 :width "33%"))
+      (<TR> (<TD> :colspan 3 (<EVENT-CLIENTS>) " connected clients."))
+      (<TR> (<TH> :class "events" "Multipart")
+	    (<TH> :class "events" "Flash")
+	    (<TH> :class "events" "Ajax"))
+      (<TR> (<TD> (<EVENT-FLASH/MULTIPART>
+		     '*multipart-socket-table* '*multipart-request-list*))
+	    (<TD> (<EVENT-FLASH/MULTIPART>
+		     '*flash-socket-table* '*flash-request-list*))
+	    (<TD> (<EVENT-AJAX>)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENT-CLIENTS> ...                                              */
@@ -321,9 +785,9 @@
       (<SPAN> :class "events-clients" (cadr (assq '*clients-number* tables)))))
    
 ;*---------------------------------------------------------------------*/
-;*    <EVENT-FLASH> ...                                                */
+;*    <EVENT-FLASH/MULTIPART> ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (<EVENT-FLASH>)
+(define (<EVENT-FLASH/MULTIPART> key1 key2)
    (let ((tables (hop-event-tables)))
       (<DIV> :class "dump-events"
 	 (<H1> "Request list")
@@ -333,26 +797,27 @@
 		       (<TH>
 			  (symbol->string (car e)))
 		       (<TD>
-			  (let ((sock (http-request-socket (cadr e))))
-			     (<SPAN> (socket-hostname sock)
+			  (with-access::http-request (cadr e) (socket)
+			     (<SPAN> (socket-hostname socket)
 				     ":"
-				     (socket-port-number sock))))))
-		 (cadr (assq '*flash-request-list* tables))))
+				     (socket-port-number socket))))))
+	       (cadr (assq key2 tables))))
 	 (<H1> "Socket table")
 	 (<TABLE> :class "dump-events"
 	    (hashtable-map
-	     (cadr (assq '*flash-socket-table* tables))
-	     (lambda (k v)
-		(list
-		 (<TR> (<TH> k))
-		 (<TR> (<TD> (map (lambda (r)
-				     (let ((sock (http-request-socket r)))
-					(list (<SPAN>
-						 (socket-hostname sock)
-						 ":"
-						 (socket-port-number sock))
-					      " ")))
-				  v))))))))))
+	       (cadr (assq key1 tables))
+	       (lambda (k v)
+		  (list
+		     (<TR> (<TH> k))
+		     (<TR> (<TD> (map (lambda (r)
+					 (with-access::http-request r (socket)
+					    (list
+					       (<SPAN>
+						  (socket-hostname socket)
+						  ":"
+						  (socket-port-number socket))
+					       " ")))
+				    v))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EVENT-AJAX> ...                                                 */

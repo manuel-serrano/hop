@@ -13,6 +13,7 @@ need to implement low-level operations on URLs.
 
 === Server ===
 
+  (http-request-cgi-args ::http-request)
   (cgi-args->list url)
   (cgi-fetch-arg url name)
   (cgi-multipart->list tmp port length boundary)
@@ -24,6 +25,19 @@ need to implement low-level operations on URLs.
 
 == Server Definitions ==
 <server>
+
+=== ++(http-request-cgi-args req) ===
+<function> http-request-cgi-args
+
+<arguments>
+^  arguments  ^   type   ^  short description                                   ^
+| req      |  http-request  | a server request.  |
+</arguments>
+
+~~ Parses the CGI arguments of a HTTP request. Returns a list composed of
+the absolute path of the request followed by arguments information such
+as provided by the function ++cgi->args->list++.
+</function>
 
 === ++(cgi-args->list string) ===
 <function> cgi-args->list
@@ -39,7 +53,7 @@ the ++URL++.
 ~~ Example:
 
   (cgi-args->list "a0=val0&a1=val1&a2=val2")
-,(begin "&#8658;")
+,(<SYM> '->)
 ,(<OBJ->STRING> (cgi-args->list "a0=val0&a1=val1&a2=val2"))
 
 </function>
@@ -61,7 +75,7 @@ is a string, is returned.
 ~~ Example:
 
   (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2")
-,(begin "&#8658;")
+,(<SYM> '->)
  ,(<OBJ->STRING> (cgi-fetch-arg "a1" "www.kernel.org?a0=val0&a1=val1&a2=val2"))
 </function>
 

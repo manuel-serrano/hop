@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopsh/repl.scm                    */
+;*    serrano/prgm/project/hop/2.4.x/hopsh/repl.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Thu Apr  2 09:42:27 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Sat May 25 09:51:07 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
@@ -30,10 +30,10 @@
 (define (hopsh-eval exp)
    (with-handler
       (lambda (e)
-	 (if (&error? e)
+	 (if (isa? e &error)
 	     (begin
-		(error-notify e)
-		(when (eof-object? (&error-obj e))
+		(exception-notify e)
+		(when (with-access::&error e (obj) (eof-object? obj))
 		   (reset-eof (current-input-port)))
 		(sigsetmask 0)
 		#unspecified)
@@ -76,7 +76,7 @@
       (lambda ()
 	 (let ((args (port->string-list (current-input-port))))
 	    (if (null? args)
-		(error 'command->url "Illegal command" str)
+		(error "command->url" "Illegal command" str)
 		(make-hopsh-url (car args)
 				(command-options str (cdr args))))))))
 
@@ -97,26 +97,35 @@
 (define (hopsh-exec url)
    (let loop ((header (login->header (hopsh-login)))
 	      (count 3))
-      (with-url url
-	 (lambda (s) s)
-	 :fail (lambda (xhr)
-		  (case (xml-http-request-status xhr)
-		     ((404)
-		      (error 'hopsh "document not found" url))
-		     ((401)
-		      (if (=fx count 0)
-			  (error 'hop-sh "permission denied'" url)
-			  (begin
-			     (login!)
-			     (when (hopsh-login)
-				(loop (login->header (hopsh-login))
-				      (-fx count 1))))))
-		     (else
-		      (error 'hopsh
-			     (format "Illegal status code `~a'"
-				     (xml-http-request-status xhr))
-			     (read-string (xml-http-request-input-port xhr))))))
-	 :header header)))
+      (let liip ((ttl 5))
+	 (with-handler
+	    (lambda (e)
+	       (if (and (isa? e &io-timeout-error) (> ttl 0))
+		   (begin
+		      (sleep 100000)
+		      (liip (- ttl 1)))
+		   (raise e)))
+	    (with-url url
+	       (lambda (s) s)
+	       :timeout (hopsh-timeout)
+	       :fail (lambda (xhr)
+			(with-access::xml-http-request xhr (status input-port)
+			   (case status
+			      ((404)
+			       (error "hopsh" "document not found" url))
+			      ((401)
+			       (if (=fx count 0)
+				   (error "hop-sh" "permission denied'" url)
+				   (begin
+				      (login!)
+				      (when (hopsh-login)
+					 (loop (login->header (hopsh-login))
+					    (-fx count 1))))))
+			      (else
+			       (error "hopsh"
+				  (format "Illegal status code `~a'" status)
+				  (read-string input-port))))))
+	       :header header)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    login->header ...                                                */
@@ -135,13 +144,13 @@
 	 ((null? o)
 	  '())
 	 ((null? (cdr o))
-	  (error 'command->url
+	  (error "command->url"
 		 (format "Illegal command option `~a'" (car o))
 		 str))
 	 ((not (char=? (string-ref (car o) 0) #\-))
 	  (cons (car o) (loop (cdr o))))
 	 ((null? (cdr o))
-	  (error 'command->url
+	  (error "command->url"
 		 (format "Actual value missing for option: ~a" (car o))
 		 `(,str ,@opts)))
 	 (else

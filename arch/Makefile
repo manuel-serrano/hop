@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/arch/Makefile                     */
+#*    serrano/prgm/project/hop/2.3.x/arch/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon May  4 21:13:41 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Wed May 23 17:12:15 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -18,14 +18,15 @@
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile macosx/Makefile.bundle
+POPULATION = Makefile
+
+POPDIRS = felix android macosx vm debian archlinux vm
 
 install:
 
 uninstall:
 
 clean:
-
 
 devclean: clean
 

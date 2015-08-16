@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/hz/install.hop            */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/install.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
-;*    Last change :  Wed May  6 10:25:34 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Tue Jul 17 19:16:32 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -19,89 +19,22 @@
 	   hz_weblet
 	   hz_db)
    
-   (export (hz-install-url ::bstring #!key auth)
-	   (hz-install-weblet ::weblet)
-	   (hz-load ::bstring)
+   (export (hz-load ::bstring)
+	   (hz-install-weblet ::weblet #!key override)
+	   (hz-download-url ::bstring #!key auth weblet override)
+	   (hz-install-url ::bstring #!key auth weblet override publisher)
 	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-install-weblet ...                                            */
+;*    hz-check-weblet ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Check that one weblet can be installed (check depends). Returns  */
+;*    #t on success, returns the name of the failing weblet and        */
+;*    the reason of the failure.                                       */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-weblet e)
-   (hz-install-url (weblet-url e)
-		   :auth (weblet-authorization e)
-		   :weblet e))
-
-;*---------------------------------------------------------------------*/
-;*    hz-install-url ...                                               */
-;*---------------------------------------------------------------------*/
-(define (hz-install-url url #!key auth weblet)
-   (hz-db-init!)
-   (multiple-value-bind (name version)
-      (package-url-parse url)
-      (let* ((hzfile (format "~a-~a.hz" name version))
-	     (hzpath (make-file-name (hz-download-directory) hzfile))
-	     (header (cond
-			((string? auth)
-			 (list (list authorization: auth)))
-			((pair? auth)
-			 (list (list authorization:
-				     (http-basic-authorization
-				      (car auth) (cdr auth)))))
-			(else
-			 '()))))
-	 (when (file-exists? hzpath)
-	    (delete-file hzpath))
-	 (with-url url
-	    (lambda (str)
-	       ;; download the file
-	       (with-output-to-file hzpath
-		  (lambda ()
-		     (display str)))
-	       ;; install it
-	       (let ((w (hz-install-file weblet hzpath name version url)))
-		  (reset-autoload!)
-		  w))
-	    :fail (lambda (xhr)
-		     ;; raise an error to stop everything
-		     (let* ((iport (xml-http-request-input-port xhr))
-			    (msg (read-string iport)))
-			(list (xml-http-request-status xhr) url msg)))
-	    :timeout (hz-connection-timeout)
-	    :header header))))
-
-;*---------------------------------------------------------------------*/
-;*    hz->weblet ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (hz->weblet name version url)
-   (let* ((p (make-file-path (hz-weblets-directory) name "etc" "weblet.info"))
-	  (i (if (file-exists? p)
-		 (with-input-from-file p read)
-		 `((name ,name) (version ,version)))))
-      (info->weblet i :name name :version version :url url)))
-
-;*---------------------------------------------------------------------*/
-;*    hz-install-file ...                                              */
-;*---------------------------------------------------------------------*/
-(define (hz-install-file e path name version url)
-   ;; untar the .hz into the weblets directory
-   (let* ((p (open-input-gzip-file path)))
-      (unwind-protect
-	 (untar p :directory (hz-weblets-directory))
-	 (close-input-port p)))
-   ;; add the weblet to the database
-   (let ((e (or e (hz->weblet name version url))))
-      ;; add the publisher for other possible weblets
-      (weblet-stamp-set! e (hz-db-sync-stamp))
-      ;; mark the weblet as installed
-      (let ((pub (weblet-publisher e)))
-	 (unless (or (not (string? pub)) (string=? pub ""))
-	    (hz-publisher-add! pub)))
-      ;; update the database
-      (weblet-install-set! e (weblet-version e))
-      (hz-db-add-or-update! e)
-      ;; try to configure the weblet
-      e))
+(define (hz-check-weblet e)
+   (with-access::weblet e (depends)
+      #t))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-load ...                                                      */
@@ -124,21 +57,128 @@
 			     (src (make-file-path
 				   tmp name (string-append name ".hop"))))
 			 (if (file-exists? src)
-			     (hop-load src)
-			     (error 'hz-load "Cannot find HOP source" path)))
-		      (error 'hz-load "Cannot find HOP source" path)))
+			     (hop-load-weblet src)
+			     (error "hz-load" "Cannot find HOP source" path)))
+		      (error "hz-load" "Cannot find HOP source" path)))
 	       (begin
 		  (close-input-port p)
 		  (close-input-port p0)))))
       :timeout (hz-connection-timeout)))
 
 ;*---------------------------------------------------------------------*/
+;*    hz-install-weblet ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-install-weblet e #!key override)
+   (with-access::weblet e (name url authorization)
+      (hz-install-url url :auth authorization :weblet e :override override)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-download-url ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hz-download-url url #!key auth weblet override)
+
+   (define (download url name version path)
+      (let ((header (cond
+		       ((string? auth)
+			(list (list authorization: auth)))
+		       ((pair? auth)
+			(list (list authorization:
+				 (http-basic-authorization
+				    (car auth) (cdr auth)))))
+		       (else
+			'()))))
+	 (with-url url
+	    (lambda (str)
+	       ;; download the file
+	       (with-output-to-file path
+		  (lambda ()
+		     (display str)))
+	       ;; return the path name
+	       path)
+	    :fail (lambda (xhr)
+		     (with-access::xml-http-request xhr (input-port status)
+			;; raise an error to stop everything
+			(let ((msg (read-string input-port)))
+			   ;; WARNING, MS 19dec2010: this code is incorrect,
+			   ;; READ-STRING is not correct. A true parsing
+			   ;; (with content-length) should be needed here.
+			   (list status url msg))))
+	    :timeout (hz-connection-timeout)
+	    :header header)))
+      
+   (multiple-value-bind (name version)
+      (package-url-parse url)
+      (let* ((hzfile (format "~a-~a.hz" name version))
+	     (hzpath (make-file-name (hz-download-directory) hzfile)))
+	 (cond
+	    ((not (file-exists? hzpath))
+	     (download url name version hzpath))
+	    ((not override)
+	     hzpath)
+	    (else
+	     (delete-file hzpath)
+	     (download url name version hzpath))))))
+   
+;*---------------------------------------------------------------------*/
+;*    hz-install-url ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hz-install-url url #!key auth weblet override publisher)
+   (hz-db-init!)
+   (multiple-value-bind (name version)
+      (package-url-parse url)
+      (let ((r (hz-download-url url :auth auth :weblet weblet :override override)))
+	 (if (and (string? r) (file-exists? r))
+	     ;; now downloaded, install
+	     (let ((w (hz-install-file weblet r name version url)))
+		;; add the publisher to the publisher list
+		(when (and (string? publisher) (not (string-null? publisher)))
+		   (hz-publisher-add! publisher))
+		(reset-autoload!)
+		w)
+	     ;; propagate the failure
+	     r))))
+
+;*---------------------------------------------------------------------*/
+;*    hz->weblet ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hz->weblet name version url)
+   (let* ((dir (make-file-name (hz-weblets-directory) name))
+	  (p  (make-file-path dir "etc" "weblet.info"))
+	  (i (if (file-exists? p)
+		 (with-input-from-file p read)
+		 `((name ,name) (version ,version)))))
+      (info->weblet i :name name :version version :url url :dir dir)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-install-file ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hz-install-file e path name version url)
+   ;; untar the .hz into the weblets directory
+   (let* ((p (open-input-gzip-file path)))
+      (unwind-protect
+	 (untar p :directory (hz-weblets-directory))
+	 (close-input-port p)))
+   ;; add the weblet to the database
+   (let ((e (or e (hz->weblet name version url))))
+      ;; add the publisher for other possible weblets
+      (with-access::weblet e (stamp publisher install version)
+	 (set! stamp (hz-db-sync-stamp))
+	 ;; mark the weblet as installed
+	 (unless (or (not (string? publisher)) (string=? publisher ""))
+	    (hz-publisher-add! publisher))
+	 ;; update the database
+	 (set! install version))
+      (hz-db-add-or-update! e)
+      ;; try to configure the weblet
+      e))
+   
+;*---------------------------------------------------------------------*/
 ;*    hz-uninstall-weblet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall-weblet w)
    (hz-db-init!)
-   (when (weblet? w)
+      (when (isa? w weblet)
       (with-access::weblet w (name install)
-	 (when (delete-path (make-file-path (hz-weblets-directory) name))
-	    (set! install "")
-	    (hz-db-add-or-update! w)))))
+	 (delete-path (make-file-path (hz-weblets-directory) name))
+	 (set! install "")
+	 (hz-db-update! w))))

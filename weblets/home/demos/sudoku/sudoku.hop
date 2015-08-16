@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../project/hop/1.9.x/weblets/home/demos/sudoku/sudoku.hop       */
+;*    .../project/hop/2.0.x/weblets/home/demos/sudoku/sudoku.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Wed Mar 22 14:27:22 2006                          */
-;*    Last change :  Tue Sep 23 05:54:54 2008 (serrano)                */
+;*    Last change :  Sun Jan 10 12:08:37 2010 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    Sudoku HOP demo                                                  */
 ;*=====================================================================*/
@@ -149,47 +149,45 @@
 ;;; 	board->html ...
 ;;; ======================================================================
 (define (board->html board level)
-  (define (show-cell id i j)
-    (let ((item (array-ref board i j)))
-      (if (negative? item)
-	  (<SPAN> :class "sudoku-cell-given" :id id (- item))
-	  (<SPAN> :class "sudoku-cell-unknown" :id id))))
-  (list 
-   (<DIV> :class "sudoku-board"
-     (map (lambda (x)
-	    (<DIV> :class "sudoku-group"
-		   (map (lambda (y)
+   (define (show-cell id i j)
+      (let ((item (array-ref board i j)))
+	 (if (negative? item)
+	     (<SPAN> :class "sudoku-cell-given" :id id (- item))
+	     (<SPAN> :class "sudoku-cell-unknown" :id id))))
+   (list 
+    (<DIV> :class "sudoku-board"
+       (map (lambda (x)
+	       (<DIV> :class "sudoku-group"
+		  (map (lambda (y)
 			  (let* ((i  (+ (* (quotient x 3) 3) (quotient y 3)))
 				 (j  (+ (* (remainder x 3) 3) (remainder y 3)))
 				 (id (format "sudoku-~a-~a" i j)))
-			    (<DIV> :class "sudoku-cell" 
-				   :onclick ~(click-cell $id)
-				   (show-cell id i j))))
-			(iota 9))))
-	  (iota 9)))
-   (<DIV> "Game level: " level "/5")))
-
+			     (<DIV> :class "sudoku-cell" 
+				:onclick ~(click-cell $id)
+				(show-cell id i j))))
+		       (iota 9))))
+	    (iota 9)))
+    (<DIV> "Game level: " level "/5")))
 
 ;;; ======================================================================
 ;;; 	run-sudoku ...
 ;;; ======================================================================
-(define-service (home/demos/sudoku)
-   (let* ((level 1)
-	  (board (init-sudoku level)))
+(define-service (home/demos/sudoku #!key (level 3))
+   (let ((board (init-sudoku level)))
       (<HTML>
-	 (<HEAD>
-	    :base (service-base-url home/demos/sudoku (current-request))
+	 (<HEAD> :base (service-base-url home/demos/sudoku (current-request))
 	    :jscript "sudoku.scm" :css "sudoku.hss")
 	 (<BODY>
 	    (<DIV> :class "sudoku-title" (<IMG> :src "sudoku.png"))
 	    (<DIV> :class "sudoku-panel"
 	       (<H2>  "Menu")
 	       (<DIV> :class "sudoku-menu"
-		  (<DIV> 
-		     "Level: "
-		     [,(<A> "1") ,(<A> "2") ,(<A> "3") ,(<A> "4") ,(<A> "5")])
-		  (<DIV>
-		     "Show errors: "
+		  (<DIV> "Level: "
+		     (map (lambda (l)
+			     (list
+			      (<A> :href (home/demos/sudoku :level l) l) " "))
+			  (iota 5 1)))
+		  (<DIV> "Show errors: "
 		     (<INPUT> :type "radio" :name "err" :checked "checked"
 			:style "cursor: pointer"
 			:onclick ~(set! *show-errors* #t))
@@ -198,9 +196,9 @@
 			:style "cursor: pointer"
 			:onclick ~(set! *show-errors* #f))
 		     "no")
-		  (<DIV> :style "cursor: pointer" :onclick ~(show-solution)
+		  (<DIV> :style "cursor: pointer; border: 1px solid #ccc; background: #eee; text-align: center; margin-bottom: 4px; margin-top: 4px;" :onclick ~(show-solution)
 		     "Show-solution")
-		  (<DIV> :style "cursor: pointer" :onclick ~(window.print)
+		  (<DIV> :style "cursor: pointer; border: 1px solid #ccc; background: #eee; text-align: center" :onclick ~(window.print)
 		     "Print the board"))
 	       (<H2> "Help")
 	       (<DIV> :class "sudoku-help"

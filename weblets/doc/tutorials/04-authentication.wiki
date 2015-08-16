@@ -36,7 +36,7 @@ such as:
 
 <code>
   (add-user! "turing"
-             :password "7cfc0ea2b67e6d80366f014674cb6cd9"
+             :password "+7cfc0ea2b67e6d80366f014674cb6cd9"
              :directories '("/university/manchester")
              :services '(enigma))
 </code>
@@ -186,7 +186,7 @@ of requests handled by HOP exceeded a limit.
 implementation is:
 
 <code>
-  (define (login req name pass local)
+  (define (login req::http-request name pass local)
      ~(let ((svc ($hz/setcookie $(begin name).value
                                 $(begin pass).value
                                 (if $(begin local).checked "local" "share")))
@@ -196,10 +196,10 @@ implementation is:
                            (+ (date.getMinutes) $(hz-auto-logout-minute)))
                          (cookie-set! "hop_hz"
                                       http
-                                      $(http-request-path req)
+                                      $req.path
                                       #f
                                       date)
-                         (set! location $(http-request-path req))))))
+                         (set! location $req.path)))))
          (with-hop svc cback)))
 </code>
 
@@ -223,8 +223,8 @@ is:
 In order to log out, users use:
 
 <code>
-  (define (logout req)
-     (let ((path (http-request-path req)))
+  (define (logout req::http-request)
+     (let ((path req.path))
         ~(let ((path $path))
             (cookie-remove! "hop_hz" path)
             (set! location path))))
@@ -269,9 +269,9 @@ for requests associated with an authenticated user:
 
 <code>
   (hop-path-access-control-set!
-    (lambda (req path)
+    (lambda (req::http-request path)
        (and (substring-at? path "/tmp" 0)
-            (user? (http-request-user req)))))
+            (user? req.user))))
 </code>
 
 == Enabling proxy requests ==

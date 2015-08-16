@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-10 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module liveness
    (import nodes
 	   walk
@@ -78,7 +90,7 @@
 			(s-end shorted-this))
 		(cond
 		   ((null? s-begin)
-		    (error 'liveness "Internal error: liveness" '()))
+		    (error "liveness" "Internal error: liveness" '()))
 		   ((eq? (cdr s-begin) (cdr s-end))
 		    ;; this even works for 'if/then/else'
 		    ;; although it isn't optimal.

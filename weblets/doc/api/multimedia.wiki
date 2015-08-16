@@ -26,7 +26,7 @@ library:
 </code>
 
 The source code of the 
-[[http://hop.inria.fr/hop/weblets/homepage?weblet=hopaudio|HopAudio]] 
+[[http://hop.inria.fr/hop/weblets/homepage?weblet=hopmusic|HopMusic]] 
 weblet is good example of Web Audio multimedia application implemented 
 in Hop. It uses almost all the features described in the manual page.
 
@@ -89,6 +89,12 @@ in Hop. It uses almost all the features described in the manual page.
   
   (mpd  music input-port output-port database :log)
   (class mpd-database directories)
+
+  (hsv->rgb h s v)
+  (hsl->rgb h s l)
+  (rgb->hsv r g b)
+  (rgb->hsl r g l)
+
 
 == Server Definitions ==
 <server>
@@ -347,7 +353,7 @@ spawns in background a mpg123 process.
 </class>
 
 ===== ++(class mpc::music ...)++ =====
-<class> mplayer
+<class> mpc
 <fields>
 ^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
 | hello   |    r      |   obj    |  ++#f++   | An optional //hello// phrase sent to MPD.  |
@@ -585,6 +591,36 @@ The field ++directories++ contains the list of the directories that contains
 music files.
 
 </class>
+
+=== Color ===
+
+===== ++(hsv->rgb h s v)++ =====
+===== ++(hsl->rgb h s l)++ =====
+===== ++(rgb->hsv r g b)++ =====
+===== ++(rgb->hsl r g b)++ =====
+<function> hsv->rgb
+<function> hsl->rgb
+<function> rgb->hsv
+<function> rgb->hsl
+</function>
+</function>
+</function>
+</function>
+
+These procedures converts from and to HSV, HSL, and RGB representations.
+The argument ++h++ is an integer in the range ++[0..360]++, 
+the arguments ++s++, ++v++, and ++l++ in the range ++[0..100]++. The
+arguments ++r++, ++g++, and ++b++ are in the range ++[0..255]++.
+These procedures returns multiple-values.
+
+<code>
+  (multiple-value-bind (r g b)
+     (hsv->rgb 340 34 56)
+     (list r g b)) ,(<SYM> '=>) (143 94 110)
+  (multiple-value-bind (h s v)
+     (rgb->hsv 255 0 0)
+     (list h s v)) ,(<SYM> '=>) (0 100 100)
+</code>
 
 </server>
 </library>

@@ -15,7 +15,8 @@
 	 (join-login (<INPUT> :type "hidden" :name "login"))
 	 (new-login (<INPUT> :type "hidden" :name "login"))
 	 (active-games (filter (lambda (g)
-				  (eq? (Game-state (cdr g)) 'open))
+				  (with-access::Game (cdr g) (state)
+				     (eq? state 'open)))
 			       *games*)))
       (<HTML>
 	 (<HEAD>
@@ -44,9 +45,10 @@
 				  :id "join-game-form"
 				  :action home/demos/set/join-game
 				  :onsubmit ~(return!
-					      (begin
-						 (set! $join-login.value
-						       $login-field.value)
+					      (let ((join-login $join-login)
+						    (login-field $login-field))
+						 (set! join-login.value
+						       login-field.value)
 						 #t))
 				  join-login
 				  (<TABLE>
@@ -66,9 +68,10 @@
 			      :id "new-game-form"
 			      :action home/demos/set/new-game
 			      :onsubmit ~(return!
-					  (begin
-					     (set! $new-login.value
-						   $login-field.value)
+					  (let ((new-login $new-login)
+						(login-field $login-field))
+					     (set! new-login.value
+						   login-field.value)
 					     #t))
 			      new-login
 			      (<TABLE>
@@ -146,19 +149,19 @@
 		(<HTML>
 		   (<BODY>
 		      "Game does not exist.")))
-	       ((eq? (Game-state (cdr g)) 'playing)
+	       ((eq? (with-access::Game (cdr g) (state) state) 'playing)
 		(<HTML>
 		   (<BODY>
 		      "Game has already started.")))
-	       ((eq? (Game-state (cdr g)) 'game-over)
+	       ((eq? (with-access::Game (cdr g) (state) state) 'game-over)
 		(<HTML>
 		   (<BODY>
 		      "Game has already finished.")))
 	       ((or (not (string? login))
 		    (string=? "" login)
-		    (any? (lambda (player)
-			     (string=? login (Player-login player)))
-			  (Game-players (cdr g))))
+		    (any (lambda (player::Player)
+			    (string=? login player.login))
+		       (with-access::Game (cdr g) (players) players)))
 		(<HTML>
 		   (<BODY>
 		      "Login is invalid or already used")))
@@ -183,8 +186,8 @@
 		   "Login is invalid")))
 	    ((or (not (string? name))
 		 (string=? "" name)
-		 (any? (lambda (g)
-			  (string=? name (car g)))
+		 (any (lambda (g)
+			 (string=? name (car g)))
 		       *games*))
 	     (<HTML>
 		(<BODY>

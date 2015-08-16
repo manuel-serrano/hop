@@ -6,8 +6,8 @@ When the HOP server receives a request, it first parses the stream of input
 characters in order to build a ::http-request that contains all the
 information needed to serve the client. Then, it applies all the
 //filters// for elaborating an answer which is an instance of the
-::%http-response class. If the answer is an instance of ::http-response-remote
-it applies the //remote// hooks. Otherwise, it applies the //local// hooks.
+::%http-response class. If the answer is an instance of ::http-response-proxy
+it applies the //proxy// hooks. Otherwise, it applies the //server// hooks.
 
 ~~ A hook is a function accepting two parameters:
   - a request descriptor (an instance of ::http-request).
@@ -24,71 +24,71 @@ be installed from the ,(<TUTORIALREF> "RC file" "07-hoprc.wiki") file.
 
 === server ===
 
-  (hop-http-response-local-hooks)
-  (hop-http-response-local-hooks-set! list)
-  (hop-http-response-local-hook-add! procedure)
-  (hop-http-response-local-hook-remove! procedure)
-  (hop-http-response-remote-hooks)
-  (hop-http-response-remote-hooks-set! list)
-  (hop-http-response-remote-hook-add! procedure)
-  (hop-http-response-remote-hook-remove! procedure)
+  (hop-http-response-server-hooks)
+  (hop-http-response-server-hooks-set! list)
+  (hop-http-response-server-hook-add! procedure)
+  (hop-http-response-server-hook-remove! procedure)
+  (hop-http-response-proxy-hooks)
+  (hop-http-response-proxy-hooks-set! list)
+  (hop-http-response-proxy-hook-add! procedure)
+  (hop-http-response-proxy-hook-remove! procedure)
 
 
 == Examples ==
-<example>hop-http-response-local-hook, hop-http-response-remote-hook</example>
+<example>hop-http-response-server-hook, hop-http-response-proxy-hook</example>
 
 == Server Definitions ==
 <server>
 
-=== ++(hop-http-response-local-hooks)++ ===
-=== ++(hop-http-response-remote-hooks)++ ===
-<function> hop-http-response-local-hooks
-<function> hop-http-response-remote-hooks
+=== ++(hop-http-response-server-hooks)++ ===
+=== ++(hop-http-response-proxy-hooks)++ ===
+<function> hop-http-response-server-hooks
+<function> hop-http-response-proxy-hooks
 
-Returns the list of currently installed //local// (respectively 
-//remote//) hooks.
+Returns the list of currently installed //server// (respectively 
+//proxy//) hooks.
 </function>
 </function>
 
-=== ++(hop-http-response-local-hooks-set! list)++ ===
-=== ++(hop-http-response-remote-hooks-set! list)++ ===
-<function> hop-http-response-local-hooks-set!
-<function> hop-http-response-remote-hooks-set!
+=== ++(hop-http-response-server-hooks-set! list)++ ===
+=== ++(hop-http-response-proxy-hooks-set! list)++ ===
+<function> hop-http-response-server-hooks-set!
+<function> hop-http-response-proxy-hooks-set!
 
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
 | list             |  list        | a list of hook.                 |
 </arguments>
 
-Replaces all the //local// (respectively //remote//) hooks.
+Replaces all the //server// (respectively //proxy//) hooks.
 </function>
 </function>
 
-=== ++(hop-http-response-local-hook-add! hook)++ ===
-=== ++(hop-http-response-remote-hook-add! hook)++ ===
-<function> hop-http-response-local-hook-add!
-<function> hop-http-response-remote-hook-add!
+=== ++(hop-http-response-server-hook-add! hook)++ ===
+=== ++(hop-http-response-proxy-hook-add! hook)++ ===
+<function> hop-http-response-server-hook-add!
+<function> hop-http-response-proxy-hook-add!
 
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
 | hook             |  procedure   | a hook.                         |
 </arguments>
 
-Add the new ++hook++ to the list of //local// (respectively //remote//) hooks.
+Add the new ++hook++ to the list of //server// (respectively //proxy//) hooks.
 </function>
 </function>
 
-=== ++(hop-http-response-local-hook-remove! hook)++ ===
-=== ++(hop-http-response-remote-hook-remove! hook)++ ===
-<function> hop-http-response-local-hook-remove!
-<function> hop-http-response-remote-hook-remove!
+=== ++(hop-http-response-server-hook-remove! hook)++ ===
+=== ++(hop-http-response-proxy-hook-remove! hook)++ ===
+<function> hop-http-response-server-hook-remove!
+<function> hop-http-response-proxy-hook-remove!
 
 <arguments>
 ^  arguments       ^   type       ^  short description              ^
 | hook             |  procedure   | a hook.                         |
 </arguments>
 
-Remove the ++hook++ to the list of //local// (respectively //remote//) 
+Remove the ++hook++ to the list of //server// (respectively //proxy//) 
 hooks.
 </function>
 </function>
@@ -96,6 +96,6 @@ hooks.
 </server>
 
 == See also ==
-<see-also>hop-http-response-local-hook, hop-http-response-remote-hook, http-request, http-response, hop-filter</see-also>
+<see-also>hop-http-response-server-hook, hop-http-response-proxy-hook, http-request, http-response, hop-filter</see-also>
 
 </doc>

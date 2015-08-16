@@ -1,122 +1,67 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-lib.js                  */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-lib.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Mar 22 07:15:48 2009 (serrano)                */
-/*    Copyright   :  2007-09 Manuel Serrano                            */
+/*    Last change :  Mon Feb  3 11:01:57 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    hop_client_debug ...                                             */
+/*    Standard JS library                                              */
 /*---------------------------------------------------------------------*/
-var hop_client_debug = 0;
+/*** META ((export Math) (JS Math)) */
+/*** META ((export navigator) (JS navigator)) */
+/*** META ((export eval) (JS eval)) */
+/*** META ((export confirm) (JS confirm)) */
+/*** META ((export setInterval) (JS setInterval)) */
+/*** META ((export clearInterval) (JS clearInterval)) */
+/*** META ((export arguments) (JS arguments)) */
+/*** META ((export hop-session) (JS hop_session)) */
+/*** META ((export hop-realm) (JS hop_realm)) */
+/*** META ((export md5sum) (JS md5sum)) */
+/*** META ((export md5sum-string) (JS hdex_md5)) */
+/*** META ((export hop-debug) (JS hop_debug)) */
+/*** META ((export hop-update) (JS hop_update)) */
+/*** META ((export server) (JS hop_server)) */
 
-var hop_client_error = "data:image/png;base64,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";
-   
 /*---------------------------------------------------------------------*/
-/*    hop_error_html ...                                               */
+/*    hop_callback ...                                                 */
+/*    -------------------------------------------------------------    */
+/*    See HOP-CALLBACK-HANDLER, hop-exception.scm.                     */
+/*    See also XML-TILDE->STATEMENT, runtime/xml.scm                   */
 /*---------------------------------------------------------------------*/
-function hop_error_html( fun, exc, msg ) {
-   var el = document.createElement( 'div' );
-   var emsg = false;
+function hop_callback( proc, ctx, id ) {
+   if( !("apply" in proc) ) {
+      sc_typeError( id, "procedure", proc, 2 );
+   }
+
+   hop_current_stack_context = ctx;
    
-   msg = msg.replace( /</g, "&lt;" );
-   msg = msg.replace( />/g, "&gt;" );
-   msg = msg.replace( /&quot;/g, "\"" );
-   
-   if( exc ) {
-      if( "message" in exc ) {
-	 emsg = exc.message;
-      } else {
-	 if( "description" in exc ) {
-	    emsg = exc.description;
-	 } else {
-	    emsg = exc.toString();
-	 }
+   var applyCallback = function() {
+      try {
+	 return proc.apply( this, arguments );
+      } catch( e ) {
+	 hop_callback_handler( e, ctx );
       }
    }
 
-   node_style_set( el, "overflow", "hidden" );
-   node_style_set( el, "padding", "0" );
-   node_style_set( el, "border", "1px solid #ccc" );
-   node_style_set( el, "-moz-border-radius", "0.5em" );
-   node_style_set( el, "height", "100%" );
-   node_style_set( el, "width", "100%" );
-   node_style_set( el, "margin", "0" );
-
-   el.innerHTML =
-      ("<table style='width: 100%; font-family: arial;'>"
-       + "<colgroup><col width='64px'><col></colgroup>"
-       + "<tr><td style='height: 64px; vertical-align: top; padding-top: 20px; padding-left: 10px; padding-right: 10px'><img src='" + hop_client_error + "' alt='Error'></td><td>"
-       + "<table style='width: 100%; font-size: 90%'><colgroup><col width='0*'></colgroup>"
-       + "  <tr><td colspan='2' style='text-align: left; width: 100%; border-bottom: 1px solid #777; font-size: x-large; font-weight: bold; color: red'>Internal Client Side Error</td></tr>"
-       + (emsg ? ("<tr><th style='text-align: left; vertical-align: top'>error:</th><td style='text-align: left'>" + emsg + "</td></tr>") : "")
-       + "  <tr><th style='text-align: left; vertical-align: top'>function:</th><td style='text-align: left'><tt>" + fun + "</tt></td></tr>"
-       + ((exc && "line" in exc ) ? "<tr><th style='text-align: left; vertical-align: top'>line:</th><td style='text-align: left'><tt>" + exc.line + "</tt></td></tr>" : "")
-       + "  <tr><td colspan='2' style='text-align: left; vertical-align: top; border-top: 1px solid #777'>"
-       + "   <div style='width: " + Math.round( (hop_current_window_width() * 0.75) - 100) + "px; overflow: auto; padding-top: 1em;'><pre style=' text-align: left; background: #ffe; border: 1px dotted #ccc;'>" + msg + "</pre></div>"
-       + "  </td></tr>"
-       + "</table>"
-       + "</td></tr></table>");
-
-   return el;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_error ...                                                    */
-/*---------------------------------------------------------------------*/
-function hop_error( fun, exc, msg, svc ) {
-   var emsg = exc ? exc.toString() : "???";
-
-   if( exc ) {
-      if( "message" in exc ) {
-	 emsg = exc.message;
-      } else {
-	 if( "description" in exc ) {
-	    emsg = exc.description;
-	 }
-      }
-      
-      if( "line" in exc ) {
-	 emsg = emsg + " (line " + exc.line + ")";
-      }
+   if( "displayName" in proc ) {
+      applyCallback.displayName = proc.displayName;
    }
 
-   if( typeof svc === "string" || svc instanceof String )
-      fun = fun + ", " + svc;
-   
-   alert( "*** ERROR " + fun + ": " + emsg + " -- " + msg );
-   
-   throw exc;
+   return applyCallback;
 }
    
-/*---------------------------------------------------------------------*/
-/*    hop_debug ...                                                    */
-/*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
-function hop_debug() {
-   return hop_client_debug;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_debug_set ...                                                */
-/*---------------------------------------------------------------------*/
-/*** META ((export hop-client-debug-set!)) */
-function hop_debug_set( v ) {
-   if( sc_isNumber( v ) ) hop_client_debug = v;
-}
-
 /*---------------------------------------------------------------------*/
 /*    hop_trace ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export trace)) */
+/*** META ((export trace) (arity -1)) */
 function hop_trace() {
-   if( hop_client_debug > 0 ) {
-      var svc = hop_apply_url( hop_service_base() + "/trace",
-			       arguments );
+   if( hop_debug() > 0 ) {
+      var svc = hop_apply_url( hop_service_base() + "/trace", arguments );
       hop_send_request( svc, true, function() {}, function() {}, false, [] );
    }
 }
@@ -124,10 +69,48 @@ function hop_trace() {
 /*---------------------------------------------------------------------*/
 /*    hop_tprint ...                                                   */
 /*---------------------------------------------------------------------*/
-function hop_tprint( file, pos, rest ) {
-   var svc = hop_apply_url( hop_service_base() + "/trace/tprint",
-			    [ file, pos, rest ] );
-   hop_send_request( svc, true, function() {}, function() {}, false, [] );
+function hop_tprint( file, pos, args ) {
+   // client console tprint
+   if( hop_config.tprint_mode === "both"
+       || hop_config.tprint_mode === "client" ) {
+      if( __sc_traceHasConsole ) {
+	 if( file || pos ) {
+	    console.log( file + ", " + pos + ": " );
+	 }
+	 console.log.apply( console, sc_list2vector( args ) );
+      } else {
+	 var str = file + ", " + pos + ": ";
+	 
+	 while( sc_isPair( args ) ) {
+	    str += args.__hop_car;
+	    args = args.__hop_cdr;
+	 }
+	 
+	 alert( str );
+      }
+   }
+
+   // tprint on a server console
+   if( hop_config.tprint_mode === "both" 
+       || hop_config.tprint_mode === "server" ) {
+      var svc = hop_apply_url( hop_service_base() + "/public/server-debug/tprint",
+			       arguments );
+      hop_send_request( svc, true, function() {}, function() {}, false, [] );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    tprint ...                                                       */
+/*    -------------------------------------------------------------    */
+/*    The variant used in JavaScript code (for debugging Hop).         */
+/*---------------------------------------------------------------------*/
+function tprint( file, rest ) {
+   var lst = null;
+   
+   for( i = arguments.length - 1; i >= 1; i-- ) 
+      lst = new sc_Pair( arguments[ i ], lst );
+   
+   hop_tprint( file, 0, lst );
 }
 
 /*---------------------------------------------------------------------*/
@@ -147,6 +130,52 @@ function hop_tprint( file, pos, rest ) {
 */
 
 /*---------------------------------------------------------------------*/
+/*    hop_for ...                                                      */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-for) (arity #t)) */
+function hop_for( proc, obj ) {
+   for( var p in obj ) {
+      proc( p, obj[ p ] );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_in ...                                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-in?) (arity #t)
+           (peephole (infix 2 2 " in "))
+           (type bool))
+*/
+function hop_in( field, obj ) {
+   return field in obj;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_instanceof ...                                               */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-instanceof? isa?) (arity #t)
+           (peephole (infix 2 2 " instanceof "))
+           (type bool))
+*/
+function hop_instanceof( obj, klass ) {
+   return obj instanceof klass;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_properties_to_list ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export js-properties->list) (arity #t)) */
+function hop_properties_to_list( obj ) {
+   var res = null;
+
+   for( var p in obj ) {
+      res = sc_cons( sc_cons( p, obj[ p ] ), res );
+   }
+   
+   return sc_reverseBang( res );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_replace_inner ...                                            */
 /*---------------------------------------------------------------------*/
 function hop_replace_inner( el ) {
@@ -157,8 +186,7 @@ function hop_replace_inner( el ) {
 	 }
       }
    } else {
-      alert( "*** Hop Error, Can't find element" );
-      return function( http ) { };
+      sc_error( "hop_replace_inner", "Can't find element", el );
    }
 }
 
@@ -185,7 +213,7 @@ function hop_set_cookie( http ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_remove ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-remove!)) */
+/*** META ((export cookie-remove!) (arity #t)) */
 function hop_cookie_remove( name, path, domain ) {
    if( hop_cookie_get_value( name ) ) {
       hop_cookie_set_value( name, "", path, domain );
@@ -195,7 +223,7 @@ function hop_cookie_remove( name, path, domain ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_get_value ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-get)) */
+/*** META ((export cookie-get) (arity #t)) */
 function hop_cookie_get_value( name ) {
    var cookies = document.cookie;
    var i = cookies.indexOf( name + "=" );
@@ -213,7 +241,7 @@ function hop_cookie_get_value( name ) {
 /*---------------------------------------------------------------------*/
 /*    hop_cookie_set_value ...                                         */
 /*---------------------------------------------------------------------*/
-/*** META ((export cookie-set!)) */
+/*** META ((export cookie-set!) (arity -3)) */
 function hop_cookie_set_value( name, val, path, domain, expires ) {
    var cookie = name + "=" + val;
 
@@ -244,19 +272,14 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
 var hop_load_frequency = 100;
 
 /*---------------------------------------------------------------------*/
-/*    HopLoadError ...                                                 */
+/*    hop_load_frequency ...                                           */
 /*---------------------------------------------------------------------*/
-function HopLoadError( file ) {
-   var e = new Error( "hop-load error" );
-   e.file = file;
-
-   return e;
-}
+var hop_load_frequency = 100;
 
 /*---------------------------------------------------------------------*/
 /*    hop_load ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function hop_load( src, timeout ) {
    var script = document.createElement( "script" );
    script.src = src;
@@ -266,8 +289,11 @@ function hop_load( src, timeout ) {
    if( !timeout || (timeout == undefined) ) timeout = -1;
 
    if( holder != null ) {
-      if( timeout != 0 ) script.onload = function( e ) { loaded = true; };
+      
+      if( timeout != 0 ) script.onload = function( e ) { loaded = true; }
+      
       holder[ 0 ].appendChild( script );
+
       if( timeout != 0 ) {
 	 var it;
 	 var p = function() {
@@ -278,7 +304,7 @@ function hop_load( src, timeout ) {
 		  timeout -= hop_load_frequency;
 		  if( timeout <= 0 ) {
 		     clearInterval( it );
-		     throw( new HopLoadError( src ) );
+		     sc_error( "hop_load", "Cannot load file", src );
 		  }
 	       }
 	    }
@@ -286,65 +312,17 @@ function hop_load( src, timeout ) {
 	 it = setInterval( p, hop_load_frequency );
       }
    } else {
-      alert( "*** Hop Error, Can't find HEAD element" );
+      sc_error( "hop_load", "Can't find HEAD element", src );
    }
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_window_onload_add ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload!)) */
+/*** META ((export add-window-onload!) (arity 1)) */
 var hop_window_onload_add = function( proc ) {
-   var oldonload = window.onload;
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = proc;
-   } else {
-      window.onload = function( e ) {
-	 oldonload( e );
-	 proc( e );
-      }
-   }
-}
-
-hop_window_onload_add( function( e ) {
-      /* once the window is loaded, onload handlers */
-      /* must be invoked eargly                     */
-      hop_window_onload_add = function( proc ) { proc( e ); }
-   } );
-
-/*---------------------------------------------------------------------*/
-/*    hop_window_onload_cons ...                                       */
-/*---------------------------------------------------------------------*/
-/*** META ((export add-window-onload-first!)) */
-function hop_window_onload_cons( proc ) {
-   var oldonload = window.onload;
-
-   if( typeof oldonload != 'function' ) {
-      window.onload = proc;
-   } else {
-      window.onload = function( e ) {
-	 proc( e );
-	 oldonload( e );
-      }
-   }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_window_onunload_add ...                                      */
-/*---------------------------------------------------------------------*/
-/*** META ((export add-window-onunload!)) */
-function hop_window_onunload_add( proc ) {
-   if( typeof( window.onunload ) != 'function' ) {
-      window.onunload = proc;
-   } else {
-      var oldonunload = window.onunload;
-
-      window.onunload = function( e ) {
-	 oldonunload( e );
-	 proc( e );
-      }
-   }
+   /* backward compatibility */
+   return hop_add_event_listener( window, "load", proc );
 }
 
 /*---------------------------------------------------------------------*/
@@ -358,12 +336,15 @@ function hop_window_onunload_add( proc ) {
 /*---------------------------------------------------------------------*/
 function hop_update( node ) {
    /* update the children recursively */
-   if( node.hop_update != undefined ) {
-      node.hop_update();
-   }
-   /* traverse the all tree */
-   for( var i = 0; i < node.childNodes.length; i++ ) {
-      hop_update( node.childNodes[ i ] );
+   if( hop_is_html_element( node ) ) {
+      if( "hop_update" in node ) {
+	 node.hop_update();
+      }
+
+      /* traverse the children */
+      for( var c in node.childNodes ) {
+	 hop_update( c );
+      }
    }
 }
 
@@ -372,8 +353,8 @@ function hop_update( node ) {
 /*    -------------------------------------------------------------    */
 /*    A wrapper for using typeof as a function in Hop.                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export find-runtime-type)) */
-function hop_find_runtime_type( obj ) {
+/*** META ((export typeof) (arity #t)) */
+function hop_typeof( obj ) {
    if( obj instanceof Object ) {
       if( obj instanceof Date ) {
 	 return "date";
@@ -381,10 +362,14 @@ function hop_find_runtime_type( obj ) {
 	 if( obj instanceof RegExp ) {
 	    return "regexp";
 	 } else {
-	    if( typeof obj.hop_find_runtime_type == "function" ) 
-	       return obj.hop_find_runtime_type();
-	    else
-	       return "object";
+	    if( obj instanceof Function ) {
+	       return "function";
+	    } else {
+	       if( typeof obj.hop_typeof == "function" ) 
+		  return obj.hop_typeof();
+	       else
+		  return "object";
+	    }
 	 }
       }
    } else {
@@ -403,27 +388,84 @@ function hop_find_runtime_type( obj ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    after ...                                                        */
+/*    sc_after ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
-function after( timeout, proc ) {
-   var tm = sc_isNumber( timeout ) ? timeout : 1;
-   var i = setInterval( function() { clearInterval( i ); proc() }, tm );
+/*** META ((export after) (arity #t)) */
+function sc_after( timeout, proc ) {
+#if HOP_RTS_DEBUG
+   var mark = "After trace:";
+   
+   if( hop_debug() > 0 ) {
+      if( !sc_isNumber( timeout ) ) {
+	 sc_typeError( "after", "integer", timeout, 2 );
+      }
+   
+      if( !proc || !("apply" in proc) ) {
+	 sc_typeError( "after", "procedure", proc, 2 );
+      }
+   
+      try {
+	 /* raise an error to get the execution stack */
+	 throw new Error( "after" );
+      } catch( e ) {
+	 var ctx;
+	 var estk = hop_get_exception_stack( e );
+
+	 if( !(sc_isPair( hop_current_stack_context )) ||
+	     hop_current_stack_context.__hop_car !== mark ) {
+	    ctx = sc_cons( mark, hop_extend_stack_context( estk ) );
+	 } else {
+	    ctx = hop_current_stack_context;
+	    ctx.__hop_cdr.__hop_car = estk;
+	 }
+
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "after" );
+      }
+   }
+#endif
+   
+   var i = setInterval( function() { clearInterval( i ); proc() }, timeout );
+   
    return true;
 }
 
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
-function timeout( tm, proc ) {
-   var i = setInterval( function() { if( !proc() ) clearInterval( i )}, tm );
+/*** META ((export timeout) (arity #t)) */
+function sc_timeout( tm, proc ) {
+#if HOP_RTS_DEBUG
+   if( hop_debug() > 0 ) {
+      if( !sc_isNumber( tm ) ) {
+	 sc_typeError( "timeout", "integer", tm, 2 );
+      }
+   
+      if( !proc || !("apply" in proc) ) {
+	 sc_typeError( "timeout", "procedure", proc, 2 );
+      }
+   
+      try {
+	 /* raise an error to get the execution stack */
+	 throw new Error( "timeout" );
+      } catch( e ) {
+	 var stk = hop_extend_stack_context( hop_get_exception_stack( e ) );
+	 var ctx = sc_cons( "Timeout trace:", stk );
+
+	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx, "timeout" );
+      }
+   }
+#endif
+   
+   if( proc() ) {
+      var i = setInterval(
+	 function() { if( !proc() ) clearInterval( i )}, tm );
+   }
 }
 
 /*---------------------------------------------------------------------*/
 /*    url-decode ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export url-decode)) */
+/*** META ((export url-decode) (arity #t)) */
 function url_decode( s ) {
    try {
       return decodeURI( s );
@@ -435,15 +477,25 @@ function url_decode( s ) {
 /*---------------------------------------------------------------------*/
 /*    url-encode ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export url-encode)) */
+/*** META ((export url-encode) (arity #t))
+           (peephole (hole 1 "encodeURI(" s ")"))) */
 function url_encode( s ) {
    return encodeURI( s );
 }
 
 /*---------------------------------------------------------------------*/
+/*    url-path-encode ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export url-path-encode) (arity #t)
+           (peephole (hole 1 "encodeURIComponent(" s ")"))) */
+function url_path_encode( s ) {
+   return encodeURIComponent( s );
+}
+
+/*---------------------------------------------------------------------*/
 /*    string-hex-extern ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string-hex-extern)) */
+/*** META ((export string-hex-extern) (arity #t)) */
 function string_hex_extern( str ) {
   var res = "";
   var l = str.length;
@@ -459,7 +511,7 @@ function string_hex_extern( str ) {
 /*---------------------------------------------------------------------*/
 /*    string-hex-intern ...                                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export string-hex-intern)) */
+/*** META ((export string-hex-intern) (arity #t)) */
 function string_hex_intern( s ) {
    var res = "";
    var l = s.length;
@@ -490,33 +542,156 @@ function string_hex_intern( s ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    make_date ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity -1)) */
+function make_date() {
+   var l = arguments.length, i = 0;
+   var year = 1970;
+   var month = 1;
+   var day = 1;
+   var hours = 1;
+   var minutes = 1;
+   var seconds = 1;
+
+   while( i < l ) {
+      var k = arguments[ i++ ];
+      
+      if( sc_isKeyword( k ) ) {
+	 var prop = sc_keyword2jsstring( k );
+	 if( prop === "year" ) year = arguments[ i++ ]; 
+	 else if( prop === "month" ) month = (arguments[ i++ ] - 1); 
+	 else if( prop === "day" ) day = arguments[ i++ ]; 
+	 else if( prop === "hours" ) hours = arguments[ i++ ]; 
+	 else if( prop === "minutes" ) minutes = arguments[ i++ ]; 
+	 else if( prop === "seconds" ) seconds = arguments[ i++ ]; 
+	 else i++;
+      }
+   }
+
+   return new Date( year, month, day, hours, minutes, seconds );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_copy ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity -2)) */
+function date_copy() {
+   var l = arguments.length, i = 1;
+   var date = arguments[ 0 ];
+   var year = date.getFullYear();
+   var month = date.getMonth();
+   var day = date.getDate();
+   var hours = date.getHours();
+   var minutes = date.getMinutes();
+   var seconds = date.getSeconds();
+
+   while( i < l ) {
+      var k = arguments[ i++ ];
+      
+      if( sc_isKeyword( k ) ) {
+	 var prop = sc_keyword2jsstring( k );
+	 if( prop === "year" ) year = arguments[ i++ ]; 
+	 else if( prop === "month" ) month = (arguments[ i++ ] - 1);  
+	 else if( prop === "day" ) day = arguments[ i++ ]; 
+	 else if( prop === "hours" ) hours = arguments[ i++ ]; 
+	 else if( prop === "minutes" ) minutes = arguments[ i++ ]; 
+	 else if( prop === "seconds" ) seconds = arguments[ i++ ]; 
+	 else i++;
+      }
+   }
+
+   return new Date( year, month, day, hours, minutes, seconds );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date->seconds ...                                                */
+/*---------------------------------------------------------------------*/
+/*** META ((export date->seconds) (arity #t)) */
+function date_seconds( d ) {
+   return d.getTime() / 1000;
+}
+
+/*---------------------------------------------------------------------*/
+/*    seconds_date ...                                                 */
+/*---------------------------------------------------------------------*/
+/*** META ((export seconds->date) (arity #t)) */
+function seconds_date( d ) {
+   return new Date( d * 1000 );
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_to_rfc2822 ...                                              */
+/*---------------------------------------------------------------------*/
+/*** META ((export date->rfc282-date) (arity #t)) */
+function date_to_rfc2822( d ) {
+   return d.toTimeString();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date_from_rfc2822 ...                                            */
+/*---------------------------------------------------------------------*/
+/*** META ((export rfc282-date->date) (arity #t)) */
+function date_from_rfc2822( s ) {
+   return new Date( s );
+}
+
+/*---------------------------------------------------------------------*/
+/*    day_seconds ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_seconds() {
+   return 86400;
+}
+
+/*---------------------------------------------------------------------*/
 /*    date-year ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_year( d ) {
-   return d.getYear();
+   return d.getFullYear();
 }
 
 /*---------------------------------------------------------------------*/
 /*    date-month ...                                                   */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_month( d ) {
-   return d.getMonth();
+   return d.getMonth() + 1;
 }
 
 /*---------------------------------------------------------------------*/
 /*    date-day ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_day( d ) {
-   return d.getDay();
+   return d.getDate();
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-yday ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function date_yday( d ) {
+   var d0 = new Date( d.getFullYear(), 0, 1,
+		      d.getHours(), d.getMinutes(),
+		      d.getSeconds(), d.getMilliseconds() );
+
+   return Math.round(((d.getTime() - d0.getTime()) / 1000) / day_seconds()) + 1;
+}
+
+/*---------------------------------------------------------------------*/
+/*    date-wday ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function date_wday( d ) {
+   return d.getDay() + 1;
 }
 
 /*---------------------------------------------------------------------*/
 /*    date-hour ...                                                    */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_hour( d ) {
    return d.getHours();
 }
@@ -524,7 +699,7 @@ function date_hour( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-minute ...                                                  */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_minute( d ) {
    return d.getMinutes();
 }   
@@ -532,7 +707,151 @@ function date_minute( d ) {
 /*---------------------------------------------------------------------*/
 /*    date-second ...                                                  */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function date_second( d ) {
    return d.getSeconds();
 }   
+
+/*---------------------------------------------------------------------*/
+/*    hop_day_names ...                                                */
+/*---------------------------------------------------------------------*/
+var hop_day_names =
+   [ "Sunday", "Monday",  "Tuesday", "Wednesday", "Thursday", "Friday",  "Saturday" ];
+
+/*---------------------------------------------------------------------*/
+/*    day-name ...                                                     */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_name( day ) {
+   if( day < 1 ) 
+      sc_error( "date-name", "Illegal day number", day );
+   else if( day > 7 )
+      return sc_jsstring2string( hop_day_names[ day % 7 ] );
+   else
+      return sc_jsstring2string( hop_day_names[ day - 1 ] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    day-aname ...                                                    */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function day_aname( day ) {
+   if( day < 1 ) 
+      sc_error( "date-name", "Illegal day number", day );
+   else if( day > 7 )
+      return sc_jsstring2string( hop_day_names[ day % 7 ].substring( 0, 2 ) );
+   else
+      return sc_jsstring2string( hop_day_names[ day - 1 ].substring( 0, 2 ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_month_names ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_month_names =
+   [ "January", "February", "March", "April", "May", "June",
+     "July", "August", "September", "October", "November", "December" ];
+
+/*---------------------------------------------------------------------*/
+/*    month-name ...                                                   */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function month_name( month ) {
+   if( month < 1 ) 
+      sc_error( "date-name", "Illegal month number", month );
+   else if( month > 12 )
+      return sc_jsstring2string( hop_month_names[ month % 12 ] );
+   else
+      return sc_jsstring2string( hop_month_names[ month - 1 ] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    month-aname ...                                                  */
+/*---------------------------------------------------------------------*/
+/*** META ((export #t) (arity #t)) */
+function month_aname( month ) {
+   if( month < 1 ) 
+      sc_error( "date-name", "Illegal month number", month );
+   else if( month > 12 )
+      return sc_jsstring2string( hop_month_names[ month % 12 ].substring( 0, 2 ) );
+   else
+      return sc_jsstring2string( hop_month_names[ month - 1 ].substring( 0, 2 ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_alist2jsobject ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export alist->jsobject) (arity #t)) */
+function hop_alist2jsobject( alist ) {
+   var o = {};
+
+   while( sc_isPair( alist ) ) {
+      if( !sc_isPair( alist.__hop_car ) || !sc_isPair( alist.__hop_car.__hop_cdr ) )
+	 sc_error( "alist->object", "Illegal entry", alist.__hop_car );
+      if( !sc_isKeyword( alist.__hop_car.__hop_car ) )
+	 sc_error( "alist->object", "Illegal key", alist.__hop_car.__hop_car );
+      
+      o[ sc_keyword2jsstring( alist.__hop_car.__hop_car ) ] = alist.__hop_car.__hop_cdr.__hop_car;
+      alist = alist.__hop_cdr;
+   }
+
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_jsobject2alist ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export jsobject->alist) (arity #t)) */
+function hop_jsobject2alist( obj ) {
+   var l = null;
+
+   for( p in obj ) {
+      var c = sc_cons( sc_jsstring2keyword( p ), sc_cons( obj[ p ], null ) );
+      l = sc_cons( c, l );
+   }
+
+   return l;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_plist2object ...                                             */
+/*---------------------------------------------------------------------*/
+/*** META ((export plist->jsobject) (arity #t)) */
+function hop_plist2jsobject( plist ) {
+   var o = {};
+
+   while( sc_isPair( plist ) ) {
+      if( !sc_isKeyword( plist.__hop_car ) )
+	 sc_error( "plist->object", "Illegal key", plist.__hop_car.__hop_car );
+      if( !sc_isPair( plist.__hop_cdr ) ) 
+	 sc_error( "plist->object", "Illegal entry", plist );
+      
+      o[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      plist = plist.__hop_cdr.__hop_cdr;
+   }
+
+   return o;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_jsobject2plist ...                                           */
+/*---------------------------------------------------------------------*/
+/*** META ((export jsobject->plist) (arity #t)) */
+function hop_jsobject2plist( obj ) {
+   var l = null;
+
+   for( p in obj ) {
+      l = sc_cons( sc_jsstring2keyword( p ), sc_cons( o[ p ], l ) );
+   }
+
+   return l;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xml_make_id ...                                              */
+/*---------------------------------------------------------------------*/
+var hop_id_count = 0;
+
+/*** META ((export xml-make-id) (arity #t)) */
+function hop_xml_make_id( obj ) {
+   return (obj instanceof String ? obj : "id") + hop_id_count++;
+}

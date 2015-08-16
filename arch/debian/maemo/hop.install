@@ -1,0 +1,8 @@
+[install]
+catalogues = chinook-extras
+package = hop
+
+[chinook-extras]
+name = maemo Extras
+uri = http://repository.maemo.org/extras/
+components = free non-free

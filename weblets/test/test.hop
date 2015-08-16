@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/test.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/test/test.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Jun 26 11:00:00 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Wed Jan 11 15:24:29 2012 (serrano)                */
+;*    Copyright   :  2005-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client side testing                                          */
 ;*=====================================================================*/
@@ -13,12 +13,15 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module weblet_test
-   (import weblet_test-image
+   (import weblet_test-dom
+	   weblet_test-image
 	   weblet_test-withhop
 	   weblet_test-event
+	   weblet_test-hss
 	   weblet_test-fl
 	   weblet_test-tree
 	   weblet_test-tabslider
+	   weblet_test-spage
 	   weblet_test-notepad
 	   weblet_test-paned
 	   weblet_test-busy
@@ -27,11 +30,14 @@
 	   weblet_test-canvas
 	   weblet_test-window
 	   weblet_test-fselector
-	   weblet_test-sound
 	   weblet_test-audio
 	   weblet_test-xhtml
 	   weblet_test-svg
-	   weblet_test-mathml)
+	   weblet_test-mathml
+	   weblet_test-spinbutton
+	   weblet_test-colorchooser
+	   weblet_test-widget
+	   weblet_test-gauge)
    (export (<TEST-HTML> . args)))
 
 ;*---------------------------------------------------------------------*/
@@ -55,12 +61,14 @@
 ;*---------------------------------------------------------------------*/
 (define-service (test)
    (<TEST-HTML>
-      (<DIV> :style "-moz-column-count: 2; column-count: 2; margin-top: 2ex;"
+      (<DIV> :class "maintest"
 	 (<H4> "Simple tests")
 	 (<UL>
+	    (<LI> (<A> :href test/dom :target "_blank" "Dom"))
 	    (<LI> (<A> :href test/images :target "_blank" "Images"))
 	    (<LI> (<A> :href test/withhop :target "_blank" "with-hop"))
-	    (<LI> (<A> :href test/events :target "_blank" "Events")))
+	    (<LI> (<A> :href test/events :target "_blank" "Events"))
+	    (<LI> (<A> :href test/hss :target "_blank" "HSS")))
 	 (<H4> "Hop Widget tests")
 	 (<UL>
 	    (<LI> (<A> :href test/fl :target "_blank" "Fold lists"))
@@ -70,9 +78,15 @@
 	    (<LI> (<A> :href test/sorttable :target "_blank" "Sorttables"))
 	    (<LI> (<A> :href test/tree :target "_blank" "Trees"))
 	    (<LI> (<A> :href test/tabslider :target "_blank" "Tabsliders"))
+	    (<LI> (<A> :href test/spage :target "_blank" "Spages"))
 	    (<LI> (<A> :href test/canvas :target "_blank" "Canvas"))
 	    (<LI> (<A> :href test/window :target "_blank" "Windows"))
-	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector")))
+	    (<LI> (<A> :href test/fselector :target "_blank" "File Selector"))
+	    (<LI> (<A> :href test/hss :target "_blank" "Label Frame"))
+	    (<LI> (<A> :href test/spinbutton :target "_blank" "SpinButton"))
+	    (<LI> (<A> :href test/colorchooser :target "_blank" "ColorChooser"))
+	    (<LI> (<A> :href test/gauge :target "_blank" "Gauge"))
+	    (<LI> (<A> :href test/widget :target "_blank" "Custom Widget")))
 	 (<H4> "XML and HTML")
 	 (<UL>
 	    (<LI> (<A> :href test/xhtml :target "_blank" "XHTML"))
@@ -81,7 +95,6 @@
 	 (<H4> "Miscellaneous tests")
 	 (<UL>
 	    (<LI> (<A> :href test/busy :target "_blank" "Busy anim"))
-	    (<LI> (<A> :href test/sound :target "_blank" "Sounds"))
 	    (<LI> (<A> :href test/audio :target "_blank" "Audio"))))))
 
 ;*---------------------------------------------------------------------*/
@@ -92,11 +105,12 @@
 				  (source #f)
 				  (backend #f)
 				  body)
-   (if backend
-       (instantiate::http-response-hop
-	  (backend backend)
-	  (content-type (xml-backend-mime-type backend))
-	  (xml (test-html include onload source body)))
+   (if (isa? backend xml-backend)
+       (with-access::xml-backend backend (mime-type)
+	  (instantiate::http-response-xml
+	     (backend backend)
+	     (content-type mime-type)
+	     (xml (test-html include onload source body))))
        (test-html include onload source body)))
 
 ;*---------------------------------------------------------------------*/
@@ -113,14 +127,17 @@
 	    ((string? include)
 	     (<HEAD> :title "Hop client-side testing"
 		:favicon (service-resource test "etc/favicon.png")
+		:include "hop-foot"
 		:css (service-resource test "test.hss") :include include))
 	    ((pair? include)
 	     (apply <HEAD> :title "Hop client-side testing"
 		    :favicon (service-resource test "etc/favicon.png")
+		    :include "hop-foot"
 		    :css (service-resource test "test.hss") :include include))
 	    (else
 	     (<HEAD> :title "Hop client-side testing"
 		:favicon (service-resource test "etc/favicon.png")
+		:include "hop-foot"
 		:css (service-resource test "test.hss"))))
 	 (<BODY> :onload onload
 	    
@@ -136,7 +153,7 @@
 		     (<TD> :id "logo"
 			(<IMG> :id "logo-img"
 			   :src (service-resource test "etc/logo.png")))
-		     (<TD> (<TABLE> :width "100%"
+		     (<TD> (<TABLE> :width "100%" :class "content"
 			      (<TR>
 				 (<TD> :id "title" "Hop client-side testing"))
 			      (when source

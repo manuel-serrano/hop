@@ -1,0 +1,142 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.1.x/share/hop-spinbutton.hss          */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Jun 10 08:52:15 2009                          */
+/*    Last change :  Thu Jul  1 16:52:33 2010 (serrano)                */
+/*    Copyright   :  2009-10 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Spin Buttons                                                     */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-spinbutton)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type spinbutton "table[hssclass=hop-spinbutton]")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+spinbutton {
+  border-top: 1px solid #777;
+  border-left: 1px solid #777;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  font-size: 8pt;
+  background: white;
+  color: black;
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+spinbutton {
+  padding: 0;
+}
+
+spinbutton td.hop-spinbutton-value {
+  background: white;
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-bottom: 1px solid #bbb;
+  height: 100%;
+  vertical-align: middle;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  padding-right: 1px;
+}
+
+spinbutton td.hop-spinbutton-value input {
+  background: inherit;
+  border: 0;
+  color: inherit;
+  text-align: right;
+  margin: 0;
+  font-size: inherit;
+  padding: 0;
+}
+
+spinbutton td.hop-spinbutton-value input.hop-spinbutton-entry-onchange {
+  display: none;
+}
+
+spinbutton td.hop-spinbutton-buttons {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  background-color: #ddd;
+  border-top: 1px solid black;
+  border-bottom: 1px solid #bbb;
+  border-right: 1px solid black;
+}
+
+spinbutton td.hop-spinbutton-buttons table {
+  font-size: 4pt;
+  border-collapse: collapse;
+  width: 2em;
+  height: 100%;
+  border: 0;
+}
+
+spinbutton td.hop-spinbutton-buttons td {
+  text-align: center;
+  width: 100%;
+  cursor: default;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+spinbutton td.hop-spinbutton-button-top div {
+  height: 100%;
+  width: 100%;
+  user-select: none;
+  cursor: default;
+  padding: 0;
+  margin: 0;
+}
+
+spinbutton td.hop-spinbutton-button-top div {
+  border-bottom: 1px solid #ccc;
+}
+
+spinbutton td.hop-spinbutton-button-bottom div {
+  border-top: 1px solid white;
+}
+
+spinbutton td.hop-spinbutton-buttons td:hover {
+  background: #8EB6F0;
+  color: white;
+}
+
+spinbutton td.hop-spinbutton-button-top {
+  border-top: 1px solid black;
+}
+
+spinbutton td.hop-spinbutton-button-bottom {
+  border-bottom: 1px solid #bbb;
+}
+
+spinbutton[bound=max] td.hop-spinbutton-button-top {
+  color: #999;
+}
+
+spinbutton[bound=min] td.hop-spinbutton-button-bottom {
+  color: #999;
+}
+
+spinbutton td.hop-spinbutton-buttons td {
+/*   border-top: 1px solid white;                                      */
+/*   border-bottom: 1px solid #ccc;                                    */
+}

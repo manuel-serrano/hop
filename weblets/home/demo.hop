@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/home/demo.hop             */
+;*    serrano/prgm/project/hop/2.3.x/weblets/home/demo.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 10 16:29:57 2006                          */
-;*    Last change :  Fri Mar 20 14:12:21 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Thu May 10 05:49:52 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOME page demonstration                                          */
 ;*=====================================================================*/
@@ -18,94 +18,83 @@
 	   hophome
 	   hophome_demos-minesweeper
 	   hophome_demos-sudoku
-	   hophome_demos-repl
 	   hophome_demos-rss
 	   hophome_demos-source
 	   hophome_demos-wiki
 	   hophome_demos-rewrite
 	   hophome_demos-set
-	   hophome_demos-music)
+	   hophome_demos-popart
+	   hophome_demos-map
+	   hophome_demos-music
+	   hophome_demos-video)
    (export (<DEMO> request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DEMO> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (<DEMO> req)
-   ;; MSIE does not support yet, inline images!
+(define (<DEMO> req::http-request)
    (let ((inl (not
 	       (string-contains
-		(http-header-field (http-request-header req) :user-agent)
+		(http-header-field req.header :user-agent)
 		"MSIE"))))
-      (<DIV>
-	 :class "demo"
+      (<DIV> :class "demo"
 	 :id "demo-playground"
 	 :align "left"
 	 (<TIPS> 550 500)
-	 (<DIV>
-	    :class "toolbar"
+	 (<DIV> :class "toolbar"
 	    :align "center"
 	    :id "toolbar-demo"
-	    (<TABLE>
-	       :class "toolbar"
+	    (<TABLE> :class "toolbar"
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/sudoku)
-			     "games1-32x32.png" "games1-48x48.png" inl
-			     500 420)))
+			"games1-32x32.png" "games1-48x48.png" inl
+			500 450)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/minesweeper)
-			     "mines-32x32.png" "mines-48x48.png" inl
-			     320 320)))
+			"mines-32x32.png" "mines-48x48.png" inl
+			320 320)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
-		     (<ZIMG> (home/demos/set)
-			     "set-32x32.png" "set-48x48.png" inl
-			     500 400)))
+		  (<TD> :align "left"
+		     (<ZIMG> (home/demos/map)
+			"map-32x32.png" "map-48x48.png" inl
+			600 500)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
+		     (<ZIMG> (home/demos/popart)
+			"popart-32x32.png" "popart-48x48.png" inl
+			700 600)))
+	       (<TR>
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/music)
-			     "music-32x32.png" "music-48x48.png" inl
-			     420 320)))
-;* 	    (<TR>                                                      */
-;* 	       (<TD>                                                   */
-;* 		  :align "left"                                        */
-;* 		  (<ZIMG> "hop/home/demos/tetris"                      */
-;* 			  "games2-32x32.png" "games2-48x48.png")))     */
+			"music-32x32.png" "music-48x48.png" inl
+			450 430)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
+		     (<ZIMG> (home/demos/video)
+			"video-32x32.png" "video-48x48.png" inl
+			400 350)))
+	       (<TR>
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/rss)
-			     "news-32x32.png" "news-48x48.png" inl
-			     570 370)))
-;* 	       (<TR>                                                   */
-;* 		  (<TD>                                                */
-;* 		     :align "left"                                     */
-;* 		     (<ZIMG> (make-service-url home/demos/repl)        */
-;* 			     "term-32x32.png" "term-48x48.png" inl     */
-;* 			     640 500)))                                */
+			"news-32x32.png" "news-48x48.png" inl
+			570 370)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/wiki)
-			     "wiki-32x32.png" "wiki-48x48.png" inl
-			     390 450)))
+			"wiki-32x32.png" "wiki-48x48.png" inl
+			390 450)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/rewrite)
-			     "utilities-32x32.png" "utilities-48x48.png" inl
-			     500 220)))
+			"utilities-32x32.png" "utilities-48x48.png" inl
+			500 220)))
 	       (<TR>
-		  (<TD>
-		     :align "left"
+		  (<TD> :align "left"
 		     (<ZIMG> (home/demos/source)
-			     "computer-32x32.png" "computer-48x48.png" inl
-			     700 500))))))))
+			"computer-32x32.png" "computer-48x48.png" inl
+			700 500))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    home/demos/tips ...                                              */
@@ -116,21 +105,45 @@
 	 :base (service-base-url home/demos/tips (current-request))
 	 :css "tips.hss")
       (<BODY>
-       (<H1> "This is the HOP demonstration playground.")
+       (<H1> "This is the HOP demonstration playground!")
        (<P> [It illustrates various features provided by HOP. It shows
 some of the HTML extensions provided by HOP (for instance for implementing
-this simple window manager). It shows how to programs application where
+his simple window manager). It shows how to programs application where
 ,(<EM> "client") computations and ,(<EM> "server") computations are
 simultaneously involved. It also illustrates some of the HOP libraries
 such as libraries for accessing and parsing ressources over the network. This
 playground contains the following demonstrations:])
+       (<IMG> :src "etc/icons/games1-32x32.png")
        (<H2> "Sudoku")
        (<P> :class "descr" [This implements a ,(<EM> "Sudoku") game.
  The programs show how client side and server side computations coexist])
+       (<IMG> :src "etc/icons/mines-32x32.png")
        (<H2> "Minesweeper")
        (<P> :class "descr" [This demonstration implements a simple
  ,(<EM> "Minesweeper") game. It shows how to program client side applications
  in HOP.])
+       (<IMG> :src "etc/icons/map-32x32.png")
+       (<H2> "Map")
+       (<P> :class "descr"
+	  [This demonstration shows how to use JavaScript library with Hop.
+		This demonstration uses the browser geolocation and the
+		OpenStreetMap JavaScript client side api.])
+       (<IMG> :src "etc/icons/popart-32x32.png")
+       (<H2> "Popart")
+       (<P> :class "descr"
+	  [This demonstration shows how to use the canvas for implementing
+dynamic effects on pictures. It uses the Hop proxy to gain full access
+to the data composing the image.])
+       (<IMG> :src "etc/icons/music-32x32.png")
+       (<H2> "Audio")
+       (<P> :class "descr" [This demonstration implements a simple
+ ,(<EM> "audio") player. It shows how to program multimedia applications
+ in HOP.])
+       (<IMG> :src "etc/icons/video-32x32.png")
+       (<H2> "Video")
+       (<P> :class "descr" [This demonstration shows how use HTML 5 videos
+in HOP to implement live special effects.])
+       (<IMG> :src "etc/icons/news-32x32.png")
        (<H2> "Rss")
        (<P> :class "descr" [This implements a ,(<EM> "RSS") reader. It
  illustrates the HOP widget for ,(<EM> "fold lists"). It shows how to use
@@ -138,24 +151,17 @@ playground contains the following demonstrations:])
  demonstration, RSS feeds are fetched from the network and parsed only
  when items are unfolded. This demonstration also shows how to
  program applications that uses third party servers.])
-;*        (<H2> "Repl")                                                */
-;*        (<P> :class "descr" [This is a HOP client side interpreter. Each time, */
-;*  the \[return\] key is pressed. The expression after the prompt (the string */
-;*  ,(<TT> ":=>")) is sent to the server for compilation. Once back, it is */
-;*  evaluated on the client browser. The expressions may refer to the whole */
-;*  HOP client side API. In particular, they can manipulate the current DOM.]) */
+       (<IMG> :src "etc/icons/wiki-32x32.png")
        (<H2> "Wiki")
        (<P> :class "descr" [This demonstration uses the HOP Wiki library. It
-also shows how HOP ,(<EM> "signals") can be deployed for allowing external
-clients to be notified by servers.])
+also shows how HOP can ,(<EM> "push") signals towards clients.])
+       (<IMG> :src "etc/icons/utilities-32x32.png")
        (<H2> "Rewrite")
        (<P> :class "descr" [This demonstration shows how the client and the
 server can cooperate to operate on distant documents. In this simple
 demonstration remote pages are changed on-the-fly by the server that acts
 as a proxy.])
-       (<H2> "Set")
-       (<P> :class "descr" [This demonstration implements another
-game. It shows how to use events to synchronize multiple clients in HOP.])
+       (<IMG> :src "etc/icons/computer-32x32.png")
        (<H2> "Source")
        (<P> :class "descr" [This demonstration uses HOP ,(<EM> "trees") and
 ,(<EM> "pan"). It implements a simple file browser. This browsers may
@@ -169,32 +175,34 @@ be used to access the whole source code of this playground.]))))
 	 (w (if (pair? r) (car r) "200"))
 	 (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
 	 (t (string-capitalize "Tips")))
-      ~(let ((frame (document.createElement "iframe"))
-	     (t (document.getElementById $id))
-	     (p (document.getElementById "demo-playground")))
-	  (set! frame.className "demos")
-	  (set! frame.src $(home/demos/tips))
-	  (node-style-set! frame "border-width" "0")
-	  (node-style-set! frame "width" "100%")
-	  (node-style-set! frame "height" $(format "~apx" h))
-	  (let* ((w (window-open :id $t
-		       :src frame
-		       :width $w :height $h
-		       :left (/ (- (current-window-width) $w) 2) :top 200
-		       :parent p))
-		 (i (<SPAN> :class "icon" $t)))
-	     (set! i.onmousedown
-		   (lambda (e)
-		      (set! i.style.visibility "hidden")
-		      (set! w.style.display "block")))
-	     (set! w.iconify
-		   (lambda ()
-		      (set! i.style.top w.style.top)
-		      (set! i.style.left w.style.left)
-		      (set! i.style.visibility "visible")
-		      (set! w.style.display "none")))
-	     (dom-append-child! p i)
-	     w))))
+      ~(add-event-listener! "demo-playground" "ready"
+	  (lambda (e)
+	     (let ((frame (document.createElement "iframe"))
+		   (t (document.getElementById $id))
+		   (p (document.getElementById "demo-playground")))
+		(set! frame.className "demos")
+		(set! frame.src $(home/demos/tips))
+		(node-style-set! frame "border-width" "0")
+		(node-style-set! frame "width" "100%")
+		(node-style-set! frame "height" "100%")
+		(let* ((w (window-open :id $t
+			     :src frame
+			     :width $w :height $h
+			     :left (/ (- (main-window-width) $w) 2) :top 200
+			     :parent p))
+		       (i (<SPAN> :class "icon" $t)))
+		   (set! i.onmousedown
+			 (lambda (e)
+			    (set! i.style.visibility "hidden")
+			    (set! w.style.display "block")))
+		   (set! w.iconify
+			 (lambda ()
+			    (set! i.style.top w.style.top)
+			    (set! i.style.left w.style.left)
+			    (set! i.style.visibility "visible")
+			    (set! w.style.display "none")))
+		   (dom-append-child! p i)
+		   w))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    img->data ...                                                    */
@@ -226,7 +234,8 @@ be used to access the whole source code of this playground.]))))
 	  (p2 (img->data i2 inl))
 	  (w (if (pair? r) (car r) "200"))
 	  (h (if (and (pair? r) (pair? (cdr r))) (cadr r) "200"))
-	  (t (string-capitalize (basename svc))))
+	  (j (string-index svc #\?))
+	  (t (string-capitalize (basename (if j (substring svc 0 j) svc)))))
       (<IMG> :id id
 	 :src p1
 	 :inline #t
@@ -254,12 +263,12 @@ be used to access the whole source code of this playground.]))))
 		      (set! frame.src $svc)
 		      (node-style-set! frame "border-width" "0")
 		      (node-style-set! frame "width" "100%")
-		      (node-style-set! frame "height" $(format "~apx" h))
+		      (node-style-set! frame "height" "100%")
 		      (let* ((w (window-open :id $t
 				   :src frame
 				   :width $w :height $h
-				   :left (+ 60 (hop_element_x p))
-				   :top (+ 10 (hop_element_y p))
+				   :left (+ 60 (node-bounding-box-x p))
+				   :top (+ 10 (node-bounding-box-y p))
 				   :parent p))
 			     (i (<SPAN> :class "icon" $t)))
 			 (set! i.onmousedown

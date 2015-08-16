@@ -1,0 +1,4 @@
+RUN=yes
+
+# "devel mode"; comment out for 'production'
+EXTRA_OPTS="--allow-service-override"

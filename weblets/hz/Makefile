@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/hz/Makefile               */
+#*    serrano/prgm/project/hop/2.3.x/weblets/hz/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue May  5 07:55:23 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Thu May 31 05:55:10 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 SOURCES		= hz.hop config.hop install.hop sync.hop \
                   install.hop sync.hop db.hop \
-                  markup.hop package.hop weblet.hop
+                  xml.hop package.hop weblet.hop api.hop depend.hop
 
 POPULATION	= $(SOURCES) \
                   hz.hss \
@@ -50,8 +50,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

@@ -39,13 +39,15 @@ vectors.
 
 === server & client ===
 
-  (find-runtime-type obj)
+  (typeof obj)
   (dom-node-element? node)
   (dom-node-text? node)
   (dom-node-document? node)
   (dom-node-comment? node)
   (dom-node-document-fragment? node)
   (dom-node-attr? node)
+  (dom-add-class! node string)
+  (dom-remove-class! node string)
   (dom-has-attributes? node)
   (dom-get-attributes node)
   (dom-has-attribute? node string)
@@ -80,14 +82,14 @@ vectors.
 
 === client only ===
 
-  (current-window-height)
-  (current-window-width)
+  (main-window-height)
+  (main-window-width)
   (dom-node-eval node)
   (node-style-get node prop)
   (node-style-set! node prop value)
-  (node-absolute-x node)
-  (node-absolute-y node)
   (node-bounding-box node [margin])
+  (node-bounding-box-x node)
+  (node-bounding-box-y node)
   (bounding-box->list bbox])
   (bounding-box-x bbox [loc])
   (bounding-box-y bbox [loc])
@@ -104,9 +106,9 @@ vectors.
 <server>
 <client>
 
-=== ++(find-runtime-type obj)++ ===
-<function> find-runtime-type
-<procedure> find-runtime-type
+=== ++(typeof obj)++ ===
+<function> typeof
+<procedure> typeof
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 | obj             |  any type     | any value.                       |
@@ -114,6 +116,25 @@ vectors.
 
 Returns a string of character denoting the type of ++obj++.
 </procedure>
+</function>
+
+=== ++(dom-add-class! node class)++ ===
+=== ++(dom-remove-class! node class)++ ===
+<function> dom-add-class!
+<function> dom-remove-class!
+<procedure> dom-add-class!
+<procedure> dom-remove-class!
+
+<arguments>
+^  arguments       ^   type       ^  short description               ^
+| node             |  element     | an element built by any markup.  |
+| class            |  string      | a class name.  |
+</arguments>
+
+These functions add and remove a class name to an element.
+</procedure>
+</procedure>
+</function>
 </function>
 
 === ++(dom-has-attributes? node)++ ===
@@ -493,8 +514,8 @@ Clones ++node++. If the argument ++deep++ is ++#t++ the cloning is deep
 </arguments>
 
 Inserts a ++new++ node in the children list of ++node++, just after the
-element ++ref++. If the element ++ref++ is not the children list, the
-behavior is unspecified.
+element ++ref++ or append it if ++ref++ is ++()++. If the element ++ref++
+is neither ++()++ nor in the children list, the behavior is unspecified.
 </procedure>
 </procedure>
 </function>
@@ -552,7 +573,7 @@ two or more elements with the same identifier.
 | name             |  string      | the seeked elements tag name.           |
 </arguments>
 
-Search all the elements in ++node++ whose tag name is ++id++. The
+Search all the elements in ++node++ whose tag name is ++name++. The
 tag name is the name of the markup that has been used to build the
 elements. The function ++string=?++ that compare characters by
 characters is used to compare identifiers.  
@@ -607,8 +628,8 @@ the tree. In general, it should not be directly called by user source code.
 == Client only Definitions ==
 <client>
 
-=== ++(current-window-height)++ ===
-<procedure> current-window-height
+=== ++(main-window-height)++ ===
+<procedure> main-window-height
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 </arguments>
@@ -619,8 +640,8 @@ use this function instead of fetching information from the global
 between Web browsers. 
 </procedure>
 
-=== ++(current-window-width)++ ===
-<procedure> current-window-width
+=== ++(main-window-width)++ ===
+<procedure> main-window-width
 <arguments>
 ^  arguments       ^   type       ^  short description               ^
 </arguments>
@@ -677,26 +698,26 @@ or its identifier (a keyword). Example:
 
 </procedure>
 
-=== ++(node-absolute-x node)++ ===
-<procedure> node-absolute-x
+=== ++(node-bounding-box-x node)++ ===
+<procedure> node-bounding-box-x
 
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | node             |  element         | an element.                             |
 </arguments>
 
-Returns the absolute horizontal position of an HTML element.
+Returns the bounding-box horizontal position of an HTML element.
 </procedure>
 
-=== ++(node-absolute-y node)++ ===
-<procedure> node-absolute-y
+=== ++(node-bounding-box-y node)++ ===
+<procedure> node-bounding-box-y
 
 <arguments>
 ^  arguments       ^   type           ^  short description                      ^
 | node             |  element         | an element.                             |
 </arguments>
 
-Returns the absolute vertical position of an HTML element.
+Returns the bounding-box vertical position of an HTML element.
 </procedure>
 
 === ++(node-bounding-box node [margin])++ ===

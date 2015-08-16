@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-file.hss               */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-file.hss                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 10:58:15 2008                          */
-/*    Last change :  Sun Feb  8 18:07:52 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Fri Feb 18 09:39:40 2011 (serrano)                */
+/*    Copyright   :  2008-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopFile Hss                                                      */
 /*=====================================================================*/
@@ -13,6 +13,11 @@
 /*    The module                                                       */
 /*---------------------------------------------------------------------*/
 $(module hopfile_hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type filechooser "div.filechooser")
 
 /*---------------------------------------------------------------------*/
 /*    Hop File config                                                  */
@@ -36,9 +41,9 @@ $(define hopfile-hdd-icon "url( icons/hop-filechooser/hdd.png )")
 $(define hopfile-edit-add-icon "url( icons/hop-filechooser/edit-add.png )")
 $(define hopfile-edit-remove-icon "url( icons/hop-filechooser/edit-remove.png )")
 
-$(define hopfile-open-icon "url( icons/hop-filechooser/open.png )")
-$(define hopfile-cancel-icon "url( icons/hop-filechooser/cancel.png )")
-$(define hopfile-run-icon "url( icons/hop-filechooser/run.png )")
+$(define hopfile-open-icon "url( icons/actions/open.png )")
+$(define hopfile-cancel-icon "url( icons/actions/cancel.png )")
+$(define hopfile-run-icon "url( icons/actions/run.png )")
 
 /*---------------------------------------------------------------------*/
 /*    filechooser                                                      */
@@ -46,10 +51,10 @@ $(define hopfile-run-icon "url( icons/hop-filechooser/run.png )")
 filechooser {
   font-size: 9pt;
   font-family: $hopfile-font-mono;
-  border: 1px outset black;
+  border: 1px outset #777;
   padding: 4px;
   background: #eee;
-  width: 100%;
+  color: black;
 }
 
 /*---------------------------------------------------------------------*/
@@ -58,14 +63,12 @@ filechooser {
 /*--- paned -----------------------------------------------------------*/
 filechooser paned {
   border: 1px outset #777;
+  width: 100%;
+  height: 400px;
 }
 
-filechooser td.hop-vpaned-pan {
+filechooser paned-pan {
   background-color: white;
-}
-
-filechooser.filechooser-drag-and-drop td.hop-vpaned-pan-left {
-  cursor: move;
 }
 
 /*--- span.filechooser-button -----------------------------------------*/
@@ -135,17 +138,14 @@ filechooser input.filechooser-location {
 /*    files                                                            */
 /*---------------------------------------------------------------------*/
 filechooser div.filechooser-files {
-  height: 50ex;
-  overflow: auto;
+  height: 100%;
   width: 100%;
+  overflow: auto;
 }
 
 filechooser table.filechooser-body {
   border-collapse: collapse;
   width: 100%;
-}
-
-filechooser table.filechooser-body td {
   height: 100%;
 }
 
@@ -189,6 +189,15 @@ filechooser table.filechooser-files td.filechooser-icon {
   padding: 3px 0px 3px 20px;
   background-repeat: no-repeat;
   background-position: 2px center;
+}
+
+filechooser table.filechooser-files td.filechooser-icon input {
+  width: 100%;
+  border: 0;
+  background-color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: default;
 }
 
 filechooser table.filechooser-files td.filechooser-file {
@@ -413,4 +422,13 @@ filechooser img.filechooser-drag {
   position: absolute;
   visibility: hidden;
   z-index: 100000;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Completion entry                                                 */
+/*    -------------------------------------------------------------    */
+/*    See hop-file.js                                                  */
+/*---------------------------------------------------------------------*/
+input.hop_inputurl_flash {
+  background-color: black;
 }

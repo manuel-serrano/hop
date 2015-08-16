@@ -1,0 +1,66 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.2.x/etc/configure_android.sch.in      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue May  5 09:54:10 2009                          */
+;*    Last change :  Mon Mar 21 16:20:38 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Common arch HOP configuration                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Install directories ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-etc-directory) "@ETCDIR@")
+(define-inline (hop-bin-directory) "@BINDIR@")
+(define-inline (hop-lib-directory) "@LIBDIR@")
+(define-inline (hop-share-directory) "@SHAREDIR@")
+(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
+(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
+
+;*---------------------------------------------------------------------*/
+;*    hop-library-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-library-path)
+   (cond-expand
+      (bigloo-jvm
+       (cons* "/resource/bigloo" "@LIBPATH@" (bigloo-library-path)))
+      (else
+       (cons "@LIBPATH@" (bigloo-library-path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-android-home ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-android-home)
+   (make-file-name (hop-etc-directory) "androidhome.hop"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-rc-directory ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-rc-directory)
+   (let ((home (or (getenv "HOME") (hop-android-home)))
+	 (host (hostname))
+	 (pref (make-file-name ".config" "hop")))
+      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+	 (if (string? host)
+	     (let ((home/h (make-file-name home (string-append pref "." host))))
+		(if (and (file-exists? home/h) (directory? home/h))
+		    home/h
+		    (if (string=? (suffix host) "")
+			(make-file-name home pref)
+			(loop (prefix host)))))
+	     (make-file-name home pref)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-var-directory ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-var-directory)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-cache-directory ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-cache-directory)
+   #f)
+

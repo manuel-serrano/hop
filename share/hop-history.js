@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/share/hop-history.js                    */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-history.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:59:42 2007                          */
-/*    Last change :  Mon Oct 29 14:40:03 2007 (serrano)                */
-/*    Copyright   :  2007 Manuel Serrano                               */
+/*    Last change :  Mon Feb 17 09:05:52 2014 (serrano)                */
+/*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP history manager.                                             */
 /*=====================================================================*/
@@ -20,6 +20,7 @@ var hop_state_history_handler = {};
 /*---------------------------------------------------------------------*/
 function hop_state_history_register_handler( key, reset, proc ) {
    hop_state_history_handler[ key ] = { reset: reset, proc: proc };
+   hop_eval_history_state( true );
 }
 
 /*---------------------------------------------------------------------*/
@@ -39,7 +40,7 @@ function _hop_state_entry( op, val ) {
 function hop_state_history_to_location( state ) {
    var loc = undefined;
    
-   for( p in state ) {
+   for( var p in state ) {
       if( state[ p ] instanceof _hop_state_entry ) {
 	 if( loc == undefined ) {
 	    loc = "#" + p + "=" + state[ p ].op + ":" + state[ p ].val;
@@ -118,9 +119,9 @@ function hop_state_history_flush() {
 
    /* store the new browser URL */
    if( i == -1 ) {
-      hop_active_location_set( document, old + loc );
+      hop_hashchange_set( document, old + loc );
    } else {
-      hop_active_location_set( document, old.substring( 0, i ) + loc );
+      hop_hashchange_set( document, old.substring( 0, i ) + loc );
    }
 }
    
@@ -144,7 +145,7 @@ function hop_state_history_add( id, op, val ) {
 /*---------------------------------------------------------------------*/
 /*    hop_with_history ...                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export with-history)) */
+/*** META ((export with-history) (arity #t)) */
 function hop_with_history( proc ) {
    var res;
    hop_state_history_transaction++;
@@ -166,7 +167,7 @@ function hop_with_history( proc ) {
 function hop_state_history_reset() {
    if( hop_current_state_history != undefined ) {
       /* there is a state, we reset all the entries */
-      for( p in hop_current_state_history ) {
+      for( var p in hop_current_state_history ) {
 	 if( hop_current_state_history[ p ] instanceof _hop_state_entry ) {
 	    var op = hop_current_state_history[ p ].op;
 	    var handler =  hop_state_history_handler[ op ];
@@ -194,9 +195,9 @@ function hop_state_history_reset() {
 function hop_state_history_update( olds, news ) {
    var res = 0;
 
-   if( olds == undefined ) {
+   if( olds === undefined ) {
       /* set the new values */
-      for( p in news ) {
+      for( var p in news ) {
 	 var state = news[ p ];
 	 if( state instanceof _hop_state_entry ) {
 	    var op = state.op;
@@ -214,7 +215,7 @@ function hop_state_history_update( olds, news ) {
    } else {
       /* reset all the entries that used to be in old    */
       /* state that are no longer present in the new one */
-      for( p in olds ) {
+      for( var p in olds ) {
 	 if( (olds[ p ] instanceof _hop_state_entry) &&
 	     !(news[ p ] instanceof _hop_state_entry) ) {
 	    var op = olds[ p ].op;
@@ -228,15 +229,15 @@ function hop_state_history_update( olds, news ) {
 
       /* update all the entries that are not */
       /* present and equal in old state      */
-      for( p in news ) {
+      for( var p in news ) {
 	 var state = news[ p ];
 	 if( state instanceof _hop_state_entry ) {
 	    if( !(olds[ p ] instanceof _hop_state_entry) ||
 		(state.op != olds[ p ].op) ||
 		(state.val != olds[ p ].val) ) {
 	       var op = state.op;
-	       var handler =  hop_state_history_handler[ op ];
-	       
+	       var handler = hop_state_history_handler[ op ];
+
 	       if( (handler != undefined) && !state.close ) {
 		  if( handler.proc( p, state.val ) ) {
 		     state.close = true;
@@ -267,69 +268,12 @@ function hop_hash_historyp( hash ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    hop_eval_history_counter ...                                     */
-/*---------------------------------------------------------------------*/
-var hop_eval_history_interval = false;
-
-/*---------------------------------------------------------------------*/
-/*    hop_retry_eval_history_state ...                                 */
-/*---------------------------------------------------------------------*/
-function hop_retry_eval_history_state( count, old_state, new_state ) {
-   var fun = function() {
-      var c = hop_state_history_update( old_state, new_state );
-
-      /* the interval is cancelled if any of the following holds: */
-      /*   * c == 0: the update complete                          */
-      /*   * c == count: no progress has been made                */
-      /*   * hop_eval_history_interval.invalid == false: the      */
-      /*     has changed again.                                   */
-      if( (c == 0) || (c == count) || hop_eval_history_interval.invalid ) {
-	 /* no progress as been made, or the update */
-	 /* complete, we cancel the interval        */
-	 clearInterval( hop_eval_history_interval );
-      }
-   }
-   hop_eval_history_interval = setInterval( fun, 200 );
-   hop_eval_history_interval.invalid = false;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_eval_history_state ...                                       */
-/*    -------------------------------------------------------------    */
-/*    This function is invoked when the location has changed.          */
-/*---------------------------------------------------------------------*/
-function hop_eval_history_state( location ) {
-   var hash = location.hash;
-
-   if( hop_eval_history_interval )
-      hop_eval_history_interval.invalid = true;
-   
-   if( hash.length == 0 ) {
-      hop_state_history_reset();
-   } else {
-      if( hop_hash_historyp( hash ) ) {
-	 var new_state = hop_location_to_state_history( hash );
-	 var old_state = hop_current_state_history;
-	 var count = hop_state_history_update( old_state, new_state );
-
-	 if( count == 0 ) {
-	    /* the update is complete, we state the new state and exit */
-	    hop_current_state_history = new_state;
-	 } else {
-	    /* periodically retry to update */
-	    hop_retry_eval_history_state( count, old_state, new_state );
-	 }
-      }
-   }
-}
-
-/*---------------------------------------------------------------------*/
 /*    hop_current_history ...                                          */
 /*---------------------------------------------------------------------*/
-/*** META ((export current-history)) */
+/*** META ((export current-history) (arity #t)) */
 function hop_current_history() {
    var hash = location.hash;
-   
+
    if( hash.length == 0 ) {
       return false;
    }
@@ -344,7 +288,7 @@ function hop_current_history() {
 /*---------------------------------------------------------------------*/
 /*    hop_replay_history ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export replay-history)) */
+/*** META ((export replay-history) (arity #t)) */
 function hop_replay_history( hist ) {
    hop_current_state_history = undefined;
    var loc = function( v ) { this.hash = v; }
@@ -366,7 +310,7 @@ function _hop_history( key ) {
 /*    This is the high level constructor presented to the Hop          */
 /*    API.                                                             */
 /*---------------------------------------------------------------------*/
-/*** META ((export make-history)) */
+/*** META ((export make-history) (arity -3)) */
 function hop_make_history( key, handler, reset ) {
    hop_state_history_register_handler( key, reset, handler );
    return new _hop_history( key );
@@ -377,7 +321,7 @@ function hop_make_history( key, handler, reset ) {
 /*    -------------------------------------------------------------    */
 /*    This high level function for adding an entry into the history.   */
 /*---------------------------------------------------------------------*/
-/*** META ((export history-add!)) */
+/*** META ((export history-add!) (arity #t)) */
 function hop_history_add( history, id, val ) {
    if( !history instanceof _hop_history ) {
       alert( "*** ERROR: Illegal history object -- " + history );
@@ -388,10 +332,38 @@ function hop_history_add( history, id, val ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_eval_history_state ...                                       */
+/*    -------------------------------------------------------------    */
+/*    This function is invoked when the location has changed.          */
+/*---------------------------------------------------------------------*/
+function hop_eval_history_state( _ ) {
+   var hash = location.hash;
+
+   if( hash.length == 0 ) {
+      hop_state_history_reset();
+   } else {
+      if( hop_hash_historyp( hash ) ) {
+	 var new_state = hop_location_to_state_history( hash );
+	 var old_state = hop_current_state_history;
+	 var count = hop_state_history_update( old_state, new_state );
+
+	 if( count == 0 ) {
+	    /* the update is complete, we state the new state and exit */
+	    hop_current_state_history = new_state;
+	 }
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    Install the location event listener                              */
 /*---------------------------------------------------------------------*/
-if( hop_enable_location_event ) {
-   hop_window_onload_add( function( e ) {
-      hop_add_event_listener( document, "location", hop_eval_history_state );
-   } );
+if( !hop_config.history ) {
+   hop_config.history = true;
+   hop_add_event_listener(
+      window, "ready",
+      function( e ) {
+	 hop_add_event_listener( window, "hashchange", hop_eval_history_state );
+      } );
 }
+

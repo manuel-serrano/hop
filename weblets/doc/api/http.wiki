@@ -19,7 +19,7 @@ are used to address remote not HOP HTTP servers.
 == Server Definitions ==
 <server>
 
-=== ++(with-url url success [:fail] [:header])++ ===
+=== ++(with-url url success [:fail] [:header] [:timeout])++ ===
 <function> with-url
 <arguments>
 ^  arguments  ^   type      ^  default    ^  short description             ^
@@ -27,6 +27,7 @@ are used to address remote not HOP HTTP servers.
 | success     |  procedure  |             | a procedure of one argument.   |
 | fail        |  procedure  |  ++raise++  | a procedure of one argument.   |
 | header      |  list       |  ++()++     | an optional header list.       |
+| timeout     |  integer    |  ++0++      | millisecond timeout.           |
 </arguments>
 
 The function ++with-url++ opens an HTTP connection with the remote
@@ -38,12 +39,15 @@ answer. On failure, it invokes ++failure++.
 as authentication to the remote host. It syntax is a list of pairs whose
 first element is a keyword and the second element a string of characters.
 
+~~ If ++timeout++ is greater than ++0++, the connection will fail after
+the amount of time expressed in milliseconds has elapsed.
+
 ~~ The function ++with-url++ follows rules similar to the ++with-hop++ form
 interpreting the result of the HTTP transaction. It checks the status
 code of the HTTP response in order to build the value sent to ++success++:
   * 200 - the result is converted into a string.
   * 201 - the result is converted into a compound object using the JSON 
- protocol (that is, using the ++json->hop++ function).
+ protocol (that is, using the ++json->obj++ function).
   * 202 - the result is converted into a compound object using ad-hoc 
  unmarshalling technics.
   * 401, 407 - access denial.

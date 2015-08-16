@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/weblets/package.hop       */
+;*    serrano/prgm/project/hop/2.4.x/weblets/weblets/package.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Fri Feb 29 08:50:52 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Sun Sep  2 11:30:12 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -43,7 +43,7 @@
 ;*---------------------------------------------------------------------*/
 (define (package-name-parse name)
    (unless (package-filename? name)
-      (error 'package-name-parse "Illegal package name" name))
+      (error 'package-name-parse "Illegal package name, wrong suffix" name))
    (let* ((n (package-sans-suffix (basename name)))
           (index (string-index-right n #\-))
           (vdot (string-index-right n #\.)))
@@ -76,25 +76,34 @@
 ;*    package-info ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (package-info url)
-   (let* ((ip (open-input-gzip-file url))
-	  (info (make-file-name "etc" "weblet.info"))
-	  (len (string-length info)))
-      (unwind-protect
+   
+   (define (read-info ip info)
+      (let ((len (string-length info)))
 	 (let loop ()
 	    (let ((h (tar-read-header ip)))
-	       (when (tar-header? h)
-		  (case (tar-header-type h)
-		     ((dir)
-		      (loop))
-		     ((normal)
-		      (let ((b (tar-read-block h ip))
-			    (n (tar-header-name h)))
-			 (if (substring-at? n info (-fx (string-length n) len))
-			     (charset-convert b (hop-locale) (hop-charset))
-			     (loop))))
-		     (else
-		      #f)))))
-	 (close-input-port ip))))
+	       (when (isa? h tar-header)
+		  (with-access::tar-header h (name type)
+		     (case type
+			((dir)
+			 (loop))
+			((normal)
+			 (let ((b (tar-read-block h ip))
+			       (n name))
+			    (if (substring-at? n info (-fx (string-length n) len))
+				(charset-convert b (hop-locale) (hop-charset))
+				(loop))))
+			(else
+			 #f))))))))
+   
+   (multiple-value-bind (base version)
+      (package-name-parse (basename url))
+      (let* ((ip (open-input-gzip-file url))
+	     (path (make-file-path base "etc" "weblet.info")))
+	 (unwind-protect
+	    (let ((info (read-info ip path)))
+	       (or info
+		   (format "((name \"~a\") (version \"~a\"))" base version)))
+	    (close-input-port ip)))))
 
 
 

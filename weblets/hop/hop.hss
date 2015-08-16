@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/hop/hop.hss              */
+/*    serrano/prgm/project/hop/2.2.x/weblets/hop/hop.hss               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 28 10:28:49 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Jun  6 11:30:07 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -19,7 +19,7 @@ $(module hop_hss)
 /*---------------------------------------------------------------------*/
 $(define font-family "Arial, Lucida Grande, Verdana, Lucida, Helvetica")
 $(define typewriter "Bitstream Vera Sans Mono, Andale Mono, monospace")
-$(define border-color "#bbb")
+$(define border-color "#8f8a7f")
 $(define home-color "#f9f9f9")
 $(define header-color "#fffff0")
 $(define title-color "#ddd")
@@ -35,20 +35,40 @@ $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#ffae2b")
 
-$(define hop-width "85%")
+$(define bg-color "#efe7d4")
+$(define bg-color2 "#fcecca")
+
+$(define hover-color "#d7cfbe")
+$(define hover-color2 "#c4b99f")
 
 /*---------------------------------------------------------------------*/
 /*    Common CSS rules                                                 */
 /*---------------------------------------------------------------------*/
 body {
-  background-color: #e0e0e0;
   font-family: $font-family;
   overflow: auto;
+  background: $bg-color2;
+  padding: 0;
+  margin: 0;
+}
+
+div.body {
+  background: $bg-color;
+  background-image: -moz-linear-gradient( -90deg, $bg-color, $bg-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($bg-color), to($bg-color2));
+  padding-top: 4ex;
+  padding-left: 5em;
+  padding-right: 5em;
 }
 
 img.logo {
   background: transparent;
   padding: 15px;
+  user-select: none;
+}
+
+div.foot {
+  margin-top: 2ex;
 }
 
 /*--- dashboard -------------------------------------------------------*/
@@ -63,6 +83,10 @@ body.hop-dashboard-panel img.logo {
   padding: 2px;
 }
 
+body.hop-dashboard-panel table.weblet td.legend {
+  font-size: 70%;
+}
+
 /*--- directory -------------------------------------------------------*/
 div.directory {
   width: 100%;
@@ -71,7 +95,6 @@ div.directory {
 /*--- weblets ---------------------------------------------------------*/
 div.weblets {
   width: 100%;
-  float: left;
 }
 
 /*--- title -----------------------------------------------------------*/
@@ -89,26 +112,33 @@ div.weblets-title {
 body.hop-dashboard-panel div.weblets-title {
   margin-top: 0;
   margin-bottom: 2ex;
+  color: #999;
 }
 
 /*--- weblet ----------------------------------------------------------*/
 table.weblet {
   float: left;
+  overflow: hidden;
 }
 
 table.weblet td.logo {
   border: 1px outset transparent;
-  -moz-border-radius: 0.2em;
-  -webkit-border-radius: 0.2em;
   border-radius: 0.2em;
 }
 
 table.weblet td.logo:hover {
-  border: 1px outset #777;
-  background-color: #fbffe1;
-  -moz-border-radius: 0.2em;
-  -webkit-border-radius: 0.2em;
+  border: 1px outset $border-color;
+  background: $hover-color;
+  background-image: -moz-linear-gradient( -90deg, $hover-color, $hover-color2 );
+  background-image: -moz-linear-gradient( -90deg, $hover-color, $hover-color2 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($hover-color), to($hover-color2));
   border-radius: 0.2em;
+}
+
+body.hop-dashboard-panel table.weblet td.logo:hover {
+  background-color: #464444;
+  border: 1px solid #777;
+  border-radius: 0.3em;
 }
 
 table.weblet td.legend {
@@ -117,18 +147,28 @@ table.weblet td.legend {
   font-family: $font-family;
   cursor: default;
   text-align: center;
+  max-width: 48px;
+  white-space: nowrap;
 }  
+
+table.weblet-incompatible td.logo,
+table.weblet-incompatible td.legend {
+  opacity: 0.2;
+}
 
 /*--- <HOP> -----------------------------------------------------------*/
 table.hop {
-  width: $hop-width;
-  margin-top: 20px;
-  padding: 10px;
+  width: 100%;
   border: 1px solid $border-color;
-  background-color: white;
-  -moz-border-radius: 0.5em;
-  -webkit-border-radius: 0.5em;
-  border-radius: 0.5em;
+  background-color: #f7f3e9;
+  border-radius: 0.4em;
+  box-shadow: 6px 6px 5px #555;
+}
+
+td.main-logo {
+  width: 78px;
+  vertical-align: top;
+  text-align: center;
 }
 
 div#title {
@@ -137,6 +177,7 @@ div#title {
   font-weight: bold;
   padding-bottom: 1px;
   text-align: left;
+  text-shadow: #999 2px 2px 2px;
 }
 
 /*--- weblet ----------------------------------------------------------*/
@@ -149,4 +190,30 @@ table.directory th.title {
   font-size: large;
   color: #00a;
 }
-  
+
+@media all and (max-width: 900px) {
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
+  div.body {
+    padding-top: 1ex;
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+
+  table.hop {
+    padding: 4px;
+    margin: 0;
+  }
+
+  td.main-logo {
+    width: 54px;
+    padding-top: 15px;
+  }
+
+  td.main-logo img {
+    padding: 0;
+  }
+}

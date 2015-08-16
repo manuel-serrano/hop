@@ -1,0 +1,102 @@
+<doc> Conditional Compilation
+
+== Description ==
+
+This page presents the support for conditional compilation which can
+be used to distinguish HOP releases as well as server-side vs
+client-side code.
+
+
+== Synopsis ==
+
+  (cond-expand ...)
+
+
+=== ++cond-expand++ ===
+<function> cond-expand
+<procedure> cond-expand
+
+The special form ++cond-expand++ implements conditional compilation. It
+can be used by either side of the programs. Its syntax is given in the
+,(<SPAN> :class "href wikiref" 
+      :onclick ~(with-history
+		 (lambda ()
+		    (notepad-select "doc-notepad" "doc-core")
+		    (window.scrollTo 0 0)))
+"Core language") section.
+
+~~ The ++cond-expand++ form can be used to distinguish HOP versions, to
+ensure backward compatibility, to check if a feature is supported by the
+underlying host, and to distinguish client-side code and server-side code.
+
+~~ HOP defines the following features: 
+
+  * bigloo
+  * hop
+  * hop-<version> (//i.e.//, hop-2.0.0)
+  * hop-<branch> (//i.e.//, hop-2.0.x)
+
+
+~~ In addition, client-side defines additional features that allows source code
+to behave differently on the server and on the client:
+
+  * hop-client
+  * hop-server
+
+
+~~ Each loaded dynamic library defines a new feature identifier that matches
+the name of the library. For instance, loading the library ++mail++ with
+a module clause such as:
+
+  (module foo
+     ...
+     (library mail)
+     ...)
+
+
+Automatically add the feature ++mail++ for the body of module.
+
+~~ The following example shows how ++cond-expand++ can be used to distinguish
+server-side and client-side code. First, let us consider a simple module
+++mod1++ that exports one function named ++cond-expand-div++.
+
+  (module mod1
+     (export (cond-expand-div)))
+
+  (define (cond-expand-div)
+     (<DIV>
+        (cond-expand
+           (hop-client "client")
+           (hop-server "server")
+           (else "unknown"))))
+
+
+The function ++cond-expand-div++ returns a newly allocated ++<DIV>++ whose
+body depends on the import of the module. If the module is imported by
+client-side, that its body is the string ++"client"++. Otherwise
+it is the string ++"server"++.
+
+~~ The module ++mod2++ imports ++mod1++ twice. Once for the server code and
+one for the client code. Then, the two definitions of ++cond-expand-div++
+are compiled against two different set of features and the two function
+definitions actually differ.
+
+
+  (module mod2
+     (import mod1)
+     ~(import mod1)
+     (export (foo)))
+
+  (define-service (foo)
+     (let ((div (cond-expand-div)))
+        (<HTML>
+           (<HEAD> :jscript (service-resource foo "mod1.hop"))
+           (<BODY>
+              (<DIV>
+                 div
+                 ~(dom-append-child! $div (cond-expand-div)))))))
+
+
+</procedure>
+</function>
+</doc>

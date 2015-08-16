@@ -1,0 +1,5 @@
+PORT=8080
+HOMEDIR=/home/hop
+LOGFILE=$HOMEDIR/hop.log
+DAEMONUSER=hop
+DAEMONARGS="--log-file $LOGFILE --rc-dir $HOMEDIR/.config/hop"

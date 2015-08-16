@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/base64.js                   */
+/*    serrano/prgm/project/hop/2.1.x/share/base64.js                   */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Tyler Akins                                       */
 /*    Creation    :  Thu Sep 21 15:34:59 2006                          */
-/*    Last change :  Mon Dec  3 12:32:10 2007 (serrano)                */
-/*    Copyright   :  2006-07 Manuel Serrano                            */
+/*    Last change :  Mon Mar  1 10:00:51 2010 (serrano)                */
+/*    Copyright   :  2006-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple base64 encoder/decoder                                    */
 /*    -------------------------------------------------------------    */
@@ -18,7 +18,7 @@ var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 /*---------------------------------------------------------------------*/
 /*    base64_encode ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function base64_encode( input ) {
    var output = "";
    var chr1, chr2, chr3;
@@ -49,7 +49,6 @@ function base64_encode( input ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    utf8_decode ...                                                  */
 /*---------------------------------------------------------------------*/
 function utf8_decode( input ) {
@@ -84,10 +83,9 @@ function utf8_decode( input ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    function                                                         */
 /*    base64_decode ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function base64_decode( input ) {
    var output = "";
    var chr1, chr2, chr3;

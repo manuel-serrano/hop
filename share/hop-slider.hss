@@ -1,0 +1,236 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.4.x/share/hop-slider.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Aug 10 11:04:10 2005                          */
+/*    Last change :  Fri May 10 07:56:33 2013 (serrano)                */
+/*    Copyright   :  2005-13 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP slider CSS                                                   */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hop_hop-slider-hss)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type slider "table[data-hss-tag=hop-slider]"
+
+    (define-hss-property (line-height v)
+       (format "div.line { height: ~l; }" v))
+
+    (define-hss-property (line-border-top v)
+       (format "div.line { border-top: ~l; }" v))
+
+    (define-hss-property (line-border-right v)
+       (format "div.line { border-right: ~l; }" v))
+
+    (define-hss-property (line-border-bottom v)
+       (format "div.line { border-bottom: ~l; }" v))
+
+    (define-hss-property (line-border-left v)
+       (format "div.line { border-left: ~l; }" v))
+
+    (define-hss-property (line-left-color v)
+       (format "div.lineleft { background-color: ~l; }" v))
+
+    (define-hss-property (line-right-color v)
+       (format "div.lineright { background-color: ~l; }" v)))
+
+$(define-hss-type slidercaption "td[data-hss-tag=hop-slider-caption]")
+
+$(define-hss-type slidercursor "td[data-hss-tag=hop-slider-cursor]"
+    (define-hss-property (height v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { min-height: ~l; height: ~l;}" v v)
+             (format "div[data-hss-tag=hop-slider-cursor-image] { min-height: ~l; height: ~l; }" v v)))
+    (define-hss-property (border v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border: ~l; }" v)))
+    (define-hss-property (border-left v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-left: ~l; }" v)))
+    (define-hss-property (border-right v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-right: ~l; }" v)))
+    (define-hss-property (border-top v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-top: ~l; }" v)))
+    (define-hss-property (border-bottom v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-bottom: ~l; }" v)))
+    (define-hss-property (border-radius v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { border-radius: ~l; }" v)))
+    (define-hss-property (-hop-background-gradient v)
+       (format "div[data-hss-tag=hop-slider-cursor-background] { background: ~l; background-image: ~l; }" v v))
+    (define-hss-property (background v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { background: ~l; }" v)))
+    (define-hss-property (background-color v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-background] { background-color: ~l; }" v)))
+    (define-hss-property (background-image v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-image: ~l; }" v)))
+    (define-hss-property (background-repeat v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-repeat: ~l; }" v)))
+    (define-hss-property (background-position v)
+       (list (format "div[data-hss-tag=hop-slider-cursor-image] { background-position: ~l; }" v))))
+
+$(define-hss-type slidertouch "div[data-hss-tag=hop-slider-touch]")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+slider {
+  line-left-color: #68f;
+  line-right-color: #ccc;
+  line-height: 3px;
+  line-border-left: 1px solid #999;
+  line-border-top: 1px solid #999;
+  line-border-right: 1px solid #555;
+  line-border-bottom: 1px solid #555;
+}
+
+slidercaption {
+  color: black;
+  font-size: 8px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  text-align: center;
+  overflow: hidden;
+  max-width: 14px;
+}
+
+slidercursor {
+  height: 7px;
+  width: 14px;
+  color: #ccc;
+  border-left: 1px solid #999;
+  border-top: 1px solid #999;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  cursor: pointer;
+  background-image: share( "icons/hop-slider/cursor.png" );
+  background-position: center center;
+  background-repeat: repeat-y;
+  background-color: #bbb;
+  vertical-align: middle;
+}
+
+slidercursor:hover {
+  background-color: #999;
+}
+
+slidertouch {
+  font-size: 24px;
+  border: 2px solid black;
+  background: white;
+  color: black;
+  font-family: sans;
+  position: absolute;
+  display: none;
+  width: 96px;
+  height: 2ex;
+  z-index: 100000;
+  top: 10px;
+  left: 10px;
+  text-align: center;
+  overflow: hidden;
+}
+
+@media all and (max-device-width: 800px) {
+  slider {
+    line-height: 10px;
+  }
+
+  slidercursor {
+    height: 14px;
+    width: 18px;
+  }
+
+  slidercaption {
+    color: black;
+    font-size: 12px;
+  }
+}
+      
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+slider {
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 0;
+  user-select: none;
+  font-size: 2pt;
+  width: 100%;
+  background-color: transparent;
+} 
+
+/*---------------------------------------------------------------------*/
+/*    Line configuration                                               */
+/*---------------------------------------------------------------------*/
+slider td {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+slider td.line {
+  border: 0;
+  vertical-align: middle;
+  background-color: inherit;
+  user-select: none;
+}
+
+slider div.line {
+  user-select: none;
+  margin: 0;
+  user-select: none;
+}
+
+slider div.lineleft {
+  border-right: 0;
+  user-select: none;
+}
+  
+slider div.lineright {
+  border-left: 0;
+  user-select: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Cursor configuration                                             */
+/*---------------------------------------------------------------------*/
+slidercursor {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  vertical-align: middle;
+}
+   
+slidercursor div[data-hss-tag=hop-slider-cursor-background],
+slidercursor div[data-hss-tag=hop-slider-cursor-image] {
+  background-color: transparent;
+  display: inline-block;
+  width: 100%;
+}
+
+slidercursor div[data-hss-tag=hop-slider-cursor-background] {
+  margin-left: -1px;
+  margin-right: 1px;
+}
+
+slidercursor div[data-hss-tag=hop-slider-cursor-image] {
+  border: 0;
+}
+
+td[data-hss-tag=hop-slider-cursor] {
+  background: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    caption                                                          */
+/*---------------------------------------------------------------------*/
+slider slidercaption {
+  user-select: none;
+  vertical-align: bottom;
+}

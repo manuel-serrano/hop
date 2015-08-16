@@ -1,96 +1,161 @@
-== Getting Hop ==
+,(define-tag <QRCODE> ((typenumber 4)
+		       (id #f)
+		       (correctlevel "L")
+		       (class #f)
+		       text)
+    (<IMG> :class class
+       :id (xml-make-id id)
+       :src (format (home-google-qrcode-format)
+		    "96x96"
+		    correctlevel
+		    (url-path-encode (car text)))))
 
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Stable versions")
-  (<TABLE>
-     :class "os-download os-download-stable"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "20%")
-        (<COL>)
-        (<COL> :width "20%")
-        (<COL>)
-        (<COL> :width "20%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "linux.png")))
-        (<TH> "Linux")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "macos.png")))
-        (<TH> "MacOS X")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "windows.png")))
-        (<TH> "Windows"))
-     (<TR> 
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *stable-tar-url* *stable-tar-gz*))
-         (<TD> (<A> :href *stable-jar-url* *stable-jar*)))))
+,(define (<DOWNLOAD> #!key class src legend url name)
+    (<A> :class (string-append "download-button " class)
+       :href url
+       (<DIV> :class "download-button"
+	  (<TABLE> :class "download-button"
+	     (<TR> 
+		(<TD> :rowspan 2 :class "download-button"
+		   (<IMG> :class "download-button" :inline #t :src src))
+		(<TH> :class "download-button" legend))
+	     (<TR> (<TD> :class "download-button" (or name (basename url))))))))
 
-,(<DIV> :class "os-download" :align 'center
-  (<DIV> :class "download-header" "Unstable versions")
-  (<TABLE>
-     :class "os-download os-download-unstable"
-     (<COLGROUP> 
-        (<COL>)
-        (<COL> :width "50%")
-        (<COL>)
-        (<COL> :width "50%"))
-     (<TR> 
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "package.png")))
-        (<TH> "Source")
-        (<TD> :rowspan 2 :class "type"
-           (<IMG> :inline #t
-             :src (make-file-path (home-dir) "etc" "icons" "java.png")))
-        (<TH> "Pre-compiled JVM"))
-     (<TR> 
-         (<TD> (<A> :href *devel-tar-url* *devel-tar-gz*))
-         (<TD> (<A> :href *devel-jar-url* *devel-jar*)))))
+== License ==
+
+<include>license.wiki</include>
 
 
-,(<TABLE>
-   :class "download"
-   (<TR> (<TD> "&nbsp;"))
-   (<TR> (<TH> [Older versions may be download by ,(<SPAN> :class "old" "ftp") at:]
-         (<A> :href (home-ftp-hop-url) (home-ftp-hop-url))))
-   (<TR> (<TD> "&nbsp;"))
-   (<TR> (<TD> 
-[Linux users ,(<B> "should") prefer the native version built
-from the source code to the pre-compiled JVM version because it gives 
-much better performance. On Linux, the JVM version should only be considered
-for quick Hop experiments.])))
+== Source code ==
 
-~~ HOP is shipped with some **Linux distributions** on which it can be
-used without downloading and installing the source code manually:
+,(<TABLE> :id "download-source"
+    (<TR>
+       (<TD> :class "download-source"
+	  (<DOWNLOAD> :class "download-src"
+	     :legend "Stable source"
+	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
+	     :url *stable-tar-url*))
+       (<TD> :class "download-source"
+	  (<DOWNLOAD> :class "download-src"
+	     :legend "Devel source"
+	     :src (make-file-path (home-dir) "etc" "icons" "package.png")
+	     :url *devel-tar-url*))))
 
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) [[http://aur.archlinux.org|Arch Linux]]
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) [[http://www.gentoo.org|Gentoo]]
+~~ Older versions may be download by ftp at:
+[[,(home-ftp-hop-url)|,(home-ftp-hop-url)]].
 
-
-~~ We provide some pre-compiled packages for non-standard architectures:
-
-  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "maemo-16x16.png")) ,(<A> :href *maemo-deb-url* "maemo") (Nokia N800, N810)
-
-
-== Getting Bigloo ==
-
-In order to install HOP from the source (for significantly improving
+~~ In order to install HOP from the source (for significantly improving
 performance), the ,(<A> :href (home-bigloo-url) "Bigloo") compiler has
-first to be installed. Bigloo version **3.1b** or higher is required for
-compiling HOP.
+first to be installed. Bigloo version **4.0a** or higher is required to
+compile HOP.
 
 ~~ Bigloo versions may be downloaded
 from: ,(<A> :href (home-ftp-bigloo-url) (home-ftp-bigloo-url)).
 
-== Browsing the code ==
 
-The HOP source code may be browsed 
-,(<A> :href (home-source-url) "here").
+== Android ==
 
-== License ==
+,(let* ((apk (format "hop-~a.apk" (home-hop-stable-version)))
+	(url (make-download-url "android" apk)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Android"
+		:src (make-file-path (home-dir) "etc" "icons" "android-market.png")
+		:url url)))
+       (<TR>
+	  (<TD> 
+	     (<QRCODE> :typenumber 4 :id "download-android" url)))))
 
-##license.wiki##
+~~ Information specific to the Android port may be found 
+[[/hop/home/android|here]].
+
+
+== Linux ==
+
+~~ HOP is shipped with some **Linux distributions** on which it can be
+used without downloading and installing the source code manually:
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "arch-16x16.png")) to access the ArchLinux packages, 
+add the following to the ++/etc/pacman.conf++ file:
+
+  [hop]
+  Server = ftp://ftp-sop.inria.fr/indes/fp/Hop/archlinux/$arch
+
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "debian-16x16.png")) For Debian (squeeze) packages, 
+add the following to the ++/etc/apt.conf/sources.list++ file:
+
+  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
+
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "gentoo-16x16.png")) For Gentoo, proceed as follows:
+
+  emerge -n layman    # Install layman overlay manager
+  layman -a lisp      # Add and fetch the lisp overlay
+  emerge bigloo::lisp # Install bigloo from lisp overlay
+
+
+  * ,(<IMG> :inline #t :src (make-file-path (home-dir) "etc" "icons" "ubuntu-16x16.png")) For Ubuntu (12.04) packages, 
+add the following to the ++/etc/apt.conf/sources.list++ file:
+
+  deb ftp://ftp-sop.inria.fr/indes/fp/Hop/ubuntu lts hop
+
+
+
+== MacOS X ==
+
+,(let* ((dmg (format "hop-~a.dmg" (home-hop-stable-version)))
+	(url (make-download-url "macosx" dmg)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "MacOS 10.7 x86/64"
+		:src (make-file-path (home-dir) "etc" "icons" "macos.png")
+		:name dmg
+		:url url)))))
+
+
+== Maemo ==
+
+,(let ((fremantle (home/maemo/install "fremantle" "hop" "free"))
+       (chinook (home/maemo/install "chinook" "hop" "free"))
+       (name (format "hop-~a.install" (home-hop-stable-version))))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Fremantle"
+		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
+		:name name
+		:url fremantle))
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-stable"
+		:legend "Chinook"
+		:src (make-file-path (home-dir) "etc" "icons" "maemo_install.png")
+		:name name
+		:url chinook)))
+       (<TR>
+	  (<TD> :colspan 2
+	     (<QRCODE> :typenumber 6 :id "download-maemo" fremantle)))))
+
+
+== Virtual Machines ==
+
+,(let* ((vmdk (format "hop-~a.vmdk" (home-hop-stable-version)))
+	(url (make-download-url "vm" vmdk)))
+    (<TABLE> :id "download-source"
+       (<TR>
+	  (<TD> :class "download-source"
+	     (<DOWNLOAD> :class "download-vm"
+		:legend "Virtual Image"
+		:src (make-file-path (home-dir) "etc" "icons" "vlinux.png")
+		:name vmdk
+		:url url)))))
+
+~~ Information specific to the running Hop inside a Virtual Machine 
+may be found [[/hop/home/vm|here]].
+
+

@@ -3,7 +3,7 @@ Here is the procedure for compiling and installing HOP on a Unix system.
 == 1. Requirements ==
 
   * HOP //requires// GNU-make.
-  * HOP //requires// [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] version 3.0c or higher.
+  * HOP //requires// [[http://www.inria.fr/indes/fp/Bigloo|Bigloo]] version 3.5a or higher.
 
 == 2. Summary of a full HOP compilation and installation ==
 

@@ -11,11 +11,13 @@ This document describes the HOP supports for SQL queries using the
 === Server ===
 
   (class sqlite ...)
+  (class sqltiny ...)
   (sqlite-close db)
   (sqlite-format string arg ...)
   (sqlite-exec db string arg ...)
   (sqlite-eval db procedure string arg ...)
   (sqlite-map db procedure string arg ...)
+  (sqlite-name-of-tables db)
   (sqlite-last-insert-rowid db)
 
 
@@ -54,6 +56,17 @@ Example:
 
   (define db1 (instantiate::sqlite (path "/tmp/foo.db")))
   (define db2 (instantiate::sqlite))
+</class>
+
+=== ++(class sqltiny ...)++===
+<class> sqltiny
+
+<fields>
+^  fields  ^   access  ^   type      ^  default value     ^  short description           ^
+| path     |    r      |   string    |  ++":memory:"++    | the path of the dababase.    |
+</fields>
+
+A lightweight and portable simplified version of SQLite.
 </class>
 
 === ++(sqlite-close db)++ ===
@@ -119,9 +132,8 @@ Examples:
 The function ++sqlite-exec++ //executes// an SQLite command. The
 command is the built by implicitly invoking ++sqlite-format++ on
 ++fmt++ and the optional ++arg<sub>0</sub>++ arguments. This function
-returns a possibly empty list.  The elements of the list are filled by
-the SQLite engine. In particular, on a query, each element of the list
-is a vector denoting a row of the searched tables.
+returns a possibly empty list. This function returns a single element,
+the first one returned by the SQL engine.
 
   (module example
      (library sqlite))
@@ -130,20 +142,9 @@ is a vector denoting a row of the searched tables.
 
   (sqlite-exec *db* "CREATE TABLE foo (x INTEGER, y INTEGER)")
   (for-each (lambda (x)
-  		(sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
-	     (iota 10))
-  (sqlite-exec *db* "SELECT * FROM foo")
-     &#8658; '(#("0" "0")
-	#("1" "1")
-	#("2" "4")
-	#("3" "9")
-	#("4" "16")
-	#("5" "25")
-	#("6" "36")
-	#("7" "49")
-	#("8" "64")
-	#("9" "81"))
-
+               (sqlite-exec *db*  "INSERT INTO foo VALUES(~A, ~A)" x (* x x)))
+	    (iota 10))
+  (sqlite-exec *db* "SELECT * FROM foo") &#8658; 9
 </function>
 
 === ++(sqlite-eval db proc fmt arg<sub>0</sub> ...) ===
@@ -205,6 +206,22 @@ Examples:
     (lambda (s1 s2) (+ (string->integer s1) (string->integer s2))) 
     "SELECT * FROM foo")
      &#8658; (0 2 6 12 20 30 42 56 72 90)
+
+</function>
+
+=== ++(sqlite-name-of-tables db) ===
+<function> sqlite-name-of-tables db
+<arguments>
+^  arguments       ^   type          ^  short description              ^
+| db               |  ::sqlite       | the database.                   |
+</arguments>
+
+Returns the list name of the tables of the database. This is equivalent
+to:
+
+  (sqlite-map db
+     (lambda (x) x)
+     "SELECT name FROM sqlite_master WHERE type='table'")
 
 </function>
 

@@ -1,0 +1,10 @@
+;; a colorchooser
+(<HTML>
+   (<HEAD> :include "hop-slider" "hop-spinbutton" "hop-color")
+   (<DIV> :style "width: 64px; height: 32px; background: #ff0000; border: 1px solid black; margin: 20px"
+      :id "color")
+   (<COLORCHOOSER> :onchange ~(let ((col (colorchooser-value this))
+				    (a (colorchooser-opacity this)))
+				 (node-style-set! "color" :background col)
+				 (node-style-set! "color" :opacity a))
+      :onselect ~(alert (colorchooser-value this))))

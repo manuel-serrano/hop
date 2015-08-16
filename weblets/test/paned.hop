@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/test/paned.hop           */
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/paned.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:32:43 2007                          */
-;*    Last change :  Mon Feb 16 08:16:27 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Thu Feb  4 07:06:13 2010 (serrano)                */
+;*    Copyright   :  2007-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Paneds                                                           */
 ;*=====================================================================*/
@@ -19,35 +19,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    <MYPAN> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<MYPAN> . attrs)
-   (let ((pan (apply
-	       <PANED>
-	       (<PAN>
-		  (let ((enum (iota 5 1)))
-		     (<DIV> :style { overflow: auto }
-			(<TABLE> :border 1
-			   (<TR> (<TD>) (map <TH> enum))
-			   (map (lambda (v1)
-				   (<TR>
-				      (cons (<TH> v1)
-					    (map (lambda (v2)
-						    (<TD> (* v1 v2)))
-						 enum))))
-				enum)))))
-	       (<PAN>
-		  (let ((enum (iota 5 1)))
-		     (<DIV> :style { overflow: auto }
-			(<TABLE> :border 1
-			   (<TR> (<TD>) (map <TH> enum))
-			   (map (lambda (v1)
-				   (<TR>
-				      (cons (<TH> v1)
-					    (map (lambda (v2)
-						    (<TD> (+ v1 v2)))
-						 enum))))
-				enum)))))
-	       :fraction 60 attrs)))
-      (<DIV>
+(define (<MYPAN> orientation)
+   (let ((pan (<PANED> :fraction 60 :orientation orientation
+		 :style "width: 400px; height: 200px;"
+		 (<PAN>
+		    (let ((enum (iota 5 1)))
+		       (<DIV> :style { overflow: auto }
+			  (<TABLE> :border 1
+			     (<TR> (<TD>) (map <TH> enum))
+			     (map (lambda (v1)
+				     (<TR>
+					(cons (<TH> v1)
+					      (map (lambda (v2)
+						      (<TD> (* v1 v2)))
+						   enum))))
+				  enum)))))
+		 (<PAN>
+		    (let ((enum (iota 5 1)))
+		       (<DIV> :style { overflow: auto }
+			  (<TABLE> :border 1
+			     (<TR> (<TD>) (map <TH> enum))
+			     (map (lambda (v1)
+				     (<TR>
+					(cons (<TH> v1)
+					      (map (lambda (v2)
+						      (<TD> (+ v1 v2)))
+						   enum))))
+				  enum))))))))
+      (<DIV> :style "margin-bottom: 2ex; border: 1px dashed black; padding: 10px;"
 	 (<BUTTON> :onclick ~(let ((v (paned-fraction $pan)))
 				(when (> v 5)
 				   (paned-fraction-set! $pan (- v 5))))
@@ -69,8 +68,8 @@
 do emit mouse move events. Hence, on these browsers, the pan cannot
 be resized with the mouse.")
       (<H3> "A vertical Paned")
-      (<MYPAN> :orientation 'vertical :height "400px")
+      (<MYPAN> 'vertical)
       (<H3> "A horizontal Paned")
-      (<MYPAN> :orientation 'horizontal)))
+      (<MYPAN> 'horizontal)))
 	    
 

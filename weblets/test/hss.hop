@@ -1,0 +1,48 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/weblets/test/hss.hop              */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
+;*    Last change :  Tue Dec  8 08:32:16 2009 (serrano)                */
+;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Testing hss                                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-hss
+   (import weblet_test)
+   (export test/hss))
+
+;*---------------------------------------------------------------------*/
+;*    test/hss ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-service (test/hss)
+   (<TEST-HTML> :include `("hop-lframe" ,(service-resource test/hss "hss.hss"))
+      :source (service-resource test/hss "hss.hop")
+      (<DIV> :class "comment"
+	 "This test checks HSS compilation and Label Frames.")
+      (<LFRAME> :class "lframe-left" :style "margin-bottom: 2ex"
+	 (<LFLABEL> "foo")
+	 "A lframe with a left label.")
+      (<LFRAME> :class "lframe-center" :style "margin-bottom: 2ex"
+	 (<LFLABEL> "bar")
+	 "An lframe with a centered label and a large top margin.")
+      (<LFRAME> :class "lframe-right" :style "margin-bottom: 2ex"
+	 (<LFLABEL> "gee")
+	 (<DIV> :style "font-weight: 200; font-size: 80%; padding: 4px"
+	    "An lframe with a right label, angular borders, and a small font."))
+      (<DIV> "This is a separation div that should have a red dotted border.")
+      (let ((div (<DIV> "")))
+	 (list
+	  div
+	  ~(add-event-listener! window "load"
+	      (lambda ()
+		 (innerHTML-set! $div
+				 (<LFRAME>
+				    (<LFLABEL> "dynamic")
+				    "A client-side created lframe"))))))))
+							 
+      

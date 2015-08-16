@@ -1,14 +1,64 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/share/hop-canvas.scm                    */
+;*    serrano/prgm/project/hop/2.3.x/share/hop-canvas.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov  3 08:24:25 2007                          */
-;*    Last change :  Fri Nov  9 15:48:09 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Thu Nov 24 10:01:32 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP Canvas interface                                             */
 ;*=====================================================================*/
 
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __hop-canvas
+   (export (canvas-get-context canvas context)
+	   (canvas-properties ctx)
+	   (canvas-properties-set! ctx . props)
+	   (canvas-begin-path ctx)
+	   (canvas-restore ctx)
+	   (canvas-save ctx)
+	   (canvas-rotate ctx angle)
+	   (canvas-scale ctx sx sy)
+	   (canvas-translate ctx tx ty)
+	   (canvas-arc ctx x y radius sa ea clockwise)
+	   (canvas-arc-to ctx x0 y0 x1 y1 radius)
+	   (canvas-begin-path ctx)
+	   (canvas-close-path ctx)
+	   (canvas-stroke ctx)
+	   (canvas-fill ctx)
+	   (canvas-clip ctx)
+	   (canvas-line ctx x0 y0 . rest)
+	   (canvas-line-to ctx x y)
+	   (canvas-move-to ctx x y)
+	   (canvas-fill ctx)
+	   (canvas-move-to ctx x y)
+	   (canvas-bezier-curve-to ctx x0 y0 x1 y1 x y)
+	   (canvas-bezier-curve ctx x0 y0 . rest)
+	   (canvas-quadratic-curve-to ctx x0 y0 x1 y1)
+	   (canvas-quadratic-curve ctx x0 y0 . rest)
+	   (canvas-clear-rect ctx x0 y0 x1 y1)
+	   (canvas-fill-rect ctx x0 y0 x1 y1)
+	   (canvas-stroke-rect ctx x0 y0 x1 y1)
+	   (canvas-shadow-rect ctx shadow-width x y w h)
+	   (canvas-create-linear-gradient ctx x1 y1 x2 y2)
+	   (canvas-create-radial-gradient ctx x1 y1 r1 x2 y2 r2)
+	   (canvas-add-color-stop gradient position color)
+	   (canvas-create-pattern ctx img type)
+	   (canvas-draw-image ctx image x y . rest)
+	   (canvas-get-image-data ctx x y w h)
+	   (canvas-put-image-data ctx frame x y)
+	   (canvas-arrow-to ctx x0 y0 x1 y1 . args)
+	   (canvas-quadratic-arrow-to ctx x0 y0 cpx cpy x1 y1 . args)
+	   (canvas-fill-text ctx text x y . rest)
+	   (canvas-stroke-text ctx text x y . rest)
+	   (canvas-measure-text ctx text)
+	   (canvas-path-text ctx text)
+	   (canvas-text-along-path ctx text stroke)
+	   (canvas-transform ctx m11 m12 m21 m22 dx dy)
+	   (canvas-set-transform ctx m11 m12 m21 m22 dx dy)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    canvas-get-context ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -19,18 +69,24 @@
 ;*    canvas-properties ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (canvas-properties ctx)
-   `(:fill-style ,ctx.fillStyle
-		 :global-alpha ,ctx.globalAlpha
-		 :global-composite-operation ,ctx.globalCompositeOperation
-		 :line-cap ,ctx.lineCap
-		 :line-join ,ctx.lineJoin
-		 :line-width ,ctx.lineWidth
-		 :miter-limit ,ctx.miterLimit
-		 :shadow-blur ,ctx.shadowBlue
-		 :shadow-color ,ctx.shadowColor
-		 :shadow-offset-x ,ctx.shadowOffsetX
-		 :shadow-offset-y ,ctx.shadowOffsetY
-		 :stroke-style  ,ctx.strokeStyle))
+   (let ((font (cond
+		  ((string? ctx.font) ctx.font)
+		  (else ctx.mozTextStyle))))
+      `(:fill-style ,ctx.fillStyle
+		    :global-alpha ,ctx.globalAlpha
+		    :global-composite-operation ,ctx.globalCompositeOperation
+		    :line-cap ,ctx.lineCap
+		    :line-join ,ctx.lineJoin
+		    :line-width ,ctx.lineWidth
+		    :miter-limit ,ctx.miterLimit
+		    :shadow-blur ,ctx.shadowBlur
+		    :shadow-color ,ctx.shadowColor
+		    :shadow-offset-x ,ctx.shadowOffsetX
+		    :shadow-offset-y ,ctx.shadowOffsetY
+		    :stroke-style  ,ctx.strokeStyle
+		    :text-align ,ctx.textAlign
+		    :text-baseline ,ctx.textBaseLine
+		    :font ,font)))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    canvas-properties-set! ...                                       */
@@ -40,17 +96,17 @@
       (when (pair? props)
 	 (cond
 	    ((null? (cdr props))
-	     (error 'canvas-property-set! "Illegal property attribute" props))
+	     (error "canvas-property-set!" "Illegal property attribute" props))
 	    ((not (keyword? (car props)))
-	     (error 'canvas-property-set! "Illegal property keyword" props))
+	     (error "canvas-property-set!" "Illegal property keyword" props))
 	    (else
 	     (case (car props)
 		((:fill-style)
 		 (set! ctx.fillStyle (cadr props)))
 		((:global-alpha)
 		 (set! ctx.globalAlpha (cadr props)))
-		((:global-composition-operation)
-		 (set! ctx.globalCompositionOperation (cadr props)))
+		((:global-composite-operation)
+		 (set! ctx.globalCompositeOperation (cadr props)))
 		((:line-cap)
 		 (set! ctx.lineCap (cadr props)))
 		((:line-join)
@@ -67,8 +123,19 @@
 		 (set! ctx.shadowOffsetX (cadr props)))
 		((:shadow-offset-y)
 		 (set! ctx.shadowOffsetY (cadr props)))
+		((:font)
+		 (set! ctx.font (cadr props))
+		 (set! ctx.mozTextStyle (cadr props)))
+		((:text-align)
+		 (let ((p (cadr props)))
+		    (set! ctx.textAlign (if (symbol? p) (symbol->string p) p))))
+		((:text-baseline)
+		 (let ((p (cadr props)))
+		 (set! ctx.textBaseLine (if (symbol? p) (symbol->string p) p))))
 		((:stroke-style)
-		 (set! ctx.strokeStyle (cadr props))))))
+		 (set! ctx.strokeStyle (cadr props)))
+		(else
+		 (error "canvas-properties-set!" "Illegal property" props)))))
 	 (loop (cddr props)))))
 
 ;*---------------------------------------------------------------------*/
@@ -151,9 +218,9 @@
    (let loop ((rest rest))
       (when (pair? rest)
 	 (if (null? (cdr rest))
-	     (error 'canvas-line "Illegal number of arguments" rest)
+	     (error "canvas-line" "Illegal number of arguments" rest)
 	     (begin
-		(ctx.moveTo (car rest) (cadr rest))
+		(ctx.lineTo (car rest) (cadr rest))
 		(loop (cddr rest)))))))
    
 ;*---------------------------------------------------------------------*/
@@ -237,6 +304,39 @@
    (ctx.strokeRect x0 y0 x1 y1))
 
 ;*---------------------------------------------------------------------*/
+;*    canvas-shadow-rect ...                                           */
+;*---------------------------------------------------------------------*/
+(define (canvas-shadow-rect ctx shadow-width x y w h)
+   ;; create the gradients
+   (when (or (not (pair? ctx.shadowgradients))
+	     (not (= (car ctx.shadowgradients) shadow-width)))
+      (let* ((grad1 (ctx.createLinearGradient 0 0 shadow-width 0))
+	     (grad2 (ctx.createLinearGradient 0 0 0 shadow-width))
+	     (grad3 (ctx.createRadialGradient 0 0 0 0 0 shadow-width))
+	     (gradients (list grad1 grad2 grad3)))
+	 (for-each (lambda (g)
+		      (g.addColorStop 0 "rgba(0,0,0,0.7)")
+		      (g.addColorStop 0.5 "rgba(255,255,255,0)"))
+		   gradients)
+	 (set! ctx.shadowgradients (cons shadow-width gradients))))
+   ;; draw the gradients
+   (ctx.save)
+   (set! ctx.fillStyle (cadr ctx.shadowgradients))
+   (ctx.translate (+ x w) y)
+   (ctx.fillRect 0 4 shadow-width (- h 4))
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (caddr ctx.shadowgradients))
+   (ctx.translate x (+ y h))
+   (ctx.fillRect 4 0 (- w 4) shadow-width)
+   (ctx.restore)
+   (ctx.save)
+   (set! ctx.fillStyle (cadddr ctx.shadowgradients))
+   (ctx.translate (+ x w) (+ y h))
+   (ctx.fillRect 0 0 shadow-width shadow-width)
+   (ctx.restore))
+   
+;*---------------------------------------------------------------------*/
 ;*    canvas-create-linear-gradient ...                                */
 ;*---------------------------------------------------------------------*/
 (define (canvas-create-linear-gradient ctx x1 y1 x2 y2)
@@ -264,18 +364,32 @@
 ;*    canvas-draw-image ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (canvas-draw-image ctx image x y . rest)
-   (if (null? rest)
-       (ctx.drawImage image x y)
-       (if (and (pair? rest) (pair? (cdr rest)))
-	   (if (null? (cdr rest))
-	       (ctx.drawImage image x y (car rest) (cadr rest))
-	       (let* ((sw (car rest))
-		      (sh (cadr rest))
-		      (rest (cddr rest)))
-		  (ctx.drawImage image x y sw sh
-				 (car rest) (cadr rest)
-				 (caddr rest) (cadddr rest))))
-	   (error 'canvas-draw-image "Illegal number of arguments"  rest))))
+   (cond
+      ((null? rest)
+       (ctx.drawImage image x y))
+      ((not (and (pair? rest) (pair? (cdr rest))))
+       (error "canvas-draw-image" "Illegal number of arguments"  rest))
+      ((null? (cddr rest))
+       (ctx.drawImage image x y (car rest) (cadr rest)))
+      (else
+       (let* ((sw (car rest))
+	      (sh (cadr rest))
+	      (rest (cddr rest)))
+	  (ctx.drawImage image x y sw sh
+			 (car rest) (cadr rest)
+			 (caddr rest) (cadddr rest))))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-get-image-data ...                                        */
+;*---------------------------------------------------------------------*/
+(define (canvas-get-image-data ctx x y w h)
+   (ctx.getImageData x y w h))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-put-image-data ...                                        */
+;*---------------------------------------------------------------------*/
+(define (canvas-put-image-data ctx frame x y)
+   (ctx.putImageData frame x y))
 
 ;*---------------------------------------------------------------------*/
 ;*    canvas-arrow-to ...                                              */
@@ -289,7 +403,7 @@
       (let loop ((args args))
 	 (when (pair? args)
 	    (if (null? (cdr args))
-		(error 'canvas-arrow-to "Illegal arguments" args)
+		(error "canvas-arrow-to" "Illegal arguments" args)
 		(cond
 		   ((eq? (car args) :angle)
 		    (set! an (cadr args))
@@ -304,7 +418,7 @@
 		    (set! tail (cadr args))
 		    (loop (cddr args)))
 		   (else
-		    (error 'canvas-arrow-to "Illegal arguments" args))))))
+		    (error "canvas-arrow-to" "Illegal arguments" args))))))
       (let* ((d (sqrt (+ (* (- x1 x0) (- x1 x0)) (* (- y1 y0) (- y1 y0)))))
 	     (ah (let ((acos (Math.acos (/ (- x1 x0) d))))
 		    (if (> y1 y0)
@@ -357,7 +471,7 @@
       (let loop ((args args))
 	 (when (pair? args)
 	    (if (null? (cdr args))
-		(error 'canvas-arrow-to "Illegal arguments" args)
+		(error "canvas-arrow-to" "Illegal arguments" args)
 		(cond
 		   ((eq? (car args) :angle)
 		    (set! an (cadr args))
@@ -372,7 +486,7 @@
 		    (set! tail (cadr args))
 		    (loop (cddr args)))
 		   (else
-		    (error 'canvas-arrow-to "Illegal arguments" args))))))
+		    (error "canvas-arrow-to" "Illegal arguments" args))))))
       (let* ((dh (sqrt (+ (* (- x1 cpx) (- x1 cpx)) (* (- y1 cpy) (- y1 cpy)))))
 	     (ah (let ((acos (Math.acos (/ (- x1 cpx) dh))))
 		    (if (> y1 cpy)
@@ -416,7 +530,82 @@
 	    (ctx.lineTo x0b y0b)
 	    (ctx.closePath)
 	    (ctx.fill)))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    canvas-fill-text ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-fill-text ctx text x y . rest)
+   (cond
+      ((procedure? ctx.fillText)
+       (if (pair? rest)
+	   (ctx.fillText text x y (car rest))
+	   (ctx.fillText text x y)))
+      ((procedure? ctx.mozDrawText)
+       (ctx.save)
+       (ctx.translate x y)
+       (ctx.mozDrawText text)
+       (ctx.restore))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-stroke-text ...                                           */
+;*---------------------------------------------------------------------*/
+(define (canvas-stroke-text ctx text x y . rest)
+   (cond
+      ((procedure? ctx.strokeText)
+       (if (pair? rest)
+	   (ctx.strokeText text x y (car rest))
+	   (ctx.strokeText text x y)))
+      ((procedure? ctx.mozPathText)
+       (ctx.save)
+       (ctx.translate x y)
+       (set! ctx.fillStyle "yellow")
+       (ctx.beginPath)
+       (ctx.mozPathText text)
+       (ctx.closePath)
+       (ctx.stroke)
+       (ctx.restore))
+      (else
+       (apply canvas-fill-text ctx text x y rest))))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-measure-text ...                                          */
+;*---------------------------------------------------------------------*/
+(define (canvas-measure-text ctx text)
+   (cond
+      ((procedure? ctx.measureText)
+       (let ((m (ctx.measureText text)))
+	  m.width))
+      ((procedure? ctx.mozMeasureText)
+       (ctx.mozMeasureText text))
+      (else
+       0)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-path-text ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-path-text ctx text)
+   (when (procedure? ctx.mozPathText)
+      (ctx.mozPathText text)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-text-along-path ...                                       */
+;*---------------------------------------------------------------------*/
+(define (canvas-text-along-path ctx text stroke)
+   (when (procedure? ctx.mozTextAlongPath)
+      (ctx.mozTextAlongPath text stroke)))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-transform ...                                             */
+;*---------------------------------------------------------------------*/
+(define (canvas-transform ctx m11 m12 m21 m22 dx dy)
+   (ctx.transform m11 m12 m21 m22 dx dy))
+
+;*---------------------------------------------------------------------*/
+;*    canvas-set-transform ...                                         */
+;*---------------------------------------------------------------------*/
+(define (canvas-set-transform ctx m11 m12 m21 m22 dx dy)
+   (ctx.setTransform m11 m12 m21 m22 dx dy))
+
 ;*---------------------------------------------------------------------*/
 ;*    Internet Explorer 7 Canvas support                               */
 ;*    -------------------------------------------------------------    */

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/etc/Makefile.hopconfig.in        */
+#*    serrano/prgm/project/hop/2.5.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Nov 28 10:40:12 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Thu Aug  8 15:01:47 2013 (serrano)                */
+#*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -22,27 +22,36 @@ HOPDATE		= @DATE@
 #*---------------------------------------------------------------------*/
 # the Bigloo compiler
 BIGLOO          = @BIGLOO@
+RELEASE		= @BIGLOOVERSION@
+HOPC		= @HOPC@
+BGLCPP		= @BGLCPP@
+HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
 BACKEND         = @BACKEND@
+LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
-CIGLOO		= @CIGLOO@
 AFILE		= @AFILE@
 JFILE		= @JFILE@
 BTAGS		= @BTAGS@
 DEPEND		= @BDEPEND@
-CC		= @CC@
 UNZIP		= @UNZIP@
 JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
+JAVAC		= @JAVAC@
 
-BMASK		= 755
+MODFILE		= 644
+MODDIR		= 755
+MODEXE		= 755
+
 INSTALL		= @INSTALL@
 
 #*---------------------------------------------------------------------*/
 #*    Compilation flags                                                */
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
-BCFLAGS		= @BCFLAGS@ -copt "$(CCFLAGS)" $(EFLAGS)
+CCOMP		= @CC@
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi hop-$(LINK) $(EFLAGS)
+BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
 FFLAGS		= @FFLAGS@
@@ -52,30 +61,42 @@ BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
 BEJVMFLAGS	= -jvm-jar
 BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
 BLDOTNETFLAGS   = @BLFLAGS@ 
-BHFLAGS		= -q -mkaddheap -mkaddlib $(EFLAGS)
+BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
+BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
 
-BIGLOOPTHLIB	= @BIGLOOPTHLIB@
-BIGLOOSSLLIB	= @BIGLOOSSLLIB@
+BIGLOOPTHLIBS	= @BIGLOOPTHLIBS@
+BIGLOOPTHLIBU	= @BIGLOOPTHLIBU@
+BIGLOOSSLLIBS	= @BIGLOOSSLLIBS@
+BIGLOOSSLLIBU	= @BIGLOOSSLLIBU@
 
 BSCM2JSFLAGS	= @BSCM2JSFLAGS@
 
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
-BGLCLOSELIBS	= $(BIGLOOPTHLIB) \
-                  $(BIGLOOSSLLIB) \
-                  -lbiglooweb_s-$(RELEASE) \
-                  -lbigloomultimedia_s-$(RELEASE)
+BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) \
+                  $(BIGLOOSSLLIBS) \
+                  @BGLCLOSELIBS_S@
+
+BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
+                  $(BIGLOOSSLLIBU) \
+                  @BGLCLOSELIBS_U@
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */
 #*---------------------------------------------------------------------*/
+BUILDDIR	= @BUILDDIR@
 BUILDETCDIR	= @BUILDETCDIR@
 BUILDBINDIR	= @BUILDBINDIR@
 BUILDLIBDIR	= @BUILDLIBDIR@
 BUILDSHAREDIR	= @BUILDSHAREDIR@
+
+BUILDSPECIFIC   = @BUILDSPECIFIC@
+INSTALLSPECIFIC = @INSTALLSPECIFIC@
+
 DISTRIBDIR	= @DISTRIBDIR@
+REPODIR		= @REPODIR@
 
 #*---------------------------------------------------------------------*/
 #*    Destinations                                                     */
@@ -104,6 +125,11 @@ JVMZIPLIBS	= @JVMZIPLIBS@
 JVMINITS	= @JVMINITS@
 
 #*---------------------------------------------------------------------*/
+#*    Apache Felix                                                     */
+#*---------------------------------------------------------------------*/
+FELIX_JAR       = @FELIX_JAR@
+
+#*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */
 #*---------------------------------------------------------------------*/
 HOPSVN		= @HOPSVN@
@@ -113,95 +139,21 @@ HOPDISTRIBDIR	= @HOPDISTRIBDIR@
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */
 #*---------------------------------------------------------------------*/
-.PHONY: showvar compile compile2 link
+.PHONY: compile compile2 link
 
-showvar = echo -n """$(1)=\"$($(1))\""
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-done = echo "$(2)$(1)$(3)$(4)"
-else
-done = if [ "$$TERM" = "rxvt" ]; then echo "$(2)[0m[1;$(1)m$(3)[0m$(4)"; else echo "$(2)$(1)$(3)$(4)"; fi
-endif
+COLOR		= yes
 
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-compile = $($(1)) $($(2)) $(3)
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-compile = echo "$($(1)) $($(2)) $(3)"; $($(1)) $($(2)) $(3)
-else
-compile = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) $$""$(2) [0m[1;30m$(3)[0m"; else echo "$($(1)) $($(2)) $(3)"; fi; $($(1)) $($(2)) $(3)
-endif
+ifeq ($(COLOR),yes)
+COLOR_STOP	= [0m
+COLOR_CC	= [0m[1;30m
+COLOR_OBJ	= [0m[1;31m
+COLOR_DEST	= [0m[1;32m
 endif
 
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-compile0 = $($(1)) $(2)
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-compile0 = echo "$($(1)) $($(2))"; $($(1)) $(2)
-else
-compile0 = echo "$$""$(1) $(2)"; $($(1)) $(2)
-endif
-endif
+done = echo '$(COLOR_DEST)$(1)$(COLOR_STOP)...done.'
+compile = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(COLOR_OBJ)$(4)$(COLOR_STOP)'; $(1) $(2) $(3) $(4)
+compile2 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(COLOR_OBJ)$(5)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5)
+compile3 = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(5) $(COLOR_OBJ)$(6)$(COLOR_STOP) $(2) $(3) $(4)'; $(1) $(5) $(6) $(2) $(3) $(4)
 
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-compile2 = $($(1)) $($(2)) $($(3)) $(4)
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-compile2 = echo "$($(1)) $($(2)) $($(3)) $(4)"; $($(1)) $($(2)) $($(3)) $(4)
-else
-compile2 = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) $$""$(2) $$""$(3) [0m[1;30m$(4)[0m"; else echo "$($(1)) $($(2)) $($(3)) $(4)"; fi; $($(1)) $($(2)) $($(3)) $(4)
-endif
-endif
-
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-compile3 = $($(1)) $($(2)) $($(3)) $($(4)) $(5)
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-compile3 = echo "$($(1)) $($(2)) $($(3)) $($(4)) $(5)"; $($(1)) $($(2)) $($(3)) $($(4)) $(5)
-else
-compile3 = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) $$""$(2) $$""$(3) $$""$(4) [0m[1;30m$(5)[0m"; else echo "$($(1)) $($(2)) $($(3)) $($(4)) $(5)"; fi; $($(1)) $($(2)) $($(3)) $($(4)) $(5)
-endif
-endif
-
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-link = $($(1)) $(2)
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-link = echo "$($(1)) $(2)"; $($(1)) $(2)
-else
-link = if [ "$$TERM" = "rxvt" ]; then echo "$$""$(1) [0m[1;30m$(2)[0m"; else echo "$($(1)) $(2)"; fi; $($(1)) $(2)
-endif
-endif
-
-#*---------------------------------------------------------------------*/
-#*    showflags                                                        */
-#*---------------------------------------------------------------------*/
-ifeq ($(findstring -n,$(filter-out --no-print-directory,$(MAKEFLAGS))),-n)
-showflags:
-else
-ifneq (,$(findstring s,$(MAKEFLAGS)))
-showflags:
-else
-showflags:
-	@ if [ "$$TERM" = "rxvt" ]; then \
-	    echo "BIGLOO=[0m[1;33m$(BIGLOO)[0m"; \
-	    echo "BCFLAGS=[0m[1;31m$(BCFLAGS)[0m"; \
-	    echo "BCFLAGSDEV=[0m[1;31m$(BCFLAGS)[0m"; \
-	    echo "BJVMFLAGS=[0m[1;31m$(BJVMFLAGS)[0m"; \
-	    echo "BLFLAGS=[0m[1;31m$(BLFLAGS) $$""(BLIBFLAGS)[0m"; \
-	    echo "BLIBFLAGS=[0m[1;31m$(BLIBFLAGS)[0m"; \
-	    echo "BHFLAGS=[0m[1;31m$(BHFLAGS)[0m"; \
-	    echo "CCFLAGS=[0m[1;31m$(CCFLAGS)[0m"; \
-          else \
-	    echo "BIGLOO=$(BIGLOO)"; \
-	    echo "BCFLAGS=$(BCFLAGS)"; \
-	    echo "BCFLAGSDEV=$(BCFLAGS)"; \
-	    echo "BJVMFLAGS=$(BJVMFLAGS)"; \
-	    echo "BLFLAGS=$(BLFLAGS) $$""(BLIBFLAGS)"; \
-	    echo "BLIBFLAGS=$(BLIBFLAGS)"; \
-	    echo "BHFLAGS=$(BHFLAGS)"; \
-	    echo "CCFLAGS=$(CCFLAGS)"; \
-          fi
-	@ echo ""
-endif
-endif
-
+heap = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(6) $(COLOR_DEST)$(7)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6) $(7)
+link = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_DEST)$(6)$(COLOR_STOP)'; $(1) $(2) $(3) $(4) $(5) $(6)

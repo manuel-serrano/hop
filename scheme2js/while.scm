@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module while
    (import config
 	   tools
@@ -9,12 +21,8 @@
 	   verbose)
    (static (wide-class Vars-Label::Label
 	      vars)
-	   (wide-class Tail-Label::Label
-	      (used?::bool (default #f))
-	      ;; if a Labeled surrounds a While, then the while-label is
-	      ;; stored in the break-label too.
-	      (while-label (default #f))))
-   (static (final-class Env
+	   )
+   (static (final-class While-Env
 	      call/cc?::bool))
    (export (tail-rec->while! tree::Module)
 	   (optimize-while! tree::Module)))
@@ -36,8 +44,8 @@
 	 (vars scope-vars))
       (default-walk! this)
       (shrink! label)
-      (let* ((break-label (make-Label (gensym 'while-break)))
-	     (location (Node-location this))
+      (let* ((break-label (instantiate::Label (id (gensym 'while-break))))
+	     (location (with-access::Node this (location) location))
 	     (while (instantiate::While
 		       (location location)
 		       (scope-vars scope-vars)
@@ -69,7 +77,7 @@
 	 (instantiate::Begin
 	    (exprs (list (loop-updates-free-order vars updates)
 			 (instantiate::Continue
-			    (location (Node-location this))
+			    (location (with-access::Node this (location) location))
 			    (label label))))))))
    
 ;; try to find loops, that can be transformed into optimized whiles.
@@ -92,7 +100,7 @@
    (when (config 'while)
       (verbose " optimize-while")
       ;; search for our pattern(s) and apply them/it if found.
-      (patterns! tree (instantiate::Env (call/cc? (config 'call/cc))))))
+      (patterns! tree (instantiate::While-Env (call/cc? (config 'call/cc))))))
 
 (define-nmethod (Node.patterns!)
    (default-walk! this))
@@ -121,11 +129,11 @@
 	    (else
 	     (error "While-patterns!" "Internal Error: should never happen" #f))))
 
-      (if (and (or (not (Env-call/cc? env)) ;; call/cc (and not just suspend)
+      (if (and (or (not (with-access::While-Env env (call/cc?) call/cc?)) ;; call/cc (and not just suspend)
 		   (not call/cc?)) ;; this could be set by suspend/resume too.
-	       (Const? test)
-	       (eq? (Const-value test) #t)
-	       (If? body))
+	       (isa? test Const)
+	       (eq? (with-access::Const test (value) value) #t)
+	       (isa? body If))
 	  (with-access::If body (test then else)
 	     (let ((new-this (cond
 				((not (continue-in-branch? label else))

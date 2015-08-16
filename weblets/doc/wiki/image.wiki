@@ -1,5 +1,5 @@
-Images are embedded inside angle brackets (,(<TT> "!!...!!")). Images
+Images are embedded inside angle brackets (,(<TT> "{{...}}")). Images
 may have a title. Image title shares its syntax with links text.
 It is specified after a pipe character ,(<TT> "|") in the definition
 of the image. For instance, this is an image
-!!,(make-file-path (hop-share-directory) "icons" "hop-16x16.png")|this is a logo!!.
+{{,(make-file-path (hop-share-directory) "icons" "hop" "hop-16x16.png")|this is a logo}}.

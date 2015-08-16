@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/wiki.hop              */
+;*    serrano/prgm/project/hop/2.4.x/weblets/doc/wiki.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 11 09:36:53 2006                          */
-;*    Last change :  Mon Mar 23 11:59:11 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Thu Nov  8 14:51:02 2012 (serrano)                */
+;*    Copyright   :  2006-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    DOC wiki parsing                                                 */
 ;*=====================================================================*/
@@ -58,7 +58,9 @@
       ((<example>) <WIKI-EXAMPLE>)
       ((<code>) <WIKI-CODE>)
       ((<share>) <WIKI-SHARE>)
-      ((<rc>) <WIKI-RC>)))
+      ((<share-public>) <WIKI-SHARE-PUBLIC>)
+      ((<rc>) <WIKI-RC>)
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *doc-syntax*                                                     */
@@ -77,11 +79,11 @@
 (define *meta-wiki-syntax*
    (instantiate::wiki-syntax
       (plugins (lambda (id)
-		   (if (eq? id '<center>)
-		       (lambda (port title expr)
-			  (<DIV> :align "center"
-				 (<DIV> :style "width: 50%; color: #555"
-					expr))))))))
+		  (if (eq? id '<center>)
+		      (lambda (port title expr)
+			 (<DIV> :align "center"
+			    (<DIV> :style "width: 50%; color: #555"
+			       expr))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-wiki-request-syntax ...                                     */
@@ -95,12 +97,15 @@
 			 (lambda (port t expr)
 			    (let ((title (if mktitle (mktitle t) t)))
 			       (if (authorized-service? req 'admin)
-				   (if (http-request-localclientp req)
-				       (<DOC/emacs> port title expr)
-				       (<DOC/edit> port title expr))
+				   (with-access::http-request req (localclientp)
+				      (if localclientp
+					  (<DOC/emacs> port title expr)
+					  (<DOC/edit> port title expr))
+				      (<WIKI-DOC> port title expr))
 				   (<WIKI-DOC> port title expr)))))
 			(else
-			 ((wiki-syntax-plugins initial-syntax) id))))))))
+			 (with-access::wiki-syntax initial-syntax (plugins)
+			    (plugins id)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-DOC> ...                                                   */
@@ -246,10 +251,34 @@
 	    (<FLHEAD> file)
 	    (with-input-from-file path
 	       (lambda ()
-		  (<PRE>
-		     :class "source"
+		  (<PRE> :class "source"
 		     (html-string-encode
 		      (read-string (current-input-port))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    <WIKI-SHARE-PUBLIC> ...                                          */
+;*---------------------------------------------------------------------*/
+(define (<WIKI-SHARE-PUBLIC> port file body)
+   (let ((path (make-file-name (hop-share-directory) file)))
+      (<FL>
+	 (<FLITEM>
+	    (<FLHEAD> file)
+	    (with-input-from-file path
+	       (lambda ()
+		  (let* ((r (read-string (current-input-port)))
+			 (p "/* <public> */\n")
+			 (i (string-contains r p)))
+		     (if (not i)
+			 (<PRE> :class "source" (html-string-encode r))
+			 (let* ((p2 "/* </public> */")
+				(j (string-contains r p2 i))
+				(s (substring r
+					      (+fx i (string-length p))
+					      (if (not j)
+						  (string-length r)
+						  (-fx j 1)))))
+			    (<PRE> :class "source"
+			       (html-string-encode s)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <WIKI-RC> ...                                                    */
@@ -273,11 +302,15 @@
 (define (doc-page page syntax)
    (define (err src)
       (<SPAN> :class "parse-error" (html-string-encode src)))
-   (if (or (not page) (not (file-exists? page)))
-       (http-file-not-found page)
+   (cond
+      ((not page)
+       (http-service-error (current-request) 'doc "Service not found"))
+      ((not (file-exists? page))
+       (http-file-not-found page))
+      (else
        (let ((iport (open-input-file page)))
 	  (if (not (input-port? iport))
-	      (http-permission-denied path)
+	      (http-permission-denied page)
 	      (with-handler
 		 (lambda (e)
 		    (exception-notify e)
@@ -290,14 +323,14 @@
 			  (wiki-input-port->hop iport :syntax syntax))
 		       (begin
 			  (eval-module-set! m2)
-			  (close-input-port iport)))))))))
+			  (close-input-port iport))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wiki-tt-parser ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (wiki-tt-parser parser)
    (lambda x
-      (if (and (null? (cdr x)) (pair? (car x)) (every? string? (car x)))
+      (if (and (null? (cdr x)) (pair? (car x)) (every string? (car x)))
 	  (let ((s (html-string-decode (apply string-append (car x)))))
 	     (or (parser s) (<TT> x)))
 	  (<TT> x))))

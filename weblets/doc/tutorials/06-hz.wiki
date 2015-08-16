@@ -37,7 +37,7 @@ In order to build and test HOP ++.hz++ file, you need:
   - the GNU [[http://www.gnu.org/software/tar/|tar]] utility.
   - if the application contains more than one source code, the
  ++bglafile++ tool (that comes with the installation of the
- [[http://www.inria.fr/mimosa/fp/Bigloo|Bigloo]] compiler).
+ [[http://www.inria.fr/indes/fp/Bigloo|Bigloo]] compiler).
 
 
 A package ++MYWEBLET.hz++ must, at least, contain:
@@ -321,7 +321,7 @@ following:
         ...)
      (<BODY> 
         ...
-        ~(hop_install_weblet 
+        ~(hop_hz_install_weblet 
              "http://mhost.mydomain.org/roman-0.0.1.hz"
              $(string-append (hop-weblets-directory) "/hz/etc/hz-install.png"))
         ...))
@@ -339,7 +339,7 @@ If the page is implemented in HTML, it should contain:
      </head>
      <body>
        ...
-       <script>hop_install_weblet( "http://mhost.mydomain.org/roman-0.0.1.hz" )</script>
+       <script>hop_hz_install_weblet( "http://mhost.mydomain.org/roman-0.0.1.hz" )</script>
        ...
      </body>
    </body>
@@ -353,7 +353,7 @@ contained in the HOP distribution, in the directory
   HOPSHAREROOT/weblets/hz/etc/hz-install.png
 </code>
 
-The function ++hop_install_weblet++ creates a HTML link that when
+The function ++hop_hz_install_weblet++ creates a HTML link that when
 clicked fetches and installs the ++roman-0.0.1.hz++ file on the HOP
 broker whose host and port number can be changed using the Web page.
 

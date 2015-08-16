@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.0.x/share/hop-file.js                 */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-file.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  2 07:05:30 2008                          */
-/*    Last change :  Mon Mar 23 09:00:02 2009 (serrano)                */
-/*    Copyright   :  2008-09 Manuel Serrano                            */
+/*    Last change :  Sun Aug 11 15:32:37 2013 (serrano)                */
+/*    Copyright   :  2008-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side support for url browsers.                            */
 /*=====================================================================*/
@@ -27,10 +27,10 @@ function hop_inputurl_keydown( obj, event ) {
 	    obj.completion_count = 0;
 	 }
       } else {
-	 var c = node_style_get( obj, "background" );
-	 node_style_set( obj, "background", "black" );
+	 var c = obj.className;
+	 obj.className = c + " hop_inputurl_flash";
 	 setInterval( function() {
-	       node_style_set( obj, "background", c ? c : "white" );
+	       obj.className = c;
 	    }, 100 );
       }
    };
@@ -45,9 +45,10 @@ function hop_inputurl_keydown( obj, event ) {
       hop_stop_propagation( event, false );
 
       if( !(obj.completion instanceof Array ) ) {
-	 // the name of the service is defined in runtime/hop-file.scm
-	 var svc = hop_apply_url( hop_service_base() + "/server-file/completion",
-				  [ obj.value ] );
+	 // the name of the service is defined in widget/file.scm
+	 var svc = hop_apply_url(
+	    hop_service_base() + "/server-file/completion",
+	    [ obj.value ] );
 	 
 	 with_hop( svc, callback );
       } else {
@@ -74,12 +75,12 @@ function hop_filechooser_button_push( button, id, url ) {
    el.button = button;
 
    // get the files content
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/files",
 			    [ id, url, fe.value, he.checked ] );
 
    function callback( h ) {
-      hop_innerHTML_set( id + "-files", h.car )
+      hop_innerHTML_set( id + "-files", h.__hop_car )
 	 
       el.selected = false;
       el.value = url;
@@ -94,18 +95,26 @@ function hop_filechooser_button_push( button, id, url ) {
 function hop_filechooser_select( row, event, id, url ) {
    var el = document.getElementById( id );
 
-   if( el.selected && (el.selected != undefined) ) {
-      el.selected.className = el.selected.oldClassName;
-   }
+   if( el.unselected == row ) {
+      return hop_filechooser_open( id, url );
+   } else {
+      if( el.selected && (el.selected != undefined) ) {
+	 el.selected.className = el.selected.oldClassName;
+      }
 
-   if( el.selected != row ) {
-      row.oldClassName = row.className;
-      row.className = "selected";
+      if( el.selected != row ) {
+	 row.oldClassName = row.className;
+	 row.className = "selected";
 
-      el.selected = row;
-      el.value = url;
+	 el.selected = row;
+	 el.unselected = undefined;
+	 el.value = url;
 
-      if( el.select ) el.select( event );
+	 if( el.select ) el.select( event );
+      } else {
+	 el.selected = undefined;
+	 el.unselected = row;
+      }
    }
 }
 
@@ -117,13 +126,13 @@ function hop_filechooser_open( id, url ) {
    var fe = document.getElementById( id + "-filters" );
    var he = document.getElementById( id + "-hidden" );
    
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/files",
 			    [ id, url, fe.value, he.checked ] );
 
    function callback( h ) {
-      hop_innerHTML_set( id + "-files", h.car );
-      hop_innerHTML_set( id + "-path", h.cdr );
+      hop_innerHTML_set( id + "-files", h.__hop_car );
+      hop_innerHTML_set( id + "-path", h.__hop_cdr );
 
       el.selected = false;
    }
@@ -139,7 +148,7 @@ function hop_filechooser_open( id, url ) {
 function hop_filechooser_add( id ) {
    var el = document.getElementById( id );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in wdiget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/addplace",
 			    [ id, el.value ] );
 
@@ -156,7 +165,7 @@ function hop_filechooser_add( id ) {
 function hop_filechooser_remove( id ) {
    var el = document.getElementById( id );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/removeplace",
 			    [ id, el.value ] );
 
@@ -176,7 +185,7 @@ function hop_filechooser_toggle_location( span, id ) {
    var flag = (cname.indexOf( "filechooser-button-selected" ) == 0);
    var l = document.getElementById( id + "-location" );
 
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    var svc = hop_apply_url( hop_service_base() + "/server-file/togglelocation",
 			    [ id, flag ] );
 
@@ -199,7 +208,8 @@ function hop_filechooser_location_keypress( input, event, id ) {
    if( hop_event_key_code( event ) == 13 ) {
       hop_filechooser_open( id, input.value );
    } else {
-      id.value = input.value;
+      var el = document.getElementById( id );
+      el.value = input.value;
    }
 }
 
@@ -270,7 +280,7 @@ function hop_filechooser_begin_drag( event, id, url ) {
 
    hop_filechooser_drag_el = document.getElementById( id + "-drag" );
    el.value = url;
-   
+
    hop_add_event_listener( document,
 			   "mousemove",
 			   hop_filechooser_drag_and_drop_move );
@@ -286,7 +296,7 @@ function hop_filechooser_begin_drag( event, id, url ) {
 /*---------------------------------------------------------------------*/
 function hop_filechooser_ok( event, id ) {
    var el = document.getElementById( id );
-   
+
    if( el.open ) el.open( event );
    hop_stop_propagation( event, false );
 }
@@ -314,15 +324,14 @@ function hop_filechooser_run( event, id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_filechooser_key ...                                          */
 /*---------------------------------------------------------------------*/
-function hop_filechooser_key( table, id ) {
-/*    alert( "id=" + id );                                             */
+function hop_filechooser_key( table, event, id, pep, pid, nep, nid ) {
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_filechooser ...                                              */
 /*---------------------------------------------------------------------*/
 function hop_filechooser( args ) {
-   // the name of the service is defined in runtime/hop-file.scm
+   // the name of the service is defined in widget/file.scm
    return hop_apply_url( hop_service_base() + "/server-file/filechooser",
 			 [ args ] );
 }
@@ -339,7 +348,7 @@ var hop_filechooser_proc_table = [];
 function hop_filechooser_save_proc( event, proc ) {
    var c = hop_filechooser_proc_count++;
    hop_filechooser_proc_table[ c ] = proc;
-   return "this." + event + " = hop_filechooser_proc_table[" + c + "]; delete hop_filechooser_proc_table[" + c + "]; this." + event + "()";
+   return "this." + event + " = hop_filechooser_proc_table[" + c + "]; delete hop_filechooser_proc_table[" + c + "]; this." + event + "(event)";
 }
 
 /*---------------------------------------------------------------------*/

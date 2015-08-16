@@ -1,3 +1,15 @@
+/*=====================================================================*/
+/*    Author      :  Florian Loitsch                                   */
+/*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+/*    -------------------------------------------------------------    */
+/*    This file is part of Scheme2Js.                                  */
+/*                                                                     */
+/*   Scheme2Js is distributed in the hope that it will be useful,      */
+/*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+/*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+/*   LICENSE file for more details.                                    */
+/*=====================================================================*/
+
 function sc_String(s) {
     this.val = s;
 }
@@ -30,6 +42,7 @@ sc_Keyword.prototype.toString = function() {
 };
 
 /*** META ((export #t)
+           (arity #t)
            (type bool)
            (peephole (postfix " instanceof sc_Keyword")))
 */
@@ -40,6 +53,7 @@ function sc_isKeyword(o) {
 
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 1 "new sc_String(" s ")")))
 */
 function sc_jsstring2string(s) {
@@ -47,6 +61,7 @@ function sc_jsstring2string(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (id)))
 */
 function sc_jsstring2symbol(s) {
@@ -54,6 +69,7 @@ function sc_jsstring2symbol(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (string2jsstring_mutable)))
 */
 function sc_string2jsstring(s) {
@@ -61,6 +77,7 @@ function sc_string2jsstring(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (id)))
 */
 function sc_symbol2jsstring(s) {
@@ -68,6 +85,7 @@ function sc_symbol2jsstring(s) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".val")))
 */
 function sc_keyword2jsstring(o) {
@@ -75,13 +93,14 @@ function sc_keyword2jsstring(o) {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole 1 "new sc_Keyword(" s ")")))
 */
 function sc_jsstring2keyword(s) {
     return new sc_Keyword(s);
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 var sc_gensym = function() {
     var counter = 1000;
     return function(sym) {
@@ -92,6 +111,7 @@ var sc_gensym = function() {
 }();
 
 /*** META ((export #t)
+           (arity #t)
            (type bool))
 */
 function sc_isEqual(o1, o2) {
@@ -101,16 +121,51 @@ function sc_isEqual(o1, o2) {
 	    (sc_isVector(o1) && sc_isVector(o2)
 	     && sc_isVectorEqual(o1, o2, sc_isEqual)) ||
 	    (sc_isString(o1) && sc_isString(o2)
-	     && sc_isStringEqual(o1, o2)));
+	     && sc_isStringEqual(o1, o2)) ||
+	    sc_objectEqual(o1,o2));
+}
+
+function sc_objectEqual(x, y) {
+  if (!(x instanceof Object) || !(y instanceof Object)) return false;
+    // if they are not strictly equal, they both need to be Objects
+
+  if (x.constructor !== y.constructor) return false;
+    // they must have the exact same prototype chain, the closest we can do is
+    // test there constructor.
+
+   for (var p in x) {
+      if (!x.hasOwnProperty(p)) continue;
+      // other properties were tested using x.constructor === y.constructor
+
+      if (!y.hasOwnProperty(p)) return false;
+      // allows to compare x[ p ] and y[ p ] when set to undefined
+
+      if (x[p] === y[p]) continue;
+      // if they have the same strict value or identity then they are equal
+
+      if (typeof(x[p]) !== "object") return false;
+      // Numbers, Strings, Functions, Booleans must be strictly equal
+
+      if ( !sc_isEqual(x[p],y[p])) return false;
+      // Objects and Arrays must be tested recursively
+   }
+
+   for (var p in y) {
+      if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) return false;
+      // allows x[ p ] to be set to undefined
+   }
+   return true;
 }
 
 /*** META ((export number->symbol integer->symbol)
+           (arity -2)
            (peephole (prefix "''+")))
            ;; peephole will only apply if no radix is given.
 */
 var sc_number2symbol = sc_number2jsstring;
 
 /*** META ((export number->string integer->string)
+           (arity -2)
            (peephole (hole 1 "new sc_String(''+" x ")")))
            ;; peephole will only apply if no radix is given.
 */
@@ -118,32 +173,31 @@ function sc_number2string(x, radix) {
     return new sc_String(sc_number2jsstring(x, radix));
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 var sc_symbol2number = sc_jsstring2number;
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -2)) */
 function sc_string2number(s, radix) {
     return sc_symbol2number(s.val, radix);
 }
 
-/*** META ((export #t)
-           (peephole (hole 1 "+" s ".val")))
-           ;; peephole will only apply if no radix is given.
-*/
+/*** META ((export #t) (arity -2)
+           (peephole (hole 2 "parseInt(" s "," radix ")")))
+*/	   
 function sc_string2integer(s, radix) {
-    if (!radix) return +s.val;
     return parseInt(s.val, radix);
 }
 
-/*** META ((export #t)
-           (peephole (hole 1 "+" s ".val")))
-*/
+/*** META ((export #t) (arity #t)
+           (peephole (hole 1 "parseFloat(" s ")")))
+*/	   
 function sc_string2real(s) {
-    return +s.val;
+    return parseFloat(s.val);
 }
 
 /*** META ((export #t)
-           (type bool)
+           (arity #t)
+	   (type bool)
            (peephole (hole 1 "typeof " s " === 'string'")))
 */
 function sc_isSymbol(s) {
@@ -158,6 +212,7 @@ function sc_symbol2string(s) {
 }
 
 /*** META ((export string->symbol)
+           (arity #t)
            (peephole (string2symbol_mutable)))
 */
 function sc_string2symbol(s) {
@@ -165,6 +220,7 @@ function sc_string2symbol(s) {
 }
 
 /*** META ((export #t)
+           (arity -1)
            (peephole (infix 0 #f "+" "''")))
 */
 function sc_symbolAppend() {
@@ -172,28 +228,38 @@ function sc_symbolAppend() {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (hole "new sc_String(" c ".val)")))
 */
 function sc_char2string(c) { return new sc_String(c.val); }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".val")))
 */
 function sc_char2symbol(c) { return c.val; }
 
 /*** META ((export #t)
+           (arity #t)
            (type bool)
            (peephole (postfix " instanceof sc_String")))
 */
 function sc_isString(s) { return (s instanceof sc_String); }
 
-/*** META ((export #t)) */
+/*** META ((export #t)
+           (arity #t)
+           (type bool)
+           (peephole (postfix " === \"\"")))
+*/
+function sc_isStringNull(s) { return (s === ""); }
+
+/*** META ((export #t) (arity -2)) */
 function sc_makeString(k, c) {
     return new sc_String(sc_makejsString(k, c));
 }
 
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity -1)) */
 function sc_string() {
     for (var i = 0; i < arguments.length; i++)
 	arguments[i] = arguments[i].val;
@@ -201,15 +267,16 @@ function sc_string() {
 }
 
 /*** META ((export #t)
+           (arity #t)
            (peephole (postfix ".val.length"))) */
 function sc_stringLength(s) { return s.val.length; }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringRef(s, k) {
     return new sc_Char(s.val.charAt(k));
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringSetBang(s, k, c) {
     var start = s.val.slice(0, k);
     var end = s.val.slice(k+1);
@@ -217,71 +284,119 @@ function sc_stringSetBang(s, k, c) {
 }
 
 /*** META ((export string=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val === " str2 ".val")))
 */
 var sc_isStringEqual = sc_isCharStringEqual;
 /*** META ((export string<?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val < " str2 ".val")))
 */
 var sc_isStringLess = sc_isCharStringLess;
 /*** META ((export string>?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val > " str2 ".val")))
 */
 var sc_isStringGreater = sc_isCharStringGreater;
 /*** META ((export string<=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val <= " str2 ".val")))
 */
 var sc_isStringLessEqual = sc_isCharStringLessEqual;
 /*** META ((export string>=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val >= " str2 ".val")))
 */
 var sc_isStringGreaterEqual = sc_isCharStringGreaterEqual;
 /*** META ((export string-ci=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val.toLowerCase() === " str2 ".val.toLowerCase()")))
 */
 var sc_isStringCIEqual = sc_isCharStringCIEqual;
 /*** META ((export string-ci<?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val.toLowerCase() < " str2 ".val.toLowerCase()")))
 */
 var sc_isStringCILess = sc_isCharStringCILess;
 /*** META ((export string-ci>?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val.toLowerCase() > " str2 ".val.toLowerCase()")))
 */
 var sc_isStringCIGreater = sc_isCharStringCIGreater;
 /*** META ((export string-ci<=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val.toLowerCase() <= " str2 ".val.toLowerCase()")))
 */
 var sc_isStringCILessEqual = sc_isCharStringCILessEqual;
 /*** META ((export string-ci>=?)
+           (arity 2)
            (type bool)
            (peephole (hole 2 str1 ".val.toLowerCase() >= " str2 ".val.toLowerCase()")))
 */
 var sc_isStringCIGreaterEqual = sc_isCharStringCIGreaterEqual;
 
 
+/*** META ((export string-contains)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringContains(s1,s2,start) {
+   return s1.val.indexOf(s2.val,start ? start : 0) >= 0;
+}
+
+/*** META ((export string-contains-ci)
+           (arity -3)
+	   (type bool))
+*/
+function sc_stringCIContains(s1,s2,start) {
+   return s1.val.toLowerCase().indexOf(s2.val.toLowerCase(),start ? start : 0) >= 0;
+}
+
 /*** META ((export #t)
+           (arity -2))
+*/
+function sc_substring(s, start, end) {
+   return s.val.substring(start, (end == undefined || end < 0) ? s.length : end);
+}
+
+/*** META ((export #t)
+           (arity #t)
            (peephole (hole 3 "new sc_String(" s ".val.substring(" start ", " end "))")))
 */
 function sc_substring(s, start, end) {
     return new sc_String(s.val.substring(start, end));
 }
 
-/*** META ((export #t))
+/*** META ((export #t) (arity -4))
 */
-function sc_isSubstring_at(s1, s2, i) {
-    return s2.val == s1.val.substring(i, i + s2.val.length);
+function sc_isSubstring_at(s1, s2, i, len) {
+    var str1 = s1.val;
+    var str2 = s2.val;
+    if (!len) len = str2.length;
+    else if (str2.length < len) return false;
+    if (str1.length < len + i) return false;
+    return str2.substring(0, len) == str1.substring(i, i+len);
 }
 
-/*** META ((export #t)
+/*** META ((export substring=?)
+           (arity #t))
+*/
+function sc_isSubstring(s1, s2, len) {
+    if (s1.val.length < len) return false;
+    if (s2.val.length < len) return false;
+    return s2.val.substring(0, len) == s1.val.substring(0, len);
+}
+
+/*** META ((export #t) (arity -1)
            (peephole (stringAppend_mutable)))
 */
 function sc_stringAppend() {
@@ -290,21 +405,21 @@ function sc_stringAppend() {
     return new sc_String("".concat.apply("", arguments));
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "sc_jsstring2list(" s ".val)")))
 */
 function sc_string2list(s) {
     return sc_jsstring2list(s.val);
 }
 
-/*** META ((export list->string)
+/*** META ((export list->string) (arity #t)
            (peephole (hole 1 "new sc_String(sc_list2jsstring(" l "))")))
 */
 function sc_list2string(l) {
     return new sc_String(sc_list2jsstring(l));
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_String(" s ".val)")))
 */
 function sc_stringCopy(s) {
@@ -312,33 +427,33 @@ function sc_stringCopy(s) {
 }
 
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringFillBang(s, c) {
     s.val = sc_makeJSStringOfLength(s.val.length, c.val);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_String(" o ".val)")))
 */
 function sc_keyword2string(o) {
     return new sc_String(o.val);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 1 "new sc_Keyword(" o ".val)")))
 */
 function sc_string2keyword(o) {
     return new sc_Keyword(o.val);
 }
 
-/*** META ((export #t)
+/*** META ((export #t) (arity #t)
            (peephole (hole 2 1 ".val.indexOf(" 0 ".val) === 0")))
 */
 function sc_isStringPrefix(cs1, cs2) {
     return cs2.val.indexOf(cs1.val) === 0;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_isStringSuffix(cs1, cs2) {
     var s1 = cs1.val;
     var s2 = cs2.val;
@@ -346,9 +461,140 @@ function sc_isStringSuffix(cs1, cs2) {
     return tmp !== false && tmp >= 0 && tmp === s2.length - s1.length;
 }
 
-/*** META ((export #t)) */
+/*** META ((export #t) (arity #t)) */
 function sc_stringSplit(s, sep) {
+    if (arguments.length === 1)
+       return sc_vector2list(s.val.split(" "));
     if (sep.val.length === 1)
 	return sc_vector2list(s.val.split(sep.val));
     return sc_vector2list(s.val.split(sc_pregexpCreateCharsetMatcher(sep.val)));
 }
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringIndex(s, cset, start) {
+   var res;
+   if (!start) start = 0;
+   
+   if (cset instanceof sc_Char) {
+      res = s.val.indexOf(sc_char2string(cset), start);
+      return res >= 0 ? res : false;
+   }
+   if (cset.val.length == 1) {
+      res = s.val.indexOf(cset.val, start);
+      return res >= 0 ? res : false;
+   } else {
+      for (var i = start; i < s.val.length; i++ ) {
+	 if (cset.val.indexOf(s.val.charAt(i)) >= 0)
+	    return i;
+      }
+
+      return false;
+   }
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringIndexRight(s, cset, start) {
+   var res;
+   if (!start) start = s.val.length - 1;
+   
+   if (cset instanceof sc_Char) {
+      res = s.val.lastIndexOf(sc_char2string(cset), start);
+      return res >= 0 ? res : false;
+   }
+   if (cset.val.length == 1) {
+      res = s.val.lastIndexOf(cset.val, start);
+      return res >= 0 ? res : false;
+   } else {
+      for (var i = start; i >= 0; i-- ) {
+	 if (cset.val.indexOf(s.val.charAt(i)) >= 0)
+	    return i;
+      }
+
+      return false;
+   }
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkip(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i < s.length; i++ ) {
+      if( set.val.indexOf( s.val.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
+}
+
+/*** META ((export #t) (arity -3)) */
+function sc_stringSkipRight(s, cset, start) {
+   var set = (cset instanceof sc_Char) ? sc_char2string(cset) : cset;
+
+   for( var i = start; i >= 0; i-- ) {
+      if( set.va.indexOf( s.val.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_downcase(s) {
+   return new sc_String(s.val.toLowerCase());
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_downcase_bang(s) {
+   s.val = s.val.toLowerCase();
+   return s;
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_upcase(s) {
+   return new sc_String(s.val.toUpperCase());
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_upcase_bang(s) {
+   s.val = s.val.toUpperCase();
+   return s;
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_capitalize(s) {
+   return new sc_String(s.val.replace(/\w+/g, function (w) {
+	    return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
+	 }));
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_string_capitalize_bang(s) {
+   s.val = s.val.replace(/\w+/g, function (w) {
+	 return w.charAt(0).toUpperCase() + w.substr(1).toLowerCase();
+      });
+   return s;
+}
+
+/*** META ((export #t) (arity 1)) */
+function sc_prefix(s) {
+   var i = s.val.lastIndexOf(".");
+   return i ? s.val.substring(0, i) : s;
+}   
+
+/*** META ((export #t) (arity 1)) */
+function sc_suffix(s) {
+   var i = s.val.lastIndexOf(".");
+   return i ? s.val.substring(i+1,i.length) : s;
+}
+
+/* OO bootstrap */
+sc_register_class( sc_Object,
+		   sc_string2symbol( sc_jsstring2string( "object" ) ),
+		   sc_Object,
+		   0,
+		   function() { return new sc_Object(); },
+		   false,
+		   sc_makeVector( 0 ) );
+

@@ -27,8 +27,6 @@ and IE7.
 
   (add-event-listener! obj name handler capture)
   (remove-event-listener! obj name handler capture)
-  (add-window-onload! handler)
-  (add-window-onunload! handler)
   (stop-event-propagation evt default)
   (event-mouse-x evt)
   (event-mouse-y evt)
@@ -39,7 +37,7 @@ and IE7.
 
 
 == Examples ==
-<example>add-event-listener!, remove-event-listener!, window-onload, window-onunload, event-mouse-, event-key-code</example>
+<example>add-event-listener!, remove-event-listener!, event-mouse-, event-key-code</example>
 
 == Event propagation ==
 
@@ -68,17 +66,18 @@ are //propagated//. The propagation uses three phases:
 ~~ Note: ,(<SPAN> :style { font-weight: bold } [
 A current ,(<SPAN> :style { font-weight: bold; color: red } [bug]) in Firefox's Flash plugin prevents server event values
 to contain ,(<SPAN> :style { font-weight: bold; color: red } [strings]) 
-containing ,(<SPAN> :style { font-weight: bold; color: red } ["])  characters.])
+containing ,(<SPAN> :style { font-weight: bold; color: red } ,(<SPAN> "\"")  characters.)])
 
 ~~ HOP implements //server events//. That is, contrary to the classical Web
 model, HOP servers may **push** information to clients. Clients that defined
 listeners for server events will get notified when such events are emitted.
 
 ~~ Server events are represented by string of characters. The function
-++add-event-listener!++ is used to register to such events. The example
+++add-event-listener!++ is used to register to such events. The listener
+is associated to the //server// object. The example
 below shows a client registering the server event named ++FOO++.
 
-  (add-event-listener! "FOO" "server" (lambda (evt) (alert "FOO received")))
+  (add-event-listener! server "FOO" (lambda (evt) (alert "FOO received")))
 
 
 To emit such an event, server code has to invoke either the function
@@ -94,17 +93,17 @@ applies to server events.
 
 ~~ The document can also receive server events. The expression:
 
-  (add-event-listener! document "server" (lambda (evt) (alert evt.name)))
+  (add-event-listener! server document (lambda (evt) (alert evt.name)))
 
 
 will force the document to get a notification for each server event that
 whose listener has set the ++capture++ flag to ++#t++.
 
 ~~ When a client is ready to received server events, it triggers a
-++serverready++ event that can be intercepted by the root document.
+++ready++ event that can be intercepted by the root document.
 
 ~~ When a client is disconnected from a server, it triggers a
-++serverclose++ event that can be intercepted by the root document.
+++down++ event that can be intercepted by the root document.
 
 == Server ==
 <server>
@@ -182,8 +181,8 @@ These functions respectively register and unregister event handlers.
  
     * ++location++: current location changes.
     * ++server++: the client receives a server event.
-    * ++serverready++: the server is ready to send events.
-    * ++serverclose++: the server closed its connection.
+    * ++ready++: the server is ready to send events.
+    * ++down++: the server closed its connection.
     * ++timeout++: an event raised at regular time interval.
     * ++iconify++: an event raised when an inner window is about to be iconified.
     * ++maximize++: an event raised when an inner window is about to be maximized.
@@ -200,26 +199,6 @@ These functions respectively register and unregister event handlers.
  a //capturing// handler) if set to ++#f++, it does not capture it.
 
 
-</procedure>
-</procedure>
-
-=== ++(add-window-onload! handler)++ ===
-=== ++(add-window-onunload! handler)++ ===
-<procedure> add-window-onload!
-<procedure> add-window-onunload!
-<arguments>
-^  arguments       ^   type     ^  short description                         ^
-| handler          | procedure  | the function on to when load completes.    |
-</arguments>
-
-This function adds a new handler (a procedure of one argument) to be called
-when loading a document completes (respectively, when a document is 
-//unloaded//). 
-
-~~ It is recommended to use ++add-window-onload!++ instead of using the
-++onload++ attribute of windows because this function manages correctly
-multiple calls while setting the ++onload++ attribute erases the previous
-values it contained.
 </procedure>
 </procedure>
 

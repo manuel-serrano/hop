@@ -1,0 +1,38 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/weblets/androidemo/config.hop.in        */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Apr  2 07:40:38 2010                          */
+;*    Last change :  Fri Apr  2 07:41:12 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Configuration                                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module androidemo_config
+   (export (androidemo-version::bstring)
+	   (androidemo-date::bstring)
+	   (androidemo-author::bstring)
+	   (androidemo-dir::bstring)
+	   (androidemo-rc-directory::bstring)
+	   
+	   (androidemo-preferences-edit . obj)
+	   (androidemo-preferences-save file)))
+
+(define (androidemo-version)
+   "@VERSION@")
+(define (androidemo-date)
+   "@DATE@")
+(define (androidemo-author)
+   "@AUTHOR@")
+
+(define _dir (dirname (the-loading-file)))
+(define (androidemo-dir)
+   _dir)
+(define (androidemo-rc-directory)
+   (make-file-name (hop-rc-directory) "androidemo"))
+
+(define-preferences androidemo-preferences)

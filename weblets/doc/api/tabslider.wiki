@@ -19,7 +19,7 @@ client side programming. They are only available on server side.])
 === Requirements ===
 
 Client codes using //tabsliders// need to load the script ++hop-tabslider.js++.
-They also need to load the ++hop-tabslider.css++ style sheet.  Hence, documents
+They also need to load the ++hop-tabslider.hss++ style sheet.  Hence, documents
 using //tabsliders// must include in their header, the following statement:
 
 
@@ -110,10 +110,13 @@ browser history.
 == Style ==
 <style>
 
-This section describes the various CSS elements used to configure
-//tabsliders//.
+=== ++hop-tabslider.hss++ ===
 
-<share>hop-tabslider.css</share>
+~~ The file ++hop-tabslider.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-tabslider.hss</share-public>
 
 </style>
 

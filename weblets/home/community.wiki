@@ -1,4 +1,25 @@
-== HOP mailing List ==
+== Browsing the code ==
+
+The HOP source code may be browsed on-line from our Mercurial
+,(<A> :href (home-source-url) "repository").
+
+~~ The Mercurial repository can be cloned with:
+
+  hg clone http://hop.inria.fr:4000 hop
+
+
+~~ Want to find out what we have been doing lately? Check the video!
+
+,(<DIV> :style "margin-left: 4em"
+   (<VIDEO> :controls #t
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.ogv")
+         :type "video/ogg")
+      (<SOURCE> :src (make-file-name (home-dir) "videos/changelog.flv")
+         :type "video/x-flv")
+      :width 320 :height 240))
+
+
+== Mailing List ==
 
 The HOP mailing list is now hosted by 
 [[http://www-sop.inria.fr|INRIA Sophia Antipolis]]. Its email address is 
@@ -38,12 +59,8 @@ sent to ,(<TT> (<A> :href "mailto:sympa@lists-sop.inria.fr?subject=HELP"
 
 Three archives of this mailing list are available. 
 
-  - The first one uses the 
- ,(<A> :target "_blank" 
-    :href "/hop/hopmail/archive?mbox=maildir://maildir"
- "Hopmail") HOP weblet.
-  - The second one uses a more traditional 
- [[https://lists-sop.inria.fr/wws/arc/hop|Web GUI]].
-  - The last one is hosted on the
- [[http://dir.gmane.org/gmane.lisp.scheme.hop|Gname]] mailing archive.
+  - A local
+ [[https://lists-sop.inria.fr/wws/arc/hop|archive]].
+  - A remote archive hosted by
+ [[http://dir.gmane.org/gmane.lisp.scheme.hop|Gname]].
 

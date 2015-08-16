@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/etc/hop.init.in                   */
+;*    serrano/prgm/project/hop/2.5.x/etc/hop.init.in                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 09:57:45 2006                          */
-;*    Last change :  Mon Apr 21 08:53:49 2008 (serrano)                */
-;*    Copyright   :  2006-08 Manuel Serrano                            */
+;*    Last change :  Thu Sep 19 11:19:49 2013 (serrano)                */
+;*    Copyright   :  2006-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP lib init file.                                           */
 ;*=====================================================================*/
@@ -13,12 +13,12 @@
 ;*    The library                                                      */
 ;*---------------------------------------------------------------------*/
 (declare-library! 'hop
-		  :version "@VERSION@"
-		  :srfi '(hop)
-		  :module-init '__hop_types
-		  :module-eval '__hop_makelib
-		  :class-init "bigloo.hop.types"
-		  :class-eval "bigloo.hop.make-lib")
+   :version "@VERSION@"
+   :srfi '(hop)
+   :module-init '__hop_types
+   :module-eval '__hop_makelib
+   :class-init "bigloo.hop.types"
+   :class-eval "bigloo.hop.make_lib")
 
 ;*---------------------------------------------------------------------*/
 ;*    Link option                                                      */
@@ -26,10 +26,6 @@
 (cond-expand
    (bigloo-compile
     ;; required libraries for HOP
-    (set! *additional-bigloo-libraries*
-	  (cons* 'bigloomultimedia
-		 'biglooweb
-                 @BIGLOOSSL@
-		 *additional-bigloo-libraries*)))
+    (for-each use-library! '(@BIGLOOCLOSELIBS@)))
    (bigloo-eval
     #unspecified))

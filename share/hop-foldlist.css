@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-foldlist.css            */
+/*    serrano/prgm/project/hop/2.2.x/share/hop-foldlist.css            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Erick Gallesio                                    */
 /*    Creation    :  Wed Mar  1 11:56:02 2006                          */
-/*    Last change :  Thu Jun 26 09:44:38 2008 (serrano)                */
+/*    Last change :  Wed Feb 16 07:11:38 2011 (serrano)                */
 /*    -------------------------------------------------------------    */
 /*    HOP fold-item CSS                                                */
 /*=====================================================================*/
@@ -34,3 +34,19 @@
   margin-left: 4px;
 }
 
+.hop-fl span.hop-fl-img {
+  display: inline-block;
+  width: 1em;
+  color: red;
+  cursor: pointer;
+}
+
+.hop-fl span.hop-fl-img-open:before {
+  content: "\25bc";
+  font-size: 90%;
+}
+
+.hop-fl span.hop-fl-img-close:before {
+  content: "\25ba";
+  font-size: 90%;
+}

@@ -1,20 +1,37 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.11.x/weblets/doc/doc.scm              */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/doc.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 22 08:00:34 2007                          */
-;*    Last change :  Sun Feb  8 07:14:49 2009 (serrano)                */
-;*    Copyright   :  2007-09 Manuel Serrano                            */
+;*    Last change :  Wed Feb  2 06:59:49 2011 (serrano)                */
+;*    Copyright   :  2007-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Doc weblet library                                               */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module hopdoc_client
+   
+   $(import hopdoc
+	    hopdoc_tutorials
+	    hopdoc_api)
+   
+   (export (select-api-doc svc entry el node-id)
+	   (select-api-pad api k pad)
+	   (tutorialref id path)
+
+	   api-history
+	   weblet-history
+	   tutorial-history))
 
 ;*---------------------------------------------------------------------*/
 ;*    api-history-handler ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (api-history-handler id entry)
    (notepad-select "doc-notepad" "doc-api" #f)
-   (with-hop (api-history-service entry)
+   (with-hop ($doc/api entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
 	    (innerHTML-set! el r)))))
@@ -24,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 (define (weblet-history-handler id entry)
    (notepad-select "doc-notepad" "doc-weblets" #f)
-   (with-hop (weblet-history-service entry)
+   (with-hop ($doc/api-sans-title entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
 	    (innerHTML-set! el r)))))
@@ -34,7 +51,7 @@
 ;*---------------------------------------------------------------------*/
 (define (tutorial-history-handler id entry)
    (notepad-select "doc-notepad" "doc-tutorials" #f)
-   (with-hop (tutorial-history-service entry)
+   (with-hop ($doc/tutorial entry)
       (lambda (r)
 	 (let ((el (dom-get-element-by-id document id)))
 	    (innerHTML-set! el r)))))
@@ -50,15 +67,6 @@
 
 (define tutorial-history
    (make-history "tut" tutorial-history-handler))
-
-;*---------------------------------------------------------------------*/
-;*    history services ...                                             */
-;*    -------------------------------------------------------------    */
-;*    These variables are initialized at loadtime by the document.     */
-;*---------------------------------------------------------------------*/
-(define api-history-service #unspecified)
-(define weblet-history-service #unspecified)
-(define tutorial-history-service #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    make-fade-vector ...                                             */
@@ -99,7 +107,7 @@
        (with-history
 	  (lambda ()
 	     (notepad-select "doc-notepad" (string-append "doc-" pad))
-	     (select-api-doc doc/api api el k)))))
+	     (select-api-doc $doc/api api el k)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tutorialref ...                                                  */
@@ -108,11 +116,18 @@
    (with-history
     (lambda ()
        (history-add! tutorial-history id path)
-       (with-hop (doc/tutorial path)
+       (with-hop ($doc/tutorial path)
 	  (lambda (h)
 	     (let ((el (dom-get-element-by-id document id)))
 		(innerHTML-set! el h)
 		(notepad-select "doc-notepad" "doc-tutorials")
 		(window.scrollTo 0 0)))))))
+
+;*---------------------------------------------------------------------*/
+;*    jsref ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (jsref)
+   (notepad-select "doc-notepad" "doc-js")
+   (window.scrollTo 0 0))
 
 

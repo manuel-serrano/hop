@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/trace/trace.hop           */
+;*    serrano/prgm/project/hop/2.2.x/weblets/trace/trace.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sat Apr 26 14:41:39 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Tue Feb 15 15:16:25 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP server trace facility                                        */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    trace ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-service (trace args)
+(define-service (trace . args)
    (let ((req (current-request))
 	 (file (service-resource trace "etc/trace.wiki")))
       (mutex-lock! trace-mutex)
@@ -77,7 +77,9 @@
 (define-service (trace/preferences)
    (trace-preferences-edit
     :onclick ~(with-hop ($(service ()
-			     (trace-preferences-save trace-prefs))))))
+			     (trace-preferences-save
+			      (make-file-name
+			       (hop-rc-directory) "tracerc.hop")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    The user configuration                                           */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/param.sch                 */
+;*    serrano/prgm/project/hop/2.2.x/runtime/param.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  1 05:02:42 2005                          */
-;*    Last change :  Wed Apr  1 16:09:17 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Nov  7 09:01:15 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of the param macros                               */
 ;*=====================================================================*/
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
-(directives (option (loadq "param-expd.sch")))
+(directives (option (loadq "param_expd.sch")))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    define-parameter ...                                             */

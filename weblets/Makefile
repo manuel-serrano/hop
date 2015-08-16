@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/Makefile                 */
+#*    serrano/prgm/project/hop/2.2.x/weblets/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Nov 28 11:01:39 2008 (serrano)                */
-#*    Copyright   :  2004-08 Manuel Serrano                            */
+#*    Last change :  Sat Nov 20 07:01:39 2010 (serrano)                */
+#*    Copyright   :  2004-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP weblets directory                       */
 #*=====================================================================*/
@@ -12,19 +12,19 @@
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../etc/Makefile.hopconfig
-include ../etc/Makefile.version
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile
+POPULATION = Makefile
 
 #*---------------------------------------------------------------------*/
 #*    weblets                                                          */
 #*---------------------------------------------------------------------*/
 POPDIRS	= hop epassword hz info webfilter doc home hopsh wizard test \
-          dashboard wiki trace shutdown weblets hzbuilder
+          dashboard color wiki trace shutdown weblets hzbuilder workbench
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
@@ -54,26 +54,30 @@ install:
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -f $(DESTDIR)$(SHAREDIR)/popdirs
+	$(RM) -f $(DESTDIR)$(SHAREDIR)/popdirs
 
 #*---------------------------------------------------------------------*/
 #*    install-weblet                                                   */
 #*---------------------------------------------------------------------*/
 install-weblet:
-	mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
-        chmod a+rx,u+rwx $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
+	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) ]; then \
+	   mkdir -p $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) && \
+              chmod $(MODDIR) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR); \
+        fi
 	for f in $(DIR)/*; do \
           if [ -d $$f ]; then \
-            mkdir -p $$f || exit 1; \
-            chmod a+rx,u+rwx $$f || exit 1; \
             $(MAKE) install-weblet DIR=$$f || exit 1; \
           else \
             if [ -f $$f ]; then \
-	      $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+	      $(INSTALL) $$f $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+                && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$$f \
+                || exit 1; \
             fi; \
           fi; \
         done; \
         if [ -f $(DIR)/.afile ]; then \
-          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) || exit 1; \
+          $(INSTALL) $(DIR)/.afile $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR) \
+            && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR)/.afile \
+            || exit 1; \
         fi; \
 

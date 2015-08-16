@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/wizard/Makefile          */
+#*    serrano/prgm/project/hop/2.3.x/weblets/wizard/Makefile           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:41:48 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Thu Dec 22 11:03:20 2011 (serrano)                */
+#*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
 #*=====================================================================*/
@@ -26,7 +26,8 @@ SOURCES		= wizard.hop wizard.hss
 
 POPULATION	= Makefile $(SOURCES) \
 		  etc/weblet.info etc/wizard.wiki \
-                  etc/admin.png etc/guest.png etc/logo.png etc/user.png
+                  etc/logo.png etc/favicon.png \
+                  etc/admin.png etc/guest.png etc/user.png etc/anonymous.png
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */
@@ -44,8 +45,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

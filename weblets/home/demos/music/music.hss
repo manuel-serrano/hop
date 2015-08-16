@@ -1,5 +1,5 @@
 body {
-  background: #ddf;
+  background: #fff;
 }
 
 body.view {
@@ -9,8 +9,9 @@ body.view {
 }
 
 h1 {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
+  text-shadow: #aaa 2px 2px 2px;
 }
 
 a {
@@ -65,7 +66,21 @@ img:hover {
   border: 1px solid black;
 }
     
-div.hop-audio div.hop-audio-controls {
-  background: transparent;
-  background-image: url( "../../etc/icons/metal.png" );
+input,
+button {
+  border: 1px solid #ccc;
+  border-radius: 2px;
+}
+
+audio {
+  box-shadow: 4px 4px 4px #666;
+}
+
+div.disclaimer {
+  margin-top: 2ex; 
+  font-size: 70%; 
+  font-style: italic; 
+  border: 1px solid black; 
+  padding: 4px; 
+  background: #efe;
 }

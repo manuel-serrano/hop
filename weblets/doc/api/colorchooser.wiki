@@ -1,0 +1,133 @@
+<doc> Colorchooser widget
+
+== Description ==
+
+The markup ++<COLORCHOOSER>++ implements //color selectors// which allows
+users to select graphically colors.
+
+
+== Synopsis ==
+
+=== Server & client ===
+
+  (<COLORCHOOSER> arg ...)
+
+
+=== client ===
+
+  (hop-colorchooser-value cc val)
+  (hop-colorchooser-value-set! cc val)
+  (hop-colorchooser-opacity cc val)
+  (hop-colorchooser-opacity-set! cc val)
+
+
+=== Requirements ===
+
+Client codes using //color choosers// need to load the following client-side
+library ++hop-color++.
+
+
+  (<HEAD> :include "hop-color")
+
+
+== Examples ==
+
+<example><COLORCHOOSER></example>
+
+== Server & Client Definitions ==
+<server>
+<client>
+
+=== ++<COLORCHOOSER>++ ===
+<markup> <COLORCHOOSER>
+
+<arguments>
+^  attributes  ^   type      ^   default    ^  short description         ^
+| :id          |  string     |  //random//  | element identifier.        |
+| :onchange    |  procedure  |  _           | a procedure to invoke on value changes.         |
+| :onselect    |  procedure  |  _           | a procedure to invoke on //ok// clicks.         | 
+| :oncancel    |  procedure  |  _           | a procedure to invoke on //cancel// clicks.         | 
+| body        |  xml  |  _           | the body of the color chooser.         | 
+</arguments>
+
+This function creates a //color chooser//.
+
+~~ The argument :onchange is a script that is invoked each time the
+colorchooser is changed via the GUI. That is calling the function
+++colorchooser-value-set!++ **does not** invoke automatically :onchange. In
+the scope of that script, the variable ++this++ is bound to the
+//colorchooser// whose value can be retrieve by the means of the function
+++colorchooser-value++. The opacity can be retrieved and set with 
+++colorchooser-opacity++ and ++colorchooser-opacity-set!++.
+
+~~ If no body is provided one "cancel" and one "ok" buttons are automatically
+inserted.
+
+</markup>
+
+</client>
+</server>
+
+== Client Definitions ==
+<client>
+
+=== ++(colorchooser-value cc)++ ===
+=== ++(colorchooser-value-set! cc val)++ ===
+<procedure> colorchooser-value
+<procedure> colorchooser-value-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| colorchooser  |  colorchooser or string   | the cc button.       |
+| val         |  string                | the new colorchooser value.  |
+</arguments>
+
+These functions get and set the value of a //color chooser//.
+
+Example:
+
+  (let ((but (<COLORCHOOSER> :max 10 :min -10 
+                 :onchange ~(alert (colorchooser-value this)))))
+    (<BUTTON> :onclick ~(colorchooser-value-set! $but "#f0f") "Reset")
+    (<BUTTON> :onclick ~(colorchooser-value-set! $but "#ff1254") "Ok")
+    (<BUTTON> :onclick ~(colorchooser-value-set! $but "rgb(23,56,95)") "Run")
+    (<BUTTON> :onclick ~(colorchooser-value-set! $but "red") "Alert"))
+
+
+The ++string++ argument should follow the colors syntax of CSS2 specification.
+</procedure>
+</procedure>
+
+=== ++(colorchooser-opactity cc)++ ===
+=== ++(colorchooser-opactity-set! cc val)++ ===
+<procedure> colorchooser-opactity
+<procedure> colorchooser-opactity-set!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| colorchooser  |  colorchooser or string   | the cc button.       |
+| val         |  real                | the new colorchooser opactity.  |
+</arguments>
+
+The argument ++val++ that specifies the opacity is a floating point number
+in the range ++[0..1]++.
+
+</client>
+
+== Style ==
+<style>
+
+=== ++hop-color.hss++ ===
+
+The file ++hop-color.hss++ contains the default graphical configuration.
+It is defined as:
+
+,(<P>)
+<share-public>hop-color.hss</share-public>
+
+</style>
+
+== See also ==
+<see-also><COLORCHOOSER></see-also>
+
+</doc>

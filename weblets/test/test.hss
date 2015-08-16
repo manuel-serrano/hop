@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/test/test.hss                   */
+/*    serrano/prgm/project/hop/2.2.x/weblets/test/test.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Sat Jul  7 08:17:56 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Sun Jan 23 07:15:26 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the TEST weblet                                          */
 /*=====================================================================*/
@@ -28,21 +28,22 @@ ul {
   font-size: 90%;
 }
 
+div.maintest {
+  column-count: 2; 
+  margin-top: 2ex;
+}
+
 table.test {
   width: 45em;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.test img#logo {
   padding: 20px;
-}
-
-table.test td {
-  text-align: left;
 }
 
 td#title {
@@ -63,6 +64,10 @@ table.test td#logo {
 a {
   font-family: Bitstream Vera Sans Mono, Andale Mono, monospace;
   font-size: small;
+}
+
+table.content {
+  text-align: left;
 }
 
 div.comment {

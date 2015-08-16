@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/2.5.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Mon May  4 20:15:55 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Fri Aug  9 19:40:27 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -18,23 +18,28 @@
 ;*    hoprc-dir ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hoprc-dir
-   (hop-rc-directory))
-   
+   (let ((d (hop-rc-directory)))
+      (unless (directory? d)
+	 (make-directories d))
+      d))
+
 ;*---------------------------------------------------------------------*/
 ;*    wizard ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-service (wizard)
    (<HTML>
       (<HEAD>
+	 (<META> :name "viewport"
+	    :content "width=device-width, initial-scale=1.2")
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
 	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
+	 :include "hop-password" "hop-foot"
 	 :css "wizard.hss"
 	 :favicon "etc/favicon.png")
       (<BODY>
 	 ~(define (crypt na pd)
-	     (let* ((str (string-append na " " pd)))
-		(hex_md5 str)))
+	     (string-append "+" (digest-password-encrypt na pd (hop-realm))))
 	 ~(define exprs '())
 	 ~(define (require id value)
 	     (let ((el (dom-get-element-by-id document id)))
@@ -45,51 +50,61 @@
 	     (let* ((status (dom-get-element-by-id document "status"))
 		    (message (dom-get-element-by-id document "message"))
 		    (msg (dom-get-element-by-id document "message"))
-		    (apasswd (dom-get-element-by-id document "apasswd").value)
-		    (uname (dom-get-element-by-id document "uname").value)
-		    (upasswd (dom-get-element-by-id document "upasswd").value)
-		    (gname (dom-get-element-by-id document "gname").value)
-		    (gpasswd (dom-get-element-by-id document "gpasswd").value)
-		    (cadmin (crypt "admin" apasswd))
-		    (cuser (if (and (> (string-length uname) 0)
-				    (> (string-length upasswd) 0))
-			       (crypt uname upasswd)
+		    (apasswd (dom-get-element-by-id document "apasswd"))
+		    (uname (dom-get-element-by-id document "uname"))
+		    (upasswd (dom-get-element-by-id document "upasswd"))
+		    (udir (dom-get-element-by-id document "udir"))
+		    (gname (dom-get-element-by-id document "gname"))
+		    (gpasswd (dom-get-element-by-id document "gpasswd"))
+		    (cadmin (crypt "admin" apasswd.value))
+		    (cuser (if (and (> (string-length uname.value) 0)
+				    (> (string-length upasswd.value) 0))
+			       (crypt uname.value upasswd.value)
 			       #f))
-		    (cguest (if (and (> (string-length gname) 0)
-				     (> (string-length gpasswd) 0))
-				(crypt uname upasswd)
+		    (cguest (if (and (> (string-length gname.value) 0)
+				     (> (string-length gpasswd.value) 0))
+				(crypt gname.value gpasswd.value)
 				#f))
-		    (proxy (dom-get-element-by-id document "proxy").value)
-		    (proxyu (dom-get-element-by-id document "uproxy").checked)
-		    (proxya (dom-get-element-by-id document "aproxy").checked)
-		    (proxyr (dom-get-element-by-id document "rproxy").checked)
+		    (proxy (dom-get-element-by-id document "proxy"))
+		    (proxyu (dom-get-element-by-id document "uproxy"))
+		    (proxya (dom-get-element-by-id document "aproxy"))
+		    (proxyr (dom-get-element-by-id document "rproxy"))
 		    (proxym (map (lambda (i)
-				    (dom-get-element-by-id document i).value)
+				    (let ((el (dom-get-element-by-id document i)))
+				       el.value))
 				 '("mip1" "mip2" "mip3" "mip4")))
-		    (webdav (dom-get-element-by-id document "webdav").checked))
+		    (localp (dom-get-element-by-id document "localp"))
+		    (lanp (dom-get-element-by-id document "lanp"))
+		    (webdav (dom-get-element-by-id document "webdav")))
 		(cond
-		   ((string=? apasswd "")
+		   ((string=? apasswd.value "")
 		    (alert "Missing password for `admin' user!"))
-		   ((and (not (string=? uname "")) (string=? upasswd ""))
+		   ((and (not (string=? uname.value "")) (string=? upasswd.value ""))
 		    (alert "Missing password for `regular' user!"))
-		   ((and (not (string=? gname "")) (string=? gpasswd ""))
+		   ((and (not (string=? gname.value "")) (string=? gpasswd.value ""))
 		    (alert "Missing password for `guest' user!"))
 		   (else
-		    (with-hop ($wizard/save #f cadmin uname cuser gname cguest
-					    proxy proxyu proxya proxyr proxym
-					    webdav)
+		    (with-hop ($wizard/save #f cadmin uname.value cuser udir.value
+					    gname.value cguest
+					    proxy.value proxyu.value
+					    proxya.value proxyr.value proxym
+					    localp.checked lanp.checked
+					    webdav.checked)
 		       (lambda (h)
-			  (case (string->symbol (car h))
+			  (case (car h)
 			     ((query)
 			      (let ((msg (string-append
 					  "The file `" (cadr h)
-					  "' alread exists. Overide it ?")))
+					  "' already exists. Override it ?")))
 				 (if (confirm msg)
-				     (with-hop ($wizard/save #t cadmin uname cuser gname cguest
-							     proxy
-							     proxyu proxya
-							     proxyr proxym
-							     webdav)
+				     (with-hop ($wizard/save #t cadmin
+							     uname.value cuser udir.value
+							     gname.value cguest
+							     proxy.value
+							     proxyu.value proxya.value
+							     proxyr.value proxym
+							     localp.checked lanp.checked
+							     webdav.checked)
 					(lambda (h)
 					   (innerHTML-set! status (cadr h))
 					   (innerHTML-set! message
@@ -117,7 +132,8 @@
 			      (<DIV> :id "title" "Hop Wizard")
 			      (<DIV> :id "description"
 				 [The Wizard creates the minimal
-				      ,(<TT> "hoprc.hop") file that
+				      ,(<TT> :title (make-file-path (hoprc-dir) "hoprc.hop")
+					  "hoprc.hop") file that
 				      is required for running HOP.])))
 			(<TR>
 			   (<TD> :colspan 2
@@ -131,6 +147,9 @@
 			(<TR>
 			   (<TD> :colspan 2
 			      (<GUEST-USER>)))
+			(<TR>
+			   (<TD> :colspan 2
+			      (<ANONYMOUS-USER>)))
 			(<TR>
 			   (<TD> :colspan 2
 			      (<SPAN> :class "head" "Internet connection:")))
@@ -167,7 +186,7 @@
 ;*---------------------------------------------------------------------*/
 (define (<ADMIN-USER>)
    (<TABLE> :class "wizard-user wizard-admin"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "admin.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "admin.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Admin"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -176,17 +195,25 @@
 				       (<TD> (<INPUT> :type 'password
 						:class "required"
 						:id "apasswd"
-						:size 20))))))
+						:size 30))))))
 		     (<TR> (<TD> :class "comment"
-			      [This user is granted administration permissions.
-He may install/uninstall softwares. He may add/delete users. Etc.])))))))
+			      [This Hop user is granted administration
+permissions. He may install/uninstall Hop softwares (aka Hop weblets). He
+may add/delete Hop users. Etc.])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PLAIN-USER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<PLAIN-USER>)
+   
+   (define (home)
+      (let ((h (getenv "HOME")))
+	 (if (string? h)
+	     h
+	     (dirname (dirname (hop-rc-directory))))))
+      
    (<TABLE> :class "wizard-user wizard-regular"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "user.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "user.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Regular User"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -197,24 +224,32 @@ He may install/uninstall softwares. He may add/delete users. Etc.])))))))
 						:onkeypress
 						~(require "upasswd" this.value)
 						:id "uname"
-						:size 40)))
+						:size 30)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
 						:class "optional"
 						:id "upasswd"
-						:size 20))))))
+						:size 30)))
+				    (<TR>
+				       (<TD> :class "legend" "path:")
+				       (<TD> (<INPUT> :type 'text
+						:class "optional"
+						:id "udir"
+						:size 30
+						:value (home)))))))
 		     (<TR> (<TD> :class "comment"
 			      [This user is the regular user, that is the
-user that executes most Hop weblets. It can access the entire disk system.
-The regular user is likely to be the owner of the Hop process.])))))))
+user that executes most Hop weblets. It can access the part disk system
+specified by path (,(<TT> "*") grants access to all disks). The regular user is
+likely to be the owner of the Hop process.])))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <GUEST-USER> ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (<GUEST-USER>)
    (<TABLE> :class "wizard-user wizard-guest"
-      (<TR> (<TD> (<IMG> :src (make-file-name "etc" "guest.png")))
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "guest.png")))
 	    (<TD> (<TABLE>
 		     (<TR> (<TH> "Guests"))
 		     (<TR> (<TD> (<TABLE> :class "wizard-user-body"
@@ -226,16 +261,39 @@ The regular user is likely to be the owner of the Hop process.])))))))
 						:onkeypress
 						~(require "gpasswd" this.value)
 						:value ""
-						:size 40)))
+						:size 30)))
 				    (<TR>
 				       (<TD> :class "legend" "password:")
 				       (<TD> (<INPUT> :type 'password
 						:class "optional"
 						:id "gpasswd"
-						:size 20))))))
+						:size 30))))))
 		     (<TR> (<TD> :class "comment"
 			      [This account is used for guest users. Guests
 can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
+
+;*---------------------------------------------------------------------*/
+;*    <ANONYMOUS-USER> ...                                             */
+;*---------------------------------------------------------------------*/
+(define (<ANONYMOUS-USER>)
+   (<TABLE> :class "wizard-user wizard-anonymous"
+      (<TR> (<TD> :class "logo" (<IMG> :src (make-file-name "etc" "anonymous.png")))
+	    (<TD> (<TABLE>
+		     (<COLGROUP> (<COL> :width "0*"))
+		     (<TR> (<TH> :colspan 2 "Anonymous"))
+		     (<TR> (<TD> 
+			      (<INPUT> :type 'checkbox :id "localp" :checked #t))
+			   (<TD> (<SPAN> "Allow anonymous requests from the local host")))
+		     (<TR> (<TD>
+			      (<TD> :class "comment"
+				 "Lets Hop accepts all anonymous requests (services and resources) coming from local host")))
+		     (<TR> (<TD> 
+			      (<INPUT> :type 'checkbox :id "lanp" :checked #f))
+			   (<TD> (<SPAN> "Allow anonymous requests from LAN")))
+		     (<TR> (<TD>
+			      (<TD> :class "comment"
+				 "Lets Hop accepts all anonymous requests coming from computers on the same domain (same local area network)"))))))))
+		     
 
 ;*---------------------------------------------------------------------*/
 ;*    <INTERNET>                                                       */
@@ -243,7 +301,7 @@ can only access the directory ,(<TT> "guest") of the Hop RC directory.])))))))
 (define (<INTERNET>)
    (<TABLE> :class "wizard-user wizard-internet"
       (<TR> (<TD>
-	       (<SPAN> :class "head" "Proxy for Hop remote Web accesses: ")
+	       (<SPAN> :class "legend" "Proxy for Hop remote Web accesses: ")
 	       (<INPUT> :type 'text
 		  :class "optional"
 		  :id "proxy"
@@ -306,10 +364,13 @@ of computers that are allowed to use this Hop as proxy.])))))
       (<TABLE> :class "wizard-user wizard-misc"
 	 (<COLGROUP> (<COL> :width "0*"))
 	 (<TR> (<TD> 
-		  (<INPUT> :type 'checkbox :id "webdav" :checked #f))
+		  (<INPUT> :type 'checkbox :id "webdav" :checked #t))
 	       (<TD> (<SPAN> "Enable "
 			     (<A> :href url "WebDAV")
-			     " services"))))))
+			     " services")))
+	 (<TR> (<TD>) (<TD> :class "comment"
+		      (<SPAN> [Enable/disable Hop WebDAV server. This default
+setting can be overriden when starting Hop.]))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wizard/documentation ...                                         */
@@ -325,36 +386,36 @@ of computers that are allowed to use this Hop as proxy.])))))
 ;*    wizard/save ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (wizard/save force
-			     apasswd uname upasswd gname gpasswd
+			     apasswd uname upasswd udir
+			     gname gpasswd
 			     proxy
 			     user-proxy anonymous-proxy
 			     remote-proxy proxy-mask
+			     localp lanp
 			     webdav)
-   (let* ((home (getenv "HOME"))
-	  (rc (make-file-name (hoprc-dir) (hop-rc-file)))
+   (let* ((rc (make-file-name (hoprc-dir) (hop-rc-file)))
 	  (wd (make-file-name (hoprc-dir) "wizard.hop")))
       (cond
 	 (force
-	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
-		proxy user-proxy anonymous-proxy remote-proxy proxy-mask))
-	 ((file-exists? (hoprc-dir))
-	  (list 'query (format "File exists ~a" (hoprc-dir))))
+	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
+		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
+		localp lanp webdav))
 	 ((file-exists? rc)
 	  (list 'query (format "File exists ~a" rc)))
 	 ((file-exists? wd)
 	  (list 'query (format "File exists ~a" wd)))
 	 (else
-	  (save (hoprc-dir) rc wd apasswd uname upasswd gname gpasswd
+	  (save (hoprc-dir) rc wd apasswd uname upasswd udir gname gpasswd
 		proxy user-proxy anonymous-proxy remote-proxy proxy-mask
-		webdav)))))
+		localp lanp webdav)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    save ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (save rcdir rcfile passwdfile
-	      apasswd uname upasswd gname gpasswd
+	      apasswd uname upasswd udir gname gpasswd
 	      proxy uproxy anonymous-proxy remote-proxy proxy-mask
-	      webdav)
+	      localp lanp webdav)
    (unless (and (file-exists? rcdir) (directory? rcdir))
       (make-directories rcdir))
    (with-output-to-file rcfile
@@ -395,25 +456,48 @@ of computers that are allowed to use this Hop as proxy.])))))
 	    (when proxy-mask
 	       (print ";; proxy IP mask")
 	       (write `(hop-proxy-ip-mask-set!
-			,(apply format "~a.~a.~a.~a" proxy-mask)))
+			  ,(apply format "~a.~a.~a.~a" proxy-mask)))
 	       (newline)
 	       (newline)))
 	 (print ";; WebDAV")
 	 (write `(hop-enable-webdav-set! ,webdav))
-	 (newline)))
+	 (newline)
+	 (newline)
+	 (cond
+	    (lanp
+	       (print ";; anonymous lan requests")
+	       (print '(hop-service-access-control-set!
+			(lambda (req svc)
+			   (with-access::http-request req (lanclientp)
+			      lanclientp))))
+	       (print '(hop-path-access-control-set!
+			(lambda (req path)
+			   (with-access::http-request req (lanclientp)
+			      lanclientp)))))
+	    (localp
+	       (print ";; anonymous local requests")
+	       (print '(hop-service-access-control-set!
+			(lambda (req svc)
+			   (with-access::http-request req (localclientp)
+			      localclientp))))
+	       (print '(hop-path-access-control-set!
+			(lambda (req path)
+			   (with-access::http-request req (localclientp)
+			      localclientp))))
+	       (newline)))))
    (let ((accounts "admin"))
       (with-output-to-file passwdfile
 	 (lambda ()
 	    (print ";; generated file, Hop Wizard " (current-date))
 	    (print ";; anonymous user")
-	    (write `(add-user! "anonymous"))
+	    (write `(add-user! "anonymous" :services '(public shutdown/kill)))
 	    (newline)
 	    (newline)
 	    (print ";; admin")
 	    (write `(add-user! "admin"
 			       :groups '(admin exec)
 			       :password ,apasswd
-			       :directories '*
+			       :directories (cons "/tmp" (hop-path))
 			       :services '*))
 	    (newline)
 	    (newline)
@@ -423,7 +507,11 @@ of computers that are allowed to use this Hop as proxy.])))))
 	       (write `(add-user! ,uname
 				  :groups '(exec)
 				  :password ,upasswd
-				  :directories (cons (getenv "HOME") (hop-path))
+				  :directories (cons* ,(if (equal? udir "*")
+							   '*
+							   udir)
+						      "/tmp"
+  						      (hop-path))
 				  :services '*))
 	       (newline)
 	       (newline))
@@ -437,10 +525,11 @@ of computers that are allowed to use this Hop as proxy.])))))
 						(make-file-name
 						 (hop-rc-directory)
 						 "guest")
+						"/tmp"
 						(hop-path))))
 	       (newline)
 	       (newline))))
       (list 'save
-	    (format "Accounts for ~a saved in `~a'.<BR>You must now <A href='/hop/shutdown'>shutdown</a> and restart Hop!" accounts passwdfile))))
+	    (format "Accounts for ~a saved in `<TT>~a</TT>'.<BR>You must now <A href='/hop/shutdown?exitval=5&restart=yes'>shutdown</a> and restart Hop!" accounts passwdfile))))
 
 

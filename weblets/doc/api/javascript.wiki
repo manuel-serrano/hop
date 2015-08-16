@@ -1,0 +1,130 @@
+<doc> JavaScript compatibility 
+
+== Description ==
+
+~~ Client-side Hop can interact with JavaScript code easily. JavaScript
+(see ,(<SPAN> :class "href" "Hop and JavaScript" :onclick ~(jsref)) 
+documentation)
+functions and variables can be used directly from Hop client-side code
+and vice-versa. In addition Hop and JavaScript share many object representation
+so that they can exchange values. Strings, numbers, functions are equivalent
+in both languages.
+
+~~ In addition to blending Hop and JavaScript programs, some JavaScript 
+builtin syntaxes are available from Hop by the means of functions. These
+functions can be used to avoid resorting on mixing Hop and JavaScript. This
+manual page describes these functions.
+
+
+== Synopsis ==
+
+
+=== Client ===
+  
+  (js-for proc obj)
+  (js-in? field obj)
+  (js-instanceof? obj class)
+  (js-property obj prop)
+  (js-property-set! obj prop value)
+  (js-property-delete! obj prop)
+  (js-new class)
+  (js-method-call obj method)
+
+
+== Examples ==
+
+<example>js-for, js-in?, js-instanceof?, js-new, js-method-call, js-property</example>
+
+
+== Client Definitions ==
+<client>
+
+=== ++(js-for proc obj)++ ===
+<procedure> js-for
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| proc     |  procedure   | The procedure to apply to all the fields.           |
+| obj      |  object      | The object.               |
+</arguments>
+
+Apply ++proc++ to all ++obj++'s fields value.
+</procedure>
+
+
+=== ++(js-in? field obj)++ ===
+<procedure> js-in?
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| field    |  string      | A field name.           |
+| obj      |  object      | An object.              |
+</arguments>
+
+Is ++field++ a field in ++obj++?
+</procedure>
+
+
+=== ++(js-instanceof? obj class)++ ===
+<procedure> js-instanceof?
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| obj      |  object      | An object.               |
+| class    |  procedure   | A class constructor.           |
+</arguments>
+
+Is ++obj++ an instance of ++class++?
+</procedure>
+
+
+=== ++(js-property obj prop)++ ===
+=== ++(js-property-set! obj prop value)++ ===
+=== ++(js-property-delete! obj prop)++ ===
+<procedure> js-property
+<procedure> js-property-set!
+<procedure> js-property-delete!
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| obj      |  object      | An object.                 |
+| prop     |  string      | A property name.           |
+| value    |  _           | Any value.                 |
+</arguments>
+
+These functions get, set, and remove properties from objects. See
+,(<SPAN> :class "href" "Hop and JavaScript" :onclick ~(jsref)) for examples.
+</procedure>
+</procedure>
+</procedure>
+
+=== ++(js-new class ...)++ ===
+<procedure> js-new
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| class    |  procedure   | A class constructor.     |
+</arguments>
+
+Create a new JavaScript object. See 
+,(<SPAN> :class "href" "Hop and JavaScript" :onclick ~(jsref)) for examples.
+</procedure>
+
+=== ++(js-method-call obj method)++ ===
+<procedure> js-method-call
+
+<arguments>
+^  arguments  ^   type               ^  short description     ^
+| obj      |  object      | An object.               |
+| method   |  string      | A method name.           |
+</arguments>
+
+Invokes ++method++ that belongs to ++obj++. See
+,(<SPAN> :class "href" "Hop and JavaScript" :onclick ~(jsref)) for examples.
+</procedure>
+
+
+== See also ==
+<see-also>js-for, js-in?, js-instanceof?, js-new, js-method-call, js-property</see-also>
+
+</doc>

@@ -1,4 +1,18 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-2009 Florian Loitsch, see LICENSE file       */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module scheme2js-main
+   (cond-expand
+      (enable-threads (library pthread)))
    (import scheme2js
 	   config)
    (include "version.sch")
@@ -46,9 +60,10 @@
       (("--bigloo-modules" (help (default-str "Use Bigloo-module headers."
 				    'bigloo-modules)))
        (update-conf 'bigloo-modules (not invert-flag?)))
+      (("--compress" (help (default-str "Compress the JavaScript output."
+			      'compress)))
+       (update-conf 'compress (not invert-flag?)))
       (section "JavaScript Interface")
-      (("--infotron" (help (default-str "Activate support for Infotrons." 'infotron)))
-       (update-conf 'infotron (not invert-flag?)))
       (("--js-dot-notation"
 	(help (default-str "Allows the access of JS-fields with dots."
 		 'direct-js-object-access)))
@@ -64,8 +79,8 @@
        (update-conf 'export-globals (not invert-flag?)))
       (("--allow-unresolved"
 	(help (default-str "Unresolved vars are supposed to be js-vars."
-		 'unresolved=JS)))
-       (update-conf 'unresolved=JS (not invert-flag?)))
+		 'allow-unresolved)))
+       (update-conf 'allow-unresolved (not invert-flag?)))
       (("--js-this"
 	(help (default-str "Procedures may use Javascript's 'this' variable."
 		 'procedures-provide-js-this)))
@@ -83,6 +98,9 @@
 						"exported) variables. (default: _ followed by the"
 						" file-name without extension)")))
        (update-conf 'statics-suffix suffix))
+      (("--pp" (help (default-str "Produce pretty-printed JavaScript code"
+			'pp)))
+       (update-conf 'pp (not invert-flag?)))
       (("--indent" ?width
 		   (help (default-str "Set indentation-width of produced code"
 			    'indent)))
@@ -96,7 +114,8 @@
       (("-O" ?level
 	     (help "Set Optimization Level [0-3,bench]"))
        (set! *config*
-	     (set-optim-level *config* (or (string->number level) (string->symbol level)))))
+	     (set-optim-level *config* (or (string->number level)
+					   (string->symbol level)))))
       (("--tail-rec"
 	(help (default-str "transform tail-recursive calls into while-loops."
 		 'optimize-tail-rec)))
@@ -194,8 +213,10 @@
 		 'extern-always-call/cc)))
        (update-conf 'extern-always-call/cc (not invert-flag?)))
       (section "Debug")
-      ((("-l" "--print-locations") (help "print locations"))
-       (update-conf 'print-locations #t))
+;      ((("-l" "--print-locations") (help "print locations"))
+;       (update-conf 'print-locations #t))
+      (("-g" (help "add debugging information"))
+       (update-conf 'debug (not invert-flag?)))
       (("-d" ?stage (help "debug compiler-stage"))
        (update-conf 'debug-stage (string->symbol stage)))
       (else

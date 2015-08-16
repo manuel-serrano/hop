@@ -19,10 +19,11 @@
 	    n
 	    (<BUTTON>
 	       "Rewrite now"
-	       :onclick ~(window.open ($home/demos/rewrite/doit $url.value
-								$o.value
-								$n.value)
-				      $url.value))))))
+	       :onclick ~(let ((url $url)
+			       (o $o)
+			       (n $n))
+			    (window.open ($home/demos/rewrite/doit url.value o.value n.value)
+			       url.value)))))))
 
 (define-service (home/demos/rewrite/doit url old new)
    (with-handler

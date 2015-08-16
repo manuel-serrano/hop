@@ -9,6 +9,7 @@ These functions handle HOP server //caches//.
   (class cache ...)
   (class cache-disk ...)
   (class cache-memory ...)
+  (class cache-entry ...)
   (registered-caches)
   (unregister-cache! cache)
   (cache-clear cache)
@@ -43,6 +44,7 @@ An abstract class for caches.
 ^  fields       ^   type      ^  default value  ^  short description           ^
 | path          |  string     |      _          | a file name                  | 
 | out           |  procedure  |   ++display++   | a procedure                  | 
+| max-file-size  |  elong     |   4096          | maximum size of stored files  |
 </fields>
 
 This class specifies //cache// whose entries are stored on a disk. 
@@ -56,6 +58,23 @@ value stored in the cache should be displayed. A good candidate is:
 <class> cache-memory
 
 <fields>
+^  fields       ^   type      ^  default value  ^  short description           ^
+| max-file-size  |  elong     |   4096          | maximum size of stored files  |
+</fields>
+
+This class specifies //cache// whose entries are stored in memory
+
+</class>
+
+
+=== ++(class cache-entry ...)++ ===
+<class> cache-entry
+
+<fields>
+^  fields       ^   type      ^  default value  ^  short description           ^
+| value         |  obj        |      _          | the cached value        | 
+| signature     |  elong      |      _          | the entry's signature        | 
+| upath         |  bstring    |      _          | the entry's key        | 
 </fields>
 
 This class specifies //cache// whose entries are stored in memory
@@ -122,7 +141,8 @@ Returns a list whose elements are the entries of the cache.
 </arguments>
 
 Gets the element store in the ++cache++ under the ++key++. If no element
-is found ++#f++ is returned.
+is found ++#f++ is returned, otherwise returns an instance of the
+the ++cache-entry++ class.
 </function>
 
 === ++(cache-put! cache key value)++ ===

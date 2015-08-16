@@ -1,0 +1,61 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.2.x/etc/configure_noarch.sch.in       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue May  5 09:54:10 2009                          */
+;*    Last change :  Sat Jan 29 14:50:20 2011 (serrano)                */
+;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Common arch HOP configuration                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Install directories ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-etc-directory) "@ETCDIR@")
+(define-inline (hop-bin-directory) "@BINDIR@")
+(define-inline (hop-lib-directory) "@LIBDIR@")
+(define-inline (hop-share-directory) "@SHAREDIR@")
+(define-inline (hop-contribs-directory) "@CONTRIBSDIR@")
+(define-inline (hop-weblets-directory) "@WEBLETSDIR@")
+
+;*---------------------------------------------------------------------*/
+;*    hop-library-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-library-path)
+   (cond-expand
+      (bigloo-jvm
+       (cons* "/resource/bigloo" "@LIBPATH@" (bigloo-library-path)))
+      (else
+       (cons "@LIBPATH@" (bigloo-library-path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-rc-directory ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-rc-directory)
+   (let* ((host (hostname))
+	  (home (or (getenv "HOME") "/"))
+	  (conf (or (getenv "XDG_CONFIG_HOME") (make-file-name home ".config")))
+	  (pref "hop"))
+      (let loop ((host (if (not (string? host)) (getenv "HOST") host)))
+	 (if (string? host)
+	     (let ((conf/h (make-file-name conf (string-append pref "." host))))
+		(if (and (file-exists? conf/h) (directory? conf/h))
+		    conf/h
+		    (if (string=? (suffix host) "")
+			(make-file-name conf pref)
+			(loop (prefix host)))))
+	     (make-file-name conf pref)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-var-directory ...                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-var-directory)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-configure-cache-directory ...                                */
+;*---------------------------------------------------------------------*/
+(define (hop-configure-cache-directory)
+   #f)
+

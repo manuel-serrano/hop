@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/2.5.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Apr  9 06:59:56 2009 (serrano)                */
-#*    Copyright   :  2004-09 Manuel Serrano                            */
+#*    Last change :  Sun Nov 17 10:19:01 2013 (serrano)                */
+#*    Copyright   :  2004-13 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -22,35 +22,58 @@ do: build
 #*    FLASHOBJS                                                        */
 #*---------------------------------------------------------------------*/
 FLASHOBJS	= HopServevt.swf HopAudio.swf HopVideo.swf \
-                  JavaScriptFlashGateway.swf JavaScriptFlashGateway.js \
-                  hop-sound.swf 
+                  JavaScriptFlashGateway.swf JavaScriptFlashGateway.js
 FLASHSRC	= HopServevt.as HopAudio.as HopVideo.as
 FLASH		= $(FLASHOBJS) $(FLASHSRC)
 FLASHOPT	= player.swf swfobject.js
 
-RTS		= $(RTSCONFIG)
-
-EXTRA		= hop-paned.css hop-sorttable.js hop-tree.js \
-		  hop-error.hss hop-paned.js hop.css \
-                  hop-fx.js \
-                  md5.js sha1.js aes.js \
-		  hop-lframe.css hop-slider.css hop-tabslider.css \
-                  hop-notepad.hss hop-slider.js hop-tabslider.js \
-	 	  hop-notepad.js hop-sorttable.css hop-tree.css \
+#*---------------------------------------------------------------------*/
+#*    Client-side runtime library                                      */
+#*    -------------------------------------------------------------    */
+#*    See hopscheme/hop-runtime.scm to add new modules.                */
+#*---------------------------------------------------------------------*/
+EXTRA		= hop.hss \
+                  hop-fx.js hop-fx.hss \
+                  hop-paned.hss hop-paned.js \
+                  hop-sorttable.hss hop-sorttable.js \
+                  md5.js sha1.js aes.js aes.scm \
+		  hop-slider.hss hop-slider.js \
+                  hop-tabslider.hss hop-tabslider.js \
+	 	  hop-notepad.hss hop-notepad.js \
+                  hop-tree.js hop-tree.css \
 		  hop-foldlist.js hop-foldlist.css \
-                  hop-window.js hop-window.hss \
+                  hop-window.scm hop-window.js \
+                  hop-window.hss hop-window-red.hss hop-window-orange.hss \
                   hop-editor.js hop-editor.css \
-                  hop-file.js hop-file.hss \
+                  hop-file.js hop-file.scm hop-file.hss \
                   hop-fileselect.js hop-fileselect.css \
-                  hop-tooltip.js hop-dashboard.js \
+                  hop-dashboard.js hop-dashboard.scm \
                   hop-prefs.js hop-prefs.hss \
-                  hop-debug.js hop-debug.css \
-		  hop-sound.js hop-sound.scm \
-                  hop-audio.js hop-audio.hss \
+                  hop-audio.js hop-audio.scm hop-audio.hss \
                   hop-video.js hop-video.hss \
                   hop-login.js hop-login.hss \
-                  hop-box.scm hop-box.hss \
-                  hop-canvas.scm
+		  hop-spinbutton.scm hop-spinbutton.hss \
+		  hop-color.scm hop-color.hss \
+                  hop-lframe.hss \
+                  hop-canvas.scm hop-exception.scm hop-debug.scm \
+                  hop-orientation.scm \
+                  hop-spage.scm hop-spage.hss hop-spage-iphone.hss\
+                  hop-gauge.scm hop-gauge.hss \
+                  hop-font.scm \
+                  hop-password.scm \
+                  hop-foot.hss
+
+#*---------------------------------------------------------------------*/
+#*    AUDIO and ICONS                                                  */
+#*---------------------------------------------------------------------*/
+ICONS_HOP	= logo-bg.png dashboard.png \
+		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
+                  hop-api-48x48.png hop-api-16x16.png hop.png hop.svg
+
+ICONS_ERRORS    = error.png error2.png client-error.png stop.png timeout.png \
+                  warning.png privacy.png notfound.png
+
+ICONS_ANIMS	= busy-anim-16.gif busy-anim-32.gif
 
 ICONS_AUDIO	= mute.png pause.png playlist.png prefs.png stop.png \
 		  next.png play.png podcast.png prev.png unmute.png
@@ -59,52 +82,54 @@ ICONS_PANED	= hcursor.png vcursor.png
 
 ICONS_SLIDER	= cursor.png
 
-ICONS_WINDOW	= bottom-left.png close.png shadow-e.png shadow-se.png \
-                  title-left.png bottom-middle.png icon.png shadow-ne.png \
-                  shadow-sw.png title.png bottom-right.png maximize.png \
-                  shadow-s.png title-right.png
+ICONS_WINDOW	= bottom-left.png bottom-middle.png bottom-right.png \
+		  close.png icon.png maximize.png \
+                  title-left.png title.png title-right.png \
+                  title-left-hover.png title-hover.png title-right-hover.png
+
+ICONS_WINDOW_RED= close.png iconify.png maximize.png 
+
+ICONS_FX	= shadow-e.png shadow-se.png shadow-ne.png \
+                  shadow-sw.png shadow-s.png
 
 ICONS_TREE	= device.png folder-close.png joinbottom.png plus.png \
 		  empty.png folder-open.png minus.png plusbottom.png \
 		  file.png join.png minusbottom.png vline.png
 
-ICONS_FOLDLIST	= triangle-down.png triangle-right.png
-
 ICONS_LOGIN	= login.png
 
-ICONS_FCHOOSER	= cancel.png open.png run.png \
-                  folder-close.png file.png home.png hdd.png desktop.png \
+ICONS_FCHOOSER	= folder-close.png file.png home.png hdd.png desktop.png \
                   keyboard.png drag.png \
                   edit-add.png edit-remove.png
 
-ICONS		= important.png shadow-se.png \
-		  busy-anim-16.gif logo-bg.png shadow-sw.png \
-		  dashboard.png notfound.png source.png \
-		  resize-grip.png stop.png \
-		  error.png shadow-e.png timeout.png \
-		  error2.png shadow-ne.png warning.png \
-		  hop-16x16.png hop-48x48.png hop-32x32.png hop-128x128.png \
-                  hop-api-48x48.png hop-api-16x16.png \
-                  hop.png hop.svg \
-                  shadow-s.png window-handle.png \
+ICONS_COLOR	= transbg.png satval.png 
+
+ICONS_ACTIONS   = cancel.png ok.png run.png open.png
+
+ICONS		= $(ICONS_HOP:%=hop/%) \
+                  $(ICONS_ERRORS:%=errors/%) \
+                  $(ICONS_ANIMS:%=anims/%) \
 		  $(ICONS_AUDIO:%=hop-audio/%) \
                   $(ICONS_PANED:%=hop-paned/%) \
                   $(ICONS_SLIDER:%=hop-slider/%) \
                   $(ICONS_WINDOW:%=hop-window/%) \
+                  $(ICONS_WINDOW_RED:%=hop-window-red/%) \
+                  $(ICONS_FX:%=hop-fx/%) \
                   $(ICONS_TREE:%=hop-tree/%) \
-                  $(ICONS_FOLDLIST:%=hop-foldlist/%) \
                   $(ICONS_LOGIN:%=hop-login/%) \
-                  $(ICONS_FCHOOSER:%=hop-filechooser/%)
+                  $(ICONS_FCHOOSER:%=hop-filechooser/%) \
+                  $(ICONS_COLOR:%=hop-color/%) \
+                  $(ICONS_ACTIONS:%=actions/%)
 
 BUTTONS		= cc.png firefox.png hop2.png inria.png opera.png \
-		  css.png freebsd.png html401.png inria2.png paypal.png \
+		  css.png freebsd.png html401.png inria-2010.png paypal.png \
 		  debian.png gpl.png ie1.png konqueror.png safari.png \
 		  donate.png hop.png ie2.png mozilla.png xhtml.png rss.png
  
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= $(RTS) $(EXTRA) \
+POPULATION	= $(RTSCONFIG) $(EXTRA) \
                   $(ICONS:%=icons/%) \
                   $(BUTTONS:%=buttons/%) \
                   editor \
@@ -114,97 +139,185 @@ POPULATION	= $(RTS) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: hop.js $(FLASHSRC:%.as=flash/%.swf) hop-runtime.js $(BACKEND)
+build: .afile hop_u.js hop_s.js \
+   $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
+
+#*---------------------------------------------------------------------*/
+#*    hop-password.scm ...                                             */
+#*---------------------------------------------------------------------*/
+hop-password.scm: ../runtime/password.scm
+	@ echo ";; Generated file, don't edit" > $@
+	@ cat $^ | sed -e "s|;; @client ||" -e "s|#;@server|;;|" >> $@
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR) && \
-        chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR) && \
-        for p in hop.js hop-autoconf.js $(RTS); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null; \
-          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	$(INSTALL) $(BUILDSHAREDIR)/.afile $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/hop-runtime.sch && \
+        for p in hop_u.js hop_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$$p.gz 2> /dev/null && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
-	  $(INSTALL) ../scheme2js/runtime/runtime.js $(DESTDIR)$(HOPSHAREDIR)/runtime.js; \
-	  $(GZIP) ../scheme2js/runtime/runtime.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
-          chmod $(BMASK) $(DESTDIR)$(HOPSHAREDIR)/runtime.js.gz; \
+	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
+	$(INSTALL) ../scheme2js/runtime/runtime_u.js $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js && \
+	$(GZIP) ../scheme2js/runtime/runtime_u.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js.gz && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_u.js.gz; \
+	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
+	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
+	$(INSTALL) ../scheme2js/runtime/runtime_s.js $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js && \
+	$(GZIP) ../scheme2js/runtime/runtime_s.js -c > $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js.gz && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/runtime_s.js.gz; \
         for p in $(EXTRA); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/icons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/icons; \
+        fi && \
         for p in $(ICONS:%=icons/%); do \
-          mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	  chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` ]; then \
+            mkdir -p $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p` && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/`dirname $$p`; \
+          fi && \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/buttons ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/buttons; \
+        fi && \
         for p in $(BUTTONS:%=buttons/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/flash ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/flash; \
+        fi && \
         for p in $(FLASHOBJS:%=flash/%); do \
-	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-        done
+	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+        done && \
 	for p in $(FLASHOPT:%=flash/%); do \
 	  if [ -f $$p ]; then \
-            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+            $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$$p && \
+            chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$$p; \
           fi; \
         done
-	mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	chmod a+rx $(DESTDIR)$(HOPSHAREDIR)/editor && \
-	$(INSTALL) $(BUILDSHAREDIR)/editor/* $(DESTDIR)$(HOPSHAREDIR)/editor
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/editor ]; then \
+	  mkdir -p $(DESTDIR)$(HOPSHAREDIR)/editor && \
+	    chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/editor; \
+        fi && \
+	for p in $(BUILDSHAREDIR)/editor/*; do \
+          $(INSTALL) $$p $(DESTDIR)$(HOPSHAREDIR)/editor && \
+          chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/editor/`basename $$p`; \
+        done
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
-	/bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/.afile && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/icons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/flash && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/buttons && \
+	$(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/editor && \
         for p in $(EXTRA); do \
-	  /bin/rm -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
+	  $(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(EXTRA); \
         done
-	for p in $(RTS) hop-autoconf runtime hop; do \
-	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
-	  /bin/rm -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
+	for p in $(RTSCONFIG) hop-autoconf runtime hop; do \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p; \
+	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$$p.gz; \
         done
 
 #*---------------------------------------------------------------------*/
-#*    hop.js hop-runtime.js ...                                        */
+#*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-SCHEME2JS_RUNTIME = ../scheme2js/runtime
-include $(SCHEME2JS_RUNTIME)/Makefile.include
-
-hop.js: hop-autoconf.js ../scheme2js/runtime/runtime.js $(RTS)
+hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js hop-exception.js $(RTSCONFIG)
 	echo "/* Automatically generated file (don't edit) */" > $@
-	echo "/* " >> $@
-	date >> $@
-	echo " */" >> $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+               | sed -e "s|//[^\"]*$$||g" \
+               | sed -e "/^[ \t]*$$/D" \
+               | $(BGLCPP) \
+               >> $@
+
+hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js hop-exception.js hop-debug.js $(RTSCONFIG)
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
 	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -e "s%/[*]\([^*]\|[*][^/]\)*[*]/%%g" \
-                       -e "/^[ \t]*$$/D" \
-                       -e "s|//[^\"]*$$||g" \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
-	  cat $^ >> $@; \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) \
+                 >> $@; \
         fi
 
-# needed for hopscheme.
-EXPORTED_RTS = $(RTS) $(filter %.js,$(EXTRA)) hop-autoconf.js
-hop-runtime.js: $(EXPORTED_RTS)
-	cat $^ > $@
+#*---------------------------------------------------------------------*/
+#*    hop-runtime.sch ...                                              */
+#*---------------------------------------------------------------------*/
+EXPORTED_RT_JS = $(RTSCONFIG) $(filter %.js,$(EXTRA)) hop-autoconf.js
+
+SCHEME2JS_RUNTIME = ../scheme2js/runtime
+EXPORTER = $(SCHEME2JS_RUNTIME)/exporter
+EXPORTER_FLAGS = --module "__hop" --constant
+
+hop-runtime.sch: $(EXPORTER) $(EXPORTED_RT_JS)
+	$(EXPORTER) $(EXPORTER_FLAGS) -o $@ $(EXPORTED_RT_JS)
+
+#*---------------------------------------------------------------------*/
+#*    .afile ...                                                       */
+#*---------------------------------------------------------------------*/
+.afile: hop-runtime.sch $(filter %.scm,$(EXTRA)) $(filter %.sch,$(EXTRA))
+	@ $(AFILE) -o $@ $^
 
 #*---------------------------------------------------------------------*/
 #*    Flash compilation                                                */
 #*---------------------------------------------------------------------*/
 flash/%.swf: flash/%.as
 	(cd flash && $(FLASHCC) $(FFLAGS) $(@F) $(<F))
+
+#*---------------------------------------------------------------------*/
+#*    JavaScript compilation                                           */
+#*---------------------------------------------------------------------*/
+hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+
+hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
@@ -224,3 +337,24 @@ jvm-list:
           fi \
         done
 
+#*---------------------------------------------------------------------*/
+#*    predistrib                                                       */
+#*---------------------------------------------------------------------*/
+predistrib: hop-exception.js hop-debug.js
+
+predistrib-clean:
+	$(RM) hop-exception.js hop-debug.js
+
+#*---------------------------------------------------------------------*/
+#*    cleaning                                                         */
+#*---------------------------------------------------------------------*/
+.PHONY: clean predistrib-clean devclean
+
+clean:
+	$(RM) hop_u.js hop_s.js 
+	$(RM) hop-runtime.sch 
+
+devclean:
+	$(RM) hop-exception.js hop-debug.js 
+
+distclean: clean

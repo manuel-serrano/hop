@@ -1,3 +1,15 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module callcc-a-normal-form
    (import config
 	   nodes
@@ -74,9 +86,9 @@
    (let* ((tmp-ref (Ref-of-new-Var 'tmp))
 	  (assig (instantiate::Set! (lvalue tmp-ref) (val n))))
       (with-access::Let l (scope-vars bindings)
-	 (cons-set! scope-vars (Ref-var tmp-ref))
+	 (cons-set! scope-vars (with-access::Ref tmp-ref (var) var))
 	 (cons-set! bindings assig)
-	 (Ref-var tmp-ref))))
+	 (with-access::Ref tmp-ref (var) var))))
 
 ;; physically modifies the given list, so that all ops are safe.
 ;; the nodes are traversed here. so no need to traverse them elsewhere.
@@ -148,13 +160,14 @@
 	       ;; else we have make sure that the key is actually a
 	       ;; constant variable. This way a restoration will reenter
 	       ;; the same branch.
-	       ((and (Ref? key)
-		     (Var-constant? (Ref-var key)))
+	       ((and (isa? key Ref)
+		     (with-access::Ref key (var)
+			(with-access::Var var (constant?) constant?)))
 		;; note: implies that the call/cc was in the clauses
 		this)
 	       (else ;; introduce temporary variable...
 		(let* ((r (Ref-of-new-Var 'ctmp))
-		       (var (Ref-var r))
+		       (var (with-access::Ref r (var) var))
 		       (binding (var-assig var key)))
 		   (set! key r)
 		   (instantiate::Let
@@ -179,13 +192,14 @@
 	       ((not if-call/cc?)
 		this)
 	       ;; otherwise the test must be a constant variable.
-	       ((and (Ref? test)
-		     (Var-constant? (Ref-var test)))
+	       ((and (isa? test Ref)
+		     (with-access::Ref test (var)
+			(with-access::Var var (constant?) constant?)))
 		;; note: implies that the call/cc was in one of the branches.
 		this)
 	       (else ;; create a temporary constant variable.
 		(let* ((r (Ref-of-new-Var 'ctmp))
-		       (var (Ref-var r))
+		       (var (with-access::Ref r (var) var))
 		       (binding (var-assig var test)))
 		   (set! test r)
 		   (instantiate::Let

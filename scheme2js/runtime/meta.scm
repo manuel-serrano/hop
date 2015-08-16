@@ -1,5 +1,17 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (define (without-META line)
-   (define META-pattern (pregexp "(?:/\*\*\* META)(.*)"))
+   (define META-pattern (pregexp "(?:/[*][*][*] META)(.*)"))
    (cadr (pregexp-match META-pattern line)))
 
 
@@ -9,6 +21,36 @@
    (let ((match (pregexp-match exported-fun-pattern line)))
       (string->symbol (cadr match))))
 
+(define (parse-arity line)
+   (define exported-fun-pattern
+      (pregexp "(?:var|function) ((?:sc_)?[^ (;]*)[(]([^)]*)[)]"))
+
+   (define (ltrim str)
+      (let loop ((i 0))
+	 (cond
+	    ((=fx i (string-length str))
+	     str)
+	    ((char=? #\space (string-ref str i))
+	     (loop (+fx i 1)))
+	    ((=fx i 0)
+	     str)
+	    (else
+	     (substring str i (string-length str))))))
+   (define (count-commas str)
+      (let loop ((i 0)
+		 (res 0))
+	 (cond
+	    ((=fx i (string-length str))
+	     res)
+	    ((char=? #\, (string-ref str i))
+	     (loop (+fx i 1) (+fx res 1)))
+	    (else
+	     (loop (+fx i 1) res)))))
+   (let* ((match (pregexp-match exported-fun-pattern line))
+	  (args (caddr match)))
+      (cond
+	 ((string-null? (ltrim args)) 0)
+	 (else (+fx 1 (count-commas args))))))
 
 (define (read-metas p)
    (let loop ((rev-result '())
@@ -48,7 +90,8 @@
 		       #f))
 		((and (starts-with? line "function")
 		      meta)
-		 (loop (cons (list (parse-var/function line) 'function meta)
+		 (loop (cons (list (parse-var/function line) 'function meta
+				   (parse-arity line))
 			     rev-result)
 		       #f))
 		(else

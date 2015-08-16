@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hop-notepad.js              */
+/*    serrano/prgm/project/hop/2.3.x/share/hop-notepad.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 17 16:07:08 2005                          */
-/*    Last change :  Sat May 31 06:53:55 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon May 21 16:46:10 2012 (serrano)                */
+/*    Copyright   :  2005-12 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP notepad implementation                                       */
 /*=====================================================================*/
@@ -46,22 +46,22 @@ function hop_notepad_inner_select( np, to, callback ) {
    /* invoke remote tab */
    if( tabs != undefined ) {
       if( tabs.childNodes[ to ].lang == "delay" ) {
-	 hop( np.onkeyup()( to ),
-	      function( html ) {
-		 hop_innerHTML_set( bodies.childNodes[ to ], html );
-		 hop_notepad_inner_toggle( np, to, tabs, bodies );
+	 with_hop( np.onkeyup()( to ),
+		   function( html ) {
+		      hop_innerHTML_set( bodies.childNodes[ to ], html );
+		      hop_notepad_inner_toggle( np, to, tabs, bodies );
 		 
-		 if( callback ) callback();
-		 /* the tab onselect handler */
-		 if( tabs.childNodes[ to ].onselect )
-		    tabs.childNodes[ to ].onselect();
-		 /* the global onchange handler */
-		 if( np.onchange )
-		    np.onchange( tabs.childNodes[ to ] );
-	      } );
+		      if( callback ) callback();
+		      /* the tab onselect handler */
+		      if( tabs.childNodes[ to ].onselect )
+			 tabs.childNodes[ to ].onselect();
+		      /* the global onchange handler */
+		      if( np.onchange )
+			 np.onchange( tabs.childNodes[ to ] );
+		   } );
       } else {
 	 hop_notepad_inner_toggle( np, to, tabs, bodies );
-	 
+
 	 if( callback ) callback();
 	 /* the tab onselect handler */
 	 if( tabs.childNodes[ to ].onselect ) tabs.childNodes[ to ].onselect();
@@ -77,18 +77,22 @@ function hop_notepad_inner_select( np, to, callback ) {
 /*    This is a user function that might be invoked with NOTEPAD       */
 /*    and PAN or IDENTs.                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export notepad-select)) */
+/*** META ((export notepad-select) (arity -3)) */
 function hop_notepad_select( id1, id2, history, callback ) {
    var np = hop_is_html_element( id1 ) ? id1 : document.getElementById( id1 );
    var tab = hop_is_html_element( id2 ) ? id2 : document.getElementById( id2 );
-   var tabs = document.getElementById( np.id + "-tabs" );
-   var i;
 
-   for( i = 0; i < tabs.childNodes.length; i++ ) {
-      if( tabs.childNodes[ i ] == tab ) {
-	 if( history != false ) hop_state_history_add( np.id, "np", i );
+   if( tab ) {
+      var body = document.getElementById( tab.getAttribute( "data-idtab" ) );
+      var tabs = document.getElementById( np.id + "-tabs" );
+      var i;
+
+      for( i = 0; i < tabs.childNodes.length; i++ ) {
+	 if( tabs.childNodes[ i ] == body ) {
+	    if( history != false ) hop_state_history_add( np.id, "np", i );
 	 
-	 return hop_notepad_inner_select( np, i, callback );
+	    return hop_notepad_inner_select( np, i, callback );
+	 }
       }
    }
 
@@ -100,7 +104,7 @@ function hop_notepad_select( id1, id2, history, callback ) {
 /*---------------------------------------------------------------------*/
 /*    hop_notepad_selection ...                                        */
 /*---------------------------------------------------------------------*/
-/*** META ((export notepad-selection)) */
+/*** META ((export notepad-selection) (arity #t)) */
 function hop_notepad_selection( id ) {
    var np = hop_is_html_element( id ) ? id : document.getElementById( id );
    var tabs = document.getElementById( np.id + "-tabs" );
@@ -111,15 +115,23 @@ function hop_notepad_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the notepad history state handler                        */
 /*---------------------------------------------------------------------*/
-hop_state_history_register_handler(
-   "np", /* key argument */
-   "0",  /* reset value  */
-   function( id, arg ) {
-     var np = document.getElementById( id );
-     if( np != undefined ) {
-	hop_notepad_inner_select( np, parseInt( arg ) );
-	return true;
-     } else {
-	return false;
-     }
-} );
+if( hop_config.history ) {
+   hop_add_event_listener(
+      window,
+      "load",
+      function( _ ) {
+	 hop_state_history_register_handler(
+	    "np", /* key argument */
+	    "0",  /* reset value  */
+	    function( id, arg ) {
+	       var np = document.getElementById( id );
+	       if( np != undefined ) {
+		  hop_notepad_inner_select( np, parseInt( arg ) );
+		  return true;
+	       } else {
+		  return false;
+	       }
+	    } );
+      },
+      true );
+}

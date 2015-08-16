@@ -1,7 +1,7 @@
 ;; Using a canvas for highlighting DOM elements
 (let ((can (<CANVAS>
-	      :width ~(current-window-width)
-	      :height ~(current-window-height)
+	      :width ~(main-window-width)
+	      :height ~(main-window-height)
 	      :style "position: absolute; top: 0; bottom: 0; right: 0; bottom: 0")))
    (<HTML>
       (<HEAD> :include "hop-canvas")
@@ -44,5 +44,7 @@
 				     :shadow-offset-y 2
 				     :shadow-blur 3
 				     :shadow-color "#00ff00")
+	     (apply canvas-shadow-rect ctx 40
+		    (bounding-box->list (node-bounding-box "row2")))
 	     (apply canvas-stroke-rect ctx
 		    (bounding-box->list (node-bounding-box "row2")))))))

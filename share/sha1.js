@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/sha1.js                     */
+/*    serrano/prgm/project/hop/2.3.x/share/sha1.js                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Chris Veness                                      */
 /*    Creation    :  Wed Jun  4 15:07:23 2008                          */
-/*    Last change :  Mon Jun  9 08:21:29 2008 (serrano)                */
-/*    Copyright   :  2002-08 Chris Veness                              */
+/*    Last change :  Tue Jan 17 10:14:19 2012 (serrano)                */
+/*    Copyright   :  2002-12 Chris Veness                              */
 /*    -------------------------------------------------------------    */
 /*    sha1 hashing                                                     */
 /*    -------------------------------------------------------------    */
@@ -15,7 +15,7 @@
 /*---------------------------------------------------------------------*/
 /*    sha1Hash ...                                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export sha1sum-string)) */
+/*** META ((export sha1sum-string sha1sum)) */
 function sha1sum( msg ) {
    // constants [§4.2.1]
    var K = [0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6];
@@ -36,11 +36,13 @@ function sha1sum( msg ) {
 	    (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
       }
    }
+
    // add length (in bits) into final pair of 32-bit integers (big-endian) [5.1.1]
    // note: most significant word would be ((len-1)*8 >>> 32, but since JS converts
    // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators
-   M[N-1][14] = ((msg.length-1)*8) / Math.pow(2, 32); M[N-1][14] = Math.floor(M[N-1][14])
-							 M[N-1][15] = ((msg.length-1)*8) & 0xffffffff;
+   M[N-1][14] = ((msg.length-1)*8) / Math.pow(2, 32);
+   M[N-1][14] = Math.floor(M[N-1][14]);
+   M[N-1][15] = ((msg.length-1)*8) & 0xffffffff;
 
    // set initial hash value [§5.3.1]
    var H0 = 0x67452301;
@@ -113,7 +115,7 @@ function sha1ROTL(x, n) {
 //   (note toString(16) is implementation-dependant, and 
 //   in IE returns signed numbers when used on full words)
 //
-sha1HexStr = function( n ) {
+function sha1HexStr( n ) {
    var s="", v;
    for (var i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
    return s;

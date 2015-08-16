@@ -6,6 +6,8 @@ This document presents the core constructions of the HOP programming language.
 It does not present the APIs which are already presented in the ++API++ tab.
 
 ~~ HOP is functional expression based programming language. That is:
+
+
   * All HOP expression as a value.
   * Functions are first class values. They can be passed as argument,
  returned as result, or stored in data structure.
@@ -63,21 +65,21 @@ An atom is a syntactic elements described by the following grammar:
 Hop supports //texts//. A text is made of a list of strings. A text
 is actually a syntactic shorthand for building list of strings.
 
-  <text> := <angle-text>
-     | <bracket-text>
+  <text> := <square-text>
+     | <curly-text>
 
-  <angle-text> := [ ... ]
+  <square-text> := [ ... ]
 
-  <bracket-text> := { ... }
+  <curly-text> := { ... }
 
 
-Inside <angle-text> all characters are left as is with two exceptions:
+Inside <square-text> all characters are left as is with two exceptions:
   * the character ,(begin "]") must escaped as ,(begin "\\]"),
   * the sequence ,(begin ",(") is an escape operator. It introduce an 
  Hop expression inside a text.
 
 
-Inside <bracket-text> all characters are left as is with two exceptions:
+Inside <curly-text> all characters are left as is with two exceptions:
   * the characters ,(begin "{") and ,(begin "}") that are included in the text
  but must be balanced. The text is ended when the parse reads a closing 
  bracket matching the one that has opened the text construction.
@@ -141,8 +143,8 @@ The alternative is:
 
 HOP supports derivative conditional constructions:
 
-  <alternative-cond> := (cond ((<expression> <expression)+))
-  <alternative-case> := (case <expression> ((<atom>+ <expression)+))
+  <alternative-cond> := (cond ((<expression> <expression>)+))
+  <alternative-case> := (case <expression> ((<atom>+ <expression>)+))
 
 
 Local variables are introduced with the ++let++ constructions:
@@ -181,17 +183,42 @@ Anonymous services are introduced by the ++service++ form:
   <service> := (service [:ttl <integer>] [:timeout <integer>] [:url <string>] 
                   (<ident>*) <expression>)
 
+== Conditional compilation ==
 
-== Server Side core language ==
+Conditional compilation are managed in HOP by the ++cond-expand++ form:
 
-This section presents the HOP constructions that are only applicable to
-server-side programming.
+  <cond-expand> := (cond-expand (<cond-expand-set> <expression>)+)
+  <cond-expand-set> := else
+    | <cond-expand-feature>
+    | (not <cond-expand-set>)
+    | (or <cond-expand-set>+)
+    | (and <cond-expand-set>+)
+  <cond-expand-feature> := symbol
 
-=== Modules ===
-On the server side the ,(<APIREF> "weblets" "service.wiki") are organized into
-//modules//. Modules structure the program. A module //export// variables,
-functions, and classes. A module might //import// another module. In
-that case, it may access to the imported variables, functions, and classes.
+
+Hop defines the following features:
+
+  * bigloo
+  * hop
+  * hop-<version> (//i.e.//, hop-2.0.0)
+  * hop-<branch> (//i.e.//, hop-2.0.x)
+
+
+In addition, client-side defines additional features that allows source code
+to behave differently on the server and on the client:
+
+  * scheme2js
+
+
+See ,(<APIREF> (<I> "Conditional Compilation") "condexpand.wiki") for 
+additional details.
+
+== Modules ==
+
+Modules structure HOP weblet. Server and client codes may use
+modules. A module //export// variables, functions, and classes. A
+module might //import// another module. In that case, it may access to
+the imported variables, functions, and classes.
 
 ~~ The syntactic structure of a module is as follows:
 
@@ -204,11 +231,23 @@ A single file cannot contain more than one module. The syntax for the clauses
 is:
 
   <clause> := <import>
+     | <client-import>
+     | <server-import>
      | <library>
      | <export>
      | <static>
 
-  <import> := (import <ident>+)
+  <import> := (import <import-module>+)
+     | <client-import>
+     | <server-import>
+
+  <import-module> := <ident>
+     | (<ident> <string>)
+
+  <client-import> := ~(import <ident>+) can only be used by server code
+
+  <server-import> := $(import <ident>+) can only be used by client code
+
   <library> := (library <ident>+)
 
   <export> := (export <class-or-binding>+)
@@ -227,7 +266,7 @@ is:
      | (default <expression>)
 
 
-Here is an example of a module named ++foo++ that uses the library
+~~ Here is an example of a module named ++foo++ that uses the library
 ++ssl++, that imports the module named ++bar++, and that exports the 
 function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
 
@@ -242,6 +281,103 @@ function ++fun-foo++, the variable ++var-foo++, and the class ++class-foo++.
                 (x (default 0))
                 (y (default 0)))))
 </code>
+
+
+=== Module Access File ===
+
+~~ Hop is different from languages such as C where a module is defined by a
+file. For Hop, the module name is not necessarily the name of the file
+where the text of the module is written and modules can even be split across
+several files.
+
+~~ Since modules are defined independently of files, it is necessary to make a
+link between a module and its files and there are two ways of doing this.
+Choosing an import clause where the file-names are specified or creating a
+"module access file". Such a file must contain only one ++list++, each
+element of the list being of the form:
+
+  (module-name "file-name" ... "file-name")
+
+
+~~ By default Hop checks if a file named ++.afile++ exists. If it
+exists it is loaded as a module access file.
+
+~~ Note: The Bigloo distribution contains a tool, ++bglafile++,
+that can automatically build a "module access file". See the manpage for
+++bglafile++ for details.
+
+=== Mixer server and client modules ===
+
+~~ Since Hop-2.0.x, servers and clients may mutually import
+modules. That is, server modules may import client modules to access
+to client functions and variables when producing a HTML
+tree. Respectively, client modules may import server modules, for
+instance, for accessing services from client code. The following
+example illustrate this mutual imports.
+
+~~ The following server module defines a weblet drawing chart:
+
+  (module foo-server
+     (import (gchart "http://localhost:8080/hop/weblets/download?weblet=gchart-api-1.0.0.hz"))
+     (export img pre)
+     ~(import foo-client))
+
+  (define types '(bhs bvs bhg bvg p p3 pc chp v s r rs))
+  (define tnum 0)
+  
+  (define (new-url)
+    (let ((len (length types)))
+          (set! tnum (+fx tnum 1))
+          (if (>=fx tnum len) (set! tnum 0))
+      (google-chart
+         :colors '("a25cff" "f72f2b" 
+                   "253c81" "c62f6d"
+                   "522e81" "f79326"
+                   "f7d93a" "aef742"
+                   "69f7ab" "3df7ec")
+         :type (list-ref types tnum)
+         :data (map (lambda (l) (cons (symbol->string l) (random 100)))
+                    types))))
+
+  (define url (new-url))
+  (define img (<IMG> :id "img" :src url :title "An image"))
+  (define pre (<PRE> :id "pre" :style "font-size: 70%" url))
+  
+  (define-service (foo)
+     (<HTML>
+        (<HEAD> :jscript (service-resource foo "foo.scm"))
+        (<BODY>
+         (<BUTTON> :onclick ~(with-hop ($(service () (new-url))) update)
+              "New barchart")
+           (<DIV> :style "margin-top: 2ex"
+              img
+              pre))))
+
+
+The server modules imports the client module named ++client++ defined as:
+
+  (module foo-client
+     $(import foo-server)
+     (export (update)))
+
+  (define (update src)
+     (innerHTML-set! $pre src)
+     (set! $img.src src))
+
+
+These modules assume a "module access file" the ++.afile++ defined as:
+
+  (
+    (server "foo.hop")
+    (client "foo.scm")
+  )
+
+
+== Server Side core language ==
+
+This section presents the HOP constructions that are only applicable to
+server-side programming.
+
 
 === Classes and Objects === 
 

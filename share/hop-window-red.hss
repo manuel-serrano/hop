@@ -1,0 +1,203 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.2.x/share/hop-window-red.hss          */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Fri Sep 25 13:45:53 2009                          */
+/*    Last change :  Sat Jan 22 09:16:46 2011 (serrano)                */
+/*    Copyright   :  2009-11 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Window customizations                                            */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-window-red)
+
+/*---------------------------------------------------------------------*/
+/*    url ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    Some browsers (IE in particular) does not support inlined        */
+/*    image inside a URL specification. Hence, window icons cannot     */
+/*    be cached. Once these browsers are fixed, the inlining could     */
+/*    be enabled.                                                      */
+/*---------------------------------------------------------------------*/
+$(define (url file)
+    (let ((fname (make-file-path (hop-share-directory) file))
+          (enable-image-inlining #f))
+       (cond
+        ((not (file-exists? fname))
+         (format "url( ~s )" file))
+        (enable-image-inlining
+	 (let ((p (open-input-file fname)))
+	    (if (input-port? p)
+		(unwind-protect
+		   (format "url( \"data:~a;base64,~a\" )"
+			   (mime-type file (format "image/~a" (suffix file)))
+			   (base64-encode (read-string p) 0))
+		   (close-input-port p))
+		(format "url( ~s )" fname))))
+	(else
+	 (format "url( ~s )" fname)))))
+
+/*---------------------------------------------------------------------*/
+/*    shadow                                                           */
+/*---------------------------------------------------------------------*/
+window {
+  box-shadow: 5px 5px 10px #444;
+}
+
+window:hover {
+  box-shadow: 5px 5px 10px #333;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Colors, icons, and borders                                       */
+/*---------------------------------------------------------------------*/
+$(define active-color "#901F1F")
+$(define active-color-to "#FF0000")
+
+$(define passive-color "#888888")
+$(define passive-color-to "#BBBBBB")
+
+$(define active-opacity "0.92")
+$(define passive-opacity "0.8")
+
+$(define iconify-icon "icons/hop-window-red/iconify.png")
+$(define maximize-icon "icons/hop-window-red/maximize.png")
+$(define close-icon "icons/hop-window-red/close.png")
+
+/*--- title and upper line --------------------------------------------*/
+div[hssclass=hop-window] div.hop-window-handle {
+  opacity: $passive-opacity;
+  border: 0;
+  height: 20px;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 0;
+}
+
+div[hssclass=hop-window]:hover div.hop-window-handle {
+  opacity: $active-opacity;
+}
+
+div[hssclass=hop-window] table.hop-window-handle {
+  border: 0;
+  height: 20px;
+  background: inherit;
+}
+
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle,
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-left,
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right,
+div[hssclass=hop-window] div.hop-window-handle {
+  vertical-align: middle;
+  background-color: $passive-color;
+  background-image: none;
+  background-image: -moz-linear-gradient( -90deg, $passive-color, $passive-color-to );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($passive-color), to($passive-color-to) );
+  border-radius: 0;
+}
+
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-middle,
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-left,
+div[hssclass=hop-window]:hover td.hop-window-up-title td.hop-window-title-right,
+div[hssclass=hop-window]:hover div.hop-window-handle {
+  background-image: none;
+  background-color: $active-color;
+  background-image: -moz-linear-gradient( -90deg, $active-color, $active-color-to );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from($active-color), to($active-color-to) );
+}
+
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-right {
+  text-align: right;
+  width: 10px;
+}
+
+div[hssclass=hop-window] td.hop-window-up-title table {
+  font-size: 12px;
+  font-weight: bold;
+  font-family: arial;
+  color: black;
+  height: 100%;
+}
+
+div[hssclass=hop-window]:hover td.hop-window-up-title table {
+  color: white;
+  height: 100%;
+}
+
+div[hssclass=hop-window] td.hop-window-up-title td.hop-window-title-middle {
+  vertical-align: middle;
+  text-align: center;
+}
+
+/*--- icons -----------------------------------------------------------*/
+div[hssclass=hop-window] td.hop-window-iconify {
+  background-image: $(url iconify-icon);
+  width: 22px;
+  height: 16px;
+}
+
+div[hssclass=hop-window] td.hop-window-maximize {
+  background-image: $(url maximize-icon);
+  width: 22px;
+  height: 16px;
+}
+
+div[hssclass=hop-window] td.hop-window-close {
+  background-image: $(url close-icon);
+  width: 22px;
+  height: 16px;
+}
+
+/*--- bottom line -----------------------------------------------------*/
+div[hssclass=hop-window] td.hop-window-bottom-left,
+div[hssclass=hop-window] td.hop-window-bottom-middle,
+div[hssclass=hop-window] td.hop-window-bottom-right {
+  background-image: none;
+  background-color: $passive-color-to;
+  border: 0;
+  height: 4px;
+}
+
+div[hssclass=hop-window] td.hop-window-bottom-left {
+  border-radius: 0;
+}
+div[hssclass=hop-window] td.hop-window-bottom-right {
+  border-radius: 0;
+}
+
+div[hssclass=hop-window]:hover td.hop-window-bottom-left,
+div[hssclass=hop-window]:hover td.hop-window-bottom-middle,
+div[hssclass=hop-window]:hover td.hop-window-bottom-right {
+  background-image: none;
+  background: $active-color-to;
+}
+
+/*--- borders ---------------------------------------------------------*/
+div[hssclass=hop-window] div.hop-window-inner {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+div[hssclass=hop-window] div.hop-window-content-border {
+  border-left: 3px solid $passive-color-to;
+  border-right: 3px solid $passive-color-to;
+}
+
+div[hssclass=hop-window]:hover div.hop-window-content-border {
+  border-left: 3px solid $active-color-to;
+  border-right: 3px solid $active-color-to;
+}
+
+/*--- content ---------------------------------------------------------*/
+div[hssclass=hop-window] div.hop-window-content {
+  left: 3px;
+  right: 3px;
+  bottom: 4px;
+  border: 1px solid #333;
+  top: 20px;
+}
+

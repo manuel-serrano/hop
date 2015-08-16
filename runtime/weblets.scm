@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/2.5.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Apr 10 09:11:47 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 08:11:33 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -14,24 +14,34 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_weblets
 
-   (include "xml.sch")
+   (include "xml.sch"
+            "verbose.sch")
    
    (import __hop_configure
 	   __hop_param
 	   __hop_types
+	   __hop_xml-types
 	   __hop_xml
 	   __hop_service
 	   __hop_misc
-	   __hop_read)
+	   __hop_read
+	   __hop_user)
    
-   (static  (class %autoload
+   (static  (abstract-class %autoload
 	       (path::bstring read-only)
-	       (pred::procedure read-only)
+	       (pred::procedure read-only))
+
+	    (class %autoload-file::%autoload
+	       (loaded::bool (default #f))
 	       (hooks::pair-nil read-only (default '()))
-	       (mutex::mutex (default (make-mutex)))
-	       (loaded::bool (default #f))))
+	       (mutex::mutex (default (make-mutex "autoload-file"))))
+
+	    (class %autoload-incompatible::%autoload
+	       (name::bstring read-only)
+	       (info::pair-nil read-only)))
    
    (export  (find-weblets-in-directory ::bstring)
+	    (weblet-compatible?::bool ::pair-nil)
 	    (reset-autoload!)
 	    (get-autoload-directories::pair-nil)
 	    (get-autoload-weblet-directories::pair-nil)
@@ -41,12 +51,14 @@
 	    (autoload-prefix::procedure ::bstring)
 	    (autoload ::bstring ::procedure . hooks)
 	    (autoload-filter ::http-request)
-	    (autoload-force-load! ::bstring)))
+	    (autoload-force-load! ::bstring)
+	    (get-weblets-zeroconf::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-weblets-in-directory dir)
+   
    (define (get-weblet-details dir name)
       (let* ((infos (get-weblet-info dir name))
 	     (main (assoc 'main-file infos))
@@ -56,7 +68,8 @@
 					 (cadr main)
 					 (string-append name ".hop")))))
 	 (when (file-exists? weblet)
-	    `((name ,name) (weblet ,weblet) (prefix ,prefix) ,@infos))))
+	    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))
+   
    (let loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)
@@ -65,6 +78,67 @@
 	     (if web
 		 (loop (cdr files) (cons web res))
 		 (loop (cdr files) res))))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-compatible? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (weblet-compatible? info)
+   (or (null? info)
+       (and (weblet-version-compatible? info)
+	    (weblet-features-supported? info))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-incomatible-error-msg ...                                 */
+;*---------------------------------------------------------------------*/
+(define (weblet-incomatible-error-msg info)
+   (cond
+      ((not (weblet-version-compatible? info))
+       (weblet-version-error-msg info))
+      ((not (weblet-features-supported? info))
+       (weblet-features-error-msg info))
+      (else
+       "incompatible weblet")))
+      
+;*---------------------------------------------------------------------*/
+;*    weblet-version-compatible? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (weblet-version-compatible? x)
+   
+   (define (cmpversion version cmp)
+      (or (not (pair? version))
+	  (not (string? (cadr version)))
+	  (string=? (cadr version) "")
+	  (cmp (hop-version) (cadr version))))
+   
+   (and (cmpversion (assq 'minhop x) string>=?)
+	(cmpversion (assq 'maxhop x) string<=?)))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-version-error-msg ...                                     */
+;*---------------------------------------------------------------------*/
+(define (weblet-version-error-msg x)
+   (format "Hop ~s incompatible with version requirements min: ~a, max: ~a"
+	   (hop-version)
+	   (let ((c (assq 'minhop x)))
+	      (if (pair? c) (cadr c) "*"))
+	   (let ((c (assq 'maxhop x)))
+	      (if (pair? c) (cadr c) "*"))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-features-supported? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (weblet-features-supported? x)
+   (let ((features (assq 'features x)))
+      (or (not features) (every eval-srfi? (cadr features)))))
+
+;*---------------------------------------------------------------------*/
+;*    weblet-features-error-msg ...                                    */
+;*---------------------------------------------------------------------*/
+(define (weblet-features-error-msg x)
+   (format "Hop does not support features: ~l"
+	   (filter (lambda (f)
+		      (not (eval-srfi? f)))
+		   (cadr (assq 'features x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-weblet-info ...                                              */
@@ -110,17 +184,19 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-load-hz path)
    (let ((p (open-input-gzip-file path)))
-      (unwind-protect
-	 (let* ((tmp (make-file-name (os-tmp) "hop"))
-		(file (car (untar p :directory tmp)))
-		(base (substring file
-				 (+fx (string-length tmp) 1)
-				 (string-length file)))
-		(dir (dirname base))
-		(name (if (string=? dir ".") base dir))
-		(src (make-file-path tmp name (string-append name ".hop"))))
-	    (hop-load-weblet src))
-	 (close-input-port p))))
+      (if (input-port? p)
+	  (unwind-protect
+	     (let* ((tmp (make-file-name (os-tmp) "hop"))
+		    (file (car (untar p :directory tmp)))
+		    (base (substring file
+				     (+fx (string-length tmp) 1)
+				     (string-length file)))
+		    (dir (dirname base))
+		    (name (if (string=? dir ".") base dir))
+		    (src (make-file-path tmp name (string-append name ".hop"))))
+		(hop-load-weblet src))
+	     (close-input-port p))
+	  (error "hop-load-hz" "Cannot find HZ file" path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-weblet ...                                              */
@@ -129,15 +205,24 @@
    (let* ((dir (dirname path))
 	  (name (basename (prefix path))))
       (if (file-exists? path)
-	  (begin
-	     (hop-load path)
-	     (let* ((winfoname (make-file-path name "etc" "weblet.info"))
-		    (winfo (if (file-exists? winfoname)
-			       (with-input-from-file winfoname read)
-			       '()))
-		    (url (string-append "/hop/" name)))
-		(install-weblet-dashboard! name dir winfo url)))
-	  (error 'hop-load-weblet "Cannot find HOP source" path))))
+	  (let* ((winfoname (make-file-path dir "etc" "weblet.info"))
+		 (winfo (if (file-exists? winfoname)
+			    (with-input-from-file winfoname read)
+			    '()))
+		 (url (string-append "/hop/" name)))
+	     (cond
+		((not (weblet-version-compatible? winfo))
+		 (error "hop-load-weblet"
+			(weblet-version-error-msg winfo)
+			name))
+		((not (weblet-features-supported? winfo))
+		 (error "hop-load-weblet"
+			(weblet-features-error-msg winfo)
+			name))
+		(else
+		 (hop-load-once path)
+		 (install-weblet-dashboard! name dir winfo url))))
+	  (error "hop-load-weblet" "Cannot find HOP source" path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    install-weblet-dashboard! ...                                    */
@@ -165,7 +250,7 @@
 				     (svc (string-append url "/dashboard")))
 				 (add-dashboard-applet! name i svc)))
 			     (else
-			      (warning 'autoload-weblets
+			      (warning "autoload-weblets"
 				       "bad dashboard declaration"
 				       d))))
 		       (cdr dashboard))
@@ -191,46 +276,60 @@
 		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
 		   opath
 		   npath))))
-   
+
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))
 	 (if (pair? cname)
 	     (let* ((name (cadr cname))
 		    (prefix (cadr (assq 'prefix x)))
-		    (url (make-url-name (hop-service-base) name))
+		    (svc (let ((c (assq 'service x)))
+			    (if (and (pair? c) (symbol? (cadr c)))
+				(symbol->string (cadr c))
+				name)))
+		    (url (make-url-name (hop-service-base) svc))
 		    (path (cadr (assq 'weblet x)))
 		    (autopred (assq 'autoload x))
 		    (rc (assq 'rc x))
-		    (opath (hashtable-get *weblet-table* name)))
+		    (zc (assq 'zeroconf x))
+		    (opath (hashtable-get *weblet-table* svc)))
 		;; dashboard setup
 		(install-weblet-dashboard! name prefix x url)
 		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
+		;; zeroconf
+		(when (pair? zc)
+		   (hop-verb 2 "zeroconf publish " name " "
+		      (hop-color 3 "" path)
+		      "\n")
+		   (weblet-zeroconf-add! name (cdr zc)))
 		;; autoload per say
 		(cond
 		   ((string? opath)
 		    (warn name opath path))
+		   ((not (weblet-compatible? x))
+		    (when (> (bigloo-warning) 1)
+		       (warning name (weblet-incomatible-error-msg x)))
+		    (autoload-incompatible path (autoload-prefix url) name x))
 		   ((pair? autopred)
 		    (when (cadr autopred)
 		       (hashtable-put! *weblet-table* name path)
-		       (hop-verb 2 "Setting autoload " path " on "
-				 (cadr autopred) "\n")
+		       (hop-verb 3 "Setting autoload " (hop-color 4 "" path)
+			  " when " (cadr autopred) "\n")
 		       (autoload path (eval (cadr autopred)))))
 		   (else
-		    (hashtable-put! *weblet-table* name path)
+		    (hashtable-put! *weblet-table* name svc)
 		    (install-autoload-prefix path url))))
-	     (warning 'autoload-weblets
-		      "Illegal weblet etc/weblet.info file"
-		      x))))
+	     (warning "autoload-weblets"
+		"Illegal weblet etc/weblet.info file"
+		x))))
    
    ;; since autoload are likely to be installed before the scheduler
    ;; starts, the lock above is unlikely to be useful.
-   (with-lock *weblet-lock*
-      (lambda ()
-	 (set! *weblet-autoload-dirs* dirs)
-	 (for-each (lambda (dir)
-		      (for-each maybe-autoload (find-weblets-in-directory dir)))
-		   dirs))))
+   (synchronize *weblet-lock*
+      (set! *weblet-autoload-dirs* dirs)
+      (for-each (lambda (dir)
+		   (for-each maybe-autoload (find-weblets-in-directory dir)))
+	 dirs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-prefix ...                                              */
@@ -249,51 +348,102 @@
 ;*---------------------------------------------------------------------*/
 ;*    *autoload-mutex* ...                                             */
 ;*---------------------------------------------------------------------*/
-(define *autoload-mutex* (make-mutex))
+(define *autoload-mutex* (make-mutex "autoload"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *autoloads* ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define *autoloads* '())
+(define *autoloads-loaded* '())
 
 ;*---------------------------------------------------------------------*/
 ;*    get-autoload-weblet-directories ...                              */
 ;*---------------------------------------------------------------------*/
 (define (get-autoload-weblet-directories)
    (map (lambda (o)
-	   (dirname (%autoload-path o)))
+	   (with-access::%autoload o (path)
+	      path))
 	*autoloads*))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (autoload file pred . hooks)
-   (with-lock *autoload-mutex*
-      (lambda ()
-	 (let ((qfile (find-file/path file (hop-path))))
-	    (if (not (and (string? qfile) (file-exists? qfile)))
-		(error 'autoload-add! "Can't find autoload file" file)
-		(let ((al (instantiate::%autoload
-			     (path qfile)
-			     (pred pred)
-			     (hooks hooks))))
-		   (set! *autoloads* (cons al *autoloads*))))))))
+   (synchronize *autoload-mutex*
+      (let ((qfile (find-file/path file (hop-path))))
+	 (cond
+	    ((not (and (string? qfile) (file-exists? qfile)))
+	     (error "autoload-add!" "Can't find autoload file" file))
+	    ((find (lambda (a::%autoload)
+		      (with-access::%autoload a (path)
+			 (string=? path qfile)))
+		*autoloads*)
+	     =>
+	     (lambda (a::%autoload)
+		(when (isa? a %autoload-file)
+		   (with-access::%autoload-file a ((apred pred) (ahooks hooks))
+		      (unless (and (equal? apred pred) (equal? ahooks hooks))
+			 (error "autoload-add!"
+			    "Autoload already registered" file))))))
+	    (else
+	     (let ((al (instantiate::%autoload-file
+			  (path qfile)
+			  (pred pred)
+			  (hooks hooks))))
+		(set! *autoloads* (cons al *autoloads*))))))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-incompatible ...                                        */
+;*---------------------------------------------------------------------*/
+(define (autoload-incompatible file pred name info)
+   (synchronize *autoload-mutex*
+      (let ((qfile (find-file/path file (hop-path))))
+	 (if (not (and (string? qfile) (file-exists? qfile)))
+	     (error "autoload-add!" "Can't find autoload file" file)
+	     (let ((al (instantiate::%autoload-incompatible
+			  (path qfile)
+			  (pred pred)
+			  (name name)
+			  (info info))))
+		(set! *autoloads* (cons al *autoloads*)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-load! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (autoload-load! req al)
-   (with-access::%autoload al (path hooks loaded mutex)
-      (mutex-lock! mutex)
-      (unwind-protect
+(define-generic (autoload-load! a::%autoload req))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-load! ::%autoload-file ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (autoload-load! a::%autoload-file req)
+   (with-access::%autoload-file a (path hooks loaded mutex)
+      (synchronize mutex
 	 (unless loaded
 	    (hop-verb 1 (hop-color req req " AUTOLOADING") ": " path "\n")
 	    ;; load the autoloaded file
-	    (hop-load-modified path)
+	    (with-handler
+	       (lambda (e)
+		  (raise
+		     (instantiate::&hop-autoload-error
+			(proc "autoload-load!")
+			(msg path)
+			(obj e))))
+	       (hop-load-modified path))
 	    ;; execute the hooks
 	    (for-each (lambda (h) (h req)) hooks)
-	    (set! loaded #t))
-	 (mutex-unlock! mutex))))
+	    (hop-verb 2 (hop-color req req " AUTOLOAD COMPLETE") ": " path "\n")
+	    (set! loaded #t)))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-load! ::%autoload-incompatible ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (autoload-load! a::%autoload-incompatible req)
+   (with-access::%autoload-incompatible a (name info)
+      (raise
+       (instantiate::&hop-autoload-error
+	  (proc "autoload-load")
+	  (msg (weblet-incomatible-error-msg info))
+	  (obj name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-filter ...                                              */
@@ -302,37 +452,90 @@
 ;*    the service-filter, when no service matches a HOP url.           */
 ;*---------------------------------------------------------------------*/
 (define (autoload-filter req)
-   (mutex-lock! *autoload-mutex*)
    (let loop ((al *autoloads*))
-      (if (null? al)
-	  (begin
-	     (mutex-unlock! *autoload-mutex*)
-	     #f)
-	  (with-access::%autoload (car al) (pred)
-	     (if (pred req)
-		 (begin
-		    (mutex-unlock! *autoload-mutex*)
-		    ;; the autoload cannot be removed until read, otherwise
-		    ;; parallel requests to the autoloaded service will raise
-		    ;; a service not found error
-		    (autoload-load! req (car al))
-		    ;; add all the file associated with the autoload in
-		    ;; the service path table (see __hop_service).
-		    (service-etc-path-table-fill! (%autoload-path (car al)))
-		    ;; remove the autoaload (once loaded)
-		    (mutex-lock! *autoload-mutex*)
-		    (set! *autoloads* (remq! (car al) *autoloads*))
-		    (mutex-unlock! *autoload-mutex*)
-		    #t)
-		 (loop (cdr al)))))))
+      (unless (null? al)
+	 (with-access::%autoload (car al) (pred)
+	    (if (pred req)
+		(begin
+		   ;; the autoload cannot be removed until the weblet
+		   ;; is fully loaded, otherwise parallel requests to the
+		   ;; autoloaded service will raise a service not found error
+		   (autoload-load! (car al) req)
+		   ;; add all the file associated with the autoload in
+		   ;; the service path table (see __hop_service).
+		   (with-access::%autoload (car al) (path)
+		      (service-etc-path-table-fill! path))
+		   ;; remove the autoaload (once loaded)
+		   (synchronize *autoload-mutex*
+		      (set! *autoloads* (remq (car al) *autoloads*))
+		      (set! *autoloads-loaded* (cons (car al) *autoloads-loaded*)))
+		   #t)
+		(loop (cdr al)))))))
+
+;*---------------------------------------------------------------------*/
+;*    autoload-loaded? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (autoload-loaded? req)
+   (synchronize *autoload-mutex*
+      (let loop ((al *autoloads-loaded*))
+	 (cond
+	    ((null? al) #f)
+	    ((with-access::%autoload (car al) (pred) (pred req)) #t)
+	    (else (loop (cdr al)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    autoload-force-load! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (autoload-force-load! path)
-   (autoload-filter
-    (instantiate::http-server-request
-       (localclientp #t)
-       (port (hop-port))
-       (path path))))
+   (let ((req (instantiate::http-server-request
+		 (user (anonymous-user))
+		 (localclientp #t)
+		 (port (hop-port))
+		 (path path)
+		 (abspath path))))
+      (or (autoload-filter req) (autoload-loaded? req))))
 
+;*---------------------------------------------------------------------*/
+;*    *weblets-zeroconf* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *weblets-zeroconf* '())
+
+;*---------------------------------------------------------------------*/
+;*    weblet-zeroconf-add! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (weblet-zeroconf-add! name zc)
+
+   (define (already? name zsvc)
+      (find (lambda (s)
+	       (string=? (cadr s) name))
+	 *weblets-zeroconf*))
+
+   (if (already? name *weblets-zeroconf*)
+       (when (>= (bigloo-warning) 1)
+	  (warning "zeroconf" 
+	     (format
+		"\"~a\" already published (-v3 for extra info)"
+		name)))
+       (with-handler
+	  (lambda (e)
+	     (exception-notify e))
+	  (for-each (lambda (z)
+		       (match-case z
+			  (((and (? string?) ?type))
+			   (set! *weblets-zeroconf*
+			      (cons `(:name ,name :type ,type :port ,(hop-port))
+				 *weblets-zeroconf*)))
+			  (((and (? string?) ?type) ?port . ?rest)
+			   (set! *weblets-zeroconf*
+			      (cons `(:name ,name :type ,type
+					:port ,(if (integer? port) port (hop-port))
+					,@rest)
+				 *weblets-zeroconf*)))))
+	     zc))))
+
+;*---------------------------------------------------------------------*/
+;*    get-weblets-zeroconf ...                                         */
+;*---------------------------------------------------------------------*/
+(define (get-weblets-zeroconf)
+   *weblets-zeroconf*)
+   

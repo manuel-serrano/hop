@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/weblets/home/Makefile             */
+#*    serrano/prgm/project/hop/2.2.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Tue May  5 07:54:54 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Mon Mar  7 14:16:13 2011 (serrano)                */
+#*    Copyright   :  2006-11 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -26,30 +26,35 @@ DATE = $(HOPDATE)
 SOURCES         = home.hop widgets.hop demo.hop wiki.hop
 HOP_POP		= presentation.wiki docs.wiki license.wiki faq.wiki \
                   download.wiki weblets.wiki install.wiki install-jvm.wiki \
-                  community.wiki videos.wiki
-VIDEOS		= hopx10.flv
+                  vm.wiki android.wiki community.wiki videos.wiki
+VIDEOS		= # hopx10.ogv hopx10.flv
+
 TALKS		= hopdiffuse.xhtml.gz
+
+ARTICLES	= hss/article.xhtml semantics/article.pdf
+
 POPULATION	= Makefile home.hss tips.hss \
                   demos etc/icons articles etc/weblet.info.in etc/home.wiki.in \
                   etc/logo.png etc/favicon.png etc/video.png \
+                  etc/icons/maemo_install.png etc/icons/android-market.png \
+                  etc/icons/vlinux.png \
                   $(VIDEOS:%=videos/%) \
                   $(TALKS:%=talks/%) \
+                  $(ARTICLES:%=articles/%) \
                   $(SOURCES) $(HOP_POP) config.hop.in
 
 HOP_DEMOS	= minesweeper/minesweeper.hop \
 	          minesweeper/minesweeper.scm \
-                  music/music.hop \
-                  repl/repl.hop \
-                  rewrite/rewrite.hop \
-                  rss/rss.hop \
-                  set/set.hop \
-                  set/util.hop \
-                  set/game.hop \
-	          set/set.scm \
-                  source/source.hop \
-                  sudoku/sudoku.hop \
-                  sudoku/sudoku.scm \
-                  wiki/wiki.hop
+                  music/music.hop music/music.hss \
+                  video/video.hop video/video.hss \
+                  rewrite/rewrite.hop rewrite/rewrite.hss \
+                  rss/rss.hop rss/rss.hss \
+                  set/set.hop set/set.scm set/util.hop set/game.hop \
+	          popart/popart.hop popart/popart.hss \
+	          map/map.hop map/map.hss \
+                  source/source.hop source/source.hss \
+                  sudoku/sudoku.hop sudoku/sudoku.scm \
+                  wiki/wiki.hop wiki/wiki.hss
 
                  
 build: .afile license.wiki install.wiki install-jvm.wiki release.info \
@@ -65,8 +70,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

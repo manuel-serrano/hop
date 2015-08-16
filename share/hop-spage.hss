@@ -1,0 +1,219 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.5.x/share/hop-spage.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Mon Dec  6 17:10:05 2010                          */
+/*    Last change :  Mon Aug 19 08:55:49 2013 (serrano)                */
+/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HSS for spage tag                                                */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-spage)
+
+/*---------------------------------------------------------------------*/
+/*    HSS declarations                                                 */
+/*---------------------------------------------------------------------*/
+$(define-hss-type spage "div[data-hss-tag=hop-spage]"
+    (define-hss-property (transition-style v)
+       (cond
+	  ((string=? (car v) "slide")
+           (format "span[data-hss-tag=hop-spstyle] { cursor: move; }"))
+	  ((string=? (car v) "fade")
+           (format "span[data-hss-tag=hop-spstyle] { cursor: help; }"))
+	  ((string=? (car v) "none")
+           (format "span[data-hss-tag=hop-spstyle] { cursor: wait; }"))
+	  ((string=? (car v) "auto")
+           (format "span[data-hss-tag=hop-spstyle] { cursor: auto; }"))
+	  (else
+           (format "span[data-hss-tag=hop-spstyle] { cursor: default; }")))))
+
+$(define-hss-type sphead "div[data-hss-tag=hop-sphead]"
+    (define-hss-property (button-visibility v)
+       (format "div[data-hss-tag=hop-sppopbutton] { visibility: ~l; }" v))
+    (define-hss-property (button-display v)
+       (format "div[data-hss-tag=hop-sppopbutton].visible { display: ~l; }" v))
+    (define-hss-property (button-text-visibility v)
+       (format "div[data-hss-tag=hop-sppopbutton] > span { visibility: ~l; }" v))
+    (define-hss-property (button-content v)
+       (format "div[data-hss-tag=hop-sppopbutton]:before { content: ~l; }" v))
+    (define-hss-property (button-color v)
+       (format "div[data-hss-tag=hop-sppopbutton]:before { color: ~l; }" v))
+    (define-hss-property (button-width v)
+       (format "div[data-hss-tag=hop-sppopbutton] { width: ~l; }" v)))
+
+$(define-hss-type spheadbody "div[data-hss-tag=hop-spheadbody]")
+
+$(define-hss-type sptab "div[data-hss-tag=hop-sptab]")
+$(define-hss-type spbody "div[data-hss-tag=hop-spbody]")
+
+$(define-hss-type sptabhead "div[data-hss-tag=hop-sptabhead]")
+$(define-hss-type sptabheadbody "div[data-hss-tag=hop-sptabhead-body]")
+$(define-hss-type sppushbutton "div[data-hss-tag=hop-sppushbutton]")
+
+/*---------------------------------------------------------------------*/
+/*    public declarations                                              */
+/*---------------------------------------------------------------------*/
+/* <public> */
+spage {
+  transition-style: auto;
+  padding: 0; 
+  margin: 0;
+  font-size: 10pt;
+}
+
+sphead {
+  button-visibility: visible;
+  button-text-visibility: hidden;
+  button-content: "\00ab";
+  button-width: 1.6em;
+  color: black;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  font-size: 11pt;
+  text-align: left;
+  padding-left: 2em;
+  white-space: nospace;
+  background: #f7f7f7;
+  background-image: -moz-linear-gradient( -90deg, #f7f7f7, #e7e7e7 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f7f7), to(#e7e7e7) );
+  border-bottom: 1px solid #ccc;
+}
+
+sptabhead {
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+  font-weight: bold;
+  text-align: left;
+  color: black;
+  border-top: 0;
+  cursor: pointer;
+}
+
+sppushbutton {
+  left: auto;
+  right: 0;
+}
+  
+sppushbutton:before {
+  content: "\00bb";
+}
+
+sptabhead:hover {
+  background: #8CB3DE;
+  background-image: -moz-linear-gradient( -0deg, #8CB3DE, #BAD0E8 );
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#8CB3DE), to(#BAD0E8) );
+  color: white;
+}
+
+spbody {
+}
+/* </public> */
+
+/*---------------------------------------------------------------------*/
+/*    private declarations                                             */
+/*---------------------------------------------------------------------*/
+spage {
+  position: relative;
+  overflow: hidden;
+}
+
+spage span[data-hss-tag=hop-spstyle] {
+  display: none;
+}
+
+sphead {
+  position: relative;
+}
+
+sptabhead {
+  position: relative;
+}
+
+sptabheadbody {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 2em;
+}
+
+sppushbutton {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 2em;
+  font-weight: normal;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 110%;
+  color: #777;
+  vertical-align: bottom;
+}
+
+div[data-hss-tag=hop-spwindow] {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+div[data-hss-tag=hop-spviewport] {
+  position: relative;
+  transition: left 0.4s ease-in;
+  margin: 0;
+  border: 0;
+  bottom: 0;
+  height: 100%;
+}
+  
+spbody {
+  overflow: auto;
+  transition: none 0.4s ease-in;
+  position: relative;
+  float: left;
+  clear: none;
+  z-index: 0;
+}
+ 
+div[data-hss-tag=hop-sppopbutton] {
+  user-select: none;
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #f7f7f7;
+  border-right: 1px solid #ccc;
+  text-align: left;
+  padding-left: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 80%;
+  color: black;
+  padding-bottom: 2px;
+  white-space: nowrap;
+}
+
+div[data-hss-tag=hop-sppopbutton]:before {
+  font-size: 140%;
+  font-weight: normal;
+  margin-right: 2px;
+  text-shadow: 1px -1px #999;
+}
+
+div[data-hss-tag=hop-sppopbutton]:hover {
+  background: #bbb;
+  color: white;
+}
+
+div[data-hss-tag=hop-sppopbutton].visible {
+  display: block;
+}
+
+div[data-hss-tag=hop-sptab-static] {
+  display: none;
+}

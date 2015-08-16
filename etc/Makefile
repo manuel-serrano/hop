@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.0.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/2.3.x/etc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue May  5 09:58:31 2009 (serrano)                */
-#*    Copyright   :  2006-09 Manuel Serrano                            */
+#*    Last change :  Fri May 25 18:44:41 2012 (serrano)                */
+#*    Copyright   :  2006-12 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -18,26 +18,32 @@
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile Makefile.contrib Makefile.weblet \
+POPULATION	= Makefile Makefile.weblet \
                   Makefile.mercurial Makefile.version Makefile.library \
 		  Makefile.hopconfig.in \
-                  configure.scm.in \
-                  configure-noarch.sch.in configure-macosx.sch.in \
-                  hoprc.hop.in hopshrc.hop.in \
+                  configure.scm.in libraries.sch.in \
+                  configure_noarch.sch.in configure_macosx.sch.in \
+                  configure_android.sch.in \
+                  hoprc.hop.in hopshrc.hop.in hophzrc.hop.in \
 		  hop.init.in scheme2js.init.in hopscheme.init.in \
-                  hopwiki.init.in hop.man.in hopsh.man.in hopreplay.man.in
+                  hopdroid.init.in \
+                  hop.man.in hopsh.man.in hopreplay.man.in \
+                  hopc.sh.in hopwidget.init.in hglog.scm
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
-	chmod $(BMASK) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
-	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
+	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	cp hopshrc.hop $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
-	chmod $(BMASK) $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
-	mkdir -p $(DESTDIR)$(HOPMANDIR) && chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)
+	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hopshrc.hop
+	if [ ! -d $(DESTDIR)$(HOPMANDIR) ]; then \
+	  mkdir -p $(DESTDIR)$(HOPMANDIR) && \
+            chmod $(MODDIR) $(DESTDIR)$(HOPMANDIR); \
+        fi
 	for p in hop hopsh hopreplay; do \
           cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \
-          chmod $(BMASK) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
+          chmod $(MODFILE) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
         done
 
 uninstall:

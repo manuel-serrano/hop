@@ -1,4 +1,16 @@
-(module mapping2
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
+(module mapping2-TO-BE-REMOVED
    (import export-desc
 	   tools)
    (include "mapping.sch")
@@ -9,13 +21,15 @@
    (let ((ht (make-eq-hashtable)))
       (map (lambda (e)
 	      (let ((desc (create-Export-Desc e #f #t)))
-		 (hashtable-put! ht (Export-Desc-id desc) desc)))
-	   (get-exports "runtime/mod-runtime.sch"))
+		 (with-access::Export-Desc desc (id)
+		    (hashtable-put! ht id desc))))
+	 (get-exports "runtime/mod-runtime.sch"))
       ht))
 (define *call/cc-runtime-var-mapping*
    (let ((ht (make-eq-hashtable)))
       (map (lambda (e)
 	      (let ((desc (create-Export-Desc e #f #t)))
-		 (hashtable-put! ht (Export-Desc-id desc) desc)))
-	   (get-exports "runtime/mod-runtime-callcc.sch"))
+		 (with-access::Export-Desc desc (id)
+		    (hashtable-put! ht id desc))))
+	 (get-exports "runtime/mod-runtime-callcc.sch"))
       ht))

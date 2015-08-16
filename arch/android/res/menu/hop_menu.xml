@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@+id/menu_clear"
+          android:icon="@drawable/ic_menu_clear_playlist"
+          android:title="@string/menu_clear"/>
+
+    <item android:id="@+id/menu_info"
+          android:icon="@drawable/ic_menu_info_details"
+          android:title="@string/menu_info"/>
+
+    <item android:id="@+id/menu_settings"
+          android:icon="@drawable/ic_menu_preferences"
+          android:title="@string/menu_settings"/>
+
+    <item android:id="@+id/menu_detach"
+          android:icon="@drawable/ic_menu_goto"
+          android:title="@string/menu_detach"/>
+
+    <item android:id="@+id/menu_restart"
+          android:icon="@drawable/ic_menu_refresh"
+          android:title="@string/menu_restart"/>
+
+    <item android:id="@+id/menu_quit"
+          android:icon="@drawable/ic_menu_stop"
+          android:title="@string/menu_quit" />
+</menu>

@@ -2,14 +2,14 @@
 (<HTML>
    (<IFRAME> :style "border: 0"
       :src ((service ()
-	       (instantiate::http-response-hop
+	       (instantiate::http-response-xml
 		  (backend (hop-get-xml-backend 'xhtml))
 		  (xml (<HTML>
 			  (<MATH>
 			     (<MATH:TEX> {\sqrt{\cos(x)}} ))))))))
    (<IFRAME> :style "border: 0; width: 300px; height: 200px; overflow: hidden"
       :src ((service ()
-	       (instantiate::http-response-hop
+	       (instantiate::http-response-xml
 		  (backend (hop-get-xml-backend 'xhtml))
 		  (xml (<HTML>
 			  ~(define (math-svg-draw path)

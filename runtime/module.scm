@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/2.5.x/runtime/module.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Apr  1 19:54:29 2009 (serrano)                */
-;*    Copyright   :  2009 Manuel Serrano                               */
+;*    Last change :  Fri Jan 24 16:36:58 2014 (serrano)                */
+;*    Copyright   :  2009-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -19,7 +19,8 @@
 	    __hop_param
 	    __hop_hz
 	    __hop_types
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_weblets)
    
    (export  (hop-module-extension-handler ::obj)
 	    (make-hop-module-resolver ::procedure)))
@@ -32,24 +33,39 @@
       ((?- ?- . ?clauses)
        (let ((i (filter-map (lambda (c)
 			       (match-case c
-				  ((<TILDE> ??- :src (quote ?import)) import)
+				  ((<TILDE> ??- :src (quote ?import) ??-) import)
 				  (else #f)))
 			    clauses)))
 	  (if (pair? i)
-	      ((clientc-modulec (hop-clientc)) i)
+	      (with-access::clientc (hop-clientc) (modulec)
+		 (modulec i))
 	      i)))
       (else
        '())))
 
 ;*---------------------------------------------------------------------*/
+;*    initial-resolver ...                                             */
+;*---------------------------------------------------------------------*/
+(define initial-resolver #f)
+
+;*---------------------------------------------------------------------*/
 ;*    make-hop-module-resolver ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (make-hop-module-resolver resolver)
-   (lambda (module abase)
-      (let ((files (resolver module abase)))
+   (set! initial-resolver resolver)
+   (lambda (module files abase)
+      (with-trace 1 "hop-module-resolver"
+	 (trace-item "module=" module)
+	 (trace-item "files=" files)
+	 (trace-item "abase=" abase)
 	 (if (pair? files)
-	     (hop-module-afile-resolver module files)
-	     (hop-module-path-resolver module ".")))))
+	     (hop-module-afile-resolver module files abase)
+	     (let ((rfiles (resolver module files '*)))
+		(let ((r (if (pair? rfiles)
+			     (hop-module-afile-resolver module rfiles abase)
+			     (hop-module-path-resolver module "."))))
+		   (trace-item "result=" r)
+		   r))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-path-resolver ...                                     */
@@ -64,25 +80,46 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-module-afile-resolver ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (hop-module-afile-resolver module files)
-   (apply append (filter-map (lambda (f) (url-resolver f module)) files)))
+(define (hop-module-afile-resolver module files abase)
+   (apply append (filter-map (lambda (f) (url-resolver module f abase)) files)))
    
 ;*---------------------------------------------------------------------*/
 ;*    url-resolver ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (url-resolver url module)
+(define (url-resolver module url abase)
    (if (hz-package-filename? url)
-       (hz-resolver module url)
+       (hz-module-resolver module url)
        (list url)))
 
 ;*---------------------------------------------------------------------*/
-;*    hz-resolver ...                                                  */
+;*    hz-module-resolver ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (hz-resolver module url)
-   ;; feed the cache
-   (let ((dir (hz-download-to-cache url)))
-      ;; resolve the module
-      (let ((afile (make-file-path dir ".afile")))
-	 (when (file-exists? afile) (module-load-access-file afile))
-	 ((bigloo-module-resolver) module dir))))
+(define (hz-module-resolver module url)
+   
+   (define (resolve-in-dir dir)
+      (with-trace 1 "resolve-in-dir"
+	 (trace-item "module=" module)
+	 (trace-item "url=" url)
+	 (trace-item "dir=" dir)
+	 (let ((afile (make-file-path dir ".afile"))
+	       (abase (module-abase)))
+	    (when (file-exists? afile)
+	       (hop-load-afile dir)
+	       (module-abase-set! dir))
+	    (unwind-protect
+	       (initial-resolver module '() dir)
+	       (module-abase-set! abase)))))
+   
+   (define (resolve-default)
+      (let ((dir (hz-download-to-cache url (hop-hz-repositories))))
+	 (if (directory? dir)
+	     (resolve-in-dir dir)
+	     '())))
 
+   (with-trace 1 "hz-module-resolver"
+      (trace-item "module=" module)
+      (trace-item "url=" url)
+      (cond
+	 ((hz-local-weblet-path url (get-autoload-directories)) => resolve-in-dir)
+	 ((hz-cache-path url) => resolve-in-dir)
+	 (else (resolve-default)))))

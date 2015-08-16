@@ -1,0 +1,69 @@
+<doc> Video
+
+== Description ==
+
+HOP supports //video// markups based on the HTML5 specification
+with two extensions which can also be used with a Flash based implementation.
+
+
+== Synopsis ==
+
+=== Server ===
+
+  (<VIDEO> arg ...)
+
+
+=== Requirements ===
+
+Client codes using //audio// need to load the script ++hop-audio.js++.
+They also need to load the ++hop-audio.css++ style sheet. Hence, documents
+using //audio// must include in their header, the following statement:
+
+
+  (<HEAD> :include "hop-audio")
+
+
+== Examples ==
+
+<example><VIDEO>, <SOURCE>, ogv, theora</example>
+
+
+== Codecs and Bakends ==
+
+~~ The codecs supported by the audio markup depend on the selected
+backend as well as on the capacity of the backend. For instance, the
+++flash++ backend can only play ++flv++ files. The ++html5++ backend
+depends on the browser running the page. For instance Firefox supports
+++ogg/theora++ and as of beginning of 2010 it is not clear yet what
+format is supported by WebKit based browsers.
+
+== Server Definitions ==
+<server>
+
+=== ++<VIDEO>++ ===
+<markup> <VIDEO>
+
+<arguments>
+^  attributes  ^   type    ^   default    ^  short description          ^
+| :id          |  string   |  //random//  | element identifier.         |
+| :src    |  false or string     |  _          | the URL to play.  |
+| :backend       |  symbol  |  html5       | the backend player.     |
+| :width       |  obj  |  auto       | the width of the video.     |
+| :height       |  obj  |  auto       | the height of the video.     |
+| :bg       |  obj  |  #f       | the background color.     |
+| body   | xml-element  |  _  | the optional //sources// of the video.  |
+</arguments>
+
+
+  * ++:src++ is the URL to be played. This field is optional, it may
+ be replaced with a ++<SOURCE>++ elements placed in the body of the
+ ++<VIDEO>++ element.
+  * The argument ++:backend++ must either be ++html5++ or ++flash++.
+</markup>
+
+
+== See also ==
+<see-also><VIDEO>, <AUDIO>, <SOURCE>, video, audio, video/ogv</see-also>
+
+
+</doc>

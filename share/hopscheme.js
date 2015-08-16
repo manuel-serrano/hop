@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Wed Sep 10 08:22:51 2008 (serrano)                */
-/*    Copyright   :  2007-08 Manuel Serrano                            */
+/*    Last change :  Sun Aug 11 15:29:59 2013 (serrano)                */
+/*    Copyright   :  2007-13 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -16,16 +16,16 @@ function hop_bigloo_serialize_pair( l ) {
    var res = "";
    var len = 0;
 
-   while (sc_isPair( l ) ) {
-      res += hop_bigloo_serialize( l.car );
-      l = l.cdr;
+   while( sc_isPair( l ) ) {
+      res += hop_bigloo_serialize_context( l.__hop_car );
+      l = l.__hop_cdr;
       len++;
    }
 
    if( l == null ) {
       return hop_serialize_word( len + 1 ) + res + ".";
    } else {
-      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize( l );
+      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize_context( l );
    }
 }
 
@@ -33,46 +33,50 @@ sc_Pair.prototype.hop_bigloo_serialize = function() {
    return '(' + hop_bigloo_serialize_pair( this );
 };
 
+sc_Char.prototype.hop_bigloo_serialize = function() {
+   return 'a' + hop_serialize_word( this.val.charCodeAt( 0 ) );
+};
+
 /*---------------------------------------------------------------------*/
-/*    find-runtime-type                                                */
+/*    typeof                                                           */
 /*---------------------------------------------------------------------*/
-sc_Pair.prototype.hop_find_runtime_type = function() {
+sc_Pair.prototype.hop_typeof = function() {
    return "pair";
 };
 
-sc_Vector.prototype.hop_find_runtime_type = function() {
+sc_Vector.prototype.hop_typeof = function() {
    return "vector";
 };
 
-sc_Struct.prototype.hop_find_runtime_type = function() {
+sc_Struct.prototype.hop_typeof = function() {
    return "struct";
 };
 
-sc_OutputPort.prototype.hop_find_runtime_type = function() {
+sc_OutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_StringOutputPort.prototype.hop_find_runtime_type = function() {
+sc_StringOutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_GenericOutputPort.prototype.hop_find_runtime_type = function() {
+sc_GenericOutputPort.prototype.hop_typeof = function() {
    return "output-port";
 };
 
-sc_InputPort.prototype.hop_find_runtime_type = function() {
+sc_InputPort.prototype.hop_typeof = function() {
    return "input-port";
 };
 
-Boolean.prototype.hop_find_runtime_type = function() {
+Boolean.prototype.hop_typeof = function() {
    return "bbool";
 };
 
-String.prototype.hop_find_runtime_type = function() {
-    return hop_find_runtime_type(this.toString());
+String.prototype.hop_typeof = function() {
+    return hop_typeof(this.toString());
 };
 
-sc_Char.prototype.hop_find_runtime_type = function() {
+sc_Char.prototype.hop_typeof = function() {
    return "bchar";
 };
 

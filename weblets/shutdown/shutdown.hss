@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/weblets/shutdown/shutdown.hss           */
+/*    serrano/prgm/project/hop/2.2.x/weblets/shutdown/shutdown.hss     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Fri Nov 16 07:12:51 2007 (serrano)                */
-/*    Copyright   :  2005-07 Manuel Serrano                            */
+/*    Last change :  Fri Oct  8 05:34:16 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SHUTDOWN HOP CSS                                                 */
 /*=====================================================================*/
@@ -21,7 +21,9 @@ body {
 button {
   border-width: 1px;
   margin-left: 1em;
-  width: 7em;
+  width: 8em;
+  padding-top: 3px;
+  padding-bottom: 3px;
 }
 
 button:hover {
@@ -41,12 +43,12 @@ table td {
 }
 
 table.shutdown {
-  width: 20em;
   margin-top: 20px;
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
+  box-shadow: 3px 3px 3px #555;
 }
 
 table.shutdown td {
@@ -54,16 +56,18 @@ table.shutdown td {
 }
 
 table.shutdown td#buttons {
+  padding-top: 2ex;
   text-align: right;
 }
 
 div#title {
-  width: 20em;
+  width: 15em;
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
 }
 
 table td {

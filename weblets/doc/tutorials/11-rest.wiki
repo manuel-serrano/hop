@@ -1,0 +1,171 @@
+<doc> Hop REST
+
+== Description ==
+
+~~ This tutorial shows how to implement REST applications with
+Hop. This relies on server ,(<APIREF> "filters" "filters.wiki") to
+intercept and handle the client requests.
+
+~~ Mainstream Hop applications do not follow the traditional
+[[http://en.wikipedia.org/wiki/REST|REST]] software architecture
+principles because they relies on ,(<APIREF> "services"
+"service.wiki") that all use the same HTTP method (namely ++POST++ or
+++GET++). REST on the other hand maps different meaning to differ
+methods.
+
+~~ This tutorial shows how by the means of server ,(<APIREF> "filters"
+"filters.wiki") one may build a REST application with Hop. For the
+sake of the illustration, this tutorial shows the implementation of a
+simple [[http://en.wikipedia.org/wiki/Amazon_S3|Amazon S3]] like
+application. It will show the implementation of an application that
+manages a servers-side database that can be accessed using the following 
+methods:
+
+  * ++GET /++ returns the whole of buckets,
+  * ++GET /bucket++ returns the objects of ++bucket++,
+  * ++GET /bucket/object++ returns the ++object++'s value,
+  * ++HEAD /bucket/object++ return the metadata of ++object++,
+  * ++PUT /bucket++ creates an empty bucket,
+  * ++POST /bucket/object + body++ adds an object to ++bucket++,
+  * ++DELETE /bucket++ remove the whole ++bucket++.
+
+
+== Hop REST filter ==
+
+~~ ,(<APIREF> "Filters" "filters.wiki") constitutes a fundamental means for
+parsing HTTP request in Hop. When a new connection is established, the
+request is first parsed and then, filters are executed in sequence up to
+one associates a response to the request. Obviously filters are the underlying
+technology used to implement Hop ,(<APIREF> "services" "service.wiki").
+
+~~ A filter is a function that accepts as argument a request, that is
+an instance of the ::http-request class. This object contains all the
+information that have been extracted during the parsing of the request.
+
+<code>
+  ;; S3 prefix
+  (define S3-path "/S3")
+  (define S3-prefix (string-append S3-path "/"))
+
+  ;; the S3-filter
+  (define (S3-filter req)
+     (with-access::http-request req (abspath method)
+        (when (or (string-prefix? S3-prefix abspath)
+                  (string=? abspath S3-path))
+           ;; this is something for us, first log the request
+           (S3-log req)
+           ;; now generate a response
+           (let ((path (substring abspath (string-length S3-path))))
+              (case method
+                 ((GET) (S3-get path req))
+                 ((PUT) (S3-put path req))
+                 ((HEAD) (S3-head path req))
+                 ((POST) (S3-post path req))
+                 ((DELETE) (S3-delete path req)))))))
+
+  ;; logging
+  (define (S3-log req)
+     (with-access::http-request req (abspath method)
+        (tprint "LOG S3, " (current-date) ": " method " " abspath)))
+</code>
+
+~~ The filter ++S3-filter++ first checks the path of the request to filter
+out all the requests that do not belong to our S3 application. This is
+accomplished by comparing the ++abspath++ (the absolute path) of the request
+to the prefix we have chosen for our application (i.e., ++"/S3"++).
+
+~~ For all the requests that match the application prefix, the filter
+dispatches the processing of the request according to the HTTP method
+type. In our example, each method is implemented using a dedicated
+function.
+
+
+== GET requests ==
+
+~~ Our application uses a SQL database to store the objects in the bucket.
+For the sake of simplicity, we create an in-memory database with the following
+statement:
+
+<code>
+  (define s3-db (instantiate::sqltiny))
+</code>
+
+~~ This database is first accessed with ++GET++ requests:
+
+<code>
+  ;; S3 GET
+  (define (S3-get path req)
+     (let ((dir (dirname path))
+           (base (basename path)))
+        (if (string=? dir ".")
+            ;; returns the bucket list
+            (if (string=? base "")
+                (instantiate::http-response-string
+                   (content-type "text/plain")
+                   (body (format "~l" (sqlite-name-of-tables s3-db))))
+                ;; returns a whole bucket
+                (instantiate::http-response-string
+                   (content-type "text/plain")
+                   (body (format "~l" (sqlite-exec s3-db "SELECT name FROM ~a" dir)))))
+            (let ((l (sqlite-map s3-db list "SELECT val FROM ~a WHERE" base)))
+               (if (pair? l)
+                   (instantiate::http-response-string
+                      (content-type "text/plain")
+                      (body (car l)))
+                   (instantiate::http-response-error
+                      (start-line "404 not Found")
+                      (request req)
+                      (body path)))))))
+</code>
+
+~~ According to the request it receives, ++S3-get++ function either returns
+the list of buckets or the content of one of this bucket. Responses are
+sent back to clients by the mean of ::http-response-string server objects.
+If a bucket is not found, then a ::http-response-error is returned. In all 
+cases the function ++S3-get++ returns an object of type ::http-response.
+This stops the server filters execution.
+
+== POST requests ==
+
+~~ ++POST++ method differs from ++GET++ in S3 because it receives the
+content of the object to create in the body of the request. Parsing and
+extracting this value is ensured by the Hop function
+++http-request-cgi-args++.
+
+<code>
+  ;; S3 POST
+  (define (S3-post path req)
+     (let ((dir (basename (dirname path)))
+           (base (basename path)))
+        (if (string=? base "")
+            (instantiate::http-response-error
+               (start-line "400 Bad Request"))
+            (let* ((args (http-request-cgi-args req))
+                   (content (assoc "content" (cdr args)))
+                   (val (when (pair? content)
+                           (let ((data (memq :data content)))
+                              (cadr data)))))
+               (sqlite-exec s3-db "INSERT TABLE ~a (~a, ~a, ~a)"
+                            dir base val "")
+               (instantiate::http-response-string
+                  (start-line "200 Ok")
+                  (request base))))))
+</code>
+
+== Putting together ==
+
+~~ The following source code contains the whole S3 application. In particular,
+it presents the part elluded in the tutorial such as the handling of
+++HEAD++, ++PUT++, and ++DELETE++ methods.
+
+,(let ((path (make-file-path (doc-dir) "examples" "S3.hop")))
+    (<FL>
+       (<FLITEM>
+	  (<FLHEAD> "S3.hop")
+	  (with-input-from-file path
+	     (lambda ()
+		(<PRE> :class "source"
+		   (html-string-encode
+		    (read-string (current-input-port)))))))))
+
+</doc>

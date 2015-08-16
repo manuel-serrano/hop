@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/weblets/hz/package.hop                  */
+;*    serrano/prgm/project/hop/2.4.x/weblets/hz/package.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Wed Nov 21 07:02:50 2007 (serrano)                */
-;*    Copyright   :  2007 Manuel Serrano                               */
+;*    Last change :  Sat Mar 30 10:35:34 2013 (serrano)                */
+;*    Copyright   :  2007-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with packages.                             */
 ;*=====================================================================*/
@@ -42,7 +42,7 @@
 ;*    Parses a package file name and returns the base name, the        */
 ;*    version number, and release number.                              */
 ;*    The syntax of a package name is:                                 */
-;*       .*-[0-9]+.0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                  */
+;*       .*-[0-9]+.[0-9]+.[0-9]+(-{pre,rc}?[0-9]+)?.hz                 */
 ;*---------------------------------------------------------------------*/
 (define (package-name-parse name)
    (unless (package-filename? name)
@@ -56,7 +56,7 @@
          ((and (fixnum? vdot) (>fx vdot index))
           ;; a package without release
           (let* ((version (substring n (+fx 1 index) (string-length n)))
-                 (base (substring n 0 index)))
+                 (base (uncgi-base (substring n 0 index))))
 	     (values base version)))
          (else
           ;; a package with release
@@ -64,8 +64,22 @@
              (if (not vindex)
                  (error 'package-name-parse "Illegal package name" name)
                  (let* ((version (substring n (+fx 1 vindex) (string-length n)))
-                        (base (substring n 0 vindex)))
+                        (base (uncgi-base (substring n 0 vindex))))
 		    (values base version))))))))
+
+;*---------------------------------------------------------------------*/
+;*    uncgi-base ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (uncgi-base base)
+   (let ((i (string-index base #\?)))
+      (if (fixnum? i)
+	  ;; a CGI url base
+	  (let ((j (string-index base #\= i)))
+	     (if (and (fixnum? j) (<fx j (string-length base)))
+		 ;; with a decent argument
+		 (substring base (+fx j 1))
+		 base))
+	  base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    package-url-parse ...                                            */

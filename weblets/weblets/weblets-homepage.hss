@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/1.10.x/weblets/weblets/weblets-homepage.hss      */
+/*    .../project/hop/2.2.x/weblets/weblets/weblets-homepage.hss       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug 12 13:49:57 2006                          */
-/*    Last change :  Thu Oct  2 07:50:29 2008 (serrano)                */
-/*    Copyright   :  2006-08 Manuel Serrano                            */
+/*    Last change :  Tue Jan 18 17:12:15 2011 (serrano)                */
+/*    Copyright   :  2006-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP weblets homepage cascade style sheet                         */
 /*=====================================================================*/
@@ -32,12 +32,56 @@ $(define deep-magenta "#7a459e")
 $(define deep-magenta2 "#4a346c")
 $(define deep-orange "#d89220")
 
-/*--- notepad ---------------------------------------------------------*/
-notepad-title {
-  background-color: transparent;
-  padding: 0 10px 20px 0;
+/*--- main frame ------------------------------------------------------*/
+body#weblet-homepage {
+  background: #e0e0e0;
+  font-family: arial;
+  font-size: 12pt;
 }
 
+table.weblet-homepage {
+  width: 55em;
+  min-height: 40ex;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid $border-color;
+  background: white;
+  border-radius: 0.5em;
+}
+
+table.weblet-homepage img.logo {
+  padding: 20px;
+}
+
+table.weblet-homepage td#buttons {
+  text-align: right;
+}
+
+div#title {
+  width: 100%;
+  font-size: 180%;
+  font-weight: bold;
+  padding-bottom: 1px;
+  text-align: left;
+  text-shadow: #999 2px 2px 2px;
+}
+
+div.weblet-homepage div.install {
+  float: right;
+  margin-top: 1ex;
+  margin-left: 1em;
+}
+
+table.hz-install {
+  border-radius: 3px;
+  box-shadow: 4px 4px 4px #777;
+}
+  
+div.foot {
+  margin-top: 2ex;
+}
+
+/*--- notepad ---------------------------------------------------------*/
 notepad-tabs {
   background-color: transparent;
   padding: 0;
@@ -88,9 +132,10 @@ div.weblets-homepage-tab {
 div.weblet-homepage h1 {
   margin-left: 2px;
   margin-right: 2px;
-  font-size: 105%;
+  font-size: 110%;
   margin-top: 15px;
   border-bottom: 1px dotted $border-color;
+  text-shadow: #999 2px 2px 2px;
 }
 
 div.weblet-homepage  h2 {
@@ -112,7 +157,6 @@ a.img-ref:href img {
 /*---------------------------------------------------------------------*/
 pre.hop span.homepage-program-comment {
   color: #ffa600;
-  font-weight: bold;
   font-weight: bold;
 }
 

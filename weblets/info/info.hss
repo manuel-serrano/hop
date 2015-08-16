@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.9.x/weblets/info/info.hss             */
+/*    serrano/prgm/project/hop/2.2.x/weblets/info/info.hss             */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Apr 16 10:47:18 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Jun  6 11:45:20 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    INFO HOP CSS                                                     */
 /*=====================================================================*/
@@ -16,6 +16,22 @@ $(define title-color "#ddd")
 body {
   background: #e0e0e0;
   font-family: arial;
+  margin: 0;
+  padding: 0;
+}
+
+/* to be removed when chromium bug fixed */
+gauge {
+  width: 300px;
+}
+
+gaugefill {
+  background: #14a3eb;
+}
+
+div.body {
+  padding: 20px;
+  text-align: center;
 }
 
 button {
@@ -31,12 +47,19 @@ table td {
 }
 
 table.info {
-  width: 45em;
-  margin-top: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 90%;
+  min-height: 90%;
   padding: 10px;
+  box-shadow: 6px 6px 5px #555;
   border: 1px solid $border-color;
+  border-radius: 0.5em;
   background: white;
-  -moz-border-radius: 0.5em;
+}
+
+table.info td#logo {
+  width: 64px;
 }
 
 table.info td#user-name {
@@ -48,12 +71,13 @@ table.info td {
 }
 
 div#title {
-  width: 35em;
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
   margin-bottom: 20px;
   padding-bottom: 1px;
+  text-shadow: #999 2px 2px 2px;
+  
 }
 
 div#result {
@@ -81,10 +105,6 @@ notepad-body {
   background-color: $info-color;
 }
 
-notepad-tabs {
-  background: transparent;
-}
-
 nptab {
   font-size: small;
   border-color: $border-color;
@@ -92,12 +112,11 @@ nptab {
 
 nptab-active {
   background-color: $info-color;
-  border-bottom-color: $info-color;
 }
 
 nptab-body {
-  border-color: blue;
   background-color: $info-color;
+  overflow: auto;
 }  
 
 table.hop-info {
@@ -120,8 +139,10 @@ table.hop-info td {
 }
 
 div.traffic {
+  position: relative;
+  top: 0; bottom: 0; right: 0; left: 0;
   overflow: auto;
-  height: 300px;
+/*   height: 300px;                                                    */
 }
 
 tr.remote td {
@@ -208,7 +229,6 @@ table.cache-files {
 div.autoload {
   min-height: 150px;
   overflow: auto;
-  background: white;
   width: 100%;
 }
 
@@ -272,3 +292,225 @@ div.dump-events table.dump-events td.ajax-buffer:after {
   content: ": ";
 }
 
+/*---------------------------------------------------------------------*/
+/*    fonts                                                            */
+/*---------------------------------------------------------------------*/
+table.info-font {
+  border: 1px solid $border-color;
+  padding: 2px;
+  background: white;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: serif;
+}
+
+table.info-font tr.info-font-header {
+  background: #eee;
+}
+
+table.info-font th {
+  color: #00a;
+  font-size: 12pt;
+  border-bottom: 1px dashed $border-color;
+}
+
+table.info-font tr.odd:hover,
+table.info-font tr.even:hover {
+  background-color: #ffffe7;
+}
+
+table.info-font tr.even {
+  background-color: #fafaff;
+}
+
+table.info-font td.font-name {
+  font-family: serif;
+  font-size: 11pt;
+  font-weight: 200;
+  padding-left: 5px;
+}
+
+table.info-font td.font-result {
+  font-family: serif;
+  font-weight: 200;
+}
+
+input.info-font {
+  width: 95%;
+  border: 1px solid $border-color;
+}
+
+textarea#info-font-sample {
+  border: 1px solid $border-color;
+  background: #ffffe7;
+  width: 100%;
+  height: 11ex;
+  font-size: 140%;
+}
+
+div.info-font button {
+  border: 1px solid $border-color;
+  background: #ddd;
+}
+
+div.info-font button:hover {
+  background: #eee;
+}
+
+table.info-font-user {
+  width: 100%;
+  border-bottom: 1px solid $border-color;
+  padding-bottom: 2ex;
+  margin-bottom: 2ex;
+  border-collapse: collapse;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Sections                                                         */
+/*---------------------------------------------------------------------*/
+h1 {
+  font-size: 110%;
+  font-weight: bold;
+  text-shadow: #999 1px 1px 1px;
+}
+
+h2 {
+  font-size: 105%;
+  font-weight: bold;
+  text-shadow: #999 1px 1px 1px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    Perfs                                                            */
+/*---------------------------------------------------------------------*/
+table#perfs-base-config {
+  font-size: 85%;
+}
+
+table#perfs-base-config th {
+  text-align: right;
+  color: #777;
+}
+
+table#perfs-base-config td {
+  font-weight: normal;
+  text-align: left;
+  font-style: italic;
+}
+
+table#perfs-base-config th:after {
+  content: ":";
+}
+
+table.perfs-results caption {
+  caption-side: bottom;
+  font-style: italic;
+  color: #555;
+}
+
+table.perfs-results {
+  border: 1px solid $border-color;
+  padding: 4px;
+  font-size: 90%;
+  border-collapse: collapse;
+  font-weight: normal;
+}
+
+table.perfs-results th.perfs-head {
+}
+
+table.perfs-results th {
+  width: 10em;
+  border-color: $border-color;
+  border-style: solid;
+  border-right-width: 1px;
+  border-left-width: 0;
+  border-top-width: 0;
+  border-bottom-width: 1px;
+  text-align: center;
+  background-color: #dddddd;
+  padding: 1px;
+}
+
+table.perfs-results tr.perfs-subhead th {
+  width: 5em;
+  font-size: 75%;
+}
+
+table.perfs-results td {
+  width: 5em;
+  background-color: white;
+  text-align: center;
+  font-weight: normal;
+}
+
+table.perfs-results td.perfs-val {
+  border-color: $border-color;
+  border-style: solid;
+  border-right-width: 0px;
+  border-left-width: 1px;
+  border-top-width: 0px;
+  border-bottom-width: 1px;
+  font-style: italic;
+}
+
+table.perfs-results td.perfs-score {
+  border-color: $border-color;
+  border-style: solid;
+  border-left-width: 0px;
+  border-right-width: 1px;
+  border-top-width: 0px;
+  border-bottom-width: 1px;
+}
+
+table.perfs-results td.perfs-fast {
+  font-weight: bold;
+}
+
+table.perfs-results td.perfs-slow {
+  font-weight: normal;
+}
+
+table.perfs-results td.perfs-error {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+div#perfs-div {
+  display: none;
+}
+
+img#perfs-img {
+  display: none;
+}
+
+iframe#perfs-iframe {
+  display: none;
+}
+
+#perfs-benchmark-name {
+  color: #777;
+  width: 12em;
+  font-style: italic;
+  text-align: right;
+  font-weight: normal;
+}
+
+div.perfs-buttons button {
+  margin-right: 2em;
+  font-size: 85%;
+}
+
+div.perfs-buttons button.perfs-all {
+  font-weight: bold;
+}
+
+/*---------------------------------------------------------------------*/
+/*    small screens                                                    */
+/*---------------------------------------------------------------------*/
+@media all and (max-width: 1024px) {
+  div.body {
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

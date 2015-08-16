@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.10.x/weblets/wizard/wizard.hss        */
+/*    serrano/prgm/project/hop/2.3.x/weblets/wizard/wizard.hss         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Wed Sep 24 08:58:16 2008 (serrano)                */
-/*    Copyright   :  2005-08 Manuel Serrano                            */
+/*    Last change :  Mon Dec  5 08:42:38 2011 (serrano)                */
+/*    Copyright   :  2005-11 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    history simple CSS                                               */
 /*=====================================================================*/
@@ -14,14 +14,17 @@ $(define border-color "#bbb")
 body {
   background: #e0e0e0;
   font-family: arial;
+  padding-left: 50px; 
+  padding-right: 50px;
 }
 
 table.wizard {
   margin-top: 20px;
   padding: 10px;
+  padding-right: 20px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
 }
 
 table.wizard img {
@@ -36,6 +39,7 @@ div#title {
   font-size: x-large;
   font-weight: bold;
   border-bottom: 1px solid $border-color;
+  text-shadow: #999 2px 2px 2px;
 }
 
 div#description {
@@ -63,14 +67,18 @@ input, button {
 /*---------------------------------------------------------------------*/
 /*    wizard                                                           */
 /*---------------------------------------------------------------------*/
-
 table.wizard-user {
   border: 1px solid $border-color;
   background: #ffe;
   padding: 5px;
-  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
   margin-bottom: 1ex;
-  width: 53em;
+  width: 100%;
+  box-shadow: 3px 3px 3px #555;
+}
+
+table.wizard-user td.logo {
+  width: 48px;
 }
 
 table.wizard-admin th {
@@ -83,6 +91,10 @@ table.wizard-regular th {
 
 table.wizard-guest th {
   color: #0e0;
+}
+
+table.wizard-anonymous th {
+  color: #555;
 }
 
 table.wizard-user th {
@@ -118,7 +130,7 @@ table.wizard-user-body input.required {
   color: red;
 }
 
-td.legend {
+.legend {
   font-weight: bold;
 }
 
@@ -154,4 +166,5 @@ table.wizard-misc {
 
 span.head {
   font-weight: bold;
+  text-shadow: #ccc 2px 2px 2px;
 }

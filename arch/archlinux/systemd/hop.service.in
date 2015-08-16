@@ -1,0 +1,12 @@
+[Unit]
+Description=Hop Web Broker
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/conf.d/hop
+ExecStart=/usr/bin/hop.sh -p ${PORT} --accept-kill --user ${DAEMONUSER}
+ExecStop=/usr/bin/hop.sh -p ${PORT} --kill --user ${DAEMONUSER}
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=multi-user.target

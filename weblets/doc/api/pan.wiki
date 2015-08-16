@@ -2,7 +2,7 @@
 
 == Description ==
 
-These markups implement //Pans// in HOP documents. A //pan// 
+~~ These markups implement //Pans// in HOP documents. A //pan// 
 is a container. It is built using the ++<PANED>++ constructor. A
 //paned// contains two ++<PAN>++s whose size can be interactively
 adjusted. 
@@ -27,7 +27,7 @@ client side programming. They are only supported on server side.])
 
 === Requirements ===
 
-Client codes using //Paneds// need to load the script ++hop-paned.js++.
+~~ Client codes using //Paneds// need to load the script ++hop-paned.js++.
 They also need to load the ++hop-paned.css++ style sheet. Hence, documents
 using //Paneds// must include in their header, the following statement:
 
@@ -49,15 +49,23 @@ using //Paneds// must include in their header, the following statement:
 ^  attributes   ^   type    ^   default       ^  short description                ^
 | :id           |  string   |  //random//     | element identifier.               |
 | :class        |  string   |  //random//     | the class of the element.         |
-| :fraction     |  integer  |   ++0++         | the split ratio.                  |
+| :fraction     |  integer  |      _          | the split ratio.                  |
 | :orientation  |  symbol   |   ++vertical++  | the paned orientation.            |
-| :style        |  string   |      _          | the CSS style.                    |
 | :onresize     |  script   |      _          | the action to execute on resize.  |
 | body          |  element  |  empty          | the body.                         |
 </arguments>
 
-This markup creates //paned//s. Currently, only //vertical// paneds are correctly
-implemented.
+~~ This markup creates //paned//s. The orientation may either be
+++vertical++ or ++horizontal++.
+
+
+~~ Paned elements react to a //resize// event that is raised when the cursor
+is moved or when the fraction value is changed at runtime. This handler
+can be specified using the ++:onresize++ field or using the ++"resize"++
+event name in a client side expression such as:
+
+  (add-event-listener! pan "resize" (lambda (e) ...))
+
 
 </markup>
 
@@ -134,35 +142,15 @@ This function sets a new onresize fnction to the //paned//.
 
 == Style ==
 <style>
-This section describes the various CSS elements used to configure
-//Paneds//.
 
-=== ++div.hop-paned++ ===
-<css> div.hop-paned
+=== ++hop-paned.hss++ ===
 
-This element specifies the graphical configuration of the overall box
-of a //paned//.
-</css>
-
-=== ++div.hop-paned-cursoron++ ===
-<css> div.hop-paned-cursoron
-
-The configuration of the selected cursor (the row between the two pans).
-</css>
-
-=== ++div.hop-paned-cursoroff++ ===
-<css> div.hop-paned-cursoroff
-
-The configuration of the selected cursor (the row between the two pans).
-</css>
-
-=== ++hop-paned.css++ ===
-
-The file ++hop-paned.css++ contains the default graphical configuration.
+~~ The file ++hop-paned.hss++ contains the default graphical configuration.
 It is defined as:
 
 ,(<P>)
-<share>hop-paned.css</share>
+<share-public>hop-paned.hss</share-public>
+
 </style>
 
 == See also ==

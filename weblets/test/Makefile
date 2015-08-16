@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/test/Makefile            */
+#*    serrano/prgm/project/hop/2.2.x/weblets/test/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 09:44:27 2008 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Last change :  Wed Dec  8 11:11:37 2010 (serrano)                */
+#*    Copyright   :  2006-10 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the wizard weblet                                */
 #*=====================================================================*/
@@ -22,15 +22,17 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-SOURCES		= test.hop \
-                  image.hop withhop.hop event.hop \
+SOURCES		= test.hop dom.hop \
+                  image.hop withhop.hop event.hop hss.hop \
                   fl.hop tree.hop notepad.hop paned.hop sorttable.hop \
                   tabslider.hop slider.hop canvas.hop \
-                  busy.hop sound.hop audio.hop fselector.hop window.hop \
-                  xhtml.hop svg.hop mathml.hop \
+                  busy.hop audio.hop fselector.hop window.hop \
+                  xhtml.hop svg.hop mathml.hop spinbutton.hop \
+                  colorchooser.hop widget.hop gauge.hop spage.hop
 
-POPULATION	= Makefile test.hss \
-                  canvas-test.jpg sound-test.mp3 \
+POPULATION	= Makefile test.hss hss.hss window.hss \
+                  canvas-test.jpg \
+                  sound-test.mp3 sound-test.ogg \
 		  etc/weblet.info.in etc/test.wiki.in \
                   etc/logo.png etc/favicon.png etc/kangaroo.svgz \
                   $(SOURCES)
@@ -51,8 +53,8 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */

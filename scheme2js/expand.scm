@@ -1,9 +1,20 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-13 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
 (module expand
    (import verbose
 	   error
 	   tools)
-   (export (my-expand x
-		      additional-macros) ;; list of lists/ht of macros
+   (export (my-expand x additional-macros) ;; list of lists/ht of macros
 	   (install-expander! id e)
 	   ;; priority: lower -> later
 	   (add-pre-expand! priority::bint f::procedure)
@@ -11,8 +22,28 @@
 	   (identity-expander x e)
 	   (add-macro-to-ht macro ht)
 	   (lazy-macro macro ht)
-	   (module-macro-ht))
+	   (module-macro-ht)
+	   (macro loc-attach)
+	   (emap1 f orig-L)
+	   (my-expand-once x)
+	   (expand-once-expander x e))
    (eval (export add-pre-expand!)))
+
+(define (my-expand x additional-macros)
+   (verbose "expanding")
+   (let* ((macro-mapping (prepare-additional-macros additional-macros))
+	  (old-module-macro-ht (module-macro-ht))
+	  (initial-expander (scheme2js-initial-expander macro-mapping)))
+      (module-macro-ht-set! (car macro-mapping))
+      (unwind-protect
+	 (initial-expander x initial-expander)
+	 (module-macro-ht-set! old-module-macro-ht))))
+
+;; ============================================================================
+;; pre-expanders
+;;   When scheme2js is used as a library one can preexpand expressions through
+;;   this mechanism.
+;; -----------------------
 
 (define *pre-expanders* '())
 
@@ -28,10 +59,9 @@
 	  (cons (cons priority f) L))
 	 (else
 	  (cons (car L) (insert (cdr L) priority f)))))
-   
-   (mutex-lock! *mutex*)
-   (set! *pre-expanders* (insert *pre-expanders* priority f))
-   (mutex-unlock! *mutex*))
+
+   (synchronize *mutex*
+      (set! *pre-expanders* (insert *pre-expanders* priority f))))
 
 (define (pre-expand! x)
    (define (pre-expand!-inner x)
@@ -41,10 +71,27 @@
 	     x
 	     (loop ((cdar pre-expanders) x)
 		   (cdr pre-expanders)))))
-   (mutex-lock! *mutex*)
-   (let ((res (pre-expand!-inner x)))
-      (mutex-unlock! *mutex*)
-      res))
+   (synchronize *mutex*
+      (pre-expand!-inner x)))
+
+;; ============================================================================
+;;   Exported function. When used as library allows to "preadd" macros to a
+;;   hashtable. This is useful when several modules need to be compiled.
+;; -----------------------
+(define (add-macro-to-ht macro ht)
+   (match-case macro
+      ((define-macro (?name . ?args) ?e0 . ?body)
+       (hashtable-put! ht name (lazy-macro macro ht)))
+      ((define-expander ?name ?proc)
+       (hashtable-put! ht name proc))
+      (else
+       (scheme2js-error "add-macro-to-ht" "bad macro" macro macro))))
+   
+;; ============================================================================
+;; module-macro-ht
+;;   In multithreaded environments a global hashtable for the macros is not
+;;   enough. We therefore have a thread-parameter for that.
+;; -----------------------
 
 (define (module-macro-ht)
    (thread-parameter 'scheme2js-module-macro-ht))
@@ -52,6 +99,11 @@
    (thread-parameter-set! 'scheme2js-module-macro-ht new-ht))
    
 
+;; ============================================================================
+;;   Given a macro of 'define-macro' form create an efficient
+;;   representation. The 'lazy-macro' form will only create an 'eval' when the
+;;   macro is actually used.
+;; -----------------------
 (define (lazy-macro macro ht)
    (define (destructure pat arg bindings)
       (cond
@@ -101,18 +153,12 @@
 	 ;; execute the macro.
 	 (macro-expander x e))))
 
-(define (add-macro-to-ht macro ht)
-   (match-case macro
-      ((define-macro (?name . ?args) ?e0 . ?body)
-       (hashtable-put! ht
-		       name
-		       (lazy-macro macro ht)))
-      (else
-       (scheme2js-error "add-macro-to-ht"
-			"bad macro"
-			macro
-			macro))))
-   
+;; ============================================================================
+;;   Once all imports, etc have been processed we have a list of
+;;   hashtable-sets. These sets are either lists or hashtables.
+;;   In the end we want a list of hasthables. However in order to be more
+;;   efficient we try to regroup several lists into one hashtable.
+;; -----------------------
 (define (prepare-additional-macros macros)
    ;; we want to have a list of hashtables.
    ;; however: try to minimize the number of hashtables.
@@ -155,16 +201,11 @@
 			   (car ms)
 			   ms)))))
 
-(define (my-expand x additional-macros)
-   (verbose "expanding")
-   (let* ((macro-mapping (prepare-additional-macros additional-macros))
-	  (old-module-macro-ht (module-macro-ht))
-	  (initial-expander (scheme2js-initial-expander macro-mapping)))
-      (module-macro-ht-set! (car macro-mapping))
-      (unwind-protect
-	 (initial-expander x initial-expander)
-	 (module-macro-ht-set! old-module-macro-ht))))
 
+
+;; ============================================================================
+;;   Initial expander and basic expanders (symbol, identity, etc.
+;; -----------------------
 
 ;; macros can not be global variable. (Parallel compilation could
 ;; yield bad results).
@@ -192,15 +233,16 @@
 	    (pre-expanded-x (pre-expand! x)))
 	 (e1 pre-expanded-x e))))
 
-(define (symbol-expander x e)
-   x)
-	     
+(define (symbol-expander x e)   x)
 (define (identity-expander x e) x)
-
 (define (application-expander x e)
-   (map! (lambda (y) (e y e)) x))
+   (emap1 (lambda (y) (e y e)) x))
 
-;; compiler expanders are shared by all parallel compilations.
+
+;; ============================================================================
+;;   Compiler-macros. (shared by all parallel compilations).
+;; -----------------------
+
 (define *expanders* '())
 
 (define (expander? id)
@@ -213,3 +255,67 @@
 
 (define (install-expander! id e)
    (cons-set! *expanders* (cons id e)))
+
+
+;; ============================================================================
+;;   Useful functions for macros.
+;; -----------------------
+
+(define (emap1 f orig-L)
+   (let loop ((L orig-L)
+	      (rev-res '()))
+      (cond
+	 ((null? L)
+	  (reverse! rev-res))
+	 ((epair? L)
+	  (loop (cdr L)
+	     (econs (f (car L))
+		rev-res
+		(cer L))))
+	 ((pair? L)
+	  (loop (cdr L)
+	     (cons (f (car L))
+		rev-res)))
+	 (else
+	  (scheme2js-error "emap1" "not a list" orig-L orig-L)))))
+
+(define-macro (loc-attach LL . attachments)
+   (let ((kvote (car LL)))
+      (define (inner L ats)
+	 (cond
+	    ((and (null? L) (null? ats))
+	     ''())
+	    ((and (pair? (car L))
+		  (eq? (caar L) 'unquote-splicing)
+		  (null? ats))
+	     (cadr (car L)))
+	    ((or (null? L) (null? ats))
+	     (error "e-attach"
+		    "Internal error. Bad e-attach"
+		    (list LL attachments)))
+	    (else
+	     (let ((t (gensym 't))
+		   (t2 (gensym 't)))
+		`(let ((,t ,(car ats))
+		       (,t2 ,(inner (cdr L) (cdr ats))))
+		    (if (epair? ,t)
+			(econs (,kvote ,(car L))
+			       ,t2
+			       (cer ,t))
+			(cons (,kvote ,(car L)) ,t2)))))))
+      (inner (cadr LL) attachments)))
+
+(define (my-expand-once x)
+   (with-handler
+      (lambda (e)
+	 (cond
+	    ((isa? e &error)
+	     (with-access::&error e (proc msg obj)
+		(scheme2js-error proc msg obj (if (epair? obj) obj x))))
+	    (else
+	     (scheme2js-error "expand" "Illegal form" x x))))
+      (expand-once x)))
+
+(define (expand-once-expander x e)
+   (e (my-expand-once x) e))
+

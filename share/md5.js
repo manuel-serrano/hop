@@ -19,7 +19,7 @@ var chrsz   = 8;  /* bits per input character. 8 - ASCII; 16 - Unicode      */
  * These are the functions you'll usually want to call
  * They take string arguments and return either hex or base-64 encoded strings
  */
-/*** META ((export md5sum-string)
+/*** META ((export md5sum-string md5sum)
            (peephole (hole 1 "hex_md5(" s ")")))
 */
 function md5sum(s){ return hex_md5(s); }

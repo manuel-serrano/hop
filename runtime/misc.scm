@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/misc.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Thu Mar 26 05:25:58 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Sun Sep 15 07:05:35 2013 (serrano)                */
+;*    Copyright   :  2004-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -13,18 +13,20 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_misc
-   
+
+   (include "param.sch")
+
    (cond-expand
       (enable-ssl (library ssl)))
-   
+
    (import  __hop_configure
 	    __hop_param
-	    __hop_types
-	    __hop_read)
-   
+	    __hop_types)
+
    (extern  (macro fork::int () "fork"))
-   
-   (export  (hop-verb ::int . args)
+
+   (export  (verb-mutex::mutex)
+	    (hop-verb ::int . args)
 	    (hop-color ::obj ::obj ::obj)
 	    (shortest-prefix ::bstring)
 	    (longest-suffix ::bstring)
@@ -36,10 +38,9 @@
 	    (suffix-member-ci ::bstring ::pair-nil)
 	    (string-member? ::bstring ::bstring)
 	    (string-member-ci? ::bstring ::bstring)
-	    (is-local?::bool ::bstring)
 	    (string-escape::bstring ::bstring ::char)
-	    (escape-string::bstring ::bstring)
 	    (delete-path ::bstring)
+	    (make-cache-name::bstring #!optional name)
 	    (make-url-name::bstring ::bstring ::bstring)
 	    (make-hop-url-name::bstring ::bstring)
 	    (make-client-socket/timeout ::bstring ::int ::int ::obj ::bool)
@@ -48,22 +49,27 @@
 	    (inline input-timeout-set! ::input-port ::int)
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
-	    (call-in-background ::procedure)))	   
+	    (call-in-background ::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *verb-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *verb-mutex* (make-mutex 'verb))
+(define *verb-mutex* (make-mutex "verb"))
+
+;*---------------------------------------------------------------------*/
+;*    verb-mutex ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (verb-mutex)
+   *verb-mutex*)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-verb ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-verb level . args)
    (when (>=fx (hop-verbose) level)
-      (with-lock *verb-mutex*
-	 (lambda ()
-	    (for-each (lambda (a) (display a (current-error-port))) args)
-	    (flush-output-port (current-error-port))))))
+      (synchronize *verb-mutex*
+	 (for-each (lambda (a) (display a (current-error-port))) args)
+	 (flush-output-port (current-error-port)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-color ...                                                    */
@@ -72,15 +78,16 @@
    (let ((c (cond
 	       ((integer? col)
 		(+fx (modulo col 16) 1))
-	       ((http-request? col)
-		(+fx (modulo (http-request-id col) 16) 1))
+	       ((isa? col http-request)
+		(with-access::http-request col (id)
+		   (+fx (modulo id 16) 1)))
 	       (else
 		1))))
       (trace-color c
-		   (if (http-request? req)
-		       (http-request-id req)
-		       req)
-		   msg)))
+	 (if (isa? req http-request)
+	     (with-access::http-request req (id) id)
+	     req)
+	 msg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    shortest-prefix ...                                              */
@@ -233,13 +240,6 @@
 	     (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    is-local? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (is-local? dest)
-   (or (string=? dest (hop-server-hostname))
-       (member dest (hop-server-aliases))))
-
-;*---------------------------------------------------------------------*/
 ;*    string-escape ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (string-escape a char)
@@ -270,12 +270,6 @@
 		    (loop (+fx i 1) (+fx j 1)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    escape-string ...                                                */
-;*---------------------------------------------------------------------*/
-(define (escape-string string)
-   (escape-scheme-string string))
-
-;*---------------------------------------------------------------------*/
 ;*    delete-path ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (delete-path path)
@@ -283,11 +277,21 @@
       ((not (file-exists? path))
        #t)
       ((directory? path)
-       (when (every? delete-path (directory->path-list path))
+       (when (every delete-path (directory->path-list path))
 	  (delete-directory path)
 	  #t))
       (else
        (delete-file path))))
+
+;*---------------------------------------------------------------------*/
+;*    make-cache-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (make-cache-name #!optional name)
+   (let ((base (make-file-name (hop-cache-directory)
+		  (integer->string (hop-port)))))
+      (if name
+	  (make-file-name base name)
+	  base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-url-name ...                                                */
@@ -319,27 +323,30 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
-			  (if (and (>fx ttl 0) (&io-timeout-error? e))
+			  (exception-notify e)
+			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1
-					   (hop-color msg msg " REMOTE")
-					   ": " host ":" port
-					   (if (http-request? msg)
-					       (format " (~a)"
-						       (http-request-path msg))
-					       "")
-					   (trace-color 1 " CONNECTION FAILED")
-					   " ttl=" ttl "\n")
+				    (hop-color msg msg " REMOTE")
+				    ": " host ":" port
+				    (if (isa? msg http-request)
+					(with-access::http-request msg (path)
+					   (format " (~a)" path))
+					"")
+				    (trace-color 1 " CONNECTION FAILED")
+				    " ttl=" ttl "\n")
 				 (-fx ttl 1))
 			      (raise e)))
 		       (if ssl
 			   (cond-expand
 			      (enable-ssl
-			       (make-ssl-client-socket host port :timeout tmt))
+				 (make-ssl-client-socket host port
+				    :protocol 'tls
+				    :timeout tmt))
 			      (else
-			       (error 'make-client-socket/timeout
-				      "SSL not supported"
-				      'make-ssl-client-socket)))
+			       (error "make-client-socket/timeout"
+				  "SSL not supported"
+				  "make-ssl-client-socket")))
 			   (make-client-socket host port :timeout tmt)))))
 	    (if (number? res)
 		(loop res)
@@ -409,7 +416,7 @@
 (define-inline (socket-timeout-set! socket ti to)
    (input-timeout-set! (socket-input socket) ti)
    (output-timeout-set! (socket-output socket) to))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    call-in-background ...                                           */
 ;*    -------------------------------------------------------------    */

@@ -250,13 +250,10 @@ the currently available weblets. These are automatically
 
 <arguments>
 ^  common attributes  ^   type           ^  short description               ^
-| :name             |  string             | a remote user name.              |
-| :password         |  string             | a remote user password.          |
-| :authorization    |  string             | a remote authorization.          |
-</arguments>
-
-<arguments>
-^  server attributes    ^   type         ^  short description           ^
+| :name             |  string            | a remote user name.              |
+| :password         |  string            | a remote user password.          |
+| :authorization    |  string            | a remote authorization.          |
+| :timeout          |  integer           | An optional timeout.             |
 | :host             |  string             | a remote server name.        |
 | :port             |  integer            | a remote server port.        |
 | :abspath          |  string             | the abspath of the service.  |
@@ -273,12 +270,10 @@ arguments ++v<sub>0</sub>++, ... On success, it then invokes the
 function ++success++ with an object constructed from the service
 answer. On failure, it invokes ++failure++. 
 
-~~ When used from a server **only**, a remote ++host++ may be specified.
-In that particular case, the service is executed on the remote host.
-Otherwise, when ++with-hop++ is used from a server without specifying
-a remote ++host++, the service is executed locally. No remote ++host++
-might specified when used from a client. Only the server that has
-provided the page might be invoked in such a situation.
+~~ When a remote ++host++ may be specified, the service is executed on
+the remote host.  Otherwise, when ++with-hop++ is used from a server
+without specifying a remote ++host++, the service is executed
+locally.
 
 ~~ When used from a client **only**, an animation procedure can be
 specified. This procedure of one argument should return a DOM object

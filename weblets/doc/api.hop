@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/weblets/doc/api.hop               */
+;*    serrano/prgm/project/hop/2.2.x/weblets/doc/api.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 10 08:28:08 2006                          */
-;*    Last change :  Sat Mar 28 08:30:08 2009 (serrano)                */
-;*    Copyright   :  2006-09 Manuel Serrano                            */
+;*    Last change :  Wed Nov 16 16:22:01 2011 (serrano)                */
+;*    Copyright   :  2006-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The developper documentation                                     */
 ;*=====================================================================*/
@@ -13,27 +13,29 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hopdoc_api
-
-   (import hopdoc_widgets
-	   hopdoc_config
-	   hopdoc_wiki
-	   hopdoc_search)
-
-   (export (setup-api-tables!)
-	   (index-table)
-	   (doc-api-syntax)
-	   doc/api
-	   doc/api-sans-title
-	   (<API>)
-	   (decorate-api-code code)
-	   (decorate-api-wiki-code code)
-	   (<APIREF> key api #!key (pad "api"))
-	   (<OBJ->STRING> expr)
-	   (markup-parser k)
-	   (server-parser k)
-	   (client-parser k)
-	   (class-parser k)
-	   (select-api-pad-on-load weblet)))
+   
+   ~(import hopdoc_client)
+   
+   (import  hopdoc_widgets
+	    hopdoc_config
+	    hopdoc_wiki
+	    hopdoc_search)
+   
+   (export  (setup-api-tables!)
+	    (index-table)
+	    (doc-api-syntax)
+	    doc/api
+	    doc/api-sans-title
+	    (<API>)
+	    (decorate-api-code code)
+	    (decorate-api-wiki-code code)
+	    (<APIREF> key api #!key (pad "api"))
+	    (<OBJ->STRING> expr)
+	    (markup-parser k)
+	    (server-parser k)
+	    (client-parser k)
+	    (class-parser k)
+	    (select-api-pad-on-load weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <API> ...                                                        */
@@ -291,13 +293,13 @@
 			     (c (substring s 1 (-fx (string-length s) 1))))
 			 (lambda (port title expr)
 			    (list (<A> :id (skip-spaces title)
-				       :name (string-append "server:" title)
-				       (<DIV> :class c expr))))))
+				     :name (string-append "server:" title)
+				     (<DIV> :class c expr))))))
 		     ((<procedure>)
 		      (lambda (port title expr)
 			 (list (<A> :id (skip-spaces title)
-				    :name (string-append "client:" title)
-				    (<DIV> :class "procedure" expr)))))
+				  :name (string-append "client:" title)
+				  (<DIV> :class "procedure" expr)))))
 		     ((<server>)
 		      (lambda (port title expr)
 			 (<DIV> :class "server" expr)))
@@ -308,7 +310,8 @@
 		      (lambda (port title expr)
 			 (<DIV> :class "style" expr)))
 		     (else
-		      ((wiki-syntax-plugins (doc-wiki-syntax)) id)))))
+		      (with-access::wiki-syntax (doc-wiki-syntax) (plugins)
+			 (plugins id))))))
       (tt (wiki-tt-parser 
 	   (lambda (k)
 	      (or (markup-parser k)

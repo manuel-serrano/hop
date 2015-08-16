@@ -15,6 +15,8 @@ These server parameters give global information on the running HOP.
   (hop-verbose-set! arg)
   (hop-session)
   (hop-session-set! arg)
+  (hop-realm)
+  (hop-realm-set! arg)
   (hop-charset)
   (hop-charset-set! arg)
   (hop-locale)
@@ -27,6 +29,9 @@ These server parameters give global information on the running HOP.
   (hop-proxy-sniffer)
   (hop-proxy-sniffer-set! proc)
   (hop-proxy-sniffer-add! proc)
+  (hop-hz-repositories)
+  (hop-hz-repositories-set!)
+  (hop-hz-repositories-add!)
 
 == Server Definitions ==
 <server>
@@ -68,6 +73,17 @@ some nodes of the local network.
 <arguments>
 ^  access  ^   type    ^  current value       ^  short description            ^
 |   r/w    |  integer  |  ++,(hop-session)++  | The current session identifier. |
+</arguments>
+</parameter>
+</parameter>
+
+=== ++hop-realm++ ===
+<parameter> hop-realm
+<parameter> hop-realm-set!
+
+<arguments>
+^  access  ^   type    ^  current value       ^  short description            ^
+|   r/w    |  string   |  ++,(hop-realm)++  | The current realm.              |
 </arguments>
 </parameter>
 </parameter>
@@ -165,13 +181,13 @@ The base name for services URL (see ++define-service++).
 |  r/w  |  bool  |  ++,(hop-enable-proxy-sniffer)++  | Enables/disables proxy sniffing.   |
 </arguments>
 
-</parameter>
-</parameter>
-
 This parameter enables or disables //proxy sniffing//. Proxy sniffing consist
 it letting user action to be executed when proxy request are served. This,
 for instance, can be used to store on a local cache a copy of the material
 transmitted to clients.
+
+</parameter>
+</parameter>
 
 === ++hop-proxy-sniffer++ ===
 <parameter> hop-proxy-sniffer
@@ -182,9 +198,6 @@ transmitted to clients.
 ^  access  ^   type  ^  current value  ^  short description  ^
 |  r/w  |  procedure  |  _  | The current proxy sniffer.   |
 </arguments>
-
-</parameter>
-</parameter>
 
 When //proxy sniffing// is enabled (see ++hop-enable-proxy-sniffer++)
 each time a proxy request is handled, HOP invokes the function
@@ -203,18 +216,55 @@ manages to send the characters of the proxy request body to **all** the
 ports returned by previous sniffers.
 
   (hop-proxy-sniffer-add! 
-     (lambda (req)
-        (when (string=? (http-request-host req) "foo.org")
+     (lambda (req::http-request)
+        (when (string=? req.host "foo.org")
            (open-output-file "/tmp/FOO"))))
 
   (hop-proxy-sniffer-add!
-     (lambda (req)
-        (when (string-suffix? ".mp3" (http-request-path req))
-           (open-output-file (format "/tmp/MP3/~a" (basename (http-request-path req)))))))
+     (lambda (req::http-request)
+        (when (string-suffix? ".mp3" req.path)
+           (open-output-file (format "/tmp/MP3/~a" (basename req.path))))))
 
 
 ~~ See ,(<TUTORIALREF> "Proxy hacking" "03-proxy.wiki") for a full example
 of proxy sniffing.
+
+</parameter>
+</parameter>
+</parameter>
+
+=== ++hop-hz-repositories++ ===
+<parameter> hop-hz-repositories
+<parameter> hop-hz-repositories-set!
+<parameter> hop-hz-repositories-add!
+
+<arguments>
+^  access  ^   type  ^  current value  ^  short description  ^
+|  r/w  |  procedure  |  _  | The list of repositories.   |
+</arguments>
+
+The parameter ++hop-hz-repositories++ contains the list of
+repositories to be scanned when a weblet is search either to be loaded
+of imported by a module. They weblet name may use wildcard such as:
+
+  (module cdf10-en
+     ~(import (osm-api_server "osm-api-1.0.*.hz"))
+     ~(import (osm-api_client "osm-api-1.0.*.hz"))
+     ~(import (hopslide_client "hopslide-2.3.*.hz"))
+     (import (geocoder-api_server "geocoder-api-1.0.*.hz")))
+
+
+~~ In general the ++hop-hz-repositories++ contains a list of local server
+directories. In can be set several times. Example:
+
+  (hop-hz-repositories-add! "/usr/local/hop/weblets")
+  (hop-hz-repositories-add! "/opt/hop/weblets")
+
+
+</parameter>
+</parameter>
+</parameter>
+
 
 </server>
 

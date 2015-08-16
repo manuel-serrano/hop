@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/1.11.x/share/hop-tree.js                */
+/*    serrano/prgm/project/hop/2.5.x/share/hop-tree.js                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Feb  6 10:51:57 2005                          */
-/*    Last change :  Wed Jan 21 15:52:03 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Mon Jan  6 18:28:01 2014 (serrano)                */
+/*    Copyright   :  2005-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP tree implementation                                          */
 /*=====================================================================*/
@@ -55,7 +55,7 @@ function hop_tree_root( tree ) {
    var aux = tree;
    var root = tree;
 
-   while( aux && aux.className === "hop-tree" ) {
+   while( aux && ("treeType" in aux) && aux.treeType === "hop-tree" ) {
       root = aux;
       aux = root.parent;
    }
@@ -65,7 +65,7 @@ function hop_tree_root( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_close ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-close)) */
+/*** META ((export tree-close) (arity #t)) */
 function hop_tree_close( tree ) {
    if( tree.openp ) {
       tree.openp = false;
@@ -88,7 +88,7 @@ function hop_tree_close( tree ) {
       var i;
 
       for( i = 0; i < children.length; i++ ) {
-	 if( children[ i ].className === "hop-tree" ) {
+	 if( children[ i ].treeType === "hop-tree" ) {
 	    hop_tree_close( children[ i ] );
 	 }
       }
@@ -100,7 +100,7 @@ function hop_tree_close( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_open ...                                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-open)) */
+/*** META ((export tree-open) (arity #t)) */
 function hop_tree_open( tree ) {
    if( tree.proc ) hop_tree_populate( tree );
    
@@ -141,18 +141,21 @@ function hop_tree_populate( tree ) {
       }
    }
    
-   var failure = function( xhr ) {
-      try {
-	 var proc = eval( xhr.responseText );
-	 if( proc ) proc( function() { return hop_tree_populate( tree ) } );
-      } catch( e ) {
-	 hop_error( "*** Hop Tree, handler error failure: " + tree +
-		    ": " + e + " -- " +
-		    hop_responsetext_error( xhr ) );
+   var failure = function( exc, xhr ) {
+      if( exc instanceof Error ) {
+	 hop_callback_handler( exc, xhr.precontext );
+      } else {
+	 try {
+	    var proc = eval( xhr.responseText );
+	    if( proc ) proc( function() { return hop_tree_populate( tree ) } );
+	 } catch( e ) {
+	    e.hopObject = xhr.responseText;
+	    throw( e );
+	 }
       }
    }
 
-   return hop( tree.proc(), success, failure );
+   return with_hop( tree.proc(), success, failure );
 }
 
 /*---------------------------------------------------------------------*/
@@ -178,11 +181,9 @@ function hop_tree_children_update( node, level, isrc ) {
       var c = children[ i ];
       var row = c.row;
       var td = row.childNodes[ level ];
-      var img = td.childNodes[ 0 ];
-
-      img.src = isrc;
+      node_style_set( td, "background-image", "url('"+ isrc + "')" );
       
-      if( c.className === "hop-tree" ) {
+      if( c.treeType === "hop-tree" ) {
 	 hop_tree_children_update( c, level, isrc );
       }
    }
@@ -198,9 +199,11 @@ function hop_tree_add( tree, child ) {
       var c = children[ children.length - 1 ];
       c.last = false;
 
-      if( c.className === "hop-tree" ) {
+      if( c.treeType === "hop-tree" ) {
 	 hop_tree_children_update( c, tree.level + 1, tree.iconvline );
       } else {
+	 var url = "url('" + tree.iconvline + "')";
+	 node_style_set( c.img_join, "background-image", url );
 	 c.img_join.src = tree.iconjoinbottom;
       }
    }
@@ -219,12 +222,8 @@ function hop_push_vlines( par, row, level ) {
       hop_push_vlines( par.parent, row, level - 1 );
 
       if( par && par.visible ) {
-	 var img = document.createElement( "img" );
-
-	 img.src = ((par && !par.last) ? par.iconvline : par.iconempty);
-	 img.className = "hop-tree";
-      
-	 td.appendChild( img );
+	 var src = ((par && !par.last) ? par.iconvline : par.iconempty);
+	 node_style_set( td, "background-image", "url('" + src + "')" );
       } else {
 	 node_style_set( td, "display", "none" );
       }
@@ -274,7 +273,7 @@ function hop_tree_row_set_select_all( tree, select ) {
    var root = hop_tree_root( tree );
    
    var traverse_lr = function( tree ) {
-      if( tree.className === "hop-tree-leaf" ) {
+      if( tree.treeType === "hop-tree-leaf" ) {
 	 if( select ) {
 	    hop_tree_row_select( root, tree.row, true );
 	 } else {
@@ -305,6 +304,7 @@ function hop_tree_row_set_select_all( tree, select ) {
 /*    hop_tree_row_select_all ...                                      */
 /*---------------------------------------------------------------------*/
 /*** META ((export tree-select-all!)
+           (arity #t)
            (peehole (hole 1 "hop_tree_row_set_select_all(" tree ", true)")))
 */
 function hop_tree_row_select_all( tree ) {
@@ -331,7 +331,7 @@ function hop_tree_row_toggle_selected( event, tree, row ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_next ...                                     */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-select-next!)) */
+/*** META ((export tree-select-next!) (arity #t)) */
 function hop_tree_row_select_next( tree ) {
    var root = hop_tree_root( tree );
 
@@ -345,7 +345,7 @@ function hop_tree_row_select_next( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_lr = function( tree, stop ) {
-	 if( tree.className === "hop-tree-leaf" ) {
+	 if( tree.treeType === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -378,7 +378,7 @@ function hop_tree_row_select_next( tree ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_row_select_previous ...                                 */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-select-previous!)) */
+/*** META ((export tree-select-previous!) (arity #t)) */
 function hop_tree_row_select_previous( tree ) {
    var root = hop_tree_root( tree );
 
@@ -392,7 +392,7 @@ function hop_tree_row_select_previous( tree ) {
       var row = root.selection ? root.selection : root.row;
       
       var traverse_rl = function( tree, stop ) {
-	 if( tree.className === "hop-tree-leaf" ) {
+	 if( tree.treeType === "hop-tree-leaf" ) {
 	    if( stop == 1 ) {
 	       hop_tree_row_select( root, tree.row, false );
 	       return -1;
@@ -477,6 +477,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    
    row.className = "hop-tree-row-unselected";
    row.id = id + "-trrow";
+   row.treeType = "hop-tree-row";
    
    /* build the left vertical lines */
    hop_push_vlines( parent, row, level );
@@ -522,7 +523,9 @@ function hop_make_tree( parent, id, visible, level, proc, title,
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
-   td3.innerHTML = title;
+
+   /* let decodeURIComponent error an error, if any */
+   td3.innerHTML = decodeURIComponent( title );
    
    row.appendChild( td3 );
    row.value = value;
@@ -543,6 +546,7 @@ function hop_make_tree( parent, id, visible, level, proc, title,
 
    /* the attribute of the tree */
    tree.className = "hop-tree";
+   tree.treeType = "hop-tree";
    tree.id = id;
    tree.parent = parent;
    tree.table = table;
@@ -638,6 +642,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    leaf.setAttribute( "cellspacing", 0 );
    leaf.setAttribute( "border", 0 );
    leaf.className = "hop-tree-leaf " + klass;
+   leaf.treeType = "hop-tree-leaf";
 
    /* the body of the table */
    var tb = document.createElement( "tbody" );
@@ -655,6 +660,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    var join = document.createElement( "img" );
    join.className = "hop-tree";
    join.src = tree.iconjoin;
+   node_style_set( join, "background-image", "none" );
    
    td1.appendChild( join );
    row.appendChild( td1 );
@@ -695,7 +701,9 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
    td3.onclick = function( e ) {
       hop_tree_row_toggle_selected( e == undefined ? event : e, tree, row );
    }
-   td3.innerHTML= content;
+
+   /* let decodeURIComponent error an error, if any */
+   td3.innerHTML= decodeURIComponent( content );
    
    row.appendChild( td3 );
 
@@ -717,7 +725,7 @@ function hop_make_tree_leaf( tree, klass, content, value, icon, iconerr ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_reset ...                                               */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-reset!)) */
+/*** META ((export tree-reset!) (arity #t)) */
 function hop_tree_reset( tree ) {
    if( !tree ) {
       return false;
@@ -755,7 +763,7 @@ function hop_tree_id_reset( id ) {
 /*---------------------------------------------------------------------*/
 /*    hop_tree_selection ...                                           */
 /*---------------------------------------------------------------------*/
-/*** META ((export tree-selection)) */
+/*** META ((export tree-selection) (arity #t)) */
 function hop_tree_selection( tree ) {
    var sel = tree.selections;
    var len = sel.length;
@@ -779,22 +787,29 @@ function hop_tree_id_selection( id ) {
 /*---------------------------------------------------------------------*/
 /*    Install the tree history state handler                           */
 /*---------------------------------------------------------------------*/
-hop_state_history_register_handler(
-   "tr", /* key argument */
-   "0",  /* reset value  */
-   function( id, arg ) {
-      var tr = document.getElementById( id );
-
-      if( tr != undefined ) {
-	 if( arg == "0" ) {
-	    hop_tree_close( tr );
-	 } else {
-	    hop_tree_open( tr );
-	 }
-
-	 return true;
-      } else {
-	 return false;
-      }
-   }
-);
+if( hop_config.history ) {
+   hop_add_event_listener(
+      window,
+      "load",
+      function( _ ) {
+	 hop_state_history_register_handler(
+	    "tr", /* key argument */
+	    "0",  /* reset value  */
+	    function( id, arg ) {
+	       var tr = document.getElementById( id );
+	       
+	       if( tr != undefined ) {
+		  if( arg == "0" ) {
+		     hop_tree_close( tr );
+		  } else {
+		     hop_tree_open( tr );
+		  }
+		  
+		  return true;
+	       } else {
+		  return false;
+	       }
+	    } );
+      },
+      true );
+}

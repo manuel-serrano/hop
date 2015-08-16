@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon Mar 30 11:20:22 2009 (serrano)                */
-/*    Copyright   :  2005-09 Manuel Serrano                            */
+/*    Last change :  Thu Feb 11 07:19:01 2010 (serrano)                */
+/*    Copyright   :  2005-10 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    CSS for the WIKI weblet                                          */
 /*=====================================================================*/
@@ -22,8 +22,6 @@ table.wiki {
   padding: 10px;
   border: 1px solid $border-color;
   background: white;
-  -moz-border-radius: 0.5em;
-  -webkit-border-radius: 0.5em;
   border-radius: 0.5em;
 }
 
@@ -275,6 +273,28 @@ span.wiki-note {
   font-weight: bold;
 }
 
+
+/*---------------------------------------------------------------------*/
+/*    misc                                                             */
+/*---------------------------------------------------------------------*/
+h1 {
+  margin-top: 3ex;
+}
+
+h2 {
+  margin-top: 2ex;
+}
+
+tt {
+  color: #00a;
+}
+
+pre {
+  border: 1px dashed #aaa;
+  background: #D7E6FF;
+  padding: 4px;
+}
+
 /*---------------------------------------------------------------------*/
 /*    Printing                                                         */
 /*---------------------------------------------------------------------*/
@@ -282,6 +302,17 @@ span.wiki-note {
   
   body.wiki {
     font-size: 11pt;
+    background: transparent;
+  }
+
+  table.wiki {
+    width: 100%;
+    border: 0;
+    background: transparent;
+  }
+
+  table.wiki td.wiki-compiled {
+    padding: 0;
   }
 
   tt {

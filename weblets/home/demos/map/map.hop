@@ -1,0 +1,42 @@
+(module hophome_demos-map
+   ~(import (osm-api_server "osm-api-1.0.*.hz"))
+   ~(import (osm-api_client "osm-api-1.0.*.hz"))
+   (export (home/demos/map)))
+
+(define-service (home/demos/map)
+   (<HTML>
+      (<HEAD> :include "osm-api-1.0.*.hz"
+	 :css (service-resource home/demos/map "map.hss"))
+      (<BODY>
+	 ~(define geolat 0)
+	 ~(define geolong 0)
+	 ~(define zoom 2)
+	 ~(define mymap #f)
+	 ~(add-event-listener! window "load"
+	     (lambda (e)
+		(set! mymap
+		      (osm-make-map :id "mymap"
+			 :latitude geolat
+			 :longitude geolong
+			 :zoom zoom
+			 :layerswitcher #t
+			 :layers (list
+				  (new OpenLayers.Layer.OSM.Osmarender "Osmarender")
+				  (new OpenLayers.Layer.OSM.CycleMap "CycleMap")
+				  (new OpenLayers.Layer.Markers "Markers"))))))
+	 ~(navigator.geolocation.getCurrentPosition
+	   (lambda (geo)
+	      (set! geolat geo.coords.latitude)
+	      (set! geolong geo.coords.longitude)
+	      (set! zoom 15)
+	      (innerHTML-set! "geoloc" (format "lat: ~a, long: ~a" geolat geolong))
+	      (osm-set-center mymap geolat geolong)
+	      (osm-zoom mymap zoom)))
+	 (<H1> "JavaScript API (OpenStreetMap)")
+	 (<DIV> :id "geoloc" "waiting for geolocation...")
+	 (<DIV> :id "mymap" ""))))
+
+
+
+
+

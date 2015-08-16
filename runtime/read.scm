@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/2.5.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Apr 29 14:02:26 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 08:25:11 2014 (serrano)                */
+;*    Copyright   :  2005-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -15,18 +15,23 @@
 ;*---------------------------------------------------------------------*/
 (module __hop_read
 
-   (cond-expand
-      (enable-threads (library pthread)))
+   (include "thread.sch")
+   
+   (library web)
 
    (import  __hop_param
 	    __hop_read-js
 	    __hop_css
 	    __hop_charset
-	    __hop_clientc)
+	    __hop_clientc
+	    __hop_hz
+	    __hop_weblets
+	    __hop_types
+	    __hop_xml-types
+	    __hop_xml
+	    __hop_misc
+	    __hop_thread)
 
-   (use     __hop_types
-	    __hop_xml)
-   
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
 	    (the-loading-dir)
@@ -37,24 +42,35 @@
 	    
 	    (hop-read #!optional
 		      (iport::input-port (current-input-port))
-		      (charset (hop-locale)))
+		      (charset (hop-locale))
+		      (menv #f)
+		      location)
 	    (hop-load ::bstring #!key
-		      (env (interaction-environment))
+		      (env (default-environment))
+		      (menv #f)
 		      (mode 'load)
 		      (charset (hop-locale))
-		      (abase #t))
+		      (abase #t)
+		      (afile #t))
 
 	    (hop-load-once ::bstring
 			   #!key
-			   (env (interaction-environment))
+			   (env (default-environment))
+			   (menv #f)
+			   (mode 'load)
 			   (charset (hop-locale))
-			   (abase #t))
+			   (abase #t)
+			   (afile #t))
 	    (hop-load-modified ::bstring
 			       #!key
-			       (env (interaction-environment))
+			       (env (default-environment))
+			       (menv #f)
+			       (mode 'load)
 			       (charset (hop-locale))
-			       (abase #t))
-	    (hop-load-once-unmark! ::bstring)
+			       (abase #t)
+			       (afile #t)
+			       (module #f))
+	    (hop-unload! ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -79,7 +95,7 @@
       (raise (instantiate::&io-read-error
 		(fname (input-port-name port))
 		(location loc)
-		(proc 'read)
+		(proc "read")
 		(msg msg)
 		(obj obj)))))
 
@@ -90,7 +106,7 @@
    (raise (instantiate::&io-read-error
 	     (fname fname)
 	     (location (if (fixnum? loc) loc 0))
-	     (proc 'read)
+	     (proc "read")
 	     (msg msg)
 	     (obj obj))))
 
@@ -122,7 +138,7 @@
 		       (laap (+fx i 1)))
 		    obj))))
 	 ((struct? obj)
-	  (let ((len (vector-length obj)))
+	  (let ((len (struct-length obj)))
 	     (let laap ((i 0))
 		(if (<fx i len)
 		    (begin
@@ -136,6 +152,7 @@
 ;*    make-list! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (make-list! l port)
+   
    (define (reverse-proper-list! l)
       (let nr ((l l)
 	       (r '()))
@@ -177,9 +194,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-upto ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (collect-upto ignore kind port)
+(define (collect-upto ignore kind port location)
    
-   (define (collect-upto.debug ignore kind port)
+   (define (collect-upto-debug ignore kind port)
       ;; move one character backward for the open-parenthesis
       (let* ((name (input-port-name port))
 	     (po (-fx (input-port-position port) 1))
@@ -193,7 +210,7 @@
 		       (loop (let ((po (input-port-last-token-position port)))
 				(econs item acc (list 'at name po))))))))))
    
-   (define (collect-upto.optim ignore kind port)
+   (define (collect-upto-optim ignore kind port)
       (let ((item (ignore)))
 	 (if (eq? item *end-of-list*)
 	     '()
@@ -203,9 +220,9 @@
 		       acc
 		       (loop (cons item acc))))))))
    
-   (if (>fx (bigloo-debug) 0)
-       (collect-upto.debug ignore kind port)
-       (collect-upto.optim ignore kind port)))
+   (if (or (>fx (bigloo-debug) 0) location)
+       (collect-upto-debug ignore kind port)
+       (collect-upto-optim ignore kind port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-quote ...                                                   */
@@ -263,7 +280,7 @@
       
       ;; ucs2 strings
       ((: "u\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 2 (-fx (the-length) 1))))
+       (let ((str (the-escape-substring 2 (-fx (the-length) 1) #f)))
   	  (utf8-string->ucs2-string str)))
       
       ;; fixnums
@@ -310,35 +327,47 @@
 	      (read-error "Illegal token" (string #\# c) (the-port)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    current-module-clientc-import ...                                */
-;*---------------------------------------------------------------------*/
-(define (current-module-clientc-import)
-   (let ((mod (eval-module)))
-      (if (evmodule? mod)
-	  (evmodule-extension mod)
-	  '())))
-
-;*---------------------------------------------------------------------*/
 ;*    *hop-grammar* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *hop-grammar*
-   (regular-grammar ((float    (or (: (* digit) "." (+ digit))
-				   (: (+ digit) "." (* digit))))
-		     (letter   (in ("azAZ") (#a128 #a255)))
-		     (kspecial (in "!@$%^&*></-_+\\=?."))
-		     (special  (or kspecial #\:))
-		     (quote    (in "\",'`"))
-		     (paren    (in "()[]{}"))
-		     (id       (: (* digit)
-				  (or letter special)
-				  (* (or letter special digit (in "'`")))))
-		     (letterid (: (or letter special)
-				  (* (or letter special digit (in "'`")))))
-		     (kid      (or digit letter kspecial))
-		     (blank    (in #\Space #\Tab #a012 #a013))
+   (regular-grammar ((float       (or (: (* digit) "." (+ digit))
+				      (: (+ digit) "." (* digit))))
+		     (letter      (in ("azAZ") (#a128 #a255)))
+		     (kspecial    (in "!@$%^&*></-_+\\=?"))
+		     (specialsans (or kspecial #\:))
+		     (special     (or specialsans #\.))
+		     (quote       (in "\",'`"))
+		     (paren       (in "()[]{}"))
+		     (id          (: (* digit)
+				     (or letter special)
+				     (* (or letter special digit (in "'`")))))
+		     (idsans      (: (* digit)
+				     (or letter specialsans)
+				     (* (or letter specialsans digit (in ",'`")))))
+		     (field       (: idsans (+ (: "." idsans))))
+		     (letterid    (: (or letter special)
+				     (* (or letter special digit (in "'`")))))
+		     (kid         (or digit letter kspecial "."))
+		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses cset)
-      
+		     cycles par-open bra-open par-poses bra-poses cset menv location)
+      ;; utf-8 bom
+      ((bof (: #a239 #a187 #a191))
+       (set! cset (charset-converter! 'UTF-8 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 big endian
+      ((bof (: #a254 #a255))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! cset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
+
+      ;; utf-16 little endian
+      ((bof (: #a255 #a254))
+       ;; MS 23nov2011: CARE I don't know if ucs-2 is big or little endian
+       (set! cset (charset-converter! 'UCS-2 (hop-charset)))
+       (ignore))
+
       ;; newlines
       ((+ #\Newline)
        (ignore))
@@ -363,11 +392,11 @@
 	    (ignore)))
       
       ;; srfi-22 support
-      ((bol (: "#!" #\space (in digit letter special "|,'`") (* all)))
+      ((bol (: "#!" #\space (or digit letter special (in "|,'`")) (* all)))
        (ignore))
       
       ;; the interpreter header or the dsssl named constants
-      ((: "#!" (+ (in digit letter special "|,'`")))
+      ((: "#!" (+ (or digit letter special (in "|,'`"))))
        (let* ((str (the-string)))
 	  (cond
 	     ((string=? str "#!optional")
@@ -390,7 +419,7 @@
 	       (input-port-position (the-port)))
 	      (integer->char (string->integer (the-substring 2 5))))))
       ((: "#\\" (>= 3 digit))
-       (integer->char (string->integer (the-substring 2 0) 8)))
+       (integer->char (string->integer (the-substring 2 (the-length)) 8)))
       ((: "#\\" (or letter digit special (in "~|#; " quote paren)))
        (string-ref (the-string) 2))
       ((: "#\\" (>= 2 letter))
@@ -419,11 +448,10 @@
       ;; the string, we have to count the number of newline
       ;; in order to increment the line-num variable strings
       ((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (escape-C-string str)))
+       (the-escape-substring 1 (-fx (the-length) 1) #f))
+      
       ((: "#\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-       (let ((str (the-substring 0 (-fx (the-length) 1))))
-	  (escape-C-string str)))
+       (the-escape-substring 2 (-fx (the-length) 1) #f))
       
       ;; fixnums
       ((: (? "+") (+ digit))
@@ -437,7 +465,7 @@
 	      (: (or float (+ digit)) (in "eE") (? (in "+-")) (+ digit))))
        (the-flonum))
       
-      ;; doted pairs
+      ;; dotted pairs
       ("."
        (if (<=fx par-open 0)
 	   (read-error/location 
@@ -460,15 +488,31 @@
        ;; rule, keyword rule has to be placed before the id rule.
        (the-keyword))
       
-      ;; identifiers
-      (id
+      ;; identifiers and fields
+      (field
+       ;;;
+       (let* ((port (the-port))
+	      (name (input-port-name port))
+	      (pos (input-port-position port))
+	      (str (the-string))
+	      (char (string-ref str 0))
+	      (loc (list 'at name pos)))
+	  (if (char=? char #\$)
+	      `(begin
+		  '$
+		  ,(econs '->
+		      (map! string->symbol (string-split str "."))
+		      loc))
+	      (econs '->
+		 (map! string->symbol (string-split str "."))
+		 loc))))
+      ((or id "$")
        ;; this rule has to be placed after the rule matching the `.' char
        (the-symbol))
       ((: "|" (+ (or (out #a000 #\\ #\|) (: #\\ all))) "|")
        (if (=fx (the-length) 2)
 	   (the-symbol)
-	   (let ((str (the-substring 0 (-fx (the-length) 1))))
-	      (string->symbol (escape-C-string str)))))
+	   (string->symbol (the-escape-substring 1 (-fx (the-length) 1) #f))))
       
       ;; quotations 
       ("'"
@@ -484,10 +528,9 @@
       ("("
        ;; we increment the number of open parenthesis
        (set! par-open (+fx 1 par-open))
-       (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
-			     par-poses))
+       (set! par-poses (cons (-fx (input-port-position (the-port)) 1) par-poses))
        ;; and then, we compute the result list...
-       (make-list! (collect-upto ignore "list" (the-port)) (the-port)))
+       (make-list! (collect-upto ignore "list" (the-port) location) (the-port)))
       (")"
        ;; we decrement the number of open parenthesis
        (set! par-open (-fx par-open 1))
@@ -503,7 +546,7 @@
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
 			   cycles par-open bra-open par-poses bra-poses
-			   cset)))
+			   cset menv)))
 	  (if (and (pair? exp) (null? (cdr exp)))
 	      (car exp)
 	      (list 'quasiquote exp))))
@@ -515,7 +558,7 @@
        (set! par-poses (cons (-fx (input-port-position (the-port)) 1)
 			     par-poses))
        (list->vector
-	(reverse! (collect-upto ignore "vector" (the-port)))))
+	(reverse! (collect-upto ignore "vector" (the-port) location))))
 
       ;; typed vectors
       ((: "#" letterid "(")
@@ -526,37 +569,37 @@
 	  (cond
 	     ((string=? s "s8")
 	      (list->s8vector
-	       (reverse! (collect-upto ignore "s8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s8vector" (the-port) location))))
 	     ((string=? s "u8")
 	      (list->u8vector
-	       (reverse! (collect-upto ignore "u8vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u8vector" (the-port) location))))
 	     ((string=? s "s16")
 	      (list->s16vector
-	       (reverse! (collect-upto ignore "s16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s16vector" (the-port) location))))
 	     ((string=? s "u16")
 	      (list->u16vector
-	       (reverse! (collect-upto ignore "u16vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u16vector" (the-port) location))))
 	     ((string=? s "s32")
 	      (list->s32vector
-	       (reverse! (collect-upto ignore "s32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s32vector" (the-port) location))))
 	     ((string=? s "u32")
 	      (list->u32vector
-	       (reverse! (collect-upto ignore "u32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u32vector" (the-port) location))))
 	     ((string=? s "s64")
 	      (list->s64vector
-	       (reverse! (collect-upto ignore "s64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "s64vector" (the-port) location))))
 	     ((string=? s "u64")
 	      (list->u64vector
-	       (reverse! (collect-upto ignore "u64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "u64vector" (the-port) location))))
 	     ((string=? s "f32")
 	      (list->f32vector
-	       (reverse! (collect-upto ignore "f32vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f32vector" (the-port) location))))
 	     ((string=? s "f64")
 	      (list->f64vector
-	       (reverse! (collect-upto ignore "f64vector" (the-port)))))
+	       (reverse! (collect-upto ignore "f64vector" (the-port) location))))
 	     (else
 	      (let* ((id (string->symbol s))
-		     (l (reverse! (collect-upto ignore "vector" (the-port)))))
+		     (l (reverse! (collect-upto ignore "vector" (the-port) location))))
 		 (list->tvector id l))))))
       
       ;; javascript (this reads up to the closing bracket).
@@ -565,20 +608,17 @@
 	  (read-char (the-port))
 	  v))
       
-      ;; hss (this reads up to the closing bracket).
-      ("@{"
-       (hop-read-hss (the-port)))
-      
       ("~"
-       (let* ((loc (list 'at
+       ;;; client side expression
+       (with-access::clientc (hop-clientc) (expressionc)
+	  (let* ((loc (list 'at
 			 (input-port-name (the-port))
 			 (input-port-position (the-port))))
-	      (expr (ignore))
-	      (args (list ((clientc-expressionc (hop-clientc))
-			   expr
-			   (current-module-clientc-import))
-			  :src `',expr)))
-	  (econs '<TILDE> args loc)))
+		 (expr (ignore))
+		 (src (tree-copy expr))
+		 (env (current-module-clientc-import))
+		 (js (expressionc expr env menv hop-read-javascript-string)))
+	     (econs '<TILDE> (list js :src `',src :loc `',loc :env `',env) loc))))
       
       ;; structures
       ("#{"
@@ -587,7 +627,7 @@
        (set! bra-open (+fx 1 bra-open))
        (set! bra-poses (cons (-fx (input-port-position (the-port)) 1)
 			     bra-poses))
-       (let ((l (reverse! (collect-upto ignore "structure" (the-port)))))
+       (let ((l (reverse! (collect-upto ignore "structure" (the-port) location))))
 	  (cons '_structure_ l)))
       ("}"
        (set! bra-open (-fx bra-open 1))
@@ -648,12 +688,20 @@
 				   (input-port-position (the-port))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    text->html-string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (text->html-string str)
+   (if (string-index str "<>&")
+       (html-string-encode str)
+       str))
+
+;*---------------------------------------------------------------------*/
 ;*    *text-grammar* ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    The grammar that parses texts (the [...] forms).                 */
 ;*---------------------------------------------------------------------*/
 (define *text-grammar*
-   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset)
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset menv)
 
       ((: (* (out ",[]\\")) #\])
        (let* ((port (the-port))
@@ -661,14 +709,14 @@
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
 	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
-	  (econs item '() loc)))
-      ((: (* (out ",[\\")) ",]")
+	  (econs (text->html-string item) '() loc)))
+      ((: (* (out ",[]\\")) ",]")
        (let* ((port (the-port))
 	      (name (input-port-name port))
 	      (pos (input-port-position port))
 	      (loc (list 'at name pos))
 	      (item (cset (the-substring 0 (-fx (the-length) 1)))))
-	  (econs item '() loc)))
+	  (econs (text->html-string item) '() loc)))
       ((: (* (out ",[]\\")) #\, (out #\( #\] #\,))
        (let* ((port (the-port))
 	      (name (input-port-name port))
@@ -676,7 +724,7 @@
 	      (loc (list 'at name pos))
 	      (item (cset (the-string)))
 	      (rest (ignore)))
-	  (econs item rest loc)))
+	  (econs (text->html-string item) rest loc)))
       ((: (* (out ",[]\\")) #\,)
        (let* ((port (the-port))
 	      (name (input-port-name port))
@@ -685,11 +733,13 @@
 	      (item (cset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses cset))
+			     par-poses bra-poses cset menv
+			     #f))
 	      (rest (ignore)))
 	  (if (string=? item "")
 	      (cons (list 'unquote sexp) rest)
-	      (econs item (cons (list 'unquote sexp) rest) loc))))
+	      (econs (text->html-string item)
+		     (cons (list 'unquote sexp) rest) loc))))
       ((or (+ (out ",[]\\"))
 	   (+ #\Newline)
 	   (: (* (out ",[]\\")) #\, (out "([]\\")))
@@ -699,19 +749,11 @@
 	      (loc (list 'at name pos))
 	      (item (cset (the-string)))
 	      (rest (ignore)))
-	  (econs item rest loc)))
-;*       ("\\\\"                                                       */
-;*        (cons "\\" (ignore)))                                        */
-;*       ("\\n"                                                        */
-;*        (cons "\n" (ignore)))                                        */
-;*       ("\\t"                                                        */
-;*        (cons "\t" (ignore)))                                        */
+	  (econs (text->html-string item) rest loc)))
       ("\\]"
        (cons "]" (ignore)))
       ("\\["
        (cons "[" (ignore)))
-;*       ("\\,"                                                        */
-;*        (cons "," (ignore)))                                         */
       (#\\
        (cons "\\" (ignore)))
       (else
@@ -732,16 +774,20 @@
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-read #!optional
-		  (iport::input-port (current-input-port))
-		  (charset (hop-locale)))
+	   (iport::input-port (current-input-port))
+	   (charset (hop-locale))
+	   (menv #f)
+	   location)
    (if (closed-input-port? iport)
-       (error 'hop-read "Illegal closed input port" iport)
+       (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (let* ((cset (charset-converter! charset (hop-charset)))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset)))
-	     ((hop-read-post-hook) iport)
-	     e))))
+	  (with-access::clientc (hop-clientc) (macroe)
+	     (let* ((cset (charset-converter! charset (hop-charset)))
+		    (menv (or menv (macroe)))
+		    (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
+		((hop-read-post-hook) iport)
+		e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -753,8 +799,9 @@
 ;*---------------------------------------------------------------------*/
 (define (the-loading-file)
    (let ((t (current-thread)))
-      (if (thread? t)
-	  (thread-specific t)
+      (if (isa? t hopthread)
+	  (with-access::hopthread t (%loading-file)
+	     %loading-file)
 	  *the-loading-file*)))
 
 ;*---------------------------------------------------------------------*/
@@ -762,8 +809,9 @@
 ;*---------------------------------------------------------------------*/
 (define (loading-file-set! file-name)
    (let ((t (current-thread)))
-      (if (thread? t)
-	  (thread-specific-set! t file-name)
+      (if (isa? t hopthread)
+	  (with-access::hopthread t (%loading-file)
+	     (set! %loading-file file-name))
 	  (set! *the-loading-file* file-name))))
 
 ;*---------------------------------------------------------------------*/
@@ -798,188 +846,367 @@
 ;*---------------------------------------------------------------------*/
 (define *afile-dirs* '())
 (define *afile-mutex* (make-mutex "hop-afile"))
+(define *afile-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-afile ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    Load the .afile if it exists and complements the module          */
+;*    Load the .afile if it exists and complement the module           */
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
+   
    (define (add-dir f)
       (if (or (string=? f "") (char=? (string-ref f 0) #\/))
 	  f
 	  (make-file-name dir f)))
-   (mutex-lock! *afile-mutex*)
-   (if (memq dir *afile-dirs*)
-       (mutex-unlock! *afile-mutex*)
-       (begin
-	  (set! *afile-dirs* (cons dir *afile-dirs*))
-	  (mutex-unlock! *afile-mutex*)
-	  (let ((path (make-file-name dir ".afile")))
-	     (when (file-exists? path)
-		(module-load-access-file path))))))
+
+   (when (synchronize *afile-mutex*
+	    (unless (member dir *afile-dirs*)
+	       (set! *afile-dirs* (cons dir *afile-dirs*))
+	       #t))
+      (with-trace 1 "hop-load-afile"
+	 (trace-item "dir=" dir)
+	 (let ((path (make-file-name dir ".afile")))
+	    (if (file-exists? path)
+		(module-load-access-file path)
+		(get-directory-module-access dir))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-directory-module-access ...                                  */
+;*---------------------------------------------------------------------*/
+(define (get-directory-module-access dir)
+   
+   (define (get-file-module-access f abase)
+      (synchronize *afile-mutex*
+	 (unless (hashtable-get *afile-table* f)
+	    (hashtable-put! *afile-table* f #t)
+	    (with-handler
+	       (lambda (e)
+		  #unspecified)
+	       (call-with-input-file f
+		  (lambda (p)
+		     (match-case (hop-read p)
+			((module ?module-name . ?-)
+			 (module-add-access! module-name (list f) abase)))))))))
+   
+   (for-each (lambda (f)
+		(when (member (suffix f) (hop-module-suffixes))
+		   ;; look like a source file, try it
+		   (get-file-module-access f dir)))
+	     (directory->path-list dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (hop-load file-name
 		  #!key
-		  (env (interaction-environment))
+		  (env (default-environment))
+		  (menv #f)
 		  (mode 'load)
 		  (charset (hop-locale))
-		  (abase #t))
-   (let ((path (find-file/path file-name (hop-path)))
-	 (apath (cond
-		   ((string? abase) abase)
-		   (abase (dirname file-name))
-		   (else "."))))
-      (if (not (string? path))
+		  (abase #t)
+		  (afile #t))
+   (if (hz-package-filename? file-name)
+       (hop-load-from-hz file-name env menv mode charset abase)
+       (hop-load-file file-name env menv mode charset abase 'eval afile)))
+
+;*---------------------------------------------------------------------*/
+;*    hz-dir ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (hz-dir fname)
+   (or (hz-local-weblet-path fname (get-autoload-directories))
+       (hz-cache-path fname)
+       (hz-download-to-cache fname (hop-hz-repositories))))
+       
+;*---------------------------------------------------------------------*/
+;*    hop-load-from-hz ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-load-from-hz fname env menv mode charset abase)
+   (with-trace 1 "hop-load-from-hz"
+      (trace-item "fname=" fname)
+      (trace-item "abase=" abase)
+      ;; feed the cache
+      (let ((dir (hz-dir fname)))
+	 ;; load the afile
+	 (let ((afile (make-file-path dir ".afile")))
+	    (when (file-exists? afile)
+	       (module-load-access-file afile)))
+	 ;; load the .hop source file
+	 (let ((base (basename dir)))
+	    (let ((fname (string-append (make-file-name dir base) ".hop")))
+	       (hop-load-file fname env menv mode charset abase 'eval #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-file ...                                                */
+;*    -------------------------------------------------------------    */
+;*    The C code generation imposes the variable traceid not to        */
+;*    be inlined.                                                      */
+;*---------------------------------------------------------------------*/
+(define (hop-load-file fname env menv mode charset abase traceid::symbol afile)
+   
+   (define (hop-load-path path)
+      (let ((apath (cond
+		      ((string? abase) abase)
+		      (abase (dirname fname))
+		      (else ".")))
+	    (menv (or menv (with-access::clientc (hop-clientc) (macroe)
+			      (macroe)))))
+	 (with-trace 1 "hop-load-file"
+	    (trace-item "fname=" fname)
+	    (trace-item "path=" path)
+	    (trace-item "abase=" abase)
+	    (trace-item "afile=" afile)
+	    (let ((port (open-input-file path)))
+	       (if (input-port? port)
+		   (let ((f (the-loading-file))
+			 (denv (current-dynamic-env))
+			 (m (eval-module)))
+		      (unwind-protect
+			 (let ()
+			    ($env-push-trace denv traceid #f)
+			    (when afile (hop-load-afile apath))
+			    (when abase (module-abase-set! apath))
+			    (loading-file-set! path)
+			    (when (evmodule? env) (eval-module-set! env))
+			    (case mode
+			       ((load)
+				(let loop ((last #unspecified)
+					   (loc #t))
+				   ;; always read the first expression
+				   ;; in debug mod to enforce location inside
+				   ;; the module clause
+				   (let ((e (hop-read port charset menv loc)))
+				      (when (epair? e)
+					 ($env-set-trace-location denv (cer e)))
+				      (if (eof-object? e)
+					  (let ((nm (eval-module)))
+					     (when (and (not (eq? m nm))
+							(evmodule? nm))
+						(evmodule-check-unbound nm #f))
+					     ($env-pop-trace denv)
+					     last)
+					  (let ((val (eval! e (eval-module))))
+					     (when (isa? val xml-tilde)
+						(evwarning
+						   (when (pair? e) (cer e))
+						   "hop-load"
+						   "Useless ~ expression"))
+					     (loop val #f))))))
+			       ((include)
+				(let loop ((res '())
+					   (loc #t))
+				   (let ((e (hop-read port charset menv loc)))
+				      (when (epair? e)
+					 ($env-set-trace-location denv (cer e)))
+				      (if (eof-object? e)
+					  (let ((nm (eval-module)))
+					     (unless (eq? m nm)
+						(evmodule-check-unbound nm #f))
+					     ($env-pop-trace denv)
+					     (reverse! res))
+					  (let ((val (eval! e (eval-module))))
+					     (loop (cons val res) #f))))))
+			       (else
+				(error "hop-load"
+				   (format "Illegal mode \"~a\"" mode)
+				   fname))))
+			 (begin
+			    (close-input-port port)
+			    (eval-module-set! m)
+			    (loading-file-set! f))))
+		   (raise (instantiate::&io-port-error
+			     (proc "hop-load")
+			     (msg "Can't open file")
+			     (obj fname))))))))
+   
+   (let ((path (find-file/path fname (hop-path))))
+      (if (string? path)
+	  (hop-load-path path)
 	  (raise (instantiate::&io-file-not-found-error
-		    (proc 'hop-load)
-		    (msg "Can't find file")
-		    (obj file-name)))
-	  (let ((port (open-input-file path)))
-	     (if (input-port? port)
-		 (let ((m (eval-module))
-		       (f (the-loading-file)))
-		    (unwind-protect
-		       (begin
-			  (hop-load-afile apath)
-			  (when abase (module-abase-set! apath))
-			  (loading-file-set! path)
-			  (case mode
-			     ((load)
-			      (let loop ((last #unspecified))
-				 (let ((sexp (hop-read port charset)))
-				    (if (eof-object? sexp)
-					last
-					(let ((val (eval! sexp env)))
-					   (when (xml-tilde? val)
-					      (warning/location
-					       file-name
-					       (caddr (cer sexp))
-					       'hop-load
-					       "Useless ~ expression"))
-					   (loop val))))))
-			     ((include)
-			      (let loop ((res '()))
-				 (let ((sexp (hop-read port charset)))
-				    (if (eof-object? sexp)
-					(reverse! res)
-					(let ((val (eval! sexp env)))
-					   (loop (cons val res)))))))
-			     (else
-			      (error 'hop-load "Illegal mode" mode))))
-		       (begin
-			  (close-input-port port)
-			  (eval-module-set! m)
-			  (loading-file-set! f))))
-		 (raise (instantiate::&io-port-error
-			   (proc 'hop-load)
-			   (msg "Can't open file")
-			   (obj file-name))))))))
+		    (proc "hop-load")
+		    (msg "file not found")
+		    (obj fname))))))
 
 ;*---------------------------------------------------------------------*/
-;*    *load-once-table* ...                                            */
+;*    *load-table* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *load-once-table* (make-hashtable))
+(define *load-table* (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
-;*    *load-once-mutex* ...                                            */
+;*    *load-mutex* ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define *load-once-mutex* (make-mutex "load-once"))
+(define *load-mutex* (make-mutex "load-once"))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-once ...                                               */
+;*    *dependency-table* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *dependency-table* (make-hashtable))
+
+;*---------------------------------------------------------------------*/
+;*    %hop-load ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    This function loads a file in ENV. If the parameter MODIFIEDP    */
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load-once file env charset modifiedp abase)
-   (with-trace 1 '%hop-load-once
+(define (%hop-load file env menv charset modifiedp abase mode afile module)
+   
+   (define (load-file f::bstring cv::condvar)
+      ;; the file has to be loaded
+      (trace-item "load")
+      ;; save the module dependency
+      (when (evmodule? module)
+	 (synchronize *load-mutex*
+	    (let ((mpath (evmodule-path module)))
+	       (when (string? mpath)
+		  (let ((c (hashtable-get *dependency-table* mpath)))
+		     (cond
+			((not (pair? c))
+			 (let* ((ftime (file-modification-time file))
+				(entry (cons file ftime)))
+			    (hashtable-put! *dependency-table* mpath (list entry))))
+			((not (assoc file c))
+			 (let* ((ftime (file-modification-time file))
+				(entry (cons file ftime)))
+			    (set-cdr! (last-pair c) (list entry))))))))))
+      (with-handler
+	 (lambda (e)
+	    (synchronize *load-mutex*
+	       (hashtable-put! *load-table* f
+		  (cons 'error (file-modification-time f)))
+	       (condition-variable-signal! cv))
+	    (raise e))
+	 (begin
+	    (synchronize *load-mutex*
+	       (hashtable-put! *load-table* f
+		  (cons 'loaded (file-modification-time f))))
+	    (when modifiedp
+	       (reload-dependencies file '()))
+	    (hop-load f :mode mode :env env :menv menv
+	       :charset charset :abase abase :afile afile)
+	    (synchronize *load-mutex*
+	       (condition-variable-signal! cv)))))
+
+   (define (reload-dependencies file stack)
+      (unless (member file stack)
+	 (let ((deps (synchronize *load-mutex*
+			(hashtable-get *dependency-table* file))))
+	    (when (pair? deps)
+	       (for-each (lambda (entry)
+			    (hop-load-modified (car entry) :env env :menv menv
+			       :mode mode :charset charset :abase abase
+			       :afile afile)
+			    (reload-dependencies (car entry) (cons file stack)))
+		  deps)))))
+   
+   (define (dependencies-modified file stack)
+      (unless (member file stack)
+	 (let ((deps (synchronize *load-mutex*
+		       (hashtable-get *dependency-table* file))))
+	    (when (pair? deps)
+	       (any (lambda (entry)
+		       (or (>elong (file-modification-time (car entry))
+			      (cdr entry))
+			   (dependencies-modified (car entry)
+			      (cons (car entry) stack))))
+		  deps)))))
+
+   (define (get-file-info::pair f::bstring)
+      (synchronize *load-mutex*
+	 (let ((info (hashtable-get *load-table* f))
+	       (t (file-modification-time f)))
+	    (cond
+	       ((not (pair? info))
+		;; the file has to be loaded
+		(let* ((cv (make-condition-variable "load"))
+		       (ninfo (cons 'loading cv)))
+		   (hashtable-put! *load-table* f ninfo)
+		   ninfo))
+	       ((eq? (car info) 'error)
+		;; the file failed to be loaded
+		(trace-item "error")
+		(if (and modifiedp
+			 (or (not (=elong t (cdr info)))
+			     (dependencies-modified f '())))
+		    (begin
+		       (hashtable-remove! *load-table* f)
+		       (cons 'force-reload t))
+		    info))
+	       ((eq? (car info) 'loaded)
+		;; the file is already loaded
+		(trace-item "already loaded")
+		;; re-load the dependency recursively
+		;; re-load if modified
+		(if (and modifiedp
+			 (or (not (=elong t (cdr info)))
+			     (dependencies-modified f '())))
+		    (begin
+		       (hashtable-remove! *load-table* f)
+		       (cons 'force-reload t))
+		    info))
+	       ((eq? (car info) 'loading)
+		(trace-item "loading")
+		(condition-variable-wait! (cdr info) *load-mutex*)
+		(cons 'loop t))
+	       (else
+		(cons 'error t))))))
+   
+   (with-trace 2 "%hop-load"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))
       (trace-item "modifiedp=" modifiedp)
       (let ((f (file-name-unix-canonicalize file)))
-	 (mutex-lock! *load-once-mutex*)
-	 (let loop ((info (hashtable-get *load-once-table* f))
-		    (t (file-modification-time f)))
-	    (if (pair? info)
-		(case (car info)
-		   ((error)
-		    ;; the file failed to be loaded
-		    (trace-item "error")
-		    (mutex-unlock! *load-once-mutex*)
-		    #f)
-		   ((loaded)
-		    ;; the file is already loaded
-		    (trace-item "already loaded")
-		    ;; re-load if modified
-		    (if (and modifiedp (not (=elong t (cdr info))))
-			(begin
-			   (hashtable-remove! *load-once-table* f)
-			   (loop #f t))
-			(begin
-			   (mutex-unlock! *load-once-mutex*)
-			   #unspecified)))
-		   ((loading)
-		    ;; the file is currently being loaded
-		    (trace-item "loading")
-		    (condition-variable-wait! (cdr info) *load-once-mutex*)
-		    #unspecified))
-		(begin
-		   ;; the file has to be loaded
-		   (trace-item "load")
-		   (let ((cv (make-condition-variable "load-once")))
-		      (hashtable-put! *load-once-table* f (cons 'loading cv))
-		      (mutex-unlock! *load-once-mutex*)
-		      (with-handler
-			 (lambda (e)
-			    (mutex-lock! *load-once-mutex*)
-			    (hashtable-put! *load-once-table* f '(error))
-			    (condition-variable-signal! cv)
-			    (mutex-unlock! *load-once-mutex*)
-			    (raise e))
-			 (hop-load f
-				   :mode 'load
-				   :env env
-				   :charset charset
-				   :abase abase))
-		      (mutex-lock! *load-once-mutex*)
-		      (hashtable-put! *load-once-table* f (cons 'loaded t))
-		      (condition-variable-signal! cv)
-		      (mutex-unlock! *load-once-mutex*))))))))
+	 (let loop ()
+	    (let ((info (get-file-info f)))
+	       (case (car info)
+		  ((loading)
+		   (load-file f (cdr info)))
+		  ((force-reload loop)
+		   (loop))
+		  ((error)
+		   (hop-unload! f)
+		   #f)
+		  ((loaded)
+		   #unspecified)
+		  (else
+		   (error "hop-load-once" "Illegal state" info))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-once ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-once file
 		       #!key
-		       (env (interaction-environment))
+		       (env (default-environment))
+		       (menv #f)
 		       (charset (hop-locale))
-		       (abase #t))
-   (%hop-load-once file env charset #f abase))
+		       (mode 'load)
+		       (abase #t)
+		       (afile #t))
+   (%hop-load file env menv charset #f abase mode afile #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-modified file
 			   #!key
-			   (env (interaction-environment))
+			   (env (default-environment))
+			   (menv #f)
 			   (charset (hop-locale))
-			   (abase #t))
-   (%hop-load-once file env charset #t abase))
+			   (mode 'load)
+			   (abase #t)
+			   (afile #t)
+			   (module #f))
+   (%hop-load file env menv charset #t abase mode afile module))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-load-once-unmark! ...                                        */
+;*    hop-unload! ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    Remove a file name from the load-once table                      */
+;*    Remove a file name from the load table, makes it as unload       */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-once-unmark! file)
-   (mutex-lock! *load-once-mutex*)
-   (when (hashtable? *load-once-table*)
-      (hashtable-remove! *load-once-table* (file-name-unix-canonicalize file)))
-   (mutex-unlock! *load-once-mutex*))
+(define (hop-unload! file)
+   (synchronize *load-mutex*
+      (when (hashtable? *load-table*)
+	 (hashtable-remove! *load-table*
+	    (file-name-unix-canonicalize file)))))
    

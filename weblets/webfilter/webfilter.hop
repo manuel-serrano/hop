@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.0.x/weblets/webfilter/webfilter.hop       */
+;*    .../prgm/project/hop/2.5.x/weblets/webfilter/webfilter.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Sun Apr 19 07:53:13 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sun Dec  8 06:21:43 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP webfilter weblet                                             */
 ;*=====================================================================*/
@@ -56,7 +56,7 @@
 ;*---------------------------------------------------------------------*/
 (define (load-blacklist t f)
    (when (file-exists? f)
-      (hop-verb 2 "Loading domain blacklist `" f "'...\n")
+      (hop-verb 3 "Loading domain blacklist `" f "'...\n")
       (with-input-from-file f
 	 (lambda ()
 	    (let loop ()
@@ -88,17 +88,17 @@
       (<HEAD>
 	 :favicon (service-resource webfilter "etc/favicon.png")
 	 :title "Hop Webfilter"
-	 :include "hop-notepad" "hop-sorttable" "hop-prefs"
+	 :include "hop-notepad" "hop-sorttable" "hop-prefs" "hop-foot"
 	 :base (service-base-url webfilter (current-request))
 	 :css "webfilter.hss")
       (<BODY>
 	 (<DIV> :align "center"
 	    (<TABLE> :class "webfilter"
 	       (<TR>
-		  (<TD>
+		  (<TD> :id "webfilter-logo"
 		     (<IMG> :src "etc/logo.png"))
-		  (<TD>
-		     (<TABLE>
+		  (<TD> :class "webfilter-content"
+		     (<TABLE> :class "webfilter-content"
 			(<TR>
 			   (<TD>
 			      (<DIV> :id "title" "Hop Web Filtering")))
@@ -106,7 +106,7 @@
 			   (<TD>
 			      body)))))))
 	 (<FOOT>))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    <HTTP-HEADERS-TABLE> ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -206,8 +206,9 @@
 					       (webfilter-http-header-filter-set! val)
 					       (webfilter-preferences-save webfilter-prefs))
 					    this.checked))
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))
       (<TR>
 	 (let ((id "http-headers-table"))
@@ -234,9 +235,10 @@
 				(with-hop ($(service (val)
 					       (webfilter-blacklist-set! val)
 					       (webfilter-preferences-save webfilter-prefs))
-					    this.checked))
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+					     this.checked))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -266,8 +268,9 @@ Google, each containing a forward pointer to the actual URL.])))
 					       (webfilter-google-unbounce-set! val)
 					       (webfilter-preferences-save webfilter-prefs)))
 				   this.checked)
-				(set! $txt.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt $txt))
+				   (set! txt.className
+				      (if this.checked "enable" "disable")))))
 	       txt)))))
    
 ;*---------------------------------------------------------------------*/
@@ -299,8 +302,9 @@ Google, each containing a forward pointer to the actual URL.])))
 					       (webfilter-flash-stop-set! val)
 					       (webfilter-preferences-save webfilter-prefs)))
 				   this.checked)
-				(set! $txt1.className
-				      (if this.checked "enable" "disable"))))
+				(let ((txt1 $txt1))
+				   (set! txt1.className
+				      (if this.checked "enable" "disable")))))
 	       txt1
 	       "&#160;&#160;"
 	       (<INPUT>
@@ -310,11 +314,12 @@ Google, each containing a forward pointer to the actual URL.])))
 		  :onchange ~(begin
 				(with-hop ($(service (val)
 					       (webfilter-flash-content-length-set!
-						(string->elong val))
+						  (string->elong val))
 					       (webfilter-preferences-save webfilter-prefs))
-					    this.checked))
-				(set! $txt2.className
-				      (if this.checked "enable" "disable"))))
+					     this.checked))
+				(let ((txt2 $txt2))
+				   (set! txt2.className
+				      (if this.checked "enable" "disable")))))
 	       txt2)))))
    
 ;*---------------------------------------------------------------------*/
@@ -381,6 +386,7 @@ Google, each containing a forward pointer to the actual URL.])))
 	    (hop-verb 2 (hop-color req req " BLACKLISTED") ": " host ":" port path "\n")
 	    (hop-verb 3 " header: " header "\n")
 	    (instantiate::http-response-string
+	       (header (list (cons 'connection: 'close)))
 	       (start-line "HTTP/1.0 404 Not Found"))))))
 
 ;*---------------------------------------------------------------------*/
@@ -391,8 +397,8 @@ Google, each containing a forward pointer to the actual URL.])))
       (with-access::http-request req (host path)
 	 (when (and (string=? host "www.google.com")
 		    (substring-at? path "/url" 0))
-	    (let ((q (cgi-fetch-arg "q" path)))
-	       (when q
+	    (let ((q (cgi-fetch-arg "url" path)))
+	       (when (and (string? q) (not (string-null? q)))
 		  (instantiate::http-response-string
 		     (start-line "HTTP/1.0 301 Moved Permanently")
 		     (header (list (cons 'location: q))))))))))
@@ -444,9 +450,9 @@ Google, each containing a forward pointer to the actual URL.])))
 			  (flush-output-port op))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    Remote hook                                                      */
+;*    proxy hook                                                       */
 ;*---------------------------------------------------------------------*/
-(hop-http-response-remote-hook-add!
+(hop-http-response-proxy-hook-add!
  (lambda (req resp)
     (or (blacklist req)
 	(google req)
@@ -459,10 +465,11 @@ Google, each containing a forward pointer to the actual URL.])))
 ;*---------------------------------------------------------------------*/
 (define-service (webfilter/preferences)
    (let ((req (current-request)))
-      (if (not (user-authorized-service? (http-request-user req) 'admin))
-	  (user-access-denied req)
-	  (<WEBFILTER:HTML>
-	     (<PREFERENCES>)))))
+      (with-access::http-request req (user)
+	 (if (not (user-authorized-service? user 'admin))
+	     (user-access-denied req)
+	     (<WEBFILTER:HTML>
+		(<PREFERENCES>))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <PREFERENCES> ...                                                */

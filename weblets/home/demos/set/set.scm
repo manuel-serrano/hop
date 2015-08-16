@@ -112,7 +112,7 @@
 		    event
 		    set-submit)
 
-   (add-event-listener! event "server" event-handler)
+   (add-event-listener! server event event-handler)
    (set! submit-set! set-submit)
    (set! *cards* cards)
    (set! *borders* borders)

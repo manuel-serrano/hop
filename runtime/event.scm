@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/2.5.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Mar 21 18:01:02 2009 (serrano)                */
-;*    Copyright   :  2005-09 Manuel Serrano                            */
+;*    Last change :  Sat Nov 30 12:55:31 2013 (serrano)                */
+;*    Copyright   :  2005-13 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -15,27 +15,34 @@
 (module __hop_event
 
    (library web)
-   
+
+   (include "thread.sch")
+
    (include "xml.sch"
 	    "service.sch"
+	    "verbose.sch"
 	    "param.sch")
 
-   (import  __hop_param
+   (import  __hop_configure
+	    __hop_param
+	    __hop_thread
 	    __hop_types
 	    __hop_user
+	    __hop_xml-types
 	    __hop_xml
-	    __hop_hop-extra
+	    __hop_html-head
 	    __hop_misc
 	    __hop_hop
 	    __hop_http-response
-	    __hop_js-lib
+	    __hop_js-comp
 	    __hop_cgi
 	    __hop_read
 	    __hop_service
 	    __hop_http-response
-	    __hop_http-error)
+	    __hop_http-error
+	    __hop_websocket)
 
-   (static  (class http-response-event::%http-response-local
+   (static  (class http-response-event::%http-response-server
 	       (name::bstring read-only))
 	    
 	    (class ajax-connection
@@ -44,39 +51,105 @@
 	       key::symbol
 	       (buffers::pair-nil (default '()))
 	       (marktime::elong (default (current-seconds)))
-	       (pingtime::elong (default #e0)))
-	    
-	    (class buffer
+	       (pingtime::elong (default #e0))
+	       (padding::obj (default #f)))
+
+	    ;; buffers for ajax server push
+	    (class ajax-buffer
 	       (buffer-init)
 	       (size::int read-only (default (hop-event-buffer-size)))
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (cells::pair-nil (default '()))
 	       (head::pair-nil (default '()))
-	       (tail::pair-nil (default '()))))
+	       (tail::pair-nil (default '())))
+
+	    ;; hopsocket for server-to-server listeners
+	    (class hopsocket
+	       (mutex::mutex read-only (default (make-mutex)))
+	       (key::bstring read-only)
+	       (socket::socket read-only)
+	       (thread::thread read-only)
+	       (listeners::pair-nil (default '()))))
 	    
-   (export  (hop-event-init! ::obj)
+   (export  (class event
+	       (name::bstring read-only)
+	       (target::obj read-only)
+	       (stopped::bool (default #f))
+	       (value::obj (default #unspecified)))
+
+	    (class websocket-event::event)
+
+	    (class server-event::event)
+	    
+	    (generic add-event-listener! ::obj ::obj ::procedure . l)
+	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
+	    (generic stop-event-propagation ::event ::bool)
+
+	    (apply-listeners ::obj ::event)
+	    
+	    (hop-event-init!)
 	    (hop-event-tables)
 	    (hop-event-signal! ::bstring ::obj)
 	    (hop-event-broadcast! ::bstring ::obj)
 	    (hop-event-client-ready? ::bstring)
-	    (hop-event-policy-file ::http-request)))
+	    (hop-event-policy-file ::http-request)
+	    (hop-event-info-service::procedure)
+	    (hop-event-register-service::procedure)
+	    (hop-event-unregister-service::procedure)))
+
+;*---------------------------------------------------------------------*/
+;*    debug ...                                                        */
+;*---------------------------------------------------------------------*/
+(define debug-ajax #f)
+(define debug-ajax-buffer #f)
+(define debug-multipart #f)
+(define debug-flash #f)
+
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ::obj ...                                    */
+;*    -------------------------------------------------------------    */
+;*    This generic function is for the time being not used in the Hop  */
+;*    server but it acts as a placeholder for future implementations   */
+;*    that might need to signal asynchronously event to the server.    */
+;*---------------------------------------------------------------------*/
+(define-generic (add-event-listener! obj::obj event proc . capture)
+   (if (and (string? event) (string? obj))
+       (add-server-listener! obj event proc capture)
+       (error "add-event-listener!" "Illegal listener" obj)))
+
+(define-generic (remove-event-listener! obj::obj event proc . capture)
+   (if (and (string? event) (string? obj))
+       (remove-server-listener! obj event proc capture)
+       (error "remove-event-listener!" "Illegal listener" obj)))
+
+(define-generic (stop-event-propagation event::event default::bool)
+   (with-access::event event (stopped)
+      (set! stopped #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *event-mutex* (make-mutex "hop-event"))
+(define *listener-mutex* (make-mutex "hop-listener"))
+
+;*---------------------------------------------------------------------*/
+;*    hop-multipart-key ...                                            */
+;*---------------------------------------------------------------------*/
+(define hop-multipart-key "hop-multipart")
 
 ;*---------------------------------------------------------------------*/
 ;*    event services ...                                               */
 ;*---------------------------------------------------------------------*/
 (define *port-service* #f)
+(define *websocket-service* #t)
 (define *register-service* #f)
 (define *unregister-service* #f)
 (define *init-service* #f)
 (define *policy-file-service #f)
 (define *close-service* #f)
 (define *client-key* 0)
-(define *default-request* (instantiate::http-server-request (user (user-nil))))
+(define *default-request* (instantiate::http-server-request
+			     (user (class-nil user))))
 (define *ping* (symbol->string (gensym 'ping)))
 (define *clients-number* 0)
 
@@ -88,18 +161,18 @@
       (with-access::ajax-connection obj (key req)
 	 (display key p)
 	 (display " " p)
-	 (if (http-request? req)
-	     (let ((sock (http-request-socket req)))
-		(display (socket-hostname sock) p)
+	 (if (isa? req http-request)
+	     (with-access::http-request req (socket)
+		(display (socket-hostname socket) p)
 		(display ":" p)
-		(display (socket-port-number sock) p))
+		(display (socket-port-number socket) p))
 	     "unattached"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-init ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (buffer-init buf)
-   (with-access::buffer buf (size head tail cells)
+   (with-access::ajax-buffer buf (size head tail cells)
       (set! cells (map! (lambda (i) (cons #f #unspecified)) (iota size)))
       (set! head cells)
       (set! tail cells)))
@@ -108,57 +181,74 @@
 ;*    buffer-empty? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (buffer-empty? buf)
-   (with-access::buffer buf (head mutex)
-      (mutex-lock! mutex)
-      (let ((r (not (car (car head)))))
-	 (mutex-unlock! mutex)
-	 r)))
+   (with-access::ajax-buffer buf (head mutex)
+      (synchronize mutex
+	 (not (car (car head))))))
 
+;*---------------------------------------------------------------------*/
+;*    buffer-length ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Assumes mutex acquired.                                          */
+;*---------------------------------------------------------------------*/
+(define (buffer-length buf)
+   (with-access::ajax-buffer buf (head tail cells mutex)
+      (let loop ((i 0)
+		 (h head))
+	 (if (and (pair? h) (caar h))
+	     (loop (+fx i 1) (cdr h))
+	     i))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    buffer-push! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (buffer-push! buf val)
-   (with-access::buffer buf (size head tail cells mutex)
-      (mutex-lock! mutex)
-      (if (pair? tail)
-	  ;; we have free cells
-	  (let ((cell (car tail)))
-	     (set! tail (cdr tail))
-	     (set-car! cell #t)
-	     (set-cdr! cell val))
-	  ;; we dont have free cells, we remove the first one
-	  (let* ((l head)
-		 (cell (car l)))
-	     (set! head (cdr head))
-	     (set-cdr! l '())
-	     (set-cdr! cell val)
-	     (set-cdr! (last-pair head) l)
-	     (set! tail '())))
-      (mutex-unlock! mutex)))
+   (with-access::ajax-buffer buf (head tail cells mutex)
+      (synchronize mutex
+	 (when debug-ajax-buffer
+	    (tprint ">>> buffer-push: len=" (buffer-length buf)
+	       " len(cell)=" (length cells)))
+	 (if (pair? tail)
+	     ;; we have free cells
+	     (let ((cell (car tail)))
+		(set! tail (cdr tail))
+		(set-car! cell #t)
+		(set-cdr! cell val))
+	     ;; we dont have free cells, we remove the first one
+	     (let ((l head)
+		   (cell (car head)))
+		(set! head (cdr head))
+		(set-cdr! l '())
+		(set-cdr! cell val)
+		(set-cdr! (last-pair head) l)))
+	 (when debug-ajax-buffer
+	    (tprint "<<< buffer-push: len=" (buffer-length buf)
+	       " len(head)=" (length head))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-pop! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop! buf)
-   (with-access::buffer buf (size head tail cells mutex)
-      (mutex-lock! mutex)
-      (let ((cell (car head)))
-	 (if (car cell)
-	     (let ((val (cdr cell)))
-		(set-car! cell #f)
-		(let ((l head))
-		   (set! head (cdr head))
-		   (set-cdr! l '())
-		   (if (pair? tail)
-		       (set-cdr! (last-pair tail) l)
-		       (begin
-			  (set-cdr! (last-pair head) l)
-			  (set! tail l))))
-		(mutex-unlock! mutex)
-		val)
-	     (begin
-		(mutex-unlock! mutex)
-		#f)))))
+   (with-access::ajax-buffer buf (head tail cells mutex)
+      (synchronize mutex
+	 (let ((cell (car head)))
+	    (if (car cell)
+		(let ((val (cdr cell)))
+		   (set-car! cell #f)
+		   (let ((l head))
+		      (set! head (cdr head))
+		      (set-cdr! l '())
+		      (if (pair? tail)
+			  (set-cdr! (last-pair tail) l)
+			  (begin
+			     (set-cdr! (last-pair head) l)
+			     (set! tail l))))
+		   (when debug-ajax-buffer
+		      (tprint ">>> buffer-pop: len=" (buffer-length buf)))
+		   val)
+		(begin
+		   (when debug-ajax-buffer
+		      (tprint ">>> buffer-pop: len=" 0))
+		   #f))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    buffer-pop-all! ...                                              */
@@ -167,36 +257,35 @@
 ;*    mutex is already acquired.                                       */
 ;*---------------------------------------------------------------------*/
 (define (buffer-pop-all! buf)
-   (with-access::buffer buf (size head tail cells)
+   (with-access::ajax-buffer buf (head tail cells)
+      (when debug-ajax-buffer
+	 (tprint ">>> buffer-pop-all!..." (buffer-length buf)
+	    " len(head)=" (length head)))
       (let loop ((res '())
-		 (last (last-pair head)))
-	 (let ((cell (car head)))
-	    (if (car cell)
-		(let ((val (cdr cell)))
-		   (set-car! cell #f)
-		   (let ((l head))
-		      (set! head (cdr head))
-		      (set-cdr! l '())
-		      (set-cdr! last l)
-		      (loop (cons val res) l)))
+		 (l head))
+	 (if (and (pair? l) (caar l))
+	     (let ((c (car l)))
+		(set-car! c #f)
+		(loop (cons (cdr c) res) (cdr l)))
+	     (begin
+		(set! tail head)
+		(when debug-ajax-buffer
+		   (tprint "<<< buffer-pop-all len(head)=" (length head)))
 		(reverse! res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-get-all ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Debug function                                                   */
 ;*---------------------------------------------------------------------*/
 (define (buffer-get-all buf)
-   (with-access::buffer buf (size head tail cells mutex)
-      (mutex-lock! mutex)
-      (let loop ((res '()))
-	 (let ((cell (car head)))
-	    (if (car cell)
-		(let ((val (cdr cell)))
-		   (let ((l head))
-		      (set! head (cdr head))
-		      (loop (cons val res))))
-		(begin
-		   (mutex-unlock! mutex)
-		   (reverse! res)))))))
+   (with-access::ajax-buffer buf (head tail cells)
+      (let loop ((res '())
+		 (l head))
+	 (if (and (pair? l) (caar l))
+	     (let ((c (car l)))
+		(loop (cons (cdr c) res) (cdr l)))
+	     (reverse! res)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ajax-connection-key-table* ...                                  */
@@ -241,9 +330,14 @@
 ;*    This function assumes that the event mutex is acquired.          */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-event-push! conn name value)
-   [assert (conn) (not (symbol? (mutex-state (ajax-connection-mutex conn))))]
+   [assert (conn)
+      (with-access::ajax-connection conn (mutex)
+	 (not (symbol? (mutex-state mutex))))]
    (with-access::ajax-connection conn (buffers mutex buffers)
       (let ((cell (assoc name buffers)))
+	 (when debug-ajax
+	    (tprint ">>>    hop-event-broadcast, ajax.4 push name=" name
+	       " cell=" (typeof cell)))
 	 (when (pair? cell)
 	    (buffer-push! (cdr cell) value)))))
 
@@ -251,8 +345,10 @@
 ;*    ajax-connection-abandon-for! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-abandon-for! conn nreq)
-   (with-access::ajax-connection conn (req mutex)
-      (when (http-request? req)
+   (with-access::ajax-connection conn (req mutex padding)
+      (when debug-ajax
+	 (tprint "!!! AJAX-CONNECTION-ABANDON: req=" req))
+      (when (isa? req http-request)
 	 (ajax-signal-value req (scheme->response '() req)))
       (set! req nreq)))
 
@@ -263,37 +359,71 @@
    (with-access::ajax-connection conn (mutex buffers)
       (let ((cell (assoc name buffers)))
 	 (unless (pair? cell)
+	    (when debug-ajax
+	       (tprint "ajax-connection-add-event, create buffer for name=" name))
 	    (hashtable-update! *ajax-connection-name-table*
-			       name
-			       (lambda (l) (cons conn l))
-			       (list conn))
-	    (set! buffers (cons (cons name (instantiate::buffer)) buffers))))))
+	       name
+	       (lambda (l) (cons conn l))
+	       (list conn))
+	    (set! buffers
+	       (cons (cons name (instantiate::ajax-buffer)) buffers))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-connection-remove-event! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (ajax-connection-remove-event! conn name)
+   (tprint "!!! ajax-connection-remove-event name=" name)
    (with-access::ajax-connection conn (mutex buffers)
-      (mutex-lock! mutex)
-      (let ((cell (assoc name buffers)))
-	 (when (pair? cell)
-	    (set! buffers (remq! cell buffers))
-	    (hashtable-update! *ajax-connection-name-table*
-			       name
-			       (lambda (l)
-				  (remq! conn l))
-			       '())))
-      (mutex-unlock! mutex)))
+      (synchronize mutex
+	 (let ((cell (assoc name buffers)))
+	    (when (pair? cell)
+	       (set! buffers (remq! cell buffers))
+	       (hashtable-update! *ajax-connection-name-table*
+		  name
+		  (lambda (l) (remq! conn l))
+		  '()))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-register-new-connection! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (ajax-register-new-connection! req key)
+(define (ajax-register-new-connection! req key padding)
+   (when debug-ajax
+      (tprint "AJAX-REGISTER-NEW-CONNECTION req=" req))
    (let ((conn (instantiate::ajax-connection
 		  (key key)
-		  (req req))))
+		  (req req)
+		  (padding padding))))
       (hashtable-put! *ajax-connection-key-table* key conn)))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-register-new-connection! ...                           */
+;*---------------------------------------------------------------------*/
+(define (websocket-register-new-connection! req key)
    
+   (define (get-header header key default)
+      (let ((c (assq key header)))
+	 (if (pair? c)
+	     (cdr c)
+	     default)))
+   
+   (with-access::http-request req (header connection socket)
+      (let ((host (get-header header host: #f))
+	    (version (get-header header sec-websocket-version: "-1")))
+	 ;; see http_response.scm for the source code that actually sends
+	 ;; the bytes of the response to the client.
+	 (with-trace (+ 1 (websocket-debug-level)) "ws-register-new-connection"
+	    (trace-item "protocol-version=" version)
+	    (let ((resp (websocket-server-response req key)))
+	       ;; register the websocket
+	       (synchronize *event-mutex*
+		  (set! *websocket-response-list*
+		     (cons (cons (string->symbol key) resp)
+			*websocket-response-list*))
+		  (trace-item "key=" key)
+		  (trace-item "socket=" socket )
+		  (trace-item "connected clients=" *websocket-response-list*))
+	       resp)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-init! ...                                              */
 ;*    -------------------------------------------------------------    */
@@ -302,60 +432,97 @@
 ;*        http://www.adobe.com/devnet/flashplayer/articles/            */
 ;*          fplayer9_security.html                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-event-init! port)
-   (with-lock *event-mutex*
-      (lambda ()
-	 (when (=fx *client-key* 0)
-	    (set! *client-key* (elong->fixnum (current-seconds)))
-	    
-	    (set! *port-service*
-		  (service :name "server-event/info" ()
-		     (vector (hostname) port (get-ajax-key (or port 0)))))
-	    
-	    (set! *init-service*
-		  (service :name "server-event/init" (#!key key)
-		     (with-lock *event-mutex*
-			(lambda ()
-			   (let ((req (current-request)))
-			      ;; read the Flash's ending zero byte
-			      (read-byte
-			       (socket-input (http-request-socket req)))
-			      (set! *flash-request-list*
-				    (cons (list (string->symbol key)
-						req
-						(current-seconds))
-					  *flash-request-list*))
-			      ;; increments the number of connected clients
-			      (set! *clients-number* (+fx *clients-number* 1))
-			      (instantiate::http-response-event
-				 (request req)
-				 (name key)))))))
-
-	    (set! *policy-file-service
-		  (service :name "server-event/policy-file" (#!key port key)
-		     (instantiate::http-response-string
-			(request (current-request))
-			(content-type "application/xml")
-			(body (hop-event-policy port)))))
-
-	    (set! *close-service*
-		  (service :name "server-event/close" (#!key key)
-		     (with-lock *event-mutex*
-			(lambda ()
-			   (let ((key (string->symbol key)))
-			      (set! *clients-number* (-fx *clients-number* 1))
-			      (set! *flash-request-list*
-				    (filter! (lambda (e)
-						(not (eq? (car e) key)))
-					     *flash-request-list*)))))))
-
-	    (set! *unregister-service*
-		  (service :name "server-event/unregister" (#!key event key)
-		     (server-event-unregister event key)))
-	    
-	    (set! *register-service*
-		  (service :name "server-event/register" (#!key event key flash)
-		     (server-event-register event key flash)))))))
+(define (hop-event-init!)
+   (synchronize *event-mutex*
+      (when (=fx *client-key* 0)
+	 (set! *client-key* (elong->fixnum (current-seconds)))
+	 
+	 (set! *websocket-service*
+	    (service :name "public/server-event/websocket"
+	       :id server-event
+	       :timeout 0
+	       (#!key key)
+	       (with-trace (websocket-debug-level) "start websocket service"
+		  (trace-item "key=" key)
+		  (let ((req (current-request)))
+		     (with-access::http-request req (header)
+			(if (websocket-proxy-request? header)
+			    (websocket-proxy-response req)
+			    (websocket-register-new-connection! req key)))))))
+	 
+	 (set! *port-service*
+	    (service :name "public/server-event/info"
+	       :id server-event
+	       :timeout 0
+	       ()
+	       (let* ((req (current-request))
+		      (hd (with-access::http-request req (header) header))
+		      (host (assq host: hd))
+		      (key (get-server-event-key req))
+		      (port (with-access::http-request req (port) port)))
+		  (if (pair? host)
+		      (let ((s (string-split (cdr host) ":")))
+			 (vector (car s) port key))
+		      (with-access::http-request req (host)
+			 (vector host port key))))))
+	 
+	 (set! *init-service*
+	    (service :name "public/server-event/init"
+	       :id server-event
+	       :timeout 0
+	       (#!key key)
+	       (synchronize *event-mutex*
+		  (lambda ()
+		     (let ((req (current-request)))
+			;; read the Flash's ending zero byte
+			(read-byte
+			   (socket-input (with-access::http-request req (socket) socket)))
+			(set! *flash-request-list*
+			   (cons (list (string->symbol key)
+				    req
+				    (current-seconds))
+			      *flash-request-list*))
+			;; increments the number of connected clients
+			(set! *clients-number* (+fx *clients-number* 1))
+			(instantiate::http-response-event
+			   (request req)
+			   (name key)))))))
+	 
+	 (set! *policy-file-service
+	    (service :name "public/server-event/policy-file"
+	       :id server-event
+	       :timeout 0
+	       (#!key port key)
+	       (instantiate::http-response-string
+		  (request (current-request))
+		  (content-type "application/xml")
+		  (body (hop-event-policy port)))))
+	 
+	 (set! *close-service*
+	    (service :name "public/server-event/close" :timeout 0 (#!key key)
+	       :id server-event
+	       (synchronize *event-mutex*
+		  (lambda ()
+		     (let ((key (string->symbol key)))
+			(set! *clients-number* (-fx *clients-number* 1))
+			(set! *flash-request-list*
+			   (filter! (lambda (e)
+				       (not (eq? (car e) key)))
+			      *flash-request-list*)))))))
+	 
+	 (set! *unregister-service*
+	    (service :name "public/server-event/unregister"
+	       :id server-event
+	       :timeout 0
+	       (#!key event key)
+	       (server-event-unregister event key)))
+	 
+	 (set! *register-service*
+	    (service :name "public/server-event/register"
+	       :id server-event
+	       :timeout 0
+	       (#!key event key mode padding)
+	       (server-event-register event key mode padding))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-ajax-table ...                                              */
@@ -376,12 +543,15 @@
 ;*    Dump the content of the event table for debug purposes.          */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-tables)
-   (with-lock *event-mutex*
-      (lambda ()
-	 `((*clients-number* ,*clients-number*)
-	   (*flash-request-list* ,*flash-request-list*)
-	   (*flash-socket-table* ,*flash-socket-table*)
-	   (*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*))))))
+   (synchronize *event-mutex*
+      `((*clients-number* ,*clients-number*)
+	(*flash-request-list* ,*flash-request-list*)
+	(*flash-socket-table* ,*flash-socket-table*)
+	(*multipart-request-list* ,*multipart-request-list*)
+	(*multipart-socket-table* ,*multipart-socket-table*)
+	(*websocket-response-list* ,*websocket-response-list*)
+	(*websocket-socket-table* ,*websocket-socket-table*)
+	(*ajax-connection-key-table* ,(dump-ajax-table *ajax-connection-key-table*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-event-gc ...                                              */
@@ -403,7 +573,7 @@
    (define (ajax-connection-ping! conn)
       (with-access::ajax-connection conn (req mutex pingtime)
 	 (set! pingtime (current-seconds))
-	 (when (http-request? req)
+	 (when (isa? req http-request)
 	    (ajax-signal-value req (scheme->response '() req)))))
    
    (define (server-event-ajax-gc)
@@ -411,7 +581,8 @@
       (hashtable-for-each *ajax-connection-key-table*
 			  (lambda (key conn)
 			     (when (ajax-connection-expired? conn)
-				(tprint "*** ajax collecting: " conn)
+				(when debug-ajax
+				   (tprint "*** ajax collecting: " conn))
 				(set! *clients-number* (-fx *clients-number* 1))
 				(with-access::ajax-connection conn (buffers)
 				   (for-each (lambda (buffer)
@@ -424,7 +595,8 @@
       (hashtable-for-each *ajax-connection-key-table*
 			  (lambda (k conn)
 			     (when (ajax-connection-ping? conn)
-				(tprint "ping: " conn)
+				(when debug-ajax
+				   (tprint "*** ping: " conn))
 				(ajax-connection-ping! conn)))))
 
    (define (flash-connection-ping? e)
@@ -443,55 +615,140 @@
 ;*---------------------------------------------------------------------*/
 ;*    server-event-register ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (server-event-register event key flash)
+(define (server-event-register event key mode padding)
    
-   (define (ajax-register-event! req name key)
-      (tprint "***** ajax-register-event, name=" name " key=" key)
-      (let ((conn (ajax-find-connection-by-key key)))
-	 (if conn
-	     (with-lock (ajax-connection-mutex conn)
-		(lambda ()
-		   ;; mark the conn for protecting it from being collected
-		   (ajax-connection-marktime-set! conn (current-seconds))
-		   (ajax-connection-pingtime-set! conn #e0)
-		   (unless (string=? name "")
-		      ;; this is not an automatic re-registry
-		      (ajax-connection-add-event! conn name))
-		   (let ((vals (ajax-connection-event-pop-all! conn)))
-		      (if (pair? vals)
-			  (scheme->response vals req)
-			  (begin
-			     (ajax-connection-abandon-for! conn req)
-			     (instantiate::http-response-persistent
-				(request req)))))))
-	     (let ((conn (ajax-register-new-connection! req key)))
-		;; increment the number of connected client
-		(set! *clients-number* (+fx 1 *clients-number*))
-		(ajax-connection-add-event! conn name)
-		(instantiate::http-response-persistent
-		   (request req))))))
+   (define (ajax-register-event! req key name padding)
+      (with-trace 3 "ajax-register-event!"
+	 (let ((conn (ajax-find-connection-by-key key)))
+	    (when debug-ajax
+	       (tprint " ajax-register-connection name=" name " conn=" conn))
+	    (if conn
+		(with-access::ajax-connection conn (marktime pingtime mutex)
+		   (synchronize mutex
+		      ;; mark the conn for protecting it from being collected
+		      (set! marktime (current-seconds))
+		      (set! pingtime #e0)
+		      (unless (string=? name "")
+			 ;; this is not an automatic re-registry
+			 (ajax-connection-add-event! conn name))
+		      (let ((vals (ajax-connection-event-pop-all! conn)))
+			 (when debug-ajax
+			    (tprint "   ajax-register-event! ajax vals=" vals))
+			 (if (pair? vals)
+			     (let ((val (padding-response
+					   (scheme->response vals req)
+					   padding)))
+				(when debug-ajax
+				   (tprint "   ajax padding=" padding))
+				val)
+			     (with-access::ajax-connection conn ((p padding))
+				(ajax-connection-abandon-for! conn req)
+				(set! p padding)
+				(instantiate::http-response-persistent
+				   (request req)))))))
+		(let ((conn (ajax-register-new-connection! req key padding)))
+		   ;; increment the number of connected client
+		   (set! *clients-number* (+fx 1 *clients-number*))
+		   (ajax-connection-add-event! conn name)
+		   (instantiate::http-response-persistent
+		      (request req)))))))
    
-   (define (flash-register-event! req name)
-      (hashtable-update! *flash-socket-table*
-			 name
-			 (lambda (l) (cons req l))
-			 (list req))
-      (instantiate::http-response-string
-	 (request req)))
+   (define (flash-register-event! req key name)
+      (with-trace 3 "flash-register-event!"
+	 (let ((req (cadr (assq key *flash-request-list*))))
+	    (hashtable-update! *flash-socket-table*
+			       name
+			       (lambda (l) (cons req l))
+			       (list req))
+	    (instantiate::http-response-string
+	       (request req)))))
 
-   (with-lock *event-mutex*
-      (lambda ()
+   (define (multipart-register-event! req key name)
+      (with-trace 3 "multipart-register-event!"
+	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
+				hop-multipart-key name hop-multipart-key))
+	       (c (assq key *multipart-request-list*)))
+	    (if (pair? c)
+		(let ((oreq (cdr c)))
+		   ;; we already have a connection for that
+		   ;; client, we simply re-use it
+		   (hashtable-update! *multipart-socket-table*
+				      name
+				      (lambda (l) (cons oreq l))
+				      (list oreq))
+		   ;; we must response as a multipart response because
+		   ;; that's the way we have configured the xhr
+		   ;; on the client side but we must close the connection
+		   (instantiate::http-response-string
+		      (request req)
+		      (header '((Transfer-Encoding: . "chunked")))
+		      (content-length #e-2)
+		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
+		      (body (format "~a\r\n~a" (integer->string (string-length content) 16) content))))
+		;; we create a new connection for that client
+		;; multipart never sends a complete answer. In order to
+		;; traverse proxy, we use a chunked response
+		(with-access::http-request req (socket)
+		   (output-port-flush-hook-set!
+		      (socket-output socket)
+		    (lambda (port size)
+		       (output-port-flush-hook-set! port chunked-flush-hook)
+		       ""))
+		   (set! *multipart-request-list*
+			 (cons (cons key req)
+			       *multipart-request-list*))
+		   (hashtable-update! *multipart-socket-table*
+				      name
+				      (lambda (l) (cons req l))
+				      (list req))
+		   (instantiate::http-response-persistent
+		      (request req)
+		      (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
+				    hop-multipart-key
+				    (integer->string (string-length content) 16)
+				    content))))))))
+   
+   (define (websocket-register-event! req key name)
+      (with-trace 3 "ws-register-event!"
+	 (let ((c (assq key *websocket-response-list*)))
+	    (trace-item "key=" key)
+	    (trace-item "name=" name)
+	    (trace-item "c=" c)
+	    (if (pair? c)
+		(let ((resp (cdr c)))
+		   (hashtable-update! *websocket-socket-table*
+				      name
+				      (lambda (l) (cons resp l))
+				      (list resp))
+		   (with-access::http-response-websocket resp (request)
+		      (instantiate::http-response-string
+			 (request request))))
+		(error "server-event-register" "Illegal websocket entry" key)))))
+
+   (with-trace 2 "ws-register-event!"
+      (synchronize *event-mutex*
+	 (when (or debug-ajax (websocket-debug) debug-multipart debug-flash)
+	    (trace-item "event=" event)
+	    (trace-item "key=" key)
+	    (trace-item "mode=" mode)
+	    (trace-item "padding=" padding))
 	 (if (<fx *clients-number* (hop-event-max-clients))
 	     (let ((req (current-request))
 		   (key (string->symbol key)))
 		;; set an output timeout on the socket
-		(output-timeout-set! (socket-output (http-request-socket req))
-				     (hop-connection-timeout))
+		(with-access::http-request req (socket) 
+		   (output-timeout-set!
+		      (socket-output socket) (hop-connection-timeout)))
 		;; register the client
-		(let ((r (if flash
-			     (let ((req (cadr (assq key *flash-request-list*))))
-				(flash-register-event! req event))
-			     (ajax-register-event! req event key))))
+		(let ((r (cond
+			    ((string=? mode "xhr-multipart")
+			     (multipart-register-event! req key event))
+			    ((string=? mode "websocket")
+			     (websocket-register-event! req key event))
+			    ((string=? mode "flash")
+			     (flash-register-event! req key event))
+			    (else
+			     (ajax-register-event! req key event padding)))))
 		   ;; cleanup the current connections
 		   (server-event-gc)
 		   r))
@@ -504,7 +761,7 @@
    
    (define (unregister-ajax-event! name key)
       (let ((conn (ajax-find-connection-by-key key)))
-	 (when (ajax-connection? conn)
+	 (when (isa? conn ajax-connection)
 	    (ajax-connection-remove-event! conn name))))
    
    (define (unregister-flash-event! event key)
@@ -519,12 +776,41 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (flash-signal-value req *ping* #unspecified)))))
+
+   (define (unregister-multipart-event! event key)
+      (let ((c (assq (string->symbol key) *multipart-request-list*)))
+	 (when (pair? c)
+	    (let ((req (cadr c)))
+	       (hashtable-update! *multipart-socket-table*
+				  event
+				  (lambda (l) (delete! req l))
+				  '())
+	       ;; Ping the client to check it still exists. If the client
+	       ;; no longer exists, an error will be raised and the client
+	       ;; will be removed from the tables.
+	       (multipart-signal req
+		  (multipart-value *ping* #unspecified))))))
+
+   (define (unregister-websocket-event! event key)
+      (let ((c (assq (string->symbol key) *websocket-response-list*)))
+	 (when (pair? c)
+	    (let ((resp (cdr c)))
+	       (hashtable-update! *websocket-socket-table*
+				  event
+				  (lambda (l) (delete! resp l))
+				  '())
+	       ;; Ping the client to check it still exists. If the client
+	       ;; no longer exists, an error will be raised and the client
+	       ;; will be removed from the tables.
+	       (websocket-signal resp
+		  (websocket-value *ping* #unspecified))))))
    
-   (with-lock *event-mutex*
-      (lambda ()
-	 (unregister-ajax-event! event key)
-	 (unregister-flash-event! event key)
-	 #f)))
+   (synchronize *event-mutex*
+      (unregister-websocket-event! event key)
+      (unregister-multipart-event! event key)
+      (unregister-ajax-event! event key)
+      (unregister-flash-event! event key)
+      #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-close-request! ...                                         */
@@ -533,7 +819,9 @@
 ;*---------------------------------------------------------------------*/
 (define (flash-close-request! req)
    ;; close the socket
-   (socket-close (http-request-socket req))
+   (with-access::http-request req (socket)
+      (socket-close socket))
+   (set! *clients-number* (-fx *clients-number* 1))
    ;; remove the request from the *flash-request-list*
    (set! *flash-request-list*
 	 (filter! (lambda (e) (not (eq? (cadr e) req))) *flash-request-list*))
@@ -547,22 +835,91 @@
    (hashtable-filter! *flash-socket-table* (lambda (k l) (pair? l))))
    
 ;*---------------------------------------------------------------------*/
+;*    multipart-close-request! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This assumes that the event-mutex has been acquired.             */
+;*---------------------------------------------------------------------*/
+(define (multipart-close-request! req)
+   ;; close the socket
+   (with-access::http-request req (socket)
+      (socket-close socket))
+   (set! *clients-number* (-fx *clients-number* 1))
+   ;; remove the request from the *multipart-request-list*
+   (set! *multipart-request-list*
+	 (filter! (lambda (e) (not (eq? (cdr e) req)))
+		  *multipart-request-list*))
+   ;; remove the request from the *multipart-socket-table*
+   (hashtable-for-each *multipart-socket-table*
+		       (lambda (k l)
+			  (hashtable-update! *multipart-socket-table*
+					     k
+					     (lambda (l) (delete! req l))
+					     '())))
+   (hashtable-filter! *multipart-socket-table* (lambda (k l) (pair? l))))
+   
+;*---------------------------------------------------------------------*/
+;*    websocket-close-request! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This assumes that the event-mutex has been acquired.             */
+;*---------------------------------------------------------------------*/
+(define (websocket-close-request! resp::http-response-websocket)
+   (with-access::http-response-websocket resp ((req request))
+      ;; close the socket
+      (with-access::http-request req (socket)
+	 (socket-close socket)
+	 (with-trace (websocket-debug-level) "ws-close-request!"
+	    (trace-item "socket=" socket)))
+      ;; decrement the current number of connected clients
+      (set! *clients-number* (-fx *clients-number* 1))
+      ;; remove the request from the *websocket-response-list*
+      (set! *websocket-response-list*
+	 (filter! (lambda (e)
+		     (not (eq? (cdr e) resp)))
+	    *websocket-response-list*))
+      ;; remove the response from the *websocket-socket-table*
+      (hashtable-for-each *websocket-socket-table*
+	 (lambda (k l)
+	    (hashtable-update! *websocket-socket-table*
+	       k
+	       (lambda (l) (delete! resp l))
+	       '())))
+      (hashtable-filter! *websocket-socket-table* (lambda (k l) (pair? l)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    hop-event-client-ready? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (hop-event-client-ready? name)
    
    (define (ajax-event-client-ready? name)
       (pair? (ajax-find-connections-by-name name)))
-
+   
+   (define (multipart-event-client-ready? name)
+      (let ((l (hashtable-get *multipart-socket-table* name)))
+	 (and (pair? l)
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
+		    l))))
+   
+   (define (websocket-event-client-ready? name)
+      (let ((l (hashtable-get *websocket-socket-table* name)))
+	 (and (pair? l)
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
+		    l))))
+   
    (define (flash-event-client-ready? name)
       (let ((l (hashtable-get *flash-socket-table* name)))
 	 (and (pair? l)
-	      (any? (lambda (req)
-		       (let ((s (http-request-socket req)))
-			  (not (socket-down? s))))
-		    l))))
-
-   (or (ajax-event-client-ready? name)
+	      (any (lambda (req)
+		      (with-access::http-request req (socket)
+			 (not (socket-down? socket))))
+		 l))))
+   
+   (or (multipart-event-client-ready? name)
+       (websocket-event-client-ready? name)
+       (ajax-event-client-ready? name)
        (flash-event-client-ready? name)))
 
 ;*---------------------------------------------------------------------*/
@@ -572,83 +929,212 @@
 (define *flash-request-list* '())
 
 ;*---------------------------------------------------------------------*/
+;*    *multipart-socket-table*                                         */
+;*---------------------------------------------------------------------*/
+(define *multipart-socket-table* (make-hashtable))
+(define *multipart-request-list* '())
+
+;*---------------------------------------------------------------------*/
+;*    *websocket-request-table*                                        */
+;*---------------------------------------------------------------------*/
+(define *websocket-socket-table* (make-hashtable))
+(define *websocket-response-list* '())
+
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-event ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-event socket)
    (let ((p (socket-output socket)))
-      (fprintf p "<acknowledge name='~a'/>" (http-response-event-name r))
+      (with-access::http-response-event r (name)
+	 (fprintf p "<acknowledge name='~a'/>" name))
       (display #a000 p)
       (flush-output-port p)
       'persistent))
 
 ;*---------------------------------------------------------------------*/
-;*    get-ajax-key ...                                                 */
+;*    get-server-event-key ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (get-ajax-key port)
-   (mutex-lock! *event-mutex*)
-   (set! *client-key* (+fx 1 *client-key*))
-   (let ((key (format "~a:~a://~a" (hostname) port *client-key*)))
-      (mutex-unlock! *event-mutex*)
-      key))
+(define (get-server-event-key req::http-request)
+   (synchronize *event-mutex*
+      (set! *client-key* (+fx 1 *client-key*))
+      (with-access::http-request req (host port)
+	 (format "~a:~a://~a" host port *client-key*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ajax-signal-value ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (ajax-signal-value req resp)
-   (let ((s (http-request-socket req)))
+   (with-access::http-request req (socket)
       (with-handler
 	 (lambda (e)
-	    (unless (&io-timeout-error? e)
-	       (raise e))
+	    (when debug-ajax
+	       (tprint "AJAX EVENT ERROR: " e))
+	    (unless (isa? e &io-error) (raise e))
 	    #f)
-	 (http-response resp s)
-	 (socket-close s)
+	 (http-response resp socket)
+	 (socket-close socket)
 	 #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-signal-value ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (flash-signal-value req name value)
-   (let* ((s (http-request-socket req))
-	  (p (socket-output s)))
-      (with-handler
-	 (lambda (e)
-	    (if (&io-timeout-error? e)
-		(begin
-		   (set! *clients-number* (-fx *clients-number* 1))
-		   (flash-close-request! req))
-		(raise e)))
-	 (begin
-	    (fprintf p "<event name='~a'>" name)
-	    (display value p)
-	    (display "</event>\n" p)
-	    (display #a000 p)
-	    (flush-output-port p)))))
+   (with-access::http-request req (socket)
+      (let ((p (socket-output socket)))
+	 (with-handler
+	    (lambda (e)
+	       (when debug-flash
+		  (tprint "FLASH EVENT ERROR: " e " thread=" (current-thread)))
+	       (if (isa? e &io-error)
+		   (flash-close-request! req)
+		   (raise e)))
+	    (begin
+	       (let ((p (current-error-port)))
+		  (fprintf p "<event name='~a'>" name)
+		  (display value p)
+		  (display "</event>\n" p))
+	       (fprintf p "<event name='~a'>" name)
+	       (display value p)
+	       (display "</event>\n" p)
+	       (display #a000 p)
+	       (flush-output-port p))))))
 
 ;*---------------------------------------------------------------------*/
-;*    flash-make-signal-value ...                                      */
+;*    multipart-signal ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (flash-make-signal-value value)
+(define (multipart-signal req vstr::bstring)
+   (with-access::http-request req (socket)
+      (let ((p (socket-output socket)))
+	 (with-handler
+	    (lambda (e)
+	       (when debug-multipart
+		  (tprint "MULTIPART EVENT ERROR: "
+		     e " thread=" (current-thread)))
+	       (if (isa? e &io-error)
+		   (multipart-close-request! req)
+		   (raise e)))
+	    (begin
+	       (fprintf p "Content-type: text/xml\n\n")
+	       (display-string vstr p)
+	       (fprintf p "\n--~a\n" hop-multipart-key p)
+	       (flush-output-port p))))))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-signal ...                                             */
+;*---------------------------------------------------------------------*/
+(define (websocket-signal resp::http-response-websocket vstr::bstring)
+   
+   (define (hixie-signal-value vstr socket)
+      (let ((p (socket-output socket)))
+	 (display #a000 p)
+	 (display-string vstr p)
+	 (display #a255 p)
+	 (flush-output-port p)))
+   
+   (define (hybi-signal-value vstr socket)
+      (let ((p (socket-output socket)))
+	 (let ((l (string-length vstr)))
+	    ;; FIN=1, OPCODE=x1 (text)
+	    (display (integer->char #x81) p)
+	    (cond
+	       ((<=fx l 125)
+		;; 1 byte length
+		(display (integer->char l) p))
+	       ((<=fx l 65535)
+		;; 2 bytes length
+		(display #a126 p)
+		(display (integer->char (bit-rsh l 8)) p)
+		(display (integer->char (bit-and l #xff)) p))
+	       (else
+		;; 4 bytes length
+		(display #a127 p)
+		(display "\000\000\000\000" p)
+		(display (integer->char (bit-rsh l 24)) p)
+		(display (integer->char (bit-and (bit-rsh l 16) #xff)) p)
+		(display (integer->char (bit-and (bit-rsh l 8) #xff)) p)
+		(display (integer->char (bit-and l #xff)) p)))
+	    ;; payload data
+	    (display-string vstr p)
+	    (flush-output-port p))))
+   
+   (with-access::http-response-websocket resp ((req request))
+      (with-access::http-request req (socket)
+	 (with-handler
+	    (lambda (e)
+	       (with-trace (websocket-debug-level) "ws-signal-error"
+		  (trace-item "err=" e)
+		  (trace-item "socket=" socket)
+		  (trace-item "thread=" (current-thread))
+		  (trace-item "req=" req )
+		  (trace-item "vlen=" (string-length vstr))
+		  (if (isa? e &io-error)
+		      (begin
+			 (with-trace (websocket-debug-level) "ws-error-close"
+			    (websocket-close-request! resp))
+			 #f)
+		      (raise e))))
+	    (with-access::http-response-websocket resp (accept)
+	       (with-trace (websocket-debug-level) "ws-signal"
+		  (trace-item "resp=" resp)
+		  (if accept
+		      (hybi-signal-value vstr socket)
+		      (hixie-signal-value vstr socket))))))))
+
+;*---------------------------------------------------------------------*/
+;*    enveloppe-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (enveloppe-value::bstring name value)
    (cond
-      ((xml? value)
+      ((isa? value xml)
+       (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
+      ((string? value)
+       (format "<s name='~a'>~a</s>" name (url-path-encode value)))
+      ((integer? value)
+       (format "<i name='~a'>~a</i>" name value))
+      ((real? value)
+       (format "<f name='~a'>~a</f>" name value))
+      (else
+       (let ((op (open-output-string)))
+	  (fprintf op "<j name='~a'><![CDATA[" name)
+	  (obj->javascript-attr value op)
+	  (display "]]></j>" op)
+	  (close-output-port op)))))
+
+;*---------------------------------------------------------------------*/
+;*    multipart-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (multipart-value::bstring name value)
+   (enveloppe-value name value))
+   
+;*---------------------------------------------------------------------*/
+;*    websocket-value ...                                              */
+;*---------------------------------------------------------------------*/
+(define (websocket-value::bstring name value)
+   (enveloppe-value name value))
+   
+;*---------------------------------------------------------------------*/
+;*    js-make-signal-value ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-make-signal-value value)
+   (cond
+      ((isa? value xml)
        (xml->string value (hop-xml-backend)))
       ((or (string? value) (number? value))
        value)
       (else
-       (string-append "<json><![CDATA[" (hop->json value #f #t) "]]></json>"))))
+       (let ((op (open-output-string)))
+	  (display "<javascript>[CDATA[" op)
+	  (obj->javascript-attr value op)
+	  (display "]]></javascript>" op)
+	  (close-output-port op)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    for-each-socket ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (for-each-socket table name proc)
-   (let ((r #f))
-      (hashtable-update! table
-			 name
-			 (lambda (l)
-			    (set! r (proc l))
-			    l)
-			 '())
-      r))
+   (let ((l (hashtable-get table name)))
+      (when l
+	 (proc l))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-signal-id ...                                                */
@@ -664,30 +1150,29 @@
       (let ((conns (ajax-find-connections-by-name name)))
 	 (let loop ((l conns))
 	    (if (pair? l)
-		(with-access::ajax-connection (car l) (req mutex)
-		   (mutex-lock! mutex)
-		   (if (http-request? req)
-		       (let* ((r req)
-			      (val (unwind-protect
-				      (scheme->response
-				       (list (list name value)) req)
-				      (begin
-					 (set! req #f)
-					 (mutex-unlock! mutex)))))
-			  (tprint "AJAX SIGNAL: " name)
-			  (or (ajax-signal-value r val)
-			      (loop (cdr l))))
-		       (begin
-			  (mutex-unlock! mutex)
-			  (loop (cdr l)))))
+		(with-access::ajax-connection (car l) (req mutex padding)
+		   (unless (synchronize mutex
+			      (when (isa? req http-request)
+				 (let* ((r req)
+					(val (unwind-protect
+						(padding-response
+						   (scheme->response
+						      (list (list name value)) req)
+						   padding)
+						(begin
+						   (set! req #f)
+						   (mutex-unlock! mutex)))))
+				    (ajax-signal-value r val))))
+		      (loop (cdr l))))
 		(when (pair? conns)
-		   (tprint "PUSHING: " value)
-		   (let* ((conn (car conns))
-			  (mutex (ajax-connection-mutex conn)))
-		      (mutex-lock! mutex)
-		      (ajax-connection-event-push! conn name value)
-		      (mutex-unlock! mutex)
-		      (tprint "PUSHING: done"))
+		   (when debug-ajax
+		      (tprint "PUSHING: " name " value=" value))
+		   (let ((conn (car conns)))
+		      (with-access::ajax-connection conn (mutex)
+			 (synchronize mutex
+			    (ajax-connection-event-push! conn name value)))
+		      (when debug-ajax
+			 (tprint "PUSHING: done")))
 		   #t)))))
    
    (define (flash-event-signal! name value)
@@ -696,26 +1181,61 @@
        name
        (lambda (l)
 	  (when (pair? l)
-		(let ((val (flash-make-signal-value value)))
-		   (flash-signal-value (car l) name val)
-		   #t)))))
+	     (let ((val (js-make-signal-value value)))
+		(flash-signal-value (car l) name val)
+		#t)))))
+
+   (define (multipart-event-signal! name value)
+      (for-each-socket
+       *multipart-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (multipart-value name value)))
+		(when debug-multipart
+		   (tprint "MULTIPART SIGNAL: " name))
+		(multipart-signal (car l) val)
+		#t)))))
+
+   (define (websocket-event-signal! name value)
+      (for-each-socket
+       *websocket-socket-table*
+       name
+       (lambda (l)
+	  (when (pair? l)
+	     (let ((val (websocket-value name value)))
+		(websocket-signal (car l) val)
+		#t)))))
 
    (set! hop-signal-id (-fx hop-signal-id 1))
    (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
 	     ": " name)
    (hop-verb 3 " value=" (with-output-to-string (lambda () (write value))))
    (hop-verb 2 "\n")
-   (mutex-lock! *event-mutex*)
-   (unwind-protect
-      (unless (flash-event-signal! name value)
-	 (ajax-event-signal! name value))
-      (mutex-unlock! *event-mutex*))
+   (synchronize *event-mutex*
+      (case (random 4)
+	 ((0)
+	  (unless (multipart-event-signal! name value)
+	     (unless (websocket-event-signal! name value)
+		(unless (flash-event-signal! name value)
+		   (ajax-event-signal! name value)))))
+	 ((1)
+	  (unless (flash-event-signal! name value)
+	     (unless (ajax-event-signal! name value)
+		(unless (multipart-event-signal! name value)
+		   (websocket-event-signal! name value)))))
+	 ((2)
+	  (unless (ajax-event-signal! name value)
+	     (unless (multipart-event-signal! name value)
+		(unless (websocket-event-signal! name value)
+		   (flash-event-signal! name value)))))
+	 ((3)
+	  (unless (websocket-event-signal! name value)
+	     (unless (flash-event-signal! name value)
+		(unless (ajax-event-signal! name value)
+		   (multipart-event-signal! name value)))))))
+	 
    #unspecified)
-
-;*---------------------------------------------------------------------*/
-;*    hop-broadcast-id ...                                             */
-;*---------------------------------------------------------------------*/
-(define hop-broadcast-id 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-broadcast! ...                                         */
@@ -723,42 +1243,80 @@
 (define (hop-event-broadcast! name value)
    
    (define (ajax-event-broadcast! name value)
+      (when debug-ajax
+	 (tprint ">>> hop-event-broadcast, ajax broadcast: " name))
       (for-each (lambda (conn)
-		   (with-access::ajax-connection conn (req mutex)
-		      (with-lock mutex
-			 (lambda ()
-			    (if (http-request? req)
-				(let ((val (scheme->response
-					    (list (list name value)) req)))
-				   (tprint ">>> hop-event-broadcast, ajax broadcast: " name " "
-					   (http-request-socket req))
-				   (ajax-signal-value req val)
-				   (set! req #f))
-				(ajax-connection-event-push! conn name value))))))
+		   (when debug-ajax
+		      (tprint ">>>    hop-event-broadcast, ajax.2 conn=" conn))
+		   (with-access::ajax-connection conn (req mutex padding)
+		      (synchronize mutex
+			 (when debug-ajax
+			    (tprint ">>>    hop-event-broadcast, ajax.3 req="
+			       req))
+			 (if (isa? req http-request)
+			     (let ((val (padding-response
+					   (scheme->response
+					      (list (list name value)) req)
+					   padding)))
+				(ajax-signal-value req val)
+				(set! req #f))
+			     (ajax-connection-event-push! conn name value)))))
 		(ajax-find-connections-by-name name)))
    
    (define (flash-event-broadcast! name value)
-      (for-each-socket
-       *flash-socket-table*
-       name
-       (lambda (l)
-	  (when (pair? l)
-	     (let ((val (flash-make-signal-value value)))
-		(for-each (lambda (req)
-			     (flash-signal-value req name val))
-			  l))))))
+      (let ((val (js-make-signal-value value)))
+	 (for-each-socket
+	    *flash-socket-table*
+	    name
+	    (lambda (l)
+	       (when (pair? l)
+		  (for-each (lambda (req)
+			       (flash-signal-value req name val))
+		     l))))))
 
-   (set! hop-broadcast-id (-fx hop-broadcast-id 1))
-   (hop-verb 2 (hop-color hop-broadcast-id hop-broadcast-id " BROADCAST")
-	     ": " name)
-   (hop-verb 3 " value=" (with-output-to-string (lambda () (write-circle value))))
-   (hop-verb 2 "\n")
-   (mutex-lock! *event-mutex*)
-   (unwind-protect
-      (begin
-	 (ajax-event-broadcast! name value)
-	 (flash-event-broadcast! name value))
-      (mutex-unlock! *event-mutex*))
+   (define (websocket-event-broadcast! name value)
+      (with-trace (websocket-debug-level) "ws-event-broadcast!"
+	 (trace-item "name=" name)
+	 (trace-item "value="
+	    (if (or (string? value) (symbol? value) (number? value))
+		value
+		(typeof value)))
+	 (let ((val (websocket-value name value)))
+	    (for-each-socket
+	       *websocket-socket-table*
+	       name
+	       (lambda (l)
+		  (with-trace (websocket-debug-level) "ws-event-broadcast"
+		     (trace-item "name=" name)
+		     (trace-item "# clients=" (length l))
+		     (trace-item "cients="
+			(map (lambda (resp)
+				(with-access::http-response-websocket resp (request)
+				   (with-access::http-request request (socket)
+				      socket)))
+			   l))
+		     (when (pair? l)
+			(for-each (lambda (resp)
+				     (websocket-signal resp val))
+			   l))))))))
+       
+   (define (multipart-event-broadcast! name value)
+      (let ((val (multipart-value name value)))
+	 (for-each-socket
+	    *multipart-socket-table*
+	    name
+	    (lambda (l)
+	       (when (pair? l)
+		  (for-each (lambda (req)
+			       (multipart-signal req val))
+		     l))))))
+
+   (synchronize *event-mutex*
+      (ajax-event-broadcast! name value)
+      (websocket-event-broadcast! name value)
+      (multipart-event-broadcast! name value)
+      (flash-event-broadcast! name value))
+   
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
@@ -776,6 +1334,251 @@
 (define (hop-event-policy-file req)
    (instantiate::http-response-raw
       (request req)
+      (connection 'close)
       (proc (lambda (p)
-	       (display (hop-event-policy (http-request-port req)) p)
+	       (with-access::http-request req (port)
+		  (display (hop-event-policy port) p))
 	       (write-char #a000 p)))))
+
+;*---------------------------------------------------------------------*/
+;*    *server-listeners* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *server-listeners*
+   (make-hashtable 16))
+
+;*---------------------------------------------------------------------*/
+;*    add-server-listener! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (add-server-listener! obj::bstring event::bstring proc::procedure capture)
+
+   (define (parse-host host auth)
+      (let ((l (string-split host ":")))
+	 (if (null? (cdr l))
+	     (values host 8080 #f)
+	     (values (car l) (string->integer (cadr l)) auth))))
+   
+   (define (parse-authenticated-host str)
+      (let ((s (string-split str "@")))
+	 (if (null? (cdr s))
+	     (parse-host str #f)
+	     (parse-host (cadr s) (car s)))))
+
+   (define (register-event! host port auth hs)
+      (with-access::hopsocket hs (mutex key listeners key)
+	 (with-hop (*register-service* :event obj :key key :mode "websocket")
+	    :authorization auth
+	    :host host :port port
+	    (lambda (_)
+	       (synchronize mutex
+		  (set! listeners
+		     (cons (cons obj proc) listeners)))))))
+
+   (define (get-hopsocket! host port auth key)
+      (let* ((sock (make-client-socket host port))
+	     (path (format "~a/public/server-event/websocket?key=~a"
+		      (hop-service-base)
+		      key)))
+	 (letrec* ((th (cond-expand
+			  (enable-threads
+			     (instantiate::hopthread
+				(body (lambda () (hopsocket-loop hs)))))
+			  (else
+			   (error "add-server-listener!"
+			      "server listener requires thread support"
+			      #f))))
+		   (hs (instantiate::hopsocket
+			  (key key)
+			  (socket sock)
+			  (thread th))))
+	    (hashtable-put! *server-listeners* event hs)
+	    (http :socket sock
+	       :host host
+	       :port port
+	       :path path
+	       :authorization auth
+	       :header `((origin ,(format "~a:~a" (hostname) (hop-port)))
+			 (WebSocket-Protocol "ws")))
+	    (let* ((in (socket-input sock))
+		   (line (read-line in))
+		   (upgrade (read-line in))
+		   (conn (read-line in))
+		   (origin (read-line in))
+		   (location (read-line in))
+		   (proto (read-line in)))
+	       (unless (string=? proto "")
+		  (read-line in)))
+	    (thread-start! th)
+	    hs)))
+
+   (define (parse-websocket-enveloppe buf len)
+      (cond
+	 ((pregexp-match "<x name='([^']*)'>"buf)
+	  => (lambda (m)
+		(let* ((name (cadr m))
+		       (xml (substring buf
+			       (+fx (string-length name) 11)
+			       (-fx len 4))))
+		   (values name xml))))
+	 ((pregexp-match "<s name='([^']*)'>" buf)
+	  => (lambda (m)
+		(let* ((name (cadr m))
+		       (url (substring buf
+			       (+fx (string-length name) 11)
+			       (-fx len 4))))
+		   (values name (url-decode url)))))
+	 ((pregexp-match "<i name='([^']*)'>"buf)
+	  => (lambda (m)
+		(let* ((name (cadr m))
+		       (int (substring buf
+			       (+fx (string-length name) 11)
+			       (-fx len 4))))
+		   (values name (string->integer int)))))
+	 ((pregexp-match "<f name='([^']*)'>" buf)
+	  => (lambda (m)
+		(let* ((name (cadr m))
+		       (real (substring buf
+				(+fx (string-length name) 11)
+				(-fx len 4))))
+		   (values name (string->real real)))))
+	 ((pregexp-match "<j name='([^']*)'><![[]CDATA[[]" buf)
+	  => (lambda (m)
+		(let* ((name (cadr m))
+		       (js (substring buf
+			      (+fx (string-length name) 20)
+			      (-fx  len 7))))
+		   (values name (call-with-input-string js javascript->obj)))))
+	 (else
+	  (error "hopsocket" "Illegal websocket enveloppe" buf))))
+
+   (define (read-websocket-event in)
+      (let ((buf (make-string 128))
+	    (len 128))
+	 (let loop ((i 0))
+	    (let ((c (read-byte in)))
+	       (cond
+		  ((=fx c 255)
+		   (parse-websocket-enveloppe buf i))
+		  ((=fx i len)
+		   (let ((nbuf (make-string (*fx 2 len))))
+		      (blit-string! buf 0 nbuf 0 len)
+		      (set! buf nbuf)
+		      (set! len (*fx 2 len))
+		      (string-set! buf i (integer->char c))
+		      (loop (+fx i 1))))
+		  (else
+		   (string-set! buf i (integer->char c))
+		   (loop (+fx i 1))))))))
+
+   (define (hopsocket-raise-event hs name value)
+      (with-access::hopsocket hs (mutex listeners)
+	 (let ((l (synchronize mutex
+		     (filter (lambda (c) (string=? (car c) name))
+			listeners))))
+	    (when (pair? l)
+	       (let ((e (instantiate::server-event
+			   (name name)
+			   (value value)
+			   (target event))))
+		  (let loop ((l l))
+		     (when (pair? l)
+			((cdar l) e)
+			(with-access::event e (stopped)
+			   (unless stopped
+			      (loop (cdr l)))))))))))
+
+   (define (hopsocket-loop hs)
+      (with-access::hopsocket hs (socket)
+	 (let ((in (socket-input socket)))
+	    (let loop ()
+	       (let ((o (read-byte in)))
+		  (cond
+		     ((eof-object? o)
+		      ;; close silently
+		      #f)
+		     ((=fx o 0)
+		      (multiple-value-bind (name value)
+			 (read-websocket-event in)
+			 (hopsocket-raise-event hs name value)
+			 (loop)))
+		     (else
+		      (error "hopsocket"
+			 "Illegal server response"
+			 (format "{~a}~a" o (read-string in))))))))))
+      
+   (multiple-value-bind (host port auth)
+      (parse-authenticated-host event)
+      (let ((hs (synchronize *listener-mutex*
+		   (hashtable-get *server-listeners* event))))
+	 (if (isa? hs hopsocket)
+	     (register-event! host port auth hs)
+	     (with-hop (*port-service*)
+		:host host :port port
+		:authorization auth
+		(lambda (v)
+		   (let ((key (vector-ref v 2)))
+		      (synchronize *listener-mutex*
+			 (let ((hs (hashtable-get *server-listeners* event)))
+			    (if (isa? hs hopsocket)
+				(register-event! host port auth hs)
+				(let ((hs (get-hopsocket! host port auth key)))
+				   (register-event! host port auth hs))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    remove-server-listener! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (remove-server-listener! obj event proc capture)
+   (let ((hs (synchronize *listener-mutex*
+		(hashtable-get *server-listeners* event))))
+      (when (isa? hs hopsocket)
+	 (with-access::hopsocket hs (mutex socket listeners)
+	    (synchronize mutex
+	       (set! listeners (filter! (lambda (l)
+					   (not (eq? (car l) obj)))
+				  listeners))
+	       (when (null? listeners)
+		  (socket-close socket)
+		  (synchronize *listener-mutex*
+		     (hashtable-remove! *server-listeners* event))))))))
+
+;*---------------------------------------------------------------------*/
+;*    padding-response ...                                             */
+;*---------------------------------------------------------------------*/
+(define (padding-response rep padding)
+   (when padding
+      (with-access::http-response-hop rep ((p padding) content-type)
+	 (set! p padding)
+	 (set! content-type "application/x-javascript")))
+   rep)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-info-service ...                                       */
+;*---------------------------------------------------------------------*/
+(define (hop-event-info-service)
+   (hop-event-init!)
+   *port-service*)
+
+;*---------------------------------------------------------------------*/
+;*    hop-event-register-service ...                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-event-register-service)
+   (hop-event-init!)
+   *register-service*)
+   
+;*---------------------------------------------------------------------*/
+;*    hop-event-unregister-service ...                                 */
+;*---------------------------------------------------------------------*/
+(define (hop-event-unregister-service)
+   (hop-event-init!)
+   *unregister-service*)
+   
+;*---------------------------------------------------------------------*/
+;*    apply-listeners ...                                              */
+;*---------------------------------------------------------------------*/
+(define (apply-listeners listeners::obj e::event)
+   (let loop ((l listeners))
+      (when (pair? l)
+	 ((car l) e)
+	 (with-access::event e (stopped)
+	    (unless stopped
+	       (loop (cdr l)))))))
+

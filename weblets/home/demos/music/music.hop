@@ -1,52 +1,26 @@
 (module hophome_demos-music
    (export (home/demos/music)))
 
-(define podcast-list
-   '(("http://radiofrance-podcast.net/podcast/rss_10053.xml"
-      "France Musique")
-     ("http://radiofrance-podcast.net/podcast/rss_20000.xml"
-      "FIP")
-     ("http://radiofrance-podcast.net/podcast/rss_16256.xml"
-      "Continent sciences")
-     ("http://radiofrance-podcast.net/podcast/rss_10334.xml"
-      "Le Mouv'")))
-
-(define (rss->podcast-mp3 url)
-   (with-url url
-      (lambda (p)
-	 (bind-exit (return)
-	    (let ((p (open-input-string p)))
-	       (xml-parse p
-			  :procedure
-			  (lambda (markup attributes body)
-			     (when (eq? markup 'enclosure)
-				(return (cdr (assq 'url attributes))))))
-	       #f)))))
-
 (define-service (home/demos/music)
-   (let ((audio (<AUDIO> :controls #t)))
+   (let ((audio (<AUDIO> :controls #t
+		   :src "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg"))
+	 (input (<INPUT> :name "podcast" :id "podcast" :type 'text
+		   :size 50
+		   :value "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg")))
       (<HTML>
-	 (<HEAD>
-	    :title "Podcast demo"
-	    :include "hop-audio" "hop-slider"
+	 (<HEAD> :title "Audio Demo"
+	    :include "hop-audio"
 	    :css (service-resource home/demos/music "music.hss"))
 	 (<BODY>
-	    ~(define snd #f)
-	    ~(define (play-url url)
-		(if (string=? url "")
-		    (set! snd #f)
-		    (set! snd (make-sound url :stream #t))))
-	    (<H3> "Podcast demonstration")
-	    audio
+	    (<H1> "Audio demo") audio
 	    (<BR>)
-	    (<SELECT> :name "podcast" :id "podcast" :size 1
-	       :onchange ~(audio-load $audio this.value #t)
-	       (<OPTION> :value "" "Select a podcast")
-	       (filter-map (lambda (podcast)
-			      (let* ((rss (car podcast))
-				     (name (cadr podcast))
-				     (url (rss->podcast-mp3 (car podcast))))
-				 (when url
-				    (<OPTION> :value url name))))
-			   podcast-list))))))
-	       
+	    (<BR>)
+	    (<DIV> "Enter a music URL:"
+	       input " "
+	       (<BUTTON> "load" :onclick ~(audio-load $audio $input.value #t)))
+	    (<DIV> :class "disclaimer" [Disclaimer: the file format
+to be used by the audio player, depends on the browser you use. With Firefox, you
+music provide an ,(<TT> ".ogg") file, with other browser you must provide a ,(<TT> ".mp3").
+Hop can be used to convert music files on the fly (e.g., from ,(<TT> ".ogg")
+,(<TT> ".mp3") and vice versa) but in order to avoid abuses of this Web site, this facility
+is not provided by this demo. Check the ,(<TT> "<AUDIO>") Hop markup in the Hop documentation.])))))

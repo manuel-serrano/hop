@@ -1,0 +1,36 @@
+Here is the procedure to start a scratchbox environment.
+
+== 0. Add scratchbox user ==
+
+   $ /misc/virtual/maemo/4.1/scratchbox/sbin/sbox_adduser USER yes
+
+
+== 1. Start scratchbox ==
+
+   $ sudo /misc/virtual/maemo/4.1/scratchbox/sbin/sbox_ctl start
+
+
+== 2. To make /users accessible from scratchbox serrano's env ==
+
+   $ sudo mount -o bind /users /misc/virtual/maemo/4.1/scratchbox/users/serrano/users/
+
+2.b Optionnally, to login to scratchbox session using the following command (as user):
+
+   $ /misc/virtual/maemo/4.1/scratchbox/login
+
+2.c Optionnally, to run the X emulator from the PC:
+
+   $ Xephyr :2 -host-cursor -screen 800x480x16 -dpi 96 -ac -extension Composite
+
+Alternatively:
+
+   $ Xnest :2 -geometry 800x480 -dpi 96 -ac -extension Composite
+
+From scratchbox:
+
+   $ export DISPLAY=:2
+   $ af-sb-init.sh start
+
+To run applications:
+
+   $ run-standalone.sh myapp

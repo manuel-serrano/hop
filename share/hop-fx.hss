@@ -1,0 +1,95 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.0.x/share/hop-fx.hss                  */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Jul  8 08:39:01 2009                          */
+/*    Last change :  Sun Jan 10 10:21:24 2010 (serrano)                */
+/*    Copyright   :  2009-10 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    HOP FX CSS                                                       */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-fx)
+
+/*---------------------------------------------------------------------*/
+/*    url ...                                                          */
+/*    -------------------------------------------------------------    */
+/*    Some browsers (IE in particular) does not support inlined        */
+/*    image inside a URL specification. Hence, icons cannot            */
+/*    be cached. Once these browsers are fixed, the inlining could     */
+/*    be enabled.                                                      */
+/*---------------------------------------------------------------------*/
+$(define (url file)
+    (let ((fname (make-file-name (hop-share-directory) file))
+          (enable-image-inlining #f))
+       (if (and enable-image-inlining (file-exists? fname))
+	   (let ((p (open-input-file fname)))
+	      (if (input-port? p)
+		  (unwind-protect
+		     (format "url( \"data:~a;base64,~a\" )"
+			     (mime-type file (format "image/~a" (suffix file)))
+			     (base64-encode (read-string p) 0))
+		     (close-input-port p))
+		  (format "url( ~s )" file)))
+	   (format "url( ~s )" file))))
+
+/*---------------------------------------------------------------------*/
+/*    shadow                                                           */
+/*---------------------------------------------------------------------*/
+table.hop-fx-shadow {
+  padding: 0;
+  border-width: 0;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+table.hop-fx-shadow td.hop-shadow-ne {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: $(url "icons/hop-fx/shadow-ne.png");
+  background-repeat: no-repeat;
+  background-position: bottom;
+}
+
+table.hop-fx-shadow td.hop-shadow-e {
+  font-size: 2pt;
+  width: 8px;
+  background: none;
+  background-image: $(url "icons/hop-fx/shadow-e.png");
+  background-repeat: repeat-y;
+  border: 0;
+}
+
+table.hop-fx-shadow td.hop-shadow-sw {
+  font-size: 2pt;
+  width: 8px;
+  height: 8px;
+  background: none;
+  background-image: $(url "icons/hop-fx/shadow-sw.png");
+  background-repeat: repeat-x;
+  background-position: bottom;
+}
+
+table.hop-fx-shadow td.hop-shadow-s {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: $(url "icons/hop-fx/shadow-s.png");
+  background-repeat: repeat-x;
+  background-position: bottom;
+}
+
+table.hop-fx-shadow td.hop-shadow-se {
+  font-size: 2pt;
+  height: 8px;
+  background: none;
+  background-image: $(url "icons/hop-fx/shadow-se.png");
+  background-repeat: repeat-x;
+  background-position: bottom;
+  border: 0;
+}

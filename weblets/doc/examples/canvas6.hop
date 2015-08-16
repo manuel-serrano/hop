@@ -1,0 +1,48 @@
+;; Using texts with canvas
+(let ((can (<CANVAS> :width 400 :height 400 :style "border: 2px ridge black")))
+   (<HTML>
+      (<HEAD> :include "hop-canvas")
+      (<DIV> :align 'center can)
+      ~(add-event-listener! window "load"
+	  (lambda (e)
+	     (let ((ctx (canvas-get-context $can "2d")))
+		;; filling texts
+		(canvas-properties-set! ctx :font "20pt Arial")
+		(canvas-fill-text ctx "A left-hand-side text" 0 30)
+		(let* ((t "A right-hand-side text")
+		       (w (canvas-measure-text ctx t)))
+		   (canvas-fill-text ctx t (- $can.width w 0) 100))
+		;; stroking texts
+		(canvas-properties-set! ctx :font "20pt Arial Bold"
+					:stroke-style "black")
+		(canvas-stroke-text ctx "A stroked text" 0 150)
+		;; text paths
+		(canvas-save ctx)
+		(canvas-translate ctx 10 200)
+		(canvas-properties-set! ctx
+					:fill-style "green"
+					:stroke-style "red"
+					:font "40pt Arial")
+		(canvas-begin-path ctx)
+		(canvas-path-text ctx "Sample String")
+		(canvas-fill ctx)
+		(canvas-stroke ctx)
+		(canvas-close-path ctx)
+		(canvas-restore ctx)
+		;; text along path
+		(let ((hop "HOP is a new Software Development Kit for the Web 2.0.  It relies a new higher-order language for programming interactive web applications such as multimedia applications (web galleries, music players, ...), 
+office applications (web agendas, mail clients, ...), ubiquitous domotics, etc. HOP can be viewed as a replacement for traditional graphical toolkits. "))
+		   (canvas-save ctx)
+		   (canvas-properties-set! ctx
+					   :fill-style "black"
+					   :font "90pt Serif"
+					   :stroke-style "red")
+		   (canvas-begin-path ctx)
+		   (canvas-translate ctx 10 350)
+		   (canvas-path-text ctx "H O P")
+		   (canvas-properties-set! ctx :fill-style "grey"
+					   :font "10pt sans serif")
+		   (canvas-text-along-path ctx hop #f)
+		   (canvas-restore ctx)))))))
+
+

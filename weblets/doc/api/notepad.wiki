@@ -42,6 +42,7 @@ using //Notepads// must include in their header, the following statement:
 
 <example><NOTEPAD></example>
 
+
 == Server Definitions ==
 <server>
 
@@ -51,6 +52,7 @@ using //Notepads// must include in their header, the following statement:
 <arguments>
 ^  attributes  ^   type    ^   default    ^  short description          ^
 | :id          |  string   |  //random//  | element identifier.         |
+| :onchange    |  function  |      -       | a function to invoke on pad selection.  |
 | :history     |  obj      |  _           | enables history recording.  |
 | body         |  element  |  empty       | the body.                   |
 </arguments>
@@ -72,7 +74,6 @@ if it is not ++#f++ and an ++:id++ value is provided.
 <arguments>
 ^  attributes  ^   type     ^   default    ^  short description                      ^
 | :id          |  string    |  //random//  | element identifier.                     |
-| :onchange    |  function  |      -       | a function to invoke on pad selection.  |
 | body         |  element   |  empty       | the body.                               |
 </arguments>
 

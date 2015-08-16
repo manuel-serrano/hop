@@ -1,0 +1,91 @@
+;*=====================================================================*/
+;*    Author      :  Florian Loitsch                                   */
+;*    Copyright   :  2007-11 Florian Loitsch, see LICENSE file         */
+;*    -------------------------------------------------------------    */
+;*    This file is part of Scheme2Js.                                  */
+;*                                                                     */
+;*   Scheme2Js is distributed in the hope that it will be useful,      */
+;*   but WITHOUT ANY WARRANTY; without even the implied warranty of    */
+;*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the     */
+;*   LICENSE file for more details.                                    */
+;*=====================================================================*/
+
+(module transform-util
+   (import nodes
+	   error
+	   export-desc
+	   symbol)
+   (export (parameter-assig-mapping where call operands formals vaarg)))
+
+;; needed for inlining, ...
+;; if vaarg? is #t then the last element is a vaarg.
+;;
+;; given a call to a function with signature (formals . vaarg)
+;; this function returns a list of pairs (formal . value).
+;; Ex: (parameter-assig-mapping ((+ 1 1) 2 3 4) (x y) (z)
+;;   => ((x (+ 1 1)) (y 2) (z (list 3 4)))
+;; The formals/vaarg are *not* referenced.
+;;
+;; Ensures that the order of assignment is that of formals
+(define (parameter-assig-mapping where call operands formals vaarg?)
+   (let loop ((opnds operands)
+	      (formals formals)
+	      (rev-res '()))
+      (cond
+	 ;; nothing left to do.
+	 ((and (null? opnds)
+	       (null? formals))
+	  (reverse! rev-res))
+	 
+	 ;; no formals, but opnds
+	 ((and (not (null? opnds))
+	       (null? formals))
+	  (scheme2js-error where
+			   "too many arguments"
+			   '()
+			   call))
+	 
+	 ;; the last element is a vaarg
+	 ;; and no operands left
+	 ((and (null? (cdr formals))
+	       vaarg?
+	       (null? opnds))
+	  ;; just map vaarg to '(), and return the
+	  ;; whole assig-list
+	  (reverse (cons (cons (car formals) (instantiate::Const (value '())))
+		      rev-res)))
+	 
+	 ;; the last element is a vaarg, and there are still operands
+	 ((and (null? (cdr formals))
+	       vaarg?)
+	  ;; create a list, and map vaarg to it.
+	  ;; then return the whole list of pairs.
+	  (let ((rvalue (instantiate::Call
+			   (location (if (and (pair? operands)
+					      (isa? (car operands) Node))
+					 (with-access::Node (car operands) (location)
+					    location)
+					 #f))
+			   (operator (runtime-reference 'list))
+			   (operands opnds))))
+	     (reverse (cons (cons (car formals) rvalue)
+			 rev-res))))
+
+	 ;; no opnds, but formals
+	 ((and (null? opnds)
+	       (not (null? formals)))
+	  (scheme2js-error where
+			   "not enough arguments"
+			   (if (isa? (car formals) Ref)
+			       (with-access::Ref (car formals) (var)
+				  (with-access::Var var (id)
+				     id))
+			       '())
+			   call))
+
+	 ;; still (non-vaarg)-formals and operands left.
+	 (else
+	  (loop (cdr opnds)
+		(cdr formals)
+		(cons (cons (car formals) (car opnds))
+		      rev-res))))))

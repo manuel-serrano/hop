@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/runtime/xml.sch                         */
+;*    serrano/prgm/project/hop/2.2.x/runtime/xml.sch                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 15:24:40 2005                          */
-;*    Last change :  Wed Dec  6 18:58:32 2006 (serrano)                */
-;*    Copyright   :  2005-06 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:46:31 2011 (serrano)                */
+;*    Copyright   :  2005-11 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML macros                                                       */
 ;*=====================================================================*/
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
-(directives (option (loadq "xml-expd.sch")))
+(directives (option (loadq "xml_expd.sch")))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-xml-element ...                                           */
@@ -38,3 +38,8 @@
 ;*    define-xml-compound ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-expander define-xml-compound hop-define-xml-cpd-expander)
+
+;*---------------------------------------------------------------------*/
+;*    define-tag ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-expander define-tag hop-server-define-tag)

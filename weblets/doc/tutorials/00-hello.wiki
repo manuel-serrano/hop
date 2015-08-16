@@ -58,14 +58,20 @@ In this example, we define a ,(<APIREF> "service" "service.wiki") named
 ,(<APIREF> "define-service" "service.wiki") special form. 
 
 <example>
-  (define-service (hello)
+  (define-service (hello/world)
      (<HTML>
         (<BODY>
            "Hello World!")))
 
-  (<HTML>
-    (<BODY>
-       (<A> :href "/hop/hello" "click me")))
+  (define (say-hello)
+     (<HTML>
+        (<BODY>
+           (<A> :href "/hop/hello/world" "click me"))))
+
+  (define-service (hello)
+     (say-hello))
+
+  (say-hello)
 </example>
 
 This automatically binds the URL ++/hop/hello++ to the service. The prefix
@@ -81,6 +87,17 @@ service.
 ~~ Once, you have evaluated the code above once, the service ++hello++
 being bound, you can directly go to the URL [[http://localhost:8080/hop/hello]]
 in your browser.
+
+,(<SPAN> :style { color: red; font-weight: bold } "Note:") For the
+sake of security, the default Hop setting disables services
+re-definition. Hence, a module loaded afterward cannot change the
+definition of services already existing. As a consequence, the
+examples of the documentation that define services can only be
+executed once (//i.e.,,// the "Run" button can only be clicked
+once). This behavior can be changed when spawning Hop. Invoking Hop
+with either the ++-g++ (debug) or ++-allow-service-override++ will
+enable multiple service definitions.
+
 
 == Storing the service on a file ==
 
@@ -173,7 +190,7 @@ text is centered.
 We now add a parameter to the service.
 
 <example>
-  (define-service (hello who)
+  (define-service (hello #!key who)
      (<HTML>
         (<BODY>
            (<DIV> :align "center" 
@@ -216,14 +233,14 @@ to provide a value to a ++<HEAD>>++ attribute :dir. Then, it is used to
 refer to a image.
 
 <code>
-  (define-service (hello who)
+  (define-service (hello #!key who)
      (<HTML>
        (<HEAD>
          :title "A simple weblet"
          :dir (service-resource hello)
          :css "hello.hss")
        (<BODY>
-         (<IMG> :href (service-resource hello "hello.jpg"))))) 
+         (<IMG> :src (service-resource hello :who "hello.jpg"))))) 
 </code>
 
 </doc>

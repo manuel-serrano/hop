@@ -1,0 +1,7 @@
+;; a simple spinbutton
+(<HTML>
+   (<HEAD> :include "hop-spinbutton")
+   (<BODY>
+      (<SPINBUTTON> :min -100 :max 100
+	 :onchange ~(if (= (remainder this.value 10) 0)
+			(alert (spinbutton-value this))))))

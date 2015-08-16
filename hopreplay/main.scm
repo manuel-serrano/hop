@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.0.x/hopreplay/main.scm                */
+;*    serrano/prgm/project/hop/2.4.x/hopreplay/main.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon May  4 16:32:52 2009 (serrano)                */
-;*    Copyright   :  2004-09 Manuel Serrano                            */
+;*    Last change :  Sun Jun 17 08:57:26 2012 (serrano)                */
+;*    Copyright   :  2004-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPREPLAY entry point                                        */
 ;*=====================================================================*/
@@ -16,29 +16,12 @@
 
    (library scheme2js hopscheme hop web)
 
-   (cond-expand
-      (enable-threads (library pthread)))
-
    (import  hoprp_parseargs
 	    hoprp_param
 	    hoprp_replay
 	    hoprp_log)
 
    (main    main))
-
-;*---------------------------------------------------------------------*/
-;*    hop-verb ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-expander hop-verb
-   (lambda (x e)
-      (match-case x
-	 ((?- (and (? integer?) ?level) . ?rest)
-	  (let ((v (gensym)))
-	     `(let ((,v ,(e level e)))
-		 (if (>=fx (hop-verbose) ,v)
-		     (hop-verb ,v ,@(map (lambda (x) (e x e)) rest))))))
-	 (else
-	  `(hop-verb ,@(map (lambda (x) (e x e)) (cdr x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */

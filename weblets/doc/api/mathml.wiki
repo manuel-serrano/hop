@@ -10,7 +10,7 @@ markups.
 
 ~~ In addition to regular SVG markups, HOP supports the additional
 ++<MATHML:TEX>++ markup that allows math TeX math formulas to be 
-embed inside HOP programs.
+embedded inside HOP programs.
 
 ~~ Note: ,(<SPAN> :style { font-weight: bold; color: red } [
 Embedding MatHML markups inside Web pages with Firefox is currently 
@@ -102,10 +102,12 @@ so they are not described here.
 
 The markup ++<MATH:TEX>++ allows an HTML page to embed, inside a 
 ++<MATH>++ markup a mathematics formula expressed using the TeX syntax.
+The argument is either a string or a list of string.
 
 ~~ Example:
 
-  (<MATH> (<MATH:TEX> {\sqrt{\cos(x)}}))
+  (<MATH> (<MATH:TEX> "\\sqrt{\\cos(x)}"))
+  (<MATH> (<MATH:TEX> [\sqrt{\cos(x)}]))
 
 
 </markup>

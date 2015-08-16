@@ -1,0 +1,32 @@
+<doc> WORKBENCH -- A Hop workbench
+
+== Description ==
+
+Workbench is a Hop weblet that let programers test their own programs
+interactively inside a web browser.
+
+
+~~
+,(<TABLE> :class "weblet-facts"
+  (<TR> (<TD> :rowspan 5 :class "logo"
+            (<IMG> :src (make-file-name (dirname (the-loading-file)) "logo.png")))
+        (<TH> (string-capitalize "@HZ@") " version") (<TD> "@VERSION@"))
+  (<TR> (<TH> "Hop min version") (<TD> "@MINHOP@"))
+  (<TR> (<TH> "Hop max version") (<TD> "@MAXHOP@"))
+  (<TR> (<TH> "Date") (<TD> "@DATE@"))
+  (<TR> (<TH> "Category") (<TD> "@CATEGORY@")))
+
+~~ The workbench reads a program on the disk of the broker, executes
+it, and includes it's generated content inside a window of the browser
+and report possible errors or messages.
+
+~~ The workbench top row consists of a file selector. Hitting the ++[tab]++
+key complements the file path prefix. Hitting ++[tab]++ twice pops up a
+file brower. Hitting the ++[return]++ loads the program.
+
+~~ Once loaded, a program may be executed. For that, the second input row
+of the workbench must be filled with the name of the service to be executed.
+Click the ++run++ button or hitting the ++[return]++ key of the service
+input field spawns the execution.
+
+</doc>

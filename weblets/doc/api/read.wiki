@@ -37,7 +37,7 @@ When a text is read (the ++[...]++ expressions as described in the
 		 (lambda ()
 		    (notepad-select "doc-notepad" "doc-core")
 		    (window.scrollTo 0 0)))
-"Syntex") section)
+"Syntax") section)
 are //automatically// encoded into the ++charset++ value. That is,
 they are assumed to be expressed in the ++(hop-locale)++ encoding and the
 reader decodes and re-encodes them using the encoding specified in the

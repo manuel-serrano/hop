@@ -1,0 +1,51 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.1.x/weblets/test/gauge.hop            */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Apr 13 10:28:51 2010                          */
+;*    Last change :  Tue Apr 13 10:32:17 2010 (serrano)                */
+;*    Copyright   :  2010 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Testing gauges                                                   */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module weblet_test-gauge
+   (import weblet_test)
+   (export test/gauge))
+
+;*---------------------------------------------------------------------*/
+;*    test/gauge ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-service (test/gauge)
+   (<TEST-HTML> :include "hop-gauge"
+      :source (service-resource test/gauge "gauge.hop")
+      (<DIV> :class "comment"
+	 "This test checks Gauges.")
+      (<TEST-GAUGE>)))
+
+;*---------------------------------------------------------------------*/
+;*    <TEST-GAUGE> ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (<TEST-GAUGE>)
+    (<TABLE> :style "width: 400px"
+       (<TR>
+	  (<TD> :style "text-align: center; width: 200px;"
+	     "count"
+	     (<GAUGE> :id "g1" :value 0 :format "~a / 99"))
+	  (<TD> :style "text-align: center; width: 200px;"
+	     "percentage"
+	     (<GAUGE> :id "g2" :value 99 :onchange
+		~(let ((p (round (* 100 (/ event.value 99)))))
+		    (gauge-text-set! this (format "~a %" p))
+		    (stop-event-propagation event #f)))))
+       (<TR>
+	  (<TD> :colspan 2 :style "text-align: center"
+	     (<BUTTON> :onclick ~(let loop ((i 0))
+				    (when (<= i 99)
+				       (gauge-value-set! "g1" i)
+				       (gauge-value-set! "g2" (- 99 i))
+				       (after 10 (lambda () (loop (+ i 1))))))
+		"Animate")))))

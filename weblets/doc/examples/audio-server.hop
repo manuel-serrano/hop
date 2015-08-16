@@ -1,0 +1,14 @@
+;; //Server-side// audio element
+(module audio-server
+   (library multimedia gstreamer))
+
+(<HTML>
+   (<HEAD> :include "hop-audio")
+   (<BODY>
+      (<AUDIO> :controls #t
+	 :src "http://www.m-base.org/tao_of_mad_phat_mp3_files/the_tao_of_mad_phat.mp3"
+	 :browser 'none
+	 :server (instantiate::audio-server
+		    (music (instantiate::gstmusic))))
+      (<DIV> :style "margin-top: 2ex"
+	 "Click the \"play\" button to starting playing music")))

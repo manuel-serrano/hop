@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/1.10.x/weblets/hzbuilder/Makefile       */
+#*    serrano/prgm/project/hop/2.0.x/weblets/hzbuilder/Makefile        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Sep 29 10:46:16 2008 (serrano)                */
-#*    Copyright   :  2007-08 Manuel Serrano                            */
+#*    Last change :  Tue Dec  8 08:42:20 2009 (serrano)                */
+#*    Copyright   :  2007-09 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Weblet Makefile                                                  */
 #*=====================================================================*/
@@ -31,7 +31,7 @@ POPULATION= $(SOURCES) \
   etc/skeleton/doc.wiki.in etc/skeleton/weblet.info.in \
   etc/skeleton/logo.png etc/skeleton/favicon.png etc/skeleton/dashboard.png \
   etc/skeleton/01-homepage.wiki \
-  Makefile LICENSE
+  Makefile
 
 #*---------------------------------------------------------------------*/
 #*    Targets                                                          */
@@ -46,6 +46,6 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-include ../../etc/Makefile.hopconfig
-include ../../etc/Makefile.version
+-include ../../etc/Makefile.hopconfig
+-include ../../etc/Makefile.version
 include ../../etc/Makefile.weblet

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/1.9.x/weblets/test/event.hop            */
+;*    serrano/prgm/project/hop/2.3.x/weblets/test/event.hop            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul  2 13:30:07 2007                          */
-;*    Last change :  Sun Feb 17 19:16:18 2008 (serrano)                */
-;*    Copyright   :  2007-08 Manuel Serrano                            */
+;*    Last change :  Tue Mar 20 05:18:51 2012 (serrano)                */
+;*    Copyright   :  2007-12 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing events                                                   */
 ;*=====================================================================*/
@@ -20,9 +20,12 @@
 ;*    test/events ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-service (test/events)
-   (let ((evt1 (symbol->string (gensym "event")))
-	 (evt2 (symbol->string (gensym "event")))
-	 (evt3 (symbol->string (gensym "event"))))
+   (let ((evt1 (symbol->string (gensym "event-ok")))
+	 (evt2 (symbol->string (gensym "event-a")))
+	 (evt3 (symbol->string (gensym "event-b")))
+	 (evt4 (symbol->string (gensym "event-ready")))
+	 (evt5 "event-long")
+	 (evt6 "event-extralong"))
       (<TEST-HTML>
 	 :source (service-resource test/events "event.hop")
 	 (<DIV> :class "comment"
@@ -35,6 +38,9 @@ events succeeded, you should see an acknowledge.")
 		      "I'm a sensitive region"))
 		(b3 (<SPAN> :style "color: red" "...waiting"))
 		(b4 (<SPAN> :style "color: red" ""))
+		(b5 (<SPAN> :style "color: red" ""))
+		(b6 (<SPAN> :style "color: red" ""))
+		(b7 (<SPAN> :style "color: gray; font-style: italic" ""))
 		(b2 (<DIV> :style "padding-top: 3ex"
 		       ~(add-event-listener! $b
 					     "mouseover"
@@ -87,36 +93,71 @@ events succeeded, you should see an acknowledge.")
 		      (let ((nval (string-append $b4.innerHTML e.value)))
 			 (innerHTML-set! $b4 nval)
 			 #t)))
-	       ~(add-event-listener! $evt1
-				     "server"
-				     (lambda (e)
-					(when e.value
-					   (innerHTML-set! $b3 e.value)))
-				     #t)
-	       ~(add-event-listener! $evt2 "server" add #t)
-	       ~(add-event-listener! $evt3 "server" add #t)
-	       ~(add-event-listener! document
-				     "server"
-				     (lambda (e)
-					(cond
-					   ((equal? e.value $evt1)
-					    (set! e.value "ok"))
-					   ((equal? e.value $evt2)
-					    (set! e.value "A"))
-					   ((equal? e.value $evt3)
-					    (set! e.value "B")))))
-	       ~(add-event-listener! document
-				     "serverready"
-				     (lambda (e)
-					(with-hop ($(service :ttl 1 ()
-						       (hop-event-signal!
-							evt1 evt1)
-						       (hop-event-signal!
-							evt2 evt2)
-						       (hop-event-signal!
-							evt3 evt3))))))
+	       ~(define (add-text e)
+		   (when e.value
+		      (innerHTML-set! $b5 (apply string-append e.value))))
+	       ~(define (add-length e)
+		   (when e.value
+		      (innerHTML-set! $b6
+			 (format "~a ~a" $b6.innerHTML
+			    (string-length e.value)))))
+	       ~(add-event-listener! server $evt1
+		   (lambda (e)
+		      (when e.value
+			 (innerHTML-set! $b3 e.value)))
+		   #t)
+	       ~(add-event-listener! server $evt2 add #t)
+	       ~(add-event-listener! server $evt3 add #t)
+	       ~(add-event-listener! server $evt4 add-text #t)
+	       ~(add-event-listener! server $evt5 add-length #t)
+	       ~(add-event-listener! server $evt6 add-length #t)
+	       ~(add-event-listener! server document
+		   (lambda (e)
+		      (cond
+			 ((equal? e.value $evt1)
+			  (set! e.value "ok"))
+			 ((equal? e.value $evt2)
+			  (set! e.value "A"))
+			 ((equal? e.value $evt3)
+			  (set! e.value "B")))))
+	       ~(add-event-listener! server "ready"
+		   (lambda (e)
+		      (let ((imp (if (string? (hop-config :server_event))
+				     (hop-config :server_event)
+				     "long polling")))
+			 (innerHTML-set! $b7 imp))
+		      (with-hop ($(service :ttl 1 ()
+				     (hop-event-signal!
+					evt1 evt1)
+				     (hop-event-signal!
+					evt2 evt2)
+				     (hop-event-signal!
+					evt3 evt3)
+				     (hop-event-signal!
+					evt4 (list "foo" "\"" "bar"))
+				     (hop-event-signal!
+					evt5 (make-string 65510 #\a))
+				     (hop-event-signal!
+					evt6 (make-string 65508 #\b)))))))
+	       (<H4> "Client events")
 	       b
 	       b2
+	       (<H4> "Server events")
+	       (<DIV> "client-side implementation: " b7)
 	       (<DIV> "Server event: " b3
-		      ", Server event 2 (AB or BA when okay): " b4))))))
+		      ", Server event 2 (AB or BA when okay): " b4)
+	       (<DIV> "Server string event should be [foo\"bar]: " b5)
+	       (<DIV> "Server string event should be [65510 65508]: " b6)
+	       (<H4> "Orientation (browser dependent)")
+	       (<DIV> :style "border: 1px solid black; text-align: center;"
+		  (<SPAN> :id "orientation" "Move your device"))
+	       ~(add-event-listener! window "load"
+		   (lambda (e)
+		      (add-event-listener! window "deviceorientation"
+			 (lambda (e)
+			    (node-style-set! "orientation"
+			       :color "red"
+			       :MozTransform (format "rotate(-~adeg)" e.gamma)))))))))))
+		      
+				    
       

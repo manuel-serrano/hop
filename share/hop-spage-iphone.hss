@@ -1,0 +1,107 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/2.3.x/share/hop-spage-iphone.hss        */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Dec  8 11:16:21 2010                          */
+/*    Last change :  Thu May  3 11:00:51 2012 (serrano)                */
+/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    Spage with an iphone-like look-and-feel.                         */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    The module                                                       */
+/*---------------------------------------------------------------------*/
+$(module __hss-spage-iphone)
+
+spage {
+  padding: 0; 
+  margin: 0;
+}
+
+sphead {
+  button-visibility: visible;
+  button-text-visibility: visible;
+  button-content: "\00ab";
+  button-width: 8em;
+  color: white;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  font-size: 14pt;
+  text-align: center;
+  text-shadow: 0px -1px #888;
+  white-space: nospace;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background: #bac6d2;
+  background-image: -moz-linear-gradient( -90deg, #bac6d2, #7995b1 );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#bac6d2), to(#7995b1) );
+  border-bottom: 1px solid #4c6171;
+  border-top: 1px solid #c6cfd9;
+  border-left: 0;
+  border-right: 0;
+}
+
+sptabhead {
+  button-visibility: visible;
+  button-content: "\00bb";
+  button-align: right;
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  font-weight: bold;
+  text-align: left;
+  color: black;
+  text-shadow: none;
+  background: inherit;
+  border-top: 0;
+  border-bottom: 1px solid #eaeaea;
+  padding: 6px;
+  position: relative;
+  cursor: pointer;
+}
+
+sptabhead:hover {
+  background: #8CB3DE;
+  background-image: -moz-linear-gradient( -0deg, #8CB3DE, #BAD0E8 );
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#8CB3DE), to(#BAD0E8) );
+  color: white;
+  text-shadow: 0px -1px #888;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sppopup configuration                                            */
+/*---------------------------------------------------------------------*/
+div[data-hss-tag=hop-sppopbutton] {
+  display: none;
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  height: 20px;
+  background: #6783AA;
+  background-image: -moz-linear-gradient( -90deg, #6783AA, #4A6C9B );
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#6783AA), to(#4A6C9B));
+  border-top: 1px solid #30363E;
+  border-left: 1px solid #3D4D63;
+  border-bottom: 1px solid #375073;
+  border-right: 1px solid #375073;
+  border-radius: 5px;
+  text-align: left;
+  padding-left: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  font-size: 60%;
+}
+
+div[data-hss-tag=hop-sppopbutton]:before {
+  font-size: 140%;
+  margin-right: 2px;
+}
+
+div[data-hss-tag=hop-sppopbutton]:hover {
+  background: #4A6C9B;
+  color: white;
+}
+
+div[data-hss-tag=hop-sppopbutton].filled {
+  display: block;
+}

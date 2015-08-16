@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/1.9.x/weblets/dashboard/dashboard.hop       */
+;*    .../prgm/project/hop/2.2.x/weblets/dashboard/dashboard.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jun 20 10:35:06 2008 (serrano)                */
-;*    Copyright   :  2005-08 Manuel Serrano                            */
+;*    Last change :  Thu Dec 16 07:34:29 2010 (serrano)                */
+;*    Copyright   :  2005-10 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP dashboard                                                    */
 ;*=====================================================================*/
@@ -25,7 +25,7 @@
 	  (url (format "/hop/doc/weblet?weblet=~a" file)))
       (instantiate::http-response-string
 	 (start-line "HTTP/1.0 301 Moved Permanently")
-	 (header (list (cons 'location: dashboard-doc-url))))))
+	 (header (list (cons 'location: url))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dashboard ...                                                    */
@@ -37,7 +37,7 @@
 	 (<HEAD> :title "Hop dashboard"
 	    :base (service-base-url dashboard (current-request))
 	    :css "dashboard.hss"
-	    :include "hop-dashboard"
+	    :include "hop-foot" "hop-dashboard"
 	    :favicon (img-base64-encode
 		      (service-resource dashboard "etc/favicon.png")))
 	 (<BODY>
@@ -65,7 +65,10 @@ further investigation.]))
 ;*---------------------------------------------------------------------*/
 (define (applets)
    (sort (lambda (s1 s2)
-	    (string<=? (car s1) (car s2)))
+	    (cond
+	       ((string=? (car s1) "hop") #t)
+	       ((string=? (car s2) "hop") #f)
+	       (else (string<=? (car s1) (car s2)))))
 	 (hop-dashboard-weblet-applets)))
 
 ;*---------------------------------------------------------------------*/

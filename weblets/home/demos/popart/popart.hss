@@ -1,0 +1,35 @@
+body {
+  background: #000;
+  font-family: Arial;
+  color: white;
+}
+
+h1 {
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  color: #EBFE86;
+}
+
+input {
+  width: 10em;
+  border: 1px solid #EBFE86;
+}
+
+button {
+  border: 1px solid #EBFE86;
+}
+
+button:hover {
+  box-shadow: 0px 0px 8px #EBFE86;
+}
+
+img.icon {
+  margin-right: 10px;
+  border: 1px solid transparent;
+}
+
+img.icon:hover {
+  margin-right: 10px;
+  border-color: #EBFE86;
+}

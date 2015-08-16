@@ -3,7 +3,7 @@
 
 (define *source-directory* (dirname (the-loading-file)))
 
-(define (file->string f)
+(define (source->string f)
    (with-input-from-file f
       (lambda ()
 	 (html-string-encode (read-string (current-input-port))))))
@@ -25,7 +25,7 @@
 							    :align "center"
 							    (<IMG> :inline #t :src qf)))
 						      (service ()
-							 (<PRE> (file->string qf))))))
+							 (<PRE> (source->string qf))))))
 					   ~(with-hop ($svc)
 					       (lambda (h)
 						  (innerHTML-set! $disp h))))
@@ -37,11 +37,12 @@
       (<HEAD> :title "Home Source demo"
 	 :include "hop-paned" "hop-tree"
 	 :css (service-resource home/demos/source "source.hss"))
-      (<BODY>
-	 (<H3> "Source code browser")
+      (<BODY> 
+	 (<H1> "Source code browser")
+	 (<P> [This demonstration let you browse the whole souce code of the Hop web site.])
 	 (let ((disp (<DIV> :class "file" ""))
 	       (d (dirname (dirname *source-directory*))))
-	    (<PANED> :fraction 40
+	    (<PANED> :fraction 40 
 	       (<PAN>
 		  (<DIV> :class "tree"
 		     (directory->tree d (basename d) #t disp)))

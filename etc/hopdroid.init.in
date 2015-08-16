@@ -1,0 +1,31 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/2.0.x/etc/hopdroid.init.in              */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Jun 20 07:32:05 2009                          */
+;*    Last change :  Sat Jun 20 07:54:50 2009 (serrano)                */
+;*    Copyright   :  2009 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The HOPDROID lib init file.                                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The library                                                      */
+;*---------------------------------------------------------------------*/
+(declare-library! 'hopdroid
+		  :version "@VERSION@"
+                  :module-init '__hopdroid-phone
+		  :module-eval '__hopdroid-makelib)
+
+;*---------------------------------------------------------------------*/
+;*    Link option                                                      */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (bigloo-compile
+    ;; required libraries for HOPDROID
+    (set! *additional-bigloo-libraries*
+	  (cons* 'bigloomultimedia
+		 'bigloophone
+		 *additional-bigloo-libraries*)))
+   (bigloo-eval
+    #unspecified))

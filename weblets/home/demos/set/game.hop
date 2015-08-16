@@ -38,10 +38,10 @@
 		   (eq? p2 p3)
 		   (eq? p1 p3)))))
 
-   (every? equal-or-different?
-	   (vector-ref board (car set))
-	   (vector-ref board (cadr set))
-	   (vector-ref board (caddr set))))
+   (every equal-or-different?
+	  (vector-ref board (car set))
+	  (vector-ref board (cadr set))
+	  (vector-ref board (caddr set))))
    
 (define (new-board)
    (define (possible-configuration? board)
@@ -82,8 +82,8 @@
       (fill-board! board)
       board))
 
-(define (set-submit player game set)
-   (with-lock (Game-lock game)
+(define (set-submit player game::Game set)
+   (with-lock game.lock
       (lambda ()
 	 (with-access::Player player (login event score)
 	    (with-access::Game game (state board rounds)
@@ -132,16 +132,16 @@
 					(cons login score)))
 				  players))
 	     (scores (reverse players/scores)))
-	 (for-each (lambda (player)
-		      (hop-event-signal! (Player-event player) `(score ,scores)))
+	 (for-each (lambda (player::Player)
+		      (hop-event-signal! player.event `(score ,scores)))
 		   players))))
 
-(define (publish-winner game login)
+(define (publish-winner game::Game login)
    (for-each
     (lambda (player)
        (with-access::Player player (event)
 	  (hop-event-signal! event `(winner ,login))))
-    (Game-players game)))
+    game.players))
    
 (define (<GAME> base-url login game can-start?)
    (define (<CARD> id)
@@ -223,6 +223,4 @@
 			 (lambda (set)
 			    (hop ($(service (set)
 					 (set-submit player game set))
-				   set)))
-			 (lambda ()
-			    (hop ($(service () (update-scores game))))))))))
+				   set))))))))

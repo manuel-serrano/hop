@@ -33,6 +33,8 @@ Safari
   (canvas-rotate ctx angle)
   (canvas-scale ctx sx sy)
   (canvas-translate ctx tx ty)
+  (canvas-transform ctx m11 m12 m21 m22 dx dy)
+  (canvas-set-transform ctx m11 m12 m21 m22 dx dy)
   (canvas-arc ctx x y r sa ea clockwise)
   (canvas-arc-to ctx x0 y0 x1 y1 r)
   (canvas-arrow-to ctx x0 y0 x1 y1 ...)*
@@ -49,6 +51,7 @@ Safari
   (canvas-move-to ctx x y)
   (canvas-stroke-rect ctx x y w height)
   (canvas-fill-rect ctx x y w height)
+  (canvas-shadow-rect ctx x y w height)
   (canvas-clear-rect ctx x y w height)
   (canvas-fill ctx)
   (canvas-stroke ctx)
@@ -57,6 +60,13 @@ Safari
   (canvas-add-color-stop gradient position color)
   (canvas-create-pattern gradient image type)
   (canvas-draw-image ctx image x y ...)
+  (canvas-get-image-data ctx image x y w h)
+  (canvas-put-image-data ctx frame x y)
+  (canvas-fill-text ctx text x y ...)
+  (canvas-stroke-text ctx text x y ...)
+  (canvas-measure-text ctx text)
+  (canvas-path-text ctx font)
+  (canvas-text-along-path ctx text stroke)
 
 
 === Requirements ===
@@ -146,13 +156,17 @@ Sets global context properties. Here is a list of supported properties.
   * ++:shadow-color++: the color of the shadow.
   * ++:shadow-offset-x++, ++:shadow-offset-y++: the offset of the shadows.
   * ++:stroke-style++: the color used to paint lines.
+  * ++:font++: the font (a CSS font specification) used to draw texts.
+  * ++:text-align++: text alignment.
+  * ++:text-baseline++: text baseline.
 
 
 ~~ Example:
 
   (apply canvas-properties-set! ctx (canvas-properties txt) 
                                     :stroke-style "#ff0000"
-                                    :fill-style "rgba(255, 0, 0, 0.9)")
+                                    :fill-style "rgba(255, 0, 0, 0.9)"
+                                    :font "20pt Arial")
 
 
 </procedure>
@@ -200,6 +214,27 @@ Save and restore the current drawing state. The drawing state includes the
 | sx          |  float       | The horizontal translate.       |
 | sy          |  float       | The vertical translate.         |
 </arguments>
+</procedure>
+
+=== ++(canvas-transform ctx m11 m12 m21 m22 dx dy)++ ===
+=== ++(canvas-set-transform ctx m11 m12 m21 m22 dx dy)++ ===
+<procedure> canvas-transform
+<procedure> canvas-set-transform
+<arguments>
+^  arguments  ^   type       ^   description                   ^
+| ctx         |  context     | A canvas context.               |
+| m11         |  float       |        |
+| m12         |  float       |        |
+| m21         |  float       |        |
+| m22         |  float       |        |
+| dx          |  float       | The horizontal translate.       |
+| dy          |  float       | The vertical translate.         |
+</arguments>
+
+The function ++canvas-transform++ //multiplies// the current transformation
+matrix with the provided arguments. The function ++canvas-set-transform++
+//sets// the transformation matrix.
+</procedure>
 </procedure>
 
 
@@ -489,6 +524,21 @@ Clears the area defined by a rectangle.
 Fills a rectangle.
 </procedure>
 
+=== ++(canvas-shadow-rect ctx width x y w h)++ ===
+<procedure> canvas-shadow-rect
+<arguments>
+^  arguments  ^   type     ^   description                                      ^
+| ctx        |  context   | A canvas context.                                  |
+| width      |  integer   | The shadow width.                                  |
+| x          |  integer   | The horizontal coordinate of the top-left corner.  |
+| y          |  integer   | The vertical coordinate of the top-left corner.    |
+| w          |  integer   | The width of the rectangle.     |
+| h          |  integer   | The height of the rectangle.    |
+</arguments>
+
+Draw a shadow-box on the right and bottom sides of the rectangle.
+</procedure>
+
 === ++(canvas-fill ctx)++ ===
 <procedure> canvas-fill
 <arguments>
@@ -593,8 +643,112 @@ image on the canvas. The third form clips an image and draws it on canvas.
 
 </procedure>
 
+=== ++(canvas-get-image-data ctx image x y w h)++ ===
+=== ++(canvas-put-image-data ctx frame x y)++ ===
+<procedure> canvas-get-image-data
+<procedure> canvas-put-image-data
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| image      |  image     | An image.                                         |
+| x          |  integer   |                                                   |
+| y          |  integer   |                                                   |
+| w          |  integer   |                                                   |
+| h          |  integer   |                                                   |
+| frame      |  integer array   |  An image frame.                            |
+</arguments>
+
+  * The function ++canvas-get-image-data++ returns the frame composing the 
+image. A frame is a integer array representing the red, green, blue, alpha value
+of each pixel. For the sake of security function ++canvas-get-image-data++
+can only be applied to //same-origin// images. 
+  * The function ++canvas-put-image-data++ draw a frame on the canvas.
+
+
+</procedure>
+</procedure>
+
+== Text ==
+
+=== ++(canvas-fill-text ctx text x y ...)++ ===
+=== ++(canvas-stroke-text ctx text x y ...)++ ===
+<procedure> canvas-fill-text
+<procedure> canvas-stroke-text
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| text       |  string    | A string.                                         |
+| x          |  integer   |                                                   |
+| y          |  integer   |                                                   |
+</arguments>
+
+Fills (respectively strokes) at point ++<x,y>++
+the specified ++text++ using the text style specified by the font
+attribute, the alignment specified by the ++text-align++ attribute,
+and the baseline specified by ++:text-baseline++. The current
+++:stroke-style++ is used when stroking the text. (See
+++canvas-properties++)
+
+Example:
+
+  (let ((ctx (canvas-get-context can "2d")))
+     (canvas-fill-text ctx "A left-hand-side text" 0 30)
+     (let* ((t "A right-hand-side text")
+            (w (canvas-measure-text ctx t)))
+        (canvas-fill-text ctx t (- $can.width w 0) 40)))
+
+
+</procedure>
+</procedure>
+
+=== ++(canvas-measure-text ctx text)++ ===
+<procedure> canvas-measure-text
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| text       |  string    | A string.                                         |
+</arguments>
+
+Returns the pixel width of ++text++.
+</procedure>
+
+=== ++(canvas-path-text ctx text)++ ===
+<procedure> canvas-path-text
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| text       |  string    | A string.                                         |
+</arguments>
+
+Adds the strokes from the specified text to the current path. This
+allows you to stroke text instead of filling it if you wish.
+
+Example:
+
+  (canvas-properties-set! ctx :fill-style "green" :stroke-style "black")
+  (canvas-path-text ctx "Sample String")
+  (canvas-fill ctx)
+  (canvas-stroke ctx)
+
+</procedure>
+
+=== ++(canvas-text-along-path ctx text stroke)++ ===
+<procedure> canvas-text-along-path
+
+<arguments>
+^  arguments  ^   type     ^   description                                    ^
+| ctx        |  context   | A canvas context.                                 |
+| text       |  string    | A string.                                         |
+| stroke     |  boolean   | if true test is stroked otherwise added to path.  |
+</arguments>
+
+Adds (or draws) the specified text along the current path.
+
+</procedure>
+
 == See also ==
 <see-also><CANVAS, canvas-</see-also>
-
-
 </doc>
