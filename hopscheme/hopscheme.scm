@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/hopscheme/hopscheme.scm           */
+;*    serrano/prgm/project/hop/3.0.x/hopscheme/hopscheme.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Fri Nov 15 11:55:43 2013 (serrano)                */
-;*    Copyright   :  2010-13 Florian Loitsch and Manuel Serrano        */
+;*    Last change :  Sun Aug 16 17:14:12 2015 (serrano)                */
+;*    Copyright   :  2010-15 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
 ;*=====================================================================*/
@@ -227,9 +227,9 @@
 					 (set! exported
 					    (cons (cons scm-id js-id)
 					       exported))))
-		   (unresolved-declare! (lambda (scm-id js-id)
+		   (unresolved-declare! (lambda (scm-id js-id location)
 					   (set! unresolved
-					      (cons (cons scm-id js-id)
+					      (cons (list scm-id js-id location)
 						 unresolved)))))
 	       (scheme2js-compile-expr
 		  ;; top-level
@@ -277,9 +277,9 @@
 					 (set! exported
 					    (cons (cons scm-id js-id)
 					       exported))))
-		   (unresolved-declare! (lambda (scm-id js-id)
+		   (unresolved-declare! (lambda (scm-id js-id location)
 					   (set! unresolved
-					      (cons (cons scm-id js-id)
+					      (cons (list scm-id js-id location)
 						 unresolved)))))
 	       (scheme2js-compile-expr
 		  ;; top-level

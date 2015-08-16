@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Feb 20 13:45:39 2014 (serrano)                */
-;*    Copyright   :  2012-14 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:22:13 2015 (serrano)                */
+;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -64,7 +64,7 @@
 	      (onmessages::pair-nil (default '())))
 
 	   (websocket-proxy-request? ::pair-nil)
-	   (websocket-proxy-connect! ::bstring ::int)
+	   (websocket-proxy-connect! ::bstring ::int ::http-request)
 	   (websocket-proxy-response::http-response-proxy-websocket ::http-request)
 	   (websocket-server-response header req)
 	   (websocket-debug)
@@ -82,6 +82,11 @@
 
 (define (websocket-debug-level)
    (if (websocket-debug) 1 1000000))
+
+;*---------------------------------------------------------------------*/
+;*    websocket-proxy-tunnel-count ...                                 */
+;*---------------------------------------------------------------------*/
+(define websocket-proxy-tunnel-count 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    *connect-host-table* ...                                         */
@@ -105,13 +110,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    websocket-proxy-connect! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (websocket-proxy-connect! host port)
-   (if (and (hop-enable-proxing) (hop-enable-websocket-proxing))
+(define (websocket-proxy-connect! host port req)
+   (if (and (hop-enable-proxying)
+	    (hop-enable-websocket-proxying)
+	    (<fx websocket-proxy-tunnel-count (hop-max-websocket-proxy-tunnel)))
        (begin
 	  (synchronize connect-mutex
-	     (hashtable-put! *connect-host-table* (format "~a:~a" host port) #t))
-	  (instantiate::http-response-string
-	     (body "Ok")))
+	     (hashtable-put! *connect-host-table*
+		(format "~a:~a" host port) #t))
+	  (websocket-connect-tunnel host port req)
+	  (instantiate::http-response-persistent
+	     (body "200 Connection established\r\n")))
        (instantiate::http-response-abort)))
    
 ;*---------------------------------------------------------------------*/
@@ -119,9 +128,10 @@
 ;*---------------------------------------------------------------------*/
 (define (websocket-proxy-request? header)
    (when (string=? (get-header header upgrade: "") "websocket")
-      (let ((host (get-header header host: #f)))
+      (let ((host (get-header header host: #f))
+	    (port (get-header header port: 80)))
 	 (synchronize connect-mutex
-	    (hashtable-get *connect-host-table* host)))))
+	    (hashtable-get *connect-host-table* (format "~a:~a" host port))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-proxy-response ...                                     */
@@ -255,8 +265,8 @@
 	       version)
 	    (trace-item "origin="
 	       (get-header header origin: "localhost"))
-	    (trace-item "WebSocket-Protocolo="
-	       (get-header header WebSocket-Protocolo: #f))
+	    (trace-item "Sec-WebSocket-Protocol="
+	       (get-header header Sec-WebSocket-Protocol: #f))
 	    (let ((v (string->integer version)))
 	       (cond
 		  ((and (>=fx v 7) (<=fx v 25))
@@ -292,7 +302,7 @@
 	       (accept
 		  (http-write-line p "Sec-WebSocket-Accept: " accept)
 		  (when protocol
-		     (http-write-line p "WebSocket-Protocol: " protocol))
+		     (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		  (http-write-line p))
 	       (sec
 		  (http-write-line p "Sec-WebSocket-Origin: " origin)
@@ -305,7 +315,7 @@
 		(http-write-line p "WebSocket-Origin: " origin)
 		(http-write-line p "WebSocket-Location: " location)
 		(when protocol
-		   (http-write-line p "WebSocket-Protocol: " protocol))
+		   (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		(http-write-line p)))
 	    (flush-output-port p)
 	    ;; set the socket in non blocking mode to prevent
@@ -331,10 +341,61 @@
 	     #f)))))
 
 ;*---------------------------------------------------------------------*/
+;*    websocket-connect-tunnel ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Used after a connect request                                     */
+;*---------------------------------------------------------------------*/
+(define (websocket-connect-tunnel host port req)
+   ;; increment the number of active proxy tunnel 
+   (set! websocket-proxy-tunnel-count (+fx websocket-proxy-tunnel-count 1))
+   (with-access::http-request req (socket timeout)
+      (let* ((rsocket (make-client-socket/timeout host port timeout req #f))
+	     (ip (socket-input socket))
+	     (op (socket-output socket))
+	     (rop (socket-output rsocket))
+	     (rip (socket-input rsocket)))
+	 (socket-timeout-set! socket 0 0)
+	 (socket-timeout-set! rsocket 0 0)
+	 (letrec ((th1 (instantiate::hopthread
+			  (name (format "websocket tunnel (client) %s:%d"
+				   host port))
+			  (body (lambda ()
+				   (let loop ()
+				      (let ((c (read-char ip)))
+					 (if (eof-object? c)
+					     (begin
+						(socket-close socket)
+						(socket-close rsocket)
+						(set! websocket-proxy-tunnel-count
+						   (-fx websocket-proxy-tunnel-count 1))
+						(thread-terminate! th2))
+					     (begin
+						(display c rop)
+						(flush-output-port rop)
+						(loop)))))))))
+		  (th2 (instantiate::hopthread
+			  (name (format "websocket tunnel (remote) %s:%d"
+				   host port))
+			  (body (lambda ()
+				   (let loop ()
+				      (let ((c (read-char rip)))
+					 (if (eof-object? c)
+					     (begin
+						(socket-close rsocket)
+						(socket-close socket)
+						(thread-terminate! th1))
+					     (begin
+						(display c rop)
+						(flush-output-port op)
+						(loop))))))))))
+	    (thread-start! th1)
+	    (thread-start! th2)))))
+
+;*---------------------------------------------------------------------*/
 ;*    websocket-tunnel ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (websocket-tunnel resp socket)
-   (with-trace (websocket-debug-level) "ws-tuner"
+   (with-trace (websocket-debug-level) "ws-tunnel"
       (with-access::http-response-proxy-websocket resp (request remote-timeout)
 	 (with-access::http-request request (header connection-timeout path timeout)
 	    (let* ((host (get-header header host: "localhost"))
@@ -345,6 +406,8 @@
 		   (rop (socket-output rsocket))
 		   (rip (socket-input rsocket))
 		   (op (socket-output socket)))
+	       (socket-timeout-set! rsocket 0 0)
+	       (socket-timeout-set! socket 0 0)
 	       (trace-item name ":" port " " path)
 	       (http-write-line rop (format "GET ~a HTTP/1.1" path))
 	       (http-write-header rop
@@ -506,6 +569,7 @@
    (define (read-messages)
       (with-access::websocket ws (%socket)
 	 (let ((in (socket-input %socket)))
+	    (input-port-timeout-set! in 0)
 	    (let loop ()
 	       (read-check-byte in #x81)
 	       (let ((s (read-byte in)))
@@ -637,3 +701,4 @@
 (define (websocket-trigger-server-ready ws::ws-server)
    (with-access::ws-server ws (onreadys)
       (websocket-trigger-event ws "ready" ws)))
+

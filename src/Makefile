@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Nov 17 10:56:37 2013 (serrano)                */
+#*    Last change :  Sun Aug  3 09:06:16 2014 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -69,7 +69,7 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 	$(MAKE) link.$(LINK) DEST=$@
 
 link.dynamic:
-	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$(DEST))
+	@ $(call link,$(BIGLOO),$(BCFLAGS) $(BLDFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$(DEST))
 
 link.static:
 	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-static-all-bigloo $(OBJECTS),-o,$(DEST))

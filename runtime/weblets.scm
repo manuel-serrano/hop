@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/weblets.scm               */
+;*    serrano/prgm/project/hop/3.0.x/runtime/weblets.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Wed Feb 12 08:11:33 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:21:52 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -383,7 +383,7 @@
 		(when (isa? a %autoload-file)
 		   (with-access::%autoload-file a ((apred pred) (ahooks hooks))
 		      (unless (and (equal? apred pred) (equal? ahooks hooks))
-			 (error "autoload-add!"
+			 (warning "autoload-add!"
 			    "Autoload already registered" file))))))
 	    (else
 	     (let ((al (instantiate::%autoload-file

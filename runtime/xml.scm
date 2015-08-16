@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sun Feb  9 09:24:30 2014 (serrano)                */
+;*    Last change :  Wed Jun 18 17:36:15 2014 (serrano)                */
 ;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -400,7 +400,6 @@
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
-	    (xml-write body p backend)
 	    (for-each (lambda (el)
 			 (if (string? el)
 			     (xml-write-style el p)
@@ -565,8 +564,8 @@
       ;; check the unbound variables
       (let ((env (make-hashtable)))
 	 (xml-tilde-unbound body env)
-	 (let* ((l (hashtable-map env (lambda (k v)
-					 (when v (cons k v)))))
+	 (let* ((l (hashtable-map env
+		      (lambda (k v) (when v (cons k v)))))
 		(lf (let loop ((x l))
 		       (when (pair? x) (or (car x) (loop (cdr x)))))))
 	    (if (pair? lf)
@@ -584,11 +583,10 @@
 			     (r (http-internal-error e m)))
 			 (with-access::http-response-xml r (xml)
 			    (xml-write-html xml p backend))))
-		   (error/source '<HTML>
-				 (format "Unbound client-side variable: ~a"
-					 (car lf))
-				 (cdr lf)
-				 (cdr lf)))
+		   (error/source-location "<HTML>"
+		      (format "Unbound client-side variable: ~a" (car lf))
+		      (cadr lf)
+		      (cddr lf)))
 		;; everything is fine
 		(xml-write-html obj p backend))))))
        
@@ -1102,17 +1100,23 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 ;*    xml-tilde-unbound ::xml-tilde ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-tilde-unbound obj::xml-tilde env)
+
+   (define (source-location src)
+      (when (epair? src) (cer src)))
+   
    (with-access::xml-tilde obj (body src)
-      (with-access::clientc (hop-clientc) (precompiled-declared-variables
-					     precompiled-free-variables)
+      (with-access::clientc (hop-clientc)
+	    (precompiled-declared-variables precompiled-free-variables)
 	 (when (vector? body)
 	    (for-each (lambda (v)
 			 (let ((v (car v)))
 			    (hashtable-update! env v (lambda (x) #f) #f)))
 	       (precompiled-declared-variables body))
 	    (for-each (lambda (v)
-			 (let ((v (car v)))
-			    (hashtable-update! env v (lambda (x) #f) src)))
+			 (let ((v (car v))
+			       (loc (caddr v)))
+			    (hashtable-update! env v (lambda (x) #f)
+			       (cons src (or loc (source-location src))))))
 	       (precompiled-free-variables body))))))
 
 

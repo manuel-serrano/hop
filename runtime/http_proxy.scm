@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/http_proxy.scm            */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_proxy.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 23 15:46:32 2006                          */
-;*    Last change :  Thu May  2 07:17:25 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:20:34 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP proxy response                                          */
 ;*=====================================================================*/
@@ -56,8 +56,6 @@
 	     (format "~a ~a ~a" method p http))
 	    ((not hostname)
 	     (format "~a ~a://~a ~a" method scheme p http))
-	    ((not port)
-	     (format "~a ~a://~a~a ~a" method scheme host p http))
 	    (else
 	     (format "~a ~a://~a:~a~a ~a" method scheme host port p http))))))
 
@@ -141,8 +139,7 @@
 				       (response-proxy-start-line r))
 				    (proxy-header header rp r)
 				    ;; if a char is ready and is eof,
-				    ;; it means that the
-				    ;; connection is closed
+				    ;; it means that the connection is closed
 				    (if (connection-down? remote)
 					(begin
 					   (with-trace 4 "connection-close@down"
@@ -158,10 +155,9 @@
 					   ;; capture dumping
 					   (when (output-port? (hop-capture-port))
 					      (log-capture request r))
-					   (let ((rep (if (assq :xhr-multipart header)
-							  (remote-multipart-body r socket remote)
-							  (remote-body r socket remote))))
-					      rep))))))))))))
+					   (if (assq :xhr-multipart header)
+					       (remote-multipart-body r socket remote)
+					       (remote-body r socket remote)))))))))))))
 	 (synchronize *debug-mutex*
 	    (set! *debug-open* (delete! count *debug-open*))))))
 
@@ -531,20 +527,20 @@
 ;*---------------------------------------------------------------------*/
 (define (connection-down? conn::connection)
    (let ((ip (connection-input conn)))
-      (or (not (input-port? ip))
-	  (when (char-ready? ip)
-	     (with-handler
-		(lambda (e)
-		   #t)
-		(let ((c (read-char ip)))
-		   (if (eof-object? c)
-		       #t
-		       (let ((m (http-parse-error-message c ip)))
-			  (raise
-			   (instantiate::&io-parse-error
-			      (proc "http-response")
-			      (obj ip)
-			      (msg (format "Illegal character: ~a" m))))))))))))
+      (when (input-port? ip)
+	 (when (char-ready? ip)
+	    (with-handler
+	       (lambda (e)
+		  #t)
+	       (let ((c (read-char ip)))
+		  (if (eof-object? c)
+		      #t
+		      (let ((m (http-parse-error-message c ip)))
+			 (raise
+			    (instantiate::&io-parse-error
+			       (proc "http-response")
+			       (obj ip)
+			       (msg (format "Illegal character: ~a" m))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    connection-output ...                                            */

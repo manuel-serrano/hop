@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Feb 12 08:25:11 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:21:15 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -245,7 +245,7 @@
 (define (read-multi-line-comment port)
    (let ((g (regular-grammar ()
 	       ("#|"
-		(read-multi-line-comment input-port)
+		(read-multi-line-comment (the-port))
 		(ignore))
 	       ((+ (or (out #\# #\|) (: #\# (out #\|)) (: #\| (out #\#))))
 		(ignore))
@@ -257,8 +257,8 @@
 		       (read-error/location 
 			"EOF inside block comment -- #| missing a closing |#"
 			c
-			(input-port-name input-port)
-			(input-port-position input-port))))))))
+			(input-port-name (the-port))
+			(input-port-position (the-port)))))))))
       (read/rp g port)))
 
 ;*---------------------------------------------------------------------*/

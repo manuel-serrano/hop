@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/3.0.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jul 31 07:26:30 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:20:17 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -107,7 +107,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 (define (<HOP-SERVER>)
    (<SCRIPT> :type (hop-mime-type)
-      (string-append "var hop_server = new HopServer(\"" (hostname) "\", \""
+      (string-append "var hop_server = new HopServer(\""
+	 (hop-server-hostname) "\", \""
 	 (hop-server-hostip) "\")")))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Jan  6 18:27:35 2014 (serrano)                */
+/*    Last change :  Sat Apr 19 12:36:10 2014 (serrano)                */
 /*    Copyright   :  2007-14 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -81,6 +81,12 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       }
    }
 
+   /* store the actual listener for listener removal */
+   if( p != proc ) {
+      if( proc[ obj ] == undefined ) proc[ obj ] = new Object();
+      proc[ obj ][ event ] = p;
+   }
+   
    if( ("hop_add_event_listener" in obj) &&
        (obj != window) &&
        (obj.hop_add_event_listener != hop_add_event_listener) ) {
@@ -91,11 +97,6 @@ function hop_add_event_listener( obj, event, proc, capture ) {
       return hop_add_hashchange_listener( obj, p );
    }
 
-   /* store the actual listener for listener removal */
-   if( p != proc ) {
-      if( proc[ obj ] == undefined ) proc[ obj ] = new Object();
-      proc[ obj ][ event ] = p;
-   }
    return hop_add_native_event_listener( obj, event, p, capture );
 }
 
@@ -104,34 +105,32 @@ function hop_add_event_listener( obj, event, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*** META ((export remove-event-listener!) (arity -4)) */
 function hop_remove_event_listener( obj, event, proc, capture ) {
+   var p = ( (obj in proc) && proc[ obj ] && proc[ obj ][ event ] ) ?
+      proc[ obj ][ event ] : proc;
+   
    if( event === "timeout" )
-      return hop_remove_timeout_listener( proc );
+      return hop_remove_timeout_listener( p );
 
    if( event === "ready" ) {
       if( obj === hop_server ) {
-	 return hop_add_serverready_listener( obj, proc );
-      } else if( proc.handler ) {
-	 proc.handler.enable = false;
+	 return hop_remove_serverready_listener( obj, p );
+      } else if( p.handler ) {
+	 p.handler.enable = false;
 	 return;
       }
    }
    
    if( (obj.hop_remove_event_listener != undefined) &&
-      (obj.hop_remove_event_listener != hop_remove_event_listener) )
-      return obj.hop_remove_event_listener( event, proc, capture );
-
-   if( event === "hashchange" && !hop_config.hashchange_event )
-      return hop_remove_hashchange_listener( obj, proc );
-
-
-   if( (obj in proc) && proc[ obj ] && proc[ obj ][ event ] ) {
-      var p = proc[ obj ][ event ];
-      /* remove the debug instrument listener */
-      return hop_remove_native_event_listener( obj, event, p, capture );
-   } else {
-      /* remove the actual listener */
-      return hop_remove_native_event_listener( obj, event, proc, capture );
+      (obj.hop_remove_event_listener != hop_remove_event_listener) ) {
+      return obj.hop_remove_event_listener( event, p, capture );
    }
+
+   if( event === "hashchange" && !hop_config.hashchange_event ) {
+      return hop_remove_hashchange_listener( obj, p );
+   }
+
+   /* remove the debug instrumented listener */
+   return hop_remove_native_event_listener( obj, event, p, capture );
 } 
 
 /*---------------------------------------------------------------------*/
@@ -1128,7 +1127,7 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 p2 = p2.__hop_cdr;
       }
    } catch( exc ) {
-      if( "displayName" in proc ) {
+      if( proc && ("displayName" in proc) ) {
 	 var c = sc_assoc( "hop_trigger_servevt", hop_name_aliases );
 
 	 if( sc_isPair( c ) ) {
@@ -1230,36 +1229,32 @@ function hop_servevt_onclose() {
 /*---------------------------------------------------------------------*/
 /*    hop_add_server_listener ...                                      */
 /*---------------------------------------------------------------------*/
-function hop_add_server_listener( obj, proc, capture ) {
+function hop_add_server_listener( event, proc, capture ) {
    if( typeof proc != "function" ) {
       throw new Error( "Illegal procedure: " + proc );
    }
 
-   if( obj === hop_server || obj === document ) {
-      hop_servevt_dlist = sc_cons( proc, hop_servevt_dlist );
+   if( !document.body ) {
+      // delay until the document is fully built
+      hop_add_event_listener(
+	 window, "ready", 
+	 function( e ) {
+	    hop_add_server_listener( event, proc, capture );
+	 } );
    } else {
-      if( !document.body ) {
-	 // delay until the document is fully built
-	 hop_add_event_listener(
-	    window, "ready", 
-	    function( e ) {
-	       hop_add_server_listener( obj, proc, capture );
-	    } );
-      } else {
-	 var o = hop_servevt_table[ obj ];
+      var o = hop_servevt_table[ event ];
       
-	 hop_servevt_table[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
+      hop_servevt_table[ event ] = sc_cons( proc, sc_isPair( o ) ? o : null );
 
-	 if( capture ) {
-	    var o = hop_servevt_ctable[ obj ];
-	    hop_servevt_ctable[ obj ] = sc_cons( proc, sc_isPair( o ) ? o : null );
-	 }
-
-	 if( !hop_servevt_proxy ) {
-	    hop_start_servevt_proxy();
-	 } else {
-	    hop_servevt_proxy.register( obj );
-	 }
+      if( capture ) {
+	 var o = hop_servevt_ctable[ event ];
+	 hop_servevt_ctable[ event ] = sc_cons( proc, sc_isPair( o ) ? o : null );
+      }
+      
+      if( !hop_servevt_proxy ) {
+	 hop_start_servevt_proxy();
+      } else {
+	 hop_servevt_proxy.register( event );
       }
    }
 }
@@ -1267,27 +1262,26 @@ function hop_add_server_listener( obj, proc, capture ) {
 /*---------------------------------------------------------------------*/
 /*    hop_remove_server_listener ...                                   */
 /*---------------------------------------------------------------------*/
-function hop_remove_server_listener( obj, proc ) {
-   if( obj === hop_server || obj === document ) {
-      hop_servevt_dlist = sc_remqBang( proc, hop_servevt_dlist );
-   } else {
-      // unregister the event listener
-      if( sc_isPair( hop_servevt_table[ obj ] ) )
-	 hop_servevt_table[ obj ] =
-	    sc_remqBang( proc, hop_servevt_table[ obj ] );
-      if( sc_isPair( hop_servevt_ctable[ obj ] ) )
-	 hop_servevt_ctable[ obj ] =
-	    sc_remqBang( proc,hop_servevt_ctable[ obj ] );
-
-      // try to close the socket
-      for( id in hop_servevt_table ) {
-	 if( sc_isPair( hop_servevt_table[ obj ] ) )
-	    return;
-      }
-
-      // no event is still expected, close the connection
-      hop_servevt_proxy.unregister( obj );
+function hop_remove_server_listener( event, proc, capture ) {
+   // unregister the event listener
+   if( sc_isPair( hop_servevt_table[ event ] ) ) {
+      hop_servevt_table[ event ] =
+	 sc_remqBang( proc, hop_servevt_table[ event ] );
    }
+   if( sc_isPair( hop_servevt_ctable[ event ] ) ) {
+      hop_servevt_ctable[ event ] =
+	 sc_remqBang( proc, hop_servevt_ctable[ event ] );
+   }
+
+   // try to close the socket
+   for( var id in hop_servevt_table ) {
+      if( sc_isPair( hop_servevt_table[ event ] ) ) {
+	 return;
+      }
+   }
+
+   // no event is still expected, close the connection
+   hop_servevt_proxy.unregister( event );
 }
 
 /*---------------------------------------------------------------------*/

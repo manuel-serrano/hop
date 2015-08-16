@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/3.0.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Sun Mar 31 07:55:12 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:19:44 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -712,7 +712,9 @@
 	    (nexpr (compile expr penv)))
 	 (if comp
 	     (let ((args (filter (lambda (o) (not (equal? o ","))) nexpr)))
-		(hss-parse-function fun (apply comp args)))
+		(if (correct-arity? comp (length args))
+		    (hss-parse-function fun (apply comp args))
+		    (error fun "wrong number of arguments" expr)))
 	     (duplicate::css-function o
 		(expr nexpr))))))
 
@@ -816,6 +818,16 @@
   display: -o-box ~a;"
 	       p p p p p)
        (format "display: ~l ~a;" v p)))
+
+;; transform-origin
+(define-hss-property (transform-origin v p)
+   (match-case v
+      ((?h ?v)
+   (format "transform-origin: ~a ~a;
+-webkit-transform-origin: ~a ~a;"
+      h v h v))
+      (else
+       (format "transform-origin: ~l;" v))))
 
 ;; border-radius
 (define-hss-property (border-radius v p)

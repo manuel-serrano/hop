@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/3.0.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Jan 23 19:03:01 2014 (serrano)                */
-;*    Copyright   :  2004-14 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:20:44 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -121,11 +121,6 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-		      
-;* 		      (call-with-output-file (format "/tmp/FOO.~a"     */
-;* 						(current-seconds))     */
-;* 				(lambda (p)                            */
-;* 				   (obj->javascript-expr value p)))    */
 		      (if padding
 			  (begin
 			     (display padding p)

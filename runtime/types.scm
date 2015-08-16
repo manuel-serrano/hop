@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Aug 19 06:27:46 2012 (serrano)                */
-;*    Copyright   :  2004-12 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:21:42 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
 	      (path::bstring (default "/dummy"))
 	      (userinfo read-only (default #f))
 	      (scheme::symbol (default 'http))
-	      (port::bint (default 80))
+	      (port::int (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (abspath::bstring (default ""))
 	      (query::obj (default #f))
@@ -86,7 +86,7 @@
 	      (http::symbol read-only (default 'HTTP/1.1))
 	      (host::bstring read-only (default "localhost"))
 	      (scheme::symbol read-only (default 'http))
- 	      (port::bint read-only (default 80))
+ 	      (port::int read-only (default 80))
 	      (method::symbol read-only (default 'GET))
 	      (path::bstring read-only)
 	      (userinfo read-only (default #f))
@@ -182,6 +182,7 @@
 	      ;; the source file
 	      (source::obj read-only (default #f)))
 
+	   (http-request-user ::http-request)
 	   (http-request-hook-add! ::http-request ::procedure)))
    
 ;*---------------------------------------------------------------------*/
@@ -232,6 +233,13 @@
 	    (print "id  : " id)
 	    (print "path: " path)
 	    (print "args: " args)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-request-user ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-request-user req)
+   (with-access::http-request req (user)
+      user))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-request-hook-add! ...                                       */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug 15 16:35:20 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Sun Aug 16 17:21:03 2015 (serrano)                */
+;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -127,6 +127,7 @@
 	    (hop-path-set! ::pair-nil)
 	    
 	    (hop-server-hostname::bstring)
+	    (hop-server-hostname-set! ::bstring)
 	    (hop-server-hostip::bstring)
 
 	    (hop-scm-compile-suffix::bstring)
@@ -150,11 +151,14 @@
 	    (hop-hss-theme::bstring)
 	    (hop-hss-theme-set! ::bstring)
 
-	    (hop-enable-proxing::bool)
-	    (hop-enable-proxing-set! ::bool)
+	    (hop-enable-proxying::bool)
+	    (hop-enable-proxying-set! ::bool)
 	    
-	    (hop-enable-websocket-proxing::bool)
-	    (hop-enable-websocket-proxing-set! ::bool)
+	    (hop-enable-websocket-proxying::bool)
+	    (hop-enable-websocket-proxying-set! ::bool)
+	    
+	    (hop-max-websocket-proxy-tunnel::int)
+	    (hop-max-websocket-proxy-tunnel-set! ::int)
 	    
 	    (hop-server-aliases::pair-nil)
 	    (hop-server-aliases-set! ::pair-nil)
@@ -769,16 +773,19 @@
    (string->symbol (hop-service-weblet-name)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-enable-proxing ...                                           */
+;*    hop-enable-proxying ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Enable (or disable) the proxy facility. If set to #f HOP no      */
 ;*    longer acts as proxy.                                            */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-enable-proxing
+(define-parameter hop-enable-proxying
    #t)
 
-(define-parameter hop-enable-websocket-proxing
+(define-parameter hop-enable-websocket-proxying
    #t)
+
+(define-parameter hop-max-websocket-proxy-tunnel
+   10)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-aliases ...                                           */
@@ -1025,7 +1032,7 @@
    256)
    
 (define-parameter hop-max-proxy-keep-alive-connection
-   ;; the max number of keep-alive remote (proxing) connections
+   ;; the max number of keep-alive remote (proxying) connections
    8
    (lambda (v)
       (if (<fx v 4)

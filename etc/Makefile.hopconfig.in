@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/3.0.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Aug  8 15:01:47 2013 (serrano)                */
-#*    Copyright   :  2004-13 Manuel Serrano                            */
+#*    Last change :  Sun Aug 16 17:16:13 2015 (serrano)                */
+#*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -25,7 +25,7 @@ BIGLOO          = @BIGLOO@
 RELEASE		= @BIGLOOVERSION@
 HOPC		= @HOPC@
 BGLCPP		= @BGLCPP@
-HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) --
+HFLAGS		= --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) -- -lib-dir $(BUILDLIBDIR)
 BACKEND         = @BACKEND@
 LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@
@@ -50,7 +50,8 @@ INSTALL		= @INSTALL@
 #*---------------------------------------------------------------------*/
 DEBUG		= @DEBUG@
 CCOMP		= @CC@
-BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -copt "$(CCFLAGS)" -srfi hop-$(LINK) $(EFLAGS)
+BCFLAGS		= @BCFLAGS@ -cc $(CCOMP) -srfi hop-$(LINK) $(EFLAGS)
+BLDFLAGS	= @BLDFLAGS@
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
@@ -59,8 +60,6 @@ BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
 BJVMFLAGS	= @BCFLAGS@ -jvm $(EFLAGS)
 BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
 BEJVMFLAGS	= -jvm-jar
-BDOTNETFLAGS	= @BCFLAGS@ -dotnet -dotnet-mono-workaround -dotnet-pnet-workaround -dotnet-managed $(EFLAGS)
-BLDOTNETFLAGS   = @BLFLAGS@ 
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@

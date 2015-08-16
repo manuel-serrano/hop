@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Dec 27 18:10:55 2013 (serrano)                */
-;*    Copyright   :  2004-13 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:23:07 2014 (serrano)                */
+;*    Copyright   :  2004-14 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -118,7 +118,7 @@
 	       (if (file-exists? (hop-script-file))
 		   (hop-load (hop-script-file))
 		   (hop-load-rc (hop-script-file))))
-	    ;; preload the files of the command lines
+	    ;; preload the files of the command line
 	    (when (pair? files)
 	       (let ((req (instantiate::http-server-request
 			     (host "localhost")

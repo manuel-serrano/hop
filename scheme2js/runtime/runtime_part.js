@@ -1597,11 +1597,13 @@ function sc_list() {
 /*** META ((export #t)
            (arity -2))
 */
-function sc_iota(num, init) {
+function sc_iota(num, init, step) {
    var res = null;
    if (!init) init = 0;
-   for (var i = num - 1; i >= 0; i--)
-      res = new sc_Pair(i + init, res);
+   if (!step) step = 1;
+   var v = step * (num - 1) + init;
+   for (var i = num - 1; i >= 0; i--, v-=step)
+      res = new sc_Pair(v, res);
    return res;
 }
 
@@ -1866,6 +1868,20 @@ function sc_assoc(o, al) {
 	al = al.__hop_cdr;
     }
     return false;
+}
+
+/*** META ((export #t) (arity #t)) */
+function sc_reduce(f, ridentify, l) {
+    if (l === null) {
+        return ridentify;
+    }
+    var res = l.__hop_car;
+    l = l.__hop_cdr;
+    while (l !== null) {
+        res = f(l.__hop_car, res);
+        l = l.__hop_cdr;
+    }
+    return res;
 }
 
 /* can be used for mutable strings and characters */
