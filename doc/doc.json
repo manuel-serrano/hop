@@ -2,7 +2,7 @@
    "version": "3.0.0",
    "bglversion": "4.2a",
    "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
-   "github": "http://github.org",
+   "github": "https://github.com/manuel-serrano/hop.git",
    "chapters": [ 
       { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
       { "name": "Download", "icon": "glyphicon-cloud-download", "href": "download.html" },
