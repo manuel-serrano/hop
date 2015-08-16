@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/Makefile                          */
+#*    serrano/prgm/project/hop/3.0.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Nov 17 10:34:35 2013 (serrano)                */
+#*    Last change :  Sun Aug 16 17:42:03 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ do: build
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
 POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
-                  configure .hoprelease .hgignore
+                  configure .hoprelease .hgignore .gitignore
 POPDIRS		= runtime hopscheme scheme2js src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget
