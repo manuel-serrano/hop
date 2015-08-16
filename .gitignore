@@ -1,0 +1,94 @@
+# Build directories
+bin/
+lib/
+work/
+tmp/
+private/
+
+# Object files
+*.o
+**/o/
+
+# Env dev
+*.afile
+*.jfile
+*.etags
+*.mco
+.*~
+
+# Configure generated files
+config.status
+
+etc/Makefile.hopconfig
+etc/hoprc.hop
+etc/hopshrc.hop
+
+share/hop-autoconf.js
+share/hop-runtime.sch
+
+src/libraries.sch
+
+runtime/configure.scm
+runtime/configure_android.sch
+runtime/configure_macosx.sch
+runtime/configure_noarch.sch
+
+nodejs/nodejs.sch
+
+test/nodejs/HOP.exe
+
+hopscript/hopscript.sch
+
+node_modules/hopc/lib/ast.js
+node_modules/hopc/lib/walk.js
+
+# scheme2js tools and generated files
+scheme2js/runtime/runtime-interface.js
+scheme2js/runtime/runtime_mapping.sch
+scheme2js/runtime/*.o
+scheme2js/runtime/exporter
+scheme2js/runtime/interface
+scheme2js/runtime/*.sch
+scheme2js/runtime/runtime.js
+scheme2js/runtime/runtime_[us].js
+scheme2js/runtime/runtime_interface.js
+scheme2js/runtime/runtime_interface_callcc.js
+scheme2js/runtime/bglcpp
+
+# share generated and object files
+share/hop-builtin-serializers.js
+share/hop-debug.js
+share/hop-exception.js
+share/hop_[su].js
+
+# doc
+doc/**/*.hml
+
+# widget compiled files
+widget/colorchooser.scm
+widget/gauge.scm
+widget/spage.scm
+widget/spinbutton.scm
+
+# weblets
+weblets/**/config.hop
+weblets/**/weblet.info
+weblets/**/etc/*.wiki
+
+# man pages
+etc/hop.man
+etc/hopreplay.man
+etc/hopsh.man
+
+# misc
+.hoprelease
+TODO
+bench/
+devel/
+old/
+repository/
+contribs/
+
+# private files
+arch/android/makeapk.sh
+arch/debian/makedeb.sh
