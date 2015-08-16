@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.5.x/configure                         */
+#*    serrano/prgm/project/hop/3.0.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Feb 11 19:28:19 2014 (serrano)                */
-#*    Copyright   :  2004-14 Manuel Serrano                            */
+#*    Last change :  Sun Aug 16 17:15:45 2015 (serrano)                */
+#*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -57,12 +57,13 @@ cssmimetype="text/css"
 
 libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite"
 bglcloselibs="web multimedia"
+bglextracloselibs=
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="2.5.0"
-devel=rc
+version="2.5.3"
+devel=
 
 hopc=$PWD/bin/hopc
 bglcpp=$PWD/scheme2js/runtime/bglcpp
@@ -80,7 +81,7 @@ mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
-buildlibdir=$PWD/lib
+buildlibdir=$PWD/lib/hop/$version
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
 distribdir=$HOME/prgm/project/hop/repository
@@ -89,7 +90,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.1a
+bigloorequired=4.2a
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -206,6 +207,9 @@ while : ; do
 
     --bcflags=*)
       bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
+    --bldflags=*)
+      bldflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
     --extra-bcflags=*)
       bcflags="$bcflags $(echo $1 | sed 's/^[-a-z]*=//')";;
@@ -339,6 +343,7 @@ while : ; do
       echo "   --install............. The installer ($install)" >&2;
       echo "   --cc=cc............... The C compiler" >&2;
       echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
+      echo "   --bldflags=args....... The Bigloo C link options" >&2;
       echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
       echo "   --blflags=args........ The link options" >&2;
@@ -398,7 +403,7 @@ EOF
 fi
 
 #*---------------------------------------------------------------------*/
-#*    First check if bigloo exists and if it is recent enough          */
+#*    First check that bigloo exists and is recent enough              */
 #*---------------------------------------------------------------------*/
 if [ ! -f $bigloo ]; then
    which $bigloo > /dev/null 2> /dev/null
@@ -409,9 +414,9 @@ if [ ! -f $bigloo ]; then
    fi
 fi
 
-bglversion=`$bigloo -q -eval "(exit (display *bigloo-version*))"`
+bglversion=`$bigloo -q -eval "(exit (display (bigloo-config 'release-number)))"`
 
-$bigloo -q -eval "(exit (if (string>=? *bigloo-version* \"$bigloorequired\") 0 1))"
+$bigloo -q -eval "(exit (if (string>=? (bigloo-config 'release-number) \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
   echo "*** ERROR:configure:bigloo. Aborting"
@@ -453,9 +458,15 @@ if [ "$cc " = " " ]; then
 fi
 
 if [ "$bigloolibdir " = " " ]; then
-  bigloolibdir=`$bigloo -q -eval "(begin (print *default-lib-dir*) (exit 0))"`
+  bigloolibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
 else
   bcflags="$bcflags -lib-dir $bigloolibdir"
+fi
+
+if [ ! -f $bigloolibdir/Makefile.config ]; then
+  echo "Bigloo not properly installed, file missing:" >&2;
+  echo "  $bigloolibdir/Makefile.config" >&2;
+  exit -1;
 fi
 
 if [ "$ccflags " = " " ]; then
@@ -743,6 +754,10 @@ done
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
+if [ "$bldflags " = " " ]; then
+  bldflags="-rpath \$(DESTDIR)\$(HOPLIBDIR)/\$(HOPFILDIR)"
+fi
+
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -768,6 +783,7 @@ cat $mkmf.in \
           -e "s|@JAR@|$jar|" \
           -e "s|@JAVAC@|$javac|" \
           -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BLDFLAGS@|$bldflags|" \
           -e "s|@BHFLAGS@|$bhflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
@@ -779,7 +795,7 @@ cat $mkmf.in \
           -e "s|@CCFLAGS@|$ccflags|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDDIR@|$PWD|" \
-          -e "s|@BUILDLIBDIR@|$PWD/lib|" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
           -e "s|@BUILDETCDIR@|$PWD/etc|" \
           -e "s|@BUILDBINDIR@|$PWD/bin|" \
           -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
@@ -804,8 +820,8 @@ cat $mkmf.in \
           -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
           -e "s|@RTSCONFIG@|$rts|" \
           -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
-          -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u|" \
-          -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s|" \
+          -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
+          -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -873,8 +889,11 @@ cat etc/hopshrc.hop.in \
     >> $hopshrc
 
 # lib/hop.init
-init=lib/hop.init
+init=lib/hop/$version/hop.init
 mkdir -p lib
+mkdir -p lib/hop
+mkdir -p lib/hop/$version
+
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
 
@@ -906,7 +925,7 @@ echo "   ))" >> $init
 chmod a-w $init
 
 # lib/hopwidget.init
-init=lib/hopwidget.init
+init=lib/hop/$version/hopwidget.init
 mkdir -p lib
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
@@ -919,7 +938,7 @@ cat etc/hopwidget.init.in \
 echo "" >> $init
 
 # lib/scheme2js.init
-init=lib/scheme2js.init
+init=lib/hop/$version/scheme2js.init
 mkdir -p lib
 mkdir -p scheme2js/o
 
@@ -934,7 +953,7 @@ echo "" >> $init
 chmod a-w $init
 
 # lib/hopscheme.init
-init=lib/hopscheme.init
+init=lib/hop/$version/hopscheme.init
 mkdir -p lib
 mkdir -p hopscheme/o
 
@@ -950,7 +969,7 @@ chmod a-w $init
 
 # lib/hopdroid.init
 if [ "$arch " = "android " ]; then
-  init=lib/hopdroid.init
+  init=lib/hop/$version/hopdroid.init
   mkdir -p lib
   mkdir -p hopdroid/o
 
@@ -1086,6 +1105,7 @@ echo "  contribs directory.................... $contribsdir"
 echo 
 echo "Internals:"
 echo "  bigloo compilation flags.............. $bcflags"
+echo "  bigloo link flags..................... $bldflags"
 echo "  runtime compilation flags............. $bcflagsrts"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
