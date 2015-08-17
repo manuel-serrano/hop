@@ -13,7 +13,7 @@ Examples
 
 ### svc/svc.js ###
 
-${ doc.include( doc.EXAMPLES_DIR + "/svc/doc.md" ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc/README.md" ) }
 
 ${ <span class="label label-info">svc/svc.js</span> }
 
@@ -23,7 +23,7 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 13 ) }
 
 ### svcs/svc2.js ###
 
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/doc.md" ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/README.md" ) }
 
 ${ <span class="label label-info">svc2/svc2.js</span> }
 

@@ -17,7 +17,7 @@ Examples
 
 ### svc.js ###
 
-${ doc.include( doc.ROOT + "/examples/worker/doc.md" ) }
+${ doc.include( doc.ROOT + "/examples/worker/README.md" ) }
 
 ${ <span class="label label-info">worker.js</span> }
 

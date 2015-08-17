@@ -122,7 +122,7 @@ the full path of a existing file.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/async/doc.md" ) }
+${ doc.include( doc.ROOT + "/examples/async/README.md" ) }
 
 ${ <span class="label label-info">file/file.js</span> }
 
@@ -150,7 +150,7 @@ and passing a `tagstLine` value in the optional argument.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/authentication/doc.md" ) }
+${ doc.include( doc.ROOT + "/examples/authentication/README.md" ) }
 
 ${ <span class="label label-info">authentication/authentication.js</span> }
 
@@ -163,7 +163,7 @@ ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/async/doc.md" ) }
+${ doc.include( doc.ROOT + "/examples/async/README.md" ) }
 
 ${ <span class="label label-info">async/async.js</span> }
 

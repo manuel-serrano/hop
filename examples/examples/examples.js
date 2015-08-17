@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Fri Aug 14 07:18:59 2015 (serrano)                */
+/*    Last change :  Mon Aug 17 08:46:13 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -299,7 +299,7 @@ function getExamples( dir ) {
 	    if( !("service" in o) ) o.service = d;
 	    if( !("level" in o) ) o.level = 0.1;
 	    if( !("commands" in o) ) o.commands = [ CMD ];
-	    if( !("doc" in o) ) o.doc = p + "/doc.md";
+	    if( !("doc" in o) ) o.doc = p + "/README.md";
 
 	    if( ("files" in o) ) {
 	       o.files = o.files.map( function( el ) {

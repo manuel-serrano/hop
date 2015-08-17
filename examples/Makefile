@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Aug 13 15:07:51 2015 (serrano)                */
+#*    Last change :  Mon Aug 17 08:47:45 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -20,7 +20,7 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   README.md \
-  async/async.js async/example.json async/doc.md \
+  async/async.js async/example.json async/README.md \
   arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \
@@ -33,26 +33,26 @@ POPULATION = Makefile \
   event/event.js event/example.json \
   fs/fs.js fs/example.json \
   url/url.js url/example.json \
-  file/file.js file/example.json file/doc.md \
+  file/file.js file/example.json file/README.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   wsclient/wsclient.js wsclient/example.json \
-  svc/svc.js svc/example.json svc/doc.md \
-  svc2/svc2.js svc2/extern.js svc2/example.json svc2/doc.md \
+  svc/svc.js svc/example.json svc/README.md \
+  svc2/svc2.js svc2/extern.js svc2/example.json svc2/README.md \
   svc3/svc3.js svc3/example.json \
   svc4/svc4.js svc4/example.json \
   html/html.js html/html.hss html/example.json \
   htmlc/htmlc.js htmlc/example.json \
   htmlr/htmlr.js htmlr/example.json htmlr/htmlr.html htmlr/htmlr.hss \
-  hss/hss.hss hss/hss.js hss/example.json hss/doc.md \
-  tree/tree.js tree/example.json tree/doc.md \
-  spage/spage.js spage/example.json spage/doc.md \
+  hss/hss.hss hss/hss.js hss/example.json hss/README.md \
+  tree/tree.js tree/example.json tree/README.md \
+  spage/spage.js spage/example.json spage/README.md \
   tower/tower.js tower/example.json \
-  dom/dom.js dom/example.json dom/doc.md \
+  dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \
   hello/hello.js hello/example.json \
   debug/debug.js debug/bugs.js debug/example.json \
   proxy/proxy.js proxy/example.json \
-  worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/doc.md \
+  worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/README.md \
   worker2/slave.js worker2/worker2.js worker2/example.json \
   worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
   worker4/slave.js worker4/worker4.js worker4/example.json \
@@ -75,7 +75,7 @@ POPULATION = Makefile \
   widget/widget.js \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
   authentication/authentication.js authentication/example.json \
-  authentication/doc.md\
+  authentication/README.md \
   authentication2/authentication2.js authentication2/example.json \
   authentication2/passwd.hop authentication2/passwd.js \
   authentication2/remote.js \

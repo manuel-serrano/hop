@@ -14,7 +14,7 @@ it from another parent where it could been included initially.
 Examples
 --------
 
-${ doc.include( doc.EXAMPLES_DIR + "/dom/doc.md" ) }
+${ doc.include( doc.EXAMPLES_DIR + "/dom/README.md" ) }
 
 ${ <span class="label label-info">dom/dom.js</span> }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Aug  7 06:54:21 2015 (serrano)                */
+/*    Last change :  Mon Aug 17 09:12:38 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -30,7 +30,7 @@ function title( attrs, subtitle ) {
       </div>
      <div class="col-md-10">
        <h1>
-         Hop.js <small>/${subtitle}</small>
+         Hop.js ${subtitle ? <small>/${subtitle}</small> : ""}
        </h1>
        <p>
          <span class="label label-default lbl-lg">version ${hop.version}</span>
