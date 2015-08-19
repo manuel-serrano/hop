@@ -10,7 +10,7 @@ Hop is:
 * An extended JavaScript:
   - **multitier**: a single code that runs on the client;
   - builtin **HTML**.
-* A builtin multithreaded **Web server**.
+* A builtin multi-threaded **Web server**.
 
 Hop programs are executed in the context of a builtin Web server. Services
 are an extension of plain JavaScript functions that get automatically invoked

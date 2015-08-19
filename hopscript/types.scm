@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Aug 12 09:13:14 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 15:00:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -194,6 +194,17 @@
 
 	   (class JsWorker::JsObject
 	      (thread::obj (default #unspecified)))
+
+	   (class JsPromise::JsObject
+	      (state::symbol (default 'pending))
+	      (val::obj (default #unspecified))
+	      (thens::pair-nil (default '()))
+	      (catches::pair-nil (default '()))
+	      (%this::JsGlobalObject read-only)
+	      (worker read-only)
+	      (resolvers::pair-nil (default '()))
+	      (rejecters::pair-nil (default '()))
+	      (watches::pair-nil (default '())))
 	   
 	   (generic js-clone::obj ::obj)
 	   

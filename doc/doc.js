@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Aug 17 09:12:19 2015 (serrano)                */
+/*    Last change :  Wed Aug 19 14:10:00 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -120,7 +120,7 @@ function compileSection( page ) {
    var toc = doc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( title ).toLowerCase();
-
+   
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
            jscript=${jscript}
@@ -148,8 +148,8 @@ function compileSection( page ) {
                     data-spy="affix"
 	            data-offset-top="215" data-offset-bottom="100">
                  <ul class="nav bs-docs-sidenav">
-             ${makeToc( toc, 0, function( el ) { 
-		return el.childNodes[ 0 ].replace( /[(].*$/, "");
+             ${makeToc( toc, 0, function( el ) {
+		return el.childNodes[ 0 ].data.replace( /[(].*$/, "");
 	     } )}
                 </ul>
              </nav> 

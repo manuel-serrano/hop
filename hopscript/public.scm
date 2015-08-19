@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Aug 14 16:17:56 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 07:37:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -125,8 +125,6 @@
 	   (generic js-inspect::JsStringLiteral ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)
-	   (js-html-html ::JsGlobalObject)
-
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -1421,14 +1419,7 @@
 	 (apply <HEAD> :idiom "javascript" :context %this
 	    (when (isa? attrs JsObject)
 	       (js-object->keyword-arguments* attrs %this))
-	    (filter (lambda (n) (isa? n xml)) nodes)))
+	    (filter (lambda (n) (isa? n xml-markup)) nodes)))
       2 'HEAD))
 
-;*---------------------------------------------------------------------*/
-;*    js-html-html ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (js-html-html %this)
-   (js-make-function %this
-      (lambda (this attrs . nodes)
-	 (apply <HTML> nodes))
-      1 'HTML))
+

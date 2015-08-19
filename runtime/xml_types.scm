@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sat Aug  8 14:04:58 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 08:08:46 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -43,7 +43,8 @@
 	       (%xml-constructor))
 
 	    (class xml-verbatim::xml
-	       (body::bstring read-only))
+	       (body read-only)
+	       (parent (default #f)))
 	    
 	    (class css::xml)
 	    
@@ -64,7 +65,7 @@
 
 	    (class xml-html::xml-markup)
 
-	    (class xml-document::xml-markup
+	    (class xml-document::xml-html
 	       (id read-only)
 	       (%idtable read-only (default (make-hashtable))))
 

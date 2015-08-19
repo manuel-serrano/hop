@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Aug  6 16:33:37 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 08:07:40 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -275,6 +275,45 @@
 			 (loop parent nparent))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    eq-verbatim? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (eq-verbatim? left right)
+   (cond
+      ((eq? left right)
+       #t)
+      ((isa? right xml-verbatim)
+       (with-access::xml-verbatim right (body) (eq? body left)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    memq-verbatim ...                                                */
+;*---------------------------------------------------------------------*/
+(define (memq-verbatim n lst)
+   (cond
+      ((null? lst) #f)
+      ((eq-verbatim? n (car lst)) #t)
+      (else (memq-verbatim n (cdr lst)))))
+
+;*---------------------------------------------------------------------*/
+;*    remq-verbatim! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (remq-verbatim! x y)
+   (cond
+      ((null? y)
+       y)
+      ((eq? x (car y))
+       (remq-verbatim! x (cdr y)))
+      (else
+       (let loop ((prev y))
+	  (cond ((null? (cdr prev))
+		 y)
+		((eq-verbatim? (cadr prev) x)
+		 (set-cdr! prev (cddr prev))
+		 (loop prev))
+		(else (loop (cdr prev))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
@@ -287,7 +326,7 @@
 		      (cond
 			 ((null? body)
 			  prev)
-			 ((eq? (car body) node)
+			 ((eq-verbatim? (car body) node)
 			  prev)
 			 (else
 			  (loop (cdr body) (car body))))))))))
@@ -300,7 +339,7 @@
 	(with-access::xml-element node (parent)
 	   (and (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
-		   (let ((child (memq node body)))
+		   (let ((child (memq-verbatim node body)))
 		      (and (pair? child)
 			   (pair? (cdr child))
 			   (cadr child))))))))
@@ -316,7 +355,7 @@
 	       (with-access::xml-element old (id)
 		  (hashtable-remove! %idtable id)))))
       (with-access::xml-markup node (body)
-	 (set! body (remq! old body))
+	 (set! body (remq-verbatim! old body))
 	 (when (eq? (dom-parent-node old) node)
 	    (dom-set-parent-node! old #f))
 	 old)))
@@ -332,7 +371,7 @@
 	  (let ((parent (dom-parent-node new)))
 	     (when (isa? parent xml-markup)
 		(with-access::xml-markup parent (body)
-		   (set! body (remq! new body)))))
+		   (set! body (remq-verbatim! new body)))))
 	  (let ((doc (dom-owner-document node)))
 	     (when (isa? doc xml-document)
 		(with-access::xml-document doc (%idtable)
@@ -364,7 +403,7 @@
 	     (let ((parent (dom-parent-node new)))
 		(when (isa? parent xml-markup)
 		   (with-access::xml-markup parent (body)
-		      (set! body (remq! new body)))))
+		      (set! body (remq-verbatim! new body)))))
 	     (when (isa? docp xml-document)
 		(with-access::xml-document docp (%idtable)
 		   (doc-update-idtable! docp new))))
@@ -406,7 +445,7 @@
 		    (let ((parent (dom-parent-node new)))
 		       (when (isa? parent xml-markup)
 			  (with-access::xml-markup parent (body)
-			     (set! body (remq! new body)))))
+			     (set! body (remq-verbatim! new body)))))
 		    (let ((doc (dom-owner-document node)))
 		       (when (isa? doc xml-document)
 			  (with-access::xml-document doc (%idtable)

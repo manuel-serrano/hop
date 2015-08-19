@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Aug  5 07:42:06 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 13:40:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -163,7 +163,7 @@
 	       (lambda (this proc req)
 		  (hopjs-response-proxy this proc req %this)))
 	    
-	    (define-js HTTPResponseAsync 1
+	    (define-js HTTPResponseAsync 2
 	       (lambda (this proc req)
 		  (hopjs-response-async this proc req %this %worker)))
 	    

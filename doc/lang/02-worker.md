@@ -19,19 +19,19 @@ Examples
 
 ${ doc.include( doc.ROOT + "/examples/worker/README.md" ) }
 
-${ <span class="label label-info">worker.js</span> }
+${ <span class="label label-info">worker/worker.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/worker/worker.js", 13 ) }
 ```
 
-${ <span class="label label-info">slave.js</span> }
+${ <span class="label label-info">worker/slave.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/worker/slave.js", 13 ) }
 ```
 
-${ <span class="label label-info">bar.js</span> }
+${ <span class="label label-info">worker/bar.js</span> }
 
 ```hopscript
 ${ doc.include( doc.ROOT + "/examples/worker/bar.js", 13 ) }

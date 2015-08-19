@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Aug 13 13:16:25 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 08:04:20 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -395,7 +395,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-verbatim p backend)
    (with-access::xml-verbatim obj (body)
-      (display body p)))
+      (display (xml-primitive-value body) p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */

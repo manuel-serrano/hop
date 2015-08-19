@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Aug 13 19:17:44 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 08:20:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -25,6 +25,7 @@
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_symbol
+	   __hopscript_promise
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -208,6 +209,7 @@
 	    (js-init-service! %this)
 	    (js-init-worker! %this)
 	    (js-init-websocket! %this)
+	    (js-init-promise! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 
@@ -389,6 +391,12 @@
 	       AUDIO VIDEO)
 
 	    ;; html
+	    (define (js-html-html %this)
+	       (js-make-function %this
+		  (lambda (this attrs . nodes)
+		     (apply <HTML> nodes))
+		  1 'HTML))
+	    
 	    (js-bind! %this %this 'HTML
 	       :value (js-html-html %this) :enumerable #f)
 
@@ -408,7 +416,7 @@
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	       SVG:TEXTPATH SVG:TREF SVG:TSPAN)
-	    
+
 	    ;; return the newly created object
 	    %this))))
 

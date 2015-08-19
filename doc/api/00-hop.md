@@ -13,7 +13,7 @@ Configuration
 -------------
 
 ### hop.shareDir ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The `share` directory of the Hop installation.
 
 ```hopscript
@@ -21,7 +21,7 @@ console.log( "share:", hop.shareDir );
 ```
 
 ### hop.binDir ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The `bin` directory of the Hop installation.
 
 ```hopscript
@@ -29,7 +29,7 @@ console.log( "bin:", hop.binDir );
 ```
 
 ### hop.libDir ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The `lib` directory of the Hop installation.
 
 ```hopscript
@@ -37,7 +37,7 @@ console.log( "lib:", hop.libDir );
 ```
 
 ### hop.port ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The port number of the running Hop server.
 
 ```hopscript
@@ -45,7 +45,7 @@ console.log( "port:", hop.port );
 ```
 
 ### hop.hostname ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The host name of the running Hop server.
 
 ```hopscript
@@ -54,7 +54,7 @@ console.log( "hostname:", hop.hostname );
 
 
 ### hop.version ###
-[:@glyphicon glyphicon-tag]
+[:@glyphicon glyphicon-tag parameter]
 The Hop version.
 
 ```hopscript
@@ -65,8 +65,11 @@ console.log( "Hop version:", hop.version );
 Responses
 ---------
 
+Service result values are transformed into Hop *responses* before being
+sent to the clients. 
+
 ### new hop.HTTPResponseHop( obj, [option] ) ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 This class is used to respond values to client requests.
 
@@ -84,7 +87,7 @@ one when the response of a service is a compound JavaScript object.
 
 
 ### hop.HTTPResponseXml ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 This class is used to deliver XML documents to client. 
 
@@ -102,7 +105,7 @@ one when the response of a service is an XML fragment.
 
 
 ### hop.HTTPResponseString ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 This class is used to deliver plain character strings to client.
 
@@ -115,14 +118,14 @@ service getXml() {
 ```
 
 ### new hop.HTTPResponseFile( path, [option] ) ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
 the full path of a existing file.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/async/README.md" ) }
+${ doc.include( doc.ROOT + "/examples/file/README.md" ) }
 
 ${ <span class="label label-info">file/file.js</span> }
 
@@ -137,7 +140,7 @@ and `HTTPResponseString` values.
 [:@warning]
 
 ### new hop.HTTPResponseAuthentication( msg, [option] ) ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 This class is used to respond HTTP `401 Unauthorized` response to Web
 client.
@@ -159,7 +162,7 @@ ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
 ```
 
 ### hop.HTTPResponseAsync ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 #### Example ####
 
@@ -178,7 +181,7 @@ Miscellaneous
 -------------
 
 ### hop.XMLCompile( node [, ofile] [, backend] ) ###
-[:@glyphicon glyphicon-tags]
+[:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,
 the product of the compilation is returned in a buffer. The

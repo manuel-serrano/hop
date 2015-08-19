@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Wed Nov 19 07:47:32 2014 (serrano)                */
-;*    Copyright   :  2005-14 Manuel Serrano                            */
+;*    Last change :  Wed Aug 19 07:43:38 2015 (serrano)                */
+;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -100,7 +100,6 @@
        (host host)
        (port port)
        (path path)
-       #;(user (class-nil user))
        (userinfo userinfo)
        (authorization authorization))
     (lambda (p status header clength tenc)

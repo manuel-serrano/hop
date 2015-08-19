@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Aug 17 08:47:45 2015 (serrano)                */
+#*    Last change :  Wed Aug 19 13:59:57 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -74,6 +74,7 @@ POPULATION = Makefile \
   widget/node_modules/flipcounter-1.0.0.tgz \
   widget/widget.js \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
+  keepalive/README.md \
   authentication/authentication.js authentication/example.json \
   authentication/README.md \
   authentication2/authentication2.js authentication2/example.json \

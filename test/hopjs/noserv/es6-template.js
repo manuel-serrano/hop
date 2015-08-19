@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Aug 14 09:43:13 2015                          */
-/*    Last change :  Sat Aug 15 09:05:55 2015 (serrano)                */
+/*    Last change :  Wed Aug 19 11:23:05 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 template strings                                     */

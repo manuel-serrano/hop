@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Mon Aug 17 09:09:31 2015 (serrano)                */
+/*    Last change :  Wed Aug 19 14:19:41 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -94,8 +94,12 @@ h2.markdown {
   font-size: 160%;
 }
 
+h3.markdown {
+  font-size: 150%;
+}
+
 h3.glyphicon {
-  color: #666;
+  color: #444;
 }
 
 h3.glyphicon {
@@ -112,6 +116,18 @@ h3.glyphicon:before {
   font-weight: 400;
   line-height: 1;
   -webkit-font-smoothing: antialiased;
+}
+
+h3.parameter:before {
+  color: #D85023;
+}
+
+h3.function:before {
+  color: #1467E6;
+}
+
+h3.tag:before {
+  color: #22BA5A;
 }
 
 /*---------------------------------------------------------------------*/

@@ -10,6 +10,7 @@ with this language.
     * `let` and `const` bindings.
     * Symbols.
     * Template strings.
+    * Promises.
   * HopScript supports most [Nodejs][nodejs] APIs (see Section
   [Nodejs](nodejs.html))
     

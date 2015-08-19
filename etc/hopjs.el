@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Aug 14 14:44:19 2015 (serrano)                */
+;*    Last change :  Wed Aug 19 13:58:33 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -79,8 +79,12 @@
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-re-open-tag "<[a-zA-Z_$][a-zA-Z_$0-9.]*[^<>]*\\([^/]>\\|[ \n]\\)")
 (defconst hopjs-re-close-tag "</[a-zA-Z_$][a-zA-Z_$0-9.]*[ ]*>")
+(defconst hopjs-re-end-tag "/>")
 (defconst hopjs-re-tag
-  (concat hopjs-re-open-tag "\\|" hopjs-re-close-tag "\\|[$~]{"))
+  (concat hopjs-re-open-tag
+	  "\\|" hopjs-re-close-tag
+	  "\\|" hopjs-re-end-tag
+	  "\\|[$~]{"))
 
 (defconst hopjs-re-entering-html
   "\\(var[ \t ]*\\)?[a-zA-Z_$][.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\([^>]\\|[^/]>\\)")
@@ -306,6 +310,10 @@ usage: (js-return)  -- [RET]"
 		  (setq hopjs-debug (cdr hopjs-debug))
 		  (setq open (- open 1))
 		  (goto-char next))
+		 ((looking-at hopjs-re-end-tag)
+		  (setq hopjs-debug (cdr hopjs-debug))
+		  (setq open (- open 1))
+		  (goto-char next))
 		 (t
 		  (forward-char 1)
 		  (forward-sexp 1)
@@ -381,7 +389,7 @@ usage: (js-return)  -- [RET]"
 	'tag)
        ((looking-at "<[^>/ ]*\\(>[ \t]*$\\| \\)")
 	'otag)
-       ((looking-at "</[^>]*>;?$")
+       ((looking-at "</[^>]*>[ \t;})]*$")
 	'ctag)
        ((looking-at "[$~]{")
 	'hop)
