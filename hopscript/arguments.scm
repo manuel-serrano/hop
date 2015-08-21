@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Jul 17 08:24:57 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 16:39:29 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -43,6 +43,13 @@
       (js-arguments->vector o (js-initial-global-object)))
    (lambda (o %this)
       (js-vector->jsarray o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate o::JsArguments worker %_this)
+   (js-raise-type-error (js-initial-global-object)
+      "[[DonationTypeError]] ~a" o))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArguments ...                                     */

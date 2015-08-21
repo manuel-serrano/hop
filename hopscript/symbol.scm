@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Aug 12 09:13:13 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:22:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -55,6 +55,19 @@
 	    (instantiate::JsSymbol
 	       (val o)
 	       (__proto__ (js-get js-symbol 'prototype this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsSymbol ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsSymbol worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-symbol)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsSymbol nobj (__proto__ val)
+	       (with-access::JsSymbol obj ((_val val))
+		  (set! __proto__ (js-get js-symbol 'prototype %this))
+		  (set! val (js-donate _val worker %_this))))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsSymbol ...                                   */

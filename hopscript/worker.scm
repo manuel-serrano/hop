@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Jul 10 14:25:02 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:25:27 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -32,34 +32,7 @@
    (static (class WorkerException::&exception
 	      exn))
    
-   (export (class MessageEvent::event
-	      data::obj)
-	   
-	   (class WorkerHopThread::hopthread
-	      (%loop (default #f))
-	      (keep-alive::bool (default #f))
-	      (mutex::mutex read-only (default (make-mutex)))
-	      (condv::condvar read-only (default (make-condition-variable)))
-	      (prehook (default #f))
-	      (alivep (default #f))
-	      (tqueue::pair-nil (default '()))
-	      (listeners::pair-nil (default '()))
-	      (onmessage::obj (default (js-undefined)))
-	      (onexit::obj (default (js-undefined)))
-	      (%this::JsGlobalObject read-only)
-	      (%process (default #f))
-	      (%retval::int (default 0))
-	      (async (default #f))
-	      (state::symbol (default 'init))
-	      (module-cache::obj (default #f))
-	      (parent::obj (default #f))
-	      (subworkers::pair-nil (default '()))
-	      (uvhandles::vector (default (make-vector 32)))
-	      (call::procedure (default (lambda (cb) (cb))))
-	      (handlers::pair-nil (default '()))
-	      (services::pair-nil (default '())))
-
-	   (js-init-worker! ::JsGlobalObject)
+   (export (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
 	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool ::procedure)
@@ -96,12 +69,18 @@
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
+;*    js-donate ::JsWorker ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate o::JsWorker worker %this)
+   (js-undefined))
+		  
+;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsWorker ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-valueof this::JsWorker %this)
    (with-access::JsWorker this (thread)
       thread))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-worker! ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -306,12 +285,12 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-slave-message worker::JsWorker data)
    (with-access::JsWorker worker (thread)
-      (with-access::WorkerHopThread thread (parent listeners)
+      (with-access::WorkerHopThread thread (parent listeners %this)
 	 (when (isa? parent WorkerHopThread)
 	    (let ((e (instantiate::MessageEvent
 			(name "message")
 			(target worker)
-			(data data))))
+			(data (js-donate data thread %this)))))
 	       (js-worker-push-thunk! parent "post-slave-message"
 		  (lambda ()
 		     (apply-listeners listeners e))))))))
@@ -325,7 +304,7 @@
 	 (let ((e (instantiate::MessageEvent
 		     (name "message")
 		     (target this)
-		     (data data))))
+		     (data (js-donate data thread %this)))))
 	    (js-worker-push-thunk! thread "post-master-message"
 	       (lambda ()
 		  (when (isa? onmessage JsFunction)

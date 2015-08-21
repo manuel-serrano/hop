@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Wed Jan 14 17:35:11 2015 (serrano)                */
+/*    Last change :  Thu Aug 20 06:58:41 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
@@ -14,17 +14,14 @@
 var hop = require( 'hop' );
 
 service svc3() {
-   return <HTML> {
-      <BUTTON> {
-	 onclick: ~{
-	    ${foo}( 1 )
-	       .post( function( r ) {
-		  document.body.appendChild( r );
-	       } )
-	 },
-	 "click"
-      }
-   }
+   return <html>
+      <button onclick=~{
+	 ${foo}( 1 )
+	    .post( function( r ) {
+	       document.body.appendChild( r );
+	    } )
+      }>click</button>
+    </html>;
 }
 
 service foo( x ) {
@@ -39,7 +36,7 @@ service foo( x ) {
 
 service bar( x ) {
    console.log( "in bar x=", x );
-   return <DIV> { x + 1 };
+   return <div>${ x + 1 }</div>;
 }
 
 console.log( "Go to \"http://%s:%d/hop/svc3\"", hop.hostname, hop.port );

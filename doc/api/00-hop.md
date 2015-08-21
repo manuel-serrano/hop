@@ -64,12 +64,13 @@ console.log( "Hop version:", hop.version );
 
 Responses
 ---------
+[:responses]
 
 Service result values are transformed into Hop *responses* before being
 sent to the clients. 
 
-### new hop.HTTPResponseHop( obj, [option] ) ###
-[:@glyphicon glyphicon-tag function]
+### hop.HTTPResponseHop( obj, [option] ) ###
+[:FOO@glyphicon glyphicon-tag function]
 
 This class is used to respond values to client requests.
 
@@ -86,7 +87,7 @@ one when the response of a service is a compound JavaScript object.
 [:@warning]
 
 
-### hop.HTTPResponseXml ###
+### hop.HTTPResponseXml( obj, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to deliver XML documents to client. 
@@ -104,7 +105,7 @@ one when the response of a service is an XML fragment.
 [:@warning]
 
 
-### hop.HTTPResponseString ###
+### hop.HTTPResponseString( string, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to deliver plain character strings to client.
@@ -161,21 +162,67 @@ ${ <span class="label label-info">authentication/authentication.js</span> }
 ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
 ```
 
-### hop.HTTPResponseAsync ###
+### hop.HTTPResponseAsync( sender, req ) ###
 [:@glyphicon glyphicon-tag function]
+
+Asynchronous responses are used when a service cannot returns instantly
+a value to a client because it relies on an asynchronous computation.
+In that situation, the service must produce a `hop.HTTPResponseAsync` which
+is interpreted by the builtin server as a delayed reply.
+
+ * The argument `sender` is a function of one argument. This function is
+automatically invoked by the runtime system with a value that is a
+function of one parameter. Invoking that function provokes the delivery
+of the reply to the client.
+ * The argument `req` is a request object. It is the `this` value of
+the service invokation.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/async/README.md" ) }
+${ doc.include( doc.ROOT + "/examples/svc3/README.md" ) }
 
-${ <span class="label label-info">async/async.js</span> }
+${ <span class="label label-info">svc3/svc3.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/async/async.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/svc3/svc3.js", 13 ) }
 ```
 
-### hop.HTTPResponseProxy ###
-[:@glyphicon glyphicon-tags]
+${ <span class="label label-warning">Note:</span> }
+ the class `hop.HTTPResponseAsync` is the base class for
+implementing asynchronous reponses. Returning
+`Promise` objects as a similar behavior and is encouraged. The service `foo`
+defined above can be implemented as:
+[:@warning]
+
+```hopscript
+service foo( x ) {
+   console.log( "in foo x=", x );
+   return new Promise( function( resolve, reject ) {
+      bar( x + 1 ).post( resolve );
+   }
+}
+```
+
+### hop.HTTPResponseProxy( obj, [option] ) ###
+[:@glyphicon glyphicon-tag function]
+
+The `hop.HTTPResponseProxy` objects are to be used when a remote resource
+can be access othwerwise. For instance, these situations arise because of
+the security enforcement of the Web browsers. Some resources have to be
+downloaded from the origin server. Using a `hop.HTTPResponseProxy` object
+enables the web page to only use local URLs, that are proxied to the actual
+remote resources by the server.
+
+#### Example ####
+
+${ doc.include( doc.ROOT + "/examples/image/README.md" ) }
+
+${ <span class="label label-info">image/image.js</span> }
+
+```hopscript
+${ doc.include( doc.ROOT + "/examples/image/image.js", 13 ) }
+```
+
 
 Miscellaneous
 -------------

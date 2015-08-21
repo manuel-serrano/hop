@@ -11,7 +11,7 @@ that is to be called when the characters of the file are all read.
 Asynchronous responses are implemented by ECMAScript 6 promises. That
 is, when a service returns a promise, this promise is treated by the
 server as an asynchronous response. When `executor` of the promise
-__resolves__, the resolved value is transmitted to the client.
+_resolves_, the resolved value is transmitted to the client.
 
 In the example, once the characters are read, they are fontified
 using the hop `hop.fontifier` module. Then an Html document is

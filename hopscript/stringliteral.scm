@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Aug  9 06:49:28 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 16:41:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -84,6 +84,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-attribute-encode obj::JsStringLiteral)
    (xml-attribute-encode (js-jsstring->string obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsStringLiteral ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsStringLiteral worker %this)
+   (js-jsstring-normalize! obj)
+   obj)
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    scheme->response ::JsStringLiteral ...                           *} */

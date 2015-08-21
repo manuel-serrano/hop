@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 17 08:18:08 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:19:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -45,6 +45,19 @@
       (with-access::JsRegExp o (rx) rx))
    (lambda (o %this)
       (js-regexp->jsregexp o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsRegExp ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsRegExp worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-regexp)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsRegExp nobj (__proto__ rx)
+	       (with-access::JsRegExp obj ((_rx rx))
+		  (set! __proto__ (js-get js-regexp 'prototype %this))
+		  (set! rx (js-donate _rx worker %_this))))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsRegexp ...                                   */

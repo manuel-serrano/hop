@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Aug 19 13:59:57 2015 (serrano)                */
+#*    Last change :  Thu Aug 20 09:05:15 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -32,13 +32,13 @@ POPULATION = Makefile \
   qunit/qunit.js qunit/example.json \
   event/event.js event/example.json \
   fs/fs.js fs/example.json \
-  url/url.js url/example.json \
+  url/url.js url/example.json url/README.md \
   file/file.js file/example.json file/README.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   wsclient/wsclient.js wsclient/example.json \
   svc/svc.js svc/example.json svc/README.md \
   svc2/svc2.js svc2/extern.js svc2/example.json svc2/README.md \
-  svc3/svc3.js svc3/example.json \
+  svc3/svc3.js svc3/example.json svc3/README.md \
   svc4/svc4.js svc4/example.json \
   html/html.js html/html.hss html/example.json \
   htmlc/htmlc.js htmlc/example.json \
@@ -53,10 +53,10 @@ POPULATION = Makefile \
   debug/debug.js debug/bugs.js debug/example.json \
   proxy/proxy.js proxy/example.json \
   worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/README.md \
-  worker2/slave.js worker2/worker2.js worker2/example.json \
+  worker2/slave.js worker2/worker2.js worker2/example.json worker2/README.md \
   worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
   worker4/slave.js worker4/worker4.js worker4/example.json \
-  worker5/slave.js worker5/worker5.js worker5/example.json \
+  worker5/slave.js worker5/worker5.js worker5/example.json worker5/README.md \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
   widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \
@@ -80,7 +80,7 @@ POPULATION = Makefile \
   authentication2/authentication2.js authentication2/example.json \
   authentication2/passwd.hop authentication2/passwd.js \
   authentication2/remote.js \
-  image/image.js image/example.json \
+  image/image.js image/example.json image/README.md \
   pair/pair.js pair/example.json \
   hzdemo/hzdemo.js hzdemo/example.json \
   hzdemo/README \

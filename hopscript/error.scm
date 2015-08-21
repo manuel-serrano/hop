@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Jul 18 10:45:03 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:24:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -41,6 +41,12 @@
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsError ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsError worker::WorkerHopThread %_this)
+   (js-undefined))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-display ::JsError ...                                     */

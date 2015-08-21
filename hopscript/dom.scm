@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Wed Aug 19 08:13:56 2015 (serrano)                */
+;*    Last change :  Thu Aug 20 07:36:03 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -103,7 +103,10 @@
 	     'removeChild))
 	 (else
 	  (with-access::xml-markup o (attributes)
-	     (let ((c (memq (symbol->keyword pname) attributes)))
+	     (let* ((id (if (eq? pname 'className)
+			    class:
+			    (symbol->keyword pname)))
+		    (c (memq id attributes)))
 		(cond
 		   ((not (pair? c))
 		    (js-undefined))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jul 17 08:17:07 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:22:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -45,6 +45,19 @@
       (with-access::JsBoolean o (val) val))
    (lambda (o %this)
       (js-bool->jsboolean o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsBoolean ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsBoolean worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-boolean)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsBoolean nobj (__proto__ val)
+	       (with-access::JsBoolean obj ((_val val))
+		  (set! __proto__ (js-get js-boolean 'prototype %this))
+		  (set! val (js-donate _val worker %_this))))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsBoolean ...                                  */

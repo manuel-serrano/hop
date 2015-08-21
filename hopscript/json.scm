@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Aug 12 08:57:12 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:25:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -36,6 +36,12 @@
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsJSON ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsJSON worker::WorkerHopThread %_this)
+   (js-undefined))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */

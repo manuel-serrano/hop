@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Aug 19 14:10:00 2015 (serrano)                */
+/*    Last change :  Thu Aug 20 07:45:40 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -184,9 +184,9 @@ function compileChapter( json ) {
        <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
 
        <div class="container">
-         ${chapter.description ? <div class="page-header">
-	   ${ fs.existsSync( ROOT + chapter.description ) ?
-	      doc.parseFile( ROOT + chapter.description ).XML
+         ${chapter.description ? <div class="chapter-header">
+	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
+	      doc.parseFile( ROOT + "/" + chapter.description ).XML
 	      : markdown.parse( chapter.description ).XML }
 	   </div> : ""}
 	 
@@ -225,7 +225,7 @@ function compileIndex( content ) {
        <docxml.title root=${ROOT}/>
 
        <div class="container">
-         ${doc.parseFile( path.join( path.dirname( module.filename ), "hop.md" ) ).XML}
+         ${doc.parseFile( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
        </div>
        <docxml.footer root=${ROOT}/>
      </body>
@@ -238,7 +238,7 @@ function compileIndex( content ) {
 /*    top level forms                                                  */
 /*---------------------------------------------------------------------*/
 if( process.argv[ 2 ].match( /[.]md$/ ) ) {
-   if( process.argv[ 2 ] === "hop.md" ) {
+   if( process.argv[ 2 ] === "_index.md" ) {
       compileIndex( "./" + process.argv[ 2 ] );
    } else {
       compileSection( process.argv[ 2 ] );

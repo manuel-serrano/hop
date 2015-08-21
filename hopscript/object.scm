@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Aug 19 08:20:39 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 16:38:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -73,6 +73,30 @@
       (if (eq? %this 'hop)
 	  o
 	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsObject ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-object)
+	 (with-access::JsObject obj (extensible)
+	    (let ((nobj ((class-constructor (object-class obj)))))
+	       (with-access::JsObject nobj (__proto__)
+		  (set! __proto__ (js-get js-object 'prototype %this)))
+	       (js-for-in obj
+		  (lambda (k)
+		     (js-put! nobj k
+			(js-donate (js-get obj k %_this) worker %this)
+			#f %this))
+		  %this)
+	       nobj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsGlobalObject ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsGlobalObject worker %_this)
+   (js-new-global-object))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */

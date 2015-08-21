@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Aug  8 14:29:31 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:25:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -45,6 +45,19 @@
       (with-access::JsDate o (val) val))
    (lambda (o %this)
       (js-date->jsdate o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsDate ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsDate worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-date)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsDate nobj (__proto__ val)
+	       (with-access::JsDate obj ((_val val))
+		  (set! __proto__ (js-get js-date 'prototype %this))
+		  (set! val (js-donate _val worker %_this))))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsDate ...                                           */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Wed Aug 19 14:19:41 2015 (serrano)                */
+/*    Last change :  Thu Aug 20 09:04:02 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -197,7 +197,7 @@ nav.sidebar li > a {
 /*    description                                                      */
 /*---------------------------------------------------------------------*/
 div.page-header {
-  font-size: 130%;
+/*   font-size: 130%;                                                  */
 }
   
 /*---------------------------------------------------------------------*/
@@ -214,7 +214,7 @@ div.page-header {
 }
 
 .toc-description {
-  color: #666;
+  color: #555;
 }
 
 /*---------------------------------------------------------------------*/
@@ -359,4 +359,11 @@ body.home code {
 body.home pre code {
   background-color: inherit;
   border: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    prog                                                             */
+/*---------------------------------------------------------------------*/
+code .h1, code .h2, code .h3, code .h4 {
+  font-size: inherit;
 }

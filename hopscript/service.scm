@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Aug  6 06:21:10 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 18:51:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -54,6 +54,26 @@
 	 "[[SerializeTypeError]] ~a" o))
    (lambda (o) o))
 
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsService ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsService worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (let* ((proc (lambda (this . args)
+		      (with-access::JsService obj (svc)
+			 (with-access::hop-service svc (path)
+			    (js-make-hopframe %this path args)))))
+	     (nobj (duplicate::JsService obj
+		      (procedure proc)
+		      (properties '()))))
+	 (js-for-in obj
+	    (lambda (k)
+	       (js-put! nobj k
+		  (js-donate (js-get obj k %_this) worker %this)
+		  #f %this))
+	    %this)
+	 nobj)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsService ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -125,6 +145,28 @@
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
+	 
+	 (js-bind! %this js-function-prototype 'timeout
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (with-access::JsService this (svc)
+			  (with-access::hop-service svc (timeout)
+			     timeout)))
+		    0 'timeout))
+
+	 (js-bind! %this js-function-prototype 'ttl
+	    :get (js-make-function %this
+		    (lambda (this)
+		       (with-access::JsService this (svc)
+			  (with-access::hop-service svc (ttl)
+			     ttl)))
+		    0 'ttl)
+	    :set (js-make-function %this
+		    (lambda (this v)
+		       (with-access::JsService this (svc)
+			  (with-access::hop-service svc (ttl)
+			     (set! ttl (js-tointeger v %this)))))
+		    0 'ttl))
 	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype

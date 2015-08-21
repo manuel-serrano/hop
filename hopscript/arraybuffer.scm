@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Jul 17 08:15:31 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 18:46:18 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -39,7 +39,28 @@
       (with-access::JsArrayBuffer o (data) data))
    (lambda (o %this)
       (js-u8vector->jsarraybuffer o (or %this (js-initial-global-object)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsArrayBuffer ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsArrayBuffer worker %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-arraybuffer)
+	 (with-access::JsArrayBuffer obj (data frozen)
+	    (let* ((ndata data)
+		   (nobj (instantiate::JsArrayBuffer
+			    (__proto__ (js-get js-arraybuffer 'prototype %this))
+			    (frozen frozen)
+			    (data ndata))))
+	       (set! data '#u8())
+	       (js-for-in obj
+		  (lambda (k)
+		     (js-put! nobj k
+			(js-donate (js-get obj k %_this) worker %this)
+			#f %this))
+		  %this)
+	       nobj)))))
+	    
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */

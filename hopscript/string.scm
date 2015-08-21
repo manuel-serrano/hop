@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Aug 15 07:09:28 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 16:38:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -55,6 +55,18 @@
 	    (instantiate::JsString
 	       (val (js-string->jsstring o))
 	       (__proto__ (js-get js-string 'prototype this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsString ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsString worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-string)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsString nobj (__proto__ val)
+	       (set! __proto__ (js-get js-string 'prototype %this))
+	       (set! val (js-donate val worker %_this)))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsString ...                                   */

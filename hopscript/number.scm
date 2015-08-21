@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jul 17 08:17:42 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:22:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -62,6 +62,19 @@
       (with-access::JsNumber o (val) val))
    (lambda (o %this)
       (js-number->jsnumber o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsNumber ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsNumber worker::WorkerHopThread %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-number)
+	 (let ((nobj (call-next-method)))
+	    (with-access::JsNumber nobj (__proto__ val)
+	       (with-access::JsNumber obj ((_val val))
+		  (set! __proto__ (js-get js-number 'prototype %this))
+		  (set! val (js-donate _val worker %_this))))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsNumber ...                                   */

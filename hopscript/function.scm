@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Jul 17 08:22:50 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 18:35:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -54,6 +54,12 @@
 ;* 	 "[[SerializeTypeError]] ~a" o))                               */
    (lambda (o %this) o))
 
+;*---------------------------------------------------------------------*/
+;*    js-donate ::Jsfunction ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsFunction worker::WorkerHopThread %this)
+   (js-undefined))
+   
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
 ;*---------------------------------------------------------------------*/

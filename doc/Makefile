@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Aug 15 09:26:25 2015 (serrano)                */
+#*    Last change :  Fri Aug 21 18:53:57 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -36,11 +36,11 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   doc.json \
   api/api.json api/00-hop.md api/10-dom.md \
   widget/widget.json \
-  lang/lang.json lang.md \
-  lang/html.bnf lang/service.bnf lang/tilde.bnf lang/syntax.bnf \
+  lang/lang.json _lang.md \
+  lang/html.bnf lang/service.bnf lang/iservice.bnf lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md lang/01-es6.md lang/01-service.md lang/02-worker.md \
   dev/dev.json dev/00-command.md dev/10-edit.md \
-  license.md hop.md \
+  license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
 
@@ -128,7 +128,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
-index.html: hop.md doc.js xml.js
+index.html: _index.md doc.js xml.js
 	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
@@ -137,4 +137,4 @@ index.html: hop.md doc.js xml.js
 #*    dependencies                                                     */
 #*---------------------------------------------------------------------*/
 download.html: license.md
-lang.html: lang.md
+lang.html: _lang.md

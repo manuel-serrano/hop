@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Aug 19 15:08:33 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 17:24:48 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -60,26 +60,33 @@
 ;*    (display "#unspecified"))                                        */
 
 ;*---------------------------------------------------------------------*/
+;*    js-donate ::JsPromise ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsPromise worker::WorkerHopThread %this)
+   (js-undefined))
+   
+;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsPromise ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsPromise req)
    
    (define (async-proc k)
-      (with-access::JsPromise obj (%this worker)
-	 (js-worker-exec worker "hopjs-response-async"
-	    (lambda ()
-	       (with-handler
-		  (lambda (e)
-		     (cond
-			((isa? e JsError) (exception-notify e))
-			((isa? e &error) (error-notify e)))
-		     #f)
-		  (js-promise-then %this obj 
-		     (js-make-function %this
-			(lambda (this resp)
-			   (k (scheme->response resp req)))
-			1 "reply")
-		     (js-undefined)))))))
+      (with-access::JsPromise obj (worker)
+	 (with-access::WorkerHopThread worker (%this)
+	    (js-worker-exec worker "hopjs-response-async"
+	       (lambda ()
+		  (with-handler
+		     (lambda (e)
+			(cond
+			   ((isa? e JsError) (exception-notify e))
+			   ((isa? e &error) (error-notify e)))
+			#f)
+		     (js-promise-then %this obj 
+			(js-make-function %this
+			   (lambda (this resp)
+			      (k (scheme->response resp req)))
+			   1 "reply")
+			(js-undefined))))))))
    
    (instantiate::http-response-async
       (async async-proc)))
@@ -151,7 +158,6 @@
    (define js-promise-prototype
       (with-access::JsGlobalObject %this (__proto__)
 	 (instantiate::JsPromise
-	    (%this %this)
 	    (worker (js-undefined))
 	    (__proto__ __proto__)
 	    (extensible #t))))
@@ -178,7 +184,6 @@
    ;; promise allocation
    (define (js-promise-alloc::JsPromise constructor::JsFunction)
       (instantiate::JsPromise
-	 (%this %this)
 	 (worker (js-current-worker))
 	 (__proto__ (js-get constructor 'prototype %this))))
    

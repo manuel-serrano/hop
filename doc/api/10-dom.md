@@ -6,7 +6,7 @@ Dom
 Hop supports the DOM interface on both client and server. The
 client-side DOM is complete. The server-side DOM is under development
 and slightly differs from the client-side DOM as the server does not
-implement a __unique__ document. As a consequence, an XML element can
+implement a _unique_ document. As a consequence, an XML element can
 be simultaneously contained in various XML nodes. On the server,
 Inserting and a node in a document does not not automatically removes
 it from another parent where it could been included initially.

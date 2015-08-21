@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Jul 30 14:30:02 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 18:45:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -51,6 +51,29 @@
    (lambda (o %this)
       (js-vector->jsarray o (or %this (js-initial-global-object)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsArray worker %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-arraybuffer)
+	 (with-access::JsArray obj (vec frozen inline sealed)
+	    (let* ((nvec (vector-map! (lambda (e) (js-donate e worker %_this))
+			    vec))
+		   (nobj (instantiate::JsArray
+			    (__proto__ (js-get js-arraybuffer 'prototype %this))
+			    (frozen frozen)
+			    (sealed sealed)
+			    (vec nvec))))
+	       (set! vec '#())
+	       (js-for-in obj
+		  (lambda (k)
+		     (js-put! nobj k
+			(js-donate (js-get obj k %_this) worker %this)
+			#f %this))
+		  %this)
+	       nobj)))))
+	    
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::JsArray ...                                         */
 ;*---------------------------------------------------------------------*/

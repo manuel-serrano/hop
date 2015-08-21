@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Jul 17 08:16:39 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 16:41:59 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -92,6 +92,41 @@
 		  (%data o)
 		  (byteoffset 0)
 		  (buffer abuf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsDataView ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsDataView worker %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-arraybuffer)
+	 (with-access::JsDataView obj (%data buffer frozen byteoffset)
+	    (let ((nbuffer (js-donate buffer worker %_this)))
+	       (instantiate::JsDataView
+		  (__proto__ (js-get js-arraybuffer 'prototype %this))
+		  (frozen frozen)
+		  (buffer nbuffer)
+		  (%data (with-access::JsArrayBuffer nbuffer (data) data))
+		  (byteoffset byteoffset)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsTypedArray ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsTypedArray worker %_this)
+   (with-access::WorkerHopThread worker (%this)
+      (with-access::JsGlobalObject %this (js-arraybuffer)
+	 (with-access::JsTypedArray obj (%data buffer frozen byteoffset bpe length)
+	    (let ((nbuffer (js-donate buffer worker %_this))
+		  (obj (class-constructor (object-class obj))))
+	       (with-access::JsTypedArray obj (__proto__ frozen buffer
+						 %data byteoffset bpe length)
+		  (set! __proto__ (js-get js-arraybuffer 'prototype %this))
+ 		  (set! frozen frozen)
+		  (set! buffer nbuffer)
+		  (set! %data (with-access::JsArrayBuffer nbuffer (data) data))
+		  (set! byteoffset byteoffset)
+		  (set! bpe bpe)
+		  (set! length length)
+		  obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsDataView ...                                 */

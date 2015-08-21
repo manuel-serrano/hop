@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Aug 19 15:00:31 2015 (serrano)                */
+;*    Last change :  Fri Aug 21 15:04:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -31,7 +31,34 @@
 	__hopscript_property
 	__hopscript_public)
    
-   (export (class JsPropertyDescriptor
+   (export (class WorkerHopThread::hopthread
+	      (%loop (default #f))
+	      (keep-alive::bool (default #f))
+	      (mutex::mutex read-only (default (make-mutex)))
+	      (condv::condvar read-only (default (make-condition-variable)))
+	      (prehook (default #f))
+	      (alivep (default #f))
+	      (tqueue::pair-nil (default '()))
+	      (listeners::pair-nil (default '()))
+	      (onmessage::obj (default (js-undefined)))
+	      (onexit::obj (default (js-undefined)))
+	      (%this::JsGlobalObject read-only)
+	      (%process (default #f))
+	      (%retval::int (default 0))
+	      (async (default #f))
+	      (state::symbol (default 'init))
+	      (module-cache::obj (default #f))
+	      (parent::obj (default #f))
+	      (subworkers::pair-nil (default '()))
+	      (uvhandles::vector (default (make-vector 32)))
+	      (call::procedure (default (lambda (cb) (cb))))
+	      (handlers::pair-nil (default '()))
+	      (services::pair-nil (default '())))
+
+	   (class MessageEvent::event
+	      data::obj)
+
+	   (class JsPropertyDescriptor
 	      (name::symbol read-only)
 	      (configurable (default #f))
 	      (enumerable (default #f)))
@@ -200,13 +227,13 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
-	      (%this::JsGlobalObject read-only)
-	      (worker read-only)
+	      worker 
 	      (resolvers::pair-nil (default '()))
 	      (rejecters::pair-nil (default '()))
 	      (watches::pair-nil (default '())))
 	   
 	   (generic js-clone::obj ::obj)
+	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 	   
 	   (inline js-undefined)
 	   (inline js-null)
@@ -299,7 +326,6 @@
 ;*    js-clone ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-clone obj)
-   ;; NOT IMPLEMENTED YET
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -321,6 +347,14 @@
       (duplicate::JsConstructMap obj
 	 (names (vector-copy names))
 	 (descriptors (vector-copy descriptors)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-donate ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    This generic is used when a value is subject to a postMessage.   */
+;*---------------------------------------------------------------------*/
+(define-generic (js-donate obj worker::WorkerHopThread %this::JsGlobalObject)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-undefined ...                                                 */
@@ -423,3 +457,4 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
 
+   
