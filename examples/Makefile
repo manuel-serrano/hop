@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Aug 20 09:05:15 2015 (serrano)                */
+#*    Last change :  Sun Aug 23 11:51:00 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -35,6 +35,7 @@ POPULATION = Makefile \
   url/url.js url/example.json url/README.md \
   file/file.js file/example.json file/README.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
+  websocket/README.md \
   wsclient/wsclient.js wsclient/example.json \
   svc/svc.js svc/example.json svc/README.md \
   svc2/svc2.js svc2/extern.js svc2/example.json svc2/README.md \
@@ -93,6 +94,7 @@ POPULATION = Makefile \
   hzdemo/foo-1.0.0.hz \
   scheme/scheme.js \
   scheme/scheme.hop \
+  md/md.js md/markdown.hss md/tex.hss md/README.md md/example.json \
   examples/doc.js examples/doc.wiki examples/example.json examples/examples.hss \
   examples/examples.js examples/libs/bootstrap/css/bootstrap-theme.css \
   examples/libs/bootstrap/css/bootstrap-theme.css.map \

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Thu Aug 13 14:46:26 2015 (serrano)                */
+/*    Last change :  Sun Aug 23 11:25:01 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -23,14 +23,13 @@ var markdown = require( "markdown" );
 service examplesDoc( o ) {
    if( fs.existsSync( o.doc ) ) {
       try {
-	 console.log( "parseing..." );
-	 return <div>${ doc.parseFile( o.doc ).XML }</div>;
+	 return <div>${ doc.load( o.doc ).XML }</div>;
       } catch( e ) {
 	 console.error( "err=", e );
 	 return <span/>;
       }
    } else {
-      return <div>${ markdown.parse( o.doc ).XML }</div>;
+      return <div>${ markdown.read( o.doc ).XML }</div>;
    }
 }
 

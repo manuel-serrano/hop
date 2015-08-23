@@ -1,0 +1,7 @@
+{
+   "tags": [ "dom", "markdown", "hss" ],
+   "description": "DOM APi, Markdown, and HSS",
+   "files": [ "md.js", "markdown.hss", "tex.hss" ],
+   "service": false,
+   "level": 3.1
+}

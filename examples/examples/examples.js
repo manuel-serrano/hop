@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Aug 17 08:46:13 2015 (serrano)                */
+/*    Last change :  Sun Aug 23 11:28:35 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -104,7 +104,7 @@ service examples() {
 	       <H1> { "Hop v", hop.version },
 	       <H2> { "Examples suite" }
 	    },
-	    
+
 	    <DIV> {
 	       class: "row",
 	       <DIV> {
@@ -261,7 +261,7 @@ service examples() {
 		  panel
 	       }
 	    } </DIV>
-	 },	    
+	 },
 	 <SCRIPT> {
 	    src: examples.resource( "libs/jquery/js/jquery.min.js" )
 	 },

@@ -1,0 +1,124 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.0.x/examples/md/tex.hss               */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Aug 23 08:21:06 2015                          */
+/*    Last change :  Sun Aug 23 11:47:23 2015 (serrano)                */
+/*    Copyright   :  2015 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Default stylesheet for converting Markdown to LaTeX.             */
+/*=====================================================================*/
+
+
+
+
+@media tex {
+
+em:before {
+  content: "{\\em{";
+}
+em:after {
+  content: "}}";
+}
+
+i:before {
+  content: "{\\textit{";
+}
+i:after {
+  content: "}}";
+}
+
+strong:before {
+  content: "{\\textbf{";
+}
+strong:after {
+  content: "}}";
+}
+
+tt:before,
+code:before {
+  content: "{\\texttt{";
+}
+tt:after,
+code:after {
+  content: "}}";
+}
+q:before {
+  content: "``";
+}
+q:after {
+  content: "''";
+}
+
+h1:before {
+  content: "\n\n\\section{";
+}
+h2:before {
+  content: "\n\n\\subsection{";
+}
+h3:before {
+  content: "\n\n\\subsubsection{";
+}
+h4:before {
+  content: "\n\n\\paragraph{";
+}
+h5:before {
+  content: "\n\n\\subparagraph{";
+}
+h1:after, h2:after, h3:after, h4:after, h5:after {
+  content: "}\n\n";
+}
+
+h1, h2, h3, h4 {
+  font-size: inherit;
+  margin-top: 0;
+}
+
+ul:before {
+  content: "\n\n\\begin{itemize}\n\n";
+}
+ul:after {
+  content: "\\end{itemize}\n";
+}
+
+ol:before {
+  content: "\n\n\\begin{enumerate}\n\n";
+}
+ol:after {
+  content: "\\end{enumerate}\n";
+}
+
+li:before {
+  content: "\\item";
+}
+li:after {
+  content: "\n";
+}
+
+pre, hoptex-prog {
+  font-size: small;
+}
+
+hoptex-figure pre,
+hoptex-figure hoptex-prog {
+  margin: 0;
+}
+
+pre:before, hoptex-prog:before {
+  content: "\\begin{flushleft}\n";
+}
+
+pre:after, hoptex-prog:after {
+  content: "\\end{flushleft}\n";
+}
+
+hoptex-prog span.hoptex-prog-comment,
+hoptex-prog span.hoptex-prog-line-comment {
+  font-style: italic;
+}
+
+hoptex-prog span.hoptex-prog-line-comment {
+  font-size: 80%;
+}
+
+}

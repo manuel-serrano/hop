@@ -1,0 +1,53 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/3.0.x/examples/md/markdown.hss          */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sun Aug 23 11:17:21 2015                          */
+/*    Last change :  Sun Aug 23 11:47:48 2015 (serrano)                */
+/*    Copyright   :  2015 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Markdown-to-Markdown compiler                                    */
+/*=====================================================================*/
+
+
+
+
+h3:before {
+  content: "\n\n### ";
+}
+
+h3:after {
+  content: "###\n\n";
+}
+
+h4:before {
+  content: "\n\n#### ";
+}
+
+h4:after {
+  content: "####\n\n";
+}
+
+strong:before, strong:after {
+  content: "**";
+}
+
+strong strong:before, strong strong:after {
+  content: "__";
+}
+
+em:before, em:after {
+  content: "_";
+}
+
+em em:before, em em:after {
+  content: "*";
+}
+
+blockquote:before {
+  content: "\n\n> ";
+}
+
+code:before, code:after {
+  content: "`";
+}
