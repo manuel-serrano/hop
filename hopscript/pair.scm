@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Thu Jul 30 15:16:15 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 10:37:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -99,6 +99,7 @@
 	 ((cdr) (js-obj->jsobject (cdr base) %this))
 	 ((cer) (if (epair? o) (js-obj->jsobject (cer base) %this) (js-undefined)))
 	 ((toArray) (js-obj->jsobject base %this))
+	 ((nodeType) 11)
 	 (else (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
@@ -155,6 +156,31 @@
 	  0 'toArray))
       ((inspect)
        (js-undefined))
+      ((nodeType)
+       11)
+      ((getElementById)
+       (js-make-function %this
+	  (lambda (this id)
+	     (dom-get-element-by-id this (js-tostring id %this)))
+	  1 'getElementById))
+      ((getElementsByTagName)
+       (js-make-function %this
+	  (lambda (this tag)
+	     (js-vector->jsarray
+		(list->vector
+		   (dom-get-elements-by-tag-name this (js-tostring tag %this)))
+		%this))
+	  1 'getElementsByTagName))
+      ((getElementsByClassName)
+       (js-make-function %this
+	  (lambda (this tag)
+	     (js-vector->jsarray
+		(list->vector
+		   (dom-get-elements-by-class this (js-tostring tag %this)))
+		%this))
+	  1 'getElementsByClassName))
+      ((childNodes)
+       (js-vector->jsarray (list->vector o) %this))
       (else
        (js-raise-type-error %this
 	  (format "no such field \"~a\" ~~a" (js-toname prop %this)) o))))

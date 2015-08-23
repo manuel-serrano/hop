@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Aug 14 16:22:27 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 19:33:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -596,9 +596,9 @@
       (let* ((temp (gensym))
 	     (assign (j2s-stmt-assign stmt temp)))
 	 (cons* this "function( event ) { var "
-	    (symbol->string temp) "; return"
+	    (symbol->string temp) "; "
 	    (append (j2s-js assign tildec j2s-js-client-dollar mode evalp conf)
-	       '("}"))))))
+	       `(,(format "\nreturn ~a}" temp)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDollar ...                                           */

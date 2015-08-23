@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Sun Jan 11 20:40:59 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 10:33:52 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -37,9 +37,9 @@
 	   (css-style-get-attribute ::css-style ::symbol)
 	   (css-style-set-attribute! ::css-style ::symbol ::obj)
 	   
-	   (node-computed-style ::xml-element ::obj css)
-	   (generic css-get-computed-style css ::xml-element)
-	   (generic css-find-matching-rules::pair-nil css ::xml-element)))
+	   (node-computed-style ::xml ::obj css)
+	   (generic css-get-computed-style css ::obj)
+	   (generic css-find-matching-rules::pair-nil css ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-mutex ...                                                    */
@@ -78,7 +78,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-computed-style ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (node-computed-style el::xml-element a css)
+(define (node-computed-style el::xml a css)
    (let ((a (cond
 	       ((string? a) a)
 	       ((keyword? a) (keyword->string a))
@@ -101,13 +101,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-get-computed-style ::obj ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (css-get-computed-style css::obj el::xml-element)
+(define-generic (css-get-computed-style css::obj el::obj)
    (let ((rules (css-find-matching-rules (cons el css) el)))
       (when (pair? rules)
 	 (let ((style (instantiate::css-style)))
 	    (for-each (lambda (rule) (css-set-style! style rule))
 	       (css-sort-rules rules))
 	    style))))
+
+;*---------------------------------------------------------------------*/
+;*    css-get-computed-style ::css-stylesheet ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (css-get-computed-style css::css-stylesheet el::obj)
+   (with-access::css-stylesheet css (rule*)
+      (css-get-computed-style rule* el)))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-sort-rules ...                                               */
@@ -203,15 +210,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-find-matching-rules ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-generic (css-find-matching-rules::pair-nil css el::xml-element)
+(define-generic (css-find-matching-rules::pair-nil css el::obj)
    (if (pair? css)
        (append-map (lambda (css) (css-find-matching-rules css el)) css)
        '()))
 
 ;*---------------------------------------------------------------------*/
-;*    css-find-matching-rules ::xml-element ...                        */
+;*    css-find-matching-rules ::xml ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (css-find-matching-rules es::xml-element el::xml-element)
+(define-method (css-find-matching-rules es::xml el::obj)
    (let ((style (dom-get-attribute el "style")))
       ;; if the element contains a style, create a dummy stylesheet
       ;; out of it with a rule of high specificity
@@ -237,7 +244,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-find-matching-rules ::css-stylesheet ...                     */
 ;*---------------------------------------------------------------------*/
-(define-method (css-find-matching-rules css::css-stylesheet el::xml-element)
+(define-method (css-find-matching-rules css::css-stylesheet el::obj)
    (with-access::css-stylesheet css (rule*)
       (css-find-matching-rules rule* el)))
 
@@ -254,7 +261,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-find-matching-rules ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (css-find-matching-rules css::css-media el::xml-element)
+(define-method (css-find-matching-rules css::css-media el::obj)
    (with-access::css-media css (medium+ ruleset*)
       (if (css-media-tex? medium+)
 	  (css-find-matching-rules ruleset* el)
@@ -263,7 +270,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-find-matching-rules ::css-ruleset ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (css-find-matching-rules css::css-ruleset el::xml-element)
+(define-method (css-find-matching-rules css::css-ruleset el::obj)
    (with-access::css-ruleset css (selector+ declaration* stamp)
       (filter-map (lambda (selector)
                      (when (css-rule-match? selector el)
@@ -279,7 +286,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-rule-match? ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (css-rule-match? selector::pair el::xml-element)
+(define (css-rule-match? selector::pair el::obj)
    (let ((selectors (reverse selector)))
       (when (css-selector-match? (car selectors) el)
 	 (let loop ((selectors (cdr selectors))
@@ -399,7 +406,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-generic (css-selector-match? selector el::xml-element)
+(define-generic (css-selector-match? selector el::obj)
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -412,40 +419,44 @@
 ;*    css-selector-match? ::css-selector ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector el)
-   (with-access::css-selector selector (element attr*)
-      (and (or (not element) (css-selector-match? element el))
-	   (every (lambda (a) (css-selector-match? a el)) attr*))))
+   (when (isa? el xml-element)
+      (with-access::css-selector selector (element attr*)
+	 (and (or (not element) (css-selector-match? element el))
+	      (every (lambda (a) (css-selector-match? a el)) attr*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-name ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (css-selector-match? selector::css-selector-name  el)
+(define-method (css-selector-match? selector::css-selector-name el)
    (with-access::css-selector-name selector (name)
       (cond
 	 ((eq? name '*)
 	  #t)
 	 ((string? name)
-	  (with-access::xml-element el (tag)
-	     (string-ci=? name (symbol->string! tag)))))))
+	  (when (isa? el xml-element)
+	     (with-access::xml-element el (tag)
+		(string-ci=? name (symbol->string! tag))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-hash ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector-hash el)
-   (with-access::xml-element el (id)
-      (with-access::css-selector-hash selector (name)
-	 (equal? name id))))
+   (when (isa? el xml-element)
+      (with-access::xml-element el (id)
+	 (with-access::css-selector-hash selector (name)
+	    (equal? name id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-class ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector-class el)
-   (let ((c (dom-get-attribute el "class")))
-      (when (string? c)
-	 (with-access::css-selector-class selector (name)
-	    (or (string=? name c)
-		(and (string-index c #\space)
-		     (member name (string-split c " "))))))))
+   (when (isa? el xml-element)
+      (let ((c (dom-get-attribute el "class")))
+	 (when (string? c)
+	    (with-access::css-selector-class selector (name)
+	       (or (string=? name c)
+		   (and (string-index c #\space)
+			(member name (string-split c " ")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-selector-match? ::css-selector-attr ...                      */

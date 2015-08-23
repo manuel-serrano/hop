@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Aug 14 16:04:41 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 09:03:49 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -297,7 +297,7 @@
 	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
-		'(es6-let: es6-const: es6-arrow-function:)))
+		'(es6-let: es6-const: es6-arrow-function: es6-default-value:)))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (nodejs-compiler-options-add! (string->keyword opt)
 		(cond

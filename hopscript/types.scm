@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Aug 21 15:04:46 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 06:52:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -354,7 +354,21 @@
 ;*    This generic is used when a value is subject to a postMessage.   */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-donate obj worker::WorkerHopThread %this::JsGlobalObject)
-   obj)
+   (cond
+      ((cell? obj)
+       (make-cell
+	  (js-donate (cell-ref obj) worker %this)))
+      ((epair? obj)
+       (econs
+	  (js-donate (car obj) worker %this)
+	  (js-donate (cdr obj) worker %this)
+	  (js-donate (cer obj) worker %this)))
+      ((pair? obj)
+       (cons
+	  (js-donate (car obj) worker %this)
+	  (js-donate (cdr obj) worker %this)))
+      (else
+       obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-undefined ...                                                 */

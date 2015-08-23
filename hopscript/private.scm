@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun 19 15:15:53 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 08:12:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -29,7 +29,6 @@
 	   (->int32::int32 ::obj)
 	   (->flonum::double ::obj)
 	   
-	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (expander js-toprimitive)
 
 	   (trim-whitespaces+::bstring ::bstring #!key (left #t) (right #f) (plus #f))
@@ -108,20 +107,6 @@
       ((elong? r) (elong->flonum r))
       ((llong? r) (llong->flonum r))
       (else (error "->flonum" (format "Illegal number (~a)" (typeof r)) r))))
-
-;*---------------------------------------------------------------------*/
-;*    js-cast-object ...                                               */
-;*---------------------------------------------------------------------*/
-(define-generic (js-cast-object obj %this::JsGlobalObject name)
-   (cond
-      ((isa? obj JsObject)
-       obj)
-      ((pair? obj)
-       obj)
-      (else
-       (js-raise-type-error %this
-	  (format "[[~a]]: not an object \"~~a\"" name)
-	  obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

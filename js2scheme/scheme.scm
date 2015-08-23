@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Aug 14 10:09:44 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 07:23:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -902,7 +902,7 @@
 	    (lambda-or-labels idthis id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
-   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode)
+   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params)
       (let* ((id (j2sfun-id this))
 	     (body (if need-bind-exit-return
 		       (with-access::J2SNode body (loc)
@@ -1096,7 +1096,7 @@
 ;*    j2s-scheme ::J2SParam ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SParam mode return conf)
-   (with-access::J2SParam this (id name)
+   (with-access::J2SParam this (id name defval)
       (j2s-name name id)))
 
 ;*---------------------------------------------------------------------*/
@@ -1573,9 +1573,12 @@
    (with-access::J2SIf this (loc test then else)
       (let ((tmp (gensym)))
 	 (epairify loc
-	    `(if ,(j2s-test test mode return conf)
-		 ,(j2s-scheme then mode return conf)
-		 ,(j2s-scheme else mode return conf))))))
+	    (if (isa? else J2SNop)
+		`(when ,(j2s-test test mode return conf)
+		    ,(j2s-scheme then mode return conf))
+		`(if ,(j2s-test test mode return conf)
+		     ,(j2s-scheme then mode return conf)
+		     ,(j2s-scheme else mode return conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDo ...                                           */

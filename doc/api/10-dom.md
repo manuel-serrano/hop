@@ -27,31 +27,44 @@ Node attributes
 ---------------
 
 ### node.id ###
+[:@glyphicon glyphicon-tag parameter]
 
 The `id` of the node.
 
-### node.childNodes ###
+### node.nodeType ###
+[:@glyphicon glyphicon-tag parameter]
 
-The children of the node.
+Return an integer value which specifies the type of the node; possible
+values are listed in [Node type constants](https://developer.mozilla.org/en/docs/Web/API/Node/nodeType).
+
+### node.childNodes ###
+[:@glyphicon glyphicon-tag parameter]
+
+The children of the node in an array.
 
 ### node.className ###
+[:@glyphicon glyphicon-tag parameter]
 
 The class of the node.
 
 ### node.nextSibling ###
+[:@glyphicon glyphicon-tag parameter]
 
 The next sibling of the node.
 
 ### node.parentNode ###
+[:@glyphicon glyphicon-tag parameter]
 
 The parent of the node or undefined if the node is not
 contained in a document.
 
 ### node.previousSibling ###
+[:@glyphicon glyphicon-tag parameter]
 
 The previous sibling of the node.
 
 ### node.tagName ###
+[:@glyphicon glyphicon-tag parameter]
 
 The tag name of the node.
 
@@ -59,16 +72,24 @@ Node methods
 ------------
 
 ### node.appendChild( child ) ###
+[:@glyphicon glyphicon-tag function]
 
 Add a new child to `node`.
 
 ### node.removeChild( child ) ###
+[:@glyphicon glyphicon-tag function]
 
 Remove a new child to `node`.
 
-### node.getElementsByTagName( name ) ###
+### node.getElementById( id ) ###
+[:@glyphicon glyphicon-tag function]
 
-Return the children of node whose tag match `name`.
+Return the children of node whose id is `id`.
+
+### node.getElementsByTagName( name ) ###
+[:@glyphicon glyphicon-tag function]
+
+Return the children of node whose tag matches `name`.
 
 ${ <span class="label label-warning">Note:</span> }
  On the server, this method is supported by all nodes. Contrary to the client
@@ -76,8 +97,9 @@ that only supports it for the `document` object.
 [:@warning]
 
 ### node.getElementsByClassName( name ) ###
+[:@glyphicon glyphicon-tag function]
 
-Return the children of node whose tag match `name`.
+Return the children of node whose class contains `name`.
 
 ${ <span class="label label-warning">Note:</span> }
  On the server, this method is supported by all nodes. Contrary to the client

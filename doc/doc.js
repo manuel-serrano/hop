@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Aug 20 07:45:40 2015 (serrano)                */
+/*    Last change :  Sun Aug 23 06:22:54 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -116,7 +116,7 @@ function makeToc( els, k, proc ) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
-   var ast = doc.parseFile( path.join( path.dirname( module.filename ), page ) )
+   var ast = doc.load( path.join( path.dirname( module.filename ), page ) )
    var toc = doc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( title ).toLowerCase();
@@ -186,8 +186,8 @@ function compileChapter( json ) {
        <div class="container">
          ${chapter.description ? <div class="chapter-header">
 	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
-	      doc.parseFile( ROOT + "/" + chapter.description ).XML
-	      : markdown.parse( chapter.description ).XML }
+	      doc.load( ROOT + "/" + chapter.description ).XML
+	      : doc.read( chapter.description ).XML }
 	   </div> : ""}
 	 
           <h1 class="toc">Table of Contents</h1>
@@ -196,7 +196,7 @@ function compileChapter( json ) {
                         return <li>
 	                    <a href=${el.href}>${el.title}</a>
                             <span class="toc-description">
-                              ${markdown.parse( el.description )}
+                              ${doc.read( el.description )}
                             </span>
 	                  </li>
 	              } )}
@@ -225,7 +225,7 @@ function compileIndex( content ) {
        <docxml.title root=${ROOT}/>
 
        <div class="container">
-         ${doc.parseFile( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
+         ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
        </div>
        <docxml.footer root=${ROOT}/>
      </body>

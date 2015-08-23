@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Aug 19 07:37:40 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 11:28:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -122,6 +122,7 @@
 	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
 
+	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect::JsStringLiteral ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)
@@ -1357,6 +1358,20 @@
 	    (js-string->jsstring (format fmt obj)) args))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-cast-object ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-cast-object obj %this::JsGlobalObject name)
+   (cond
+      ((isa? obj JsObject)
+       obj)
+      ((pair? obj)
+       obj)
+      (else
+       (js-raise-type-error %this
+	  (format "[[~a]]: not an object \"~~a\"" name)
+	  obj))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-inspect ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-inspect o cnt)
@@ -1372,45 +1387,6 @@
 		(write-circle o op)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-inspect ::xml-markup ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (js-inspect o::xml-markup cnt)
-   (js-string->jsstring
-      (with-access::xml-markup o (tag attributes body)
-	 (call-with-output-string
-	    (lambda (op)
-	       (display tag op)
-	       (display "{" op)
-	       (let loop ((attr attributes)
-			  (sep " "))
-		  (if (null? attr)
-		      (let loop ((nodes (xml-unpack body))
-				 (sep sep))
-			 (if (not (pair? nodes))
-			     (display "}" op)
-			     (begin
-				(display sep op)
-				(display (js-inspect (car nodes) (- cnt 1)) op)
-				(loop (cdr nodes) ", "))))
-		      (begin
-			 (display (keyword->string (car attr)) op)
-			 (display ": " op)
-			 (display (js-inspect (cadr attr) (- cnt 1)) op)
-			 (loop (cddr attr) ", ")))))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-inspect ::xml-tilde ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (js-inspect o::xml-tilde cnt)
-   (js-string->jsstring
-      (with-access::xml-tilde o (%js-statement)
-	 (call-with-output-string
-	    (lambda (op)
-	       (display "~{" op)
-	       (display %js-statement op)
-	       (display " }" op))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-html-head %this)
@@ -1419,7 +1395,9 @@
 	 (apply <HEAD> :idiom "javascript" :context %this
 	    (when (isa? attrs JsObject)
 	       (js-object->keyword-arguments* attrs %this))
-	    (filter (lambda (n) (isa? n xml-markup)) nodes)))
+	    (filter (lambda (n)
+		       (or (isa? n xml-tilde) (isa? n xml-markup)))
+	       nodes)))
       2 'HEAD))
 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Jul  3 16:59:44 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 07:08:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -160,8 +160,10 @@
 ;*    j2s->list ::J2SParam ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SParam)
-   (with-access::J2SParam this (id)
-      `(,@(call-next-method) ,id)))
+   (with-access::J2SParam this (id defval)
+      (if (isa? defval J2SUndefined)
+	  `(,@(call-next-method) ,id)
+	  `(,@(call-next-method) ,id = ,(j2s->list defval)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */

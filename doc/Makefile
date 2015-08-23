@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Aug 21 18:53:57 2015 (serrano)                */
+#*    Last change :  Sun Aug 23 11:44:43 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -34,7 +34,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js \
   doc.json \
-  api/api.json api/00-hop.md api/10-dom.md \
+  api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md \
   widget/widget.json \
   lang/lang.json _lang.md \
   lang/html.bnf lang/service.bnf lang/iservice.bnf lang/tilde.bnf lang/syntax.bnf \
@@ -44,7 +44,8 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   nodejs.md download.md \
   hss/doc.hss \
 
-API_TARGETS=api.html 00-hop.html 10-dom.html hss.html config.html
+API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
+  hss.html config.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
   01-es6.html
@@ -78,6 +79,7 @@ build: $(ALL_TARGETS)
 clean:
 	$(RM) $(API_TARGETS) $(LANG_TARGETS)
 	$(RM) license.html index.html nodejs.html
+	$(RM) 00-command.html 10-edit.html
 
 devclean: clean
 

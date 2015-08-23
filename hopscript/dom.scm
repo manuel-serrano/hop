@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Aug 20 07:36:03 2015 (serrano)                */
+;*    Last change :  Sun Aug 23 10:13:15 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -46,10 +46,62 @@
 (%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
-;*    js-cast-object ::xml-markup ...                                  */
+;*    js-cast-object ::xml ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-cast-object o::xml-markup %this name)
+(define-method (js-cast-object o::xml %this name)
    o)
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml cnt)
+   (js-string->jsstring (typeof xml)))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-verbatim ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-verbatim cnt)
+   (with-access::xml-verbatim o (body)
+      (js-inspect body cnt)))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-markup ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-markup cnt)
+   (js-string->jsstring
+      (with-access::xml-markup o (tag attributes body)
+	 (call-with-output-string
+	    (lambda (op)
+	       (display tag op)
+	       (display "{" op)
+	       (let loop ((attr attributes)
+			  (sep " "))
+		  (if (null? attr)
+		      (let loop ((nodes (xml-unpack body))
+				 (sep sep))
+			 (if (not (pair? nodes))
+			     (display "}" op)
+			     (begin
+				(display sep op)
+				(display (js-inspect (car nodes) (- cnt 1)) op)
+				(loop (cdr nodes) ", "))))
+		      (begin
+			 (display (keyword->string (car attr)) op)
+			 (display ": " op)
+			 (display (js-inspect (cadr attr) (- cnt 1)) op)
+			 (loop (cddr attr) ", ")))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-tilde ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-tilde cnt)
+   (js-string->jsstring
+      (with-access::xml-tilde o (%js-statement)
+	 (call-with-output-string
+	    (lambda (op)
+	       (display "~{" op)
+	       (display %js-statement op)
+	       (display " }" op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-markup ...                                          */
@@ -69,8 +121,12 @@
 	     (lambda (this)
 		(js-string->jsstring
 		   (xml->string this (hop-xml-backend))))
-	     0
-	     'toString))
+	     0 'toString))
+	 ((getElementById)
+	  (js-make-function %this
+	     (lambda (this id)
+		(dom-get-element-by-id this (js-tostring id %this)))
+	     1 'getElementById))
 	 ((getElementsByTagName)
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -78,8 +134,7 @@
 		   (list->vector
 		      (dom-get-elements-by-tag-name this (js-tostring tag %this)))
 		   %this))
-	     1
-	     'getElementsByTagName))
+	     1 'getElementsByTagName))
 	 ((getElementsByClassName)
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -87,20 +142,17 @@
 		   (list->vector
 		      (dom-get-elements-by-class this (js-tostring tag %this)))
 		   %this))
-	     1
-	     'getElementsByClassName))
+	     1 'getElementsByClassName))
 	 ((appendChild)
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-append-child! this child))
-	     1
-	     'appendChild))
+	     1 'appendChild))
 	 ((removeChild)
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-remove-child! this child))
-	     1
-	     'removeChild))
+	     1 'removeChild))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let* ((id (if (eq? pname 'className)
@@ -169,9 +221,11 @@
       ((data)
        (with-access::xml-verbatim o (body)
 	  (js-string->jsstring body)))
+      ((nodeType)
+       3)
       (else
        (js-undefined))))
-
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -182,6 +236,8 @@
 	  (if (string? id)
 	      (js-string->jsstring id)
 	      (js-undefined))))
+      ((nodeType)
+       1)
       ((parentNode)
        (with-access::xml-element o (parent)
 	  parent))
@@ -266,6 +322,12 @@
        (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-has-property ::xml-verbatim ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-property o::xml-verbatim name %this)
+   (memq name '(nodeType data)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::xml-element prop v throw::bool %this::JsGlobalObject)
@@ -284,7 +346,8 @@
 ;*    js-has-property ::xml-markup ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::xml-markup name %this)
-   (or (memq name '(className id attributes children getElementsByTagName))
+   (or (memq name '(className id nodeType attributes children
+		    getElementById getElementsByTagName getElementsByClassName))
        (let ((k (symbol->keyword name)))
 	  (with-access::xml-markup o (attributes)
 	     (let loop ((attributes attributes))
@@ -304,11 +367,13 @@
 (define-method (js-properties-name o::xml-markup enump::bool %this::JsGlobalObject)
    (with-access::xml-markup o (attributes)
       (let loop ((attributes attributes)
-		 (attrs `(,(js-string->jsstring "tagName")
+		 (attrs `(,(js-string->jsstring "nodeType")
+			  ,(js-string->jsstring "tagName")
 			  ,(js-string->jsstring "className")
 			  ,(js-string->jsstring "attributes")
 			  ,(js-string->jsstring "childNodes")
 			  ,(js-string->jsstring "parentNode")
+			  ,(js-string->jsstring "getElementById")
 			  ,(js-string->jsstring "getElementsByTagName")
 			  ,(js-string->jsstring "getElementsByClassName")
 			  ,(js-string->jsstring "appendChild")

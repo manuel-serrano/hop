@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Wed Aug 12 11:23:02 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 19:13:52 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -380,13 +380,11 @@
 		       (if (and (string? etag)
 				(=elong (string->elong etag) signature))
 			   (instantiate::http-response-string
-			      #;(request req)
 			      (start-line "HTTP/1.1 304 Not Modified")
 			      (content-type mime)
 			      (header hd)
 			      (charset (hop-locale)))
 			   (instantiate::http-response-file
-			      #;(request req)
 			      (charset (hop-locale))
 			      (content-type mime)
 			      (bodyp (eq? method 'GET))
@@ -394,14 +392,12 @@
 			      (file value))))))
 		((string? hss)
 		 (instantiate::http-response-file
-		    #;(request req)
 		    (charset (hop-locale))
 		    (content-type mime)
 		    (bodyp (eq? method 'GET))
 		    (file hss)))
 		(hss
                  (instantiate::http-response-procedure
-                      #;(request req)
                       (charset (hop-locale))
                       (content-type mime)
                       (bodyp (eq? method 'GET))

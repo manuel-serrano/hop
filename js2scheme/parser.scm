@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Aug 15 08:34:34 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 09:20:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -656,6 +656,7 @@
 	       (instantiate::J2SCatch
 		  (loc loc)
 		  (param (instantiate::J2SParam
+			    (defval (instantiate::J2SUndefined (loc loc)))
 			    (loc loc)
 			    (id id)))
 		  (body body))))))
@@ -703,44 +704,65 @@
    (define (service-expression)
       (service #f))
 
-   (define (arrow-params params)
-      (map (lambda (t)
-	      (instantiate::J2SParam
-		 (loc (token-loc t))
-		 (id (cdr t))))
-	 params))
+   (define (arrow-params args)
+      (map (lambda (p)
+	      (cond
+		 ((pair? p)
+		  (let ((loc (token-loc p)))
+		     (instantiate::J2SParam
+			(defval (instantiate::J2SUndefined (loc loc)))
+			(loc loc)
+			(id (token-value p)))))
+		 ((isa? p J2SAssig)
+		  (with-access::J2SAssig p (loc lhs rhs)
+		     (with-access::J2SUnresolvedRef lhs (id)
+			(instantiate::J2SParam
+			   (defval rhs)
+			   (loc loc)
+			   (id id)))))
+		 ((isa? p J2SUnresolvedRef)
+		  (with-access::J2SUnresolvedRef p (id loc)
+		     (instantiate::J2SParam
+			(defval (instantiate::J2SUndefined (loc loc)))
+			(loc loc)
+			(id id))))
+		 (else
+		  (parse-node-error "unexpected token" p))))
+	 args))
 
-   (define (arrow-body)
+   (define (arrow-body params::pair-nil)
       (if (eq? (peek-token-type) 'LBRACE)
 	  ;; a statement
-	  (fun-body)
+	  (fun-body params)
 	  ;; an expression
 	  (let ((expr (expression #f)))
 	     (with-access::J2SNode expr (loc)
 		(instantiate::J2SBlock
 		   (loc loc)
 		   (endloc loc)
-		   (nodes (list (instantiate::J2SReturn
-				   (loc loc)
-				   (expr expr)))))))))
+		   (nodes (append (fun-body-params-defval params)
+			     (list (instantiate::J2SReturn
+				      (loc loc)
+				      (expr expr))))))))))
    
-   (define (arrow-function params)
+   (define (arrow-function args::pair-nil)
       ;; ES6 arrow functions
-      (let ((=> (consume-any!)))
+      (let* ((=> (consume-any!))
+	     (params (arrow-params args)))
 	 (instantiate::J2SArrow
 	    (idthis '%)
 	    (loc (token-loc =>))
 	    (name '||)
 	    (mode 'strict)
-	    (params (arrow-params params))
-	    (body (arrow-body)))))
+	    (params params)
+	    (body (arrow-body params)))))
 	    
    (define (function declaration?)
       (let* ((token (consume-token! 'function))
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID)))
 	     (params (params))
-	     (body (fun-body))
+	     (body (fun-body params))
 	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
 	    (declaration?
@@ -791,6 +813,7 @@
 	     (if (isa? name J2SString)
 		 (with-access::J2SString name (val)
 		    (instantiate::J2SParam
+		       (defval (instantiate::J2SUndefined (loc loc)))
 		       (loc loc)
 		       (id (string->symbol val))))
 		 (parse-node-error "Illegal parameter declaration" init)))
@@ -809,7 +832,7 @@
 		       inits
 		       (instantiate::J2SNop
 			  (loc (token-loc token)))))
-	     (body (fun-body)))
+	     (body (fun-body params)))
 	 (cond
 	    (declaration?
 	     (instantiate::J2SDeclSvc
@@ -887,9 +910,18 @@
 					  (expr "(current-request)")))))))))))
 
    (define (consume-param!)
-      (let ((token (consume-token! 'ID)))
+      (let* ((token (consume-token! 'ID))
+	     (loc (token-loc token))
+	     (expr (if (eq? (peek-token-type) '=)
+		       ;; a parameter with a default value
+		       (begin
+			  (consume-any!)
+			  (assig-expr #f))
+		       ;; no default value
+		       (instantiate::J2SUndefined (loc loc)))))
 	 (instantiate::J2SParam
-	    (loc (token-loc token))
+	    (defval expr)
+	    (loc loc)
 	    (id (token-value token)))))
       
    (define (params)
@@ -931,7 +963,38 @@
 		    (pop-open-token)
 		    (reverse! rev-params)))))))
 
-   (define (fun-body)
+   (define (param-defval p::J2SParam)
+      ;; generate (if (eq? id undefined) (set! id defval))
+      (with-access::J2SParam p (defval loc)
+	 (unless (isa? defval J2SUndefined)
+	    (let* ((rhs (instantiate::J2SUndefined
+			   (loc loc)))
+		   (lhs (instantiate::J2SRef
+			   (loc loc)
+			   (decl p)))
+		   (test (instantiate::J2SBinary
+			    (loc loc)
+			    (op '===)
+			    (lhs lhs)
+			    (rhs rhs)))
+		   (then (instantiate::J2SStmtExpr
+			    (loc loc)
+			    (expr (instantiate::J2SAssig
+				     (loc loc)
+				     (lhs (duplicate::J2SRef lhs))
+				     (rhs defval)))))
+		   (else (instantiate::J2SNop
+			    (loc loc))))
+	       (instantiate::J2SIf
+		  (loc loc)
+		  (test test)
+		  (then then)
+		  (else else))))))
+   
+   (define (fun-body-params-defval params::pair-nil)
+      (filter-map param-defval params))
+
+   (define (fun-body params::pair-nil)
       (let ((token (push-open-token (consume-token! 'LBRACE))))
 	 (let ((loc (current-loc)))
 	    (let loop ((rev-ses '()))
@@ -941,7 +1004,8 @@
 		      (instantiate::J2SBlock
 			 (loc (token-loc token))
 			 (endloc (token-loc etoken))
-			 (nodes (reverse! rev-ses))))
+			 (nodes (append (fun-body-params-defval params)
+				   (reverse! rev-ses)))))
 		   (loop (cons (source-element) rev-ses)))))))
    
    (define (expression::J2SExpr in-for-init?)
@@ -1385,22 +1449,29 @@
 		(loc (token-loc token))
 		(id (token-value token)))))
 	 ((LPAREN)
-	  (let ((token (push-open-token (consume-any!)))
-		(expr (expression #f))
-		(ignore-too (consume! 'RPAREN)))
-	     (pop-open-token)
-	     (if (eq? (peek-token-type) '=>)
-		 (let ((ps (map (lambda (n)
-				   (if (isa? n J2SUnresolvedRef)
-				       (with-access::J2SUnresolvedRef n (id loc)
-					  (econs 'ID id loc))
-				       (parse-node-error "unexpected token" n)))
-			      (with-access::J2SSequence expr (exprs)
-				 exprs))))
-		    (arrow-function ps))
-		 (instantiate::J2SParen
-		    (loc (token-loc token))
-		    (expr expr)))))
+	  (let ((token (push-open-token (consume-any!))))
+	     (if (eq? (peek-token-type) 'RPAREN)
+		 (let ((tok (consume-any!)))
+		    (pop-open-token)
+		    (if (eq? (peek-token-type) '=>)
+			;; zero-argument arrow function
+			(arrow-function '())
+			(parse-node-error "unexpected token" tok)))
+		 (let* ((expr (expression #f))
+			(ignore-too (consume! 'RPAREN)))
+		    (pop-open-token)
+		    (if (eq? (peek-token-type) '=>)
+			(cond
+			   ((isa? expr J2SAssig)
+			    (arrow-function (list expr)))
+			   ((isa? expr J2SSequence)
+			    (with-access::J2SSequence expr (exprs)
+			       (arrow-function exprs)))
+			   (else
+			    (parse-node-error "unexpected token" expr)))
+			(instantiate::J2SParen
+			   (loc (token-loc token))
+			   (expr expr)))))))
 	 ((LBRACKET)
 	  (array-literal))
 	 ((LBRACE)
@@ -1685,7 +1756,7 @@
       (define (property-accessor tokname name props)
 	 (let* ((id (consume-any!))
 		(params (params))
-		(body (fun-body))
+		(body (fun-body params))
 		(mode (or (javascript-mode body) 'normal))
 		(fun (instantiate::J2SFun
 			(mode mode)
@@ -1969,6 +2040,8 @@
    (unless (memq mode '(hopscript ecmascript6))
       (unless (config-get conf :es6-let #f)
 	 (disable-es6-let node))
+      (unless (config-get conf :es6-default-value #f)
+	 (disable-es6-default-value node))
       (unless (config-get conf :es6-arrow-function #f)
 	 (disable-es6-arrow node)))
    node)
@@ -2026,4 +2099,32 @@
 	    (obj '=>)
 	    (fname (cadr loc))
 	    (location (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-default-value ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-default-value this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-default-value ::J2SFun ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-let this::J2SFun)
+   (with-access::J2SFun this (mode)
+      (unless (memq mode '(hopscript ecmascript6))
+	 (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-default-value ::J2SParam ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-default-value this::J2SParam)
+   (with-access::J2SParam this (defval id loc)
+      (unless (isa? defval J2SUndefined)
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "js-parser")
+	       (msg "default parameter values disabled")
+	       (obj 'id)
+	       (fname (cadr loc))
+	       (location (caddr loc))))))) 
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Jul 31 11:57:47 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 07:12:57 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -82,6 +82,24 @@
 	 "[[SerializeTypeError]] ~a" o))
    (lambda (o) o))
 
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsWebSocket ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsWebSocket worker::WorkerHopThread %this)
+   (js-undefined))
+   
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsWebSocketClient ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsWebSocketClient worker::WorkerHopThread %this)
+   (js-undefined))
+   
+;*---------------------------------------------------------------------*/
+;*    js-donate ::JsWebSocketServer ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsWebSocketServer worker::WorkerHopThread %this)
+   (js-undefined))
+   
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::JsWebSocket ...                            */
 ;*---------------------------------------------------------------------*/

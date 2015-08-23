@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Thu Jul 10 17:09:26 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sat Aug 22 19:54:04 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
 /*=====================================================================*/
@@ -38,6 +38,7 @@ function require( url ) {
 	 hop_modules[ url ] = exports;
 	 return exports;
       } else {
+	 console.log( "hop_modules=", hop_modules );
 	 throw new Error( "Cannot require client-side module \"" + url + "\"" );
       }
    }

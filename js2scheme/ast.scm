@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Aug 14 09:50:25 2015 (serrano)                */
+;*    Last change :  Sat Aug 22 06:40:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -216,7 +216,8 @@
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f)))
 
-	   (final-class J2SParam::J2SDecl)
+	   (final-class J2SParam::J2SDecl
+	      (defval::J2SExpr read-only))
 	   
 	   (abstract-class J2SLiteral::J2SExpr)
 	   
