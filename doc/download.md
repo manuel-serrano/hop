@@ -17,7 +17,7 @@ version from the sources.
     <xml.downloadButton
        class="danger"
        title="Stable"
-       icon="glyphicon-cloud-download"
+       icon="glyphicon-download"
        href=${cfg.urlbase + "/hop-" + cfg.version + ".tar.gz"}/>
   </div>
 </div>}

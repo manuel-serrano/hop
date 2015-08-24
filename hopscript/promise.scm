@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Aug 21 17:24:48 2015 (serrano)                */
+;*    Last change :  Mon Aug 24 19:48:24 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -170,11 +170,11 @@
 	  (let ((resolve (js-make-function %this
 			    (lambda (_ val)
 			       (promise-resolve o val))
-			    1 'resolve))
+			    1 'resolve :src 'builtin))
 		(reject (js-make-function %this
 			   (lambda (_ err)
 			      (promise-reject o err))
-			   1 'reject)))
+			   1 'reject :src 'builtin)))
 	     (js-call2 %this executor o resolve reject)
 	     o)))
    

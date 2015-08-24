@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Aug 21 18:35:34 2015 (serrano)                */
+;*    Last change :  Mon Aug 24 19:47:29 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -58,7 +58,12 @@
 ;*    js-donate ::Jsfunction ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsFunction worker::WorkerHopThread %this)
-   (js-undefined))
+   (with-access::JsFunction obj (procedure src)
+      (if (eq? src 'builtin)
+	  (let ((res (duplicate::JsFunction obj)))
+	     (set! procedure list)
+	     res)
+	  (js-undefined))))
    
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */

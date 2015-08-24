@@ -4,11 +4,11 @@ ${ var fontifier = require( "fontifier" ) }
 HopScript Service
 =================
 
-A service is a function that is that is callable throught the network.
-Invoking a service builds a _service frame_. This frame can be
-used to actually invoke the service. If the service declaration
-used _named arguments_ the frame can be automatically build out
-of a standard URL.
+A Hop.js service is a function that is that is callable throught the
+network.  Invoking a service builds a _service frame_. This frame can
+be used to actually invoke the service. If the service declaration
+used _named arguments_ the frame can be automatically build out of a
+standard URL.
 
 Example:
 
@@ -198,7 +198,7 @@ Create the absolute relatively to the file defining the service. For instance,
 this can be used to obtained the absolute path of CSS file or an image whose
 name is known relatively to the source file defining the service.
 
-Example:
+#### Example ####
 
 ${ doc.include( doc.EXAMPLES_DIR + "/svc/README.md" ) }
 
@@ -214,7 +214,7 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 13 ) }
 The number of seconds the service is live. Negative values means infinite
 timeout.
 
-Example
+#### Example ####
 
 ```hopscript
 console.log( svc2.timeout );

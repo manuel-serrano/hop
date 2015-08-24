@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Aug 21 16:38:51 2015 (serrano)                */
+;*    Last change :  Mon Aug 24 13:13:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -158,21 +158,21 @@
 (define-macro (js-bind-tag! %this obj tag . tagjs)
    `(begin
        (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
-	  :value (js-make-function ,%this
-		    (lambda (this attrs . nodes)
-		       (if (isa? attrs JsObject)
-			   (if (null? nodes)
-			       (apply ,(symbol-append '< tag '>)
-				  (js-object->keyword-arguments attrs ,%this))
-			       (apply ,(symbol-append '< tag '>)
-				  (append
-				     (js-object->keyword-arguments attrs ,%this)
-				     nodes)))
-			   (apply ,(symbol-append '< tag '>)
-			      nodes)))
-		    2 ',tag)
-	  :writable #t
-	  :enumerable #f)))
+          :value (js-make-function ,%this
+                    (lambda (this attrs . nodes)
+                       (if (isa? attrs JsObject)
+                           (if (null? nodes)
+                               (apply ,(symbol-append '< tag '>)
+                                  (js-object->keyword-arguments attrs ,%this))
+                               (apply ,(symbol-append '< tag '>)
+                                  (append
+                                     (js-object->keyword-arguments attrs ,%this)
+                                     nodes)))
+                           (apply ,(symbol-append '< tag '>)
+                              nodes)))
+                    2 ',tag)
+          :writable #t
+          :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tags! ...                                                */
@@ -436,7 +436,7 @@
 
 	    ;; svg
 	    (js-bind-tags! %this %this
-	       SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
+	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
 	       SVG:TEXTPATH SVG:TREF SVG:TSPAN)

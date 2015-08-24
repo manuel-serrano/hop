@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Aug 23 11:44:43 2015 (serrano)                */
+#*    Last change :  Mon Aug 24 08:31:34 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -34,21 +34,24 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js \
   doc.json \
-  api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md \
+  api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
   widget/widget.json \
   lang/lang.json _lang.md \
-  lang/html.bnf lang/service.bnf lang/iservice.bnf lang/tilde.bnf lang/syntax.bnf \
-  lang/00-syntax.md lang/01-es6.md lang/01-service.md lang/02-worker.md \
+  lang/html.bnf lang/service.bnf lang/iservice.bnf \
+  lang/tilde.bnf lang/syntax.bnf \
+  lang/00-syntax.md \
+  lang/01-es6.md lang/01-service.md lang/02-worker.md \
+  lang/01-module.md \
   dev/dev.json dev/00-command.md dev/10-edit.md \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html
+  hss.html config.html 01-html.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
-  01-es6.html
+  01-es6.html 01-module.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
@@ -77,7 +80,7 @@ build: $(ALL_TARGETS)
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	$(RM) $(API_TARGETS) $(LANG_TARGETS)
+	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS)
 	$(RM) license.html index.html nodejs.html
 	$(RM) 00-command.html 10-edit.html
 

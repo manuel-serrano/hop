@@ -12,8 +12,5 @@
 /*=====================================================================*/
 
 exports.hello = function( s ) {
-   return <DIV> {
-      onclick: ~{ alert( "s=" + s ); },
-      s
-   }
+   return <div onclick=~{ alert( "s=" + s ) }>${s}</div>;
 }

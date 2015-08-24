@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Aug 23 11:51:00 2015 (serrano)                */
+#*    Last change :  Mon Aug 24 19:58:31 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -24,7 +24,8 @@ POPULATION = Makefile \
   arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \
-  requirec/requirec.js requirec/mod2.js requirec/mod1.js requirec/example.json \
+  requirec/requirec.js requirec/mod2.js requirec/mod1.js \
+  requirec/example.json requirec/README.md \
   requirew/requirew.js requirew/provider.js requirew/foo.js \
   requirew/example.json \
   js2http/js2http.js js2http/fact.js \
@@ -44,13 +45,17 @@ POPULATION = Makefile \
   html/html.js html/html.hss html/example.json \
   htmlc/htmlc.js htmlc/example.json \
   htmlr/htmlr.js htmlr/example.json htmlr/htmlr.html htmlr/htmlr.hss \
+  htmlr/README.md \
   hss/hss.hss hss/hss.js hss/example.json hss/README.md \
   tree/tree.js tree/example.json tree/README.md \
   spage/spage.js spage/example.json spage/README.md \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \
-  hello/hello.js hello/example.json \
+  hello/hello.js hello/example.json README.md \
+  svg/svg.js svg/example.json svg/README.md \
+  pdfviewer/pdfviewer.js pdfviewer/example.json pdfviewer/README.md \
+  pdfviewer/pdfwrap.js pdfviewer/pdf.js pdfviewer/example.pdf \
   debug/debug.js debug/bugs.js debug/example.json \
   proxy/proxy.js proxy/example.json \
   worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/README.md \

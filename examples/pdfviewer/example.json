@@ -1,0 +1,6 @@
+{
+   "tags": [ "html", "foreign", "javascript" ],
+   "description": "An example of Foreign JavaScript code",
+   "files": [ "pdfviewer.js", "pdfwrap.js" ],
+   "level": 2
+}

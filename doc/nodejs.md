@@ -34,9 +34,3 @@ Hop.js supports the following Node.js modules:
 * [VM](https://nodejs.org/api/vm.html)
 
 
-In addition, the `require` function can be used to load HTML fragements and
-documents as in:
-
-```hopscript
-var html = require( "doc.html" );
-```

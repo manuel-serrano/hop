@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Aug 16 08:22:46 2015 (serrano)                */
+#*    Last change :  Mon Aug 24 19:38:59 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -48,7 +48,11 @@ install:
           cp $$p.man $(DESTDIR)$(HOPMANDIR)/$$p.1 && \
           chmod $(MODFILE) $(DESTDIR)$(HOPMANDIR)/$$p.1; \
         done
-	cp hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp
+	if [ ! -d $(DESTDIR)$(HOPSHAREDIR)/site-lisp ]; then \
+	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
+	  chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
+	fi
+	cp hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp/
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

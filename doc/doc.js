@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Aug 23 06:22:54 2015 (serrano)                */
+/*    Last change :  Mon Aug 24 09:31:15 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -123,6 +123,7 @@ function compileSection( page ) {
    
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
+	   title=${title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -173,6 +174,7 @@ function compileChapter( json ) {
 
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
+	   title=${chapter.title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -215,6 +217,7 @@ function compileChapter( json ) {
 function compileIndex( content ) {
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
+	   title="Hop.js"
            jscript=${jscript}
            rts=${false}/>
 

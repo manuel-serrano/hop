@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Aug 19 18:38:34 2015 (serrano)                */
+;*    Last change :  Mon Aug 24 19:55:08 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -50,7 +50,7 @@
   (list (list "^\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
 	(cons ".post" 'font-lock-face-2)
 	(cons "</?[a-zA-Z0-9_.]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-9)
-	(list "\\(</?[a-zA-Z0-9_.]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-9)
+	(list "\\(</?[a-zA-Z0-9_.:]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-9)
 	(list "[}\"][ ]*\\(>\\)" 1 'font-lock-face-9)
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-2)
 	(list "\\([$]\\){" 1 'font-lock-face-2)
@@ -77,14 +77,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-re-open-tag ...                                            */
 ;*---------------------------------------------------------------------*/
-(defconst hopjs-re-open-tag "<[a-zA-Z_$][a-zA-Z_$0-9.]*[^<>/]*")
-(defconst hopjs-re-close-tag "</[a-zA-Z_$][a-zA-Z_$0-9.]*[ ]*>")
-(defconst hopjs-re-end-tag "/>")
+(defconst hopjs-re-open-tag
+  "<[a-zA-Z_$][a-zA-Z_$0-9.]*[^<>/]*")
+(defconst hopjs-re-close-tag
+  "</[a-zA-Z_$][a-zA-Z_$0-9.]*[ ]*>")
+(defconst hopjs-re-end-tag
+  "/>")
+(defconst hopjs-re-code
+  "[~$]{")
 (defconst hopjs-re-tag
   (concat hopjs-re-open-tag
 	  "\\|" hopjs-re-close-tag
 	  "\\|" hopjs-re-end-tag
-	  "\\|[$~]{"))
+	  "\\|" hopjs-re-code))
 
 (defconst hopjs-re-entering-html
   "\\(var[ \t ]*\\)?[a-zA-Z_$][.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\([^>]\\|[^/]>\\)")
@@ -93,9 +98,19 @@
 ;*    debugging                                                        */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-debug (fmt &rest l)
-  (apply 'message fmt l))
+  (when hopjs-debug (apply 'message fmt l)))
 
 (defconst hopjs-debug t)
+
+;*---------------------------------------------------------------------*/
+;*    call-sans-debug ...                                              */
+;*---------------------------------------------------------------------*/
+(defun call-sans-debug (f &rest l)
+  (let ((dbg hopjs-debug))
+    (setq hopjs-debug nil)
+    (let ((tmp (apply f l)))
+      (setq hopjs-debug dbg)
+      tmp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-electric-brace ...                                         */
@@ -299,6 +314,9 @@ usage: (js-return)  -- [RET]"
 		 ((memq (get-text-property (point) 'face)
 			'(font-lock-comment-face font-lock-string-face))
 		  (goto-char next))
+		 ((looking-at hopjs-re-code)
+		  (forward-char 1)
+		  (forward-sexp 1))
 		 ((looking-at hopjs-re-open-tag)
 		  (setq open (+ open 1))
 		  (when hopjs-debug
@@ -326,55 +344,62 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-html-previous-line-indent ...                              */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-html-previous-line-indent (pmin indent-level)
-  (hopjs-debug ">>> hopjs-html-previous-line-indent point=%s" (point))
+(defun hopjs-html-previous-line-indent (pmin attr-or-tag)
+  (hopjs-debug ">>> hopjs-html-previous-line-indent point=%s pmin=%s attr-or-tag=%s"
+	       (point) pmin attr-or-tag)
   (save-excursion
-    (previous-line)
-    (beginning-of-line)
-    (back-to-indentation)
-    (when (> (point) pmin)
-      (cond
-       ((looking-at "^[ \t]*$")
-	(hopjs-html-previous-line-indent pmin indent-level))
-       ((looking-at hopjs-re-entering-html)
-	;; entering HTML mode
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: entering HTML")
-	(+ (current-column) hopjs-indent-level-html))
-       ((looking-at "<[^>/]*/>")
-	;; standlone tag
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: standalone tag %s %s" (point) (current-column))
-	(current-column))
-       ((looking-at "<[a-zA-Z_$][.0-9a-zA-Z_$]*[ ]+\\([^>]\\)[^>]*$")
-	;; open tag + attribute
-	(goto-char (match-beginning 0))
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: open + attr")
-	(current-column))
-       ((looking-at "[^<>]+=[^<>]+/>$")
-	;; attribute + closing
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: attr + close")
-	(+ (hopjs-html-previous-line-indent pmin 0) indent-level))
-       ((looking-at "[^<>]+=[^<>]")
-	;; attribute
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: attr")
-	(current-column))
-       ((looking-at "</[^>]*>$")
-	;; closing
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: close")
-	(current-column))
-       ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>$")
-	;; single line open/closing
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: open-close")
-	(current-column))
-       ((looking-at "<[^/<>]+\\(>$\\| \\)")
-	;; opening
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: opening")
-	(+ (current-column) hopjs-indent-level-html))
-       ((> (point) pmin)
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: text > %s" (point))
-	(hopjs-html-previous-line-indent pmin indent-level))
-       (t
-	(hopjs-debug "<<< hopjs-html-previous-line-indent: ?")
-	(current-column))))))
+    (if (> (point) pmin)
+	(progn
+	  (previous-line)
+	  (beginning-of-line)
+	  (back-to-indentation)
+	  (cond
+	   ((not (call-sans-debug 'hopjs-html-p (point)))
+	    (hopjs-debug "--- hopjs-html-previous-line-indent: skip, not in html")
+	    (hopjs-html-previous-line-indent pmin attr-or-tag))
+	   ((looking-at "^[ \t]*$")
+	    (hopjs-debug "--- hopjs-html-previous-line-indent: skip, blank")
+	    (hopjs-html-previous-line-indent pmin 0))
+	   ((looking-at hopjs-re-entering-html)
+	    ;; entering HTML mode
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: entering HTML")
+	    (cons (current-column) 'otag))
+	   ((looking-at "<\\([^>/\n]\\|/[^>]\\)*/>$")
+	    ;; standlone tag
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: standalone tag %s %s" (point) (current-column))
+	    (cons (current-column) 'tag))
+	   ((looking-at "<[a-zA-Z_$][.0-9a-zA-Z_$]*[ ]+\\([^>\n]\\)[^>]*$")
+	    ;; open tag + attribute
+	    (goto-char (match-beginning attr-or-tag))
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: open + attr point=%s col=%s" (point) (current-column))
+	    (cons (current-column) 'otag-attr))
+	   ((looking-at "[^<>]+=[^<>]+/>$")
+	    ;; attribute + closing
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: attr + close %s" (point))
+	    (cons (car (hopjs-html-previous-line-indent pmin attr-or-tag)) 'ctag-attr))
+	   ((looking-at "[^<>]+=[^<>]*$")
+	    ;; attribute
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: attr %s" (point))
+	    (cons (current-column) 'attr))
+	   ((looking-at "</[^>]*>$")
+	    ;; closing
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: close")
+	    (cons (current-column) 'ctag))
+	   ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>$")
+	    ;; single line open/closing
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: open-close")
+	    (cons (current-column) 'tag))
+	   ((looking-at "<\\([^/<>]\\|/[^>]\\)+\\(>\\| \\)$")
+	    ;; opening
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: opening")
+	    (cons (current-column) 'otag))
+	   ((> (point) pmin)
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: text > %s" (point))
+	    (hopjs-html-previous-line-indent pmin 0))
+	   (t
+	    (hopjs-debug "<<< hopjs-html-previous-line-indent: ?")
+	    (cons (current-column) 'text))))
+      (cons 0 'point-min))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-html-line-type ...                                         */
@@ -387,7 +412,7 @@ usage: (js-return)  -- [RET]"
       (cond
        ((or (= (point) p) (looking-at "[ \t]*$"))
 	'blank)
-       ((looking-at "<[^>]*/>")
+       ((looking-at "<[^>\n]*/>$")
 	'tag)
        ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>;?$")
 	'tag)
@@ -395,11 +420,13 @@ usage: (js-return)  -- [RET]"
 	'otag)
        ((looking-at "</[^>]*>[ \t;})]*$")
 	'ctag)
+       ((looking-at "\\([^/>]\\|/[^>]\\)*/>[ \t;})]*$")
+	'ctag-attr)
        ((looking-at "[$~]{")
 	'hop)
        ((looking-at "[^<>]+=[^<>]+/>;?$")
 	(if (memq (progn (previous-line) (beginning-of-line) (hopjs-html-line-type))
-		  '(blank attr 'otag))
+		  '(blank attr otag))
 	    'otag
 	  'text))
        (t
@@ -431,12 +458,35 @@ usage: (js-return)  -- [RET]"
 	  (hopjs-debug "<<<  entering=%s" (+ (current-column) hopjs-indent-level-html))
 	  (+ (current-column) hopjs-indent-level-html))
 	 (t
-	  (let* ((pindent (hopjs-html-previous-line-indent 0 hopjs-indent-level-html))
-		 (res (if (eq ltype 'ctag)
-			  (max (- pindent hopjs-indent-level-html) 0)
-			pindent)))
-	    (hopjs-debug "<<<  pindent=%s type=%s -> %s" pindent ltype res)
-	    res)))))))
+	  (case ltype
+	    ((ctag-attr)
+	     (let* ((previnfo (hopjs-html-previous-line-indent (point-min) 1))
+		    (col (car previnfo))
+		    (ptype (cdr previnfo))
+		    (res (case ptype
+			   ((otag-attr) col)
+			   ((otag) (+ col hopjs-indent-level-html))
+			   (t col))))
+	       (hopjs-debug "<<< ltype.1=%s ptype=%s -> %s" ltype ptype res)
+	       res))
+	    ((ctag)
+	     (let* ((previnfo (hopjs-html-previous-line-indent (point-min) 0))
+		    (col (car previnfo))
+		    (ptype (cdr previnfo))
+		    (res (case ptype
+			   ((otag-attr) col)
+			   (t (- col hopjs-indent-level-html)))))
+	       (hopjs-debug "<<< ltype.2=%s ptype=%s -> %s"  ltype ptype res)
+	       res))
+	    (t
+	     (let* ((previnfo (hopjs-html-previous-line-indent (point-min) 0))
+		    (col (car previnfo))
+		    (ptype (cdr previnfo))
+		    (res (case ptype
+			   ((otag otag-attr) (+ col hopjs-indent-level-html))
+			   (t col))))
+	       (hopjs-debug "<<< ltype.3=%s ptype=%s -> %s"  ltype ptype res)
+	       res)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */

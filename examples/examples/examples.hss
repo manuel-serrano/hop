@@ -78,3 +78,7 @@ pre.console {
 a.panel-heading-url {
   color: white;
 }
+
+.fontifier-prog span.fontifier-prog-tag {
+  font-size: inherit;
+}

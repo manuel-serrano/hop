@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Dec 20 09:45:55 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Mon Aug 24 09:12:09 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    multitier require                                                */
 /*    -------------------------------------------------------------    */
@@ -14,22 +14,20 @@
 var hop = require( 'hop' );
 
 service requirec() {
-   return <HTML> {
-      <HEAD> {
-	 require: [ "./mod1.js", "./mod2.js" ],
-	 ~{
-	    var mod1;
+   return <html> 
+     <head require= ${[ "./mod1.js", "./mod2.js" ]}>
+       ~{
+	  var mod1;
 
-	    window.onload = function() {
-	       mod1 = require( "./mod1.js" );
-	    }
-	 }
-      },
-      <BUTTON> {
-	 onclick: ~{ document.body.appendChild( mod1.hello() ) },
-	 "click me"
-      }
-   }
+	  window.onload = function() {
+	     mod1 = require( "./mod1.js" );
+	  }
+       }
+     </head>
+     <button onclick=~{ document.body.appendChild( mod1.hello() ) }>
+       click me
+     </button>
+   </html>;
 }
 
 console.log( "Go to \"http://%s:%d/hop/requirec\"", hop.hostname, hop.port );
