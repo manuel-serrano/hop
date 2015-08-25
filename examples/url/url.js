@@ -43,10 +43,11 @@ service url() {
        ${input}
        <button onclick=~{
 	  ${translate}( ${input}.value, ${select}.value )
-	     .post( function( v ) { ${output}.innerHTML = v; } )}/>
+	     .post( function( v ) { ${output}.innerHTML = v; } )}>
          translate
        </button>
        ${output}
+     </div>
      </html>;
 }
 
