@@ -14,7 +14,7 @@
 *.jfile
 *.etags
 *.mco
-.*~
+*~
 
 # Configure generated files
 config.status

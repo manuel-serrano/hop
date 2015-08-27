@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Aug 23 11:28:03 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 09:32:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -89,10 +89,8 @@
 	   (js-toindex::uint32 ::obj)
 	   (js-isindex?::bool ::uint32)
 	   
-	   (js-tostring::bstring ::obj ::JsGlobalObject)
+	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
 	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
-	   
-	   (generic js-object-tostring::bstring ::object ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
@@ -938,12 +936,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8          */
 ;*---------------------------------------------------------------------*/
-(define (js-tostring obj %this::JsGlobalObject)
+(define-generic (js-tostring obj %this::JsGlobalObject)
    (cond
-      ((isa? obj JsObject)
-       (js-tostring (js-toprimitive obj 'string %this) %this))
-      ((js-jsstring? obj)
-       (js-jsstring->string obj))
       ((eq? obj (js-undefined))
        "undefined")
       ((eq? obj #t)
@@ -956,8 +950,6 @@
        (js-number->string obj))
       ((symbol? obj)
        (symbol->string! obj))
-      ((object? obj)
-       (js-object-tostring obj %this))
       ((string? obj)
        (bigloo-type-error "js-tostring" "JsStringLiteral" obj))
       (else
@@ -970,18 +962,6 @@
    (if (js-jsstring? obj)
        obj
        (js-string->jsstring (js-tostring obj %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-tostring ...                                           */
-;*---------------------------------------------------------------------*/
-(define-generic (js-object-tostring::bstring obj::object %this::JsGlobalObject)
-   (typeof obj))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-tostring::bstring ::JsStringLiteral ...                */
-;*---------------------------------------------------------------------*/
-(define-method (js-object-tostring::bstring obj::JsStringLiteral %this)
-   (js-jsstring->string obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */

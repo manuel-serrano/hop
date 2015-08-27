@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Aug 22 20:09:07 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 09:11:09 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -20,10 +20,10 @@
 	   __nodejs_process)
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject)
+	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread)
+	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj)
@@ -130,9 +130,9 @@
 	 ;; filename
 	 (js-put! m 'filename (js-string->jsstring filename) #f %this)
 	 ;; loaded
-	 (js-put! m 'loaded #t #f %this)
+	 (js-put! m 'loaded #f #f %this)
 	 ;; parent
-	 (js-put! m 'parent #f #f %this)
+	 (js-put! m 'parent (js-null) #f %this)
 	 ;; children
 	 (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
 	 ;; paths
@@ -157,15 +157,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject)
+(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::symbol)
 
    ;; require
    (define require
       (js-make-function this
-	 (lambda (_ name)
+	 (lambda (_ name lang)
 	    (nodejs-require-module (js-tostring name this)
-	       (js-current-worker) this %module))
-	 1 "require"))
+	       (js-current-worker) this %module
+	       (if (eq? lang (js-undefined))
+		   language
+		   (string->symbol (js-tostring lang this)))))
+	 2 "require"))
 
    ;; require.main
    (with-access::JsGlobalObject this (js-main js-object) 
@@ -195,6 +198,10 @@
       :value require
       :enumerable #f)
 
+   ;; require.language
+   (let ((lang (js-string->jsstring (symbol->string language))))
+      (js-put! require 'language lang #f this))
+   
    require)
 
 ;*---------------------------------------------------------------------*/
@@ -386,7 +393,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring)
+(define (nodejs-compile filename::bstring #!optional lang)
 
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -398,6 +405,7 @@
 		     (j2s-compile in
 			:driver (nodejs-driver)
 			:filename filename
+			:language (or lang 'hopscript)
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod))
@@ -412,6 +420,7 @@
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
+		  :language (or lang 'hopscript)
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod))))))
@@ -442,13 +451,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread)
+(define (nodejs-load filename worker::WorkerHopThread #!optional lang)
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename))
+	       (let ((hopscript (nodejs-compile filename lang))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
@@ -465,6 +474,8 @@
 			   (js-delete! module-cache filename #f %this))
 			(raise e))
 		     (hopscript %this this scope mod))
+		  ;; set the loaded property
+		  (js-put! mod 'loaded #t #f %this)
 		  ;; return the newly created module
 		  (trace-item "mod=" (typeof mod))
 		  mod)))))
@@ -564,7 +575,8 @@
 ;*    Require a nodejs module, load it if necessary or simply          */
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require-module name::bstring worker::WorkerHopThread %this %module)
+(define (nodejs-require-module name::bstring worker::WorkerHopThread %this
+	   %module #!optional lang)
    
    (define (load-json path)
       (let ((mod (nodejs-module path path worker %this))
@@ -592,7 +604,7 @@
 ;* 		((string-suffix? ".wiki" path)                      */
 ;* 		 (load-wiki path))                                  */
 	 (else
-	  (let ((mod (nodejs-load path worker)))
+	  (let ((mod (nodejs-load path worker lang)))
 	     (unless (js-get mod 'parent %this)
 		;; parent and children
 		(let* ((children (js-get %module 'children %this))

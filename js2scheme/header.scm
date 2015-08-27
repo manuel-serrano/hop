@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Wed Jul  8 12:25:12 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 08:14:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -42,13 +42,13 @@
       (with-access::J2SProgram ast (headers path loc mode)
 	 (let* ((id (basename path))
 		(path (or (config-get conf :module-path #f) path)))
-	    (set! headers (hopscript-header mode id path loc)))))
+	    (set! headers (hopscript-header mode id path loc conf)))))
    ast)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-header ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-header::pair mode id path loc)
+(define (hopscript-header::pair mode id path loc conf)
    
    (define (js-def-extern js bind writable expr)
       (instantiate::J2SDeclExtern
@@ -67,7 +67,7 @@
       (js-def-extern 'GLOBAL #t #f '%this)
       (js-def-extern 'module #t #t '%module)
       (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
-      (js-def-extern 'require #t #f '(nodejs-require %worker %this %module))
+      (js-def-extern 'require #t #f `(nodejs-require %worker %this %module ',(config-get conf :language 'hopscript)))
       (js-def-extern 'Worker #t #t '(nodejs-worker %this %scope %module))
       (js-def-extern '__filename #t #f '(js-get %module 'filename %scope))
       (js-def-extern '__dirname #t #f '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Aug 22 07:23:56 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 07:38:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -715,6 +715,13 @@
 					,(j2s-scheme expr mode return conf)
 					%this)))))
 		     exprs))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SNativeString ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SNativeString mode return conf)
+   (with-access::J2SNativeString this (loc val)
+      val))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SString ...                                       */

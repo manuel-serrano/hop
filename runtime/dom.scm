@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Aug 19 08:07:40 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 07:20:22 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -210,28 +210,21 @@
 ;*---------------------------------------------------------------------*/
 (define (dom-node-type node)
    (cond
-      ((string? node)
-       'text)
-      ((isa? node xml-markup)
-       (with-access::xml-markup node (tag) tag))
-      ((isa? node xml-element)
-       'element)
-      ((isa? node xml-document)
-       'document)
-      (else
-       'unknown)))
+      ((or (string? node) (isa? node xml-verbatim)) 'text)
+      ((isa? node xml-markup) (with-access::xml-markup node (tag) tag))
+      ((isa? node xml-element) 'element)
+      ((isa? node xml-document) 'document)
+      ((isa? node xml-comment) 'comment)
+      (else 'unknown)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-node-value ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (dom-node-value node)
    (cond
-      ((string? node)
-       node)
-      ((isa? node xml-markup)
-       #f)
-      (else
-       #f)))
+      ((string? node) node)
+      ((isa? node xml-markup) #f)
+      (else #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-parent-node ...                                              */
@@ -282,7 +275,7 @@
       ((eq? left right)
        #t)
       ((isa? right xml-verbatim)
-       (with-access::xml-verbatim right (body) (eq? body left)))
+       (with-access::xml-verbatim right (data) (eq? data left)))
       (else
        #f)))
 

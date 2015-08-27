@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Aug 24 11:28:33 2015                          */
-/*    Last change :  Mon Aug 24 11:33:19 2015 (serrano)                */
+/*    Last change :  Mon Aug 24 20:10:06 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example of third-party client-side JavaScript code.           */
@@ -21,7 +21,7 @@ service pdfviewer( { path: pdfviewer.resource( "example.pdf" ) } ) {
      <head jscript=${ [pdfviewer.resource( "pdfwrap.js" ),
 		       pdfviewer.resource( "pdf.js" )] }/>
      <body>
-       <div >${path}</div>
+       <div>${path}</div>
        ${ ca }
        ~{
 	  PDFJS.workerSrc = ${pdfviewer.resource( "pdf.js" )};

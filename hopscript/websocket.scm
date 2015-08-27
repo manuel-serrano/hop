@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat Aug 22 07:12:57 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 09:39:40 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -174,7 +174,13 @@
 				       (js-get options 'protocol %this)))))
 		      (url (js-tostring url %this))
 		      (ws (instantiate::websocket
-			     (url (pregexp-replace "ws://" url "http://"))
+			     (url (cond
+				     ((string-prefix? "ws://" url)
+				      (string-append "http://" (substring url 5)))
+				     ((string-prefix? "wss://" url)
+				      (string-append "https://" (substring url 6)))
+				     (else
+				      url)))
 			     (protocol protocol)))
 		      (obj (instantiate::JsWebSocket
 			      (__proto__ js-websocket-prototype)
@@ -285,7 +291,15 @@
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
 		    (with-access::websocket ws (url)
-		       (pregexp-replace "http://" url "ws://"))))
+		       (cond
+			  ((string-prefix? "http://" url)
+			   (js-stringlist->jsstring
+			      (list "ws://" (substring url 8))))
+			  ((string-prefix? "https://" url)
+			   (js-stringlist->jsstring
+			      (list "wss://" (substring url 9))))
+			  (else
+			   (js-string->jsstring url))))))
 	      0 'url))
    ;; send
    (js-bind! %this obj 'send

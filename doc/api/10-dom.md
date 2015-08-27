@@ -47,10 +47,22 @@ The children of the node in an array.
 
 The class of the node.
 
+### node.innerHTML ###
+[:@glyphicon glyphicon-tag parameter]
+
+Set or get the HTML syntax describing the element's descendants.
+ 
 ### node.nextSibling ###
 [:@glyphicon glyphicon-tag parameter]
 
 The next sibling of the node.
+
+### node.outerHTML ###
+[:@glyphicon glyphicon-tag parameter]
+
+The serialized HTML fragment describing the element including its
+descendants. It can be set to replace the element with nodes parsed
+from the given string.
 
 ### node.parentNode ###
 [:@glyphicon glyphicon-tag parameter]

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 25 09:33:54 2014                          */
-/*    Last change :  Sat Dec 20 10:03:45 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Thu Aug 27 11:21:07 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    This shows how to import Bigloo code from JS using modules       */
 /*    -------------------------------------------------------------    */
@@ -38,6 +38,7 @@ service sqlite( { path: defpath } ) {
 }
 
 function dbTable( db, table ) {
+#:tprint( "dbTable db=", #:typeof( db ) );
    var cols = db.columns( table );
 
    return <TABLE> {

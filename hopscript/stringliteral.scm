@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Aug 21 16:41:30 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 09:29:58 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -51,6 +51,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (object-print obj::JsStringLiteral op proc)
    (display-js-string obj op))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring::bstring ::JsStringLiteral ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring::bstring obj::JsStringLiteral %this)
+   (js-jsstring->string obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsStringLiteral ...                            */

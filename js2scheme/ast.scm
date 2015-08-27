@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Aug 22 06:40:39 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 07:34:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -228,6 +228,8 @@
 
 	   (class J2SLiteralValue::J2SLiteral
 	      val)
+
+	   (class J2SNativeString::J2SLiteralValue)
 	   
 	   (class J2SString::J2SLiteralValue
 	      (escape::pair-nil read-only (default '())))

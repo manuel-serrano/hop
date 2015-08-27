@@ -2,5 +2,7 @@
    "title": "API",
    "files": [ "api",
 	      "../node_modules/config/doc/config.md",
-	      "../node_modules/hss/doc/hss.md" ]
+	      "../node_modules/user/doc/user.md",
+	      "../node_modules/hss/doc/hss.md",
+	      "../node_modules/markdown/doc/markdown.md"]
 }

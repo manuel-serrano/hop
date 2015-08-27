@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jul  8 14:17:34 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 10:18:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -55,15 +55,19 @@
 	     (vars (append-map (lambda (s) (collect* s)) nodes))
 	     (lets (collect-let nodes))
 	     (env (append hds vars lets))
-	     (global (config-get conf :bind-global '%scope)))
+	     (global (config-get conf :bind-global '%scope))
+	     (vdecls (bind-decls! vars env mode global '() '())))
 	 (when (pair? vars)
-	    (set! decls (bind-decls! vars env mode global '() '())))
+	    (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
 	 (when (pair? lets)
 	    (for-each (lambda (d::J2SDecl)
 			 (with-access::J2SDecl d (global)
 			    (set! global #t)))
 	       lets)
 	    (set! decls (append decls lets)))
+	 (set! nodes
+	    (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
+	       nodes))
 	 (set! nodes
 	    (map! (lambda (o) (resolve! o env mode '() '())) nodes))))
    this)
@@ -96,7 +100,7 @@
 		     (loc loc)
 		     (lhs (j2sref old loc withs wenv))
 		     (rhs val))))))
-   
+
    (let loop ((decls (map (lambda (e) (bind! e env mode)) decls))
 	      (acc '())
 	      (funs '()))

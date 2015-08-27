@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Aug 24 13:13:28 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 12:20:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -73,6 +73,12 @@
       (if (eq? %this 'hop)
 	  o
 	  (js-plist->jsobject o (or %this (js-initial-global-object))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsObject ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::JsObject %this::JsGlobalObject)
+   (js-tostring (js-toprimitive obj 'string %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsObject ...                                         */
@@ -171,8 +177,7 @@
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
                     2 ',tag)
-          :writable #t
-          :enumerable #f)))
+          :writable #f :configurable #f :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tags! ...                                                */
@@ -438,8 +443,24 @@
 	    (js-bind-tags! %this %this
 	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
-	       SVG:IMG SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
-	       SVG:TEXTPATH SVG:TREF SVG:TSPAN)
+	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
+	       SVG:TEXTPATH SVG:TREF SVG:TSPAN SVG:IMG)
+
+	    ;; mathml
+	    (js-bind-tags! %this %this
+	       MATH MATH:MSTYLE MATH:MI MATH:MN MATH:MO
+	       MATH:MROW MATH:MUNDER MATH:MOVER MATH:MUNDEROVER
+	       MATH:MSUP MATH:MSUB MATH:MSUBSUP MATH:MFRAC
+	       MATH:MROOT MATH:MSQRT MATH:MTEXT MATH:MTABLE
+	       MATH:MTR MATH:MTD MATH:MPADDED MATH:TEX)
+
+	    (js-bind! %this %this '!--
+	       :value (js-make-function %this
+			 (lambda (this data)
+			    (instantiate::xml-comment
+			       (data data)))
+			 1 '<!--)
+	       :enumerable #f :writable #f :configurable #f)
 
 	    ;; return the newly created object
 	    %this))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Aug 14 16:11:12 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 12:15:01 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -192,7 +192,14 @@
       ((: "<!--"
 	  (* (or (out "-") (: "-" (out "-")) (: "--" (out ">"))))
 	  "-->")
-       (ignore))
+       (let ((tag (token 'HTML '<!--> (the-length)))
+	     (data (the-substring 4 -3)))
+	  (instantiate::J2SCall
+	     (loc (token-loc tag))
+	     (fun (j2s-tag->expr tag #t))
+	     (args (list (instantiate::J2SNativeString
+			    (val (decoder data))
+			    (loc (the-coord (the-port) (+fx (the-length) 6)))))))))
       
       ((: "<!" (: (or (out "[-") (: "-" (out "-")))
 		  (* (out ">]"))
@@ -273,11 +280,14 @@
 		       (set! attrs (cons x attrs))
 		       (set! abody (cons x abody))))
 	 attributes)
-      (let ((a (instantiate::J2SObjInit
-		  (loc (token-loc tag))
-		  (inits (filter (lambda (x)
-				    (isa? x J2SDataPropertyInit))
-			    (reverse! attrs))))))
+      (let ((a (if (null? attrs)
+		   (instantiate::J2SUndefined
+		      (loc (token-loc tag)))
+		   (instantiate::J2SObjInit
+		      (loc (token-loc tag))
+		      (inits (filter (lambda (x)
+					(isa? x J2SDataPropertyInit))
+				(reverse! attrs)))))))
 	 (instantiate::J2SCall
 	    (loc (token-loc tag))
 	    (fun (j2s-tag->expr tag #t))
