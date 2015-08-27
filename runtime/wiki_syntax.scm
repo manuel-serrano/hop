@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Dec 21 11:52:52 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Thu Aug 27 07:21:08 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -74,7 +74,7 @@
 	       (type::procedure (default (lambda (x) x)))
 	       (hyphen::procedure (default (lambda (x)
 					      (instantiate::xml-verbatim
-						 (body "&shy;")))))
+						 (data "&shy;")))))
 	       (plugins::procedure (default (lambda (id) #f)))
 	       (verbatims::procedure (default (lambda (id) #f)))
 	       (prehook::procedure (default (lambda () #f)))

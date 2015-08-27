@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Jul 18 22:21:11 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 10:11:01 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -59,9 +59,13 @@
       (let ((lets '())
 	    (vars '()))
 	 (for-each (lambda (x)
-		      (if (isa? x J2SLet)
-			  (set! lets (cons x lets))
-			  (set! vars (cons x vars))))
+		      (cond
+			 ((isa? x J2SLet)
+			  (set! lets (cons x lets)))
+			 ((isa? x J2SDecl)
+			  (set! vars (cons x vars)))
+			 (else
+			  (error "j2s-letopt" "internal error" (j2s->list x)))))
 	    decls)
 	 (when (pair? lets)
 	    ;; this modify nodes in place
@@ -341,7 +345,7 @@
 		   (set! decls (remq! d decls)))
 	 disabled)
       decls)
-
+   
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())

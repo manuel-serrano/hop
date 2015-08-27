@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon Jun 15 16:48:37 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 09:40:09 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -594,9 +594,7 @@
 		      (target ws)
 		      (data val)
 		      (value val))))
-	    (tprint "MESSAGE RECEIVED: " val)
 	    (synchronize %mutex
-	       (tprint "MESSAGE HANDLER INVOKING " val)
 	       (apply-listeners onmessages se)))))
    
    (define (read-check-byte in val)
@@ -607,7 +605,6 @@
       (with-access::websocket ws (%socket)
 	 (let ((in (socket-input %socket)))
 	    (input-timeout-set! in 0)
-	    (tprint "READING MESSAGES...")
 	    (let loop ()
 	       (let ((msg (websocket-read %socket)))
 		  (if (string? msg)
@@ -621,7 +618,7 @@
 	 (unless (websocket-connected? ws)
 	    (multiple-value-bind (scheme userinfo host port path)
 	       (url-parse url)
-	       (let* ((sock (make-client-socket/timeout host port -1 0 #f))
+	       (let* ((sock (make-client-socket/timeout host port -1 0 (string=? scheme "https")))
 		      (in (socket-input sock))
 		      (out (socket-output sock)))
 		  (set! %socket sock)
@@ -667,7 +664,6 @@
 					  (body (lambda ()
 						   (let loop ()
 						      (synchronize %mutex
-							 (tprint "WAITING FOR HANDLER")
 							 (unless (pair? onmessages)
 							    (condition-variable-wait! %condvar %mutex)))
 						      (unwind-protect
@@ -675,11 +671,6 @@
 							    (lambda (e) #f)
 							    (read-messages))
 							 (close)))))))))))))))))))
-;* 							  (begin       */
-;* 							     (synchronize %mutex */
-;* 								(tprint "WAITING FOR HANDLER") */
-;* 								(condition-variable-wait! %condvar %mutex)) */
-;* 							     (loop)))))))))))))))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */

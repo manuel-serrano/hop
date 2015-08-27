@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Aug 24 08:31:34 2015 (serrano)                */
+#*    Last change :  Thu Aug 27 08:44:32 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -48,7 +48,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   hss/doc.hss \
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html 01-html.html
+  hss.html config.html user.html 01-html.html markdown.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
   01-es6.html 01-module.html
@@ -67,7 +67,9 @@ VPATH=api lang dev widget \
   ../node_modules/tree/doc \
   ../node_modules/spage/doc \
   ../node_modules/hss/doc \
-  ../node_modules/config/doc
+  ../node_modules/config/doc \
+  ../node_modules/user/doc \
+  ../node_modules/markdown/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Aug 22 09:20:19 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 07:55:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -33,6 +33,7 @@
 (define (j2s-parser input-port conf::pair-nil)
 
    (define tilde-level (config-get conf :tilde-level 0))
+   (define lang (config-get conf :language 'hopscript))
 
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
@@ -103,7 +104,7 @@
    (define (peek-token)
       (if (null? *peeked-tokens*)
 	  (begin
-	     (set! *peeked-tokens* (list (read/rp (j2s-lexer) input-port)))
+	     (set! *peeked-tokens* (list (read/rp (j2s-lexer) input-port lang)))
 	     (if (eq? (caar *peeked-tokens*) 'NEWLINE)
 		 (begin
 		    (set! *previous-token-type* 'NEWLINE)

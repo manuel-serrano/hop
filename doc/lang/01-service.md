@@ -232,6 +232,12 @@ Example
 svc2.ttl = 5;
 ```
 
+### service.unregister() ###
+[:@glyphicon glyphicon-tag function]
+
+Unregister a service from the Hop.js server. Once unregistered services
+can no longer be invoked in response to client requests.
+
 Importing Services
 ------------------
 

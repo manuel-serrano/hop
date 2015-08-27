@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul  8 10:21:05 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 09:30:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -646,7 +646,7 @@
 	     ((toString)
 	      (js-make-function %this
 		 (lambda (this)
-		    (js-object-tostring this %this))
+		    (js-tostring this %this))
 		 0
 		 'toString))
 	     (else

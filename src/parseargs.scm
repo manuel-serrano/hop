@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Aug 22 09:03:49 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 14:08:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -86,7 +86,10 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir)
-	     (hop-cache-directory-set! (make-file-name dir "cache")))
+	     (hop-cache-directory-set! (make-file-name dir "cache"))
+	     (when (bigloo-config 'have-dlopen)
+		(hop-so-directories-set!
+		   (list (make-file-path (hop-rc-directory) "so")))))
 	    (("--var-dir" ?dir (help "Set var directory"))
 	     (hop-var-directory-set! dir)
 	     (hop-upload-directory-set! (make-file-name dir "upload")))

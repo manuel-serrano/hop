@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Aug 12 11:19:17 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 14:09:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -36,6 +36,9 @@
 
 	    (hop-cache-enable::bool)
 	    (hop-cache-enable-set! ::bool)
+
+	    (hop-so-directories::pair-nil)
+	    (hop-so-directories-set! ::pair-nil)
 
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
@@ -382,6 +385,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-cache-enable
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-so-directories ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-so-directories
+   (when (bigloo-config 'have-dlopen)
+      (list (make-file-path (hop-rc-directory) "so"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */

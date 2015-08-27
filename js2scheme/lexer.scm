@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Aug 15 09:23:08 2015 (serrano)                */
+;*    Last change :  Tue Aug 25 07:59:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -15,7 +15,7 @@
 (module __js2scheme_lexer
    
    (include "token.sch")
-   
+
    (export (j2s-lexer)
 	   (j2s-template-lexer)
 	   (j2s-regex-lexer)
@@ -154,7 +154,8 @@
 	  (line_cont (: #\\ (or "\n" "\r\n" ls ps)))
 	  (string_char (or (out #a226 #\" #\' #\\ #\Return #\Newline) e2))
 	  (string_char_quote (or #\' string_char))
-	  (string_char_dquote (or #\" string_char)))
+	  (string_char_dquote (or #\" string_char))
+	  lang)
 
       (define (octalllong n::llong)
        (let loop ((power #l1)
@@ -291,16 +292,22 @@
 
       ;; hopscript escapes
       ("~{"
-       (token 'TILDE (the-string) (the-length)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (token 'TILDE (the-string) (the-length))))
       ("${"
-       (token 'DOLLAR (the-string) (the-length)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (token 'DOLLAR (the-string) (the-length))))
       
       ;; identifiers and keywords
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
 	     ((getprop symbol 'reserved)
-	      (token symbol symbol (the-length)))
+	      (if (and (eq? symbol 'service) (eq? lang 'javascript))
+		  (token 'ID symbol (the-length))
+		  (token symbol symbol (the-length))))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))
 	      (token 'RESERVED symbol (the-length)))
 	     (else
@@ -337,22 +344,31 @@
 
       ;; tags (hopscript extension)
       ((: "<" tagid ">")
-       (token 'OTAG (the-symbol) (the-length)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (token 'OTAG (the-symbol) (the-length))))
       
       ;; closing tags (hopscript extension)
       ((: "</" tagid ">")
-       (token 'CTAG (symbol-append '< (string->symbol (the-substring 2 -1)) '>)
-	  (the-length)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (token 'CTAG
+	      (symbol-append '< (string->symbol (the-substring 2 -1)) '>)
+	      (the-length))))
 
       ;; HTML
       ((: "<" tagid (+ (in " \t\n")) (or tagid "/>" ">"))
-       (let* ((str (the-string))
-	      (i (string-index str " \t\n")))
-	  (rgc-buffer-insert-substring! (the-port) str
-	     (+fx i 1) (string-length str))
-	  (token 'OHTML (string->symbol (substring str 0 i)) i)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (let* ((str (the-string))
+		  (i (string-index str " \t\n")))
+	      (rgc-buffer-insert-substring! (the-port) str
+		 (+fx i 1) (string-length str))
+	      (token 'OHTML (string->symbol (substring str 0 i)) i))))
       ((: "<" tagid "/>")
-       (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length)))
+       (if (eq? lang 'javascript)
+	   (token 'ERROR (the-string) (the-length))
+	   (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length))))
       
       ;; error
       (else

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Aug 24 09:31:15 2015 (serrano)                */
+/*    Last change :  Thu Aug 27 08:55:28 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -83,15 +83,31 @@ function chapterEntries( chapter ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    childrenSize ...                                                 */
+/*---------------------------------------------------------------------*/
+function childrenSize( children ) {
+   var res = 0;
+   
+   for( var i = 0; i < children.length; i++ ) {
+      if( children[ i ].tagName == "ul" ) {
+	 res += childrenSize( children[ i ].childNodes );
+      } else if( children[ i ].tagName == "li" ) {
+	 res++;
+      }
+   }
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
 /*    makeToc ...                                                      */
 /*---------------------------------------------------------------------*/
-function makeToc( els, k, proc ) {
+function _makeToc( els, k, proc, indent ) {
    if( els.length == k  ) {
       return [];
    } else {
       var acc = [];
       var tag = els[ k ].tagName;
-      
+
       for( var i = k; i < els.length; ) {
 	 if( els[ i ].tagName == tag ) {
 	    var el = els[ i++ ];
@@ -100,9 +116,9 @@ function makeToc( els, k, proc ) {
 	      <a href=${"#" + el.id} role="presentation">
 		${n}</a></li> );
 	 } else if( els[ i ].tagName > tag ) {
-	    var children = makeToc( els, i, proc );
+	    var children = _makeToc( els, i, proc, indent + "  " );
 	    acc.push( <ul>${children}</ul> );
-	    i += children.length;
+	    i += childrenSize( children );
 	 } else {
 	    return acc;
 	 }
@@ -110,6 +126,10 @@ function makeToc( els, k, proc ) {
 
       return acc;
    }
+}
+
+function makeToc( els, k, proc ) {
+   return _makeToc( els, k, proc, "" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -132,11 +152,11 @@ function compileSection( page ) {
        <docxml.navbar title=${title} key=${key}>
          ${chapters}
        </docxml.navbar>
-  
+       
        <docxml.title root=${ROOT}>${title}</docxml.title>
        <div class="container">
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
-           <h1 class="toc">Table of Contents</h1>
+           <h1 class="toc TOC">Table of Contents</h1>
            <ul class="toc">
              ${makeToc( toc, 0 )}
            </ul>
@@ -144,19 +164,19 @@ function compileSection( page ) {
          </div>
          <div class="row">
            ${(toc.length > 0) ?
-             <div id="navbar" class="col-md-3" role="complementary">
-               <nav class="sidebar"
-                    data-spy="affix"
-	            data-offset-top="215" data-offset-bottom="100">
-                 <ul class="nav bs-docs-sidenav">
-             ${makeToc( toc, 0, function( el ) {
-		return el.childNodes[ 0 ].data.replace( /[(].*$/, "");
-	     } )}
-                </ul>
-             </nav> 
-             </div>
-             : undefined}
-         </div>
+           <div id="navbar" class="col-md-3" role="complementary">
+             <nav class="sidebar"
+		  data-spy="affix"
+	          data-offset-top="215" data-offset-bottom="100">
+               <ul class="nav bs-docs-sidenav">
+                  ${makeToc( toc, 0, function( el ) {
+		     return el.childNodes[ 0 ].data.replace( /[(].*$/, "");
+		  } )}
+	       </ul>
+	     </nav> 
+	   </div>
+           : undefined}
+	 </div>
        </div>
        <docxml.footer root=${ROOT}/>
      </body>
@@ -180,7 +200,7 @@ function compileChapter( json ) {
 
      <body data-spy="scroll" data-target="#navbar">
        <docxml.navbar title=${chapter.title}
-                        key=${chapter.title.toLowerCase()}>
+                      key=${chapter.title.toLowerCase()}>
          ${chapters}
        </docxml.navbar>
        <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
@@ -192,16 +212,16 @@ function compileChapter( json ) {
 	      : doc.read( chapter.description ).XML }
 	   </div> : ""}
 	 
-          <h1 class="toc">Table of Contents</h1>
-          <ul class="toc">
+         <h1 class="toc TOC">Table of Contents</h1>
+         <ul class="toc">
            ${toc.map( function( el ) {
-                        return <li>
-	                    <a href=${el.href}>${el.title}</a>
-                            <span class="toc-description">
-                              ${doc.read( el.description )}
-                            </span>
-	                  </li>
-	              } )}
+              return <li>
+	        <a href=${el.href}>${el.title}</a>
+                <span class="toc-description">
+                  ${doc.read( el.description )}
+                </span>
+	      </li>
+	   } )}
          </ul>
        </div>
        <docxml.footer root=${ROOT}/>

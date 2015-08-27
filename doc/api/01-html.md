@@ -59,18 +59,21 @@ property.
 
 
 Hop.js tags
------------
+===========
 
 In addition to standard HTML5 tags, Hop.js supports the following tags.
 
 ### <SVG:IMG [attributes]> ###
 [:@glyphicon glyphicon-tag tag]
 
-An SVG Image. The attributes are:
+An SVG image. The attributes are:
 
  * `src`: the URL of the SVG image.
  * `width`: the width of the image.
  * `height`: the height of the image.
+
+The tag `<svg:img>` may be used everywhere in HTML documents. It should not
+be used inside a `<svg>` section.
 
 ${ doc.include( doc.EXAMPLES_DIR + "/svg/README.md" ) }
 
@@ -80,5 +83,139 @@ ${ <span class="label label-info">svg/svg.js</span> }
 ${ doc.include( doc.EXAMPLES_DIR + "/svg/svg.js", 13 ) }
 ```
 
+### <MATH:TEX> ###
+[:@glyphicon glyphicon-tag tag]
+
+Parse a math formula expressed in the TeX syntax and build the corresponding
+MathML DOM tree. 
+
+
+SVG tags
+========
+
+Hop.js supports the following SVG tags.
+
+### <SVG [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:DEFS [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:RECT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:CIRCLE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:ELLIPSE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:FILTER [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:FEGAUSSIANBLUR [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:FECOLORMATRIX [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:FOREIGNOBJECT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:G [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:IMG [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:LINE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:PATH [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:POLYLINE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:POLYGON [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:TEXT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:TEXTPATH [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:TREF [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <SVG:TSPAN [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+
+MathML tags
+===========
+
+Hop.js supports the following MathML tags.
+
+### <MATH [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MSTYLE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MI [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MN [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MO [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MROW [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MUNDER [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MOVER [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MUNDEROVER [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MSUP [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MSUB [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MSUBSUP [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MFRAC [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MROOT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MSQRT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MTEXT [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MTABLE [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MTR [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MTD [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
+
+### <MATH:MPADDED [attributes]> ###
+[:@glyphicon glyphicon-tag tag]
 
 

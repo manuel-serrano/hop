@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Aug 19 08:04:20 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 07:35:12 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -394,8 +394,17 @@
 ;*    xml-write ::xml-verbatim ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-verbatim p backend)
-   (with-access::xml-verbatim obj (body)
-      (display (xml-primitive-value body) p)))
+   (with-access::xml-verbatim obj (data)
+      (display data p)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::xml-comment ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write obj::xml-comment p backend)
+   (with-access::xml-comment obj (data)
+      (display "<!--" p)
+      (display-string data p)
+      (display "-->" p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-if ...                                           */
@@ -1073,9 +1082,9 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 (define (<PRAGMA> . obj)
    (cond
       ((and (pair? obj) (null? (cdr obj)) (string? (car obj)))
-       (instantiate::xml-verbatim (body (car obj))))
+       (instantiate::xml-verbatim (data (car obj))))
       ((every string? obj)
-       (instantiate::xml-verbatim (body (apply string-append obj))))
+       (instantiate::xml-verbatim (data (apply string-append obj))))
       (else
        (error "<PRAGMA>" "Illegal arguments" obj))))
 

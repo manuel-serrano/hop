@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Aug 21 18:51:03 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 12:22:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -53,6 +53,13 @@
       (js-raise-type-error (js-initial-global-object)
 	 "[[SerializeTypeError]] ~a" o))
    (lambda (o) o))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsHopFrame ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring o::JsHopFrame %this)
+   (with-access::JsHopFrame o (args url)
+      url))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsService ...                                        */
@@ -136,7 +143,7 @@
 	       (svc #f)
 	       (extensible #t)))
 	 
-	 (js-bind! %this js-function-prototype 'resource
+	 (js-bind! %this js-service-prototype 'resource
 	    :value (js-make-function %this
 		      (lambda (this file)
 			 (js-string->jsstring
@@ -145,8 +152,17 @@
 	    :writable #t
 	    :configurable #t
 	    :enumerable #f)
+	 (js-bind! %this js-service-prototype 'unregister
+	    :value (js-make-function %this
+		      (lambda (this)
+			 (unregister-service! this)
+			 (js-undefined))
+		      0 'unregister)
+	    :writable #t
+	    :configurable #t
+	    :enumerable #f)
 	 
-	 (js-bind! %this js-function-prototype 'timeout
+	 (js-bind! %this js-service-prototype 'timeout
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::JsService this (svc)
@@ -154,7 +170,7 @@
 			     timeout)))
 		    0 'timeout))
 
-	 (js-bind! %this js-function-prototype 'ttl
+	 (js-bind! %this js-service-prototype 'ttl
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::JsService this (svc)
@@ -191,6 +207,11 @@
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'toString))
+	 (js-bind! %this js-hopframe-prototype 'inspect
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame)
+			 (js-string->jsstring (hopframe->string this %this)))
+		      0 'inspect))
 
 	 (letrec ((js-hopframe (js-make-function %this
 				  (lambda (this url args)

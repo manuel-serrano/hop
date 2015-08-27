@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug 21 17:25:55 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 12:19:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -67,7 +67,7 @@
       (display val p)))
 		  
 ;*---------------------------------------------------------------------*/
-;*    xml-unpack ::JsObject ...                                        */
+;*    xml-unpack ::JsDate ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Used when an JS object is to pack the arguments sent to          */
 ;*    an XML constructor.                                              */

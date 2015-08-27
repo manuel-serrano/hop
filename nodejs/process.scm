@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Jun 21 09:38:44 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 12:28:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -1002,7 +1002,7 @@
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
 				    (js-string->jsstring "LE")
 				    (js-string->jsstring "BE")))
-			     0 "endianess"))
+			     0 "endianness"))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)
 			      (js-string->jsstring (hostname)))
