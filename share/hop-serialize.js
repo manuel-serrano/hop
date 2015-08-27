@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Aug 10 16:55:01 2015 (serrano)                */
+/*    Last change :  Thu Aug 27 16:15:42 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -988,9 +988,7 @@ function hop_bytearray_to_obj( s, extension ) {
       hash = hashobj.__hop_car;
       obj = hashobj.__hop_cdr;
 
-      unserializer = hop_find_class_unserializer( hash );
-
-      res = unserializer( obj );
+      res = hop_find_class_unserializer( hash )( obj );
       
       if( old_defining >= 0 ) {
 	 definitions[ old_defining ] = res;
@@ -1148,6 +1146,11 @@ function hop_class_register_serializer( clazz, serializer, unserializer ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    sc__class__ ...                                                  */
+/*---------------------------------------------------------------------*/
+var sc__class__ = sc_string2keyword( "__class__" );
+
+/*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_find_class_unserializer( hash ) {
@@ -1170,10 +1173,16 @@ function hop_find_class_unserializer( hash ) {
 				+ ") unserializer", o );
 	    }
 	 } else {
-	    return sc_error( "string->obj",
-			     "Cannot find custom class ("
-			     + hash
-			     + ") unserializer", hash );
+	    if( sc_isPair( o ) && sc_car( o ) == sc__class__ ) {
+	       var clazz = { sc_hash: hash };
+	       hop_class_register_serializer( clazz, hop_js_to_object, hop_plist2jsobject );
+	       return hop_plist2jsobject( o );
+	    } else {
+	       return sc_error( "string->obj",
+				"Cannot find custom class ("
+				+ hash
+				+ ") unserializer", hash );
+	    }
 	 }
       }
    }

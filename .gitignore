@@ -79,6 +79,7 @@ widget/spinbutton.scm
 weblets/**/config.hop
 weblets/**/weblet.info
 weblets/**/etc/*.wiki
+weblets/home/release.info
 
 # man pages
 etc/hop.man

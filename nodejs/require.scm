@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Aug 27 09:11:09 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 16:30:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -466,7 +466,7 @@
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
 		  ;; main module
-		  (unless js-main (set! js-main mod))
+		  (when (eq? js-main (js-null)) (set! js-main mod))
 		  ;; create the module
 		  (with-handler
 		     (lambda (e)
@@ -493,7 +493,7 @@
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
 		  ;; main module
-		  (unless js-main (set! js-main mod))
+		  (when (eq? js-main (js-null)) (set! js-main mod))
 		  ;; create the module
 		  (with-handler
 		     (lambda (e)

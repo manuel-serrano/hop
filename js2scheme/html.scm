@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Aug 27 12:15:01 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 16:46:54 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -191,7 +191,7 @@
 	  (loc (the-coord (the-port) (+fx (the-length) 1)))))      
       ((: "<!--"
 	  (* (or (out "-") (: "-" (out "-")) (: "--" (out ">"))))
-	  "-->")
+	  (+ "-") "->")
        (let ((tag (token 'HTML '<!--> (the-length)))
 	     (data (the-substring 4 -3)))
 	  (instantiate::J2SCall
