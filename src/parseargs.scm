@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Aug 28 08:15:46 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 14:48:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -100,7 +100,7 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
-	    (("--no-load-compiled" (help "Disable loading pre-compiled file"))
+	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
