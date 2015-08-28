@@ -4,8 +4,8 @@ ${ var fontifier = require( "fontifier" ) }
 Server-side Workers
 ===================
 
-Hop server-side workers are processes that run concurently. Each
-worker possses its own isolated memory heap. Workers cannot shared
+Hop server-side workers are processes that run concurrently. Each
+worker possesses its own isolated memory heap. Workers cannot share
 JavaScript objects. Each worker possesses its own private JavaScript
 global objects. Worker communicate using message passing. Workers
 are the only mean for running concurrent JavaScript execution on the
@@ -23,15 +23,28 @@ Constructor
 [:@glyphicon glyphicon-tag function]
 
 Workers are created using the `Worker` function which takes as parameter
-the source file of the worker. The path is resolved using the rules
+the source file of the worker. The path is resolved using the same rules
 as the `require` module importation function
-(see [nodejs module](https://nodejs.org/api/modules.html)).
+(see [module](./01-module.html)).
 
 Example:
 
 ```hopscript
 var w = new Worker( "./slave.js" );
 ```
+
+`New Worker( path )` returns immediately, before the worker module is
+fully initialized. Messages sent to the worker are buffered until the
+worker is able to process them, so the calling thread may send
+messages as soon as the `Worker`object is created.
+
+However, since workers may also define services, the developer should
+ensure that services defined within the worker will not be invoked
+until the worker is fully initialized.  In general, this is achieved
+by letting the worker pass the service handle to the calling thread.
+Note that services that are invoked as a result of a user action on a
+web client are very likely to be up and running long before the user
+clicks on the button triggering the service invocation.
 
 Properties
 ----------
@@ -49,7 +62,8 @@ An `EventListener` called whenever the worker exits.
 ### Worker.onmessage ###
 [:@glyphicon glyphicon-tag parameter]
 
-An `EventListener` called whenever the worker receives a message.
+An `EventListener` called whenever the worker receives a message. The
+message is stored in the `data`property of the event.
 
 Methods
 -------
@@ -68,9 +82,12 @@ objects. The following rules apply:
  length 0.
  3. In all our cases, `msg` is deep copied an each field is donated to the
  target.
+ 4. `Service` handles can be passed within a message.
+ 5. Objects made from the above data types are passed with the same
+    donation rules.
 
-Objects that cannot be donated (`Worker`, `Arguments`, `Function`, `Math`,
-`Json, `Error`, or `Promise`) are replaced with the `undefined` value.
+6. Objects that cannot be donated (`Worker`, `Arguments`, `Function`, `Math`,
+`Json`, `Error`, or `Promise`) are replaced with the `undefined` value.
 
 ### Basic communications ###
 
