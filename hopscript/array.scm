@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 21 18:45:54 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 14:05:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -56,22 +56,23 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsArray worker %_this)
    (with-access::WorkerHopThread worker (%this)
-      (with-access::JsGlobalObject %this (js-arraybuffer)
+      (with-access::JsGlobalObject %this (js-array)
 	 (with-access::JsArray obj (vec frozen inline sealed)
-	    (let* ((nvec (vector-map! (lambda (e) (js-donate e worker %_this))
-			    vec))
-		   (nobj (instantiate::JsArray
-			    (__proto__ (js-get js-arraybuffer 'prototype %this))
-			    (frozen frozen)
-			    (sealed sealed)
-			    (vec nvec))))
-	       (set! vec '#())
+	    (let ((nobj (js-vector->jsarray
+			   (vector-map! (lambda (e)
+					   (js-donate e worker %_this))
+			      vec)
+			   %this)))
+	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k)
 		     (js-put! nobj k
-			(js-donate (js-get obj k %_this) worker %this)
+			(js-donate (js-get obj k %_this) worker %_this)
 			#f %this))
 		  %this)
+	       ;; invalidate the source array
+	       (set! vec '#())
+	       (js-put! obj 'length 0 #f %_this)
 	       nobj)))))
 	    
 ;*---------------------------------------------------------------------*/

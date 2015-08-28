@@ -18,7 +18,7 @@ The arguments are as follows:
  * `id` is a string that designates the source file containing the module.
  * `language` is an optional string denoting the implementation language
  of the module. The supported languages are:
-   * `javascript`, `ecmascript5`;
+   * `javascript`;
    * `hopscript`.
    
 When a language is specified and when this language is not `hopscript`,

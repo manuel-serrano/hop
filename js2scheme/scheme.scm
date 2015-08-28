@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Aug 27 07:38:31 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 11:11:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -196,7 +196,9 @@
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
-		,@(exit-body body)))))
+		,@(exit-body body))
+	    ;; for dynamic loading
+	    'hopscript)))
 
    (define (j2s-main-module name body)
       (let ((module `(module ,(string->symbol name)

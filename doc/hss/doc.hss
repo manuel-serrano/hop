@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Tue Aug 25 06:53:09 2015 (serrano)                */
+/*    Last change :  Fri Aug 28 14:41:57 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -97,6 +97,16 @@ h2 {
   padding-bottom: 4px;
   border-bottom: 1px dashed #777;
   text-shadow: #aaa 2px 2px 2px;
+}
+
+body.home h2:before,
+body.home h3:before,
+body.download h2:before,
+body.download h3:before,
+h1.nonumber:before,
+h2.nonumber:before,
+h3.nonumber:before {
+  content: none;
 }
 
 h2:before {
@@ -200,6 +210,7 @@ nav.sidebar li {
 nav.sidebar .active {
   font-weight: bold;
   border-left-color: #900;
+  background-color: #d0d0d0;
 }
 
 nav.sidebar ul ul .active {

@@ -1,5 +1,6 @@
 Compatibilities & Standards
 ===========================
+[:@nonumber]
 
 HopScript is based on JavaScript and aim at ensuring compatibility
 with this language.

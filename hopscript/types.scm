@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Aug 27 09:01:39 2015 (serrano)                */
+;*    Last change :  Thu Aug 27 20:51:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -321,6 +321,34 @@
 	 enumerable
 	 writable
 	 index)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-specific ::WorkerHopThread ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (thread-specific obj::WorkerHopThread)
+   (unless (eq? obj (class-nil WorkerHopThread))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-specific-set! ::WorkerHopThread ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (thread-specific-set! obj::WorkerHopThread val)
+   (unless (eq? obj (class-nil WorkerHopThread))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-cleanup ::WorkerHopThread ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (thread-cleanup obj::WorkerHopThread)
+   (unless (eq? obj (class-nil WorkerHopThread))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    thread-cleanup-set! ::WorkerHopThread ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (thread-cleanup-set! obj::WorkerHopThread val)
+   (unless (eq? obj (class-nil WorkerHopThread))
+      (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ...                                                     */

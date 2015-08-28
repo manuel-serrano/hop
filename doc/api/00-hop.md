@@ -36,6 +36,14 @@ The `lib` directory of the Hop installation.
 console.log( "lib:", hop.libDir );
 ```
 
+### hop.modulesDir ###
+[:@glyphicon glyphicon-tag parameter]
+The `node_modules` directory of the Hop installation.
+
+```hopscript
+console.log( "modules:", hop.modulesDir );
+```
+
 ### hop.port ###
 [:@glyphicon glyphicon-tag parameter]
 The port number of the running Hop server.

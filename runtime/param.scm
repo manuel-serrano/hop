@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Aug 27 14:09:15 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 08:15:11 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -37,8 +37,11 @@
 	    (hop-cache-enable::bool)
 	    (hop-cache-enable-set! ::bool)
 
-	    (hop-so-directories::pair-nil)
-	    (hop-so-directories-set! ::pair-nil)
+	    (hop-sofile-enable::bool)
+	    (hop-sofile-enable-set! ::bool)
+
+	    (hop-sofile-directory::bstring)
+	    (hop-sofile-directory-set! ::bstring)
 
 	    (hop-load-preferences::bool)
 	    (hop-load-preferences-set! ::bool)
@@ -387,11 +390,16 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
-;*    hop-so-directories ...                                           */
+;*    hop-sofile-enable                                                */
 ;*---------------------------------------------------------------------*/
-(define-parameter hop-so-directories
-   (when (bigloo-config 'have-dlopen)
-      (list (make-file-path (hop-rc-directory) "so"))))
+(define-parameter hop-sofile-enable
+   (bigloo-config 'have-dlopen))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-directory ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-directory
+   (make-file-path (hop-rc-directory) "libs"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */

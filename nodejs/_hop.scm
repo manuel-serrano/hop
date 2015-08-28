@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Aug 24 19:46:19 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 12:19:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -80,6 +80,7 @@
 	    `(shareDir . ,(hop-share-directory))
 	    `(binDir . ,(hop-bin-directory))
  	    `(libDir . ,(hop-lib-directory))
+	    `(modulesDir . ,(make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
  	    `(contribsDir . ,(hop-contribs-directory))
  	    `(webletsDir . ,(hop-weblets-directory))
 

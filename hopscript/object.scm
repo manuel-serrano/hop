@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Aug 27 12:20:34 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 14:05:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -87,13 +87,13 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
 	 (with-access::JsObject obj (extensible)
-	    (let ((nobj ((class-constructor (object-class obj)))))
-	       (with-access::JsObject nobj (__proto__)
-		  (set! __proto__ (js-get js-object 'prototype %this)))
+	    (let ((nobj (duplicate::JsObject obj
+			   (__proto__ (js-get js-object 'prototype %this))
+			   (properties '()))))
 	       (js-for-in obj
 		  (lambda (k)
 		     (js-put! nobj k
-			(js-donate (js-get obj k %_this) worker %this)
+			(js-donate (js-get obj k %_this) worker %_this)
 			#f %this))
 		  %this)
 	       nobj)))))

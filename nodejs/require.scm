@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Aug 27 16:30:48 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 12:26:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -184,8 +184,7 @@
 	    (let ((name (js-tostring name this)))
 	       (if (core-module? name)
 		   (js-string->jsstring name)
-		   (js-string->jsstring
-		      (nodejs-resolve name this %module)))))
+		   (js-string->jsstring (nodejs-resolve name this %module)))))
 	 1 "resolve")
       #f this)
 
@@ -452,12 +451,18 @@
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread #!optional lang)
+
+   (define (loadso-or-compile filename lang)
+      (let ((sopath (hop-find-sofile filename)))
+	 (if sopath
+	     (or (dynamic-load sopath) (nodejs-compile filename lang))
+	     (nodejs-compile filename lang))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename lang))
+	       (let ((hopscript (loadso-or-compile filename lang))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
@@ -484,7 +489,7 @@
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename))
+	       (let ((hopscript (loadso-or-compile filename 'hopscript))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
@@ -517,14 +522,18 @@
    (define (load-module-hop)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((evmod (hop-load/cache filename))
+	    (let ((evmod-or-init (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-module filename filename worker %this)))
-	       (when (evmodule? evmod)
-		  (call-with-eval-module evmod
-		     (lambda ()
-			((eval! 'hopscript) %this this scope mod))))
+	       (cond
+		  ((and (procedure? evmod-or-init)
+			(=fx (procedure-arity evmod-or-init) 4))
+		   (evmod-or-init %this this scope mod))
+		  ((evmodule? evmod-or-init)
+		   (call-with-eval-module evmod-or-init
+		      (lambda ()
+			 ((eval! 'hopscript) %this this scope mod)))))
 	       ;; return the newly created module
 	       mod))))
    
@@ -738,12 +747,12 @@
 	       #f %this)
 	    (js-raise exn))))
    
-   (define (resolve-modules mod x start)
+   (define (resolve-modules mod x)
       (any (lambda (dir)
 	      (resolve-file-or-directory x dir))
-	 (node-modules-path mod start)))
+	 (node-modules-path mod)))
    
-   (define (node-modules-path mod start)
+   (define (node-modules-path mod)
       (let ((paths (js-get mod 'paths %this)))
 	 (cond
 	    ((pair? paths)
@@ -789,14 +798,14 @@
 		      :port port))))
 	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
 	     (or (resolve-file-or-directory name dir)
-		 (resolve-modules mod name (dirname dir))
+		 (resolve-modules mod name)
 		 (resolve-error name)))
 	    ((string-prefix? "/" name)
 	     (or (resolve-file-or-directory name "/")
-		 (resolve-modules mod name "/")
+		 (resolve-modules mod name)
 		 (resolve-error name)))
 	    (else
-	     (or (resolve-modules mod name (dirname dir))
+	     (or (resolve-modules mod name)
 		 (resolve-error name)))))))
 
 ;*---------------------------------------------------------------------*/

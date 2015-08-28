@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Wed Aug  5 07:40:45 2015 (serrano)                */
+/*    Last change :  Fri Aug 28 12:17:49 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -18,6 +18,7 @@ exports.binDir = hop.binDir;
 exports.libDir = hop.libDir;
 exports.contribsDir = hop.contribsDir;
 exports.weblestDir = hop.webletsDir;
+exports.modulesDir = hop.modulesDir;
 
 Object.defineProperty( exports, "debug", {
    get: function() { return hop.debug() },
@@ -31,6 +32,7 @@ Object.defineProperty( exports, "debug", {
 /*---------------------------------------------------------------------*/
 exports.srcDir = hop.srcDir;
 exports.srcFile = hop.srcFile;
+
 exports.currentThread = hop.currentThread;
 
 /*---------------------------------------------------------------------*/

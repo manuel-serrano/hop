@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Aug 23 14:36:29 2015 (serrano)                */
+#*    Last change :  Fri Aug 28 09:51:55 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -132,7 +132,7 @@ for p in $rts; do
 done
 
 arch=noarch
-
+mach=
 felix=
 
 # Argument parsing
@@ -815,6 +815,10 @@ if [ "$bldflags " = " " ]; then
   bldflags="-rpath \$(DESTDIR)\$(HOPLIBDIR)/\$(HOPFILDIR)"
 fi
 
+if [ "$mach " = " " ]; then
+  mach="`$bigloo -eval '(begin (display (os-name)) (exit 0))'`-`$bigloo -eval '(begin (display (os-arch)) (exit 0))'`"
+fi
+
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -882,6 +886,8 @@ cat $mkmf.in \
           -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
           -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
           -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
+	  -e "s|@BGLMACH@|$mach|" \
+	  -e "s|@BGLARCH@|$arch|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -912,6 +918,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
             -e "s|@HOPZEROCONF@|$zeroconf|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPMACH@|$mach|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
 done
@@ -944,6 +951,7 @@ for p in nodejs.sch; do
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
             -e "s|@HOPZEROCONF@|$zeroconf|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPMACH@|$mach|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $configure
 done
@@ -974,6 +982,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe; do
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
             -e "s|@HOPZEROCONF@|$zeroconf|" \
             -e "s|@HOPSRFIS@|$hopsrfis|" \
+            -e "s|@HOPMACH@|$mach|" \
             -e "s|@HOPARCH@|$arch|" \
       >> $script
   chmod a+x $script
@@ -1007,6 +1016,7 @@ done
 #*             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \              */
 #*             -e "s|@HOPZEROCONF@|$zeroconf|" \                       */
 #*             -e "s|@HOPSRFIS@|$hopsrfis|" \                          */
+#*             -e "s|@HOPMACH@|$mach|" \                               */
 #*             -e "s|@HOPARCH@|$arch|" \                               */
 #*       >> $configure                                                 */
 #* done                                                                */

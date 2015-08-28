@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Aug 25 07:55:54 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 13:28:10 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1550,6 +1550,15 @@
 		(loc (token-loc tag))
 		(fun (j2s-tag->expr tag #t))
 		(args '()))))
+	 ((HTMLCOMMENT)
+	  (let* ((tag (consume-any!))
+		 (loc (token-loc tag)))
+	     (instantiate::J2SCall
+		(loc (token-loc tag))
+		(fun (j2s-tag->expr (make-token tag '<!--> loc) #t))
+		(args (list (instantiate::J2SNativeString
+			       (loc loc)
+			       (val (token-value tag))))))))
 	 ((OHTML)
 	  (html-expression (consume-any!)))
 	 ((TILDE)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Aug 27 14:17:55 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 12:46:50 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -30,7 +30,8 @@
 	    __hop_xml-types
 	    __hop_xml
 	    __hop_misc
-	    __hop_thread)
+	    __hop_thread
+	    __hop_configure)
 
    (export  (loading-file-set! ::obj)
 	    (the-loading-file)
@@ -51,8 +52,7 @@
 		      (mode 'load)
 		      (charset (hop-locale))
 		      (abase #t)
-		      (afile #t)
-		      (sodirs (hop-so-directories)))
+		      (afile #t))
 
 	    (hop-load-once ::bstring
 			   #!key
@@ -72,6 +72,8 @@
 			       (afile #t)
 			       (module #f))
 	    (hop-unload! ::bstring)
+
+	    (hop-find-sofile::obj ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -919,11 +921,10 @@
 		  (mode 'load)
 		  (charset (hop-locale))
 		  (abase #t)
-		  (afile #t)
-		  (sodirs (hop-so-directories)))
+		  (afile #t))
    (if (hz-package-filename? file-name)
-       (hop-load-from-hz file-name env menv mode charset abase sodirs)
-       (hop-load-file file-name env menv mode charset abase 'eval afile sodirs)))
+       (hop-load-from-hz file-name env menv mode charset abase)
+       (hop-load-file file-name env menv mode charset abase 'eval afile)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir ...                                                       */
@@ -936,7 +937,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-from-hz ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-from-hz fname env menv mode charset abase sodirs)
+(define (hop-load-from-hz fname env menv mode charset abase)
    (with-trace 'read "hop-load-from-hz"
       (trace-item "fname=" fname)
       (trace-item "abase=" abase)
@@ -949,38 +950,57 @@
 	 ;; load the .hop source file
 	 (let ((base (basename dir)))
 	    (let ((fname (string-append (make-file-name dir base) ".hop")))
-	       (hop-load-file fname env menv mode charset abase 'eval #f sodirs))))))
+	       (hop-load-file fname env menv mode charset abase 'eval #f))))))
 
 ;*---------------------------------------------------------------------*/
-;*    compile-soname ...                                               */
+;*    so-arch-directory ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (compile-soname path)
-   (string-append (basename (prefix path)) "-" (md5sum-string path) ".so"))
-
-;*---------------------------------------------------------------------*/
-;*    compile-directory ...                                            */
-;*---------------------------------------------------------------------*/
-(define-macro (compile-directory)
+(define-macro (so-arch-directory)
    (string-append (os-name) "-" (os-arch)))
 
 ;*---------------------------------------------------------------------*/
-;*    compile-find-sofile ...                                          */
+;*    so-suffix ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (compile-find-sofile dirs path)
-   (let ((soname (compile-soname path)))
-      (let loop ((dirs dirs))
-	 (when (pair? dirs)
-	    (if (string? (car dirs))
-		(let ((sopath (make-file-path (car dirs) (compile-directory) soname)))
-		   (cond
-		      ((not (file-exists? sopath))
-		       (loop (cdr dirs)))
-		      ((>=elong (file-modification-time sopath)
-			  (file-modification-time path))
-		       sopath)
-		      (else
-		       (loop (cdr dirs)))))
-		(loop (cdr dirs)))))))
+(define-macro (so-suffix)
+   (string-append "." (shared-library-suffix)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-find-sofile ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-find-sofile path)
+   
+   (define (more-recent? sopath)
+      (when (file-exists? sopath)
+	 (>=elong (file-modification-time sopath)
+	    (file-modification-time path))))
+   
+   ;; check the path directory first
+   (when (hop-sofile-enable)
+      (let* ((dir (dirname path))
+	     (base (prefix (basename path)))
+	     (file (string-append base "_u-" (hop-version) (so-suffix)))
+	     (sopath (make-file-path dir ".libs"
+			(hop-version) (so-arch-directory)
+			file)))
+	 (if (more-recent? sopath)
+	     sopath
+	     ;; if not found check the user global libs repository
+	     (let* ((soname (string-append
+			       base "-" (md5sum-string path) (so-suffix)))
+		    (sopath (make-file-path
+			       (hop-sofile-directory)
+			       (hop-version) (so-arch-directory)
+			       soname)))
+		(if (more-recent? sopath)
+		    sopath
+		    (let ((env (getenv "HOP_LIBS_PATH")))
+		       (when (string? env)
+			  (let loop ((paths (unix-path->list env)))
+			     (when (pair? paths)
+				(let ((path (make-file-path (car paths) file)))
+				   (if (more-recent? path)
+				       path
+				       (loop (cdr paths))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
@@ -988,29 +1008,22 @@
 ;*    The C code generation imposes the variable traceid not to        */
 ;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-file fname env menv mode charset abase traceid::symbol afile sodirs)
-   
-   (define (hop-load-path path)
+(define (hop-load-file fname env menv mode charset abase traceid::symbol afile)
+
+   (define (hop-eval-path path)
       (let ((apath (cond
 		      ((string? abase) abase)
 		      (abase (dirname fname))
 		      (else ".")))
 	    (menv (or menv (with-access::clientc (hop-clientc) (macroe)
 			      (macroe)))))
-	 (with-trace 'read "hop-load-file"
+	 (with-trace 'read "hop-eval-path"
 	    (trace-item "fname=" fname)
 	    (trace-item "path=" path)
 	    (trace-item "abase=" abase)
 	    (trace-item "afile=" afile)
-	    (cond
-	       ((when (eq? mode 'load)
-		   (compile-find-sofile sodirs path))
-		=>
-		(lambda (sopath)
-		   (dynamic-load sopath)))
-	       ((open-input-file path)
-		=>
-		(lambda (port)
+	    (let ((port (open-input-file path)))
+	       (if (input-port? port)
 		   (let ((f (the-loading-file))
 			 (denv (current-dynamic-env))
 			 (m (eval-module)))
@@ -1059,7 +1072,7 @@
 					     (reverse! res))
 					  (let ((val (eval! e (eval-module))))
 					     (loop (cons val res) #f))))))
-			       ((module)
+			       ((module force-module)
 				(let loop ((loc #t))
 				   (let ((e (hop-read port charset menv loc)))
 				      (when (epair? e)
@@ -1079,13 +1092,34 @@
 			 (begin
 			    (close-input-port port)
 			    (eval-module-set! m)
-			    (loading-file-set! f))))))
-	       (else
-		(raise (instantiate::&io-port-error
-			  (proc "hop-load")
-			  (msg "Can't open file")
-			  (obj fname))))))))
-	       
+			    (loading-file-set! f))))
+		   (raise (instantiate::&io-port-error
+			     (proc "hop-load")
+			     (msg "Can't open file")
+			     (obj fname))))))))
+   
+   (define (hop-load-path path)
+      (with-trace 'read "hop-load-path"
+	 (trace-item "fname=" fname)
+	 (trace-item "path=" path)
+	 (trace-item "abase=" abase)
+	 (trace-item "afile=" afile)
+	 (if (or (eq? mode 'load) (eq? mode 'module))
+	     (let ((sopath (hop-find-sofile path)))
+		(if sopath
+		    ;; a compiled file has been found, try to load that one
+		    (with-trace 'read "hop-load-path-compiled"
+		       (trace-item "sopath=" sopath)
+		       (let ((loadval (dynamic-load sopath)))
+			  (trace-item "sovalue=" loadval)
+			  (if (eq? mode 'load)
+			      loadval
+			      (or loadval
+				  ;; the dynamic load didn't produced the expected
+				  ;; value, load with eval
+				  (hop-eval-path path)))))
+		    (hop-eval-path path)))
+	     (hop-eval-path path))))
    
    (let ((path (find-file/path fname (hop-path))))
       (cond

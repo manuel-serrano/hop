@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Aug 27 08:55:28 2015 (serrano)                */
+/*    Last change :  Fri Aug 28 14:28:32 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -209,7 +209,7 @@ function compileChapter( json ) {
          ${chapter.description ? <div class="chapter-header">
 	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
 	      doc.load( ROOT + "/" + chapter.description ).XML
-	      : doc.read( chapter.description ).XML }
+	      : doc.eval( chapter.description ).XML }
 	   </div> : ""}
 	 
          <h1 class="toc TOC">Table of Contents</h1>
@@ -218,7 +218,7 @@ function compileChapter( json ) {
               return <li>
 	        <a href=${el.href}>${el.title}</a>
                 <span class="toc-description">
-                  ${doc.read( el.description )}
+                  ${doc.eval( el.description )}
                 </span>
 	      </li>
 	   } )}

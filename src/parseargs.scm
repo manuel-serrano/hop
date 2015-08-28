@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Aug 27 14:08:58 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 08:15:46 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -87,9 +87,7 @@
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir)
 	     (hop-cache-directory-set! (make-file-name dir "cache"))
-	     (when (bigloo-config 'have-dlopen)
-		(hop-so-directories-set!
-		   (list (make-file-path (hop-rc-directory) "so")))))
+	     (hop-sofile-directory-set! (make-file-path dir "libs")))
 	    (("--var-dir" ?dir (help "Set var directory"))
 	     (hop-var-directory-set! dir)
 	     (hop-upload-directory-set! (make-file-name dir "upload")))
@@ -102,6 +100,8 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
+	    (("--no-load-compiled" (help "Disable loading pre-compiled file"))
+	     (hop-sofile-enable-set! #f))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -124,6 +124,7 @@
 	    (("-g?level" (help "Increase/set debug level"))
 	     (cond
 		((string=? level "")
+		 (hop-sofile-enable-set! #f)
 		 (set! clientc-source-map #t)
 		 (hop-clientc-debug-unbound-set! 1)
 		 (set! clientc-debug #t)
@@ -161,9 +162,12 @@
 		 (set! clientc-source-map #f))
 		((string=? level "module")
 		 (bigloo-debug-module-set! 2))
+		((string=? level "sofile")
+		 (hop-sofile-enable-set! #f))
 		((string=? level "0")
 		 #f)
 		(else
+		 (hop-sofile-enable-set! #f)
 		 (let ((l (string->integer level)))
 		    (set! clientc-source-map #t)
 		    (set! clientc-debug #t)

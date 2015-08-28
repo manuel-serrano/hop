@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Aug 21 17:25:27 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 13:56:45 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -290,7 +290,7 @@
 	    (let ((e (instantiate::MessageEvent
 			(name "message")
 			(target worker)
-			(data (js-donate data thread %this)))))
+			(data (js-donate data parent %this)))))
 	       (js-worker-push-thunk! parent "post-slave-message"
 		  (lambda ()
 		     (apply-listeners listeners e))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Aug 27 11:37:03 2015 (serrano)                */
+;*    Last change :  Fri Aug 28 13:30:37 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -184,6 +184,8 @@
    (case (js-toname prop %this)
       ((nodeType)
        8)
+      ((inspect)
+       (js-make-function %this js-inspect 1 'inspect))
       ((toString)
        (js-make-function %this
 	  (lambda (this txt)

@@ -1,5 +1,7 @@
 ${ var doc = require( "hopdoc" ) }
 ${ var fontifier = require( "fontifier" ) }
+${ var path = require( "path" ) }
+${ var ROOT = path.dirname( module.filename ) }
 
 HopScript Service
 =================
