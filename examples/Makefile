@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Aug 24 19:58:31 2015 (serrano)                */
+#*    Last change :  Fri Aug 28 14:52:29 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -52,7 +52,7 @@ POPULATION = Makefile \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \
-  hello/hello.js hello/example.json README.md \
+  hello/hello.js hello/example.json hello/README.md \
   svg/svg.js svg/example.json svg/README.md \
   pdfviewer/pdfviewer.js pdfviewer/example.json pdfviewer/README.md \
   pdfviewer/pdfwrap.js pdfviewer/pdf.js pdfviewer/example.pdf \
@@ -61,7 +61,7 @@ POPULATION = Makefile \
   worker/slave.js worker/worker.js worker/bar.js worker/example.json worker/README.md \
   worker2/slave.js worker2/worker2.js worker2/example.json worker2/README.md \
   worker3/slave.js worker3/worker3.js worker3/bar.js worker3/example.json \
-  worker4/slave.js worker4/worker4.js worker4/example.json \
+  worker4/slave.js worker4/worker4.js worker4/example.json worker4/README.md \
   worker5/slave.js worker5/worker5.js worker5/example.json worker5/README.md \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
   widget/node_modules widget/example.json \
