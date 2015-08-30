@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Aug 27 08:03:03 2015 (serrano)                */
+;*    Last change :  Sun Aug 30 10:43:11 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -95,6 +95,9 @@
 (defconst hopjs-re-entering-html
   "\\(var[ \t ]*\\)?[a-zA-Z_$][.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\([^>]\\|[^/]>\\)")
 
+(defconst hopjs-re-special-tag
+  "<\\(link\\|LINK\\)")
+  
 ;*---------------------------------------------------------------------*/
 ;*    debugging                                                        */
 ;*---------------------------------------------------------------------*/
@@ -294,58 +297,43 @@ usage: (js-return)  -- [RET]"
 	  (open 0)
 	  (be (progn (hopjs-beginning-of-defun (point)) (point))))
       (hopjs-debug "~~~ hopjs-html-p be=%s" be)
-;*       (save-excursion                                               */
-;* 	(let ((p (nth 9 (parse-partial-sexp be pos))))                 */
-;* 	  (hopjs-debug "~~~ hopjs-html-p partial-sexp p=%s" p)         */
-;* 	  (while (and (consp p) (eq loop 'loop) (> (car p) (point-min))) */
-;* 	    (goto-char (- (car p) 1))                                  */
-;* 	    (if (looking-at "[~$]{")                                   */
-;* 		(progn                                                 */
-;* 		  (hopjs-debug "!!! hopjs-html-p in script %s" (point)) */
-;* 		  (setq loop nil))                                     */
-;* 	      (setq p (cdr p))))))                                     */
       (hopjs-debug "~~~ hopjs-html-p, loop=%s be=%d" loop be)
       (when (eq loop 'loop)
 	(goto-char be)
 	(while (eq loop 'loop)
 	  (if (re-search-forward hopjs-re-tag pos t)
 	      (let ((next (match-end 0)))
-		(hopjs-debug "--- hopjs-html-p, open=%d next=%d %s" open next
+		(hopjs-debug "--- hopjs-html-p open=%d point=%s next=%d match=\"%s\""
+			     open (point) next
 			 (buffer-substring
 			  (match-beginning 0) (match-end 0)))
 		(goto-char (match-beginning 0))
 		(cond
 		 ((memq (get-text-property (point) 'face)
 			'(font-lock-comment-face font-lock-string-face))
-		  (hopjs-debug "--- hopjs-html-p in-comment/string %s" (point))
+		  (hopjs-debug "     (in-comment/string)")
 		  (goto-char next))
 		 ((looking-at hopjs-re-code)
-		  (hopjs-debug "~~~ hopjs-html-p re-code %s" (point))
 		  (condition-case ()
 		      (let ((p (save-excursion (forward-sexp 1) (point))))
-			(hopjs-debug "--- hopjs-html-p re-code %s p=%s pos=%s"
-				     (point) p pos)
+			(hopjs-debug "    (re-code p=%s pos=%s)" p pos)
 			(if (> p pos)
-			    (forward-char 1)
+			    (progn
+			      (setq open 0)
+			      (forward-char 1))
 			  (goto-char p)))
 		    (error
 		     (forward-char 1))))
 		 ((looking-at hopjs-re-open-tag)
 		  (setq open (+ open 1))
-		  (hopjs-debug "--- hopjs-html-p re-open-tag"
-			       (buffer-substring
-				(match-beginning 0) (match-end 0)))
+		  (hopjs-debug "    (re-open-tag)")
 		  (goto-char next))
 		 ((looking-at hopjs-re-close-tag)
-		  (hopjs-debug "--- hopjs-html-p re-close-tag"
-			       (buffer-substring
-				(match-beginning 0) (match-end 0)))
+		  (hopjs-debug "    (re-close-tag)")
 		  (setq open (- open 1))
 		  (goto-char next))
 		 ((looking-at hopjs-re-end-tag)
-		  (hopjs-debug "--- hopjs-html-p re-end-tag"
-			       (buffer-substring
-				(match-beginning 0) (match-end 0)))
+		  (hopjs-debug "    (re-end-tag)")
 		  (setq open (- open 1))
 		  (goto-char next))
 		 (t
@@ -377,7 +365,7 @@ usage: (js-return)  -- [RET]"
       'tag)
      ((looking-at "<[a-zA-Z_$][.0-9a-zA-Z_$]*[ ]+\\([^>\n]\\)[^>]*$")
       ;; open tag + attribute
-      'otag-attr)
+      (if (looking-at hopjs-re-special-tag) 'tag 'otag-attr))
      ((looking-at "\\([^<>\n=]+=[^<>\n=]+[ \t]*\\)+/>[ \t]*$")
       ;; attribute + closing
       'attr-tag)
@@ -387,7 +375,7 @@ usage: (js-return)  -- [RET]"
      ((looking-at "\\([^<>\n]+=[^<>\n]+[ \t]*\\)+$")
       ;; attribute
       'attr)
-     ((looking-at "</[^>]*>[ \t;]*$")
+     ((looking-at "</[^>]*>[ \t;)}]*$")
       ;; closing
       'ctag)
      ((looking-at "<\\([a-zA-Z_$][.0-9a-zA-Z_$]*\\).*</\\1>[ \t]*$")
@@ -404,7 +392,10 @@ usage: (js-return)  -- [RET]"
       'comment)
      ((looking-at "<\\([^/<>]\\|/[^>]\\)+\\(>\\| \\)$")
       ;; opening
-      'otag)
+      (if (looking-at hopjs-re-special-tag) 'tag 'otag))
+     ((looking-at "<\\([^/<>]\\|/[^>]\\)+>\\([^/]\\|/[^>]\\)*$")
+      ;; opening with content
+      (if (looking-at hopjs-re-special-tag) 'tag 'otag))
      (t
       (save-excursion
 	(let ((min (point)))
@@ -423,6 +414,8 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-goto-html-line ...                                         */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-goto-html-line (types pmin attr-or-tag)
+  (hopjs-debug "### hopjs-goto-html-line point=%s pmin=%s attr-or-tag=%s types=%s"
+	       (point) pmin attr-or-tag types)
   (if (> (point) pmin)
       (progn
 	(previous-line)
@@ -449,6 +442,7 @@ usage: (js-return)  -- [RET]"
 		(backward-sexp 1)
 		(hopjs-goto-html-line types pmin attr-or-tag))
 	    (error
+	     (hopjs-debug "!!!hopjs-goto-html-line: cannot forward sexp %s" (point))
 	     'text)))))
     'text))
   

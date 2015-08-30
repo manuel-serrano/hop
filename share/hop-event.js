@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon Jan 12 17:51:49 2015 (serrano)                */
+/*    Last change :  Sun Aug 30 10:24:10 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -1091,7 +1091,7 @@ function hop_start_servevt_proxy() {
 /*---------------------------------------------------------------------*/
 /*    hop_trigger_servevt ...                                          */
 /*    -------------------------------------------------------------    */
-/*    This function is invoked by Flash and Ajax upon event reception  */
+/*    This function is invoked upon event reception                    */
 /*---------------------------------------------------------------------*/
 function hop_trigger_servevt( id, text, value, js ) {
    var proc;
@@ -1122,7 +1122,6 @@ function hop_trigger_servevt( id, text, value, js ) {
 	 } catch( exc ) {
 	    throw exc;
 	 }
-	 
 	 if( evt.isStopped ) break;
 	 p2 = p2.__hop_cdr;
       }
