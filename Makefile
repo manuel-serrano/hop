@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Aug 30 10:46:31 2015 (serrano)                */
+#*    Last change :  Sun Aug 30 10:50:50 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -95,7 +95,7 @@ weblets: lib hopc-bin
 scheme2js:
 	$(MAKE) -C scheme2js build
 
-node_modules: libdir hopc-bin hopscript-lib
+node_modules: libdir hopc-bin hopscript-lib nodejs
 	$(MAKE) -C node_modules build
 
 doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
