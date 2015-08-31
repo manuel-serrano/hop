@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 27 12:19:41 2015 (serrano)                */
+;*    Last change :  Mon Aug 31 20:04:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -940,8 +940,12 @@
    (define (date-prototype-setdate this::JsDate date)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (let ((date (js-tonumber date %this)))
-		(set! val (date-copy val :day date))
+	     (let* ((date (js-tonumber date %this))
+		    (day (cond
+			    ((fixnum? date) date)
+			    ((flonum? date) (flonum->fixnum date))
+			    (else 1))))
+		(set! val (date-copy val :day 1))
 		(date->seconds val))
 	     val)))
 

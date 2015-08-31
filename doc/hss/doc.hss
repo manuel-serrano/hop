@@ -75,7 +75,7 @@ h1 {
   padding-top: 4px;
   border-bottom: 1px solid #777;
   border-top: 1px solid #777;
-  text-shadow: #aaa 2px 2px 2px;
+  text-shadow: #ccc 2px 2px 2px;
   counter-reset: subsection;
   counter-increment: section;
 }
@@ -96,7 +96,7 @@ h1.TOC:before {
 h2 {
   padding-bottom: 4px;
   border-bottom: 1px dashed #777;
-  text-shadow: #aaa 2px 2px 2px;
+  text-shadow: #ccc 1px 1px 1px;
 }
 
 body.home h2:before,
@@ -115,11 +115,10 @@ h2:before {
 }
 
 h3 {
-  text-shadow: #aaa 2px 2px 2px;
+  text-shadow: none;
 }
 
 h3.glyphicon {
-  text-shadow: none;
   display: block;
 }
 

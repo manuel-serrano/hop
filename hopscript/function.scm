@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Aug 28 14:05:48 2015 (serrano)                */
+;*    Last change :  Mon Aug 31 19:36:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -59,26 +59,18 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-function)
 	 (with-access::JsFunction obj (procedure src)
-	    (let ((nfun (duplicate::JsFunction obj
-			   (__proto__ (js-get js-function 'prototype %this))
-			   (properties '()))))
-	       (unless (eq? src 'builtin)
-		  ;; donate the JS properties
-		  (js-for-in obj
-		     (lambda (k)
-			(js-put! nfun k
-			   (js-donate (js-get obj k %_this) worker %_this)
-			   #f %this))
-		     %this)
-		  ;; donate the free variables
-		  (let loop ((i (procedure-length procedure)))
-		     (when (>fx i 0)
-			(procedure-set! procedure i
-			   (js-donate (procedure-ref procedure i) worker %_this))
-			(loop (-fx i 1)))))
-	       ;; invalidate the procedure of the source procedure
-	       (set! procedure (lambda l (js-undefined)))
-	       nfun)))))
+	    (if (eq? src 'builtin)
+		(let ((nfun (duplicate::JsFunction obj
+			       (__proto__ (js-get js-function 'prototype %this))
+			       (properties '()))))
+		   ;; donate the free variables
+		   (let loop ((i (procedure-length procedure)))
+		      (when (>fx i 0)
+			 (procedure-set! procedure i
+			    (js-donate (procedure-ref procedure i) worker %_this))
+			 (loop (-fx i 1))))
+		   nfun)
+		(js-undefined))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */

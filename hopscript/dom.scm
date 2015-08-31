@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Aug 28 13:30:37 2015 (serrano)                */
+;*    Last change :  Mon Aug 31 21:04:09 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -172,6 +172,8 @@
 	  (lambda (this txt)
 	     (js-string->jsstring (js-tostring o %this)))
 	  0 'toString))
+      ((inspect)
+       (js-make-function %this js-inspect 1 'inspect))
       ((nodeType)
        3)
       (else

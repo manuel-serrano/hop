@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 28 14:05:19 2015 (serrano)                */
+;*    Last change :  Mon Aug 31 19:38:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -59,8 +59,8 @@
       (with-access::JsGlobalObject %this (js-array)
 	 (with-access::JsArray obj (vec frozen inline sealed)
 	    (let ((nobj (js-vector->jsarray
-			   (vector-map! (lambda (e)
-					   (js-donate e worker %_this))
+			   (vector-map (lambda (e)
+					  (js-donate e worker %_this))
 			      vec)
 			   %this)))
 	       ;; donate the value of the array
@@ -70,9 +70,6 @@
 			(js-donate (js-get obj k %_this) worker %_this)
 			#f %this))
 		  %this)
-	       ;; invalidate the source array
-	       (set! vec '#())
-	       (js-put! obj 'length 0 #f %_this)
 	       nobj)))))
 	    
 ;*---------------------------------------------------------------------*/
