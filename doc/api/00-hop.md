@@ -85,7 +85,7 @@ This class is used to respond values to client requests.
 Example:
 ```hopscript
 service getObj() {
-  return new hop.HTTPResponseHop( { key: "foo", value: [ 1,2 3 ] } );
+  return hop.HTTPResponseHop( { key: "foo", value: [ 1,2 3 ] } );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -103,7 +103,7 @@ This class is used to deliver XML documents to client.
 Example:
 ```hopscript
 service getXml() {
-  return new hop.HTTPResponseXML( <div>a div</div> );
+  return hop.HTTPResponseXML( <div>a div</div> );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -121,12 +121,12 @@ This class is used to deliver plain character strings to client.
 Example:
 ```hopscript
 service getXml() {
-  return new hop.HTTPResponseString(
+  return hop.HTTPResponseString(
     "This resource does not exist here!",
     { startLine: "HTTP/1.0 404 File not found" } ) 
 ```
 
-### new hop.HTTPResponseFile( path, [option] ) ###
+### hop.HTTPResponseFile( path, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
@@ -148,7 +148,7 @@ the same behaviour can also be implemented combining standard `fs` operations
 and `HTTPResponseString` values.
 [:@warning]
 
-### new hop.HTTPResponseAuthentication( msg, [option] ) ###
+### hop.HTTPResponseAuthentication( msg, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond HTTP `401 Unauthorized` response to Web

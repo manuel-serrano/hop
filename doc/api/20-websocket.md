@@ -47,6 +47,12 @@ The argument `option` is either:
 Properties
 ----------
 
+### WebSocketServer.onconnection ###
+[:@glyphicon glyphicon-tag parameter]
+
+An `EventListener` called whenever a WebSocketServer establishes a new
+connection with a remote WebSocket client.
+
 ### WebSocket.readyState ###
 [:@glyphicon glyphicon-tag parameter]
 
@@ -76,12 +82,6 @@ An `EventListener` called whenever the WebSocket is closed.
 [:@glyphicon glyphicon-tag parameter]
 
 An `EventListener` called whenever an error occurs on the WebSocket.
-
-### WebSocket.onconnection ###
-[:@glyphicon glyphicon-tag parameter]
-
-An `EventListener` called whenever a WebSocketServer establishes a new
-connection with a remote WebSocket client.
 
 Methods
 -------

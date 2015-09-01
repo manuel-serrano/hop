@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Fri Jan 16 14:32:59 2015 (serrano)                */
+/*    Last change :  Tue Sep  1 15:26:31 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
@@ -11,9 +11,9 @@
 /*    run: hop -p 9999 -v -g wsserver.js                               */
 /*=====================================================================*/
 
-var wss = new WebSocketServer( { path: "wss", protocol: "foo" } );
+var serv = new WebSocketServer( { path: "serv", protocol: "foo" } );
 
-wss.onconnection = function( event ) {
+serv.onconnection = function( event ) {
    var ws = event.value;
 
    console.error( "connection established:", ws.socket );

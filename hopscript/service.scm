@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Aug 28 05:33:57 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 14:31:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -326,7 +326,11 @@
 	 (scheme 'http))
       (cond
 	 ((isa? opt JsFunction)
-	  (set! fail opt))
+	  (set! fail
+	     (lambda (xhr)
+		(with-access::xml-http-request xhr (header)
+		   (js-call1 %this opt %this
+		      (js-alist->jsobject header %this))))))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt 'host %this))
 		(p (js-get opt 'port %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Sep  1 08:01:33 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 14:43:33 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -268,7 +268,11 @@
 	 (scheme "http"))
       (cond
 	 ((isa? opt JsFunction)
-	  (set! fail opt))
+	  (set! fail
+	     (lambda (xhr)
+		(with-access::xml-http-request xhr (header)
+		   (js-call1 %this opt %this
+		      (js-alist->jsobject header %this))))))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt 'host %this))
 		(p (js-get opt 'port %this))

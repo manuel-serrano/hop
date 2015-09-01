@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Fri Jan 16 14:33:24 2015 (serrano)                */
+/*    Last change :  Tue Sep  1 15:26:42 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
@@ -12,9 +12,9 @@
 /*=====================================================================*/
 
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
-var ws = new WebSocket( "ws://localhost:" + port + "/hop/wss", [ "bar", "foo" ] );
+var ws = new WebSocket( "ws://localhost:" + port + "/hop/serv", [ "bar", "foo" ] );
 
-console.error( "ws=", "ws://localhost:" + port + "/hop/wss" );
+console.error( "ws=", "ws://localhost:" + port + "/hop/serv" );
 
 ws.onopen = function( event ) {
    this.send( "toto n'est pas content" );
