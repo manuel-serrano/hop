@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Aug 28 12:46:50 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 14:12:51 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -978,7 +978,11 @@
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
 	     (base (prefix (basename path)))
-	     (file (string-append base "_u-" (hop-version) (so-suffix)))
+	     (file (string-append base
+		      (cond-expand
+			 (bigloo-unsafe "_u")
+			 (else "_s"))
+		      "-" (hop-version) (so-suffix)))
 	     (sopath (make-file-path dir ".libs"
 			(hop-version) (so-arch-directory)
 			file)))
