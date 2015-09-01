@@ -1,4 +1,5 @@
 {
-   "title": "Configuration",
-   "files": [ "dev" ]
+   "title": "Development",
+   "files": [ "dev" ],
+   "key": "dev"
 }

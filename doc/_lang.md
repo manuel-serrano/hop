@@ -13,6 +13,7 @@ with this language.
     * symbols.
     * template strings.
     * promises.
+    * Typed Arrays.
   * HopScript supports most [Nodejs][nodejs] APIs (see Section
   [Nodejs](nodejs.html))
     

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Aug 28 14:52:29 2015 (serrano)                */
+#*    Last change :  Tue Sep  1 07:50:26 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -118,16 +118,30 @@ POPULATION = Makefile \
   examples/passwd.hop \
   examples/src.js
 
+#*---------------------------------------------------------------------*/
+#*    The hop executable                                               */
+#*---------------------------------------------------------------------*/
+.PHONY: build clean install uninstall
 
 #*---------------------------------------------------------------------*/
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
+	$(MAKE) mkdir DIR=$(DESTDIR)$(HOPDOCDIR)/examples
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/examples
+	for p in *; do \
+          if [ -d $p  ]; then \
+             cp -r $p $(DESTDIR)$(HOPDOCDIR)/examples; \
+             chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/examples/$p; \
+             chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/examples/$p/*; \
+          fi \
+        done
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */
 #*---------------------------------------------------------------------*/
 uninstall:
+	$(RM) -rf $(DESTDIR)$(HOPDOCDIR)/examples
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

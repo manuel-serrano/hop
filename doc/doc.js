@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Aug 31 21:08:20 2015 (serrano)                */
+/*    Last change :  Tue Sep  1 08:40:03 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -24,6 +24,15 @@ const css = [ P( "hss/doc.hss" ),
 	      P( "lib/bootstrap/css/bootstrap.min.css" ) ];
 const jscript = [ P( "lib//jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
+
+const alias = {
+   "user": "api",
+   "config": "api",
+   "hss": "api",
+   "markdown": "api",
+   "tree": "widget",
+   "spage": "widget"
+}
 
 /*---------------------------------------------------------------------*/
 /*    P ...                                                            */
@@ -139,7 +148,14 @@ function compileSection( page ) {
    var ast = doc.load( path.join( path.dirname( module.filename ), page ) )
    var toc = doc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
-   var key = path.basename( title ).toLowerCase();
+   var chapter = path.basename( path.dirname( path ) );
+   var key = path.basename( path.dirname( page ) ).toLowerCase();
+   
+   if( key == "doc" ) {
+      key = alias[ path.basename( page ) ];
+   } else if( key == "." ) {
+      key = title;
+   }
    
    var document = <html>
      <head css=${[ fontifier.css, markdown.css, css ]}
@@ -200,7 +216,7 @@ function compileChapter( json ) {
 
      <body data-spy="scroll" data-target="#navbar">
        <docxml.navbar title=${chapter.title}
-                      key=${chapter.title.toLowerCase()}>
+                      key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
        <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
@@ -242,7 +258,7 @@ function compileIndex( content ) {
            rts=${false}/>
 
      <body class="home" data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title="Hop.js" key="Home">
+       <docxml.navbar title="Hop.js" key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title root=${ROOT}/>

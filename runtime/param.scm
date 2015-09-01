@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Aug 28 08:15:11 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 07:55:41 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -337,6 +337,9 @@
 
 	    (hop-user-agent::bstring)
 	    (hop-user-agent-set! ::bstring)
+
+	    (hop-preferred-language::bstring)
+	    (hop-preferred-language-set! ::bstring)
 
 	    (hop-rc-loaded)
 	    (hop-rc-loaded?)
@@ -1440,3 +1443,8 @@
 (define-parameter hop-user-agent
    "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
 
+;*---------------------------------------------------------------------*/
+;*    hop-preferred-language ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-preferred-language
+   "hop")

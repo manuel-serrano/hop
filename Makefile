@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun Aug 30 10:50:50 2015 (serrano)                */
+#*    Last change :  Tue Sep  1 07:44:34 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -217,6 +217,10 @@ install-debian: hop-dirs
 	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)/etc/init.d \
 	  && chmod u+rx $(DESTDIR)/etc/init.d/hop
+
+install-doc:
+	$(MAKE) -C doc install
+	$(MAKE) -C examples install
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

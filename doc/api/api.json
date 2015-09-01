@@ -1,5 +1,6 @@
 {
-   "title": "API",
+   "title": "Api",
+   "key": "api",
    "files": [ "api",
 	      "../node_modules/config/doc/config.md",
 	      "../node_modules/user/doc/user.md",

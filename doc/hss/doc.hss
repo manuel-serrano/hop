@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Fri Aug 28 14:41:57 2015 (serrano)                */
+/*    Last change :  Tue Sep  1 08:42:23 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -70,12 +70,15 @@ footer button.inria {
   content: none;
 }
 
+h1.toc {
+  font-weight: bold;
+}
+
 h1 {
   padding-bottom: 4px;
   padding-top: 4px;
   border-bottom: 1px solid #777;
   border-top: 1px solid #777;
-  text-shadow: #ccc 2px 2px 2px;
   counter-reset: subsection;
   counter-increment: section;
 }
@@ -228,6 +231,10 @@ nav.sidebar .active * {
 
 nav.sidebar li > a {
   padding: 4px 8px;
+}
+
+nav.navbar-inverse .navbar-nav li.active > a {
+  background-color: #444;
 }
 
 /*---------------------------------------------------------------------*/

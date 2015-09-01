@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Aug 28 12:19:13 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 08:01:33 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -95,6 +95,13 @@
 		     (hop-server #t)
 		     (else #f))))
 
+	    (define-js preferredLanguage 0
+	       (lambda (this)
+		  (js-string->jsstring (hop-preferred-language))))
+	    (define-js preferredLanguageSet 1
+	       (lambda (this val)
+		  (hop-preferred-language-set! (js-tostring val %this))))
+	    
 	    ;; misc
 	    (define-js srcDir 0
 	       (lambda (this)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Aug 28 12:17:49 2015 (serrano)                */
+/*    Last change :  Tue Sep  1 08:00:39 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -23,6 +23,13 @@ exports.modulesDir = hop.modulesDir;
 Object.defineProperty( exports, "debug", {
    get: function() { return hop.debug() },
    set: function( v ) { return hop.debugSet( v ) },
+   enumerable: true,
+   configurable: false
+} );
+
+Object.defineProperty( exports, "preferredLanguage", {
+   get: function() { return hop.preferredLanguage() },
+   set: function( v ) { return hop.preferredLanguageSet( v ) },
    enumerable: true,
    configurable: false
 } );

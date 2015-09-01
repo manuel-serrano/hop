@@ -3,6 +3,7 @@
    "files": [ "widget",
 	      "../node_modules/tree/doc/tree.md",
               "../node_modules/spage/doc/spage.md" ],
-   "description": "This chapter documents the Hop.js HTML widgets"
+   "description": "This chapter documents the Hop.js HTML widgets",
+   "key": "widget"
 
 }

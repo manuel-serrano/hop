@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Aug 13 14:59:31 2015 (serrano)                */
+;*    Last change :  Tue Sep  1 07:57:10 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -245,6 +245,8 @@
 (define (javascript-rc %worker %global)
    
    (define (load-rc path)
+      ;; set the preferred language
+      (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()

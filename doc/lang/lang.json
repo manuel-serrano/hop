@@ -1,5 +1,6 @@
 {
-   "title": "Core Language",
+   "title": "Lang",
    "files": [ "lang" ],
-   "description": "_lang.md"
+   "description": "_lang.md",
+   "key": "lang"
 }

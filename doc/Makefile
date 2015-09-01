@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Aug 28 14:20:05 2015 (serrano)                */
+#*    Last change :  Tue Sep  1 07:45:38 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -97,8 +97,8 @@ distclean: clean
 #*    install                                                          */
 #*---------------------------------------------------------------------*/
 install:
-	mkdir -p $(DESTDIR)$(HOPDOCDIR)
-	mkdir -p $(DESTDIR)$(HOPDOCDIR)/lib
+	$(MAKE) mkdir DIR=$(DESTDIR)$(HOPDOCDIR)
+	$(MAKE) mkdir DIR=$(DESTDIR)$(HOPDOCDIR)/lib
 	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)$(HOPDOCDIR)
 	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
