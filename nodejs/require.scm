@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Aug 28 12:26:14 2015 (serrano)                */
+;*    Last change :  Wed Sep  2 08:34:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -455,7 +455,12 @@
    (define (loadso-or-compile filename lang)
       (let ((sopath (hop-find-sofile filename)))
 	 (if sopath
-	     (or (dynamic-load sopath) (nodejs-compile filename lang))
+	     (let ((p (dynamic-load sopath)))
+		(if (and (procedure? p) (=fx (procedure-arity p) 4))
+		    p
+		    (js-raise-error (js-new-global-object)
+		       (format "Wrong compiled file format ~s" sopath)
+		       sopath)))
 	     (nodejs-compile filename lang))))
    
    (define (load-module-js)
