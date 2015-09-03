@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Jun 25 07:30:36 2015 (serrano)                */
+;*    Last change :  Wed Sep  2 21:25:49 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -15,6 +15,10 @@
 (module __hop_event
 
    (library web)
+
+   (cond-expand
+      (enable-ssl
+       (library ssl)))
 
    (include "thread.sch")
 
@@ -464,12 +468,16 @@
 		      (hd (with-access::http-request req (header) header))
 		      (host (assq host: hd))
 		      (key (get-server-event-key req))
-		      (port (with-access::http-request req (port) port)))
+		      (sock (with-access::http-request req (socket) socket))
+		      (port (with-access::http-request req (port) port))
+		      (ssl (cond-expand
+			      (enable-ssl (ssl-socket? sock))
+			      (else #f))))
 		  (if (pair? host)
 		      (let ((s (string-split (cdr host) ":")))
-			 (vector (car s) port key))
+			 (vector (car s) port key ssl))
 		      (with-access::http-request req (host)
-			 (vector host port key))))))
+			 (vector host port key ssl))))))
 	 
 	 (set! *init-service*
 	    (service :name "public/server-event/init"

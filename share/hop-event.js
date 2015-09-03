@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Sun Aug 30 10:24:10 2015 (serrano)                */
+/*    Last change :  Thu Sep  3 08:22:28 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -342,7 +342,7 @@ function hop_servevt_envelope_parse( val, xhr ) {
 /*---------------------------------------------------------------------*/
 /*    start_servevt_websocket_proxy ...                                */
 /*---------------------------------------------------------------------*/
-function start_servevt_websocket_proxy( key, host, port ) {
+function start_servevt_websocket_proxy( key, host, port, ssl ) {
    var reconnect_debug = 0;
    
    function open_websocket( url ) {
@@ -460,7 +460,7 @@ function start_servevt_websocket_proxy( key, host, port ) {
    }
 
    if( !hop_servevt_proxy.websocket ) {
-      var url = "ws://" + host + ":" + port +
+      var url = (ssl ? "wss://" : "ws://") + host + ":" + port +
 	 hop_service_base() + "/public/server-event/websocket?key=" + key;
 
       hop_servevt_proxy.key = key;
@@ -1048,10 +1048,11 @@ function hop_start_servevt_proxy() {
 	 var host = v[ 0 ];
 	 var port = v[ 1 ];
 	 var key = v[ 2 ];
+	 var ssl = v[ 3 ];
 	 
 	 if( servevt_websocketp() ) {
 	    // websocket backend
-	    start_servevt_websocket_proxy( key, host, port );
+	    start_servevt_websocket_proxy( key, host, port, ssl );
 	 } else if( servevt_xhr_multipartp() ) {
 	    // xhr_multipart backend
 	    start_servevt_xhr_multipart_proxy( key );
@@ -1279,7 +1280,7 @@ function hop_remove_server_listener( event, proc, capture ) {
       }
    }
 
-   // no event is still expected, close the connection
+   // no new events expected, close the connection
    hop_servevt_proxy.unregister( event );
 }
 

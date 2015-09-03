@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Sep  1 14:43:33 2015 (serrano)                */
+;*    Last change :  Wed Sep  2 19:35:56 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -137,6 +137,14 @@
 	       (lambda (this text from to)
 		  (js-string->jsstring
 		     (hopjs-charset-convert this text from to %this))))
+	    
+	    (define-js locale 0
+	       (lambda (this)
+		  (js-string->jsstring (symbol->string! (hop-locale)))))
+	    
+	    (define-js localeSet 1
+	       (lambda (this cs)
+		  (hop-locale-set! (string->symbol (js-tostring cs %this)))))
 	    
 	    (define-js charset 0
 	       (lambda (this)

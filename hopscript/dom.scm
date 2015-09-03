@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Mon Aug 31 21:04:09 2015 (serrano)                */
+;*    Last change :  Wed Sep  2 19:32:44 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -176,6 +176,12 @@
        (js-make-function %this js-inspect 1 'inspect))
       ((nodeType)
        3)
+      ((parentNode)
+       (with-access::xml-verbatim o (parent) parent))
+      ((nextSibling)
+       (dom-next-sibling o))
+      ((previousSibling)
+       (dom-previous-sibling o))
       (else
        (js-undefined))))
 
@@ -193,6 +199,12 @@
 	  (lambda (this txt)
 	     (js-string->jsstring (js-tostring o %this)))
 	  0 'toString))
+      ((parentNode)
+       (with-access::xml-comment o (parent) parent))
+      ((nextSibling)
+       (dom-next-sibling o))
+      ((previousSibling)
+       (dom-previous-sibling o))
       (else
        (js-undefined))))
    
@@ -276,8 +288,7 @@
       ((nodeType)
        1)
       ((parentNode)
-       (with-access::xml-element o (parent)
-	  parent))
+       (with-access::xml-element o (parent) parent))
       ((nextSibling)
        (dom-next-sibling o))
       ((previousSibling)
