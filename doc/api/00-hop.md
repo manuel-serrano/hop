@@ -5,12 +5,21 @@ Hop
 
 This module contains utilities for getting, controlling, and using the
 Hop server.
+The module defines functions to craft service responses, and a
+broadcast function that lets a server send events to registered
+remote clients.
 
 Use `require( 'hop' )` to use this module.
 
 
 Configuration
 -------------
+
+The server properties defined below are set either in the Hop.js [launch
+arguments](00-command.html) or in the `hoprc.js`configuration file, before the implicit
+http server is activated. Setting the properties later would have no
+effect on the running http server.
+
 
 ### hop.shareDir ###
 [:@glyphicon glyphicon-tag parameter]
@@ -60,15 +69,21 @@ The host name of the running Hop server.
 console.log( "hostname:", hop.hostname );
 ```
 
+### hop.locale() ###
+[:@glyphicon glyphicon-tag function]
+The locale of the host running the Hop server. 
+
+### hop.charset() ###
+[:@glyphicon glyphicon-tag function]
+The character set used to compile XML nodes into HTML. 
 
 ### hop.version ###
-[:@glyphicon glyphicon-tag parameter]
+[:@glyphicon glyphicon-tag parameter] 
 The Hop version.
 
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
-
 
 Responses
 ---------
@@ -213,7 +228,7 @@ service foo( x ) {
 
 ### hop.HTTPResponseProxy( obj, [option] ) ###
 [:@glyphicon glyphicon-tag function]
-
+ 
 The `hop.HTTPResponseProxy` objects are to be used when a remote resource
 can be access othwerwise. For instance, these situations arise because of
 the security enforcement of the Web browsers. Some resources have to be
@@ -231,6 +246,44 @@ ${ <span class="label label-info">image/image.js</span> }
 ${ doc.include( doc.ROOT + "/examples/image/image.js", 13 ) }
 ```
 
+Broadcast
+---------
+
+Broadcast is an abstraction on top of webSockets to let a Hop server
+send events to connected clients (either web browsers or Hop client
+processes). Connections  originate from the client to the server,
+so broadcast can be used even in the  asymetric web topology where
+clients most often lie behind a NAT router or firewall and would not
+accept a connection from a remote server (forbidding the remote server
+to invoke services running on the client process).
+
+### hop.broadcast( eventName, value ) ###
+[:@glyphicon glyphicon-tag function]
+
+Generates an event of type `eventName` with payload `value`. The event
+is broadcast over the network to all registered clients. `eventName`
+is cast into a String, `value`can be any serializable object,
+including JavaScript objects, Hop.js services, and
+xml-elements. Clients register to specific broadcast events with the
+`addEventListener`method.
+
+### addEventListener( eventName, handler, [options] ) ###
+
+Use this method on the client side to register to the `eventName`
+server event. The effect of this method is to establish a persistent
+connection with the Hop server, register the client for the given
+event type, and trigger the handler whenever the event is received by
+the client. `handler` takes one argument, the event. The transmitted
+`value` can be retrieved in the `value` property of the event.  When
+used within a web browser, connection is established with the Hop
+server serving the current page, the exact syntax is
+`server.addEventListener( eventName, handler )` where `server` denotes
+the current server (the runtime system automatically binds the
+`server` variable to the current server).  When used within a client
+Hop process, the server address and port are specified in the options
+argument (as in the `post`method of services).
+
+
 
 Miscellaneous
 -------------
@@ -239,9 +292,9 @@ Miscellaneous
 [:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,
-the product of the compilation is returned in a buffer. The
-optional `backend` argument is string. It denotes the HTML version to be
-used for the compilation.
+the product of the compilation is returned in a buffer. The 
+optional `backend` argument is a string denoting the HTML version to be 
+used for the compilation. 
 
 ```hopscript
 var node = <html><div onclick=~{alert( "clicked" )}>click me</div></html>
@@ -253,3 +306,4 @@ ${ <span class="label label-warning">Note:</span> }
 for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]
+
