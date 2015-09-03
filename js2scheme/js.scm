@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Aug 27 07:38:21 2015 (serrano)                */
+;*    Last change :  Thu Sep  3 15:35:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -569,7 +569,7 @@
       (case op
 	 ((OR) '("||"))
 	 ((BIT_OR) '("|"))
-	 (else (list (symbol->string op)))))
+	 (else (list " " (symbol->string op) " "))))
    
    (with-access::J2SBinary this (lhs rhs op)
       (cons this

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Aug 24 19:48:24 2015 (serrano)                */
+;*    Last change :  Thu Sep  3 17:07:01 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -49,15 +49,6 @@
       o)
    (lambda (o %this)
       o))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    hop->javascript ::JsPromise ...                                  *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    See runtime/js_comp.scm in the Hop library for the definition    *} */
-;* {*    of the generic.                                                  *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (hop->javascript o::JsPromise op compile isexpr)     */
-;*    (display "#unspecified"))                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsPromise ...                                        */
@@ -295,7 +286,7 @@
 ;*    js-promise-then ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-then %this::JsGlobalObject this::JsPromise proc fail)
-   (with-access::JsPromise this (state thens catches val)
+   (with-access::JsPromise this (state thens rejecters catches val)
       (case state
 	 ((fullfilled)
 	  (if (isa? proc JsFunction)
@@ -313,14 +304,14 @@
 	  (when (isa? proc JsFunction)
 	     (set! thens (cons proc thens)))
 	  (when (isa? fail JsFunction)
-	     (set! catches (cons fail thens)))))
+	     (set! catches (cons fail rejecters)))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-catch ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-catch %this::JsGlobalObject this::JsPromise fail)
-   (with-access::JsPromise this (state thens catches val)
+   (with-access::JsPromise this (state rejecters catches val)
       (case state
 	 ((rejected)
 	  (if (isa? fail JsFunction)
@@ -330,7 +321,7 @@
 		 (typeof fail))))
 	 (else
 	  (when (isa? fail JsFunction)
-	     (set! catches (cons fail thens)))))))
+	     (set! catches (cons fail rejecters)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral end                                              */

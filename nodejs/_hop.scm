@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Sep  2 19:35:56 2015 (serrano)                */
+;*    Last change :  Thu Sep  3 16:35:46 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -392,11 +392,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    get/default ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (get/default::obj obj key this def)
-   (let ((v (js-get obj key this)))
+(define (get/default obj key this def)
+   (let ((v::obj (js-get obj key this)))
       (cond
 	 ((eq? v (js-undefined)) def)
 	 ((js-jsstring? v) (js-jsstring->string v))
+	 ((isa? v JsObject) (js-jsobject->alist v this))
 	 (else v))))
 
 ;*---------------------------------------------------------------------*/
@@ -409,6 +410,7 @@
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
 	  (content-type (get/default req 'contentType %this "application/x-javascript"))
 	  (charset (get/default req 'charset %this (hop-charset)))
+	  (header (get/default req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
@@ -442,6 +444,7 @@
        (instantiate::http-response-file
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
+	  (header (get/default req 'header %this '()))
 	  (file (js-tostring file %this)))
        (instantiate::http-response-file
 	  (file (js-tostring file %this)))))
@@ -455,6 +458,7 @@
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (content-type (get/default req 'contentType %this #f))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
+	  (header (get/default req 'header %this '()))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
 	  (body (js-tostring string %this)))))
@@ -507,6 +511,7 @@
 	  (instantiate::http-response-async
 	     (charset (get/default req 'charset %this (hop-charset)))
 	     (content-type (get/default req 'contentType %this #f))
+	     (header (get/default req 'header %this '()))
 	     (async (async-proc req))))
        (instantiate::http-response-async
 	  (async (async-proc req)))))

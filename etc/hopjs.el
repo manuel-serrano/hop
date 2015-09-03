@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sun Aug 30 10:43:11 2015 (serrano)                */
+;*    Last change :  Thu Sep  3 16:51:09 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -396,6 +396,9 @@ usage: (js-return)  -- [RET]"
      ((looking-at "<\\([^/<>]\\|/[^>]\\)+>\\([^/]\\|/[^>]\\)*$")
       ;; opening with content
       (if (looking-at hopjs-re-special-tag) 'tag 'otag))
+     ((looking-at "~{")
+      ;; script code
+      'script)
      (t
       (save-excursion
 	(let ((min (point)))
@@ -463,7 +466,7 @@ usage: (js-return)  -- [RET]"
 	     (hopjs-debug "<<<.1 js--html-statement-indentation... text -> %s"
 			  (current-column))
 	     (current-column))
-	    ((tag otag otag-attr)
+	    ((tag otag otag-attr script)
 	     (let ((ptype (hopjs-goto-html-line
 			   '(ctag otag otag-attr tag entering attr-tag) pmin 0)))
 	       (hopjs-debug "<<<.2 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
@@ -508,6 +511,80 @@ usage: (js-return)  -- [RET]"
 		  (current-column)))))
 	    (t
 	     (current-column))))))))
+
+(defconst js--plain-method-re
+  (concat "^\\s-*?\\(" js--dotted-name-re "\\)\\.prototype"
+          "\\.\\(" js--name-re "\\)\\s-*?=\\s-*?\\(function\\|service\\)\\_>")
+  "Regexp matching an explicit JavaScript prototype \"method\" declaration.
+Group 1 is a (possibly-dotted) class name, group 2 is a method name,
+and group 3 is the 'function' keyword.")
+
+(defconst js--function-heading-2-re
+  (concat
+   "^\\s-*\\(" js--name-re "\\)\\s-*:\\s-*\\(function\\|service\\)\\_>")
+  "Regexp matching the start of a function entry in an associative array.
+Match group 1 is the name of the function.")
+
+(defconst js--function-heading-3-re
+  (concat
+   "^\\s-*\\(?:var\\s-+\\)?\\(" js--dotted-name-re "\\)"
+   "\\s-*=\\s-*\\(function\\|service\\)\\_>")
+  "Regexp matching a line in the JavaScript form \"var MUMBLE = function\".
+Match group 1 is MUMBLE.")
+
+(defun js--function-prologue-beginning (&optional pos)
+  "Return the start of the JavaScript function prologue containing POS.
+A function prologue is everything from start of the definition up
+to and including the opening brace.  POS defaults to point.
+If POS is not in a function prologue, return nil."
+  (message "js--function-prologue-beginning")
+  (let (prologue-begin)
+    (save-excursion
+      (if pos
+          (goto-char pos)
+        (setq pos (point)))
+
+      (when (save-excursion
+              (forward-line 0)
+              (or (looking-at js--function-heading-2-re)
+                  (looking-at js--function-heading-3-re)))
+
+        (setq prologue-begin (match-beginning 1))
+        (when (<= prologue-begin pos)
+          (goto-char (match-end 0))))
+
+      (skip-syntax-backward "w_")
+      (message "AND %s" (point))
+      (and (or (looking-at "\\_<\\(function\\|service\\)\\_>")
+               (js--re-search-backward "\\_<\\(function\\|service\\)\\_>" nil t))
+
+           (save-match-data (goto-char (match-beginning 0))
+                            (js--forward-function-decl))
+
+           (<= pos (point))
+           (or prologue-begin (match-beginning 0))))))
+
+(defun js--forward-function-decl ()
+  "Move forward over a JavaScript function declaration.
+This puts point at the 'function' keyword.
+
+If this is a syntactically-correct non-expression function,
+return the name of the function, or t if the name could not be
+determined.  Otherwise, return nil."
+  (cl-assert (looking-at "\\_<\\(function\\|service\\)\\_>"))
+  (message "js--forward-function-decl %s" (point))
+  (let ((name t))
+    (forward-word)
+    (forward-comment most-positive-fixnum)
+    (when (looking-at js--name-re)
+      (setq name (match-string-no-properties 0))
+      (goto-char (match-end 0)))
+    (forward-comment most-positive-fixnum)
+    (and (eq (char-after) ?\( )
+         (ignore-errors (forward-list) t)
+         (progn (forward-comment most-positive-fixnum)
+                (and (eq (char-after) ?{)
+                     name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */

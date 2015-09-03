@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep  2 21:25:49 2015 (serrano)                */
+;*    Last change :  Thu Sep  3 16:24:39 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1106,7 +1106,7 @@
       (else
        (let ((op (open-output-string)))
 	  (fprintf op "<j name='~a'><![CDATA[" name)
-	  (obj->javascript-attr value op)
+	  (display (url-path-encode (obj->string value 'hop-client)) op)
 	  (display "]]></j>" op)
 	  (close-output-port op)))))
 
@@ -1134,7 +1134,7 @@
       (else
        (let ((op (open-output-string)))
 	  (display "<javascript>[CDATA[" op)
-	  (obj->javascript-attr value op)
+	  (display (url-path-encode (obj->string value 'hop-client)) op)
 	  (display "]]></javascript>" op)
 	  (close-output-port op)))))
 
