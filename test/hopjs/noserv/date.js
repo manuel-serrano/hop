@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Aug 31 20:05:02 2015 (serrano)                */
+/*    Last change :  Thu Sep  3 08:37:43 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -75,9 +75,9 @@ test( "2000-11-01T12:00:00+05:00" );
 /*    creation                                                         */
 /*---------------------------------------------------------------------*/
 var date = new Date();
-date.setDate(1.9);
+date.setDate( 2.9 );
 
-assert.ok( date.getDate() == 1 );
+assert.ok( date.getDate() == 2 );
 
 
 
