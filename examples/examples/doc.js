@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Sun Aug 23 11:25:01 2015 (serrano)                */
+/*    Last change :  Fri Sep  4 11:28:50 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -29,7 +29,7 @@ service examplesDoc( o ) {
 	 return <span/>;
       }
    } else {
-      return <div>${ markdown.read( o.doc ).XML }</div>;
+      return <div>${ markdown.eval( o.doc ).XML }</div>;
    }
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Sep  3 16:51:09 2015 (serrano)                */
+;*    Last change :  Fri Sep  4 11:45:39 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -31,6 +31,9 @@
   (hopjs-key-bindings)
   ;; font lock
   (font-lock-add-keywords nil hopjs-font-lock-keywords)
+  ;; custom beginning of defun
+;*   (setq beginning-of-defun-function 'hopjs-beginning-of-defun)      */
+;*   (setq end-of-defun-function 'hopjs-end-of-defun)                  */
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
@@ -153,7 +156,7 @@
     (c-beginning-of-statement
      0
      (save-excursion
-       (beginning-of-defun)
+       (hopjs-beginning-of-defun)
        (point))
      nil)
     (let ((start (point)))
@@ -172,36 +175,36 @@ usage: (js-return)  -- [RET]"
        (newline)
      (newline-and-indent)))
 
-;*---------------------------------------------------------------------*/
-;*    hopjs-beginning-of-defun ...                                     */
-;*---------------------------------------------------------------------*/
-(defun hopjs-beginning-of-defun (pos)
-  (interactive "d")
-  (let ((res 'loop))
-    (while (eq res 'loop)
-      (beginning-of-defun)
-      (let ((defpos (point)))
-	(cond
-	 ((<= defpos (point-min))
-	  (setq res nil))
-	 ((search-forward "{" pos t)
-	  (forward-char -1)
-	  (condition-case nil
-	      (progn
-		(forward-sexp 1)
-		(if (> (point) pos)
-		    (progn
-		      (goto-char defpos)
-		      (setq res t))
-		  (goto-char defpos)))
-	    (error
-	     (progn
-	       (goto-char defpos)
-	       (setq res t)
-	       nil))))
-	 (t
-	  (setq res nil)))))
-    res))
+;* {*---------------------------------------------------------------------*} */
+;* {*    hopjs-beginning-of-defun ...                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (defun hopjs-beginning-of-defun (pos)                               */
+;*   (interactive "d")                                                 */
+;*   (let ((res 'loop))                                                */
+;*     (while (eq res 'loop)                                           */
+;*       (beginning-of-defun)                                          */
+;*       (let ((defpos (point)))                                       */
+;* 	(cond                                                          */
+;* 	 ((<= defpos (point-min))                                      */
+;* 	  (setq res nil))                                              */
+;* 	 ((search-forward "{" pos t)                                   */
+;* 	  (forward-char -1)                                            */
+;* 	  (condition-case nil                                          */
+;* 	      (progn                                                   */
+;* 		(forward-sexp 1)                                       */
+;* 		(if (> (point) pos)                                    */
+;* 		    (progn                                             */
+;* 		      (goto-char defpos)                               */
+;* 		      (setq res t))                                    */
+;* 		  (goto-char defpos)))                                 */
+;* 	    (error                                                     */
+;* 	     (progn                                                    */
+;* 	       (goto-char defpos)                                      */
+;* 	       (setq res t)                                            */
+;* 	       nil))))                                                 */
+;* 	 (t                                                            */
+;* 	  (setq res nil)))))                                           */
+;*     res))                                                           */
 	      
 ;*---------------------------------------------------------------------*/
 ;*    hopjs--indent-operator-re ...                                    */
@@ -295,7 +298,7 @@ usage: (js-return)  -- [RET]"
   (save-excursion
     (let ((loop 'loop)
 	  (open 0)
-	  (be (progn (hopjs-beginning-of-defun (point)) (point))))
+	  (be (progn (hopjs-beginning-of-defun) (point))))
       (hopjs-debug "~~~ hopjs-html-p be=%s" be)
       (hopjs-debug "~~~ hopjs-html-p, loop=%s be=%d" loop be)
       (when (eq loop 'loop)
@@ -512,80 +515,91 @@ usage: (js-return)  -- [RET]"
 	    (t
 	     (current-column))))))))
 
-(defconst js--plain-method-re
-  (concat "^\\s-*?\\(" js--dotted-name-re "\\)\\.prototype"
-          "\\.\\(" js--name-re "\\)\\s-*?=\\s-*?\\(function\\|service\\)\\_>")
-  "Regexp matching an explicit JavaScript prototype \"method\" declaration.
-Group 1 is a (possibly-dotted) class name, group 2 is a method name,
-and group 3 is the 'function' keyword.")
+;*---------------------------------------------------------------------*/
+;*    hopjs-search-code-regexp ...                                     */
+;*---------------------------------------------------------------------*/
+(defun hopjs-search-code-regexp (regexp search key)
+  (save-excursion
+    (let ((res '_)
+	  (pos (point)))
+      (while (eq res '_)
+	(if (funcall search regexp nil t)
+	    (let ((beg (match-beginning 0)))
+	      (cond
+	       ((eq (get-text-property beg 'face) key)
+		(setq res t))
+	       ((> pos (point))
+		;; backward search
+		(if (> (point) (point-min))
+		    (goto-char (1- beg))
+		  (setq res nil)))
+	       (t
+		;; forward search
+		(if (< (point) (point-max))
+		    (forward-char)
+		  (setq res nil)))))
+	  (setq res nil)))
+      res)))
+      
+;*---------------------------------------------------------------------*/
+;*    hopjs-search-previous-function ...                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-search-previous-function ()
+  (when (hopjs-search-code-regexp
+	 "\\_<\\(function\\|service\\)\\_>"
+	 're-search-backward 
+	 'font-lock-keyword-face)
+    (let ((beg (match-beginning 0)))
+      (goto-char beg)
+      (if (hopjs-search-code-regexp "{" 're-search-forward nil)
+	  ;; and we have found a open bracket
+	  (condition-case nil
+	      (progn
+		(goto-char (match-beginning 0))
+		(forward-sexp 1)
+		(cons beg (point)))
+	    (error
+	     (cons beg beg)))
+	;; no bracket found...
+	nil))))
 
-(defconst js--function-heading-2-re
-  (concat
-   "^\\s-*\\(" js--name-re "\\)\\s-*:\\s-*\\(function\\|service\\)\\_>")
-  "Regexp matching the start of a function entry in an associative array.
-Match group 1 is the name of the function.")
+;*---------------------------------------------------------------------*/
+;*    hopjs-goto-defun ...                                             */
+;*---------------------------------------------------------------------*/
+(defun hopjs-goto-defun (ref pos)
+  (let ((loop t))
+    (while loop
+      (let ((fun (hopjs-search-previous-function)))
+	(cond
+	   ((not fun)
+	    (setq loop nil))
+	   ((> (cdr fun) pos)
+	    (progn
+	      (setq loop nil)
+	      (goto-char (funcall ref fun))))
+	   ((> (car fun) (point-min))
+	    (goto-char (1- (car fun))))
+	   (t
+	    (setq loop nil)))))))
 
-(defconst js--function-heading-3-re
-  (concat
-   "^\\s-*\\(?:var\\s-+\\)?\\(" js--dotted-name-re "\\)"
-   "\\s-*=\\s-*\\(function\\|service\\)\\_>")
-  "Regexp matching a line in the JavaScript form \"var MUMBLE = function\".
-Match group 1 is MUMBLE.")
+;*---------------------------------------------------------------------*/
+;*    hopjs-beginning-of-defun ...                                     */
+;*---------------------------------------------------------------------*/
+(defun hopjs-beginning-of-defun (&optional arg)
+  (unless arg (setq arg 1))
+  (while (> arg 0)
+    (setq arg (1- arg))
+    (hopjs-goto-defun 'car (point))))
 
-(defun js--function-prologue-beginning (&optional pos)
-  "Return the start of the JavaScript function prologue containing POS.
-A function prologue is everything from start of the definition up
-to and including the opening brace.  POS defaults to point.
-If POS is not in a function prologue, return nil."
-  (message "js--function-prologue-beginning")
-  (let (prologue-begin)
-    (save-excursion
-      (if pos
-          (goto-char pos)
-        (setq pos (point)))
-
-      (when (save-excursion
-              (forward-line 0)
-              (or (looking-at js--function-heading-2-re)
-                  (looking-at js--function-heading-3-re)))
-
-        (setq prologue-begin (match-beginning 1))
-        (when (<= prologue-begin pos)
-          (goto-char (match-end 0))))
-
-      (skip-syntax-backward "w_")
-      (message "AND %s" (point))
-      (and (or (looking-at "\\_<\\(function\\|service\\)\\_>")
-               (js--re-search-backward "\\_<\\(function\\|service\\)\\_>" nil t))
-
-           (save-match-data (goto-char (match-beginning 0))
-                            (js--forward-function-decl))
-
-           (<= pos (point))
-           (or prologue-begin (match-beginning 0))))))
-
-(defun js--forward-function-decl ()
-  "Move forward over a JavaScript function declaration.
-This puts point at the 'function' keyword.
-
-If this is a syntactically-correct non-expression function,
-return the name of the function, or t if the name could not be
-determined.  Otherwise, return nil."
-  (cl-assert (looking-at "\\_<\\(function\\|service\\)\\_>"))
-  (message "js--forward-function-decl %s" (point))
-  (let ((name t))
-    (forward-word)
-    (forward-comment most-positive-fixnum)
-    (when (looking-at js--name-re)
-      (setq name (match-string-no-properties 0))
-      (goto-char (match-end 0)))
-    (forward-comment most-positive-fixnum)
-    (and (eq (char-after) ?\( )
-         (ignore-errors (forward-list) t)
-         (progn (forward-comment most-positive-fixnum)
-                (and (eq (char-after) ?{)
-                     name)))))
-
+;*---------------------------------------------------------------------*/
+;*    hopjs-end-of-defun ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-end-of-defun (&optional arg)
+  (unless arg (setq arg 1))
+  (while (> arg 0)
+    (setq arg (1- arg))
+    (hopjs-goto-defun 'cdr (point))))
+  
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */
 ;*---------------------------------------------------------------------*/

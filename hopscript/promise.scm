@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Sep  3 17:07:01 2015 (serrano)                */
+;*    Last change :  Fri Sep  4 11:27:02 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -64,20 +64,12 @@
    (define (async-proc k)
       (with-access::JsPromise obj (worker)
 	 (with-access::WorkerHopThread worker (%this)
-	    (js-worker-exec worker "hopjs-response-async"
-	       (lambda ()
-		  (with-handler
-		     (lambda (e)
-			(cond
-			   ((isa? e JsError) (exception-notify e))
-			   ((isa? e &error) (error-notify e)))
-			#f)
-		     (js-promise-then %this obj 
-			(js-make-function %this
-			   (lambda (this resp)
-			      (k (scheme->response resp req)))
-			   1 "reply")
-			(js-undefined))))))))
+	    (js-promise-then-catch %this obj 
+	       (js-make-function %this
+		  (lambda (this resp)
+		     (k (scheme->response resp req)))
+		  1 "reply")
+	       (js-undefined)))))
    
    (instantiate::http-response-async
       (async async-proc)))
@@ -125,24 +117,33 @@
 
    ;; promise-resolve
    (define (promise-resolve o::JsPromise v)
-      (with-access::JsPromise o (thens state val resolvers)
+      (with-access::JsPromise o (thens state val resolvers worker)
 	 (when (eq? state 'pending)
 	    (set! state 'fullfilled)
 	    (set! val v)
-	    (for-each (lambda (then)
-			 (js-call1 %this then o v))
-	       (reverse thens))
+	    (js-worker-push-thunk! worker "promise"
+	       (lambda ()
+		  (with-handler
+		     exception-notify
+		     (for-each (lambda (then)
+				  (when (isa? then JsFunction)
+				     (js-call1 %this then o v)))
+			(reverse thens)))))
 	    (for-each (lambda (w) (promise-resolvers w)) resolvers))))
    
    ;; promise-reject
    (define (promise-reject o::JsPromise v)
-      (with-access::JsPromise o (catches state val rejecters)
+      (with-access::JsPromise o (catches state val rejecters worker)
 	 (when (eq? state 'pending)
 	    (set! state 'rejected)
 	    (set! val v)
-	    (for-each (lambda (hdl)
-			 (js-call1 %this hdl o v))
-	       (reverse catches))
+	    (js-worker-push-thunk! worker "promise"
+	       (lambda ()
+		  (with-handler
+		     exception-notify
+		     (for-each (lambda (hdl)
+				  (js-call1 %this hdl o v))
+			(reverse catches)))))
 	    (for-each (lambda (w) (promise-rejecters w)) rejecters))))
    
    ;; builtin prototype
@@ -257,7 +258,7 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#24.4.4.2         */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-promise-prototype! %this::JsGlobalObject js-promise obj)
-   
+
    ;; catch
    (js-bind! %this obj 'catch
       :value (js-make-function %this
@@ -265,7 +266,7 @@
 		   (if (not (isa? this JsPromise))
 		       (js-raise-type-error %this "argument not a promise ~a"
 			  (typeof this))
-		       (js-promise-catch %this this fail))
+		       (js-promise-then-catch %this this #f fail))
 		   this)
 		1 'catch)
       :enumerable #f)
@@ -277,51 +278,39 @@
 		   (if (not (isa? this JsPromise))
 		       (js-raise-type-error %this "argument not a promise ~a"
 			  (typeof this))
-		       (js-promise-then %this this proc fail))
+		       (js-promise-then-catch %this this proc fail))
 		   this)
 		2 'then)
       :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
-;*    js-promise-then ...                                              */
+;*    js-promise-then-catch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-promise-then %this::JsGlobalObject this::JsPromise proc fail)
-   (with-access::JsPromise this (state thens rejecters catches val)
+(define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail)
+   (with-access::JsPromise this (state thens rejecters catches val worker)
       (case state
 	 ((fullfilled)
 	  (if (isa? proc JsFunction)
-	      (js-call1 %this proc this val)
-	      (js-raise-type-error %this
-		 "argument not a procedure ~a"
-		 (typeof proc))))
+	      (js-worker-push-thunk! worker "promise"
+		 (lambda ()
+		    (with-handler
+		       exception-notify
+		       (js-call1 %this proc this val))))
+	      (js-undefined)))
 	 ((rejected)
-	  (if (isa? fail JsFunction)
-	      (js-call1 %this fail this val)
-	      (js-raise-type-error %this
-		 "argument not a procedure ~a"
-		 (typeof fail))))
+	  (js-worker-push-thunk! worker "promise"
+	     (lambda ()
+		(with-handler
+		   exception-notify
+		   (if (isa? fail JsFunction)
+		       (js-call1 %this fail this val)
+		       (js-raise-error %this "Uncaught (in promise)" val))))))
 	 (else
 	  (when (isa? proc JsFunction)
 	     (set! thens (cons proc thens)))
 	  (when (isa? fail JsFunction)
 	     (set! catches (cons fail rejecters)))))
       this))
-
-;*---------------------------------------------------------------------*/
-;*    js-promise-catch ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-promise-catch %this::JsGlobalObject this::JsPromise fail)
-   (with-access::JsPromise this (state rejecters catches val)
-      (case state
-	 ((rejected)
-	  (if (isa? fail JsFunction)
-	      (js-call1 %this fail this val)
-	      (js-raise-type-error %this
-		 "argument not a procedure ~a"
-		 (typeof fail))))
-	 (else
-	  (when (isa? fail JsFunction)
-	     (set! catches (cons fail rejecters)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral end                                              */
