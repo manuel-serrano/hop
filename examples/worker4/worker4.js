@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Mon Aug 24 19:57:37 2015 (serrano)                */
+/*    Last change :  Fri Sep  4 12:11:47 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Services in workers example                                      */
@@ -43,6 +43,7 @@ service counter() {
 
 service counter2() {
    return new Promise( function( resolve, reject ) {
+      console.log( "resolve=", resolve.toString() );
       w.postMessage( resolve );
    } );
 }

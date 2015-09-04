@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Aug 31 19:36:51 2015 (serrano)                */
+;*    Last change :  Fri Sep  4 12:23:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -60,16 +60,9 @@
       (with-access::JsGlobalObject %this (js-function)
 	 (with-access::JsFunction obj (procedure src)
 	    (if (eq? src 'builtin)
-		(let ((nfun (duplicate::JsFunction obj
-			       (__proto__ (js-get js-function 'prototype %this))
-			       (properties '()))))
-		   ;; donate the free variables
-		   (let loop ((i (procedure-length procedure)))
-		      (when (>fx i 0)
-			 (procedure-set! procedure i
-			    (js-donate (procedure-ref procedure i) worker %_this))
-			 (loop (-fx i 1))))
-		   nfun)
+		(duplicate::JsFunction obj
+		   (__proto__ (js-get js-function 'prototype %this))
+		   (properties '()))
 		(js-undefined))))))
    
 ;*---------------------------------------------------------------------*/
