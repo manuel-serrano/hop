@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Aug 28 13:56:45 2015 (serrano)                */
+;*    Last change :  Fri Sep  4 11:10:49 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -411,7 +411,7 @@
 ;*    js-worker-exception-handler ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exception-handler th::object exn errval)
-   (with-access::WorkerHopThread th (handlers %this %process)
+   (with-access::WorkerHopThread th (handlers %this %process keep-alive)
       (if (pair? handlers)
 	  (let loop ((handlers (reverse handlers)))
 	     (cond
