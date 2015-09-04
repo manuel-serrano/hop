@@ -9,7 +9,9 @@ and slightly differs from the client-side DOM as the server does not
 implement a _unique_ document. As a consequence, an XML element can
 be simultaneously contained in various XML nodes. On the server,
 Inserting and a node in a document does not not automatically removes
-it from another parent where it could been included initially.
+it from another parent where it could been included initially, then
+the `nextSibling`, `previousSibling`, and `parentNode` properties
+cannot be used with non arborescent structures.
 
 Examples
 --------
@@ -96,7 +98,7 @@ Remove a new child to `node`.
 ### node.getElementById( id ) ###
 [:@glyphicon glyphicon-tag function]
 
-Return the children of node whose id is `id`.
+Return the child of node whose id is `id`.
 
 ### node.getElementsByTagName( name ) ###
 [:@glyphicon glyphicon-tag function]
