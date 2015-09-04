@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Jul 16 13:54:54 2015 (serrano)                */
+;*    Last change :  Fri Sep  4 15:48:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -737,111 +737,123 @@
    ;; http://nodejs.org/api/buffer.html#buffer_buf_write_string_offset_length_encoding
    (js-put! slowbuffer-proto 'binaryWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (maxfx 0
-			   (minfx (js-jsstring-length string)
-			      (minfx length
-				 (-fx (string-length data) offset))))))
-		  (if (>fx n 0)
-		      (let ((l (blit-string-binary-decode!
-				  (js-jsstring->string string) 0 data offset n)))
-			 (js-put! js-slowbuffer '_charsWritten l #t %this)
-			 l)
-		      n))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let ((n (maxfx 0
+			       (minfx (js-jsstring-length string)
+				  (minfx length
+				     (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (let ((l (blit-string-binary-decode!
+				      (js-jsstring->string string) 0 data offset n)))
+			     (js-put! js-slowbuffer '_charsWritten l #t %this)
+			     l)
+			  n)))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "binaryWrite")
       #f %this)
 
    (js-put! slowbuffer-proto 'utf8Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (maxfx 0
-			   (minfx (js-jsstring-length string)
-			      (minfx length
-				 (-fx (string-length data) offset))))))
-		  (if (>fx n 0)
-		      (multiple-value-bind (m c)
-			 (blit-string-utf8!
-			    (js-jsstring->string string) 0 data offset n)
-			 (js-put! js-slowbuffer '_charsWritten c #t %this)
-			 m)
-		      (begin
-			 (js-put! js-slowbuffer '_charsWritten n #t %this)
-			 n)))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let ((n (maxfx 0
+			       (minfx (js-jsstring-length string)
+				  (minfx length
+				     (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (multiple-value-bind (m c)
+			     (blit-string-utf8!
+				(js-jsstring->string string) 0 data offset n)
+			     (js-put! js-slowbuffer '_charsWritten c #t %this)
+			     m)
+			  (begin
+			     (js-put! js-slowbuffer '_charsWritten n #t %this)
+			     n))))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "utf8Write")
       #f %this)
 
    (js-put! slowbuffer-proto 'asciiWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let ((n (maxfx 0
-			   (minfx (js-jsstring-length string)
-			      (minfx length
-				 (-fx (string-length data) offset))))))
-		  (if (>fx n 0)
-		      (let ((l (blit-string-ascii-decode!
-				  (js-jsstring->string string) 0 data offset n)))
-			 (js-put! js-slowbuffer '_charsWritten l #t %this)
-			 l)
-		      n))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let ((n (maxfx 0
+			       (minfx (js-jsstring-length string)
+				  (minfx length
+				     (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (let ((l (blit-string-ascii-decode!
+				      (js-jsstring->string string) 0 data offset n)))
+			     (js-put! js-slowbuffer '_charsWritten l #t %this)
+			     l)
+			  n)))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "asciiWrite")
       #f %this)
 
    (js-put! slowbuffer-proto 'base64Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let ((ip (open-input-string! (js-jsstring->string string)))
-		     (op (open-output-string)))
-		  (base64-decode-port ip op #t)
-		  (close-input-port ip)
-		  (let* ((s (close-output-port op))
-			 (n (maxfx 0
-			       (minfx (string-length s)
-				  (minfx length
-				     (-fx (string-length data) offset))))))
-		     (when (>fx n 0)
-			(blit-string! s 0 data offset n))
-		     (js-put! js-slowbuffer '_charsWritten n #t %this)
-		     n))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let ((ip (open-input-string! (js-jsstring->string string)))
+			 (op (open-output-string)))
+		      (base64-decode-port ip op #t)
+		      (close-input-port ip)
+		      (let* ((s (close-output-port op))
+			     (n (maxfx 0
+				   (minfx (string-length s)
+				      (minfx length
+					 (-fx (string-length data) offset))))))
+			 (when (>fx n 0)
+			    (blit-string! s 0 data offset n))
+			 (js-put! js-slowbuffer '_charsWritten n #t %this)
+			 n)))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "base64Write")
       #f %this)
 
    (js-put! slowbuffer-proto 'ucs2Write
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (utf8-string->ucs2-string (js-jsstring->string string)))
-		      (n (maxfx 0
-			    (minfx (*fx 2 (ucs2-string-length s))
-			       (minfx length
-				  (-fx (string-length data) offset))))))
-		  (if (>fx n 0)
-		      (let ((l (blit-string-ucs2! s 0 data offset n)))
-			 (js-put! js-slowbuffer '_charsWritten (/fx l 2)
-			    #t %this)
-			 l)
-		      0))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let* ((s (utf8-string->ucs2-string (js-jsstring->string string)))
+			  (n (maxfx 0
+				(minfx (*fx 2 (ucs2-string-length s))
+				   (minfx length
+				      (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (let ((l (blit-string-ucs2! s 0 data offset n)))
+			     (js-put! js-slowbuffer '_charsWritten (/fx l 2)
+				#t %this)
+			     l)
+			  0)))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "ucs2Write")
       #f %this)
 
    (js-put! slowbuffer-proto 'hexWrite
       (js-make-function %this
-	 (lambda (this::JsSlowBuffer string::JsStringLiteral offset length)
-	    (with-access::JsSlowBuffer this (data)
-	       (let* ((s (string-hex-intern (js-jsstring->string string)))
-		      (n (maxfx 0
-			    (minfx (*fx 2 (string-length s))
-			       (minfx length
-				  (-fx (string-length data) offset))))))
-		  (if (>fx n 0)
-		      (begin
-			 (blit-string! s 0 data offset n)
-			 (js-put! js-slowbuffer '_charsWritten (*fx n 2) #t %this)
-			 n)
-		      0))))
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (isa? string JsStringLiteral)
+		(with-access::JsSlowBuffer this (data)
+		   (let* ((s (string-hex-intern (js-jsstring->string string)))
+			  (n (maxfx 0
+				(minfx (*fx 2 (string-length s))
+				   (minfx length
+				      (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (begin
+			     (blit-string! s 0 data offset n)
+			     (js-put! js-slowbuffer '_charsWritten (*fx n 2) #t %this)
+			     n)
+			  0)))
+		(js-raise-type-error %this "not a string" string)))
 	 3 "hexWrite")
       #f %this)
 
