@@ -82,8 +82,31 @@ service svc( { name: "durand" } ) {
   return true;
 }
 ```
-${ <span class="label label-warning">TODO</span> } quelles sont les 
-propriétés de l'objet HTTP request? [:@warning]
+
+Usable properties of the request object are listed below:
+
+* `header` is a JavaScript object containing the properties that the
+  client has put in the request header:
+  * `host`: the server name and port (for example:
+	`hop.inria.fr:8080`),
+  * `connection`: whether to close the connection `close` or keep it alive `keep-alive`,
+  * clients may add custom header
+  properties in the options argument of the service invocation, for
+  example specifying `{header: { foo: 'foo property value' }}` in the
+  `post`options defines the property `foo`that can be retrieved in
+  `header.foo`on the server,
+  
+* `host` is the hostname of the server (as set by the client),
+* `port` is the tcp port the request was sent to (as set by the client),
+* `path` is the service path (for example `/hop/foo`),
+* `abspath`,
+* `seconds` is the date of arrival of the request,
+* `connection` is a shortcut to `header.connection`,
+* `"connection-timeout"` is the timeout for keepalive connections,
+* `http` is the protocol version requested by the client,
+* `scheme` is the protocol scheme requested by the client,
+* `method` is the HTTP method used in the request,
+
 
 Service are free to return any _serializable_ object. The value
 is first converted into a `hop.HTTPResponse` object by Hop.js. This converted
