@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug 28 13:28:10 2015 (serrano)                */
+;*    Last change :  Sat Sep  5 06:53:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -337,7 +337,7 @@
       (decl-list (consume-token! 'const) in-for-init?
 	 (lambda (loc id val)
 	    (instantiate::J2SLetInit
-	       (const #t)
+	       (isconst #t)
 	       (loc loc)
 	       (id id)
 	       (val val)))

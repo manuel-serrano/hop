@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Jul  3 16:14:30 2015 (serrano)                */
+;*    Last change :  Sat Sep  5 06:53:52 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -61,12 +61,12 @@
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (when (isa? decl J2SLet)
-	       (with-access::J2SLet decl (const id)
-		  (when const
+	       (with-access::J2SLet decl (isconst id)
+		  (when isconst
 		     (raise
 			(instantiate::&io-error
 			   (proc "ronly")
-			   (msg "Const variable cannot be assigned")
+			   (msg "Const variables cannot be assigned")
 			   (obj id)
 			   (fname (cadr loc))
 			   (location (caddr loc)))))))
