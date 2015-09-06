@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Sep  1 08:00:39 2015 (serrano)                */
+/*    Last change :  Sat Sep  5 06:48:26 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -108,15 +108,16 @@ exports.Cons = hop.Cons;
 /*---------------------------------------------------------------------*/
 /*    Hop sub modules                                                  */
 /*---------------------------------------------------------------------*/
-exports.tree = "tree";
-exports.notepad = "notepad";
-exports.spage = "spage";
-exports.fontifier = "fontifier";
-exports.wiki = "wiki";
-exports.security = "security";
-exports.config = "config";
-exports.user = "user";
-exports.hss = "hss";
+exports.tree = hop.modulesDir + "/tree";
+exports.notepad = hop.modulesDir + "/notepad";
+exports.spage = hop.modulesDir + "/spage";
+exports.fontifier = hop.modulesDir + "/fontifier";
+exports.wiki = hop.modulesDir + "/wiki";
+exports.security = hop.modulesDir + "/security";
+exports.config = hop.modulesDir + "/config";
+exports.user = hop.modulesDir + "/user";
+exports.hss = hop.modulesDir + "/hss";
+exports.markdown = hop.modulesDir + "/markdown";
 
 Object.seal( exports );
 Object.freeze( exports );

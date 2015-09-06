@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 27 07:34:28 2015 (serrano)                */
+;*    Last change :  Sat Sep  5 06:52:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -196,7 +196,7 @@
 	      (val::J2SExpr read-only))
 
 	   (final-class J2SLet::J2SDecl
-	      (const::bool read-only (default #f)))
+	      (isconst::bool read-only (default #f)))
 	   
 	   (wide-class J2SLetInit::J2SLet
 	      (val::J2SExpr read-only))
