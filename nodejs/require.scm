@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Sep  2 08:34:13 2015 (serrano)                */
+;*    Last change :  Mon Sep  7 18:43:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -446,21 +446,32 @@
 ;*    hop-load-cache ...                                               */
 ;*---------------------------------------------------------------------*/
 (define hop-load-cache (make-hashtable))
+(define sofile-cache (make-hashtable))
+(define soload-mutex (make-mutex))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread #!optional lang)
 
+   (define (soload sopath)
+      (synchronize soload-mutex
+	 (let ((old (hashtable-get sofile-cache sopath)))
+	    (if old
+		old
+		(let ((p (dynamic-load sopath)))
+		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
+		       (begin
+			  (hashtable-put! sofile-cache sopath p)
+			  p)
+		       (js-raise-error (js-new-global-object)
+			  (format "Wrong compiled file format ~s" sopath)
+			  sopath)))))))
+   
    (define (loadso-or-compile filename lang)
       (let ((sopath (hop-find-sofile filename)))
 	 (if sopath
-	     (let ((p (dynamic-load sopath)))
-		(if (and (procedure? p) (=fx (procedure-arity p) 4))
-		    p
-		    (js-raise-error (js-new-global-object)
-		       (format "Wrong compiled file format ~s" sopath)
-		       sopath)))
+	     (soload sopath)
 	     (nodejs-compile filename lang))))
    
    (define (load-module-js)

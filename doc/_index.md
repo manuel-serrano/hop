@@ -8,14 +8,14 @@ Hop is:
   - EcmaScript 6 features;
   - Nodejs compatibility.
 * An extended JavaScript:
-  - **multitier**: a single code that runs on the client;
+  - **multitier**: a single code that runs on the client and the server;
   - builtin **HTML**.
 * A builtin multi-threaded **Web server**.
 
-Hop programs are executed in the context of a builtin Web server. Services
-are an extension of plain JavaScript functions that get automatically invoked
-when HTTP request are received by the server. Answering a request only
-takes defining a `service`:
+Hop programs are executed in the context of a builtin Web
+server. Services are extended JavaScript functions that get
+automatically invoked when HTTP requests are received by the
+server. Answering a request only takes defining a `service`:
 
 ```hopscript[:prog1@homeprog]
 service hello() {
