@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Sep  4 11:10:28 2015 (serrano)                */
+;*    Last change :  Mon Sep  7 12:26:26 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -480,19 +480,19 @@
       (trace-item "name=" name)
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (if %loop
-	     (with-access::JsLoop %loop (actions async exiting)
-		(synchronize mutex
-		   (let ((act (cons name thunk)))
+	 (let ((act (cons name thunk)))
+	    (if %loop
+		(with-access::JsLoop %loop (actions async exiting)
+		   (synchronize mutex
 		      (unless (pair? actions)
 			 (uv-ref async)
 			 (uv-async-send async))
 		      ;; push the action to be executed (with a debug name)
-		      (set! actions (cons act actions)))))
-	     ;; the loop is not started yet (this might happend when
-	     ;; a master send a message (js-worker-post-master-message)
-	     ;; before the slave is fully initialized
-	     (set! tqueue (append! tqueue (list (cons name thunk))))))))
+		      (set! actions (cons act actions))))
+		;; the loop is not started yet (this might happend when
+		;; a master send a message (js-worker-post-master-message)
+		;; before the slave is fully initialized
+		(set! tqueue (append (cons act tqueue))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
