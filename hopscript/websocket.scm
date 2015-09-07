@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Thu Aug 27 09:39:40 2015 (serrano)                */
+;*    Last change :  Mon Sep  7 12:51:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -283,7 +283,7 @@
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
 		    (with-access::websocket ws (state)
-		       (symbol->string state))))
+		       (js-string->jsstring (symbol->string state)))))
 	      0 'readyState))
    ;; url
    (js-bind! %this obj 'url
@@ -294,10 +294,10 @@
 		       (cond
 			  ((string-prefix? "http://" url)
 			   (js-stringlist->jsstring
-			      (list "ws://" (substring url 8))))
+			      (list "ws://" (substring url 7))))
 			  ((string-prefix? "https://" url)
 			   (js-stringlist->jsstring
-			      (list "wss://" (substring url 9))))
+			      (list "wss://" (substring url 8))))
 			  (else
 			   (js-string->jsstring url))))))
 	      0 'url))
@@ -479,6 +479,19 @@
 ;*    init-builtin-websocket-client-prototype! ...                     */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-client-prototype! %this obj)
+   ;; readyState
+   (js-bind! %this obj 'readyState
+      :get (js-make-function %this
+	      (lambda (this)
+		 (with-access::JsWebSocketClient this (socket)
+		    (cond
+		       ((not (socket? socket))
+			(js-string->jsstring "connecting"))
+		       ((socket-down? socket)
+			(js-string->jsstring "closed"))
+		       (else
+			(js-string->jsstring "open")))))
+	      0 'readyState))
    ;; close
    (js-bind! %this obj 'close
       :value (js-make-function %this

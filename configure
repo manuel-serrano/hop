@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug 28 09:51:55 2015 (serrano)                */
+#*    Last change :  Mon Sep  7 09:50:23 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -37,6 +37,9 @@ debug=no
 bcflags="-O2 -fsharing -Wall -wslots -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
+
+bglpcre=required
+bglunistring=required
 
 bcflagsdev=""
 bcflagsdbg="-copt -g -O2"
@@ -189,6 +192,12 @@ while : ; do
 
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloo-pcre=*)
+      bglpcre="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloo-unistring=*)
+      bglunistring="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bglafile=*)
       afile="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -431,10 +440,10 @@ fi
 if [ ! -f $bigloo ]; then
    which $bigloo > /dev/null 2> /dev/null
    if [ "$?" != "0" ]; then
-      echo "*** ERROR:configure:bigloo. Aborting"
-      echo "Can't find bigloo. You need at least version $(bigloorequired)."
-      echo "It may be downloaded at:"
-      echo "   $bigloourl"
+      echo "*** ERROR:configure:bigloo. Aborting" >&2
+      echo "Can't find bigloo. You need at least version $(bigloorequired)." >&2
+      echo "It may be downloaded at:" >&2
+      echo "   $bigloourl" >&2
       exit 1;
    fi
 fi
@@ -444,13 +453,45 @@ bglversion=`$bigloo -q -eval "(exit (display (bigloo-config 'release-number)))"`
 $bigloo -q -eval "(exit (if (string>=? (bigloo-config 'release-number) \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
-  echo "*** ERROR:configure:bigloo. Aborting"
-  echo "Your version of Bigloo ($bglversion) is too old. Release"
-  echo "   $bigloorequired"
-  echo "or more recent is required. It may be downloaded at:"
-  echo "   $bigloourl"
+  echo "*** ERROR:configure:bigloo. Aborting" >&2
+  echo "Your version of Bigloo ($bglversion) is too old. Release" >&2
+  echo "   $bigloorequired" >&2
+  echo "or more recent is required. It may be downloaded at:" >&2
+  echo "   $bigloourl" >&2
   exit 1;
 fi
+
+haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
+pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
+fail=false;
+
+if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
+    echo "*** ERROR:configure: your Bigloo setting  does not support \"unistrings\"." >&2
+    echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
+    echo "  If you known what you are doing and if you don't need string locale " >&2
+    echo "  comparison, re-configure Hop with the following option:" >&2
+    echo "    ./configure ... --bigloo-unistring=no" >&2
+    echo "" >&2
+    fail=true;
+fi
+
+if [ "$pcre " != "pcre " -a "$bglpcre " != "pcre " ]; then
+    echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
+    echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
+    echo "  If you known what you are doing and if you don't want compatible regexp" >&2
+    echo "  re-configure Hop with the following option:" >&2
+    echo "    ./configure ... --bigloo-pcre=no" >&2
+    echo "  Otherwise, install pcre and re-configure and re-compile Bigloo first." >&2
+    echo "" >&2
+    fail=true;
+fi
+
+if [ "$fail " = "true " ]; then
+    echo "When re-configuring Bigloo, it might be useful to use the configure option" >&2
+    echo "\"--abort-missing\" that will force the Bigloo configuration process to fail" >&2
+    echo "as soon as one important Bigloo library is missing." >&2
+    exit 1
+fi    
 
 #*---------------------------------------------------------------------*/
 #*    Check the backend                                                */
