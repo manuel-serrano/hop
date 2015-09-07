@@ -7,10 +7,10 @@ HopScript Modules
 Hop.js supports [Nodejs Modules](https://nodejs.org/api/modules.html).
 The import/exports mechanism, the file name resolution, the caching,
 the `module` object, and the variable scoping are compatible in Hop.js and
-Node.js. The only difference
+Node.js. Hop.js adds several extensions to Nodejs Modules.
 
 
-### module.require( id [, language ] ) ###
+### require( id [, language ] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The arguments are as follows:
@@ -23,18 +23,27 @@ The arguments are as follows:
    
 When a language is specified and when this language is not `hopscript`,
 all the syntactic extensions of Hop.js are disabled (`service`, HTML syntax,
-`\${`, and `~{` mark). Requring a module specifying the `javascript` language
+`\${`, and `~{` mark). Requiring a module specifying the `javascript` language
 is then useful to require a module that uses the extra HopScript keywords
-are normal identifier.
+as normal identifiers.
 
 Modules are loaded differently depending on their source file suffix.
 
  * `.js`, the module is source file module. It is loaded as plain source
  code. The value returned by `require` is the `exports` module property.
- * `.json`, the module is a JSON file. The JSON object is parsed is the
- result of the `require` call.
- * `.html`, the module is HopScript HTML expression, which is the result
+ * `.json`, the module is a JSON file. The JSON object is parsed and
+ returned as the result of the `require` call.
+ * `.html`, the module is a HopScript HTML expression, which is the result
  of the `require` call.
+
+When `id`is a directory, the loader looks in the directory for a file named package.json
+to tell how to load the module.
+
+When `id` is an http url, Hop.js assumes that the file is to be
+retrieved from a remote Hop.js server, and issues http requests to the
+given server to get the file contents. Modules required within the
+retrieved file are downloaded from the same location, except for
+system modules which are assumed to be available locally.
 
 #### Example ####
 
