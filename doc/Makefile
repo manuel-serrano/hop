@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep  1 07:45:38 2015 (serrano)                */
+#*    Last change :  Tue Sep  8 09:00:57 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -123,8 +123,7 @@ uninstall:
 #*    .md -> .html                                                     */
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
-	HOP_LIBS_PATH=$(HOP_LIBS_PATH) $(HOP) $(EFLAGS) \
-          --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -132,8 +131,7 @@ uninstall:
 #*    .json -> .html                                                   */
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
-	HOP_LIBS_PATH=$(HOP_LIBS_PATH) $(HOP) $(EFLAGS) \
-          --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -141,8 +139,7 @@ uninstall:
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
-	HOP_LIBS_PATH=$(HOP_LIBS_PATH) $(HOP) $(EFLAGS) \
-          --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 

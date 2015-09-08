@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sat Sep  5 06:48:26 2015 (serrano)                */
+/*    Last change :  Tue Sep  8 09:38:15 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -13,34 +13,34 @@ var hop = process.binding( "hop" );
 /*---------------------------------------------------------------------*/
 /*    config                                                           */
 /*---------------------------------------------------------------------*/
-exports.shareDir = hop.shareDir;
-exports.binDir = hop.binDir;
-exports.libDir = hop.libDir;
-exports.contribsDir = hop.contribsDir;
-exports.weblestDir = hop.webletsDir;
-exports.modulesDir = hop.modulesDir;
-
-Object.defineProperty( exports, "debug", {
-   get: function() { return hop.debug() },
-   set: function( v ) { return hop.debugSet( v ) },
-   enumerable: true,
-   configurable: false
-} );
-
-Object.defineProperty( exports, "preferredLanguage", {
-   get: function() { return hop.preferredLanguage() },
-   set: function( v ) { return hop.preferredLanguageSet( v ) },
-   enumerable: true,
-   configurable: false
-} );
+/* exports.shareDir = hop.shareDir;                                    */
+/* exports.binDir = hop.binDir;                                        */
+/* exports.libDir = hop.libDir;                                        */
+/* exports.contribsDir = hop.contribsDir;                              */
+/* exports.weblestDir = hop.webletsDir;                                */
+/* exports.modulesDir = hop.modulesDir;                                */
+/*                                                                     */
+/* Object.defineProperty( exports, "debug", {                          */
+/*    get: function() { return hop.debug() },                          */
+/*    set: function( v ) { return hop.debugSet( v ) },                 */
+/*    enumerable: true,                                                */
+/*    configurable: false                                              */
+/* } );                                                                */
+/*                                                                     */
+/* Object.defineProperty( exports, "preferredLanguage", {              */
+/*    get: function() { return hop.preferredLanguage() },              */
+/*    set: function( v ) { return hop.preferredLanguageSet( v ) },     */
+/*    enumerable: true,                                                */
+/*    configurable: false                                              */
+/* } );                                                                */
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */
 /*---------------------------------------------------------------------*/
-exports.srcDir = hop.srcDir;
-exports.srcFile = hop.srcFile;
-
-exports.currentThread = hop.currentThread;
+/* exports.srcDir = hop.srcDir;                                        */
+/* exports.srcFile = hop.srcFile;                                      */
+/*                                                                     */
+/* exports.currentThread = hop.currentThread;                          */
 
 /*---------------------------------------------------------------------*/
 /*    info                                                             */
@@ -53,7 +53,7 @@ exports.version = hop.version;
 /*    withHOP                                                          */
 /*---------------------------------------------------------------------*/
 exports.webService = hop.webService;
-exports.withURL = hop.withURL;
+/* exports.withURL = hop.withURL;                                      */
 
 /*---------------------------------------------------------------------*/
 /*    Responses                                                        */
@@ -70,16 +70,16 @@ exports.HTTPResponseProxy = hop.HTTPResponseProxy;
 /*    Charset                                                          */
 /*---------------------------------------------------------------------*/
 exports.charsetConvert = hop.charsetConvert;
-Object.defineProperty(
-   exports, "locale", {
-      get: function () { return hop.locale; },
-      set: function( v ) { return hop.localeSet( v ); }
-   } );
-Object.defineProperty(
-   exports, "charset", {
-      get: function () { return hop.charset; },
-      set: function( v ) { return hop.charsetSet( v ); }
-   } );
+/* Object.defineProperty(                                              */
+/*    exports, "locale", {                                             */
+/*       get: function () { return hop.locale; },                      */
+/*       set: function( v ) { return hop.localeSet( v ); }             */
+/*    } );                                                             */
+/* Object.defineProperty(                                              */
+/*    exports, "charset", {                                            */
+/*       get: function () { return hop.charset; },                     */
+/*       set: function( v ) { return hop.charsetSet( v ); }            */
+/*    } );                                                             */
 
 /*---------------------------------------------------------------------*/
 /*    Events                                                           */

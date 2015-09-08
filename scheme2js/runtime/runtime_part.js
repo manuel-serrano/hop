@@ -3868,7 +3868,7 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
       var constr = ("prototype" in clazz) ? clazz.prototype.constructor
 	  : function( c ) { return c; };
       
-      clazz.prototype = new zuper();
+      clazz.prototype = sc_class_creator( zuper );
       clazz.prototype.constructor = constr;
 
       for( f in zuper.sc_fields_table ) {

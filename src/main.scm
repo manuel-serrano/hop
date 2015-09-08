@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  7 12:26:54 2015 (serrano)                */
+;*    Last change :  Tue Sep  8 16:44:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -53,6 +53,13 @@
 	    (fprint (current-error-port) "Segmentation violation")
 	    (display-trace-stack (get-trace-stack) (current-error-port))
 	    (exit 2)))))
+
+;*---------------------------------------------------------------------*/
+;*    js initialization ...                                            */
+;*---------------------------------------------------------------------*/
+(define jsmutex (make-mutex))
+(define jscondv (make-condition-variable))
+(define jsinit #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
@@ -149,6 +156,11 @@
 		     (hop-preload-services))
 		  ;; close the filters, users, and security
 		  (security-close!)
+		  ;; wait for js init
+		  (when jsworker
+		     (synchronize jsmutex
+			(unless jsinit
+			   (condition-variable-wait! jscondv jsmutex))))
 		  ;; start the main loop
 		  (scheduler-accept-loop (hop-scheduler) serv #t))
 	       (if jsworker
@@ -204,6 +216,23 @@
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
 	 (nodejs-module "repl" path %worker %global))
+      ;; push the user expressions
+      (when (pair? exprs)
+	 (js-worker-push-thunk! %worker "cmdline"
+	    (lambda ()
+	       (for-each (lambda (expr)
+			    (call-with-input-string (string-append expr "\n")
+			       (lambda (ip)
+				  (%js-eval ip 'eval %global
+				     (js-undefined) %global))))
+		  exprs))))
+      ;; close user registration
+      (js-worker-push-thunk! %worker "cmdline"
+	 (lambda ()
+	    (users-close!)
+	    (synchronize jsmutex
+	       (set! jsinit #t)
+	       (condition-variable-signal! jscondv))))
       ;; preload the command-line files
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
@@ -220,20 +249,6 @@
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
 	 (hopscript-repl (hop-scheduler) %global %worker))
-      ;; push the user expressions
-      (when (pair? exprs)
-	 (js-worker-push-thunk! %worker "cmdline"
-	    (lambda ()
-	       (for-each (lambda (expr)
-			    (call-with-input-string (string-append expr "\n")
-			       (lambda (ip)
-				  (%js-eval ip 'eval %global
-				     (js-undefined) %global))))
-		  exprs))))
-      ;; close user registration
-      (js-worker-push-thunk! %worker "cmdline"
-	 (lambda ()
-	    (users-close!)))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -250,7 +265,12 @@
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()
-	    (nodejs-load path %worker))))
+	    (let ((path (if (and (>fx (string-length path) 0)
+				 (char=? (string-ref path 0) (file-separator)))
+			    path
+			    (file-name-canonicalize!
+			       (make-file-name (pwd) path)))))
+	       (nodejs-load path %worker)))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
       (if (file-exists? path)
