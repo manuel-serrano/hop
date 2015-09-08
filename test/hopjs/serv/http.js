@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    https.js                                             */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/http.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Fri Sep  4 18:43:00 2015                          */
+/*    Last change :  Mon Sep  7 12:42:26 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
@@ -62,7 +62,6 @@ function goToWS() {
    server.onconnection = function( event ) {
       console.log( 'server: accepting new connection' );
       var ws = event.value;
-      console.log( 'server: ws url:', ws.url );
       console.log( 'server: ws readyState:', ws.readyState );
       ws.onmessage = function( event ) {
 	 console.log( 'server: ws received message', event.data );
@@ -81,7 +80,7 @@ function goToWS() {
    console.log( 'client: WS created' );
    ws.onopen = function() {
       console.log( 'client: ws url', ws.url );
-      //console.log( 'client: readyState', ws.readyState );
+      console.log( 'client: readyState', ws.readyState );
       console.log( 'client: ws sending', message );
       ws.send( message );
    };
@@ -92,7 +91,7 @@ function goToWS() {
       ws.close();
       console.log( 'attempting to close ws' );
    };
-   //   ws.onclose = goToBroadcast;
+   // ws.onclose = goToBroadcast;
    // commented out until server.addEventListener is supported by hop processes.
    ws.onclose = function() {
       console.log( 'client WS closed' );
