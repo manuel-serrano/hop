@@ -53,7 +53,8 @@ POPULATION = Makefile \
   hopjs/serv/service.js \
   hopjs/serv/service2.js \
   hopjs/serv/post.js \
-  hopjs/serv/svc_args.js
+  hopjs/serv/svc_args.js \
+  hopjs/serv/unregisterService.js
 
 all:
 	(cd hopjs; ./TEST)
