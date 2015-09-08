@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Sep  4 11:57:30 2015 (serrano)                */
+;*    Last change :  Tue Sep  8 08:57:07 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -34,17 +34,63 @@
        (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
 		 
 ;*---------------------------------------------------------------------*/
+;*    bind-param! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (bind-param! %this exports type id accessor . mutator)
+   `(js-bind! ,%this ,exports ',id
+       :get (js-make-function %this
+	       (lambda (this)
+		  ,(case type
+		      ((string)
+		       `(js-string->jsstring (,accessor)))
+		      ((symbol)
+		       `(js-string->jsstring (symbol->string (,accessor))))
+		      ((string-array)
+		       `(let ((v (map js-string->jsstring (,accessor))))
+			   (js-vector->jsarray (list->vector v) %this)))
+		      ((bool obj integer)
+		       `(,accessor))
+		      (else
+		       (error "bind-param!" "unsupported type" type))))
+	       0 ',id)
+       :set ,(when (pair? mutator)
+	       `(js-make-function %this
+		   (lambda (o v)
+		      ,(case type
+			  ((string)
+			   `(,(car mutator)
+			     (js-tostring v %this)))
+			  ((symbol)
+			   `(,(car mutator)
+			     (string->symbol (js-tostring v %this))))
+			  ((integer)
+			   `(,(car mutator)
+			     (js-tointeger v %this)))
+			  ((bool)
+			   `(,(car mutator)
+			     (js-totest v)))
+			  ((string-array)
+			   `(,(car mutator)
+			     (map! (lambda (s) (js-tostring s %this))
+				(jsarray->list v %this))))
+			  (else
+			   `(,(car mutator) v))))
+		   1 ',id))
+       :writable ,(pair? mutator)
+       :enumerable #t))
+   
+;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-hop %worker %this)
    (with-access::JsGlobalObject %this (js-object js-function-prototype 
 					 __proto__)
-
+      
       (define js-urlframe-prototype
 	 (instantiate::JsObject
 	    (__proto__ __proto__)
 	    (extensible #t)))
-
+      
       (define js-webservice
 	 (js-make-function %this
 	    (lambda (this url args)
@@ -56,7 +102,7 @@
 			  (js-make-urlframe %this
 			     js-urlframe-prototype
 			     url args))))
-
+      
       (js-bind! %this js-urlframe-prototype 'post
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)
@@ -72,170 +118,112 @@
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
 		   0 'toString))
-
-      (js-alist->jsobject
-	 
-	 (list
-	    ;;configure
-	    `(shareDir . ,(hop-share-directory))
-	    `(binDir . ,(hop-bin-directory))
- 	    `(libDir . ,(hop-lib-directory))
-	    `(modulesDir . ,(make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
- 	    `(contribsDir . ,(hop-contribs-directory))
- 	    `(webletsDir . ,(hop-weblets-directory))
-
-	    (define-js debug 0
-	       (lambda (this) (bigloo-debug)))
-	    (define-js debugSet 1
-	       (lambda (this v) (bigloo-debug-set! (js-tointeger v %this))))
-		
-	    (define-js isServer 0
-	       (lambda (this)
-		  (cond-expand
-		     (hop-server #t)
-		     (else #f))))
-
-	    (define-js preferredLanguage 0
-	       (lambda (this)
-		  (js-string->jsstring (hop-preferred-language))))
-	    (define-js preferredLanguageSet 1
-	       (lambda (this val)
-		  (hop-preferred-language-set! (js-tostring val %this))))
-	    
-	    ;; misc
-	    (define-js srcDir 0
-	       (lambda (this)
-		  (js-string->jsstring (the-loading-dir))))
-	    
-	    (define-js srcFile 0
-	       (lambda (this code)
-		  (js-string->jsstring (the-loading-file))))
-
-	    (define-js currentThread 0
-	       (lambda (this) (current-thread)))
-
-	    ;; info
-	    `(port . ,(hop-port))
-	    `(hostname . ,(js-string->jsstring (hostname)))
-	    `(version . ,(hop-version))
+      
+      (with-access::JsGlobalObject %this (js-object)
+	 (js-alist->jsobject
+	    (list
+	       ;; info
+	       `(version . ,(hop-version))
+	       `(port . ,(hop-port))
+	       `(hostname . ,(js-string->jsstring (hostname)))
+	       `(modulesDir . ,(make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 	       
-	    ;; requests
-	    (define-js webService 1
-	       (lambda (this base)
-		  (let ((name (string->symbol (js-jsstring->string base))))
-		     (js-make-function %this
-			(lambda (this args)
-			   (js-new %this js-webservice base args))
-			1 name))))
-	    
-	    (define-js withURL 3
-	       (lambda (this url success opt)
-		  (hopjs-with-url url success opt %this)))
-
-	    ;; charset
-	    (define-js charsetConvert 3
-	       (lambda (this text from to)
-		  (js-string->jsstring
-		     (hopjs-charset-convert this text from to %this))))
-	    
-	    (define-js locale 0
-	       (lambda (this)
-		  (js-string->jsstring (symbol->string! (hop-locale)))))
-	    
-	    (define-js localeSet 1
-	       (lambda (this cs)
-		  (hop-locale-set! (string->symbol (js-tostring cs %this)))))
-	    
-	    (define-js charset 0
-	       (lambda (this)
-		  (js-string->jsstring (symbol->string! (hop-charset)))))
-	    
-	    (define-js charsetSet 1
-	       (lambda (this cs)
-		  (hop-charset-set! (string->symbol (js-tostring cs %this)))))
-	    
-	    ;; responses
-	    (define-js HTTPResponseHop 2
-	       (lambda (this obj req)
-		  (hopjs-response-hop this obj req %this)))
-	    
-	    (define-js HTTPResponseXml 2
-	       (lambda (this obj req)
-		  (hopjs-response-xml this obj req %this)))
-	    
-	    (define-js HTTPResponseFile 2
-	       (lambda (this file req)
-		  (hopjs-response-file this file req %this)))
-	    
-	    (define-js HTTPResponseString 2
-	       (lambda (this str req)
-		  (hopjs-response-string this str req %this)))
-	    
-	    (define-js HTTPResponseAuthentication 2
-	       (lambda (this msg req)
-		  (hopjs-response-authentication this msg req %this)))
-	    
-	    (define-js HTTPResponseProxy 2
-	       (lambda (this proc req)
-		  (hopjs-response-proxy this proc req %this)))
-	    
-	    (define-js HTTPResponseAsync 2
-	       (lambda (this proc req)
-		  (hopjs-response-async this proc req %this %worker)))
-	    
-	    ;; events
-	    (define-js signal 2
-	       (lambda (this name v)
-		  (hop-event-signal! (js-tostring name %this) v)))
-	    
-	    (define-js broadcast 2
-	       (lambda (this name v)
-		  (hop-event-broadcast! (js-tostring name %this) v)))
-
-	    ;; xml
-	    (define-js XMLCompile 3
-	       (lambda (this xml ofile backend)
-		  (let ((be (hop-get-xml-backend
-			       (if (eq? backend (js-undefined))
-				   'html5
-				   (string->symbol
-				      (js-tostring backend %this))))))
-		     (if (eq? ofile (js-undefined))
-			 (js-string->jsstring
-			    (call-with-output-string
+	       ;; requests
+	       (define-js webService 1
+		  (lambda (this base)
+		     (let ((name (string->symbol (js-jsstring->string base))))
+			(js-make-function %this
+			   (lambda (this args)
+			      (js-new %this js-webservice base args))
+			   1 name))))
+	       
+	       ;; charset
+	       (define-js charsetConvert 3
+		  (lambda (this text from to)
+		     (js-string->jsstring
+			(hopjs-charset-convert this text from to %this))))
+	       
+	       ;; responses
+	       (define-js HTTPResponseHop 2
+		  (lambda (this obj req)
+		     (hopjs-response-hop this obj req %this)))
+	       
+	       (define-js HTTPResponseXml 2
+		  (lambda (this obj req)
+		     (hopjs-response-xml this obj req %this)))
+	       
+	       (define-js HTTPResponseFile 2
+		  (lambda (this file req)
+		     (hopjs-response-file this file req %this)))
+	       
+	       (define-js HTTPResponseString 2
+		  (lambda (this str req)
+		     (hopjs-response-string this str req %this)))
+	       
+	       (define-js HTTPResponseAuthentication 2
+		  (lambda (this msg req)
+		     (hopjs-response-authentication this msg req %this)))
+	       
+	       (define-js HTTPResponseProxy 2
+		  (lambda (this proc req)
+		     (hopjs-response-proxy this proc req %this)))
+	       
+	       (define-js HTTPResponseAsync 2
+		  (lambda (this proc req)
+		     (hopjs-response-async this proc req %this %worker)))
+	       
+	       ;; events
+	       (define-js signal 2
+		  (lambda (this name v)
+		     (hop-event-signal! (js-tostring name %this) v)))
+	       
+	       (define-js broadcast 2
+		  (lambda (this name v)
+		     (hop-event-broadcast! (js-tostring name %this) v)))
+	       
+	       ;; xml
+	       (define-js XMLCompile 3
+		  (lambda (this xml ofile backend)
+		     (let ((be (hop-get-xml-backend
+				  (if (eq? backend (js-undefined))
+				      'html5
+				      (string->symbol
+					 (js-tostring backend %this))))))
+			(if (eq? ofile (js-undefined))
+			    (js-string->jsstring
+			       (call-with-output-string
+				  (lambda (op)
+				     (xml-write xml op be))))
+			    (call-with-output-file (js-tostring ofile %this)
 			       (lambda (op)
-				  (xml-write xml op be))))
-			 (call-with-output-file (js-tostring ofile %this)
-			    (lambda (op)
-			       (xml-write xml op be)
-			       (js-undefined)))))))
-	    
-	    ;; lib
-	    (define-js encodeURIComponent 1
-	       (lambda (this path)
-		  (js-string->jsstring
-		     (url-path-encode (js-tostring path %this)))))
-
-	    (define-js md5sum 1
-	       (lambda (this path)
-		  (js-string->jsstring
-		     (md5sum-string (js-tostring path %this)))))
-
-	    (define-js sha1sum 1
-	       (lambda (this path)
-		  (js-string->jsstring
-		     (sha1sum-string (js-tostring path %this)))))
-
-	    ;; Lists
-	    (define-js List -1
-	       (lambda (this . l)
-		  l))
-
-	    (define-js Cons 2
-	       (lambda (this car cdr)
-		  (cons car cdr)))
-	    )
-	 %this)))
+				  (xml-write xml op be)
+				  (js-undefined)))))))
+	       
+	       ;; lib
+	       (define-js encodeURIComponent 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(url-path-encode (js-tostring path %this)))))
+	       
+	       (define-js md5sum 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(md5sum-string (js-tostring path %this)))))
+	       
+	       (define-js sha1sum 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(sha1sum-string (js-tostring path %this)))))
+	       
+	       ;; Lists
+	       (define-js List -1
+		  (lambda (this . l)
+		     l))
+	       
+	       (define-js Cons 2
+		  (lambda (this car cdr)
+		     (cons car cdr))))
+	    %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-urlframe ...                                             */

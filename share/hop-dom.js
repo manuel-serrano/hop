@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Aug  6 16:25:28 2015 (serrano)                */
+/*    Last change :  Tue Sep  8 15:56:59 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1704,21 +1704,20 @@ function hop_innerHTML_set( nid, html ) {
 /*    hop_style_attribute_set ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_style_attribute_set( obj, val ) {
-   var expr;
-   if( (val instanceof String) || (typeof val == "string") ) {
+   if( (typeof val == "string") || (val instanceof String) ) {
       while( val.length > 1 ) {
-	 var m = /[ \n\t]*([^ \n\t]+)[ \n\t]*:[ \n\t]*([^;]+);?/.exec( val );
+	 var m = /[ \n\t]*([^ \n\t:]+)[ \n\t]*:[ \n\t]*([^;]+);?/.exec( val );
 
 	 if( m ) {
 	    node_style_set( obj, m[ 1 ], m[ 2 ] );
-	    val = val.substring( m[ 1 ].length, val.length );
+	    val = val.substring( m[ 0 ].length, val.length );
 	 } else {
 	    val = "";
 	 }
       }
    } else {
       for( var p in val ) {
-	 node_style_set( obj, p, expr[ p ] );
+	 node_style_set( obj, p, val[ p ] );
       }
    }
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Sep  7 12:26:54 2015 (serrano)                */
+;*    Last change :  Tue Sep  8 15:36:06 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -76,7 +76,9 @@
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   (let ((jsworker #f))
+   (let ((jsworker #f)
+	 (jsmutex #f)
+	 (jscondv #f))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs)
 	 (parse-args args)
@@ -87,7 +89,10 @@
 	 (hop-init args files exprs)
 	 ;; js rc load
 	 (if (hop-javascript)
-	     (set! jsworker (javascript-init args files exprsjs))
+	     (begin
+		(set! jsmutex (make-mutex "js-init"))
+		(set! jscondv (make-condition-variable "js-init"))
+		(set! jsworker (javascript-init args files exprsjs jsmutex jscondv)))
 	     (users-close!))
 	 ;; when debugging, init the debugger runtime
 	 (when (>=fx (bigloo-debug) 1)
@@ -149,6 +154,10 @@
 		     (hop-preload-services))
 		  ;; close the filters, users, and security
 		  (security-close!)
+		  ;; wait for js init
+		  (when jsworker
+		     (synchronize jsmutex
+			(condition-variable-wait! jscondv jsmutex)))
 		  ;; start the main loop
 		  (scheduler-accept-loop (hop-scheduler) serv #t))
 	       (if jsworker
@@ -188,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init args files exprs)
+(define (javascript-init args files exprs jsmutex jscondv)
    (let* ((%global (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
@@ -204,6 +213,22 @@
       (let ((path (file-name-canonicalize!
 		     (make-file-name (pwd) (car args)))))
 	 (nodejs-module "repl" path %worker %global))
+      ;; push the user expressions
+      (when (pair? exprs)
+	 (js-worker-push-thunk! %worker "cmdline"
+	    (lambda ()
+	       (for-each (lambda (expr)
+			    (call-with-input-string (string-append expr "\n")
+			       (lambda (ip)
+				  (%js-eval ip 'eval %global
+				     (js-undefined) %global))))
+		  exprs))))
+      ;; close user registration
+      (js-worker-push-thunk! %worker "cmdline"
+	 (lambda ()
+	    (users-close!)
+	    (synchronize jsmutex
+	       (condition-variable-signal! jscondv))))
       ;; preload the command-line files
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
@@ -220,20 +245,6 @@
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
 	 (hopscript-repl (hop-scheduler) %global %worker))
-      ;; push the user expressions
-      (when (pair? exprs)
-	 (js-worker-push-thunk! %worker "cmdline"
-	    (lambda ()
-	       (for-each (lambda (expr)
-			    (call-with-input-string (string-append expr "\n")
-			       (lambda (ip)
-				  (%js-eval ip 'eval %global
-				     (js-undefined) %global))))
-		  exprs))))
-      ;; close user registration
-      (js-worker-push-thunk! %worker "cmdline"
-	 (lambda ()
-	    (users-close!)))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -250,7 +261,12 @@
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()
-	    (nodejs-load path %worker))))
+	    (let ((path (if (and (>fx (string-length path) 0)
+				 (char=? (string-ref path 0) (file-separator)))
+			    path
+			    (file-name-canonicalize!
+			       (make-file-name (pwd) path)))))
+	       (nodejs-load path %worker)))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
       (if (file-exists? path)
