@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    unregisterService.js                                             */
+/*    .../project/hop/3.0.x/test/hopjs/serv/unregisterService.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Fri Sep  4 18:43:00 2015                          */
+/*    Last change :  Tue Sep  8 18:10:37 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing unregister service                                       */
@@ -11,16 +11,16 @@
 
 var assert = require( 'assert' );
 
-service foo (){
+service testSvc (){
    return true;
 }
 
-foo().post( function( result ) {
+testSvc().post( function( result ) {
    // console.log( 'ok, service is running' );
    assert.ok( result );
-   foo.unregister();
-   foo().post( function( result) {
-      // console.log( 'still active');
+   testSvc.unregister();
+   testSvc().post( function( result ) {
+      console.log( 'still active', result );
       process.exit( 1 );
    },
 	       function( error ) {
