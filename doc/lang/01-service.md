@@ -20,15 +20,10 @@ standard URI specified in [RFC3986](https://tools.ietf.org/html/rfc3986).
 
 Example:
 
-${ <span class="label label-warning">TODO</span> } Je pense que
-l'exemple est trop complexe our une introduction. Risque de confusion entre
-service et webservice.  [:@warning]
-
-
-${ <span class="label label-info">url/url.js</span> }
+${ <span class="label label-info">service/fact.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/url/url.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/service/fact.js", 13 ) }
 ```
 
 
