@@ -20,10 +20,10 @@ standard URI specified in [RFC3986](https://tools.ietf.org/html/rfc3986).
 
 Example:
 
-${ <span class="label label-info">service/fact.js</span> }
+${ <span class="label label-info">svc1/svc1.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/service/fact.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc1/svc1.js", 13 ) }
 ```
 
 

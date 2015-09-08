@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Sep  8 15:36:06 2015 (serrano)                */
+;*    Last change :  Tue Sep  8 16:44:58 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -55,6 +55,13 @@
 	    (exit 2)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js initialization ...                                            */
+;*---------------------------------------------------------------------*/
+(define jsmutex (make-mutex))
+(define jscondv (make-condition-variable))
+(define jsinit #f)
+
+;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
@@ -76,9 +83,7 @@
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   (let ((jsworker #f)
-	 (jsmutex #f)
-	 (jscondv #f))
+   (let ((jsworker #f))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs)
 	 (parse-args args)
@@ -89,10 +94,7 @@
 	 (hop-init args files exprs)
 	 ;; js rc load
 	 (if (hop-javascript)
-	     (begin
-		(set! jsmutex (make-mutex "js-init"))
-		(set! jscondv (make-condition-variable "js-init"))
-		(set! jsworker (javascript-init args files exprsjs jsmutex jscondv)))
+	     (set! jsworker (javascript-init args files exprsjs))
 	     (users-close!))
 	 ;; when debugging, init the debugger runtime
 	 (when (>=fx (bigloo-debug) 1)
@@ -157,7 +159,8 @@
 		  ;; wait for js init
 		  (when jsworker
 		     (synchronize jsmutex
-			(condition-variable-wait! jscondv jsmutex)))
+			(unless jsinit
+			   (condition-variable-wait! jscondv jsmutex))))
 		  ;; start the main loop
 		  (scheduler-accept-loop (hop-scheduler) serv #t))
 	       (if jsworker
@@ -197,7 +200,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init args files exprs jsmutex jscondv)
+(define (javascript-init args files exprs)
    (let* ((%global (nodejs-new-global-object))
 	  (%worker (js-init-main-worker! %global
 		      ;; keep-alive
@@ -228,6 +231,7 @@
 	 (lambda ()
 	    (users-close!)
 	    (synchronize jsmutex
+	       (set! jsinit #t)
 	       (condition-variable-signal! jscondv))))
       ;; preload the command-line files
       (when (pair? files)
