@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    https.js                                             */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/https.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Fri Sep  4 18:43:00 2015                          */
+/*    Last change :  Tue Sep  8 18:06:47 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
@@ -37,7 +37,7 @@ function goToService() {
 	    testService( i + 1 );
 	 }, { fail: function( error ) {
 	    process.exit( 1 );
-	 }, ssl: true }
+	 }, ssl: config.HTTPSPort != undefined }
 			       );
       }
    }
@@ -55,6 +55,7 @@ function goToWS() {
    console.log( 'WS test' );
    var server = new WebSocketServer( {path: 'server'} );
    console.log( 'server WS listening' );
+   var proto = config.HTTPSPort != undefined ? "wss://" : "ws://";
    
    server.onconnection = function( event ) {
       console.log( 'server: accepting new connection' );
@@ -73,8 +74,8 @@ function goToWS() {
 	 WSFlag = true;
       };
    };
-   console.log( 'wss://' + hop.hostname + ':' + hop.port + '/hop/server' );
-   var ws = new WebSocket( 'wss://' + hop.hostname + ':' + hop.port + '/hop/server' );
+   console.log( proto + hop.hostname + ':' + hop.port + '/hop/server' );
+   var ws = new WebSocket( proto  + hop.hostname + ':' + hop.port + '/hop/server' );
    console.log( 'client: WS created' );
    ws.onopen = function() {
       console.log( 'client: ws url', ws.url );
