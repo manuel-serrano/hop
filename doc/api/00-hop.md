@@ -1,3 +1,4 @@
+${ #:tprint( "RES=", require.resolve( "hopdoc" ) ) }
 ${ var doc = require( "hopdoc" ) }
 
 Hop
@@ -12,46 +13,8 @@ remote clients.
 Use `require( 'hop' )` to use this module.
 
 
-Configuration
--------------
-
-The server properties defined below are set either in the Hop.js [launch
-arguments](00-command.html) or in the `hoprc.js`configuration file, before the implicit
-http server is activated. Setting the properties later would have no
-effect on the running http server.
-
-
-### hop.shareDir ###
-[:@glyphicon glyphicon-tag parameter]
-The `share` directory of the Hop installation.
-
-```hopscript
-console.log( "share:", hop.shareDir );
-```
-
-### hop.binDir ###
-[:@glyphicon glyphicon-tag parameter]
-The `bin` directory of the Hop installation.
-
-```hopscript
-console.log( "bin:", hop.binDir );
-```
-
-### hop.libDir ###
-[:@glyphicon glyphicon-tag parameter]
-The `lib` directory of the Hop installation.
-
-```hopscript
-console.log( "lib:", hop.libDir );
-```
-
-### hop.modulesDir ###
-[:@glyphicon glyphicon-tag parameter]
-The `node_modules` directory of the Hop installation.
-
-```hopscript
-console.log( "modules:", hop.modulesDir );
-```
+Server Information
+------------------
 
 ### hop.port ###
 [:@glyphicon glyphicon-tag parameter]
@@ -68,14 +31,6 @@ The host name of the running Hop server.
 ```hopscript
 console.log( "hostname:", hop.hostname );
 ```
-
-### hop.locale() ###
-[:@glyphicon glyphicon-tag function]
-The locale of the host running the Hop server. 
-
-### hop.charset() ###
-[:@glyphicon glyphicon-tag function]
-The character set used to compile XML nodes into HTML. 
 
 ### hop.version ###
 [:@glyphicon glyphicon-tag parameter] 

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Sep  7 09:50:23 2015 (serrano)                */
+#*    Last change :  Wed Sep  9 07:51:11 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -125,6 +125,8 @@ uv=""
 hopsrfis=""
 
 rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js"
+
+bglfail=false;
 
 hopservicebase="/hop"
 hopjssanssuffix='"hop"'
@@ -461,38 +463,6 @@ if [ $? != "0" ]; then
   exit 1;
 fi
 
-haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
-pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
-fail=false;
-
-if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
-    echo "*** ERROR:configure: your Bigloo setting  does not support \"unistrings\"." >&2
-    echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
-    echo "  If you known what you are doing and if you don't need string locale " >&2
-    echo "  comparison, re-configure Hop with the following option:" >&2
-    echo "    ./configure ... --bigloo-unistring=no" >&2
-    echo "" >&2
-    fail=true;
-fi
-
-if [ "$pcre " != "pcre " -a "$bglpcre " != "pcre " ]; then
-    echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
-    echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
-    echo "  If you known what you are doing and if you don't want compatible regexp" >&2
-    echo "  re-configure Hop with the following option:" >&2
-    echo "    ./configure ... --bigloo-pcre=no" >&2
-    echo "  Otherwise, install pcre and re-configure and re-compile Bigloo first." >&2
-    echo "" >&2
-    fail=true;
-fi
-
-if [ "$fail " = "true " ]; then
-    echo "When re-configuring Bigloo, it might be useful to use the configure option" >&2
-    echo "\"--abort-missing\" that will force the Bigloo configuration process to fail" >&2
-    echo "as soon as one important Bigloo library is missing." >&2
-    exit 1
-fi    
-
 #*---------------------------------------------------------------------*/
 #*    Check the backend                                                */
 #*---------------------------------------------------------------------*/
@@ -566,21 +536,23 @@ rm -f $tmp/bigloo-test-hop $tmp/bigloo-test-hop.scm $tmp/bigloo-test-hop.o
 #*    Check the Bigloo required libraries                              */
 #*---------------------------------------------------------------------*/
 if [ ! -f $bigloolibdir/web.heap ]; then
-  echo "*** ERROR:configure:bigloo web. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the WEB support. Please"
-  echo "check your Bigloo installation."
-  exit 1;
+  echo "*** ERROR:configure:bigloo web." >&2;
+  echo "" >&2;
+  echo "This error is due to a bad Bigloo installation. It might be that" >&2;
+  echo "you have installed Bigloo without the WEB support. Please" >&2;
+  echo "check your Bigloo installation." >&2;
+  echo "" >&2
+  bglfail=true;
 fi
 
 if [ ! -f $bigloolibdir/multimedia.heap ]; then
-  echo "*** ERROR:configure:bigloo multimedia. Aborting"
-  echo ""
-  echo "This error is due to a bad Bigloo installation. It might be that"
-  echo "you have installed Bigloo without the MULTIMEDIA support. Please"
-  echo "check your Bigloo installation."
-  exit 1;
+  echo "*** ERROR:configure:bigloo multimedia." >&2;
+  echo "" >&2;
+  echo "This error is due to a bad Bigloo installation. It might be that" >&2;
+  echo "you have installed Bigloo without the MULTIMEDIA support. Please" >&2;
+  echo "check your Bigloo installation." >&2;
+  echo "" >&2
+  bglfail=true;
 fi
 
 #*---------------------------------------------------------------------*/
@@ -596,12 +568,13 @@ fi
 
 if [ "$ssl" = "yes" ]; then
   if [ ! -f $bigloolibdir/ssl.heap ]; then
-    echo "*** ERROR:configure:bigloo ssl. Aborting"
-    echo ""
-    echo "This error is due to a bad Bigloo installation. It might be that"
-    echo "you have installed Bigloo without the SSL support. Please"
-    echo "check your Bigloo installation, or configure Hop without ssl."
-    exit 1;
+    echo "*** ERROR:configure:bigloo ssl." >&2;
+    echo "" >&2;
+    echo "This error is due to a bad Bigloo installation. It might be that" >&2;
+    echo "you have installed Bigloo without the SSL support. Please" >&2;
+    echo "check your Bigloo installation, or configure Hop without ssl." >&2;
+    echo "" >&2
+    bglfail=true;
   fi
 
   hopsrfis="$hopsrfis enable-ssl"
@@ -622,13 +595,14 @@ fi
 
 if [ "$threads" = "yes" ]; then
   if [ ! -f $bigloolibdir/pthread.heap ]; then
-    echo "*** ERROR:configure:bigloo pthread. Aborting"
-    echo ""
-    echo "You have request a multi-threading support but it appears that"
-    echo "the installed Bigloo compiler does not support multi-threading."
-    echo "You must either, configure Hop without multi-threading support"
-    echo "or re-configure and re-install your Bigloo compiler."
-    exit 1;
+    echo "*** ERROR:configure:bigloo pthread." >&2;
+    echo "" >&2;
+    echo "You have request a multi-threading support but it appears that" >&2;
+    echo "the installed Bigloo compiler does not support multi-threading." >&2;
+    echo "You must either, configure Hop without multi-threading support" >&2;
+    echo "or re-configure and re-install your Bigloo compiler." >&2;
+    echo "" >&2
+    bglfail=true;
   fi
 
   hopsrfis="$hopsrfis enable-threads"
@@ -636,20 +610,22 @@ if [ "$threads" = "yes" ]; then
   bglcloselibs="$bglcloselibs pthread"
 else
   if [ "$avahi " = "yes " ]; then
-    echo "*** ERROR:configure:bigloo pthread. Aborting"
-    echo ""
-    echo "Avahi requires threads, either disable avahi (--disable-avahi)"
-    echo "or enable threads (--enable-threads)"
-    exit 1;
+    echo "*** ERROR:configure:bigloo avahi." >&2;
+    echo "" >&2;
+    echo "Avahi requires threads, either disable avahi (--disable-avahi)" >&2;
+    echo "or enable threads (--enable-threads)" >&2;
+    echo "" >&2
+    bglfail=true;
   else
     avahi=no;
   fi
   if [ "$upnp " = "yes " ]; then
-    echo "*** ERROR:configure:bigloo pthread. Aborting"
-    echo ""
-    echo "Upnp requires threads, either disable upnp (--disable-upnp)"
-    echo "or enable threads (--enable-threads)"
-    exit 1;
+    echo "*** ERROR:configure:bigloo upnp." >&2;
+    echo "" >&2;
+    echo "Upnp requires threads, either disable upnp (--disable-upnp)" >&2;
+    echo "or enable threads (--enable-threads)" >&2;
+    echo "" >&2
+    bglfail=true;
   else
     upnp=no;
   fi
@@ -668,13 +644,14 @@ fi
 
 if [ "$avahi " = "yes " ]; then
   if [ ! -f $bigloolibdir/avahi.heap ]; then
-    echo "*** ERROR:configure:bigloo avahi. Aborting"
-    echo ""
-    echo "You have request a avahi support but it appears that"
-    echo "the installed Bigloo compiler does not support avahi."
-    echo "You must either, configure Hop without avahi support"
-    echo "or re-configure and re-install your Bigloo compiler."
-    exit 1;
+    echo "*** ERROR:configure:bigloo avahi." >&2;
+    echo "" >&2;
+    echo "You have request a avahi support but it appears that" >&2;
+    echo "the installed Bigloo compiler does not support avahi." >&2;
+    echo "You must either, configure Hop without avahi support" >&2;
+    echo "or re-configure and re-install your Bigloo compiler." >&2;
+    echo "" >&2
+    bglfail=true;
   fi
 
   hopsrfis="$hopsrfis enable-avahi"
@@ -697,13 +674,14 @@ fi
 
 if [ "$upnp " = "yes " ]; then
   if [ ! -f $bigloolibdir/upnp.heap ]; then
-    echo "*** ERROR:configure:bigloo upnp. Aborting"
-    echo ""
-    echo "You have request a upnp support but it appears that"
-    echo "the installed Bigloo compiler does not support upnp."
-    echo "You must either, configure Hop without upnp support"
-    echo "or re-configure and re-install your Bigloo compiler."
-    exit 1;
+    echo "*** ERROR:configure:bigloo upnp." >&2;
+    echo "" >&2;
+    echo "You have request a upnp support but it appears that" >&2;
+    echo "the installed Bigloo compiler does not support upnp." >&2;
+    echo "You must either, configure Hop without upnp support" >&2;
+    echo "or re-configure and re-install your Bigloo compiler." >&2;
+    echo "" >&2
+    bglfail=true;
   fi
 
   hopsrfis="$hopsrfis enable-upnp"
@@ -724,15 +702,16 @@ fi
 
 if [ "$uv " = "no " ]; then
   if [ "$libuv " != "no " ]; then
-    echo "*** ERROR:configure:bigloo libuv. Aborting"
-    echo ""
-    echo "Bigloo LIBUV is not installed on your machine."
-    echo ""
-    echo "LIBUV is strongly recommended for better performance. It is then"
-    echo "advised to install LIBUV and re-install Bigloo before compiling Hop."
-    echo "However, if you want to give Hop a try without LIBUV, configure it"
-    echo "with the \"--disable-libuv\" option."
-    exit 1;
+    echo "*** ERROR:configure:bigloo libuv." >&2;
+    echo "" >&2;
+    echo "Bigloo LIBUV is not installed on your machine." >&2;
+    echo "" >&2;
+    echo "LIBUV is strongly recommended for better performance. It is then" >&2;
+    echo "advised to install LIBUV and re-install Bigloo before compiling Hop." >&2;
+    echo "However, if you want to give Hop a try without LIBUV, configure it" >&2;
+    echo "with the \"--disable-libuv\" option." >&2;
+    echo "" >&2
+    bglfail=true;
   fi
 else
   hopsrfis="$hopsrfis enable-libuv"
@@ -740,6 +719,48 @@ else
   bglcloselibs="$bglcloselibs libuv"
   bglextracloselibs="-luv"
 fi
+
+#*---------------------------------------------------------------------*/
+#*    unistring                                                        */
+#*---------------------------------------------------------------------*/
+haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
+pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
+
+if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
+    echo "*** ERROR:configure: your Bigloo setting  does not support \"unistring\"." >&2
+    echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
+    echo "  If you known what you are doing and if you don't need string locale " >&2
+    echo "  comparison, re-configure Hop with the following option:" >&2
+    echo "    ./configure ... --bigloo-unistring=no" >&2
+    echo "" >&2
+    bglfail=true;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    pcre                                                             */
+#*---------------------------------------------------------------------*/
+if [ "$pcre " != "pcre " -a "$bglpcre " != "pcre " ]; then
+    echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
+    echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
+    echo "  If you known what you are doing and if you don't want compatible regexp" >&2
+    echo "  re-configure Hop with the following option:" >&2
+    echo "    ./configure ... --bigloo-pcre=no" >&2
+    echo "  Otherwise, install pcre and re-configure and re-compile Bigloo first." >&2
+    echo "" >&2
+    bglfail=true;
+fi
+
+#*---------------------------------------------------------------------*/
+#*    bgl test completion                                              */
+#*---------------------------------------------------------------------*/
+if [ "$fail " = "true " ]; then
+  echo "*** Aborting after Bigloo configuration errors." >&2;
+  echo "When re-configuring Bigloo, it might be useful to use the configure option" >&2
+  echo "\"--abort-missing\" that will force the Bigloo configuration process to fail" >&2
+  echo "as soon as one important Bigloo library is missing." >&2
+  exit 1
+fi    
+
 
 #*---------------------------------------------------------------------*/
 #*    Then check if bglafile exists this is a good indicator of a      */

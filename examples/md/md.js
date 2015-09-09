@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Aug 23 08:07:57 2015                          */
-/*    Last change :  Sun Aug 23 11:42:57 2015 (serrano)                */
+/*    Last change :  Tue Sep  8 15:29:06 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example combining Markdown and HSS                            */
@@ -11,8 +11,8 @@
 /*    run: hop -v -g md.js                                             */
 /*=====================================================================*/
 var hop = require( "hop" );
-var md = require( "markdown" );
-var hss = require( "hss" );
+var md = require( hop.markdown );
+var hss = require( hop.hss );
 
 function compileNode( node, css, media ) {
    

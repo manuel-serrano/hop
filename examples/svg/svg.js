@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Aug 24 13:13:49 2015 (serrano)                */
+/*    Last change :  Tue Sep  8 16:36:36 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic Hop.js SVG support                                         */
@@ -12,13 +12,14 @@
 /*    browser: http://localhost:8080/hop/svg                           */
 /*=====================================================================*/
 var hop = require( "hop" );
+var cfg = require( hop.config );
 
 service svgServerDate() {
    return Date.now();
 }
 
 service svg() {
-   var path = hop.shareDir + "/icons/hop/hop.svg";
+   var path = cfg.shareDir + "/icons/hop/hop.svg";
    return <html>
      <table>
        <tr>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Sep  7 18:43:14 2015 (serrano)                */
+;*    Last change :  Mon Sep  7 19:52:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -450,28 +450,31 @@
 (define soload-mutex (make-mutex))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-dynamic-load ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hop-dynamic-load sopath)
+   (synchronize soload-mutex
+      (let ((old (hashtable-get sofile-cache sopath)))
+	 (if old
+	     old
+	     (let ((v (dynamic-load sopath)))
+		(hashtable-put! sofile-cache sopath v)
+		v)))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread #!optional lang)
 
-   (define (soload sopath)
-      (synchronize soload-mutex
-	 (let ((old (hashtable-get sofile-cache sopath)))
-	    (if old
-		old
-		(let ((p (dynamic-load sopath)))
-		   (if (and (procedure? p) (=fx (procedure-arity p) 4))
-		       (begin
-			  (hashtable-put! sofile-cache sopath p)
-			  p)
-		       (js-raise-error (js-new-global-object)
-			  (format "Wrong compiled file format ~s" sopath)
-			  sopath)))))))
-   
    (define (loadso-or-compile filename lang)
       (let ((sopath (hop-find-sofile filename)))
 	 (if sopath
-	     (soload sopath)
+	     (let ((p (hop-dynamic-load sopath)))
+		(if (and (procedure? p) (=fx (procedure-arity p) 4))
+		    p
+		    (js-raise-error (js-new-global-object)
+		       (format "Wrong compiled file format ~s" sopath)
+		       sopath)))
 	     (nodejs-compile filename lang))))
    
    (define (load-module-js)
@@ -556,7 +559,7 @@
    (define (load-module-so)
       (with-access::WorkerHopThread worker (%this)
 	 (with-access::JsGlobalObject %this (js-object)
-	    (let ((init (dynamic-load filename))
+	    (let ((init (hop-dynamic-load filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-module filename filename worker %this)))

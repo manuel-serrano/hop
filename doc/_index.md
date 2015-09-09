@@ -10,12 +10,13 @@ Hop is:
 * An extended JavaScript:
   - **multitier**: a single code that runs on the client and the server;
   - builtin **HTML**.
-* A builtin multi-threaded **Web server**.
+* A builtin multi-threaded **web server**.
 
-Hop programs are executed in the context of a builtin Web
-server. Services are extended JavaScript functions that get
+Hop programs execute in the context of a builtin web server. They
+define services, which are extended JavaScript functions that get
 automatically invoked when HTTP requests are received by the
-server. Answering a request only takes defining a `service`:
+server. Functions and services are syntactically similar but the latter
+are defined using the `service` keyword:
 
 ```hopscript[:prog1@homeprog]
 service hello() {
@@ -23,14 +24,17 @@ service hello() {
 }
 ```
 
-To run the server put this code in the file `hello.js` and run Hop with:
+To run this program put this code in the file `hello.js` and run Hop with:
 
 ```sh[:shell@homeprog]
 hop -p 8080 hello.js
 ```
 
+You can now browse ${<tt>http://localhost:8080/hop/hello</tt>}.
+
+
 Hop extends JavaScript with the geniune HTML syntax such as
-`<div>`, `<span>`, or `<button>`. The service can be
+`<div>`, `<span>`, or `<button>`. Our service can be
 modified to return a HTML document:
 
 ```hopscript[:prog2@homeprog]
@@ -39,7 +43,7 @@ service hello() {
 }
 ```
 
-Hop is multitier: client-side codes are also implemented in Hop. The
+Hop is multitier. That is client-side codes are also implemented in Hop. The
 `\~{` mark switches JavaScript from server-side code to client-side code:
 
 ```hopscript[:prog3@homeprog]
@@ -53,17 +57,18 @@ Hop client-side code and server-side can be mixed using the
 
 ```hopscript[:prog4@homeprog]
 service hello( { who: "foo" } ) {
-  return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello ${who}</html>;
+  return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello</html>;
 }
 ```
 
-Additional examples can be found in the `examples` directory of the
-[source code](https://github.com/manuel-serrano/hop/tree/3.0.x/examples).
+Many additional examples can be found in the
+[source development tree](https://github.com/manuel-serrano/hop/tree/3.0.x/examples).
 
-Before executing the server, if this is your first installation, you first
-need to configure it as by default Hop.js only accepts to server
-authenticated requests. For this, executes the following shell command.
-
+By default Hop.js only accepts to serve authenticated requests. Before
+executing any programs _users_ must be declared. These declarations go
+into the `$HOME/.config/hop/hoprc.js` file. The following declare a
+user named `hopjs` whose password is `inria` and that is allowed to
+execute any Hop.js service:
 
 ```sh[:config@homeprog]
 mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
@@ -79,7 +84,4 @@ user.add( { name: "hopjs",
 EOF
 ```
 
-The file `$HOME/.config/hop/hoprc.js` now contains the declaration
-of a user named `hopjs` whose password is `inria` and that is allowed
-to execute any Hop.js service.
-
+You are now ready to execute Hop.js programs!

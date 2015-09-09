@@ -46,34 +46,47 @@ failure=0
 i=0
 
 run() {
-  i=`expr $i + 1`
+  echo $1 | grep rc.js 2> /dev/null > /dev/null
+  
+  if [ $? != 0 ]; then
+    i=`expr $i + 1`
 
-  echo -n "$i. $path ... "
-  if [ "$verb " != " " ]; then
-    echo ""
-    echo -n "$hop -g --no-zeroconf $* ..."
-  fi
-  $hop -g --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
-
-  if [ $? = 0 ]; then
-    echo "ok.";
-    success=`expr $success + 1`
-  else
-    echo "failure !!!"
+    echo -n "$i. $path ... "
     if [ "$verb " != " " ]; then
-      cat /tmp/TEST-HOPJS.out
+      echo ""
+      echo -n "$hop -g --no-zeroconf $* ..."
     fi
-    failure=`expr $failure + 1`
+    $hop -g --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
+
+    if [ $? = 0 ]; then
+      echo "ok.";
+      success=`expr $success + 1`
+    else
+      echo "failure !!!"
+      if [ "$verb " != " " ]; then
+        cat /tmp/TEST-HOPJS.out
+      fi
+      failure=`expr $failure + 1`
+    fi
+    /bin/rm -f /tmp/TEST-HOPJS.out
   fi
-  /bin/rm -f /tmp/TEST-HOPJS.out
 }
 
 for path in noserv/*.js; do
-    run $path -q --no-server
+   if [ -f $path.rc.js ]; then
+     run $path -q --no-server --rc-file $path.rc.js
+   else
+     run $path -q --no-server
+   fi
 done
 
 for path in serv/*.js; do
-    run $path -p 0 --rc-file passwd.hop
+   if [ -f $path.rc.js ]; then
+     run $path -p 0 --rc-file $path.rc.js
+   else       
+     run $path -p 0 --rc-file passwd.hop
+   fi
+       
 done
 
 echo "`expr $success + $failure` executed"

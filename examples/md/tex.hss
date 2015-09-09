@@ -3,15 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Aug 23 08:21:06 2015                          */
-/*    Last change :  Sun Aug 23 11:47:23 2015 (serrano)                */
+/*    Last change :  Tue Sep  8 15:29:50 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Default stylesheet for converting Markdown to LaTeX.             */
 /*=====================================================================*/
-
-
-
-
 @media tex {
 
 em:before {

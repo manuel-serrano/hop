@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    authentication.js                                                */
+/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/authentication.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  7 15:00:00 2015                          */
-/*    Last change :  Mon Sep  7 15:00:00 2015                          */
+/*    Last change :  Tue Sep  8 17:39:16 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing the user module                                          */
@@ -13,15 +13,6 @@ console.log( 'loading test module authentication.js' );
 
 var hop = require( 'hop' );
 var assert = require( 'assert' );
-
-var user = require( hop.user );
-
-// Bob is declared on the server
-user.add( {name: 'Bob', password: ( user.encryptPassword( 'Bob', 'secret') ), services: [ 'foo' ], directories: '*' } );
-// Alice is not declared on the server
-//user.add( {name: 'Alice', password: ( user.encryptPassword( 'Alice', 'Alice' ), services: '*', directories: '*' } );
-// anonymous must be declared to handle authentication errors, otherwise we get a server side error while handling Alice request.
-user.add( { name: 'anonymous', services: [], directories: [] } );
 
 service foo( who ) {
    console.log( 'service foo, user %s', who );
