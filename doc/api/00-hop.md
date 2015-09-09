@@ -267,26 +267,82 @@ including JavaScript objects, Hop.js services, and
 xml-elements. Clients register to specific broadcast events with the
 `addEventListener`method.
 
-### addEventListener( eventName, handler, [options] ) ###
+Example:
+```hopscript
+hop.broadcast( 'refreshScore', 14 );
+```
+
+### addEventListener( eventName, handler [, options] ) ###
+[:@glyphicon glyphicon-tag function]
 
 Use this method on the client side to register to the `eventName`
 server event. The effect of this method is to establish a persistent
 connection with the Hop server, register the client for the given
 event type, and trigger the handler whenever the event is received by
 the client. `handler` takes one argument, the event. The transmitted
-`value` can be retrieved in the `value` property of the event.  When
-used within a web browser, connection is established with the Hop
-server serving the current page, the exact syntax is
-`server.addEventListener( eventName, handler )` where `server` denotes
-the current server (the runtime system automatically binds the
-`server` variable to the current server).  When used within a client
-Hop process, the server address and port are specified in the options
-argument (as in the `post`method of services).
+`value` can be retrieved in the `value` property of the event.
+
+When used within a web browser, connection is established with the Hop 
+server serving the current page, the exact syntax is 
+`server.addEventListener( eventName, handler )` where `server` denotes 
+the current server (the runtime system automatically binds the 
+`server` variable to the current server). 
+
+
+Example:
+```hopscript
+server.addEventListener( 'refreshScore', function( event ) {
+  var score = event.value;
+  var scoreElement = this.document.getElementById( 'score' );
+  // update GUI element with new score
+```
+
+The `addEventListener` method is not supported by client Hop processes.
+
+
+
+WebService
+----------
+
+###hop.webService( url ) ###
+[:@glyphicon glyphicon-tag function]
+
+Use this method to create a WebService, which supports methods
+to send http requests to third party servers using the
+same syntax  as in service invocations. The method returns a
+WebService function. Invoking a WebService with an object argument
+returns a WebService frame, where object properties define to the
+WebService named arguments.
+
+
+
+###WebServiceFrame.post([ success, [ fail-or-options ]] ) ###
+[:@glyphicon glyphicon-tag function]
+
+Invokes asynchronously the webService. The optional `success`argument,
+when provided, must be a function of one argument, which is set the
+the value returned by the WebService.
+
+if the optional argument `fail-or-options` is a procedure, it is
+invoked if an error occurs during the WebService invocation. If
+`fail-or-options` is an object, it contains optional parameters to the
+WebService invocation.
+
+###WebServiceFrame.postSync([ success, [ fail-or-option ]] ) ###
+[:@glyphicon glyphicon-tag function]
+
+THe synchronous version of `post`. Returns the value returned by the
+service. Since `postSync` blocks the execution of the client process
+until the service returns a value, it is strongly advised to use
+the asynchronous `post` when applicable.
 
 
 
 Miscellaneous
 -------------
+
+### hop.md5sum() ###
+[:@glyphicon glyphicon-tag function]
 
 ### hop.XMLCompile( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
