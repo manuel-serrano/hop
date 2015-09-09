@@ -21,6 +21,10 @@ ${ <span class="label label-warning">Note:</span> }
  ECMAScript 6 features requires `use strict` or `use hopscript` modes.
 [:@warning]
 
+```hopscript  
+service() { return foo }
+```
+
 [es5]: http://www.ecma-international.org/ecma-262/5.1
 [es6]: http://www.ecma-international.org/ecma-262/6.0
 [nodejs]: https://nodejs.org/api

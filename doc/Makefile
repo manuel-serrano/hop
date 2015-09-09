@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep  8 09:00:57 2015 (serrano)                */
+#*    Last change :  Wed Sep  9 11:15:07 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -86,7 +86,7 @@ build: $(ALL_TARGETS)
 #*---------------------------------------------------------------------*/
 clean:
 	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS)
-	$(RM) license.html index.html nodejs.html download.html
+	$(RM) license.html index.html nodejs.html download.html dev.html
 	$(RM) 00-command.html 10-edit.html
 
 devclean: clean

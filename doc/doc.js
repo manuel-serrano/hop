@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Sep  8 14:18:51 2015 (serrano)                */
+/*    Last change :  Wed Sep  9 11:16:07 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -172,7 +172,7 @@ function compileSection( page ) {
        <docxml.title root=${ROOT}>${title}</docxml.title>
        <div class="container">
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
-           <h1 class="toc TOC">Table of Contents</h1>
+           <h1 class="toc" id="toc">Table of Contents</h1>
            <ul class="toc">
              ${makeToc( toc, 0 )}
            </ul>
@@ -228,7 +228,7 @@ function compileChapter( json ) {
 	      : doc.eval( chapter.description ).XML }
 	   </div> : ""}
 	 
-         <h1 class="toc TOC">Table of Contents</h1>
+         <h1 class="toc" id="toc">Table of Contents</h1>
          <ul class="toc">
            ${toc.map( function( el ) {
               return <li>
