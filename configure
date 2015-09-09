@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Sep  9 07:51:11 2015 (serrano)                */
+#*    Last change :  Wed Sep  9 10:35:35 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -724,14 +724,12 @@ fi
 #*    unistring                                                        */
 #*---------------------------------------------------------------------*/
 haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
-pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
-
 if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"unistring\"." >&2
     echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
     echo "  If you known what you are doing and if you don't need string locale " >&2
     echo "  comparison, re-configure Hop with the following option:" >&2
-    echo "    ./configure ... --bigloo-unistring=no" >&2
+    echo "    ./configure --bigloo-unistring=no ..." >&2
     echo "" >&2
     bglfail=true;
 fi
@@ -739,12 +737,14 @@ fi
 #*---------------------------------------------------------------------*/
 #*    pcre                                                             */
 #*---------------------------------------------------------------------*/
-if [ "$pcre " != "pcre " -a "$bglpcre " != "pcre " ]; then
+pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
+
+if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
     echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
     echo "  If you known what you are doing and if you don't want compatible regexp" >&2
     echo "  re-configure Hop with the following option:" >&2
-    echo "    ./configure ... --bigloo-pcre=no" >&2
+    echo "    ./configure --bigloo-pcre=no ..." >&2
     echo "  Otherwise, install pcre and re-configure and re-compile Bigloo first." >&2
     echo "" >&2
     bglfail=true;
@@ -753,8 +753,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    bgl test completion                                              */
 #*---------------------------------------------------------------------*/
-if [ "$fail " = "true " ]; then
-  echo "*** Aborting after Bigloo configuration errors." >&2;
+if [ "$bglfail " = "true " ]; then
   echo "When re-configuring Bigloo, it might be useful to use the configure option" >&2
   echo "\"--abort-missing\" that will force the Bigloo configuration process to fail" >&2
   echo "as soon as one important Bigloo library is missing." >&2

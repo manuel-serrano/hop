@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Aug 22 07:28:01 2015 (serrano)                */
+#*    Last change :  Wed Sep  9 10:32:56 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -54,6 +54,8 @@ POPULATION = Makefile \
   hopjs/serv/service2.js \
   hopjs/serv/post.js \
   hopjs/serv/svc_args.js \
+  hopjs/serv/authentication.js \
+  hopjs/serv/authentication.js.rc.js \
   hopjs/serv/unregisterService.js
 
 all:
