@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Tue Sep  1 08:42:23 2015 (serrano)                */
+/*    Last change :  Wed Sep  9 11:16:19 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -87,12 +87,12 @@ h1:before {
   content: counter( section ) ". ";
 }
 
-h1.TOC {
+h1#toc {
   counter-reset: section;
   counter-increment: none;
 }
 
-h1.TOC:before {
+h1#toc:before {
   content: none;
 }
 
