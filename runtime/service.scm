@@ -612,7 +612,6 @@
 	     (let ((env (current-dynamic-env))
 		   (name id))
 		($env-push-trace env name #f)
-		    (tprint "id.2=" id " proc=" proc " vals=" vals)
 		(let ((aux (proc req vals)))
 		   ($env-pop-trace env)
 		   aux)))

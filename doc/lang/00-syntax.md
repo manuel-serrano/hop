@@ -8,7 +8,7 @@ HopScript Syntax
 HopScript extends EcmaScript 5 syntax with the following additional constructs:
 
  * service definitions and declarations;
- * `~`-expessions and `$`-expressions;
+ * `~`-expressions and `$`-expressions;
  * embedded HTML syntax.
 
 The formal syntax is defined by:
@@ -17,10 +17,10 @@ The formal syntax is defined by:
 Services
 --------
 
-Services shares most of their syntax with functions, with two notable differences:
+Services share most of their syntax with functions, with two notable differences:
 
  * services are introduced with the `service` keyword;
- * services supported named arguments which are introduced using the JavaScript
+ * services support named arguments which are introduced using the JavaScript
    object literal syntax. 
 
 ```ebnf
