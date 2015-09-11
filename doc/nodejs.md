@@ -33,4 +33,5 @@ Hop.js supports the following Node.js modules:
 * [Utilities](https://nodejs.org/api/util.html)
 * [VM](https://nodejs.org/api/vm.html)
 
-
+`process.version`returns the Hop.js version.  The Node.js version is
+stored in the `node`property of `process.versions`.

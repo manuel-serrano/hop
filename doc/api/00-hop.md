@@ -1,4 +1,3 @@
-${ #:tprint( "RES=", require.resolve( "hopdoc" ) ) }
 ${ var doc = require( "hopdoc" ) }
 
 Hop
@@ -10,36 +9,42 @@ The module defines functions to craft service responses, and a
 broadcast function that lets a server send events to registered
 remote clients.
 
+The module also defines an API to invoke third party WebServices.
+
 Use `require( 'hop' )` to use this module.
 
 
 Server Information
 ------------------
 
+The server properties defined below are read-only.
+
+
 ### hop.port ###
-[:@glyphicon glyphicon-tag parameter]
-The port number of the running Hop server.
+[:@glyphicon glyphicon-tag parameter]  
+The port number of the running Hop server. To set the port and
+protocol for the Hop server, see [config](config.html).
 
 ```hopscript
 console.log( "port:", hop.port );
 ```
 
 ### hop.hostname ###
-[:@glyphicon glyphicon-tag parameter]
-The host name of the running Hop server.
+[:@glyphicon glyphicon-tag parameter] 
+The host name of the running Hop server.  
 
 ```hopscript
 console.log( "hostname:", hop.hostname );
 ```
 
 ### hop.version ###
-[:@glyphicon glyphicon-tag parameter] 
-The Hop version.
+[:@glyphicon glyphicon-tag parameter]  
+The Hop version. 
 
 ```hopscript
 console.log( "Hop version:", hop.version );
 ```
-
+ 
 Responses
 ---------
 [:responses]
@@ -52,7 +57,6 @@ sent to the clients.
 
 This class is used to respond values to client requests.
 
-Example:
 ```hopscript
 service getObj() {
   return hop.HTTPResponseHop( { key: "foo", value: [ 1,2 3 ] } );
@@ -70,7 +74,6 @@ one when the response of a service is a compound JavaScript object.
 
 This class is used to deliver XML documents to client. 
 
-Example:
 ```hopscript
 service getXml() {
   return hop.HTTPResponseXML( <div>a div</div> );
@@ -88,7 +91,6 @@ one when the response of a service is an XML fragment.
 
 This class is used to deliver plain character strings to client.
 
-Example:
 ```hopscript
 service getXml() {
   return hop.HTTPResponseString(
@@ -222,26 +224,112 @@ including JavaScript objects, Hop.js services, and
 xml-elements. Clients register to specific broadcast events with the
 `addEventListener`method.
 
-### addEventListener( eventName, handler, [options] ) ###
+```hopscript
+hop.broadcast( 'refreshScore', 14 );
+```
+
+### addEventListener( eventName, handler [, options] ) ###
+[:@glyphicon glyphicon-tag function]
 
 Use this method on the client side to register to the `eventName`
 server event. The effect of this method is to establish a persistent
 connection with the Hop server, register the client for the given
 event type, and trigger the handler whenever the event is received by
 the client. `handler` takes one argument, the event. The transmitted
-`value` can be retrieved in the `value` property of the event.  When
-used within a web browser, connection is established with the Hop
-server serving the current page, the exact syntax is
-`server.addEventListener( eventName, handler )` where `server` denotes
-the current server (the runtime system automatically binds the
-`server` variable to the current server).  When used within a client
-Hop process, the server address and port are specified in the options
-argument (as in the `post`method of services).
+`value` can be retrieved in the `value` property of the event.
 
+When used within a web browser, connection is established with the Hop 
+server serving the current page, the exact syntax is 
+`server.addEventListener( eventName, handler )` where `server` denotes 
+the current server (the runtime system automatically binds the 
+`server` variable to the current server). 
+
+
+```hopscript
+server.addEventListener( 'refreshScore', function( event ) {
+  var score = event.value;
+  var scoreElement = this.document.getElementById( 'score' );
+  // update GUI element with new score
+```
+
+The `addEventListener` method is not supported by client Hop processes.
+
+
+
+WebService
+----------
+
+WebService is a set of API that let you invoke third party WebServices
+the same way you invoke Hop services.
+
+```hopscript
+var hop = require( 'hop' );
+var mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
+mymemory( {q: 'My tailor is rich.', langpair: 'en|fr' } ).post( function( result ) {
+   console.log( result.responseData );
+   }, { fail: function( error ) {
+   console.log( 'failure' );
+} });
+```
+
+###hop.webService( url ) ###
+[:@glyphicon glyphicon-tag function]
+
+Use this method to declare a remote WebService,that can later be
+invoked with named arguments. `url`is the url of the WebService.
+Call the returned function with an object argument containing the
+named arguments you want to send to the WebService. The returned value
+is a WebServiceFrame (very similar in use to Service Frames).
+
+
+###WebServiceFrame.post([ success, [ fail-or-options ]] ) ###
+[:@glyphicon glyphicon-tag function]
+
+Invokes asynchronously the webService. The optional `success`argument,
+when provided, must be a function of one argument, which is set the
+the value returned by the WebService.
+
+if the optional argument `fail-or-options` is a procedure, it is
+invoked if an error occurs during the WebService invocation. If
+`fail-or-options` is an object, it contains optional parameters to the
+WebService invocation.
+
+###WebServiceFrame.postSync([ success, [ fail-or-option ]] ) ###
+[:@glyphicon glyphicon-tag function]
+
+The synchronous version of `post`. Returns the value returned by the
+service. Since `postSync` blocks the execution of the client process
+until the service returns a value, it is strongly advised to use
+the asynchronous `post` when applicable.
 
 
 Miscellaneous
 -------------
+
+### hop.charsetConvert() ###
+[:@glyphicon glyphicon-tag function]
+
+### hop.Cons() ###
+[:@glyphicon glyphicon-tag function]
+
+This function is a constructor to create native (Bigloo) objects. 
+
+### hop.encodeURIComponent() ###
+[:@glyphicon glyphicon-tag function]
+
+### hop.List() ###
+[:@glyphicon glyphicon-tag function]
+
+This function is a constructor to create native (Bigloo) objects. 
+
+### hop.md5sum() ###
+[:@glyphicon glyphicon-tag function]
+
+### hop.sha1sum() ###
+[:@glyphicon glyphicon-tag function]
+
+### hop.signal() ###
+[:@glyphicon glyphicon-tag function]
 
 ### hop.XMLCompile( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
@@ -262,3 +350,50 @@ for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]
 
+Sub Modules
+----------
+
+The following properties lead to sub modules that can be loaded using
+the `require` function.
+
+```hopscript
+var hop = require( 'hop' );
+var config = require( hop.config );
+```
+
+### hop.config ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [config](config.html).
+
+### hop.fontifier ###
+[:@glyphicon glyphicon-tag parameter]
+
+
+### hop.markdown ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [markdown](markdown.html).
+
+### hop.notepad ###
+[:@glyphicon glyphicon-tag parameter]
+
+### hop.security ###
+[:@glyphicon glyphicon-tag parameter]
+
+### hop.spage ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [spage](spage.html).
+
+### hop.tree ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [tree](tree.html).
+### hop.user ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [user](user.html).
+
+### hop.wiki ###
+[:@glyphicon glyphicon-tag parameter]
