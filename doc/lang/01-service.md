@@ -115,7 +115,7 @@ value is sent to the client. The rules for converting values into
  * If the response is a promise, a `hop.HTTPResponseAsync` object is built.
  * if the response is a JavaScript object.
    * if that object has a `toResponse` property which is a function, the
-   result of invoking this function is used as a reponse.
+   result of invoking this function is used as a response.
  * Otherwise, a `hop.HTTPResponseHop` is constructed. This will have the
  effect of serializing the JavaScript object and re-creating it on the client.
 
@@ -336,4 +336,63 @@ ${ <span class="label label-info">svc2/extern.js</span> }
 
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 13 ) }
+```
+
+Interoperable WebServices
+-----------------------
+
+Services may be invoked from third party clients, allowing the Hop
+server to deliver WebServices to these clients. To do so, a few
+interoperability rules must be satisfied:
+
+* the service must be declared with named arguments or no arguments,
+which makes the service compliant to RFC3986.  Services with unnamed
+arguments cannot be invoked from a third party client.
+
+* The service should not respond with `hop.HTTPResponseHop` that would
+not be understood by the client. Other Response constructors deliver
+contents that is generally handled by most clients. Take care to
+stringify objects before sending them to the client, and note that
+string values are received on the client side as `\[text/plain\]`,
+HTML values are received as `\[text/html\]`.
+
+* The client should use `GET`or `POST` methods to invoke
+  services. Both the `application/x-www-form-urlencoded`and
+  `multipart/form-data` `Content-Type` options are supported.
+
+Server Example
+
+```hopscript
+service getRecord( { name: 'main' } ) {
+   var record;
+   switch (name) {
+   case 'main': record = { host: 'hop.inria.fr', port : 80 };
+      break;
+   case 'game': record = { host: 'game.inria.fr', port: 8080 };
+      break;
+   default: record = {};
+   };
+   return JSON.stringify( record );
+}
+```
+
+Client Side, service invocation
+
+```hopscript
+getRecord( { name: 'game' } ).post( function( result ) {
+   var record = JSON.parse( result );
+   console.log( 'http://%s:%s', record.host, record.port );
+});
+```
+Client side, Hop.js [WebService API](00-hop.html)
+
+```hopscript
+var util = require( 'util' );
+var serverURL = util.format( 'http://%s:%s/hop/getRecord', hop.hostname, hop.port );
+var webService = hop.webService( serverURL );
+var frame = webService( { name : 'game' } );
+frame.post( function( result ) {
+   var record = JSON.parse( result );
+   console.log( 'http://%s:%s', record.host, record.port );
+});
 ```
