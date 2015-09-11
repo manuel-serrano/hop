@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Sep  4 15:40:29 2015 (serrano)                */
+;*    Last change :  Fri Sep 11 06:19:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -98,12 +98,12 @@
    (js-jsstring-normalize! obj)
    obj)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    scheme->response ::JsStringLiteral ...                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (scheme->response obj::JsStringLiteral req)          */
-;*    (scheme->response (js-jsstring->string obj) req))                */
-;*                                                                     */
+;*---------------------------------------------------------------------*/
+;*    scheme->response ::JsStringLiteral ...                           */
+;*---------------------------------------------------------------------*/
+(define-method (scheme->response obj::JsStringLiteral req)
+   (scheme->response (js-jsstring->string obj) req))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */
 ;*    -------------------------------------------------------------    */
