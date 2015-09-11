@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Thu Aug 27 07:34:47 2015 (serrano)                */
+;*    Last change :  Fri Sep 11 08:21:10 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -40,7 +40,8 @@
 	       (runtime::pair-nil read-only (default '())))
 
 	    (class xml
-	       (%xml-constructor))
+	       (%xml-constructor)
+	       (loc::obj read-only (default #f)))
 
 	    (class xml-verbatim::xml
 	       (data::bstring read-only)
@@ -88,7 +89,6 @@
 	       (body read-only)
 	       (parent (default #f))
 	       (src read-only (default #f))
-	       (loc read-only (default #f))
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
