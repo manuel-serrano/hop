@@ -13,9 +13,6 @@ var assert = require( 'assert' );
 var hop = require( 'hop' );
 //var spawn = require( 'childProcess' ).spawn;
 
-/* we are in a http hop process. We need to launch a https hop process
- * and then have both processes communicate with each other */
-
 var payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ] ];
 
 
@@ -27,16 +24,16 @@ function goToService() {
    service foo( arg ) {
       return arg ;
    }
-
+   
    function testService( i ) {
       if ( i == payload.length ) {
 	 console.log( 'Service test ok' );
-	 goToWS();
+	 goToServiceNamedArgs();
       } else {
 	 foo( payload[i] ).post(function( result ) {
 	    // console.log( i, payload[ i ], result, typeof( result ) );
-	    assert.equal (typeof( result ), typeof( payload[ i ]));
-	    assert.equal (result.toString(), payload[ i ].toString() );
+	    assert.equal( typeof( result ), typeof( payload[ i ] ));
+	    assert.equal( result.toString(), payload[ i ].toString() );
 	    testService( i + 1 );
 	 }, function( error ) {
 	    process.exit( 1 );
@@ -48,6 +45,32 @@ function goToService() {
    testService( 0 );
 }
 
+function goToServiceNamedArgs() {
+   service bar( { arg : undefined } ) {
+      return arg ;
+   }
+   function testService( i ) {
+      if ( i == payload.length ) {
+	 console.log( 'Service (named arguments) test ok' );
+	 goToWS();
+      } else {
+	 bar( { arg: payload[i] } ).post(function( result ) {
+//	    console.log( i, payload[ i ], result, typeof( result ) );
+	    assert.equal( typeof( result ), typeof( payload[ i ] ));
+	    assert.equal( result.toString(), payload[ i ].toString() );
+	    testService( i + 1 );
+	 }, function( error ) {
+	    process.exit( 1 );
+	 }
+			       );
+      }
+   }
+   console.log( 'Service test (named arguments)' );
+   testService( 0 );
+}
+
+
+   
 var WSFlag = false;
 
 /* WebSocket test. We test that a string is passed unchanged from the
@@ -100,7 +123,9 @@ function goToWS() {
    }
 }
 
-/* broadcast: we test that the client receives any of the payload elements. TODO: replace the weak (and false) toString equality test with a complete object inspection */
+/* broadcast: we test that the client receives any of the payload
+ * elements. TODO: replace the weak (and false) toString equality test
+ * with a comprehensive object comparison */
    
 function goToBroadcast(){
    console.log( 'Broadcast test' );
@@ -120,10 +145,10 @@ function goToBroadcast(){
 
 function goToEnd() {
    setTimeout( function() {
-      console.log( 'Test diagnostic' );
-      console.log( 'checking', WSFlag );
-      //      assert.ok( WSFlag );
-      // commented out: the server does not get the close event within 2 seconds.
+      console.log( 'Asynchronous test: is the ws closed server side?', WSFlag );
+      //      assert.ok( WSFlag ); commented out: the server does not
+      // get the close event within 2 seconds but we consider that the
+      // test is valid anyway.
       process.exit( 0 );
    }, 2000 );
 }
