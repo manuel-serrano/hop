@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Tue Sep  8 09:38:15 2015 (serrano)                */
+/*    Last change :  Sat Sep 12 08:43:18 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -65,6 +65,12 @@ exports.HTTPResponseString = hop.HTTPResponseString;
 exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
 exports.HTTPResponseAsync = hop.HTTPResponseAsync;
 exports.HTTPResponseProxy = hop.HTTPResponseProxy;
+
+var jsonContentType = { "contentType": "application/json" };
+
+exports.HTTPResponseJson = function( obj ) {
+   return hop.HTTPResponseString( JSON.stringify( obj ), jsonContentType );
+}
 
 /*---------------------------------------------------------------------*/
 /*    Charset                                                          */
