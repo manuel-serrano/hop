@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Aug 27 16:46:54 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 08:15:27 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -230,9 +230,10 @@
 	     p specials strict decoder encoding conf)))
       ((: "<" id "/>")
        (let ((tag (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length))))
-	  (instantiate::J2SCall
-	     (loc (token-loc tag))
-	     (fun (j2s-tag->expr tag #t)))))
+	  (make-dom-create tag '() '() conf)))
+;* 	  (instantiate::J2SCall                                        */
+;* 	     (loc (token-loc tag))                                     */
+;* 	     (fun (j2s-tag->expr tag #t)))))                           */
       ((: "<" id (in " \n\t\r"))
        (let* ((t (the-substring 1 (-fx (the-length) 1)))
 	      (ts (string->symbol t))
@@ -247,7 +248,7 @@
 		    (collect-up-to ignore tag (reverse! attr) p specials strict decoder encoding
 		       conf))
 		   ((eq? obj '/>)
-		    (make-dom-create tag attr '())))))))
+		    (make-dom-create tag attr '() conf)))))))
       ((: "</" id ">")
        (string->symbol (the-substring 2 (-fx (the-length) 1))))
       ("~{"
@@ -272,7 +273,42 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-dom-create ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (make-dom-create tag::pair attributes body)
+(define (make-dom-create tag::pair attributes body conf)
+
+   (define (debug-init-val loc)
+      (match-case loc
+	 ((at ?fname ?pos)
+	  (instantiate::J2SObjInit
+	     (loc loc)
+	     (inits (list
+		       (instantiate::J2SDataPropertyInit
+			  (loc loc)
+			  (name (instantiate::J2SString
+				   (val "filename")
+				   (loc loc)))
+			  (val (instantiate::J2SString
+				  (val fname)
+				  (loc loc))))
+		       (instantiate::J2SDataPropertyInit
+			  (loc loc)
+			  (name (instantiate::J2SString
+				   (val "pos")
+				   (loc loc)))
+			  (val (instantiate::J2SNumber
+				  (val pos)
+				  (loc loc))))))))
+	 (else
+	  (instantiate::J2SUndefined
+	     (loc loc)))))
+
+   (define (debug-init loc)
+      (instantiate::J2SDataPropertyInit
+	 (loc loc)
+	 (name (instantiate::J2SString
+		  (val "%location")
+		  (loc loc)))
+	 (val (debug-init-val loc))))
+
    (let ((attrs '())
 	 (abody '()))
       (for-each (lambda (x)
@@ -280,16 +316,21 @@
 		       (set! attrs (cons x attrs))
 		       (set! abody (cons x abody))))
 	 attributes)
-      (let ((a (if (null? attrs)
-		   (instantiate::J2SUndefined
-		      (loc (token-loc tag)))
-		   (instantiate::J2SObjInit
-		      (loc (token-loc tag))
-		      (inits (filter (lambda (x)
-					(isa? x J2SDataPropertyInit))
-				(reverse! attrs)))))))
+      (let* ((loc (token-loc tag))
+	     (inits (filter (lambda (x)
+			       (isa? x J2SDataPropertyInit))
+		       (reverse! attrs)))
+	     (dbg (> (config-get conf :debug 0) 0))
+	     (a (if (and (null? attrs) (not dbg))
+		    (instantiate::J2SUndefined
+		       (loc loc))
+		    (instantiate::J2SObjInit
+		       (loc loc)
+		       (inits (if dbg
+				  (cons (debug-init loc) inits)
+				  inits))))))
 	 (instantiate::J2SCall
-	    (loc (token-loc tag))
+	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
 	    (args (cons a (append (reverse! abody) body)))))))
 
@@ -307,23 +348,24 @@
 	       ((symbol? item)
 		(cond
 		   ((eq? item tag)
-		    (make-dom-create tag attributes (reverse! acc)))
+		    (make-dom-create tag attributes (reverse! acc) conf))
 		   (strict
 		    (xml-parse-error "Illegal closing tag"
 				     (format "`~a' expected, `~a' provided"
 					     tag item)
 				     name po))
 		   (else
-		    (make-dom-create tag attributes (reverse! acc)))))
+		    (make-dom-create tag attributes (reverse! acc) conf))))
 	       ((special? item)
 		(let ((nitem (make-dom-create (special-tag item)
 				(special-attributes item)
-				(special-body item))))
+				(special-body item)
+				conf)))
 		   (if (memq (special-tag item) tags)
 		       (loop acc nitem)
 		       (begin
 			  (list (make-dom-create tag attributes
-				   (reverse! acc)) nitem)))))
+				   (reverse! acc) conf) nitem)))))
 	       ((eof-object? item)
 		(xml-parse-error
 		   (format "Premature end of HTML, expecting tag `</~a>'"
@@ -339,9 +381,9 @@
 	 ((not spec)
 	  (collect ignore '()))
 	 ((null? (cdr spec))
-	  (make-dom-create tag attributes '()))
+	  (make-dom-create tag attributes '() conf))
 	 ((procedure? (cdr spec))
-	  (make-dom-create tag attributes ((cdr spec) port)))
+	  (make-dom-create tag attributes ((cdr spec) port) conf))
 	 ((pair? (cdr spec))
 	  (let ((ignore (lambda ()
 			   (read/rp xml-grammar port

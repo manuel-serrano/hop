@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Sep 12 06:31:06 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 07:43:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -122,6 +122,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack o::JsObject)
    (js-object->keyword-arguments o (js-initial-global-object)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-to-errstring ::JsObject ...                                  */
+;*    -------------------------------------------------------------    */
+;*    This method is invoked when an native error occurs on a XML      */
+;*    object. This method is then invoked from Scheme code.            */
+;*---------------------------------------------------------------------*/
+(define-method (xml-to-errstring o::JsObject)
+   (js-tostring o (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-fields ...                                              */
