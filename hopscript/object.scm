@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Sep 11 08:33:01 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 06:31:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -165,7 +165,7 @@
    `(begin
        (js-bind! ,%this ,obj ',(if (pair? tagjs) (car tagjs) tag)
           :value (js-make-function ,%this
-                    (lambda (this attrs nodes loc)
+                    (lambda (this attrs . nodes)
                        (if (isa? attrs JsObject)
                            (if (null? nodes)
                                (apply ,(symbol-append '< tag '>)
@@ -176,7 +176,7 @@
                                      nodes)))
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
-                    3 ',tag)
+                    2 ',tag)
           :writable #f :configurable #f :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/

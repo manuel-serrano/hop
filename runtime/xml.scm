@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Aug 27 07:35:12 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 06:24:40 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -253,13 +253,15 @@
    (let loop ((a args)
 	      (attr '())
 	      (body '())
-	      (id #unspecified))
+	      (id #unspecified)
+	      (loc #f))
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
 	     (tag el)
 	     (attributes (reverse! attr))
 	     (id (xml-make-id id))
+	     (loc loc)
 	     (body (reverse! body))))
 	 ((keyword? (car a))
 	  (cond
@@ -268,12 +270,15 @@
 	     ((eq? (car a) :id)
 	      (let ((v (xml-primitive-value (cadr a))))
 		 (if (or (string? v) (not v))
-		     (loop (cddr a) attr body v)
+		     (loop (cddr a) attr body v loc)
 		     (bigloo-type-error el "string" (cadr a)))))
+	     ((eq? (car a) :%location)
+	      (let ((nloc (xml-primitive-value (cadr a))))
+		 (loop (cddr a) attr body id nloc)))
 	     (else
-	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
+	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id loc))))
 	 ((null? (car a))
-	  (loop (cdr a) attr body id))
+	  (loop (cdr a) attr body id loc))
 	 ((xml-unpack (car a))
 	  =>
 	  (lambda (l)
@@ -281,10 +286,10 @@
 		 (error (el->string el) "Illegal arguments"
 		    `(,(el->string el) ,@args))
 		 (if (or (pair? l) (null? l))
-		     (loop (append l (cdr a)) attr body id)
-		     (loop (cdr a) attr (cons (car a) body) id)))))
+		     (loop (append l (cdr a)) attr body id loc)
+		     (loop (cdr a) attr (cons (car a) body) id loc)))))
 	 (else
-	  (loop (cdr a) attr (cons (car a) body) id)))))
+	  (loop (cdr a) attr (cons (car a) body) id loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
