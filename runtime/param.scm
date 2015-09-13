@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Sep  2 20:30:20 2015 (serrano)                */
+;*    Last change :  Sun Sep 13 08:55:18 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -837,7 +837,7 @@
 ;*    hop-service-weblet-weblet-name ...                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-service-weblet-name
-   (format "public/svc-~a" (hop-session)))
+   (format "svc-~a" (hop-session)))
 
 (define-parameter hop-service-weblet-id
    (string->symbol (hop-service-weblet-name)))
