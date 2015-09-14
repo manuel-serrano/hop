@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Sep  8 18:09:43 2015 (serrano)                */
+;*    Last change :  Mon Sep 14 14:26:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -384,14 +384,14 @@
 	     val))
 
       (if asynchronous
-	  (begin
+	  (let ((worker (js-current-worker)))
 	     (thread-start!
 		(instantiate::hopthread
 		   (body (lambda ()
 			    (with-hop
 				  (if (isa? success JsFunction)
 				      (lambda (x)
-					 (js-worker-exec (js-current-worker) svc
+					 (js-worker-push-thunk! worker svc
 					    (lambda ()
 					       (js-call1 %this success %this
 						  (scheme->js x)))))

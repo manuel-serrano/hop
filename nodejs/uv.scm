@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Sep  7 12:26:26 2015 (serrano)                */
+;*    Last change :  Mon Sep 14 14:19:36 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -582,9 +582,6 @@
 	       " repeat=" repeat)
 	    (let ((proc (js-get obj 'ontimeout %this)))
 	       (when (isa? proc JsFunction)
-;* 		  (js-call1 %this proc obj status))))))                */
-;* 		  ;; to enforce that timers are executed after the     */
-;* 		  ;; check and idle watcher they are pushed on the async queue */
 		  (js-worker-push-thunk! %worker "tick-spinner"
                      (lambda ()
                         (js-call1 %this proc obj status))))))))
