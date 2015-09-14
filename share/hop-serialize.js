@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu Aug 27 16:15:42 2015 (serrano)                */
+/*    Last change :  Sun Sep 13 16:01:21 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -43,14 +43,14 @@ function hop_bigloo_serialize( item ) {
    } else {
       hop_serialize_context.active = true;
       hop_serialize_context.ref = 0;
-      hop_serialize_context.def = 0;
+      hop_serialize_context.def = 0; 
       hop_serialize_context.key++;
 
       var str = hop_bigloo_serialize_context( item );
 
       hop_serialize_context.active = false;
 
-      return "c" + hop_serialize_number( hop_serialize_context.def ) + str;
+      return "c" + hop_serialize_number( hop_serialize_context.def + 1 ) + str;
    }
 }
 
@@ -166,7 +166,7 @@ function hop_bigloo_serialize_object() {
    str += args;
    str += hop_bigloo_serialize_context( item.hop_classhash );
 
-   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
+   str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
 
    return str;
 }
@@ -208,7 +208,7 @@ function hop_bigloo_serialize_sc_object() {
    str += args;
    str += hop_bigloo_serialize_context( sc_class_hash( clazz ) );
 
-   str = "=" +  hop_serialize_word( item.hop_serialize_context_def ) + str;
+   str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
 
    return str;
 }
@@ -653,13 +653,7 @@ function safe_decode_uri( s ) {
 /*** META ((export obj->string) (arity #t)) */
 function hop_obj_to_string( item ) {
    hop_serialize_context.active = false;
-   hop_serialize_context.ref = 0;
-   hop_serialize_context.def = 0;
-   hop_serialize_context.key++;
-   
-   var s = hop_bigloo_serialize_context( item );
-
-   return safe_decode_uri( s );
+   return safe_decode_uri( hop_bigloo_serialize( item ) );
 }
 
 /*---------------------------------------------------------------------*/

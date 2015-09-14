@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Fri Aug 14 07:18:39 2015 (serrano)                */
+/*    Last change :  Sun Sep 13 09:05:21 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -266,7 +266,7 @@ function hop_cookie_set_value( name, val, path, domain, expires ) {
    if( (domain instanceof String) || (typeof domain == "string") ) {
       cookie += "; domain=" + domain;
    }
-   
+
    document.cookie = cookie;
 }
 

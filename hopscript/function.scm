@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Sep  4 12:23:41 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 07:45:24 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -65,6 +65,15 @@
 		   (properties '()))
 		(js-undefined))))))
    
+;*---------------------------------------------------------------------*/
+;*    xml-unpack ::JsObject ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Simply returns the function. This will give the XML write        */
+;*    a chance to raise an appropriate error messages.                 */
+;*---------------------------------------------------------------------*/
+(define-method (xml-unpack o::JsFunction)
+   o)
+
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
 ;*---------------------------------------------------------------------*/

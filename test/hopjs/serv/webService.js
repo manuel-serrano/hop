@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/WebService.js     */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/webService.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Fri Sep  11 14:00:00 2015                         */
+/*    Last change :  Fri Sep 11 21:51:15 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
@@ -61,7 +61,7 @@ function testLocalWS() {
 	 frame = myWebService( args );
 	 next = count + 1;
       };
-      console.log( frame.toString() );
+      console.log( "frame=", frame.toString() );
       frame.post( function( result ) {
 	 if (positive) {
 	    console.log( expected, result );

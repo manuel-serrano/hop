@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Aug 27 07:35:12 2015 (serrano)                */
+;*    Last change :  Sun Sep 13 05:54:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -62,6 +62,7 @@
 	    (generic xml-attribute-encode ::obj)
 
 	    (generic xml-primitive-value ::obj)
+	    (generic xml-to-errstring::bstring ::obj)
 
 	    (xml->string ::obj ::xml-backend)
 
@@ -387,8 +388,8 @@
 		   'UTF-8 (hop-charset))))
 	  (xml-write s p backend)))
       (else
-       (error "xml-write" (format "Illegal xml object (~s)" (typeof obj))
-	  obj))))
+       (error "xml" "bad XML object"
+	  (xml-to-errstring obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
@@ -698,7 +699,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (unless (or (eq? attr #f) (eq? attr #unspecified))
+   (unless (or (eq? attr #f) (eq? attr #unspecified) (eq? id :%location))
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -798,6 +799,14 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-primitive-value x::obj)
    x)
+
+;*---------------------------------------------------------------------*/
+;*    xml-to-errstring ::obj ...                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-to-errstring o::obj)
+   (call-with-output-string
+      (lambda (op)
+	 (write-circle o op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */

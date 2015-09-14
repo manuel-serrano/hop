@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Sep  7 19:52:06 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 07:59:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -74,7 +74,8 @@
 			      :parser 'client-program
 			      :driver (if (>fx (bigloo-debug) 0)
 					  (j2s-javascript-debug-driver)
-					  (j2s-javascript-driver)))))
+					  (j2s-javascript-driver))
+			      :debug (bigloo-debug))))
 		  (for-each (lambda (exp)
 			       (unless (isa? exp J2SNode)
 				  ;; skip node information, used for sourcemap
@@ -407,7 +408,8 @@
 			:language (or lang 'hopscript)
 			:mmap-src m
 			:module-main #f
-			:module-name (symbol->string mod))
+			:module-name (symbol->string mod)
+			:debug (bigloo-debug))
 		     (close-mmap m)))))))
 
    (define (compile-url url::bstring mod)
@@ -422,7 +424,8 @@
 		  :language (or lang 'hopscript)
 		  :filename filename
 		  :module-main #f
-		  :module-name (symbol->string mod))))))
+		  :module-name (symbol->string mod)
+		  :debug (bigloo-debug))))))
 
    (define (compile filename::bstring mod)
       (if (file-exists? filename)

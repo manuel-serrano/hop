@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep  5 06:53:17 2015 (serrano)                */
+;*    Last change :  Sat Sep 12 07:55:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1343,9 +1343,10 @@
 			     (format "Illegal xml expression, tag \"~a\" found, \"~a\" expected"
 				(cdr ctag) (cdr tag))
 			     (peek-token))))
-		   (let ((attrs (instantiate::J2SObjInit
+		   (let* ((inits (reverse! attributes))
+			  (attrs (instantiate::J2SObjInit
 				   (loc (token-loc token))
-				   (inits (reverse! attributes)))))
+				   (inits inits))))
 		      (instantiate::J2SCall
 			 (loc (token-loc tag))
 			 (fun (j2s-tag->expr tag #f))

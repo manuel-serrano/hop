@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Thu Aug 27 15:41:28 2015 (serrano)                */
+;*    Last change :  Fri Sep 11 21:13:53 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -503,7 +503,10 @@
    
    (define (hopjs-encoded-arguments? args)
       (match-case args
-	 ((((? string?) :data ?- :header ?val) . ?-) #t)
+	 ((((? string?) :data ?- :header (:hop-encoding ?-)) . ?-)
+	  #t)
+	 ((((? string?) :data ?- :header (and (? pair?) ?val)) . ?-)
+	  (memq :hop-encoding val))
 	 (else #f)))
    
    (define (multipart->list dir pi content-length boundary transfer-encoding)
