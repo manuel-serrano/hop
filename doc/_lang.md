@@ -2,7 +2,7 @@ Compatibilities & Standards
 ===========================
 [:@nonumber]
 
-HopScript is based on JavaScript and aim at ensuring compatibility
+HopScript is based on JavaScript and aims at ensuring compatibility
 with this language.
 
   * HopScript fully supports [ECMAScript 5][es5]
@@ -20,10 +20,6 @@ with this language.
 ${ <span class="label label-warning">Note:</span> }
  ECMAScript 6 features requires `use strict` or `use hopscript` modes.
 [:@warning]
-
-```hopscript  
-service() { return foo }
-```
 
 [es5]: http://www.ecma-international.org/ecma-262/5.1
 [es6]: http://www.ecma-international.org/ecma-262/6.0

@@ -20,8 +20,8 @@ Services
 Services share most of their syntax with functions, with two notable differences:
 
  * services are introduced with the `service` keyword;
- * services support named arguments which are introduced using the JavaScript
-   object literal syntax. 
+ * services arguments may be named using the JavaScript object literal
+   syntax.
 
 ```ebnf
 ${ doc.include( ROOT + "/service.bnf" ) }
@@ -29,10 +29,12 @@ ${ doc.include( ROOT + "/service.bnf" ) }
 
 ### Example ###
 
-```hopscript
-${ doc.include( ROOT + "/../../examples/tower/tower.js", 13 ) }
-```
+${ <span class="label label-info">syntax/syntax.js</span> }
 
+```hopscript  
+${ doc.include( ROOT + "/../../examples/syntax/syntax.js", 13, 72 ) }
+```
+ 
 Tilde
 -----
 
@@ -48,11 +50,19 @@ HTML
 ----
 
 HopScript supports two syntaxes for creating server side HTML values. The first
-one is plain HTML syntax extended with `~`- and `$`-expessions. The second one
+one is plain HTML syntax extended with `~`- and `$`-expressions. The second one
 is an extension of JavaScript literal objects.
 
 ```ebnf
 ${ doc.include( ROOT + "/html.bnf" ) }
+```
+
+### Example ###
+
+${ <span class="label label-info">syntax/syntax.js</span> }
+
+```hopscript 
+${ doc.include( ROOT + "/../../examples/syntax/syntax.js", 72 ) }
 ```
 
 
