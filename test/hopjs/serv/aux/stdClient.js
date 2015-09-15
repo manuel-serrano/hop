@@ -1,15 +1,15 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/aux/asyncSrvRspClient.js   */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/aux/stdClient.js  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
 /*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
-/*    Async service Response: client worker                            */
+/*    simple worker to stress test services                            */
 /*=====================================================================*/
 
-/* This worker iterates service invocations for <numCalls> times, then
+/* This worker iterates service invocations for <num> times, then
  * post a message to inform the main thread of completion */
 
 var hop = require( 'hop' );
