@@ -31,7 +31,7 @@ Hop.js can be forked at
 
 ## Binary distributions ##
 
-Precompiled Hop.js distributions are availabe.
+Precompiled Hop.js distributions are available.
 
 ### Debian/Raspberry ###
 

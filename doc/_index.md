@@ -68,7 +68,8 @@ By default Hop.js only accepts to serve authenticated requests. Before
 executing any programs _users_ must be declared. These declarations go
 into the `$HOME/.config/hop/hoprc.js` file. The following declare a
 user named `hopjs` whose password is `inria` and that is allowed to
-execute any Hop.js service:
+execute any Hop.js service ( `services: "*"`) and download any file
+readable from the server process ( `directories: "*"`):
 
 ```sh[:config@homeprog]
 mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
@@ -77,7 +78,7 @@ var user = require( hop.user );
 var config = require( hop.config );
 
 user.add( { name: "hopjs",
-            password: "+019bb7f0e76945cf6d2fc4dac65ee1b4",
+            password: user.encryptPassword( "hopjs", "inria" ),
             services: "*",
             directories: "*"
           } );

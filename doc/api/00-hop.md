@@ -98,6 +98,16 @@ service getXml() {
     { startLine: "HTTP/1.0 404 File not found" } ) 
 ```
 
+### hop.HTTPREsponseJson( object ) ###
+[:@glyphicon glyphicon-tag function]
+
+This convenience function returns an `\[application/json\]` value from a
+JavaScript object. It is the same as:
+
+```hopscript
+hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json' } )
+```
+
 ### hop.HTTPResponseFile( path, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
