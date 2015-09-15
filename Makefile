@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sat Sep 12 08:24:17 2015 (serrano)                */
+#*    Last change :  Tue Sep 15 15:25:17 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -167,8 +167,8 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C hopsh install && \
 	$(MAKE) -C hopc install && \
 	$(MAKE) -C hophz install && \
-	$(MAKE) -C etc install && \
-	$(MAKE) -C node_modules install
+	$(MAKE) -C node_modules install && \
+	$(MAKE) -C etc install
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \

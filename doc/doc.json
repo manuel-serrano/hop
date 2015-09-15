@@ -3,6 +3,7 @@
    "bglversion": "4.2a",
    "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
    "github": "https://github.com/manuel-serrano/hop.git",
+   "bglurlbase": "ftp://ftp-sop.inria.fr/indes/fp/Bigloo",
    "chapters": [ 
       { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
       { "name": "Download", "icon": "glyphicon-cloud-download", "href": "download.html" },

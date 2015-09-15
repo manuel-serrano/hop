@@ -15,10 +15,23 @@ version from the sources.
   </div>
   <div class="col-xs-3">
     <xml.downloadButton
-       class="danger"
+       class="warning"
        title="Stable"
        icon="glyphicon-download"
        href=${cfg.urlbase + "/hop-" + cfg.version + ".tar.gz"}/>
+  </div>
+</div>}
+
+${<div class="row">
+  <div class="col-xs-9">
+Compiling Hop.js requires the Bigloo compiler.
+  </div>
+  <div class="col-xs-3">
+    <xml.downloadButton
+       class="danger"
+       title="Stable"
+       icon="glyphicon-download"
+       href=${cfg.bglurlbase + "/bigloo" + cfg.bglversion + ".tar.gz"}/>
   </div>
 </div>}
 

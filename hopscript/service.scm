@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Sep 15 08:25:15 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 15:35:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -321,9 +321,11 @@
 	 (password #f)
 	 (authorization #f)
 	 (fail #f)
+	 (failjs #f)
 	 (asynchronous (not force-sync))
 	 (header #f)
-	 (scheme 'http))
+	 (scheme 'http)
+	 (worker (js-current-worker)))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail
@@ -360,11 +362,17 @@
 	     (unless (eq? s (js-undefined))
 		(set! scheme (string->symbol (js-tostring s %this))))
 	     (when (isa? f JsFunction)
+		(set! failjs f)
 		(set! fail
 		   (lambda (xhr)
 		      (with-access::xml-http-request xhr (header)
-			 (js-call1 %this f %this
-			    (js-alist->jsobject header %this))))))
+			 (if asynchronous
+			     (js-worker-push-thunk! worker svc
+				(lambda ()
+				   (js-call1 %this f %this
+				      (js-alist->jsobject header %this))))
+			     (js-call1 %this f %this
+				(js-alist->jsobject header %this)))))))
 	     (when (isa? r JsObject)
 		(set! header (js-jsobject->alist r %this))))))
 
@@ -384,18 +392,25 @@
 	     val))
 
       (if asynchronous
-	  (let ((worker (js-current-worker)))
+	  (begin
 	     (thread-start!
 		(instantiate::hopthread
 		   (body (lambda ()
-			    (with-hop
-				  (if (isa? success JsFunction)
-				      (lambda (x)
-					 (js-worker-push-thunk! worker svc
-					    (lambda ()
-					       (js-call1 %this success %this
-						  (scheme->js x)))))
-				      scheme->js))))))
+			    (with-handler
+			       (lambda (e)
+				  (if failjs
+				      (js-worker-push-thunk! worker svc
+					 (lambda ()
+					    (js-call1 %this failjs %this e)))
+				      (exception-notify e)))
+			       (with-hop
+				     (if (isa? success JsFunction)
+					 (lambda (x)
+					    (js-worker-push-thunk! worker svc
+					       (lambda ()
+						  (js-call1 %this success %this
+						     (scheme->js x)))))
+					 scheme->js)))))))
 	     (js-undefined))
 	  (with-hop
 	     (if (isa? success JsFunction)

@@ -121,7 +121,7 @@ ${ doc.include( doc.ROOT + "/examples/file/README.md" ) }
 ${ <span class="label label-info">file/file.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/file/file.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/file/file.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -149,7 +149,7 @@ ${ doc.include( doc.ROOT + "/examples/authentication/README.md" ) }
 ${ <span class="label label-info">authentication/authentication.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 14 ) }
 ```
 
 ### hop.HTTPResponseAsync( sender, req ) ###
@@ -174,7 +174,7 @@ ${ doc.include( doc.ROOT + "/examples/svc3/README.md" ) }
 ${ <span class="label label-info">svc3/svc3.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/svc3/svc3.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/svc3/svc3.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -210,7 +210,7 @@ ${ doc.include( doc.ROOT + "/examples/image/README.md" ) }
 ${ <span class="label label-info">image/image.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/image/image.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/image/image.js", 14 ) }
 ```
 
 Broadcast
