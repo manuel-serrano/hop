@@ -96,19 +96,19 @@ ${ doc.include( doc.ROOT + "/examples/worker/README.md" ) }
 ${ <span class="label label-info">worker/worker.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/worker.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/worker/worker.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker/slave.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/slave.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/worker/slave.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker/bar.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/bar.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/worker/bar.js", 14 ) }
 ```
 
 ### Worker.terminate() ###
@@ -121,13 +121,13 @@ ${ doc.include( doc.EXAMPLES_DIR + "/worker2/README.md" ) }
 ${ <span class="label label-info">worker2/worker2.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/worker2/worker2.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/worker2/worker2.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker2/slave.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/worker2/slave.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/worker2/slave.js", 14 ) }
 ```
 
 
@@ -139,12 +139,12 @@ ${ doc.include( doc.ROOT + "/examples/worker5/README.md" ) }
 ${ <span class="label label-info">worker5/worker5.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker5/worker5.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/worker5/worker5.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker5/slave.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker5/slave.js", 13 ) }
+${ doc.include( doc.ROOT + "/examples/worker5/slave.js", 14 ) }
 ```
 

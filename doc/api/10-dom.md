@@ -21,7 +21,7 @@ ${ doc.include( doc.EXAMPLES_DIR + "/dom/README.md" ) }
 ${ <span class="label label-info">dom/dom.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/dom/dom.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/dom/dom.js", 14 ) }
 ```
 
 

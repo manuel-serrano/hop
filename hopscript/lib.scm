@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Jul 16 09:12:41 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 16:14:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -143,10 +143,10 @@
       (js-for-in obj
 	 (lambda (p)
 	    (let ((p (string->symbol (js-jsstring->string p))))
-	       (set! args (cons (js-get obj p %this) args))
-	       (set! args (cons (symbol->keyword p) args))))
+	       (set! args (cons (symbol->keyword p) args))
+	       (set! args (cons (js-get obj p %this) args))))
 	 %this)
-      args))
+      (reverse! args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->alist ...                                           */

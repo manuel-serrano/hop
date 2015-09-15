@@ -80,7 +80,7 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svg/README.md" ) }
 ${ <span class="label label-info">svg/svg.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svg/svg.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svg/svg.js", 14 ) }
 ```
 
 ### <MATH:TEX> ###

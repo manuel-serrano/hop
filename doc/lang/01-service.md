@@ -23,7 +23,7 @@ Example:
 ${ <span class="label label-info">svc1/svc1.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc1/svc1.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc1/svc1.js", 14 ) }
 ```
 
 
@@ -276,7 +276,7 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc/README.md" ) }
 ${ <span class="label label-info">svc/svc.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 14 ) }
 ```
 
 ### service.timeout ###
@@ -329,13 +329,13 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc2/README.md" ) }
 ${ <span class="label label-info">svc2/svc2.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/svc2.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/svc2.js", 14 ) }
 ```
 
 ${ <span class="label label-info">svc2/extern.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 14 ) }
 ```
 
 Interoperable WebServices

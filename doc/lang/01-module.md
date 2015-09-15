@@ -52,13 +52,13 @@ ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/README.md" ) }
 ${ <span class="label label-info">htmlr/htmlr.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.js", 14 ) }
 ```
 
 ${ <span class="label label-info">htmlr/htmlr.html</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 14 ) }
 ```
 
 
@@ -78,18 +78,18 @@ ${ doc.include( doc.EXAMPLES_DIR + "/requirec/README.md" ) }
 ${ <span class="label label-info">requirec/requirec.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/requirec.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/requirec.js", 14 ) }
 ```
 
 ${ <span class="label label-info">requirec/mod1.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod1.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod1.js", 14 ) }
 ```
 
 ${ <span class="label label-info">requirec/mod2.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
 ```
 

@@ -25,13 +25,13 @@ ${ doc.include( doc.EXAMPLES_DIR + "/websocket/README.md" ) }
 ${ <span class="label label-info">websocket/wsserver.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/websocket/wsserver.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/websocket/wsserver.js", 14 ) }
 ```
 
 ${ <span class="label label-info">websocket/wsclient.js</span> }
 
 ```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/websocket/wsclient.js", 13 ) }
+${ doc.include( doc.EXAMPLES_DIR + "/websocket/wsclient.js", 14 ) }
 ```
 
 Constructors

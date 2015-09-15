@@ -32,7 +32,7 @@ ${ doc.include( ROOT + "/service.bnf" ) }
 ${ <span class="label label-info">syntax/syntax.js</span> }
 
 ```hopscript  
-${ doc.include( ROOT + "/../../examples/syntax/syntax.js", 13, 72 ) }
+${ doc.include( ROOT + "/../../examples/syntax/syntax.js", 14, 72 ) }
 ```
  
 Tilde
