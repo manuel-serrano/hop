@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Aug  2 14:30:28 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 08:41:16 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
@@ -63,6 +63,7 @@
 		    (inline #t boolean)
 		    (iconopen #t)
 		    (iconclose #t)
+		    (%location #f)
 		    body)
    (let ((head "")
 	 (body (xml-body body)))
@@ -106,6 +107,7 @@
 		      (value #unspecified)
 		      (inline #t boolean)
 		      (icon #t)
+		      (%location #f)
 		      body)
    (instantiate::html-tree-leaf
       (tag 'tree-leaf)
@@ -351,7 +353,8 @@
 			     (with-access::xml-delay b (thunk)
 				(loop (thunk))))
 			    ((service? b)
-			     (loop (xml-body-element ((service-proc b) #f))))
+			     (with-access::hop-service (service->hop-service b) (proc)
+				(loop (xml-body-element (proc #f)))))
 			    ((isa? b html-tree)
 			     (html-write-tree level b parent p be)
 			     (display ";\n" p))
