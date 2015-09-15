@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Aug 14 16:16:36 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 07:52:41 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -468,6 +468,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			    (set! idiom v)
 			    (loop (cddr a) #f rts dir path base inl packed els))
 			 (error "<HEAD>" "Illegal :idiom argument" (cadr a)))))
+		 ((:%location)
+		  (loop (cddr a) mode rts dir path base inl packed els))
 		 (else
 		  (error "<HEAD>"
 		     (format "Unknown ~a argument" (car a))

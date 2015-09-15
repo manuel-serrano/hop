@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Sep 11 21:13:53 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 08:37:51 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -43,9 +43,9 @@
 	    (hop-object->plist::pair ::obj)
 	    (hop-plist->object::object ::pair)
 	    (generic service?::bool ::obj)
-	    (generic service-resource::bstring ::obj #!optional file)
-	    (generic service-path::bstring ::obj)
-	    (generic service-proc::procedure ::obj)
+	    (generic service->hop-service::hop-service ::obj)
+	    (service-path::bstring ::obj)
+	    (service-resource::bstring ::obj #!optional file)
 	    (generic service-base-url::bstring ::obj ::http-request)
 	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
@@ -161,28 +161,29 @@
    (and (procedure? obj) (isa? (procedure-attr obj) hop-service)))
 
 ;*---------------------------------------------------------------------*/
-;*    service-resource ...                                             */
+;*    service->hop-service ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (service-resource svc #!optional file)
-   (with-access::hop-service (procedure-attr svc) (resource)
-      (if (string? file)
-	  (string-append resource "/" file)
-	  resource)))
+(define-generic (service->hop-service obj)
+   (if (procedure? obj)
+       (procedure-attr obj)
+       (bigloo-type-error "service->hop-service" "service" obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-path ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (service-path svc)
-   (with-access::hop-service (procedure-attr svc) (path)
+(define (service-path svc)
+   (with-access::hop-service (service->hop-service svc) (path)
       path))
-   
+
 ;*---------------------------------------------------------------------*/
-;*    service-proc ...                                                 */
+;*    service-resource ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (service-proc svc)
-   (with-access::hop-service (procedure-attr svc) (proc)
-      proc))
-   
+(define (service-resource svc #!optional file)
+   (with-access::hop-service (service->hop-service svc) (resource)
+      (if (string? file)
+	  (string-append resource "/" file)
+	  resource)))
+
 ;*---------------------------------------------------------------------*/
 ;*    service-base-url ...                                             */
 ;*---------------------------------------------------------------------*/

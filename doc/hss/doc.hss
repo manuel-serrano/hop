@@ -419,3 +419,12 @@ body.home pre code {
 code .h1, code .h2, code .h3, code .h4 {
   font-size: inherit;
 }
+
+/*---------------------------------------------------------------------*/
+/*    media                                                            */
+/*---------------------------------------------------------------------*/
+@media screen and (max-width:1024px) {
+  #navbar {
+     display: none;
+  }
+}

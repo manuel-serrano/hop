@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Sep 14 14:26:23 2015 (serrano)                */
+;*    Last change :  Tue Sep 15 08:25:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -454,31 +454,12 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
-;*    service-resource ::JsService ...                                 */
+;*    service->hop-service ::JsService ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (service-resource obj::JsService #!optional file)
+(define-method (service->hop-service obj::JsService)
    (with-access::JsService obj (svc)
-      (with-access::hop-service svc (resource)
-	 (if (string? file)
-	     (string-append resource "/" file)
-	     resource))))
-
-;*---------------------------------------------------------------------*/
-;*    service-path ::JsService ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (service-path obj::JsService)
-   (with-access::JsService obj (svc)
-      (with-access::hop-service svc (path)
-	 path)))
-
-;*---------------------------------------------------------------------*/
-;*    service-proc ::JsService ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (service-proc obj::JsService)
-   (with-access::JsService obj (svc)
-      (with-access::hop-service svc (proc)
-	 proc)))
-
+      svc))
+   
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
