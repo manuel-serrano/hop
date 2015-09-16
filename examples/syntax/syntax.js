@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep 14 17:00:00 2015                          */
-/*    Last change :  Tue Sep  8 16:36:36 2015 (serrano)                */
+/*    Last change :  Tue Sep 15 16:30:38 2015 (serrano)                */
 /*    Copyright   :  2014-15 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Hop.js syntax extensions                                         */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g syntax.js                                         */
 /*    browser: http://localhost:8080/hop/svg                           */
 /*=====================================================================*/
-
 // service declaration with standard formal arguments
 service add( x, y ) {
    console.log( 'add - x: %s (%s), y: %s (%s)', x, typeof( x ), y, typeof( y ) );
