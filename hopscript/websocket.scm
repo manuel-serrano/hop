@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Sep 16 19:57:36 2015 (serrano)                */
+;*    Last change :  Wed Sep 16 20:05:56 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -460,7 +460,6 @@
 	 (thread-start!
 	    (instantiate::hopthread
 	       (body (lambda ()
-			(tprint "websocket-client socket=" socket " " (current-thread))
 			;; now the connection is established remove all
 			;; connection/read timeouts.
 			(let ((in (socket-input socket)))
@@ -477,9 +476,6 @@
 						      (target ws)
 						      (data val)
 						      (value val))))
-					  (tprint "READING val [" val "] socket="
-					     socket " " 
-					     (current-thread))
 					  (js-worker-push-thunk! worker
 					     "wesbsocket-client"
 					     (lambda ()
