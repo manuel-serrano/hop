@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Sep  9 11:16:07 2015 (serrano)                */
+/*    Last change :  Wed Sep 16 12:07:24 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -193,8 +193,8 @@ function compileSection( page ) {
 	   </div>
            : undefined}
 	 </div>
+	 <docxml.footer root=${ROOT}/>
        </div>
-       <docxml.footer root=${ROOT}/>
      </body>
    </html>;
 
@@ -239,8 +239,8 @@ function compileChapter( json ) {
 	      </li>
 	   } )}
          </ul>
+	 <docxml.footer root=${ROOT}/>
        </div>
-       <docxml.footer root=${ROOT}/>
      </body>
    </html>;
 
@@ -265,8 +265,8 @@ function compileIndex( content ) {
 
        <div class="container">
          ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
+	 <docxml.footer root=${ROOT}/>
        </div>
-       <docxml.footer root=${ROOT}/>
      </body>
    </html>;
 

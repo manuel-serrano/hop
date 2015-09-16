@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Mon Aug 17 09:12:38 2015 (serrano)                */
+/*    Last change :  Wed Sep 16 13:46:06 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -139,16 +139,29 @@ function copyrightYears( iyear ) {
 /*---------------------------------------------------------------------*/
 function docfooter( attrs ) {
    return <footer>
-   <div class="container">
-     <div class="copyright">Copyright Inria ${copyrightYears( 2006 )}  
-       <button class="inria">
-         <a href="http://www.inria.fr">
+     <div class="container">
+       <div class="copyright col-md-2 copyright-left">
+       &copy; ${copyrightYears( 2006 )}
+	 <a href="http://www.inria.fr">Inria</a>
+       </div>
+       <div class="copyright col-md-8 copyright-middle">
+         <a class="iddn" href="http://app.legalis.net/">
+           IDDN.FR.001.260002.000.S.P.2006.000.10400
+	 </a>
+         - 
+         <a class="iddn" href="http://app.legalis.net/">
+           IDDN.FR.001.260002.001.S.A.2006.000.10600
+	 </a>
+       </div>
+       <div class="copyright copyright-right col-md-2">
+	 <button type="button" class="inria btn btn-danger">
+           <a href="http://www.inria.fr">
            <svg:img class="inria"
-                      src=${path.join( attrs.root, "../share/icons/hop/inria.svg" )}
-                   height="1.5ex" width="4em"/>
-         </a>
-       </button>
-     </div>
+		    src=${path.join( attrs.root, "../share/icons/hop/inria.svg" )}
+		    height="1.6ex" width="4em"/>
+           </a>
+	 </button>
+       </div>
      </div>
    </footer>
 }

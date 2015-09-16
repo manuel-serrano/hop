@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Wed Sep  9 11:16:19 2015 (serrano)                */
+/*    Last change :  Wed Sep 16 12:59:55 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -42,18 +42,36 @@ body {
 /*    footer                                                           */
 /*---------------------------------------------------------------------*/
 footer {
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #ddd;
   padding-top: 4ex;
   padding-bottom: 2ex;
   margin-top: 4ex;
-  margin-left: 2em;
-  margin-right: 2em;
   text-align: left;
-  color: #555;
+  color: #777;
+  font-size: 12px;
 }
 
 footer button.inria {
-  line-height: 16px;
+  line-height: 10px;
+  font-size: 16px;
+  border: none;
+}
+
+footer button.inria svg * {
+  fill: white;
+  stroke: white;
+}
+
+footer .copyright-right {
+  text-align: right;
+}
+
+footer .copyright-left {
+  text-align: left;
+}
+
+footer .copyright-middle {
+  text-align: center;
 }
 
 /*---------------------------------------------------------------------*/
@@ -350,12 +368,17 @@ body.download h1.toc {
 
 body.home {
   color: #444;
+  font-size: 16px;
 }
 
 body.home h1, body.home h2 {
   color: #faab02;
   text-shadow: none;
   font-weight: bold;
+}
+
+body.home h2 {
+  font-size: 200%;
 }
 
 body.home pre {
@@ -405,7 +428,8 @@ body.home code {
   background-color: #efefef;
   border: 1px solid #d2d2d2;
   border-radius: 1px;
-  color: #1a75f9;
+/*   color: #1a75f9;                                                   */
+  color: #D85023;
 }
 
 body.home pre code {
