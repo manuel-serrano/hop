@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Sep  7 12:51:54 2015 (serrano)                */
+;*    Last change :  Wed Sep 16 19:57:36 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -186,6 +186,15 @@
 			      (__proto__ js-websocket-prototype)
 			      (worker (js-current-worker))
 			      (ws ws))))
+		  ;; listeners
+		  (for-each (lambda (act)
+			       (bind-websocket-listener! %this obj act))
+		     (list
+			(cons 'onmessage #f)
+			(cons 'onopen #f)
+			(cons 'onclose #f)
+			(cons 'onerror #f)))
+		  ;; connect the socket to the server
 		  (websocket-connect! ws)
 		  obj)))
 
@@ -201,6 +210,11 @@
 				       (name "connection")
 				       (target wss)
 				       (value ws))))
+			      ;; listeners
+			   (for-each (lambda (act)
+					(bind-websocket-client-listener! %this ws act))
+			      (list (cons 'onmessage #f)
+				 (cons 'onclose #f)))
 			   (with-access::JsWebSocketServer wss (conns worker)
 			      (js-worker-push-thunk! worker "wss-onconnect"
 				 (lambda ()
@@ -239,6 +253,11 @@
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
 			      (svc svc))))
+	       ;; listeners
+	       (for-each (lambda (act)
+			    (bind-websocket-server-listener! %this wss act))
+		  (list (cons 'onconnection #f)
+		     (cons 'onclose #f)))
 	       wss))
 
 	 ;; prototypes properties
@@ -324,13 +343,6 @@
 		(lambda (this message proc)
 		   (add-event-listener! this (js-tostring message %this) proc))
 		2 'addEventListener))
-   ;; listeners
-   (for-each (lambda (act) (bind-websocket-listener! %this obj act))
-      (list
-	 (cons 'onmessage #f)
-	 (cons 'onopen #f)
-	 (cons 'onclose #f)
-	 (cons 'onerror #f)))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -434,10 +446,6 @@
 		      (add-event-listener! this (js-tostring message %this)
 			 (proc->listener worker %this proc this))))
 		2 'addEventListener))
-   ;; listeners
-   (for-each (lambda (act) (bind-websocket-server-listener! %this obj act))
-      (list (cons 'onconnection #f)
-	 (cons 'onclose #f)))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -452,6 +460,7 @@
 	 (thread-start!
 	    (instantiate::hopthread
 	       (body (lambda ()
+			(tprint "websocket-client socket=" socket " " (current-thread))
 			;; now the connection is established remove all
 			;; connection/read timeouts.
 			(let ((in (socket-input socket)))
@@ -468,6 +477,9 @@
 						      (target ws)
 						      (data val)
 						      (value val))))
+					  (tprint "READING val [" val "] socket="
+					     socket " " 
+					     (current-thread))
 					  (js-worker-push-thunk! worker
 					     "wesbsocket-client"
 					     (lambda ()
@@ -534,10 +546,6 @@
 			    (add-event-listener! this action
 			       (proc->listener worker %this proc this))))))
 		2 'addEventListener))
-   ;; listeners
-   (for-each (lambda (act) (bind-websocket-client-listener! %this obj act))
-      (list (cons 'onmessage #f)
-	 (cons 'onclose #f)))
    obj)
 
 ;*---------------------------------------------------------------------*/
