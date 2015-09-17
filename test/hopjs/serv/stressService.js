@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/stressService.js  */
+/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/stressService.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Mon Sep  7 12:42:26 2015 (serrano)                */
+/*    Last change :  Tue Sep 15 16:15:03 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services                                         */
@@ -18,6 +18,7 @@ service toTest( { str: undefined, id: undefined, file: undefined } ) {
 }
 
 var numClients = 8;
+//var numClients = 1;
 var doneWithClients = 0;
 var clients = [];
 
@@ -45,8 +46,6 @@ function launchTest() {
    checkCompletion();
 }
 
-prepareClient( 0 );
-
 function checkCompletion() {
    console.log( 'checkCompletion', doneWithClients );
    if ( doneWithClients == numClients ) {
@@ -54,4 +53,6 @@ function checkCompletion() {
       process.exit( 0 );
    };
 }
-   
+
+prepareClient( 0 );
+

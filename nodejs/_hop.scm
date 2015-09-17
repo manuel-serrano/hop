@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Sep  8 08:57:07 2015 (serrano)                */
+;*    Last change :  Wed Sep 16 19:18:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -489,7 +489,7 @@
    (define (async-proc req)
       (if (isa? req http-request)
 	  (lambda (k)
-	     (js-worker-exec %worker "hopjs-response-async"
+	     (js-worker-push-thunk! %worker "hopjs-response-async"
 		(lambda ()
 		   (with-handler
 		      (lambda (e)
