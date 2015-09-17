@@ -10,8 +10,11 @@
 /*=====================================================================*/
 
 
-function runTest( numClients, numCalls ) {
-
+function runTest( clientModule, numClients, numCalls, timeout ) {
+   console.log( 'Launcher configuration: %s client modules (%s) X %s',
+    		numClients,
+    		clientModule,
+    		numCalls ); 
    var doneWithClients = 0;
    function checkCompletion() {
       console.log( 'checkCompletion', doneWithClients );
@@ -24,7 +27,7 @@ function runTest( numClients, numCalls ) {
    var clients = [];
    for ( var i = 0; i  < numClients; i++ ) {
       console.log( 'main: preparing client #%s', i );
-      var client = new Worker( './stdClient.js' );
+      var client = new Worker( clientModule );
       clients.push( client );
       client.onmessage = function( e ) {
 	 doneWithClients++;
@@ -37,6 +40,13 @@ function runTest( numClients, numCalls ) {
       client.postMessage( { clientId: id, num: numCalls } );
    });
    checkCompletion();
+
+   setTimeout( function() {
+      console.log( 'Timeout: %sms, test failed', timeout );
+      console.log( 'Change TIMEOUT value in source file' );
+      process.exit( 1 );
+   }, timeout );
+   
 }
 
 
