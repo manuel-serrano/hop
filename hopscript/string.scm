@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Aug 25 09:34:29 2015 (serrano)                */
+;*    Last change :  Sat Sep 19 07:39:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -160,7 +160,7 @@
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
 	 (define (js-string-raw this . a)
 	    (js-stringlist->jsstring
-	       (map! (lambda (v) (js-tostring v %this) a))))
+	       (map! (lambda (v) (js-tostring v %this)) a)))
 		    
 	 (js-bind! %this js-string 'raw
 	    :value (js-make-function %this
@@ -1022,14 +1022,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-tonumber this::JsString %this)
    (with-access::JsString this (val)
-      (let ((val (js-jsstring->string val)))
-	 (cond
-	    ((string=? val "Infinity")
-	     +inf.0)
-	    ((string=? val "NaN")
-	     +nan.0)
-	    (else
-	     (or (string->number val) +nan.0))))))
+      (js-tonumber val %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsString ...                                      */
@@ -1038,15 +1031,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-tointeger this::JsString %this)
    (with-access::JsString this (val)
-      (let ((val (js-jsstring->string val)))
-	 (cond
-	    ((string=? val "Infinity")
-	     +inf.0)
-	    ((string=? val "NaN")
-	     +nan.0)
-	    (else
-	     (let ((i (string->number val)))
-		(if (fixnum? i) i 0)))))))
+      (js-tointeger val %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsString ...                                */

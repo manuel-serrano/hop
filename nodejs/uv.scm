@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Sep 14 14:19:36 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 07:41:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -213,16 +213,6 @@
 	    (set! tick-callback (js-get %process '_tickCallback %this)))
 	 (js-call0 %this tick-callback (js-undefined)))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-need-tick-callback ...                                    *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-need-tick-callback %worker %this %process)          */
-;*    (js-worker-push-thunk! %worker "tick-spinner"                    */
-;*       (lambda ()                                                    */
-;* 	 (let ((tick-from-spinner (js-get %process '_tickFromSpinner %this))) */
-;* 	    (when (isa? tick-from-spinner JsFunction)                  */
-;* 	       (js-call0 %this tick-from-spinner (js-undefined)))))))  */
-
 ;*---------------------------------------------------------------------*/
 ;*    !js-callback0 ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -402,11 +392,11 @@
 				       (uv-unref async)
 				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))
-	 (set! %loop loop)
-	 ;; to avoid using locks, force process structure initialization,
-	 ;; even if not used explicitly in the loop
-	 (nodejs-process th %this)
 	 (synchronize mutex
+	    (set! %loop loop)
+	    (nodejs-process th %this)
+	    (with-access::JsLoop loop (actions)
+	       (set! actions tqueue))
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
@@ -480,19 +470,19 @@
       (trace-item "name=" name)
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
-	 (let ((act (cons name thunk)))
-	    (if %loop
-		(with-access::JsLoop %loop (actions async exiting)
-		   (synchronize mutex
+	 (synchronize mutex
+	    (let ((act (cons name thunk)))
+	       (if %loop
+		   (with-access::JsLoop %loop (actions async exiting)
 		      (unless (pair? actions)
 			 (uv-ref async)
 			 (uv-async-send async))
 		      ;; push the action to be executed (with a debug name)
 		      (set! actions (cons act actions))))
-		;; the loop is not started yet (this might happend when
-		;; a master send a message (js-worker-post-master-message)
-		;; before the slave is fully initialized
-		(set! tqueue (append (cons act tqueue))))))))
+	       ;; the loop is not started yet (this might happend when
+	       ;; a master send a message (js-worker-post-master-message)
+	       ;; before the slave is fully initialized
+	       (set! tqueue (append (cons act tqueue))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -1948,23 +1938,6 @@
 		   (UV-INHERIT-FD))
 		(uv-process-options-stdio-container-fd-set! opts i handle))))))
    
-;*    (define (onexit this status term)                                */
-;*       (let ((onexit (js-get process 'onexit %this))                 */
-;* 	    (status (flonum->fixnum (int64->flonum status))))          */
-;* 	 (with-trace 'nodejs-spawn "process-onexit"                    */
-;* 	    (trace-item "status=" status)                              */
-;* 	    (when (isa? onexit JsFunction)                             */
-;* 	       (js-worker-push-thunk! %worker "exit"                   */
-;* 		  (lambda ()                                           */
-;* 		     (when (<fx status 0)                              */
-;* 			(process-fail %this %process status)           */
-;* 			(set! status -1))                              */
-;* 		     (js-call2 %this onexit process                    */
-;* 			status                                         */
-;* 			(if (=fx term 0)                               */
-;* 			    (js-undefined)                             */
-;* 			    (signal->string term)))))))))              */
-
    (define (onexit this status term)
       (let ((onexit (js-get process 'onexit %this))
 	    (status (flonum->fixnum (int64->flonum status))))

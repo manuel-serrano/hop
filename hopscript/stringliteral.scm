@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Sep 11 06:19:24 2015 (serrano)                */
+;*    Last change :  Sat Sep 19 07:40:41 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -17,7 +17,8 @@
    (library hop)
    
    (import __hopscript_types
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_private)
    
    (export (inline js-string->jsstring::JsStringLiteral ::bstring)
 	   (inline js-stringlist->jsstring::JsStringLiteral ::pair-nil)
@@ -239,6 +240,41 @@
 		     (val ,(integer->string i))
 		     (state #u8:0)))
 	    (iota num))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumber ::JsStringLiteral ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumber this::JsStringLiteral %this)
+   (let ((str (trim-whitespaces+ (js-jsstring->string this)
+		 :left #t :right #t :plus #t)))
+      (cond
+	 ((string=? str "Infinity")
+	  +inf.0)
+	 ((string=? str "+Infinity")
+	  +inf.0)
+	 ((string=? str "-Infinity")
+	  -inf.0)
+	 ((string=? str "NaN")
+	  +nan.0)
+	 ((string-null? str)
+	  0)
+	 ((or (string-prefix? "0x" str) (string-prefix? "0X" str))
+	  (js-parseint str 16 #t %this))
+	 ((string-index str "eE.")
+	  (js-parsefloat str #t %this))
+	 (else
+	  (js-parseint str 10 #t %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tointeger ::JsStringLiteral ...                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tointeger this::JsStringLiteral %this)
+   (with-access::JsStringLiteral this (val)
+      (js-tointeger (js-jsstring->string val) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    integers ...                                                     */

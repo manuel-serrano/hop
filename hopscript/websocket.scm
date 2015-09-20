@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Sep 16 20:05:56 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 06:53:05 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -159,7 +159,8 @@
 
 	 (define (js-websocket-construct o url options)
 	    (with-access::JsGlobalObject %this (js-object)
-	       (let* ((protocol (cond
+	       (let* ((worker (js-current-worker))
+		      (protocol (cond
 				   ((string? options)
 				    options)
 				   ((js-jsstring? options)
@@ -184,7 +185,7 @@
 			     (protocol protocol)))
 		      (obj (instantiate::JsWebSocket
 			      (__proto__ js-websocket-prototype)
-			      (worker (js-current-worker))
+			      (worker worker)
 			      (ws ws))))
 		  ;; listeners
 		  (for-each (lambda (act)
@@ -195,31 +196,45 @@
 			(cons 'onclose #f)
 			(cons 'onerror #f)))
 		  ;; connect the socket to the server
-		  (websocket-connect! ws)
+		  (js-worker-push-thunk! worker "ws-listener"
+		     (lambda ()
+			(websocket-connect! ws)))
 		  obj)))
 
 	 (define (wss-onconnect wss)
 	    (lambda (resp)
 	       (with-access::http-response-websocket resp (request)
-		  (let ((mutex (make-mutex)))
-		     (synchronize mutex
-			(let* ((ws (websocket-client %this
-				      js-websocket-client-prototype
-				      request wss mutex))
-			       (evt (instantiate::server-event
-				       (name "connection")
-				       (target wss)
-				       (value ws))))
-			      ;; listeners
-			   (for-each (lambda (act)
-					(bind-websocket-client-listener! %this ws act))
-			      (list (cons 'onmessage #f)
-				 (cons 'onclose #f)))
+		  (with-access::http-request request (socket)
+		     (let  ((ws (instantiate::JsWebSocketClient
+				   (socket socket)
+				   (wss wss)
+				   (__proto__ js-websocket-client-prototype))))
+			;; listeners
+			(for-each (lambda (act)
+				     (bind-websocket-client-listener! %this
+					ws act))
+			   (list (cons 'onmessage #f)
+			      (cons 'onclose #f)))
+			(let ((evt (instantiate::server-event
+				      (name "connection")
+				      (target wss)
+				      (value ws)))
+			      (id (gensym)))
+			   ;; trigger an onconnect event
 			   (with-access::JsWebSocketServer wss (conns worker)
 			      (js-worker-push-thunk! worker "wss-onconnect"
 				 (lambda ()
-				    (apply-listeners conns evt))))))))))
-
+				    (apply-listeners conns evt)
+				    ;; start the client-server-loop
+				    ;; on JavaScript completion
+				    (with-access::JsWebSocketServer wss (worker)
+				       (js-worker-push-thunk! worker "wss-onconnect"
+					  (lambda ()
+					     (websocket-server-read-loop
+						%this request wss ws id))))))))
+			;; returns the new client socket
+			ws)))))
+	 
 	 (define (js->hop x)
 	    (if (js-jsstring? x)
 		(js-jsstring->string x)
@@ -448,40 +463,65 @@
 		2 'addEventListener))
    obj)
 
+(define _frame 0)
+(define (frame++)
+   (set! _frame (+fx 1 _frame))
+   _frame)
+
+
 ;*---------------------------------------------------------------------*/
-;*    websocket-client ...                                             */
+;*    websocket-server-read-loop ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (websocket-client %this proto req wss mutex)
+(define (websocket-server-read-loop %this req wss ws::JsWebSocketClient id)
+   
+   (define (onmessage frame)
+      (with-access::JsWebSocketClient ws (onmessages)
+;* 			      (tprint "############## read " id " " (frame++) " " frame */
+;* 				 " " onmessages)                       */
+	 (with-access::JsWebSocketServer wss (worker)
+	    (let* ((val (js-string->jsstring frame))
+		   (evt (instantiate::JsWebSocketEvent
+			   (name "message")
+			   (target ws)
+			   (data val)
+			   (value val))))
+	       (js-worker-push-thunk! worker
+		  "wesbsocket-client"
+		  (lambda ()
+		     (apply-listeners onmessages evt)))))))
+   
+   (define (onclose)
+      (with-access::JsWebSocketClient ws (oncloses)
+	 (with-access::JsWebSocketServer wss (worker)
+	    (let ((evt (instantiate::JsWebSocketEvent
+			  (name "close")
+			  (target ws)
+			  (data (js-undefined))
+			  (value (js-undefined)))))
+	       (js-worker-push-thunk! worker
+		  "wesbsocket-client"
+		  (lambda ()
+		     (apply-listeners oncloses evt)))))))
+   
    (with-access::http-request req (socket)
-      (let ((ws (instantiate::JsWebSocketClient
-		   (socket socket)
-		   (wss wss)
-		   (__proto__ proto))))
-	 (thread-start!
-	    (instantiate::hopthread
-	       (body (lambda ()
-			;; now the connection is established remove all
-			;; connection/read timeouts.
-			(let ((in (socket-input socket)))
-			   (input-port-timeout-set! in 0))
-			;; start reading the frames
-			(synchronize mutex
-			   (let loop ((frame (websocket-read socket)))
-			      (when (string? frame)
-				 (with-access::JsWebSocketClient ws (onmessages)
-				    (with-access::JsWebSocketServer wss (worker svc)
-				       (let* ((val (js-string->jsstring frame))
-					      (evt (instantiate::JsWebSocketEvent
-						      (name "message")
-						      (target ws)
-						      (data val)
-						      (value val))))
-					  (js-worker-push-thunk! worker
-					     "wesbsocket-client"
-					     (lambda ()
-						(apply-listeners onmessages evt))))))
-				 (loop (websocket-read socket)))))))))
-	 ws)))
+      (thread-start!
+	 (instantiate::hopthread
+	    (body (lambda ()
+		     ;; now the connection is established remove all
+		     ;; connection/read timeouts.
+		     (let ((in (socket-input socket)))
+			(input-port-timeout-set! in 0))
+		     ;; start reading the frames
+		     (let loop ()
+			(let ((frame (websocket-read socket)))
+			   (if (string? frame)
+			       (begin
+				  (onmessage frame)
+				  (loop))
+			       (begin
+				  (socket-shutdown socket)
+				  (onclose)))))))))
+      ws))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-websocket-client-prototype! ...                     */

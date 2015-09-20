@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/zeroconf.scm              */
+;*    serrano/prgm/project/hop/3.0.x/runtime/zeroconf.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Fri Mar 29 12:35:04 2013 (serrano)                */
-;*    Copyright   :  2011-13 Manuel Serrano                            */
+;*    Last change :  Sat Sep 19 20:23:20 2015 (serrano)                */
+;*    Copyright   :  2011-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *zeroconf-backend* ...                                           */
 ;*---------------------------------------------------------------------*/
-(define *zeroconf-backend* *zeroconf-backend*)
+(define *zeroconf-backend* (instantiate::zeroconf-dummy))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-register-backend! ...                                   */

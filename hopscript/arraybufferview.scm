@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Aug 21 16:41:59 2015 (serrano)                */
+;*    Last change :  Sat Sep 19 07:15:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -597,7 +597,7 @@
 							   (soff byteoffset)
 							   (slength length))
 			    (with-access::JsArrayBuffer sbuffer ((source data))
-			       (let ((tstart (+u32 (*u32 bp off) toff)))
+			       (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff)))
 				  (cond
 				     ((or (>=u32 tstart tlength)
 					  (<u32 tstart 0))
@@ -621,7 +621,7 @@
 						    (tbpe bp)
 						    (tbuffer buffer))
 		      (with-access::JsArrayBuffer tbuffer ((target data))
-			 (let ((tstart (+u32 (*u32 bp off) toff))
+			 (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff))
 			       (slength (js-get array 'length %this)))
 			    (cond
 			       ((or (>=u32 tstart tlength) (<u32 tstart 0))
