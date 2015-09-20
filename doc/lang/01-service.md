@@ -121,6 +121,41 @@ value is sent to the client. The rules for converting values into
 
 The various Hop responses classes are documented [here](00-hop.html#responses).
 
+
+Service Constructor
+-------------------
+
+Hop.js services are instances of the `Service` constructor.
+
+### new Service( function, [name], [arguments] ) ###
+[:@glyphicon glyphicon-tag function]
+
+ * `function`, is the function implementing the service. When invoked,
+`this` is bound to the request object.
+ * `name`, is an optional string argument, which is the name of the
+service. 
+ * `arguments`, is an optional object, which specifies the arguments
+name and default value for named argument service.
+
+Example:
+
+```hopscript
+function svcImpl( fname, lname ) { return <html>${fname},${lname}</html> };
+
+// create an anonymous service with fixed arguments
+var priv = new Service( svcImpl );
+
+// create a second service with named arguments and a public URL
+var pub = new Service( svcImpl, "public", { fname: "jean", lname: "dupond" } );
+
+// call the first service
+priv( "jeanne", "durand" ).post();
+
+// call the second service
+pub( { name: "larivierre" }).post();
+```
+
+
 Service Frames
 --------------
 
@@ -230,6 +265,7 @@ Invoking the `post` or `postSync` methods of a service frame triggers
 the remote invocation of the service. That is, the arguments serialized
 in the service frame are transmitted to the remote host and the service
 body is executed.
+
 
 Service methods & attributes
 ----------------------------

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Sep 15 16:14:12 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 09:08:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -43,8 +43,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
    (cond
-;*       ((or (string? obj) (date? obj))                               */
-;*        (error "js-obj->jsobject" "should not be here" obj))         */
       ((string? obj) (js-string->jsstring obj))
       ((date? obj) (js-date->jsdate obj %this))
       ((vector? obj) (js-vector->jsobject obj %this))
@@ -71,7 +69,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-struct->jsobject stu %this)
    (case (struct-key stu)
-;*       ((__JsBoolean__ __JsNumber__) (error "js-struct->jsobject" "should not be here" stu)) */
       ((__JsBoolean__) (js-bool->jsboolean (struct-ref stu 0) %this))
       ((__JsNumber__) (js-number->jsnumber (struct-ref stu 0) %this))
       ((__JsCustom__) ((struct-ref stu 1) (struct-ref stu 0) %this))

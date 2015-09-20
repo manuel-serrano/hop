@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Sep 15 08:37:51 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 09:46:53 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -54,7 +54,6 @@
 	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-service-url::bstring ::hop-service ::pair-nil)
-	    (service-funcall-url::bstring ::hop-service . o)
 	    (hop-request-service-name::bstring ::http-request)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
@@ -333,15 +332,6 @@
 (define (hop-apply-service-url svc vals)
    (with-access::hop-service svc (path)
       (hop-apply-url path vals)))
-
-;*---------------------------------------------------------------------*/
-;*    service-funcall-url ...                                          */
-;*---------------------------------------------------------------------*/
-(define (service-funcall-url svc . vals)
-   (if (not (isa? svc hop-service))
-       (bigloo-type-error "service-funcall-url" 'service svc)
-       (with-access::hop-service svc (path)
-	  (hop-apply-url path vals))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get-args ...                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Sep 11 20:55:37 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 09:05:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1041,7 +1041,6 @@
 				(apply fun this
 				   (js-dsssl-args->jsargs (car args) %this)))
 			       (else
-				(tprint "args=" args)
 				,(service-call-error this))))))))))
 
       (define (service-proc->scheme this)
