@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Aug 27 09:40:09 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 06:50:27 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -352,12 +352,13 @@
 		(when protocol
 		   (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		(http-write-line p)))
-	    (flush-output-port p)
 	    ;; set the socket in non blocking mode to prevent
 	    ;; down connections to block all event broadcasts
 	    (output-timeout-set! p 5000)
-	    ;; run the onconnection listener
+	    ;; run the onconnection listener before flushing the output
 	    (when (procedure? onconnect) (onconnect r))
+	    ;; the server is up and running, notify the client
+	    (flush-output-port p)
 	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
@@ -743,76 +744,6 @@
       (websocket-trigger-event ws "ready" ws)))
 
 ;*---------------------------------------------------------------------*/
-;*    write-frame ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
-;*---------------------------------------------------------------------*/
-(define (write-frame-TOBEREMOVED frame::websocket-frame port::output-port)
-   (with-access::websocket-frame frame (kind final? payload)
-      (define (string->bytes str)
-         (map char->integer (string->list str)))
-
-      (define (->int16 n)
-         ;; Return N as big endian.
-         (let ((m (modulo n 256)))
-            (list (quotient (- n m) 256) m)))
-
-      (define (->int64 n)
-         ;; Return N as big endian.
-         (letrec-syntax ((decompose (syntax-rules ()
-                                       ((_ n m0 m ...)
-                                        (let* ((m0 (modulo n 256))
-                                               (r  (quotient (- n m0) 256)))
-                                           (cons m0 (decompose r m ...))))
-                                       ((_ n)
-                                        '()))))
-            (reverse (decompose n m0 m1 m2 m3 m4 m5 m6 m7))))
-
-      (define (circular-list . args)
-         ;; Work around interpreter bug:
-         ;; <http://article.gmane.org/gmane.lisp.scheme.bigloo/6146>.
-         (let ((lst (list-copy args)))
-            (set-cdr! (last-pair lst) lst)
-            lst))
-
-      (define len
-         (string-length payload))
-
-      (define key
-         ;; The "masking key" (Section 5.3.)
-         (list (random 256) (random 256) (random 256) (random 256))
-	 (list 1 2 3 4))
-
-      (define bytes
-         `(,(bit-or
-               (if final? #x80 0)
-               (case kind
-                  ((text) 1)
-                  ((binary) 2)
-                  (else (error "invalid frame kind" 'write-frame frame))))
-
-           ,(bit-or
-               #x80                               ; masking bit, must be 1
-               (cond ((< len 127) len)
-                     ((< len 65536) #x7e)         ; encode length on 16 bits
-                     (else #x7f)))                ; encode length on 63 bits
-
-           ,@(cond ((< len 127) '())
-                   ((< len 65536)
-                    (->int16 len))                ; frame-payload-length-16
-                   (else
-                    (->int64 len)))               ; frame-payload-length-63
-
-           ,@key                                  ; masking key (4 bytes)
-
-           ,@(map bit-xor
-                (string->bytes payload)
-                (apply circular-list key))))
-
-      (display (list->string (map integer->char bytes)) port)
-      (flush-output-port port)))
-
-;*---------------------------------------------------------------------*/
 ;*    websocket-send-frame ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    Write FRAME to PORT (RFC 6455, Section 5.2.)                     */
@@ -924,26 +855,6 @@
 	 (else
 	  #f)))
    
-;*    (define (read-payload in l)                                      */
-;*       (cond                                                         */
-;* 	 ((<=fx l 125)                                                 */
-;* 	  (tprint "read-payload.1 l=" l)                               */
-;* 	  (read-chars l in))                                           */
-;* 	 ((=fx l 126)                                                  */
-;* 	  (let ((sz (read-int16 in)))                                  */
-;* 	     (tprint "read-payload.2 l=" l " sz=" sz)                  */
-;* 	     (read-chars sz in)))                                      */
-;* 	 ((=fx l 127)                                                  */
-;* 	  (when (and (read-check-byte in 0)                            */
-;* 		     (read-check-byte in 0)                            */
-;* 		     (read-check-byte in 0)                            */
-;* 		     (read-check-byte in 0))                           */
-;* 	     (let ((sz (read-int32 in)))                               */
-;* 		(tprint "read-payload.3 l=" l " sz=" sz)               */
-;* 		(read-chars sz in))))                                  */
-;* 	 (else                                                         */
-;* 	  #f)))                                                        */
-   
    (define (unmask payload key)
       (let ((len (string-length payload)))
 	 (let loop ((i 0))
@@ -964,21 +875,25 @@
    (let ((in (socket-input sock)))
       ;; MS: to be complete, binary, ping, etc. must be supported
       (when (read-check-byte in #x81)
-	 (let* ((s (read-byte in))
-		(l (bit-and s #x7f))
-		(len (read-playload-len l in)))
-	    (cond
-	       ((not len)
-		(error "websocket-read" "badly formed frame" s))
-	       ((=fx (bit-and s #x80) 0)
-		;; unmasked payload
-		(read-chars len in))
-	       (else
-		;; masked payload
-		(let* ((key0 (read-byte in))
-		       (key1 (read-byte in))
-		       (key2 (read-byte in))
-		       (key3 (read-byte in))
-		       (key (vector key0 key1 key2 key3))
-		       (payload (read-chars len in)))
-		   (unmask payload key))))))))
+	 (let ((s (read-byte in)))
+	    (when (integer? s)
+	       (let ((len (read-playload-len (bit-and s #x7f) in)))
+		  (cond
+		     ((not len)
+		      (error "websocket-read" "badly formed frame" s))
+		     ((=fx (bit-and s #x80) 0)
+		      ;; unmasked payload
+		      (read-chars len in))
+		     (else
+		      ;; masked payload
+		      (let* ((key0 (read-byte in))
+			     (key1 (read-byte in))
+			     (key2 (read-byte in))
+			     (key3 (read-byte in)))
+			 (when (and (integer? key0)
+				    (integer? key1)
+				    (integer? key2)
+				    (integer? key3))
+			    (let ((key (vector key0 key1 key2 key3))
+				  (payload (read-chars len in)))
+			       (unmask payload key))))))))))))

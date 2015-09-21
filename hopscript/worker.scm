@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Sep  4 11:10:49 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 07:27:01 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -211,6 +211,9 @@
 	    (when (isa? parent WorkerHopThread)
 	       (add-subworker! parent thread))
 	    
+	    ;; start the worker thread
+	    (thread-start! thread)
+	       
 	    ;; create the worker object
 	    (let ((worker (instantiate::JsWorker
 			     (__proto__ js-worker-prototype)
@@ -236,9 +239,6 @@
 			     2 'onmessage)
 		     :configurable #t
 		     :enumerable #t))
-	       
-	       ;; start the worker thread
-	       (thread-start! thread)
 	       
 	       ;; return the newly created worker
 	       worker)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Aug 25 09:32:40 2015 (serrano)                */
+;*    Last change :  Sat Sep 19 07:44:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -665,25 +665,7 @@
 	 ((eq? obj #f)
 	  0)
 	 ((js-jsstring? obj)
-	  (let ((str (trim-whitespaces+ (js-jsstring->string obj)
-			:left #t :right #t :plus #t)))
-	     (cond
-		((string=? str "Infinity")
-		 +inf.0)
-		((string=? str "+Infinity")
-		 +inf.0)
-		((string=? str "-Infinity")
-		 -inf.0)
-		((string=? str "NaN")
-		 +nan.0)
-		((string-null? str)
-		 0)
-		((or (string-prefix? "0x" str) (string-prefix? "0X" str))
-		 (js-parseint str 16 #t %this))
-		((string-index str "eE.")
-		 (js-parsefloat str #t %this))
-		(else
-		 (js-parseint str 10 #t %this)))))
+	  (js-tonumber obj %this))
 	 ((symbol? obj)
 	  (loop (symbol->string! obj)))
 	 (else

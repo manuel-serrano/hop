@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Mon Sep  7 12:42:26 2015 (serrano)                */
+/*    Last change :  Fri Sep 18 16:32:17 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
@@ -14,8 +14,6 @@ var hop = require( 'hop' );
 //var spawn = require( 'childProcess' ).spawn;
 
 var payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ] ];
-
-
 
 console.log( 'testing local http ...' );
 
@@ -55,7 +53,6 @@ function goToServiceNamedArgs() {
 	 goToWS();
       } else {
 	 bar( { arg: payload[i] } ).post(function( result ) {
-//	    console.log( i, payload[ i ], result, typeof( result ) );
 	    assert.equal( typeof( result ), typeof( payload[ i ] ));
 	    assert.equal( result.toString(), payload[ i ].toString() );
 	    testService( i + 1 );

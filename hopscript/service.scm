@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Sep 15 15:35:34 2015 (serrano)                */
+;*    Last change :  Sun Sep 20 10:00:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -122,7 +122,6 @@
 ;*    js-init-service! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-service! %this::JsGlobalObject)
-   ;; first, create the builtin prototype
    (with-access::JsGlobalObject %this (__proto__ js-function
 					 js-service-prototype
 					 js-hopframe-prototype)
@@ -215,7 +214,16 @@
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'inspect))
 
-	 (letrec ((js-hopframe (js-make-function %this
+	 (letrec ((js-service (js-make-function %this
+				 (lambda (this proc path args)
+				    (js-new %this js-service proc path args))
+				 3 'Service
+				 :__proto__ js-function-prototype
+				 :prototype js-service-prototype
+				 :construct (lambda (this proc name args)
+					       (js-create-service proc name args
+						  (js-current-worker) %this))))
+		  (js-hopframe (js-make-function %this
 				  (lambda (this url args)
 				     (js-new %this js-hopframe url args))
 				  1 'HopFrame
@@ -224,6 +232,8 @@
 				  :construct (lambda (this url args)
 						(js-make-hopframe %this
 						   url args)))))
+	    (js-bind! %this %this 'Service
+	       :configurable #f :enumerable #f :value js-service)
 	    (js-bind! %this %this 'HopFrame
 	       :configurable #f :enumerable #f :value js-hopframe))
 
@@ -416,6 +426,132 @@
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-create-service ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function is called when the HopScript constructor           */
+;*    Service is directly invoked from user programs. The role         */
+;*    of this function is to build an internal hop-service that        */
+;*    simply calls the HopScript function passed as argument.          */
+;*    The complexity of this function comes when the optional          */
+;*    "args" arguments is an object, in which case, the function       */
+;*    builds a service with optional named arguments.                  */
+;*---------------------------------------------------------------------*/
+(define (js-create-service proc::JsFunction name args worker %this::JsGlobalObject)
+   
+   (define js
+      "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },\n sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },\n sc_lambda)")
+   
+   (define (source::bstring proc)
+      (with-access::JsFunction proc (src)
+	 (match-case (car src)
+	    ((at ?path ?-) path)
+	    (else (pwd)))))
+
+   (define (fix-args len)
+      (map (lambda (i)
+	      (string->symbol (format "a~a" i)))
+	 (iota len)))
+
+   (define (dsssl-args args)
+      (let ((acc '()))
+	 (js-for-in args
+	    (lambda (s) (set! acc (cons (string->symbol s) acc))) %this)
+	 (cons '#!key (reverse! acc))))
+   
+   (define (create-fix-service proc name)
+      (letrec* ((id (if (string? name) (string->symbol name) (gensym 'svc)))
+		(src (source proc))
+		(svcp (lambda (this . args)
+			 (with-access::JsService svcjs (svc)
+			    (with-access::hop-service svc (path)
+			       (js-make-hopframe %this path args)))))
+		(svcjs (js-make-service %this svcp id #t -1 worker
+			  (instantiate::hop-service
+			     (ctx %this)
+			     (proc (lambda (this . args)
+				      (map! (lambda (a)
+					       (js-obj->jsobject a %this))
+					 args)
+				      (js-worker-exec worker
+					 (symbol->string! id)
+					 (lambda ()
+					    (js-apply %this proc this args)))))
+			     (javascript js)
+			     (path (if (string? name)
+				       (make-file-name (hop-service-base) name)
+				       (make-hop-url-name
+					  (gen-service-url :public #t))))
+			     (id id)
+			     (wid id)
+			     (args (fix-args (js-get proc 'length %this)))
+			     (resource (dirname src))
+			     (source src)))))
+	 svcjs))
+
+   (define (dsssl-actuals defaults objs)
+      (if (and (null? (cdr objs)) (isa? (car objs) JsObject))
+	  (let ((obj (car objs)))
+	     (map (lambda (arg)
+		     (let ((k (keyword->symbol (car arg))))
+			(if (js-has-property obj k %this)
+			    (js-get obj k %this)
+			    (cdr arg))))
+		defaults))
+	  (map (lambda (arg)
+		  (let ((c (memq (car arg) objs)))
+		     (if (pair? c)
+			 (js-obj->jsobject (cadr c) %this)
+			 (cdr arg))))
+	     defaults)))
+   
+   (define (create-dsssl-service proc name args)
+      (letrec* ((id (if (string? name) (string->symbol name) (gensym 'svc)))
+		(src (source proc))
+		(svcp (lambda (this . args)
+			 (with-access::JsService svcjs (svc)
+			    (with-access::hop-service svc (path)
+			       (js-make-hopframe %this path args)))))
+		(defaults (js-jsobject->alist args %this))
+		(svcjs (js-make-service %this svcp id #t -1 worker
+			  (instantiate::hop-service
+			     (ctx %this)
+			     (proc (lambda (this . objs)
+				      (js-worker-exec worker
+					 (symbol->string! id)
+					 (lambda ()
+					    (js-apply %this proc this
+					       (dsssl-actuals defaults
+						  objs))))))
+			     (javascript js)
+			     (path (if (string? name)
+				       (make-file-name (hop-service-base) name)
+				       (make-hop-url-name
+					  (gen-service-url :public #t))))
+			     (id id)
+			     (wid id)
+			     (args (dsssl-args args))
+			     (resource (dirname src))
+			     (source src)))))
+	 svcjs))
+
+   ;; argument parsing
+   (cond
+      ((isa? name JsStringLiteral)
+       (let ((name (js-jsstring->string name)))
+	  (if (eq? args (js-undefined))
+	      (create-fix-service proc name)
+	      (create-dsssl-service proc name args))))
+      ((isa? name JsString)
+       (let ((name (js-tostring name %this)))
+	  (if (eq? args (js-undefined))
+	      (create-fix-service proc name)
+	      (create-dsssl-service proc name args))))
+      ((isa? name JsObject)
+       (create-dsssl-service proc #f name))
+      (else
+       (create-fix-service proc #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
