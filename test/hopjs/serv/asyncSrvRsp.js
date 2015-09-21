@@ -15,17 +15,15 @@ var clientModule = require.resolve( './aux/stdClient.js' );
 
 var NUMCLIENTS = 5; // number of concurrent clients
 var NUMCALLS = 200; // number of service invocations per client
-var DELAY = 10; // set delay for asynchronous response
+var DELAY = 5; // set delay for asynchronous response
 var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware
 // ( ~ 500 requests/s on a laptop for synchronous responses )
 
-var count = 1;
+var requests = 0;
 
 service toTest( clientId, num ) {
-   //   console.log( id );
-   console.log( 'server', count );
-   count++;
+   requests++;
    return hop.HTTPResponseAsync(
       function( sendResponse ) {
 	 setTimeout( function () {
@@ -34,4 +32,20 @@ service toTest( clientId, num ) {
       }, this );
 }
 
-runTest( clientModule, NUMCLIENTS, NUMCALLS, TIMEOUT );
+function onTimeout() {
+   console.log( 'timeout (%s ms): server has processed %s requests', TIMEOUT, requests );
+   process.exit( 1 );
+}
+
+function onFailure() {
+   console.log( 'failure: server has processed %s requests', requests );
+   process.exit( 1 );
+}
+
+runTest( { clientModule: clientModule,
+	   numClients: NUMCLIENTS,
+	   numCalls: NUMCALLS,
+	   timeout: TIMEOUT,
+	   onTimeout: onTimeout,
+	   onFailure: onFailure,
+	 } );

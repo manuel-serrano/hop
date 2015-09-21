@@ -16,12 +16,15 @@
 var hop = require( 'hop' );
 var assert = require( 'assert' );
 
+var id;
+var num;
+
 function test( id, num ) {
    var ws;
    
    function loop( num ) {
       if ( num == 0 ) {
-	 postMessage( id );
+	 postMessage( { messageType: 'done' } );
       } else {
 	 // console.log( 'client #%s: call #%s', id, num );
 	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
@@ -43,8 +46,13 @@ function test( id, num ) {
 
 /* Protocol with workers launcher */
 onmessage = function( e ) {
-   var id = e.data.clientId;
-   var num = e.data.num;
-   console.log( 'client start', id, num );
-   test( id, num );
+   switch (e.data.messageType) {
+   case 'params':
+      id = e.data.clientId;
+      num = e.data.num;
+      postMessage( { messageType: 'ready' } );
+      break;
+   case 'run':
+      test( id, num );
+   }
 };
