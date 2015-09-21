@@ -39,8 +39,8 @@ onmessage = function( e ) {
 	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
       }
       catch (e) {
-	 console.log( 'error creating socket', e );
-	 process.exit( 1 );
+	 console.log( 'error creating socket' );
+	 postMessage( { messageType: 'failure' } );
       };
       ws.onopen = function() {
 	 postMessage( { messageType: 'ready' } );

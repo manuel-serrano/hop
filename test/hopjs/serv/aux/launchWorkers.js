@@ -19,7 +19,7 @@ function runTest( args ){
    var onTimeout = args.onTimeout || function() {
       console.log( 'Timeout: %sms, test failed', timeout );
       console.log( 'Change TIMEOUT value in source file' );
-      process.exit( 1 );
+      onFailure();
    };
    var onFailure = args.onFailure || function() {
       process.exit( 1 );
@@ -32,6 +32,13 @@ function runTest( args ){
     		numClients,
     		clientModule,
     		numCalls );
+
+   /* Set a timeout in case something goes wrong during test
+   configuration. Will be reset afterwards */
+   var configurationTimeout = setTimeout( function() {
+      console.log( 'cannot configure test: timeout', timeout );
+      onFailure();
+   }, timeout );
    
    function checkReadiness() {
 //      console.log( 'checkReadiness', readyClients );
@@ -43,7 +50,9 @@ function runTest( args ){
 	    client.postMessage( { messageType: 'run' } );
 	 });
 	 checkCompletion();
-	 setTimeout( onTimeout, timeout );
+
+	 clearTimeout( configurationTimeout );
+	 setTimeout( onTimeout, timeout ); // timeout is set while running tests
       }
    }
    
