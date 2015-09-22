@@ -14,22 +14,29 @@ var clientModule = require.resolve( './aux/webSocketClient.js' );
 
 var serv = new WebSocketServer( { path: "serv" } );
 
+var messages = 0;
 serv.onconnection = function( event ) {
-/*    console.error( ">>> onconnection");                              */
    var ws = event.value;
    ws.onmessage = function( event ) {
       //console.log( 'server:', event.data );
+      messages++;
       ws.send( event.data );
    };
-/*    console.error( "<<< onconnection");                              */
 };
 
 var NUMCLIENTS = 5; // number of concurrent clients
-var NUMCALLS = 200; // number of ws messages sent per client
-var TIMEOUT = 6000; //global timeout (test will fail if not completed by then)
+var NUMCALLS = 1000; // number of ws messages sent per client
+var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware ( ~ 500 requests/s on a laptop)
 
-NUMCLIENTS = 5;
-NUMCALLS = 200;
+function onFailure() {
+   console.log( 'server has processed %s messages', messages );
+   process.exit( 1 );
+}
 
-runTest( clientModule, NUMCLIENTS, NUMCALLS, TIMEOUT );
+runTest( { clientModule: clientModule,
+	   numClients: NUMCLIENTS,
+	   numCalls: NUMCALLS,
+	   timeout: TIMEOUT,
+	   onFailure: onFailure,
+	 } );
