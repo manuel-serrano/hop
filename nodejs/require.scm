@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Sep 12 07:59:46 2015 (serrano)                */
+;*    Last change :  Tue Sep 22 08:34:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -245,7 +245,8 @@
 	    :value (js-make-function %this
 		      (lambda (this name fun)
 			 (js-bind! %this this
-			    (string->symbol (js-jsstring->string name)) :get fun))
+			    (string->symbol (js-jsstring->string name))
+			    :get fun))
 		      2 "__defineGetter__")
 	    :enumerable #f
 	    :writable #t
@@ -896,7 +897,7 @@
       (define (in-property p)
 	 (when (isa? p JsPropertyDescriptor)
 	    (with-access::JsPropertyDescriptor p (name)
-	       (proc (symbol->string! name)))))
+	       (proc name))))
       
       (let loop ((o obj))
 	 (with-access::JsObject o (cmap properties __proto__)
@@ -910,9 +911,8 @@
       ;; bind all the exported functions in the global object
       (if (null? bindings)
 	  (for-in e
-	     (lambda (p)
-		(let ((k (string->symbol p)))
-		   (js-put! %scope k (js-get e k %this) #f %this))))
+	     (lambda (k)
+		(js-put! %scope k (js-get e k %this) #f %this)))
 	  (for-each (lambda (k)
 		       (js-bind! %this %scope k
 			  :get (js-make-function %this
