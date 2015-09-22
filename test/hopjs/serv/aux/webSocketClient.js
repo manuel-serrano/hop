@@ -9,48 +9,50 @@
 /*    simple worker to stress test a WebSocket server                  */
 /*=====================================================================*/
 
-/* This worker iterates service invocations for <num> times, then
- * post a message to inform the main thread of completion */
+/* This worker opens a WebSocket, then sends <num> messages, then post
+ * a message to inform the main thread of completion */
 
 var hop = require( 'hop' );
 var assert = require( 'assert' );
 
-function test( id, num ) {
-   var ws;
-   
-   try {
-      // console.log( 'client #%s: WebSocket open', id );
-      ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
-   }
-   catch( e ) {
-      console.log( 'client #%s: failed to open WebSocket', id );
-      process.exit( 1 );
-   };
-   
-   function loop( num ) {
-      if ( num == 0 ) {
-	 postMessage( id );
-      } else {
-	 // console.log( 'client #%s: call #%s', id, num );
-	 ws.send( JSON.stringify( { id: id, num: num } ));
-      }
-   }
+var id;
+var num;
+var ws;
 
-   ws.onmessage = function( event ) {
-      var data = JSON.parse( event.data );
-      assert.equal( id, data.id );
-      loop( data.num - 1 );
-   };
-   
-   ws.onopen = function() {
-      loop( num );
-   };
+function loop( num ) {
+   if ( num == 0 ) {
+      postMessage( { messageType: 'done' } );
+   } else {
+      // console.log( 'client #%s: call #%s', id, num );
+      ws.send( JSON.stringify( { id: id, num: num } ));
+   }
 }
+
 
 /* Protocol with workers launcher */
 onmessage = function( e ) {
-   var id = e.data.clientId;
-   var num = e.data.num;
-   //console.log( 'client start', id, num );
-   test( id, num );
+   switch (e.data.messageType) {
+   case 'params':
+      id = e.data.clientId;
+      num = e.data.num;
+      try {
+	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
+      }
+      catch (e) {
+	 console.log( 'error creating socket' );
+	 postMessage( { messageType: 'failure' } );
+      };
+      ws.onopen = function() {
+	 postMessage( { messageType: 'ready' } );
+      };
+      ws.onmessage = function( event ) {
+	 var data = JSON.parse( event.data );
+	 assert.equal( id, data.id );
+	 loop( data.num - 1 );
+      };
+   
+      break;
+   case 'run':
+      loop( num );
+   }
 };

@@ -10,42 +10,87 @@
 /*=====================================================================*/
 
 
-function runTest( clientModule, numClients, numCalls, timeout ) {
+function runTest( args ){
+   var clientModule = args.clientModule;
+   var numClients = args.numClients;
+   var numCalls = args.numCalls;
+   var timeout = args.timeout;
+   var onSuccess = args.onSuccess || process.exit;
+   var onTimeout = args.onTimeout || function() {
+      console.log( 'Timeout: %sms, test failed', timeout );
+      console.log( 'Change TIMEOUT value in source file' );
+      onFailure();
+   };
+   var onFailure = args.onFailure || function() {
+      process.exit( 1 );
+   };
+   var clients = [];
+   var readyClients = 0;
+   var doneWithClients = 0;
+   
    console.log( 'Launcher configuration: %s client modules (%s) X %s',
     		numClients,
     		clientModule,
-    		numCalls ); 
-   var doneWithClients = 0;
+    		numCalls );
+
+   /* Set a timeout in case something goes wrong during test
+   configuration. Will be reset afterwards */
+   var configurationTimeout = setTimeout( function() {
+      console.log( 'cannot configure test: timeout', timeout );
+      onFailure();
+   }, timeout );
+   
+   function checkReadiness() {
+//      console.log( 'checkReadiness', readyClients );
+      if (readyClients == numClients ) {
+	 console.log( 'All clients ready. Run test' );
+	 // run clients
+	 clients.forEach( function( client, id ) {
+//	    console.log( 'run client', id );
+	    client.postMessage( { messageType: 'run' } );
+	 });
+	 checkCompletion();
+
+	 clearTimeout( configurationTimeout );
+	 setTimeout( onTimeout, timeout ); // timeout is set while running tests
+      }
+   }
+   
    function checkCompletion() {
       console.log( 'checkCompletion', doneWithClients );
       if ( doneWithClients == numClients ) {
-	 console.log( 'All tests passed. exiting' );
-	 process.exit( 0 );
+	 console.log( 'All client tests passed. Checking server post flight assertions' );
+	 onSuccess();
       };
    }
-   
-   var clients = [];
+   // Create workers
    for ( var i = 0; i  < numClients; i++ ) {
-      console.log( 'main: preparing client #%s', i );
+//      console.log( 'start client', i );
       var client = new Worker( clientModule );
       clients.push( client );
       client.onmessage = function( e ) {
-	 doneWithClients++;
-	 console.log( 'client %s done', e.data );
-	 checkCompletion();
+	 switch (e.data.messageType) {
+	 case 'ready':
+	    readyClients++;
+	    checkReadiness();
+	    break;
+	 case 'done': 
+	    doneWithClients++;
+	    checkCompletion();
+	    break;
+	 case 'failure':
+	    onFailure();
+	 };
       };
    };
-   console.log( 'main: launching test' );
+   // set parameters
+   console.log( 'setting parameters' );
    clients.forEach( function( client, id ) {
-      client.postMessage( { clientId: id, num: numCalls } );
+      client.postMessage( { messageType: 'params', clientId: id, num: numCalls } );
    });
-   checkCompletion();
-
-   setTimeout( function() {
-      console.log( 'Timeout: %sms, test failed', timeout );
-      console.log( 'Change TIMEOUT value in source file' );
-      process.exit( 1 );
-   }, timeout );
+   
+   checkReadiness();
+   
    
 }
 
